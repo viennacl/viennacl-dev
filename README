@@ -1,0 +1,95 @@
+************************************************
+****           ViennaCL Readme              ****
+************************************************
+
+Table of Contents
+------------------
+1. Requirements
+2. Installation
+3. Project Layout
+4. Authors and Contact
+A. License
+
+
+
+1. Requirements
+-----------------
+ViennaCL requires the following:
+ * A recent C++ compiler (e.g. gcc 4.x.x)
+ * For accessing GPUs and multi-core CPUs: OpenCL (shared library and include files)
+ * For building some of the tutorials: uBLAS (shipped with the Boost libraries)
+
+
+2. Installation
+-----------------
+
+The first step is to extract the file:
+
+Unix-based OS:
+$> gunzip ViennaCL-1.3.0.tar.gz
+$> tar -xf ViennaCL-1.3.0.tar
+$> cd ViennaCL-1.3.0
+
+ViennaCL is a header-only library, therefore it is sufficient to copy the subfolder viennacl/ (holding the header files) into you project directory or your system include directory. For instructions on how to set the include paths correctly, please refer to the documentation of your compiler.
+
+For building the examples, proceed as follows:
+
+Unix-based clients:
+ * change to the build directory:
+   $> cd build
+ * call cmake
+   $> cmake ..
+ * Use 'make' to build all examples:
+   $> make
+   (alternatively, you can build them individually via 'make blas1', 'make viennacl-info', etc.
+ * Start the tutorials (optional)
+   $> ./blas1
+   $> ./custom-kernels
+   $> ./viennacl-info
+   (...)
+
+
+3. Project Layout
+-----------------
+
+---- ViennaCL-1.X.X
+   |
+   |-- auxiliary/ - Auxiliary files (i.e. the OpenCL source code tree and the converter for the header files)
+   | 
+   |-- CL/ - The OpenCL headers
+   |
+   |-- cmake/ - Additional CMake configuration files
+   |
+   |-- doc/ - Documentation (LaTeX and doxygen)
+   | 
+   |-- examples/ - Tutorial and benchmarking applications
+        | 
+        |-- testdata/ - Test data for the tutorials and benchmarks
+        | 
+        |-- benchmarks/ - A small benchmarking suite
+        |
+        |-- tutorial/ - Some tutorials explaining the usage of ViennaCL
+        |
+        |-- parameters/ - Parameter optimization environment
+   | 
+   |-- external/ - External libraries
+   |
+   |-- tests/ - Automated test suite using CTest
+   | 
+   |-- viennacl/ - The library source code
+
+
+4. Contact
+------------------------
+
+For any technical questions related to ViennaCL, please use our mailing list: viennacl-support@lists.sourceforge.net
+You may also use the forum provided by sourceforge.net: http://sourceforge.net/projects/viennacl/
+For any other issues, please contact the project head Karl Rupp  at rupp@iue.tuwien.ac.at.
+
+ViennaCL was developed under the aegis of the 'Institute for Microelectronics' at the 'Vienna University of Technology'.
+
+
+A. License
+------------
+ViennaCL is distributed under the MIT (X11) License. See file LICENSE.
+

@@ -1,0 +1,41 @@
+\chapter{Kernel Parameter Tuning} \label{chap:tuning}
+The choice of the global and local work sizes for {\OpenCL} kernels typically has a considerable impact on the obtained device performance.
+The default setting in {\ViennaCL} is -- with some exceptions -- to use the same global and local work sizes for each compute kernel.
+To obtain highest performance, optimal work sizes have to be determined for each kernel in dependence of the underlying device.
+
+\section{Start Tuning Runs}
+{\ViennaCLversion} ships with a automated tuning environment, which tries to determine the best kernel parameters for the available device.
+At present, only kernel parameters for the first device are optimized. The tuning programs are located in
+\begin{itemize}
+ \item \texttt{examples/parameters/vector.cpp}: Tuning for vector kernels
+ \item \texttt{examples/parameters/matrix.cpp}: Tuning for matrix kernels
+ \item \texttt{examples/parameters/sparse.cpp}: Tuning for sparse matrix kernels
+\end{itemize}
+and are built together with other examples when using {\CMake}. The executables are
+\begin{itemize}
+ \item \texttt{vectorparams},
+ \item \texttt{matrixparams},
+ \item \texttt{sparseparams}
+\end{itemize}
+respectively and are executed without additional parameters.
+During execution, these programs create three XML files \texttt{vector\_parameters.xml}, \texttt{matrix\_parameters.xml} and \texttt{sparse\_parameters.xml}, which hold the best parameter set.
+
+At present, only {\ViennaCL} types with standard alignment are benchmarked. Higher performance can be obtained when allowing further memory alignments and comparing different implementations.
+This, however, is not yet available, but may be part of future versions.
+
+\section{Load Best Parameters at Startup}
+In order to load the best parameters at each startup, the parameter reader located at \texttt{viennacl/io/kernel\_parameters.hpp} can be used.
+The individual kernels for the respective {\ViennaCL} types can be loaded with the lines
+\begin{lstlisting}
+using viennacl::io;
+read_kernel_parameters< viennacl::vector<float> >("vector_parameters.xml");
+read_kernel_parameters< viennacl::matrix<float> >("matrix_parameters.xml");
+read_kernel_parameters< viennacl::compressed_matrix<float> >("sparse_parameters.xml");
+
+//similarly for the numeric type double
+\end{lstlisting}
+where the filename is as usual relative to current working directory. A simple example doing just that can be found in \texttt{examples/parameters/parameter\_reader.cpp}.
+In principle, kernel parameters can all be located in a single XML file, from which the call to \lstinline|read_kernel_parameters()| will then extract the relevant ones for the respective
+{\ViennaCL} type and the available device.
+
+\TIP{Please note that in order to read the parameters, the project has to be linked with \texttt{pugixml} \cite{pugixml}, which is shipped with {\ViennaCL} in \texttt{external/} }

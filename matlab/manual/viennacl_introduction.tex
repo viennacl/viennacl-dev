@@ -1,0 +1,60 @@
+
+\chapter*{Introduction}   \addcontentsline{toc}{chapter}{Introduction}
+
+The MATLAB interface of {\ViennaCL} provides simple access to the computational resources of GPUs using {\ViennaCL} under MATLAB.
+An interface for the following iterative solvers (confer for example to the book of Y.~Saad \cite{saad-iterative-solution}) is provided:
+\begin{itemize}
+ \item Conjugate Gradient (CG)
+ \item Stabilized BiConjugate Gradient (BiCGStab)
+ \item Generalized Minimum Residual (GMRES)
+\end{itemize}
+In the current version, all solvers are provided without preconditioner. Since MATLAB relies on double precision arithmetics, only a few GPUs can be used, see Tab.~\ref{tab:double-precision-GPUs}.
+
+\NOTE{Double precision arithmetic on GPUs is only possible if it is provided by the GPU. There is no double precision emulation in {\ViennaCL}.}
+
+\begin{table}[tb]
+\begin{center}
+\begin{tabular}{l|c}
+Compute Device & ViennaCL-Matlab \\
+\hline
+Nvidia Geforce 86XX GT/GSO   & no \\
+Nvidia Geforce 88XX GTX/GTS  & no \\
+Nvidia Geforce 96XX GT/GSO   & no \\
+Nvidia Geforce 98XX GTX/GTS  & no \\
+Nvidia GT 230     & no \\
+Nvidia GT(S) 240  & no \\
+Nvidia GTS 250    & no \\
+Nvidia GTX 260    & yes \\
+Nvidia GTX 275    & yes \\
+Nvidia GTX 280    & yes \\
+Nvidia GTX 285    & yes \\
+Nvidia GTX 465    & yes \\
+Nvidia GTX 470    & yes \\
+Nvidia GTX 480    & yes \\
+Nvidia Quadro FX 46XX & no \\
+Nvidia Quadro FX 48XX & yes \\
+Nvidia Quadro FX 56XX & no \\
+Nvidia Quadro FX 58XX & yes \\
+Nvidia Tesla 870    & no \\
+Nvidia Tesla C10XX  & yes \\
+Nvidia Tesla C20XX  & yes \\
+\hline
+ATI Radeon HD 45XX   & no \\
+ATI Radeon HD 46XX   & no \\
+ATI Radeon HD 47XX   & no \\
+ATI Radeon HD 48XX   & maybe \\
+ATI Radeon HD 54XX   & no \\
+ATI Radeon HD 55XX   & no \\
+ATI Radeon HD 56XX   & no \\
+ATI Radeon HD 57XX   & no \\
+ATI Radeon HD 58XX   & maybe \\
+ATI Radeon HD 59XX   & maybe \\
+ATI FireStream V92XX & maybe \\
+ATI FirePro V78XX    & maybe \\
+ATI FirePro V87XX    & maybe \\
+ATI FirePro V88XX    & maybe \\
+\end{tabular}
+\caption{Supported GPUs for the MATLAB interface of {\ViennaCL}. At the release of the MATLAB interface for {\ViennaCLversion}, GPUs from AMD/ATI do not comply to {\OpenCL} standard for double precision extensions. Once the driver of these GPUs complies to the double precision extension standard of {\OpenCL}, they can be used with the MATLAB interface for {\ViennaCL} immediately.}
+\label{tab:double-precision-GPUs}
+\end{center}
+\end{table}

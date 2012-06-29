@@ -1,0 +1,547 @@
+% -*- mode: LaTeX -*-
+% $Id: keywords.tex,v 1.6 2006/03/22 12:48:58 entner Exp $
+
+% Specific text elements
+\newcommand{\specific}[1] {\textit{#1}}
+\newcommand{\extension}[1] {\textit{.#1}}
+\newcommand{\email}[1]     {#1}
+
+% Keywords and Indexing
+%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter keyword into keyword index
+\newcommand{\keywordidx}[1]  {\index[idxkey]{#1@\texttt{#1}}}
+
+% Print keyword within paragraph
+\newcommand{\keyword}[1]     {\texttt{#1}}
+
+% Print keyword and enter to keyword index
+\newcommand{\keywordI}[1]    {\texttt{#1}{\keywordidx{#1}}}
+
+% Print material parameter and enter to the mat.par.index
+\newcommand{\ipdkeywordI}[1] {\texttt{#1}{\index[idxipd]{#1@\texttt{#1}}}}
+
+% Print bold keyword and enter to the keyword index
+%\newcommand{\bold}[1]        {{\bf \hyperpage{#1}}}
+\newcommand{\keywordIB}[1]   {\texttt{#1}{\keywordidx{#1}}}
+
+% Enter bold keyword to general index
+\newcommand{\indexbold}[1]   {\index{#1|bold}}
+
+% Print keyword and add to a second keyword in the keyword index:
+\newcommand{\keywordII}[2]   {\texttt{#2}{\index[idxkey]{#1@\texttt{#2}}}}
+
+% Environments for the model
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\psin}[1] {\varphi_{\mathrm{#1}}}
+\newcommand{\IR}[1]   {I^R_\mathrm{N_#1}(\psin{1},\psin{2})}
+\newcommand{\rhs}[1]  {\mathrm{rhs[N_#1]}}
+\newcommand{\Y}[2]    {\mathrm{Y[N_#1][N_#2]}}
+
+\newcommand{\mdlalphachar}{\mbox{\mdltt{[a-zA-Z]}}}
+\newcommand{\mdlextendchar}{\mbox{\mdltt{[a-zA-Z0-9\_{\mdlbackslash}]}}}
+
+\newcommand{\MdlBool}{\mdltt{Mdl\-Bool}}
+\newcommand{\MdlString}{\mdltt{Mdl\-String}}
+\newcommand{\MmuMdlKeyword}{\mdltt{Mmu\-Mdl\-Key\-word}}
+\newcommand{\MmuMdlKeywordList}{\mdltt{MmuMdlKeywordList}}
+
+\newcommand{\mdlAliasedModel}{\mdlkeyw{AliasedModel}}
+\newcommand{\mdlEnd}{\mdlkeyw{End}}
+\newcommand{\mdlinclude}{\mdlkeyw{\#include}}
+\newcommand{\mdlInstance}{\mdlkeyw{Instance}}
+\newcommand{\mdlinstantiate}{\mdlkeyw{instantiate}}
+\newcommand{\mdlInterface}{\mdlkeyw{Interface}}
+\newcommand{\mdlLinkMap}{\mdlkeyw{LinkMap}}
+\newcommand{\mdlLoadObjectLibrary}{\mdlkeyw{LoadObjectLibrary}}
+\newcommand{\mdlLocal}{\mdlkeyw{Local}}
+\newcommand{\mdlModel}{\mdlkeyw{Model}}
+\newcommand{\mdlNewModel}{\mdlkeyw{New\-Model}}
+\newcommand{\mdlParameter}{\mdlkeyw{Parameter}}
+\newcommand{\mdlParameters}{\mdlkeyw{Parameters}}
+\newcommand{\mdlAnyParameter}{\mdlkeyw{AnyParameter}}
+\newcommand{\mdlSelect}{\mdlkeyw{Select}}
+\newcommand{\mdlStatic}{\mdlkeyw{Static}}
+\newcommand{\mdlbreak}{\mdlkeyw{break}}
+\newcommand{\mdlcalc}{\mdlkeyw{calc}}
+\newcommand{\mdlcall}{\mdlkeyw{call}}
+\newcommand{\mdlconstruct}{\mdlkeyw{construct}}
+\newcommand{\mdlcontinue}{\mdlkeyw{continue}}
+\newcommand{\mdldestruct}{\mdlkeyw{destruct}}
+\newcommand{\mdldo}{\mdlkeyw{do}}
+\newcommand{\mdlelse}{\mdlkeyw{else}}
+\newcommand{\mdlerrors}{\mdlkeyw{errors}}
+\newcommand{\mdlevaluate}{\mdlkeyw{evaluate}}
+\newcommand{\mdlfalse}{\mdlkeyw{false}}
+\newcommand{\mdlfor}{\mdlkeyw{for}}
+\newcommand{\mdlgenLibrary}{\mdlkeyw{genLibrary}}
+\newcommand{\mdlif}{\mdlkeyw{if}}
+\newcommand{\mdlinitialize}{\mdlkeyw{initialize}}
+\newcommand{\mdllink}{\mdlkeyw{link}}
+\newcommand{\mdllistModels}{\mdlkeyw{listModels}}
+\newcommand{\mdlmdlLibraryName}{\mdlkeyw{mdlLibraryName}}
+\newcommand{\mdlmethod}{\mdlkeyw{method}}
+\newcommand{\mdlof}{\mdlkeyw{of}}
+\newcommand{\mdlparser}{\mdlkeyw{parser}}
+\newcommand{\mdlprivate}{\mdlkeyw{private}}
+\newcommand{\mdlprotected}{\mdlkeyw{protected}}
+\newcommand{\mdlquiet}{\mdlkeyw{quiet}}
+\newcommand{\mdlreturn}{\mdlkeyw{return}}
+\newcommand{\mdlscanner}{\mdlkeyw{scanner}}
+\newcommand{\mdlset}{\mdlkeyw{set}}
+\newcommand{\mdlto}{\mdlkeyw{to}}
+\newcommand{\mdltrue}{\mdlkeyw{true}}
+\newcommand{\mdlverbose}{\mdlkeyw{verbose}}
+\newcommand{\mdlwhile}{\mdlkeyw{while}}
+\newcommand{\mdlCompilerProject}{\mdlkeyw{CompilerProject}}
+\newcommand{\mdlcompile}{\mdlkeyw{compile}}
+\newcommand{\mdlInfo}{\mdlkeyw{Info}}
+\newcommand{\mdlundef}{\mdlkeyw{undef}}
+
+\newcommand{\mdlModelClassDefinitionExtensions}{\mdltt{MODEL\_CLASS\_DEF\-INIT\-ION\_EX\-TENS\-IONS}}
+\newcommand{\mdlModelClassStdConstructor}{\mdltt{Model\-Class\-Std\-Con\-struc\-tor}}
+\newcommand{\mdlModelClassStdDestructor}{\mdltt{Model\-Class\-Std\-De\-struc\-tor}}
+\newcommand{\mdlModelClassStdDeclarations}{\mdltt{Model\-Class\-Std\-Dec\-larat\-ions}}
+\newcommand{\mdlModelClassInitExtension}{\mdltt{MODEL\_\-CLASS\_\-INIT\_\-EXT\-ENSION}}
+
+\newcommand{\MDLPREFIXSTRING}{\mdltt{MDL\-PRE\-FIX\-STRING}}
+\newcommand{\Model}{\mdltt{Model}}
+\newcommand{\Parameter}{\mdltt{Parameter}}
+\newcommand{\Interface}{\mdltt{Interface}}
+\newcommand{\mdlbackslash}{\ensuremath{\mathtt{\backslash}}}
+\newcommand{\divop}{\mathop{\rm div}}
+\newcommand{\gradop}{\mathop{\rm grad}}
+\newcommand{\asinh}{\mathop{\rm asinh}}
+
+\newcommand{\unix}{\progname{Unix}}
+\newcommand{\windows}{\progname{Windows-NT}}
+
+% Some derived tables
+\newenvironment{fixedwidthtable}     [2] {\begin{mmnttable}  {|l|p{10cm}|} {#1}                                  {#2}}     {\end{mmnttable}}
+\newenvironment{fixedwidthtablep}    [3] {\begin{mmnttable}  {|l|p{#3}|}   {#1}                                  {#2}}     {\end{mmnttable}}
+\newenvironment{fixedwidthtableL}    [3] {\begin{mmnttableL} {|l|p{10cm}|} {#1}                                  {#2}{#3}} {\end{mmnttableL}}
+\newenvironment{fixedwidthTablep}    [3] {\begin{mmntTable}  {|l|p{#3}|}   {#1}                                  {#2}}     {\end{mmntTable}}
+\newenvironment{fixedwidthTableL}    [3] {\begin{mmntTableL} {|l|p{10cm}|} {#1}                                  {#2}{#3}} {\end{mmntTableL}}
+                                     
+\newenvironment{keydesctableII}      [1] {\begin{mmnttable}  {|l|p{10cm}|} {Keyword & Description}               {#1}}     {\end{mmnttable}}
+\newenvironment{keydesctableIIL}     [2] {\begin{mmnttableL} {|l|p{10cm}|} {Keyword & Description}               {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{keydesctableIILp}    [3] {\begin{mmnttableL} {|l|p{#3}|}   {Keyword & Description}               {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{keydesctableIII}     [1] {\begin{mmnttable}  {|l|l|l|}     {Keyword & Type & Description}        {#1}}     {\end{mmnttable}}
+\newenvironment{keydesctableIIIL}    [2] {\begin{mmnttableL} {|l|l|l|}     {Keyword & Type & Description}        {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{keydesctableIIILp}   [3] {\begin{mmnttableL} {|l|l|p{#3}|} {Keyword & Type & Description}        {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{keydesctableIV}      [1] {\begin{mmnttable}  {|l|l|l|l|}   {Keyword & Type & Description & Unit} {#1}}     {\end{mmnttable}}
+\newenvironment{keydesctableIVL}     [2] {\begin{mmnttableL} {|l|l|l|l|}   {Keyword & Type & Description & Unit} {#1}{#2}} {\end{mmnttableL}}
+
+\newenvironment{keydescTableII}      [1] {\begin{mmntTable}  {|l|p{10cm}|} {Keyword & Description}               {#1}}     {\end{mmntTable}}
+\newenvironment{keydescTableIIL}     [2] {\begin{mmntTableL} {|l|p{10cm}|} {Keyword & Description}               {#1}{#2}} {\end{mmntTableL}}
+\newenvironment{keydescTableIII}     [1] {\begin{mmntTable}  {|l|l|l|}     {Keyword & Type & Description}        {#1}}     {\end{mmntTable}}
+\newenvironment{keydescTableIIIL}    [2] {\begin{mmntTableL} {|l|l|l|}     {Keyword & Type & Description}        {#1}{#2}} {\end{mmntTableL}}
+\newenvironment{keydescTableIIILp}   [3] {\begin{mmntTableL} {|l|l|p{#3}|} {Keyword & Type & Description}        {#1}{#2}} {\end{mmntTableL}}
+\newenvironment{keydescTableIV}      [1] {\begin{mmntTable}  {|l|l|l|l|}   {Keyword & Type & Description & Unit} {#1}}     {\end{mmntTable}}
+\newenvironment{keydescTableIVL}     [2] {\begin{mmntTableL} {|l|l|l|l|}   {Keyword & Type & Description & Unit} {#1}{#2}} {\end{mmntTableL}}
+
+\newenvironment{keytypetableII}      [1] {\begin{mmnttable}  {|l|l|}       {Keyword & Type}                      {#1}}     {\end{mmnttable}}
+\newenvironment{keytypetableIIL}     [2] {\begin{mmnttableL} {|l|l|}       {Keyword & Type}                      {#1}{#2}} {\end{mmnttableL}}
+                                     
+\newenvironment{keyunittableI}       [1] {\begin{mmnttable}  {|l|l|l|}     {Keyword & Type & Unit}               {#1}}     {\end{mmnttable}}
+
+\newenvironment{parameterdescrtable} [1] {\begin{mmnttable}  {|l|l|}       {Parameter & Description}             {#1}}     {\end{mmnttable}}
+\newenvironment{parameterdescrtableL}[2] {\begin{mmnttableL} {|l|l|}       {Parameter & Description}             {#1}{#2}} {\end{mmnttableL}}
+
+\newenvironment{symbolkeytableII}    [1] {\begin{mmnttable}  {|l|l|}       {Symbol & Keyword}                    {#1}}     {\end{mmnttable}}
+\newenvironment{symbolkeytableIIL}   [2] {\begin{mmnttableL} {|l|l|}       {Symbol & Keyword}                    {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{symbolkeytableIII}   [1] {\begin{mmnttable}  {|l|l|l|}     {Symbol & Keyword & Type}             {#1}}     {\end{mmnttable}}
+\newenvironment{symbolkeyTableIII}   [1] {\begin{mmntTable}  {|l|l|l|}     {Symbol & Keyword & Type}             {#1}}     {\end{mmntTable}}
+\newenvironment{symbolkeytableIIIL}  [2] {\begin{mmnttableL} {|l|l|l|}     {Symbol & Keyword & Type}             {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{symbolkeytableIV}    [1] {\begin{mmnttable}  {|l|l|l|l|}   {Symbol & Keyword & Type & Unit}      {#1}}     {\end{mmnttable}}
+\newenvironment{symbolkeyTableIV}    [1] {\begin{mmntTable}  {|l|l|l|l|}   {Symbol & Keyword & Type & Unit}      {#1}}     {\end{mmntTable}}
+\newenvironment{symbolkeytableIVL}   [2] {\begin{mmnttableL} {|l|l|l|l|}   {Symbol & Keyword & Type & Unit}      {#1}{#2}} {\end{mmnttableL}}
+\newenvironment{symbolkeytableV}     [1] {\begin{mmnttable}  {|l|l|l|}     {Symbol & Keyword & Type}             {#1}}     {\end{mmnttable}}
+
+\newenvironment{valuekeytableIII}    [1] {\begin{mmnttable}  {|l|l|l|}     {Keyword & Type & Values}             {#1}}     {\end{mmnttable}}
+\newenvironment{valuekeytableIIIL}   [2] {\begin{mmnttableL} {|l|l|l|}     {Keyword & Type & Values}             {#1}{#2}} {\end{mmnttableL}}
+
+
+\newcommand{\gcc} {GCC}
+
+
+% File name
+\newcommand{\file}[1]    {\stdin{#1}}
+\newcommand{\fileI}[1]   {\file{#1}\index{#1}}
+\newcommand{\fileIB}[1] {{\file{#1}}{\index{#1|bold}}}
+
+% Some frequently used program names
+\newcommand{\progname}[1]{\textsc{#1}}
+
+\newcommand{\alib}{\progname{Algorithm Library}}
+\newcommand{\cgg}{\progname{Cgg}}
+\newcommand{\cpp}{\progname{C++}}
+\newcommand{\C}{\progname{c}}
+\newcommand{\tcl} {\progname{Tcl}}
+\newcommand{\perl} {\progname{Perl}}
+\newcommand{\ANSI}{\progname{Ansi}}
+\newcommand{\ansic}{\progname{Ansi~c}}
+\newcommand{\ansicpp}{\progname{nsi~\cpp}}
+\newcommand{\posix}{\progname{Posix}}
+\newcommand{\STL}{\progname{Stl}}
+\newcommand{\emacs}{\progname{Emacs}}
+\newcommand{\geo}{\progname{Geo2ps}}
+\newcommand{\geotops}{\progname{Geo2ps}}
+\newcommand{\inp}{\progname{Inp}}
+\newcommand{\make}{\progname{Make}}
+\newcommand{\makedevice}{\progname{makedevice}}
+\newcommand{\MDL}{\progname{Model Definition Language}}
+\newcommand{\mdl}{\progname{Mdl}}
+\newcommand{\mkdev}{\progname{Makedevice}}
+\newcommand{\python}{\progname{Python}}
+\newcommand{\xmgrace}{\progname{Xmgrace}}
+\newcommand{\xcrv}{\progname{Xcrv}}
+\newcommand{\minimos}{\progname{Minimos~6}}
+\newcommand{\mmnt}{\progname{Minimos-NT}}
+\newcommand{\mdlprog}{\mmnt}
+\newcommand{\mmtont}{\progname{Mm62nt}}
+\newcommand{\pbf}{\progname{Pbf}}
+\newcommand{\pbfm}{\progname{Pbfm}}
+\newcommand{\pif}{\progname{Pif}}
+\newcommand{\pifcopy}{\progname{Pifcopy}}
+\newcommand{\pifrm}{\progname{Pifrm}}
+\newcommand{\pifmaid}{\progname{Pifmaid}}
+\newcommand{\prost}{\progname{Prost2d}}
+\newcommand{\punch}{\progname{Punch}}
+\newcommand{\rul}{\progname{Rul}}
+\newcommand{\Siesta}{\progname{Siesta}}
+\newcommand{\sketch}{\progname{Sketch}}
+\newcommand{\spice}{\progname{Spice}}
+\newcommand{\splitseg}{\progname{Splitseg}}
+\newcommand{\svg}{\progname{Svg}}
+\newcommand{\svgtops}{\progname{Svg2ps}}
+\newcommand{\tif}{\progname{Tif}}
+\newcommand{\str}{\progname{Str}}
+\newcommand{\devedit}{\progname{Devedit}}
+\newcommand{\silvaco}{\progname{Silvaco}}
+\newcommand{\iseToPif}{\progname{Ise2pif}}
+\newcommand{\synopsys}{\progname{Synopsys}}
+\newcommand{\tifwrap}{\progname{Tifwrap}}
+\newcommand{\tiftopif}{\progname{Tif2pbf.sh}}
+\newcommand{\tsuprem}{\progname{Tsuprem4}}
+\newcommand{\athena}{\progname{Athena}}
+\newcommand{\xpif}{\progname{Xpif2d}}
+\newcommand{\xsvg}{\progname{Xsvg}}
+\newcommand{\vmake}{\progname{Vmake}}
+\newcommand{\eas}{\progname{Eas}}
+
+\newcommand{\pai}{\progname{Pai}}
+\newcommand{\PAI}{\progname{Pai}}
+\newcommand{\vista}{\progname{Vista}}
+\newcommand{\PBF}{\progname{Pbf}}
+\newcommand{\PBL}{\progname{Pbl}}
+\newcommand{\PLB}{\progname{Plb}}
+\newcommand{\PAL}{\progname{Pal}}
+\newcommand{\FORTRAN}{\progname{Fortran}}
+\newcommand{\LISP}{\progname{Lisp}}
+\newcommand{\PIL}{\progname{Pil}}
+\newcommand{\PCL}{\progname{Pcl}}
+\newcommand{\PFL}{\progname{Pfl}}
+\newcommand{\UNFUG}{\progname{Unfug}}
+\newcommand{\DIOS}{\progname{Dios}}
+\newcommand{\bison}{\progname{Bison}}
+\newcommand{\flex}{\progname{Flex}}
+
+\newcommand{\ipl}{ViennaIPD}
+\newcommand{\inputdeck} {ViennaIPD}
+\newcommand{\Inputdeck} {ViennaIPD}
+%\newcommand{\inputdeck} {input-deck} % word within a paragraph
+%\newcommand{\Inputdeck} {Input-deck} % at the beginning of a paragraph
+%\newcommand{\InputDeck} {Input-Deck} % in headings
+
+\newcommand{\curve}     {\sc{Curve}}
+
+% simulation modes
+\newcommand{\sm}{\sc{Single-Mode}}
+\newcommand{\mm}{\sc{Mixed-Mode}}
+\newcommand{\MM}{\sc{Mixed-Mode}}
+\newcommand{\DC}{\sc{dc}}
+\newcommand{\AC}{\sc{ac}}
+\newcommand{\DD}{\sc{dd}}
+\newcommand{\HD}{\sc{hd}}
+
+% Name of a person (e.g. Maxwell)
+\newcommand{\persname}[1]{\textsl{#1}}
+
+\newcommand{\srh}{\persname{Shockley-Read-Hall}}
+
+\newcommand{\key}[1]{\texttt{<#1>}}
+\newcommand{\menu}[1]{\textsf{#1}}
+\newcommand{\window}[1]{\textsl{\textsf{#1}}}
+
+% Differential Operators: grad, div, rot, error function
+\newcommand{\GRAD}{\mathrm{grad}}
+\newcommand{\DIV}{\mathrm{div}}
+\newcommand{\ROT}{\mathrm{rot}}
+\newcommand{\erfc}{\mathrm{erfc}}
+
+% Partial Derivative
+\newcommand{\PD}[2]{\frac{\partial #1}{\partial #2}}
+
+% Total Derivative
+\newcommand{\TD}[2]{\frac{{\mathrm{d}} #1}{{\mathrm{d}} #2}}
+
+% References to Equations, Tables, Figures, Sections
+\newcommand{\Eq}[1]{(\ref{#1})}
+\newcommand{\Fig}[1]{Fig.~\ref{#1}}
+\newcommand{\Sec}[1]{Section~\ref{#1}}
+\newcommand{\Chapter}[1]{Chapter~\ref{#1}}
+\newcommand{\Appendix}[1]{Appendix~\ref{#1}}
+\newcommand{\Table}[1]{Table~\ref{#1}}
+
+% Vector
+\newcommand{\vect}[1]{\mathbf{#1}}
+
+% Bernoulli function
+\newcommand{\bern}{\mathrm{B}}
+
+% average D
+\newcommand{\dav}{\overline{D}}
+
+\newcommand{\ToKmO}{\left(\frac{\TL}{\mathrm{300\ K}} - 1\right)}
+\newcommand{\ToK}{\left(\frac{\TL}{\mathrm{300\ K}}\right)}
+\newcommand{\LToK}{\left(\frac{\TL}{\mathrm{77\ K}}\right)}
+\newcommand{\LToKTH}{\left(\frac{\TL}{\mathrm{300\ K}}\right)}
+\newcommand{\TK}{\left(\frac{T}{K}\right)}
+\newcommand{\KoT}{\left(\frac{\mathrm{300\ K}}{\TL}\right)}
+\newcommand{\KoLT}{\left(\frac{\mathrm{77\ K}}{\TL}\right)}
+
+\newcommand{\dop}[2]      {\ensuremath{#1\times 10^{#2} \, \textrm{cm}^{-3}}}
+\newcommand{\dopOne}[1]   {\ensuremath{10^{#1} \, \textrm{cm}^{-3}}}
+
+\newcommand{\kL}      {\ensuremath{\kappa_\mathrm{L}}}
+
+\newcommand{\nrg}  {\mathcal{E}}
+
+\newcommand{\lth} {\lambda_\mathrm{TH}}
+\newcommand{\hc}  {h_\mathrm{corr}}
+\newcommand{\Qi}  {Q_\mathrm{i}}
+\newcommand{\fB}  {f_\mathrm{B}}
+
+\newcommand{\kdiel}   {\ensuremath{\kappa_\mathrm{diel}}}
+\newcommand{\tdiel}   {\ensuremath{t_\mathrm{diel}}}
+\newcommand{\mdiel}   {\ensuremath{m_\mathrm{diel}}}
+\newcommand{\mOx}     {\ensuremath{m_\mathrm{ox}}}
+\newcommand{\meff}    {\ensuremath{m_\mathrm{eff}}}
+\newcommand{\kme}     {\ensuremath{\kappa_\mathrm{metal}}}
+\newcommand{\ksi}     {\ensuremath{\kappa_\mathrm{si}}}
+\newcommand{\epsr}[1]{\varepsilon_{\mathrm{r}}^{\mathrm{#1}}}
+\newcommand{\q}{\mathrm{q}}
+\newcommand{\kB}{\mathrm{k_B}}
+\newcommand{\Ed}    {\nrg_\mathrm{d}}
+\newcommand{\Ea}    {\nrg_\mathrm{a}}
+\newcommand{\ED}    {\nrg_\mathrm{D}}
+\newcommand{\EA}    {\nrg_\mathrm{A}}
+\newcommand{\Ec}    {\nrg_\mathrm{C}}
+\newcommand{\Eci}[1]{\nrg_\mathrm{C#1}}
+\newcommand{\Ev}    {\nrg_\mathrm{V}}
+\newcommand{\Evi}[1]{\nrg_\mathrm{V#1}}
+\newcommand{\ET}    {\nrg_{\mathrm{T}}}
+\newcommand{\rt}    {r_{\mathrm{t}}}
+\newcommand{\ft}    {\ensuremath{f_{\mathrm{t}}}}
+\newcommand{\Qt}    {\ensuremath{Q_{\mathrm{t}}}}
+\newcommand{\Ei}    {\nrg_{\mathrm{i}}}
+\newcommand{\Eref}  {\ensuremath{\nrg_{\mathrm{ref}}}}
+\newcommand{\Ethr}  {\nrg_{\mathrm{thr}}}
+\newcommand{\Eg}    {\nrg_{\mathrm{g}}}
+\newcommand{\Egz}   {\nrg_{\mathrm{g,0}}}
+\newcommand{\Eoff}  {\nrg_{\mathrm{off}}}
+\newcommand{\GnII}{G_{n}^{\mathrm{II}}}
+\newcommand{\GpII}{G_{p}^{\mathrm{II}}}
+\newcommand{\NA}{N_\mathrm{A}}
+\newcommand{\ND}{N_\mathrm{D}}
+\newcommand{\Nc}{N_\mathrm{C}}
+\newcommand{\Nv}{N_\mathrm{V}}
+\newcommand{\Ncv}{N_\mathrm{C,V}}
+\newcommand{\Ncz}{N_\mathrm{C,0}}
+\newcommand{\Nvz}{N_\mathrm{V,0}}
+\newcommand{\Ni}{N_{\mathrm{i}}}
+\newcommand{\NT}{N_{\mathrm{T}}}
+\newcommand{\Ntot}{N_{\mathrm{tot}}}
+\newcommand{\TC}{T_{\mathrm{C}}}
+\newcommand{\RDIR}{R^{\mathrm{DIR}}}
+\newcommand{\RAU}{R^{\mathrm{AU}}}
+\newcommand{\RBB}{R^{\mathrm{BB}}}
+\newcommand{\RII}{R^{\mathrm{II}}}
+\newcommand{\RSRH}{R^{\mathrm{SRH}}}
+\newcommand{\RT}{R_{\mathrm{T}}}
+\newcommand{\TL}{T_\mathrm{L}}
+\newcommand{\TLo}{T_{L,\mathrm{old}}}
+\newcommand{\tauen}{\tau_{\epsilon,n}}
+\newcommand{\tauep}{\tau_{\epsilon,p}}
+\newcommand{\taue}[1]{\tau_{\epsilon,#1}}
+\newcommand{\TCoK}{\left(\frac{T_n}{\mathrm{300\ K}}+C_0\right)}
+\newcommand{\PhiB}    {\ensuremath{\Phi_\mathrm{B}}}
+\newcommand{\Phit}    {\ensuremath{\Phi_\mathrm{t}}}
+\newcommand{\deriv}     {\ensuremath  {\mathrm{d}}}
+\newcommand{\Schro}     {\persname{Schr{\"o}\-dinger}}
+
+\newcommand{\Emin}      {\ensuremath{\nrg_\mathrm{min}}}
+\newcommand{\Emax}      {\ensuremath{\nrg_\mathrm{max}}}
+\newcommand{\Ef}        {\ensuremath{\nrg_\mathrm{F}}}
+\newcommand{\Efi}       {\ensuremath{\nrg_{\mathrm{F},i}}}
+\newcommand{\ef}[1]     {\ensuremath{\nrg_\mathrm{F#1}}}
+
+\newcommand{\VEold}{\vect{E}_{\mathrm{old}}}
+\newcommand{\VEoldi}[1]{\vect{E}_{\mathrm{old} #1}}
+\newcommand{\VPold}{\vect{P}_{\mathrm{old}}}
+\newcommand{\VPoldi}[1]{\vect{P}_{\mathrm{old} #1}}
+\newcommand{\VP}[1]{\vect{P}_{#1}}
+\newcommand{\Vg}        {\ensuremath{V_\mathrm{G}}}
+
+\newcommand{\Iin}       {\ensuremath{I_\mathrm{in}}}
+\newcommand{\Iout}      {\ensuremath{I_\mathrm{out}}}
+\newcommand{\Vin}       {\ensuremath{V_\mathrm{in}}}
+\newcommand{\Vout}      {\ensuremath{V_\mathrm{out}}}
+
+\newcommand{\Vox}      {\ensuremath{V_\mathrm{ox}}}
+
+\newcommand{\VDS}       {\ensuremath{V_\mathrm{DS}}}
+
+
+\newcommand{\Id}        {\ensuremath{I_\mathrm{d}}}
+\newcommand{\Vd}        {\ensuremath{V_\mathrm{d}}}
+\newcommand{\Is}        {\ensuremath{I_\mathrm{s}}}
+
+\newcommand{\te} {\ensuremath{\tau_\mathrm{e}}}
+\newcommand{\tc} {\ensuremath{\tau_\mathrm{c}}}
+\newcommand{\Nt} {\ensuremath{N_\mathrm{t}}}
+\newcommand{\Et} {\ensuremath{\nrg_\mathrm{t}}}
+\newcommand{\tox}{\ensuremath{t_\mathrm{ox}}}
+\newcommand{\Di} {\ensuremath{D_\mathrm{i}}}
+
+% install screen-shots
+
+%% \newcommand{\leftpic}[3]{%
+%%   \parpic[l]{%
+%%   \psblurbox[linecolor=white,linewidth=0,framesep=-0.04,shadowsize=0.2cm,blurradius=0.1cm]{%
+%%       \includegraphics[width=#1]{#2}} }  #3
+%%   \picskip{0}
+%%   \bigskip
+%% }
+%% \newcommand{\rightpic}[3]{%
+%%   \parpic[r]{%
+%%   \psblurbox[linecolor=white,linewidth=0,framesep=-0.04,shadowsize=0.2cm,blurradius=0.1cm]{%
+%%       \includegraphics[width=#1]{#2}} }  #3
+%%   \picskip{0}
+%%   \bigskip
+%% }
+
+\newcommand{\leftpic}[3]{%
+  \begin{minipage}{0.48\linewidth}
+      \includegraphics[width=\linewidth]{#2}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.48\linewidth}
+      #3
+  \end{minipage}
+}
+
+\newcommand{\rightpic}[3]{%
+  \begin{minipage}{0.48\linewidth}
+      #3
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.48\linewidth}
+      \includegraphics[width=\linewidth]{#2}
+  \end{minipage}
+}
+
+% makedevice
+\newcommand{\SiO}{SiO$_2$}
+\newcommand{\SiN}{Si$_3$N$_4$}
+
+
+% abbreviations
+\newcommand{\AIX}      {\sc Aix}
+\newcommand{\ASCII}    {\sc Ascii}
+\newcommand{\BICGSTAB} {\sc Bicg-stab}
+\newcommand{\BJT}      {\sc Bjt}
+\newcommand{\case}     {\sc Case}
+\newcommand{\CNT}      {\sc Cnt}
+\newcommand{\cpu}      {\sc Cpu}
+\newcommand{\EEPROM}   {\sc Eeprom}
+\newcommand{\EKV}      {\sc Ekv}
+\newcommand{\FET}      {\sc Fet}
+\newcommand{\GMRES}   {{\sc Gmres}(m)}
+\newcommand{\HBT}      {\sc Hbt}
+\newcommand{\HEMT}     {\sc Hemt}
+\newcommand{\IBM}      {\sc Ibm}
+\newcommand{\ILU}      {\sc Ilu}
+\newcommand{\ILUFAC}   {Incomplete-{\LU} factorization}
+\newcommand{\IUE}      {Institute for Microelectronics}
+\newcommand{\LU}       {\sc Lu}
+\newcommand{\MOS}      {\sc Mos}
+\newcommand{\MOSFET}   {\sc Mosfet}
+\newcommand{\NMOS}     {\sc Nmos}
+\newcommand{\OSF}      {\sc Osf}
+\newcommand{\PMOS}     {\sc Pmos}
+\newcommand{\SOI}     {{\sc Soi}}
+\newcommand{\SOIFET}   {\sc Soifet}
+\newcommand{\TBB}      {\sc Tbb}
+\newcommand{\TUV}      {Technical University Vienna}
+
+\newcommand{\mydollar}   {\$} %$
+\newcommand{\mytilde}    {{\ensuremath{{\sim}}}}
+
+\newcommand{\MISSING}[1]{${}^*$\marginpar{${}^*$\textbf{Missing {#1}}}}
+
+\newcommand{\NI}{${}^*$\marginpar{${}^*$\textbf{Not implemented!}}}
+
+\newcommand{\BUG}{\marginpar{\includegraphics[width=1cm]{figures/bug.ps}}}
+
+% Mobility functions
+\newcommand{\mob}[1]{\mu^{\mathrm{#1}}}
+\newcommand{\con}[1]{C^{\mathrm{#1}}}
+\newcommand{\vs}{v^{\mathrm{sat}}}
+
+\newcommand{\phis}[1]{\varphi_{\mathrm{s#1}}}
+\newcommand{\psis} {\varphi_{\mathrm{s}}}
+\newcommand{\psim} {\varphi_{\mathrm{m}}}
+\newcommand{\psibi}{\psi_{\mathrm{bi}}}
+\newcommand{\psiwf}{\varphi_{\mathrm{wf}}}
+\newcommand{\psiox}{\varphi_{\mathrm{ins}}}
+\newcommand{\psiqfl}{\varphi_{\mathrm{qfl}}}
+\newcommand{\Ewf}{\nrg_{\mathrm{w}}}
+\newcommand{\eps}[1]{\varepsilon_{\mathrm{#1}}}
+\newcommand{\mL}{{\mathrm{L}}}
+
+\newcommand{\qf}  {quasi-\persname{Fermi}} % is not coupled to index entries
+
+\newcommand{\BB}   {\sc bb}
+\newcommand{\BGN}  {\sc Bgn}
+\newcommand{\BNF}  {\sc Bnf}
+\newcommand{\CQFL} {\sc Cqfl}
+\newcommand{\QTBM} {\sc Qtbm}
+\newcommand{\WKB}  {\sc Wkb}
+\newcommand{\TFE}  {\sc Tfe}
+\newcommand{\TE}   {\sc Te}
+\newcommand{\SI}   {\sc si}
+
+\newcommand{\Nit}         {\ensuremath{N_\mathrm{it}}}
+\newcommand{\Nz}          {\ensuremath{N_0}}
+\newcommand{\kf}          {\ensuremath{k_\mathrm{f}}}
+\newcommand{\kfz}         {\ensuremath{k_\mathrm{f,0}}}
+\newcommand{\kr}          {\ensuremath{k_\mathrm{r}}}
+\newcommand{\NXz}         {\ensuremath{N_{X,\mathrm{it}}}}
+\newcommand{\ps}          {\ensuremath{p_\mathrm{s}}}
+\newcommand{\Eox}         {\ensuremath{E_\mathrm{ox}}}
+\newcommand{\pref}        {\ensuremath{p_\mathrm{ref}}}
+\newcommand{\Qit}         {\ensuremath{Q_\mathrm{it}}}
+\newcommand{\Qitsimple}   {\ensuremath{Q_\mathrm{it}^\mathrm{simple}}}
+\newcommand{\Dt}          {\ensuremath{D_\mathrm{t}}}
+\newcommand{\Qf}          {\ensuremath{Q_\mathrm{f}}}
+\newcommand{\EF}          {E_{\mathrm{F}}}
+\newcommand{\Vth}         {V_\mathrm{th}}
+\newcommand{\Cox}         {\ensuremath{C_\mathrm{ox}}}
+\newcommand{\NX}          {\ensuremath{N_X}}
+\newcommand{\DX}          {\ensuremath{D_X}}
+\newcommand{\DXz}         {\ensuremath{D_{X,0}}}
+\newcommand{\PhiX}        {\ensuremath{\Phi_X}}
+

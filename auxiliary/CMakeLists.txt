@@ -1,0 +1,345 @@
+include_directories(${Boost_INCLUDE_DIRS})
+
+add_executable(generate-blas3-solve-align1 generate-blas3-solve-align1.cpp)
+add_executable(generate-blas3-prod-align1 generate-blas3-prod-align1.cpp)
+add_executable(generate-blas3-prod16-align1 generate-blas3-prod16-align1.cpp)
+
+function(generate_blas3_prod_align1 outvar)
+   set(crstr_0 col)
+   set(crstr_1 row)
+   set(ATstr_0 A)
+   set(ATstr_1 T)
+   set(outfiles)
+
+   foreach(ar 0 1) # A is column/row major
+   foreach(br 0 1) # B is column/row major
+   foreach(cr 0 1) # C is column/row major
+   foreach(at 0 1) # A is (not) transposed
+   foreach(bt 0 1) # B is (not) transposed
+      set(d "${CMAKE_CURRENT_BINARY_DIR}")
+      set(d "${d}/matrix_prod_${crstr_${ar}}_${crstr_${br}}_${crstr_${cr}}")
+      set(d "${d}/align1")
+      file(MAKE_DIRECTORY "${d}")
+
+      # standard kernels:
+      set(o "${d}/prod_${ATstr_${at}}${ATstr_${bt}}.cl")
+      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
+      add_custom_command(OUTPUT "${o}"
+         COMMAND generate-blas3-prod-align1
+            ${ar} ${br} ${cr} ${at} ${bt} > "${o}"
+         COMMENT "Generating ${ro}"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+         VERBATIM)
+      list(APPEND outfiles "${o}")
+
+      # fast kernels:
+      set(o16 "${d}/prod16_${ATstr_${at}}${ATstr_${bt}}.cl")
+      file(RELATIVE_PATH ro16 "${CMAKE_CURRENT_BINARY_DIR}" "${o16}")
+      add_custom_command(OUTPUT "${o16}"
+         COMMAND generate-blas3-prod16-align1
+            ${ar} ${br} ${cr} ${at} ${bt} > "${o16}"
+         COMMENT "Generating ${ro16}"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+         VERBATIM)
+      list(APPEND outfiles "${o16}")
+
+   endforeach()
+   endforeach()
+   endforeach()
+   endforeach()
+   endforeach()
+   set(${outvar} "${outfiles}" PARENT_SCOPE)
+endfunction()
+
+function(generate_blas3_solve_align1 outvar)
+   set(crstr_0 col)
+   set(crstr_1 row)
+   set(tstr_0)
+   set(tstr_1 trans_)
+   set(ulstr_0 lower)
+   set(ulstr_1 upper)
+   set(unitstr_0)
+   set(unitstr_1 unit_)
+   set(outfiles)
+
+   foreach(ar 0 1) # A is column/row major
+   foreach(br 0 1) # A is column/row major
+   foreach(at 0 1) # A is transposed
+   foreach(bt 0 1) # B is transposed
+   foreach(ul 0 1) # upper/lower
+   foreach(un 0 1) # unit
+      set(d "${CMAKE_CURRENT_BINARY_DIR}")
+      set(d "${d}/matrix_solve_${crstr_${ar}}_${crstr_${br}}")
+      set(d "${d}/align1")
+      file(MAKE_DIRECTORY "${d}")
+      set(o "${d}/${tstr_${at}}${unitstr_${un}}${ulstr_${ul}}_${tstr_${bt}}solve.cl")
+      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
+      add_custom_command(OUTPUT "${o}"
+         COMMAND generate-blas3-solve-align1
+            ${ar} ${br} ${at} ${bt} ${ul} ${un} > "${o}"
+         COMMENT "Generating ${ro}"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+         VERBATIM)
+      list(APPEND outfiles "${o}")
+   endforeach()
+   endforeach()
+   endforeach()
+   endforeach()
+   endforeach()
+   endforeach()
+   set(${outvar} "${outfiles}" PARENT_SCOPE)
+endfunction()
+
+# Matrix-Matrix products
+generate_blas3_prod_align1(MATRIX_PROD_SRCS)
+
+# Matrix-Matrix triangular solver
+generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
+
+set(COMPRESSED_MATRIX_SRCS
+   compressed_matrix/align1/bicgstab_kernel1.cl
+   compressed_matrix/align1/bicgstab_kernel2.cl
+   compressed_matrix/align1/jacobi.cl
+   compressed_matrix/align1/jacobi_precond.cl
+   compressed_matrix/align1/lu_backward.cl
+   compressed_matrix/align1/lu_forward.cl
+   compressed_matrix/align1/row_scaling_1.cl
+   compressed_matrix/align1/row_scaling_2.cl
+   compressed_matrix/align1/vec_mul.cl
+   compressed_matrix/align4/vec_mul.cl
+   compressed_matrix/align8/vec_mul.cl)
+
+set(COORDINATE_MATRIX_SRCS
+   coordinate_matrix/align1/vec_mul.cl
+   coordinate_matrix/align128/dummy)
+
+set(ELL_MATRIX_SRCS
+   ell_matrix/align1/vec_mul.cl)
+
+set(HYB_MATRIX_SRCS
+   hyb_matrix/align1/vec_mul.cl)
+
+set(MATRIX_COL_SRCS
+   matrix_col/align1/add.cl
+   matrix_col/align1/assign.cl
+   matrix_col/align1/clear.cl
+   matrix_col/align1/cpu_inplace_mult.cl
+   matrix_col/align1/fft_direct.cl
+   matrix_col/align1/fft_radix2.cl
+   matrix_col/align1/fft_radix2_local.cl
+   matrix_col/align1/fft_reorder.cl
+   matrix_col/align1/inplace_add.cl
+   matrix_col/align1/inplace_divide.cl
+   matrix_col/align1/inplace_mult.cl
+   matrix_col/align1/inplace_sub.cl
+   matrix_col/align1/lower_triangular_substitute_inplace.cl
+   matrix_col/align1/lu_factorize.cl
+   matrix_col/align1/rank1_update.cl
+   matrix_col/align1/scaled_rank1_update.cl
+   matrix_col/align1/sub.cl
+   matrix_col/align1/trans_lower_triangular_substitute_inplace.cl
+   matrix_col/align1/trans_unit_lower_triangular_substitute_inplace.cl
+   matrix_col/align1/trans_unit_upper_triangular_substitute_inplace.cl
+   matrix_col/align1/trans_upper_triangular_substitute_inplace.cl
+   matrix_col/align1/trans_vec_mul.cl
+   matrix_col/align1/unit_lower_triangular_substitute_inplace.cl
+   matrix_col/align1/unit_upper_triangular_substitute_inplace.cl
+   matrix_col/align1/upper_triangular_substitute_inplace.cl
+   matrix_col/align1/vec_mul.cl
+   matrix_col/align16/dummy)
+
+set(MATRIX_ROW_SRCS
+   matrix_row/align1/add.cl
+   matrix_row/align1/assign.cl
+   matrix_row/align1/clear.cl
+   matrix_row/align1/cpu_inplace_mult.cl
+   matrix_row/align1/fft_direct.cl
+   matrix_row/align1/fft_radix2.cl
+   matrix_row/align1/fft_radix2_local.cl
+   matrix_row/align1/fft_reorder.cl
+   matrix_row/align1/inplace_add.cl
+   matrix_row/align1/inplace_divide.cl
+   matrix_row/align1/inplace_mult.cl
+   matrix_row/align1/inplace_sub.cl
+   matrix_row/align1/lower_triangular_substitute_inplace.cl
+   matrix_row/align1/lu_factorize.cl
+   matrix_row/align1/rank1_update.cl
+   matrix_row/align1/scaled_rank1_update.cl
+   matrix_row/align1/sub.cl
+   matrix_row/align1/trans_lower_triangular_substitute_inplace.cl
+   matrix_row/align1/trans_unit_lower_triangular_substitute_inplace.cl
+   matrix_row/align1/trans_unit_upper_triangular_substitute_inplace.cl
+   matrix_row/align1/trans_upper_triangular_substitute_inplace.cl
+   matrix_row/align1/trans_vec_mul.cl
+   matrix_row/align1/unit_lower_triangular_substitute_inplace.cl
+   matrix_row/align1/unit_upper_triangular_substitute_inplace.cl
+   matrix_row/align1/upper_triangular_substitute_inplace.cl
+   matrix_row/align1/vec_mul.cl
+   matrix_row/align16/dummy)
+
+set(SCALAR_SRCS
+   scalar/align1/add.cl
+   scalar/align1/cpu_add.cl
+   scalar/align1/cpu_div.cl
+   scalar/align1/cpu_inplace_add.cl
+   scalar/align1/cpu_inplace_div.cl
+   scalar/align1/cpu_inplace_mul.cl
+   scalar/align1/cpu_inplace_sub.cl
+   scalar/align1/cpu_mul.cl
+   scalar/align1/cpu_sub.cl
+   scalar/align1/divide.cl
+   scalar/align1/inplace_add.cl
+   scalar/align1/inplace_div.cl
+   scalar/align1/inplace_mul.cl
+   scalar/align1/inplace_sub.cl
+   scalar/align1/mul.cl
+   scalar/align1/sub.cl)
+
+set(VECTOR_SRCS
+   vector/align16/add.cl
+   vector/align16/cpu_inplace_mul.cl
+   vector/align16/cpu_mult.cl
+   vector/align16/divide.cl
+   vector/align16/inplace_add.cl
+   vector/align16/inplace_divide.cl
+   vector/align16/inplace_mult.cl
+   vector/align16/inplace_sub.cl
+   vector/align16/mult.cl
+   vector/align16/sub.cl
+   vector/align1/add.cl
+   vector/align1/assign.cl
+   vector/align1/clear.cl
+   vector/align1/cpu_inplace_mul_add.cl
+   vector/align1/cpu_inplace_mult.cl
+   vector/align1/cpu_mul_add.cl
+   vector/align1/cpu_mult.cl
+   vector/align1/diag_precond.cl
+   vector/align1/divide.cl
+   vector/align1/index_norm_inf.cl
+   vector/align1/inner_prod.cl
+   vector/align1/inplace_add.cl
+   vector/align1/inplace_div_add.cl
+   vector/align1/inplace_divide.cl
+   vector/align1/inplace_div_sub.cl
+   vector/align1/inplace_mul_add.cl
+   vector/align1/inplace_mul_sub.cl
+   vector/align1/inplace_mult.cl
+   vector/align1/inplace_sub.cl
+   vector/align1/mul_add.cl
+   vector/align1/mul_sub.cl
+   vector/align1/mult.cl
+   vector/align1/norm_1.cl
+   vector/align1/norm_2.cl
+   vector/align1/norm_inf.cl
+   vector/align1/plane_rotation.cl
+   vector/align1/sqrt_sum.cl
+   vector/align1/sub.cl
+   vector/align1/sum.cl
+   vector/align1/swap.cl
+   vector/align1/vmax.cl
+   vector/align4/cpu_inplace_mul_add.cl
+   vector/align4/cpu_mul_add.cl
+   vector/align4/inplace_div_add.cl
+   vector/align4/inplace_div_sub.cl
+   vector/align4/inplace_mul_add.cl
+   vector/align4/inplace_mul_sub.cl
+   vector/align4/mul_add.cl)
+
+set(FFT_SRCS
+   fft/align1/bluestein_post.cl
+   fft/align1/bluestein_pre.cl
+   fft/align1/complex_to_real.cl
+   fft/align1/fft_div_vec_scalar.cl
+   fft/align1/fft_mult_vec.cl
+   fft/align1/real_to_complex.cl
+   fft/align1/reverse_inplace.cl
+   fft/align1/transpose.cl
+   fft/align1/transpose_inplace.cl
+   fft/align1/vandermonde_prod.cl
+   fft/align1/zero2.cl
+   )
+
+set(SVD_SRCS
+   svd/align1/copy_col.cl
+   svd/align1/copy_row.cl
+   svd/align1/transpose_inplace.cl
+   svd/align1/inverse_signs.cl
+   svd/align1/givens_prev.cl
+   svd/align1/bidiag_pack.cl
+   svd/align1/house_col.cl
+   svd/align1/house_row.cl
+   )
+
+set(SPAI_SRCS
+   spai/align1/assemble_blocks.cl
+   spai/align1/block_bv_assembly.cl
+   spai/align1/block_least_squares.cl
+   spai/align1/block_q_mult.cl
+   spai/align1/block_qr.cl
+   spai/align1/block_qr_assembly.cl
+   spai/align1/block_qr_assembly_1.cl
+   spai/align1/block_r_assembly.cl
+   )
+
+set(NMF_SRCS
+   nmf/align1/el_wise_mul_div.cl
+   nmf/align1/sub_wise.cl
+   )
+
+set(CL_SRCS)
+foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
+      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS)
+   get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
+   file(MAKE_DIRECTORY "${d}")
+   configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
+   list(APPEND CL_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${f}")
+endforeach()
+list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
+
+add_executable(converter converter.cpp)
+target_link_libraries(converter ${Boost_LIBRARIES})
+
+set(KERNEL_HDRS)
+set(KERNEL_SRCS)
+foreach(d
+      compressed_matrix
+      coordinate_matrix
+      ell_matrix
+      hyb_matrix
+      matrix_col
+      matrix_prod_col_col_col
+      matrix_prod_col_col_row
+      matrix_prod_col_row_col
+      matrix_prod_col_row_row
+      matrix_prod_row_col_col
+      matrix_prod_row_col_row
+      matrix_prod_row_row_col
+      matrix_prod_row_row_row
+      matrix_row
+      matrix_solve_col_col
+      matrix_solve_col_row
+      matrix_solve_row_col
+      matrix_solve_row_row
+      scalar
+      vector
+      fft
+      svd
+      spai
+      nmf
+      )
+   set(f "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels/${d}")
+   list(APPEND KERNEL_HDRS "${f}_kernels.h")
+   list(APPEND KERNEL_SRCS "${f}_source.h")
+endforeach()
+
+file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels")
+
+add_custom_command(OUTPUT ${KERNEL_HDRS} ${KERNEL_SRCS}
+   COMMAND converter
+   DEPENDS ${CL_SRCS}
+   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+   COMMENT "Generating kernel headers and sources"
+   VERBATIM)
+
+add_custom_target(kernels ALL
+   DEPENDS ${KERNEL_HDRS} ${KERNEL_SRCS})

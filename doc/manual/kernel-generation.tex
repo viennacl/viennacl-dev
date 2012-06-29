@@ -1,0 +1,34 @@
+\chapter{Automated User-Kernel Generation} \label{chap:kernel-generation}
+
+While {\ViennaCL} provides a convenient means of including custom compute kernels, cf.~Chap.~\ref{chap:custom},
+it can be rather tedious to come up with a good compute kernel, or to come up with many similar kernels differing in small details only.
+For the case of BLAS level 1 and level 2 operations, {\ViennaCL} now provides an automated kernel generator, which takes a high-level specification of the operations and create one or more suitable OpenCL kernels.
+This allows for high-performance implementations of algorithms which may otherwise lead to spurious temporary objects.
+
+As our second example, we consider the operation
+\begin{align*}
+\mathbf{x} = \mathbf{A} \times \bigl[ (\mathbf{y} \cdot (\mathbf{y}+\mathbf{z}))\mathbf{y} + \mathbf{z} \bigr] \ ,
+\end{align*}
+where $\mathbf{x}$, $\mathbf{y}$ and $\mathbf{z}$ denote vectors, $\mathbf{A}$ is a dense matrix, and the dot denotes the vector dot product.
+With the proposed generator it is sufficient to write the following C++ code:
+\begin{lstlisting}
+// Instantiation of the symbolic variables
+symbolic_vector<0, NumericT> sX;
+symbolic_matrix<1, NumericT> sA;
+symbolic_vector<2, NumericT> sY;
+symbolic_vector<3, NumericT> sZ;
+
+//Creation of the custom operation
+custom_operation my_op(
+ sX = prod(sA, inner_prod(sY, sY+sZ) * sY + sZ)
+                      );
+\end{lstlisting}
+where \lstinline|NumericT| is either \lstinline|float| or \lstinline|double|.
+The custom operation object \lstinline|my_op| can then be enqueued like any other kernel:
+\begin{lstlisting}
+//Execution of the custom operation
+viennacl::ocl::enqueue(my_op(x,A,y,z));
+\end{lstlisting}
+Here, \lstinline|x|, \lstinline|y|, \lstinline|z| are of type \lstinline|viennacl::vector<NumericT>| and \lstinline|A| is of type \lstinline|viennacl::matrix<NumericT>|.
+
+\TIP{Sample code can be found in \lstinline|tests/src/generator_*.cpp|}

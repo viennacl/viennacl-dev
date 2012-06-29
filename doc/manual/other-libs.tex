@@ -1,0 +1,111 @@
+\chapter{Interfaces to Other Libraries} \label{chap:other-libs}
+{\ViennaCL} aims at compatibility with as many other libraries as possible.
+This is on the one hand achieved by using generic implementations of the individual algorithms,
+and on the other hand by providing the necessary wrappers.
+
+The interfaces to third-party libraries provided with {\ViennaCL} are explained in the following subsections.
+Please feel free to suggest additional libraries for which an interface should be shipped with {\ViennaCL}.
+
+Since it is unlikely that all third-party libraries for which {\ViennaCL} provides interfaces are installed
+on the target machine, the wrappers are disabled by default. To selectively enable the wrappers,
+the appropriate preprocessor constants \lstinline|VIENNACL_HAVE_XXXX| have to be defined \emph{prior to any 
+\lstinline|\#include| statements for {\ViennaCL} headers}. This can for example be assured by passing the
+preprocessor constant directly when launching the compiler. With \lstinline|GCC| this is for instance 
+achieved by the \lstinline|-D| switch.
+
+\section{\ublas}
+Since all types in {\ViennaCL} have to same interface as their counterparts in {\ublas},
+most code written for {\ViennaCL} objects remains valid when using {\ublas} objects.
+\begin{lstlisting}
+//Option 1: Using ViennaCL:
+using namespace viennacl;
+using namespace viennacl::linalg;
+
+//Option 2: Using ublas:
+//using namespace boost::numeric::ublas;
+
+matrix<float> dense_matrix(5,5);
+vector<float> dense_vector(5,5);
+compressed_matrix<float> sparse_matrix(1000, 1000);
+
+//fill with data:
+dense_matrix(0,0) = 2.0;
+....
+
+//run solvers
+vector<float> result1 = solve(dense_matrix, dense_vector, upper_tag());
+vector<float> result2 = viennacl::linalg::solve(sparse_matrix,
+                                                dense_vector, cg_tag());
+\end{lstlisting}
+The above code is valid for either the {\ViennaCL} namespace declarations, or the {\ublas} namespace. Note that the
+iterative solvers are not part of {\ublas} and therefore the explicit namespace specification is required. More examples
+for the exchangability of {\ublas} and {\ViennaCL} can be found in the tutorials in the \texttt{examples/tutorials/} folder.
+
+When using the iterative solvers, the preprocessor constant \texttt{VIENNACL\_HAVE\_UBLAS} must be defined prior to any other {\ViennaCL} include statements.
+This is essential for enabling the respective wrappers.
+
+\TIP{Refer in particular to \texttt{iterative-ublas.cpp} for a complete example on iterative solvers using {\ublas} types.}
+
+\section{\Eigen}
+To copy data from {\Eigen} \cite{eigen} objects to {\ViennaCL}, the \texttt{copy()}-functions are used just as for {\ublas} and STL types:
+\begin{lstlisting}
+ //from Eigen to ViennaCL
+ viennacl::copy(eigen_vector, vcl_vector);
+ viennacl::copy(eigen_densematrix, vcl_densematrix);
+ viennacl::copy(eigen_sparsematrix, vcl_sparsematrix);
+\end{lstlisting}
+In addition, the STL-compliant iterator-version of \texttt{viennacl::copy()} taking three arguments can be used for copying vector data.
+Here, all types prefixed with \texttt{eigen} are {\Eigen} types, the prefix \texttt{vcl} indicates {\ViennaCL} objects.
+Similarly, the transfer from {\ViennaCL} back to {\Eigen} is accomplished by
+\begin{lstlisting}
+ //from ViennaCL to Eigen
+ viennacl::copy(vcl_vector, eigen_vector);
+ viennacl::copy(vcl_densematrix, eigen_densematrix);
+ viennacl::copy(vcl_sparsematrix, eigen_sparsematrix);
+\end{lstlisting}
+
+The iterative solvers in {\ViennaCL} can also be used directly with {\Eigen} objects:
+\begin{lstlisting}
+  using namespace viennacl::linalg; //for brevity of the following lines
+  eigen_result = solve(eigen_matrix, eigen_rhs, cg_tag());
+  eigen_result = solve(eigen_matrix, eigen_rhs, bicgstab_tag());
+  eigen_result = solve(eigen_matrix, eigen_rhs, gmres_tag());
+\end{lstlisting}
+When using the iterative solvers with {\Eigen}, the preprocessor constant \texttt{VIENNACL\_HAVE\_EIGEN} must be defined prior to any other {\ViennaCL} include statements.
+This is essential for enabling the respective wrappers.
+
+\TIP{Refer to \texttt{iterative-eigen.cpp} and \texttt{eigen-with-viennacl.cpp} for complete examples.}
+
+
+
+\section{MTL 4}
+The following lines demonstate how {\ViennaCL} types are filled with data from {\MTL} \cite{mtl4} objects:
+\begin{lstlisting}
+ //from Eigen to ViennaCL
+ viennacl::copy(mtl4_vector, vcl_vector);
+ viennacl::copy(mtl4_densematrix, vcl_densematrix);
+ viennacl::copy(mtl4_sparsematrix, vcl_sparsematrix);
+\end{lstlisting}
+In addition, the STL-compliant iterator-version of \texttt{viennacl::copy()} taking three arguments can be used for copying vector data.
+Here, all types prefixed with \texttt{mtl4} are {\MTL} types, the prefix \texttt{vcl} indicates {\ViennaCL} objects.
+Similarly, the transfer from {\ViennaCL} back to {\MTL} is accomplished by
+\begin{lstlisting}
+ //from ViennaCL to MTL4
+ viennacl::copy(vcl_vector, mtl4_vector);
+ viennacl::copy(vcl_densematrix, mtl4_densematrix);
+ viennacl::copy(vcl_sparsematrix, mtl4_sparsematrix);
+\end{lstlisting}
+
+Even though {\MTL} provides its own set of iterative solvers, the iterative solvers in {\ViennaCL} can also be used:
+\begin{lstlisting}
+  using namespace viennacl::linalg; //for brevity of the following lines
+  mtl4_result = solve(mtl4_matrix, mtl4_rhs, cg_tag());
+  mtl4_result = solve(mtl4_matrix, mtl4_rhs, bicgstab_tag());
+  mtl4_result = solve(mtl4_matrix, mtl4_rhs, gmres_tag());
+\end{lstlisting}
+Our internal tests have shown that the execution time of {\MTL} solvers is equal to {\ViennaCL} solvers when using {\MTL} types.
+
+When using the iterative solvers with {\MTL}, the preprocessor constant \texttt{VIENNACL\_HAVE\_MTL4} must be defined prior to any other {\ViennaCL} include statements.
+This is essential for enabling the respective wrappers.
+
+\TIP{Refer to \texttt{iterative-mtl4.cpp} and \texttt{mtl4-with-viennacl.cpp} for complete examples.}

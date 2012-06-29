@@ -1,0 +1,17 @@
+foreach(bench blas3 opencl vector)
+   add_executable(${bench}bench ${bench}.cpp)
+   target_link_libraries(${bench}bench ${OPENCL_LIBRARIES})
+endforeach()
+
+if(ENABLE_UBLAS)
+   include_directories(${Boost_INCLUDE_DIRS})
+   foreach(bench sparse solver)
+      add_executable(${bench}bench ${bench}.cpp)
+      target_link_libraries(${bench}bench ${OPENCL_LIBRARIES})
+   endforeach()
+endif()
+
+# IF(CMAKE_COMPILER_IS_GNUCXX)
+   #ADD_DEFINITIONS(-Wall -pedantic -O0 -g)
+#   ADD_DEFINITIONS(-Wall -pedantic -O3)
+# ENDIF(CMAKE_COMPILER_IS_GNUCXX)

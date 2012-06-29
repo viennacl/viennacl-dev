@@ -1,0 +1,822 @@
+//helper:
+void helper_float_parallel_reduction( __local float * tmp_buffer )
+{
+  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2)
+  {
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if (get_global_id(0) < stride)
+      tmp_buffer[get_global_id(0)] += tmp_buffer[get_global_id(0)+stride];
+  }
+};
+
+
+/////////////////////////// MATRIX OPERATIONS ///////////////////////////////
+
+
+__kernel void float_packed_sparse_matrix_vector_mul_align1(
+          unsigned int elements_per_row,
+          __global const unsigned int * row_element_count,
+          __global const uint * column_indices, 
+          __global const float * elements,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int size)
+{
+  unsigned int row = get_global_id(0);
+  __global const float * cur_row_elements = elements + row*elements_per_row;
+  __global const uint * cur_row_column_indices = column_indices + row*elements_per_row;
+  for (; row < size; row += get_global_size(0))
+  {
+    cur_row_elements = elements + row*elements_per_row;
+    cur_row_column_indices = column_indices + row*elements_per_row;
+
+    float dot_prod = 0.0f;
+    for (unsigned int i = 0; i < row_element_count[row]; ++i)
+      dot_prod += cur_row_elements[i] * vector[cur_row_column_indices[i]];
+    result[row] = dot_prod;
+  }
+};
+
+//
+//__kernel void float_packed_sparse_matrix_vector_mul_align4(
+//          unsigned int elements_per_row,
+//          __global const unsigned int * row_element_count,
+//          __global const uint * column_indices, 
+//          __global const float * elements,
+//          __global const float * vector,  
+//          __global float * result,
+//          unsigned int size)
+//{
+//  unsigned int row = get_global_id(0);
+//  __global const float * cur_row_elements = elements + row*elements_per_row*4;
+//  __global const uint * cur_row_column_indices = column_indices + row*elements_per_row*4;
+//  for (; row < size; row += get_global_size(0))
+//  {
+//    cur_row_elements = elements + row*elements_per_row*4;
+//    cur_row_column_indices = column_indices + row*elements_per_row*4;
+//
+//    float dot_prod = 0.0f;
+//    for (unsigned int i = 0; i < row_element_count[row]*4; ++i)
+//      dot_prod += cur_row_elements[i] * vector[cur_row_column_indices[i]];
+//    result[row] = dot_prod;
+//  }
+//};
+
+
+__kernel void float_packed_sparse_matrix_vector_mul_align4(
+          unsigned int elements_per_row,
+          __global const unsigned int * row_element_count,
+          __global const uint4 * column_indices, 
+          __global const float4 * elements,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int size)
+{ 
+  unsigned int row = get_global_id(0);
+  __global const float4 * cur_row_elements = elements + row*elements_per_row;
+  __global const uint4 * cur_row_column_indices = column_indices + row*elements_per_row;
+  for (; row < size; row += get_global_size(0))
+  {
+    cur_row_elements = elements + row*elements_per_row;
+    cur_row_column_indices = column_indices + row*elements_per_row;
+
+    float dot_prod = 0.0f;
+    for (unsigned int i = 0; i < row_element_count[row]; ++i)
+    {
+      float4 tmp0;
+      float4 tmp1 = cur_row_elements[i];
+      uint4 ind0 = cur_row_column_indices[i];
+
+      tmp0.x = vector[ind0.x];
+      tmp0.y = vector[ind0.y];
+      tmp0.z = vector[ind0.z];
+      tmp0.w = vector[ind0.w];
+      
+      dot_prod += dot(tmp0, tmp1);
+    }
+    result[row] = dot_prod;
+  }
+};
+
+__kernel void float_packed_sparse_matrix_vector_mul_align8(
+          unsigned int elements_per_row,
+          __global const unsigned int * row_element_count,
+          __global const uint8 * column_indices, 
+          __global const float8 * elements,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int size)
+{ 
+  unsigned int row = get_global_id(0);
+  __global const float8 * cur_row_elements = elements + row*elements_per_row/8;
+  __global const uint8 * cur_row_column_indices = column_indices + row*elements_per_row/8;
+  for (; row < size; row += get_global_size(0))
+  {
+    cur_row_elements = elements + row*elements_per_row/8;
+    cur_row_column_indices = column_indices + row*elements_per_row/8;
+
+    float dot_prod = 0.0f;
+    for (unsigned int i = 0; i < row_element_count[row]/8; ++i)
+    {
+      float8 tmp0;
+      float8 tmp1 = cur_row_elements[i];
+      uint8 ind0 = cur_row_column_indices[i];
+
+      tmp0.s0 = vector[ind0.s0];
+      tmp0.s1 = vector[ind0.s1];
+      tmp0.s2 = vector[ind0.s2];
+      tmp0.s3 = vector[ind0.s3];
+      tmp0.s4 = vector[ind0.s4];
+      tmp0.s5 = vector[ind0.s5];
+      tmp0.s6 = vector[ind0.s6];
+      tmp0.s7 = vector[ind0.s7];
+
+      dot_prod += dot(tmp0.lo, tmp1.lo);
+      dot_prod += dot(tmp0.hi, tmp1.hi);
+
+      /*float4 tmp0;
+      float4 tmp1 = cur_row_elements[i];
+      float4 tmp2;
+      float4 tmp3 = cur_row_elements[i+1];
+      uint4 ind0 = cur_row_column_indices[i];
+      uint4 ind2 = cur_row_column_indices[i+1];
+
+      tmp0.x = vector[ind0.x];
+      tmp0.y = vector[ind0.y];
+      tmp0.z = vector[ind0.z];
+      tmp0.w = vector[ind0.w];
+
+      tmp2.x = vector[ind2.x];
+      tmp2.y = vector[ind2.y];
+      tmp2.z = vector[ind2.z];
+      tmp2.w = vector[ind2.w];
+      
+      dot_prod += dot(tmp0, tmp1);
+      dot_prod += dot(tmp2, tmp3);*/
+    }
+    result[row] = dot_prod;
+  }
+};
+//
+__kernel void float_compressed_mat_vec_mul_align1(
+          __global const unsigned int * row_indices,
+          __global const unsigned int * column_indices, 
+          __global const float * elements,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int size) 
+{ 
+  for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0))
+  {
+    float dot_prod = 0.0f;
+    for (unsigned int i = row_indices[row]; i < row_indices[row+1]; ++i)
+      dot_prod += elements[i] * vector[column_indices[i]];
+    result[row] = dot_prod;
+  }
+};
+
+
+
+//segmented parallel reduction. At present restricted to up to 128 threads
+void helper_float_segmented_parallel_reduction( unsigned int row, float val, __local unsigned int * shared_rows, __local float * inter_results )
+{
+  barrier(CLK_LOCAL_MEM_FENCE);
+  shared_rows[get_global_id(0)] = row;
+  inter_results[get_global_id(0)] = val;
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >=  1 && row == shared_rows[get_global_id(0) -  1] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) -  1]; } 
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >=  2 && row == shared_rows[get_global_id(0) -  2] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) -  2]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >=  4 && row == shared_rows[get_global_id(0) -  4] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) -  4]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >=  8 && row == shared_rows[get_global_id(0) -  8] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) -  8]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >= 16 && row == shared_rows[get_global_id(0) - 16] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) - 16]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >= 32 && row == shared_rows[get_global_id(0) - 32] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) - 32]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if( get_global_id(0) >= 64 && row == shared_rows[get_global_id(0) - 64] ) { inter_results[get_global_id(0)] += inter_results[get_global_id(0) - 64]; }
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+};
+
+
+__kernel void float_coord_mat_vec_mul_align1(
+          __global const uint2 * coords, //(row_index, column_index)
+          __global const float * elements,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int size,
+          __local unsigned int * shared_rows,
+          __local float * inter_results)
+{ 
+  uint2 tmp;
+  float val;
+  const uint last_index = get_global_size(0) - 1;
+  shared_rows[last_index] = 1;  //will prevent if-trigger in first loop run
+  inter_results[last_index] = 0.0f;
+  
+  for (unsigned int index = get_global_id(0); index < size; index += get_global_size(0))
+  {
+    tmp = coords[index];
+    val = elements[index] * vector[tmp.y];
+    
+    if (get_global_id(0) == 0)
+    {
+      //check for carry from previous loop run:
+      if (tmp.x == shared_rows[last_index])
+        val += inter_results[last_index];
+      else
+        result[shared_rows[last_index]] += inter_results[last_index];
+    }
+
+    helper_float_segmented_parallel_reduction(tmp.x, val, shared_rows, inter_results);
+    
+    if (get_global_id(0) != last_index && 
+         shared_rows[get_global_id(0)] != shared_rows[get_global_id(0) + 1])
+    {
+      result[tmp.x] += inter_results[get_global_id(0)];
+    }
+  } //for
+  
+  barrier(CLK_GLOBAL_MEM_FENCE);
+  
+  if (get_global_id(0) == last_index)
+  {
+    result[shared_rows[get_global_id(0)]] += inter_results[get_global_id(0)];
+  }
+};
+
+//
+//__kernel void float_sparse_matrix_vector_packed_mul(
+//          __global const unsigned int * row_indices,
+//          __global const unsigned int * column_indices, 
+//          __global const float * elements,
+//          __global const float * vector,  
+//          __global float * result,
+//          unsigned int size) 
+//{ 
+//  __global const float4 * vector_f4 = elements;
+//  for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0))
+//  {
+//    float dot_prod = 0.0f;
+//    unsigned int start = row_indices[row];
+//    unsigned int end = row_indices[row+1];
+//    
+//    for (unsigned int i = start/4; i < end/4; i+=2)
+//    {
+//      float4 tmp0;
+//      float4 tmp1 = vector_f4[i];
+//      float4 tmp2;
+//      float4 tmp3 = vector_f4[i+1];
+//      
+//      tmp0.x = vector[column_indices[8*i+0]];
+//      tmp0.y = vector[column_indices[8*i+1]];
+//      tmp0.z = vector[column_indices[8*i+2]];
+//      tmp0.w = vector[column_indices[8*i+3]];
+//      
+//      tmp2.x = vector[column_indices[8*i+4]];
+//      tmp2.y = vector[column_indices[8*i+5]];
+//      tmp2.z = vector[column_indices[8*i+6]];
+//      tmp2.w = vector[column_indices[8*i+7]];
+//      
+//      dot_prod += dot(tmp0, tmp1);
+//      dot_prod += dot(tmp2, tmp3);
+//    }
+//    
+//    result[row] = dot_prod;
+//  }
+//};
+//
+//float float_vector_inner_prod_impl(
+//          __global const float * vec1,
+//          __global const float * vec2,
+//          unsigned int size,
+//          __local float * tmp_buffer)
+//{
+//  float tmp = 0;
+//  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))
+//    tmp += vec1[i]*vec2[i];
+//  tmp_buffer[get_global_id(0)] = tmp;
+//  
+//  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2)
+//  {
+//    barrier(CLK_LOCAL_MEM_FENCE);
+//    if (get_global_id(0) < stride)
+//      tmp_buffer[get_global_id(0)] += tmp_buffer[get_global_id(0)+stride];
+//  }
+//  
+//  return tmp_buffer[0];
+//}
+
+
+////// solver kernels for upper triangular systems
+
+__kernel void float_upper_triangular_substitute_inplace(
+          __global const float * matrix,
+          __global float * vector,
+          unsigned int row_length,
+          unsigned int size)
+{
+  float temp;
+  for (int row = size-1; row > -1; --row)
+  {
+    if (get_global_id(0) == 0)
+      vector[row] /= matrix[row*row_length+row];
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    temp = vector[row];
+    //eliminate column with index 'row' in parallel:
+    for  (int row_elim = get_global_id(0); row_elim < row; row_elim += get_global_size(0))
+      vector[row_elim] -= temp * matrix[row_elim*row_length+row];
+  }
+  
+};
+
+//transposed lower triangular matrix
+__kernel void float_trans_upper_triangular_substitute_inplace(
+          __global const float * matrix,
+          __global float * vector,
+          unsigned int row_length,
+          unsigned int size)
+{
+  float temp;
+  for (int row = size-1; row > -1; --row)
+  {
+    if (get_global_id(0) == 0)
+      vector[row] /= matrix[row+row*row_length];
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    temp = vector[row];
+
+    for  (int row_elim = get_global_id(0); row_elim < row; row_elim += get_global_size(0))
+      vector[row_elim] -= temp * matrix[row*row_length+row_elim];
+  }
+};
+
+
+////// solver kernels for lower triangular systems /////////////
+
+__kernel void float_lower_triangular_substitute_inplace(
+          __global const float * matrix,
+          __global float * vector,
+          unsigned int row_length,
+          unsigned int size)
+{
+  float temp;
+  for (int row = 0; row < size; ++row)
+  {
+    if (get_global_id(0) == 0)
+      vector[row] /= matrix[row+row*row_length];
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    temp = vector[row];
+
+    for  (int row_elim = row + get_global_id(0) + 1; row_elim < size; row_elim += get_global_size(0))
+      vector[row_elim] -= temp * matrix[row_elim*row_length+row];
+  }
+};
+
+//transposed upper triangular matrix
+__kernel void float_trans_lower_triangular_substitute_inplace(
+          __global const float * matrix,
+          __global float * vector,
+          unsigned int row_length,
+          unsigned int size)
+{
+  float temp;
+  for (int row = 0; row < size; ++row)
+  {
+    if (get_global_id(0) == 0)
+      vector[row] /= matrix[row+row*row_length];
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    temp = vector[row];
+
+    for  (int row_elim = row + get_global_id(0) + 1; row_elim < size; row_elim += get_global_size(0))
+      vector[row_elim] -= temp * matrix[row*row_length+row_elim];
+  }
+};
+
+
+// __kernel void float_trans_matvec_mul_align1(
+//           __global const float * matrix, //matrix is not transposed in memory!
+//           __global const float * vector,  
+//           __global float * result,
+//           unsigned int row_length,
+//           unsigned int size) 
+// { 
+//   for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0))
+//   {
+//     float dot_prod = 0.0f;
+//     for (unsigned int col = 0; col < row_length; ++col)
+//       dot_prod += matrix[row + col*size] * vector[col];
+//     result[row] = dot_prod;
+//   }
+// };
+
+
+__kernel void float_trans_matrix_vector_mul_align1(
+          __global const float * matrix,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int matrix_row_length, //keep transpose operation in mind!
+          unsigned int vector_length, //keep transpose operation in mind!
+          unsigned int result_length) 
+{ 
+  for (unsigned int row = get_global_id(0); row < result_length; row += get_global_size(0))
+  {
+    float dot_prod2 = 0.0f;
+    for (unsigned int col = 0; col < vector_length; ++col)
+      dot_prod2 += matrix[row + col*matrix_row_length] * vector[col];
+    result[row] = dot_prod2;
+  }
+};
+
+
+__kernel void float_matrix_vector_mul_align1(
+          __global const float * matrix,
+          __global const float * vector,  
+          __global float * result,
+          unsigned int matrix_row_length, //keep transpose operation in mind!
+          unsigned int vector_length,
+          unsigned int result_length) 
+{ 
+  for (unsigned int row = get_global_id(0); row < result_length; row += get_global_size(0))
+  {
+    float dot_prod = 0.0f;
+    for (unsigned int col = 0; col < vector_length; ++col)
+      dot_prod += matrix[row*matrix_row_length+col] * vector[col];
+    result[row] = dot_prod;
+  }
+};
+
+
+
+
+//perform a rank-1 update of the matrix, i.e. A += x * x^T
+__kernel void float_rank_1_update(
+          __global float * matrix,
+          __global const float * vector1,  
+          __global const float * vector2,  
+          unsigned int matrix_row_length,
+          unsigned int row_length,
+          unsigned int col_length) 
+{ 
+  float tmp;
+  unsigned int offset;
+
+  for (unsigned int row = get_global_id(0); row < row_length; row += get_global_size(0))
+  {
+    tmp = vector1[row];
+    offset = row*matrix_row_length;
+    for (unsigned int col = 0; col < col_length; ++col)
+      matrix[offset+col] += tmp * vector2[col];
+  }
+};
+
+__kernel void float_scaled_rank_1_update(
+          __global float * matrix,
+          float val,
+          __global const float * vector1,  
+          __global const float * vector2,  
+          unsigned int matrix_row_length,
+          unsigned int row_length,
+          unsigned int col_length) 
+{ 
+  float tmp;
+  unsigned int offset;
+
+  for (unsigned int row = get_global_id(0); row < row_length; row += get_global_size(0))
+  {
+    tmp = val * vector1[row];
+    offset = row*matrix_row_length;
+    for (unsigned int col = 0; col < col_length; ++col)
+      matrix[offset+col] += tmp * vector2[col];
+  }
+};
+
+
+
+//lu factorization of a matrix without pivoting:
+
+
+__kernel void float_matrix_lu_factorize(
+          __global float * matrix,
+          unsigned int matrix_row_length,
+          unsigned int size) 
+{ 
+  float temp;
+  unsigned rowi;
+  unsigned rowk;
+  for (unsigned int i=1; i<size; ++i)
+  {
+    rowi = i * matrix_row_length;
+    for (unsigned int k=0; k<i; ++k)
+    {
+      rowk = k * matrix_row_length;
+      if (get_global_id(0) == 0)
+        matrix[rowi + k] /= matrix[rowk + k];
+
+      barrier(CLK_GLOBAL_MEM_FENCE);
+      temp = matrix[rowi + k];
+      
+      //parallel subtraction:
+      for (unsigned int j=k+1 + get_global_id(0); j<size; j += get_global_size(0))
+        matrix[rowi + j] -= temp * matrix[rowk + j];
+    }
+  }
+} 
+
+
+/*
+__kernel void float_matrix_lu_factorize(
+          __global float * matrix,
+          __local float * buffer,                              
+          unsigned int matrix_row_length,
+          unsigned int size) 
+{ 
+  float temp;
+  unsigned rowi;
+  unsigned rowk;
+  for (unsigned int i=1; i<size; ++i)
+  {
+    rowi = i * matrix_row_length;
+    
+    //first step: obtain a_ik from a triangular solution step:
+    for (unsigned int k=0; k<i; ++k)
+    {
+      rowk = k * matrix_row_length;
+      if (get_global_id(0) == 0)
+        matrix[rowi + k] = matrix[rowi + k] / matrix[rowk + k];
+      barrier(CLK_GLOBAL_MEM_FENCE);
+      
+      temp = matrix[rowi + k];
+      
+      for  (unsigned int j = k + 1 + get_global_id(0); j < i; j += get_global_size(0))
+        matrix[rowi + j] -= temp * matrix[rowk + j];
+    }
+
+
+    //second step: subtract block A(k,j) with k=0..i-1 and j=i+1...size-1
+    if (i < get_global_size(0))
+    {
+      //condense column down to matrix(i,j):
+      for (unsigned int j=i+get_global_id(0); j<size; j += get_global_size(0))
+      {
+        temp = 0.0;      
+        //subtraction of A(j, 0:i-1) from A(j,i):
+        for (unsigned int k=0; k<i; ++k)
+          temp += matrix[rowi + k] * matrix[k * matrix_row_length + j];
+        matrix[rowi + j] -= temp;
+      } 
+    }
+    else
+    {
+      //parallel columns:
+      for (unsigned int j=i; j<size; ++j)
+      {
+        temp = 0.0;
+        for (unsigned int k=0; k<= i / get_global_size(0); ++k)
+        {
+          rowk = k*get_global_size(0) + get_global_id(0); //reused as row index k in matrix
+          if (rowk < i)
+            buffer[get_global_id(0)] = matrix[rowi + rowk] * matrix[rowk * matrix_row_length + j];
+          else
+            buffer[get_global_id(0)] = 0.0;
+          helper_float_parallel_reduction(buffer);
+          if (get_global_id(0) == 0)
+            temp += buffer[0];
+        }
+        
+        if (get_global_id(0) == 0)
+          matrix[rowi + j] -= temp;
+      } //for j
+    } //if 
+    
+    barrier(CLK_GLOBAL_MEM_FENCE);
+  }
+} */
+
+
+
+//solve LUx = y
+__kernel void float_matrix_lu_substitute(
+          __global float * matrix,
+          __global float * vector,
+          unsigned int matrix_row_length,
+          unsigned int size) 
+{ 
+  float temp;
+  
+  //forward substitution Lz = y
+  for (int row = 0; row < size; ++row)
+  {
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    temp = vector[row];
+
+    for  (int row_elim = row + get_global_id(0) + 1; row_elim < size; row_elim += get_global_size(0))
+      vector[row_elim] -= temp * matrix[row_elim*matrix_row_length+row];
+  }
+
+
+  //backward substitution: Ux = z
+  float_upper_triangular_substitute_inplace(matrix, vector, matrix_row_length, size);
+  
+}
+
+ 
+// compute y in Ly = z for incomplete LU factorizations of a sparse matrix in compressed format
+__kernel void float_compressed_ilu_forward_substitute(
+          __global const unsigned int * row_indices,
+          __global const unsigned int * column_indices, 
+          __global const float * elements,
+          __local  int * buffer,                              
+          __local  float * vec_entries,   //a memory block from vector
+          __global float * vector,
+          unsigned int size) 
+{
+  int waiting_for; //block index that must be finished before the current thread can start
+  unsigned int waiting_for_index;
+  int block_offset;
+  unsigned int col;
+  unsigned int row;
+  unsigned int row_index_end;
+  
+  //forward substitution: one thread per row in blocks of get_global_size(0)
+  for (unsigned int block_num = 0; block_num <= size / get_global_size(0); ++block_num)
+  {
+    block_offset = block_num * get_global_size(0);
+    row = block_offset + get_global_id(0);
+    buffer[get_global_id(0)] = 0; //set flag to 'undone'
+    waiting_for = -1;
+
+    if (row < size)
+    {
+      vec_entries[get_global_id(0)] = vector[row];
+      waiting_for_index = row_indices[row];
+      row_index_end = row_indices[row+1];
+    }
+
+    //try to eliminate all lines in the block. 
+    //in worst case scenarios, in each step only one line can be substituted, thus loop
+    for (unsigned int k = 0; k<get_global_size(0); ++k)
+    {
+      //barrier(CLK_LOCAL_MEM_FENCE);
+      if (row < size) //valid index?
+      {
+        if (waiting_for >= 0)
+        {
+          if (buffer[waiting_for] == 1)
+            waiting_for = -1;
+        }
+        
+        if (waiting_for == -1) //substitution not yet done, check whether possible
+        {
+          //check whether reduction is possible:
+          for (unsigned int j = waiting_for_index; j < row_index_end; ++j)
+          {
+            col = column_indices[j];
+            if (col < block_offset)
+              vec_entries[get_global_id(0)] -= elements[j] * vector[col];
+            else if (col < row)  //index is from current block
+            {
+              if (buffer[col - block_offset] == 0) //entry is not yet calculated
+              {
+                waiting_for = col - block_offset;
+                waiting_for_index = j;
+                break;
+              }
+              else  //updated entry is available in shared memory:
+                vec_entries[get_global_id(0)] -= elements[j] * vec_entries[col - block_offset];
+            }
+            else  //not a relevant entry
+              continue;
+          }
+          
+          if (waiting_for == -1)  //this row is done
+          {
+            buffer[get_global_id(0)] = 1;
+            waiting_for = -2; //magic number: thread is finished
+          }
+        } 
+      } //row < size
+      else
+        buffer[get_global_id(0)] = 1; //work done (because there is no work to be done at all...)
+
+      ///////// check whether all threads are done. If yes, exit loop /////////////
+      /*
+      if (get_global_id(0) == 0)
+        buffer[get_global_size(0) + 1] = 1;
+      barrier(CLK_LOCAL_MEM_FENCE);
+      if (buffer[get_global_id(0)] == 0)
+        buffer[get_global_size(0) + 1] = 0;
+      barrier(CLK_LOCAL_MEM_FENCE);
+      
+      if (buffer[get_global_size(0) + 1] > 0)  //all threads break this loop simultaneously
+        break; */
+      
+    } //for k
+    
+    //write to vector:
+    if (row < size)
+      vector[row] = vec_entries[get_global_id(0)];
+    
+    barrier(CLK_GLOBAL_MEM_FENCE);
+  } //for block_num
+}
+
+// compute x in Ux = y for incomplete LU factorizations of a sparse matrix in compressed format
+__kernel void float_compressed_ilu_backward_substitute(
+          __global const unsigned int * row_indices,
+          __global const unsigned int * column_indices, 
+          __global const float * elements,
+          __local  int * buffer,                              
+          __global float * vector,
+          unsigned int size) 
+{
+  int waiting_for; //block index that must be finished before the current thread can start
+  int block_offset;
+  unsigned int col;
+  unsigned int row;
+  float row_entry;
+  
+  //forward substitution: one thread per row in blocks of get_global_size(0)
+  for (int block_num = size / get_global_size(0); block_num > -1; --block_num)
+  {
+    block_offset = block_num * get_global_size(0);
+    row = block_offset + get_global_id(0);
+    buffer[get_global_id(0)] = 0; //set flag to 'undone'
+    waiting_for = -1;
+    
+    if (row < size)
+      row_entry = vector[row];
+
+    //try to eliminate all lines in the block. 
+    //in worst case scenarios, in each step only one line can be substituted, thus loop
+    for (unsigned int k = 0; k<get_global_size(0); ++k)
+    {
+      barrier(CLK_LOCAL_MEM_FENCE);
+      if (row < size) //valid index?
+      {
+        if (waiting_for >= 0)
+        {
+          if (buffer[waiting_for] == 1)
+            waiting_for = -1;
+        }
+        
+        if (waiting_for == -1) //substitution not yet done, check whether possible
+        {
+          //check whether reduction is possible:
+          for (unsigned int j = row_indices[row] + 1; j < row_indices[row+1]; ++j)
+          {
+            col = column_indices[j];
+            if (col < block_offset + get_global_size(0))  //is index from current block?
+            {
+              if (buffer[col - block_offset] == 0) //entry is not yet calculated
+              {
+                waiting_for = col - block_offset;
+                break;
+              }
+            }
+          }
+        }
+        
+        //carry out reduction if possible:
+        if (waiting_for == -1)
+        {
+          for (unsigned int j = row_indices[row] + 1; j < row_indices[row+1]; ++j)
+            row_entry -= elements[j] * vector[column_indices[j]];
+          vector[row] = row_entry / elements[row_indices[row]];
+        
+          //this row is done
+          buffer[get_global_id(0)] = 1;
+          waiting_for = -2; //magic number: thread is finished
+        } //if 
+      } //row < size
+      else
+        buffer[get_global_id(0)] = 1; //work done (because there is no work to be done at all...)
+      
+      ///////// check whether all threads are done. If yes, exit loop /////////////
+      
+      if (get_global_id(0) == 0)
+        buffer[get_global_size(0) + 1] = 1;
+      barrier(CLK_LOCAL_MEM_FENCE);
+      if (buffer[get_global_id(0)] == 0)
+        buffer[get_global_size(0) + 1] = 0;
+      barrier(CLK_LOCAL_MEM_FENCE);
+      
+      if (buffer[get_global_size(0) + 1] > 0)  //all threads break the loop simultaneously
+        break;
+
+      barrier(CLK_GLOBAL_MEM_FENCE);
+    } //for k
+  } //for block_num
+}
+

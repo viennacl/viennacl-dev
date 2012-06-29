@@ -1,0 +1,99 @@
+%\documentclass[11pt]{article}
+\documentclass[11pt]{report}
+
+\usepackage{amsmath,amssymb}
+\usepackage{newcent}
+\usepackage{pstricks} 
+\usepackage{fancyhdr}
+\usepackage[dvips]{graphicx}
+\usepackage{makeidx}
+\usepackage{psfrag}
+\usepackage{alltt}
+\usepackage{index}
+\usepackage{fancyvrb}
+\usepackage{pst-blur}
+\usepackage{pst-grad}
+\usepackage{epsfig}
+%\usepackage{subfig}
+\usepackage{subfigure}
+
+
+\usepackage[colorlinks=true,linktocpage=true]{hyperref}
+
+%% Listings package START
+\usepackage{color}
+\usepackage{listings}
+
+\definecolor{darkblue}{rgb}{0,0,.6}
+\definecolor{darkred}{rgb}{.6,0,0}
+\definecolor{darkgreen}{rgb}{0,.6,0}
+\definecolor{red}{rgb}{.98,0,0}
+\definecolor{lightgrey}{rgb}{0.98,0.98,0.98}
+
+
+\lstloadlanguages{C++}
+\lstset{%
+  language=C++,
+  basicstyle=\small\ttfamily,
+  commentstyle=\itshape\color{darkgreen},
+  keywordstyle=\bfseries\color{darkblue},
+  stringstyle=\color{darkred},
+  showspaces=false,
+  showtabs=false,
+  columns=fixed,
+  backgroundcolor=\color{lightgrey},
+  numbers=none,
+  frame=single,
+  numberstyle=\tiny,
+  breaklines=true,
+  showstringspaces=false,
+  xleftmargin=0.1cm
+}%
+%% Listings package STOP
+
+%Keywords and Setup
+\newcommand{\CMake} {\texttt{CMake}}
+\newcommand{\OpenMP} {\texttt{OpenMP}}
+\newcommand{\OpenCL} {\texttt{OpenCL}}
+\newcommand{\ViennaCL} {\texttt{ViennaCL}}
+\newcommand{\ViennaCLversion} {\texttt{ViennaCL 1.0.2}}
+\newcommand{\ViennaCLminorversion} {\texttt{ViennaCL 1.0.x}}
+\newcommand{\Boost} {\texttt{Boost}}
+\newcommand{\ublas} {\texttt{ublas}}
+\newcommand{\GCC} {\texttt{GCC}}
+\newcommand{\MATLAB} {\texttt{MATLAB}}
+
+\include{keywords} % [KR] This is a mess, we should delete unused Minimos-stuff
+\include{setup}
+
+\begin{document}
+\pagenumbering{roman}
+
+\include{viennacl_cover}
+\include{viennacl_contributors}
+
+\clearpage
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}} 
+\tableofcontents
+%\label{s:ipl:content} \index{IPL!content}
+
+\clearpage
+\pagenumbering{arabic}
+\include{viennacl_introduction}
+\include{viennacl_installation}
+\include{viennacl_benchmarks}
+\include{viennacl_changelogs}
+\include{viennacl_license}
+
+%\section{Bibliography}
+\bibliographystyle{IEEEtran_v1.13}
+\addcontentsline{toc}{chapter}{Bibliography} 
+\bibliography{viennacl}
+
+%\cleardoublepage
+%\phantomsection
+%\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\end{document}

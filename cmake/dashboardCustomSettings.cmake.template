@@ -1,0 +1,22 @@
+# Template for the dashboardCustomSettings.cmake file
+
+# Name of the testing site (usually the computer name)
+#set(CTEST_SITE "$ENV{HOST}")
+
+# Where the build tree should be located
+#set(CTEST_BINARY_DIRECTORY "${CTEST_SOURCE_DIRECTORY}/dashboard-build")
+
+# The CMake-generator to be used
+#set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+
+# The build configuration
+#set(CTEST_CONFIGURATION_TYPE Release)
+
+# The build command to use, only override if the default is no good
+#set(CTEST_BUILD_COMMAND "/usr/bin/make -i -j3")
+
+# The path to the ctest executable
+#set(CTEST_COMMAND "/usr/bin/ctest")
+
+# The command used to update the sources
+#set(CTEST_UPDATE_COMMAND "/usr/bin/git")

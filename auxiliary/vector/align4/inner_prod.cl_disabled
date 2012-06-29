@@ -1,0 +1,40 @@
+
+//helper:
+void helper_inner4_float_parallel_reduction( __local float * tmp_buffer )
+{
+  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2)
+  {
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if (get_global_id(0) < stride)
+      tmp_buffer[get_global_id(0)] += tmp_buffer[get_global_id(0)+stride];
+  }
+}
+
+//////// inner products:
+float float_vector4_inner_prod_impl(
+          __global const float4 * vec1,
+          __global const float4 * vec2,
+          unsigned int size,
+          __local float * tmp_buffer)
+{
+  float tmp = 0;
+  for (unsigned int i = get_global_id(0); i < size/4; i += get_global_size(0))
+    tmp += dot(vec1[i],vec2[i]);
+  tmp_buffer[get_global_id(0)] = tmp;
+  
+  helper_inner4_float_parallel_reduction(tmp_buffer);
+  
+  return tmp_buffer[0];
+}
+
+__kernel void inner_prod(
+          __global const float4 * vec1,
+          __global const float4 * vec2,
+          unsigned int size,
+          __local float * tmp_buffer,
+          global float * result)
+{
+  float tmp = float_vector4_inner_prod_impl(vec1, vec2, size, tmp_buffer);
+  if (get_global_id(0) == 0) *result = tmp;
+}
+

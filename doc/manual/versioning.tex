@@ -1,0 +1,35 @@
+
+\chapter*{Versioning}  \addcontentsline{toc}{chapter}{Versioning}
+
+Each release of {\ViennaCL} carries a three-fold version number, given by\\
+\begin{center}
+ \texttt{ViennaCL X.Y.Z} . \\
+\end{center}
+For users migrating from an older release of {\ViennaCL} to a new one, the
+following guidelines apply:
+\begin{itemize}
+ \item \texttt{X} is the \emph{major version number}, starting with \texttt{1}.
+A change in the major version number is not necessarily API-compatible with any
+versions of ViennaCL carrying a different major version number. In particular,
+end users of {\ViennaCL} have to expect considerable code changes when changing
+between different major versions of {\ViennaCL}.
+
+ \item \texttt{Y} denotes the \emph{minor version number}, restarting with zero
+whenever the major version number changes. The minor version number is
+incremented whenever significant functionality is added to {\ViennaCL}.
+The API of an older release of {\ViennaCL} with smaller minor version number
+(but same major version number) is \emph{essentially} compatible to the new
+version, hence end users of {\ViennaCL} usually do not have to alter their
+application code, unless they have used a certain functionality that was not
+intended to be used and removed in the new version.
+
+ \item \texttt{Z} is the \emph{revision number}. If either the major or the
+minor version number changes, the revision number is reset to zero. Releases of
+{\ViennaCL}, that only differ in their revision number, are API compatible.
+Typically, the revision number is increased whenever bugfixes are applied,
+compute kernels are improved or some extra, not significant functionality is
+added.
+\end{itemize}
+
+\TIP{Always try to use the latest version of {\ViennaCL} before submitting bug
+reports!}

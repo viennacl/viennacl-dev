@@ -1,0 +1,94 @@
+
+\chapter*{Introduction}   \addcontentsline{toc}{chapter}{Introduction}
+
+The Vienna Computing Library (\ViennaCL) is a scientific computing
+library written in C++. It allows simple, high-level access
+to the vast computing resources available on parallel architectures such as
+GPUs and multi-core CPUs by using {\OpenCL}. The primary focus is on common linear algebra
+operations (BLAS levels 1, 2 and 3) and the solution of large sparse systems of equations by means of iterative
+methods. In {\ViennaCLminorversion}, the following iterative solvers are
+implemented (confer for example to the book of Y.~Saad \cite{saad-iterative-solution}):
+\begin{itemize}
+ \item Conjugate Gradient (CG)
+ \item Stabilized BiConjugate Gradient (BiCGStab)
+ \item Generalized Minimum Residual (GMRES)
+\end{itemize}
+%An optional ILU preconditioner can be used, which is in {\ViennaCLversion}
+%precomputed and applied on a single CPU core and may thus not lead to overall
+%performance gains over a purely CPU based implementation.
+%Moreover, a Jacobi and a row-scaling preconditioner are available, which can be executed directly in parallel on the {\OpenCL} device.
+A number of preconditioners is provided with {\ViennaCLversion} in order to improve convergence of these solvers, cf.~Chap.~\ref{chap:algorithms}.
+
+The solvers and preconditioners can also be used with different
+libraries due to their generic implementation. At present, it is possible to
+use the solvers and preconditioners directly with types from the {\ublas} library, which is part of 
+{\Boost} \cite{boost}. The iterative solvers can directly be used with Eigen \cite{eigen} and MTL 4 \cite{mtl4}.
+
+Under the hood, {\ViennaCL} uses {\OpenCL} \cite{khronoscl} for accessing and
+executing code on compute devices. Therefore, {\ViennaCL} is not tailored 
+to products from a particular vendor and can be used on many different
+platforms. At present, {\ViennaCL} is known to work on modern GPUs from {NVIDIA}
+and AMD (see Tab.~\ref{tab:double-precision-GPUs}) as well as on CPUs 
+using either the AMD Accelerated Parallel Processing SDK (formerly ATI Stream SDK) or the Intel OpenCL SDK.
+
+\NOTE{Double precision arithmetic on GPUs is only possible if it is provided by the GPU. There is no double precision emulation in {\ViennaCL}.}
+
+\NOTE{Double precision arithmetic using the ATI Stream SDK or AMD APP SDK may not be fully
+OpenCL-certified. See Sec.~\ref{sec:opencl-on-ati} for details.}
+
+\begin{table}[tb]
+\begin{center}
+\begin{tabular}{l|c|c}
+Compute Device & float & double \\
+\hline
+\NVIDIA Geforce 86XX GT/GSO   & ok & - \\
+\NVIDIA Geforce 88XX GTX/GTS  & ok & - \\
+\NVIDIA Geforce 96XX GT/GSO   & ok & - \\
+\NVIDIA Geforce 98XX GTX/GTS  & ok & - \\
+\NVIDIA GT 230     & ok & - \\
+\NVIDIA GT(S) 240  & ok & - \\
+\NVIDIA GTS 250    & ok & - \\
+\NVIDIA GTX 260    & ok & ok \\
+\NVIDIA GTX 275    & ok & ok \\
+\NVIDIA GTX 280    & ok & ok \\
+\NVIDIA GTX 285    & ok & ok \\
+\NVIDIA GTX 465    & ok & ok \\
+\NVIDIA GTX 470    & ok & ok \\
+\NVIDIA GTX 480    & ok & ok \\
+\NVIDIA GTX 560    & ok & ok \\
+\NVIDIA GTX 570    & ok & ok \\
+\NVIDIA GTX 580    & ok & ok \\
+\NVIDIA GTX 590    & ok & ok \\
+\NVIDIA Quadro FX 46XX & ok & - \\
+\NVIDIA Quadro FX 48XX & ok & ok \\
+\NVIDIA Quadro FX 56XX & ok & - \\
+\NVIDIA Quadro FX 58XX & ok & ok \\
+\NVIDIA Tesla 870    & ok & - \\
+\NVIDIA Tesla C10XX  & ok & ok \\
+\NVIDIA Tesla C20XX  & ok & ok \\
+\hline
+ATI Radeon HD 45XX   & ok & - \\
+ATI Radeon HD 46XX   & ok & - \\
+ATI Radeon HD 47XX   & ok & - \\
+ATI Radeon HD 48XX   & ok & essentially ok \\
+ATI Radeon HD 54XX   & ok & - \\
+ATI Radeon HD 55XX   & ok & - \\
+ATI Radeon HD 56XX   & ok & - \\
+ATI Radeon HD 57XX   & ok & - \\
+ATI Radeon HD 58XX   & ok & essentially ok \\
+ATI Radeon HD 59XX   & ok & essentially ok \\
+ATI Radeon HD 68XX   & ok & - \\
+ATI Radeon HD 69XX   & ok & essentially ok \\
+ATI FireStream V92XX & ok & essentially ok \\
+ATI FirePro V78XX    & ok & essentially ok \\
+ATI FirePro V87XX    & ok & essentially ok \\
+ATI FirePro V88XX    & ok & essentially ok \\
+\end{tabular}
+\caption{Available arithmetics in {\ViennaCL} provided by selected GPUs. At the
+release of {\ViennaCLversion}, the Stream SDK (APP SDK) from AMD/ATI may not comply to
+the {\OpenCL} standard for double precision extensions, but we have not observed
+problems with the latest version of the SDK. Support for AMD devices is now
+per default enabled in {\ViennaCL}, see Sec.~\ref{sec:opencl-on-ati}.}
+\label{tab:double-precision-GPUs}
+\end{center}
+\end{table}

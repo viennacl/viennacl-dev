@@ -1,0 +1,86 @@
+// file automatically generated - do not edit!
+// matrix-matrix multiplication C = A * B
+// matrix layouts: C...row_major, A...row_major, B...col_major
+__kernel void prod_AA(
+          __global const float * A,
+          unsigned int A_rows,
+          unsigned int A_cols,
+          unsigned int A_internal_rows,
+          unsigned int A_internal_cols,
+          __global const float * B,  
+          unsigned int B_rows,
+          unsigned int B_cols,
+          unsigned int B_internal_rows,
+          unsigned int B_internal_cols,
+          __global float * C,
+          unsigned int C_rows,
+          unsigned int C_cols,
+          unsigned int C_internal_rows,
+          unsigned int C_internal_cols,
+          __local float * bufA,
+          __local float * bufB) 
+{ 
+  int block_size = 2 * get_local_size(0);
+  int aBegin = get_group_id(0) * block_size * A_internal_cols;
+  int bBegin = get_group_id(1) * block_size * B_internal_rows;
+  int block_num = A_cols / block_size;
+  if (block_num * block_size != A_cols)
+    ++block_num;
+    
+  float2 A1 = 1.0f;  
+  float2 A2 = 1.0f;  
+  float2 B1;  
+  float2 B2;
+    
+  float Csub11 = 0;
+  float Csub12 = 0;
+  float Csub21 = 0;
+  float Csub22 = 0;
+  
+  int aOffset1 =  2*get_local_id(0)      * A_internal_cols + 2*get_local_id(1);
+  int aOffset2 = (2*get_local_id(0) + 1) * A_internal_cols + 2*get_local_id(1);
+  int bOffset1 = 2*get_local_id(0) +  2*get_local_id(1)    * B_internal_rows;
+  int bOffset2 = 2*get_local_id(0) + (2*get_local_id(1)+1) * B_internal_rows;
+  
+  for (int block = 0;
+           block < block_num;
+           ++block)
+  {
+    bufA[(2*get_local_id(0))   * block_size + 2*get_local_id(1)]     = A[aBegin + aOffset1];
+    bufA[(2*get_local_id(0))   * block_size + 2*get_local_id(1) + 1] = A[aBegin + aOffset1 + 1];
+    bufA[(2*get_local_id(0)+1) * block_size + 2*get_local_id(1)]     = A[aBegin + aOffset2];
+    bufA[(2*get_local_id(0)+1) * block_size + 2*get_local_id(1) + 1] = A[aBegin + aOffset2 + 1];
+    
+    
+    bufB[(2*get_local_id(1))   * block_size + 2*get_local_id(0)]     = B[bBegin + bOffset1];
+    bufB[(2*get_local_id(1))   * block_size + 2*get_local_id(0) + 1] = B[bBegin + bOffset1 + 1];
+    bufB[(2*get_local_id(1)+1) * block_size + 2*get_local_id(0)]     = B[bBegin + bOffset2];
+    bufB[(2*get_local_id(1)+1) * block_size + 2*get_local_id(0) + 1] = B[bBegin + bOffset2 + 1];
+    
+    barrier(CLK_LOCAL_MEM_FENCE);
+    for (int k = 0; k < block_size; k+=2)
+    {
+      A1 = *( (__local float2 *)(bufA +  2*get_local_id(0)      * block_size + k) );
+      A2 = *( (__local float2 *)(bufA + (2*get_local_id(0) + 1) * block_size + k) );
+      B1 = *( (__local float2 *)(bufB +  2*get_local_id(1)      * block_size + k) );
+      B2 = *( (__local float2 *)(bufB + (2*get_local_id(1) + 1) * block_size + k) );
+      
+      Csub11 += A1.x * B1.x;
+      Csub11 += A1.y * B1.y; //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub12 += A1.x * B2.x; //dot(A1, B2); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub12 += A1.y * B2.y; //dot(A1, B2); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub21 += A2.x * B1.x; //dot(A2, B1); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub21 += A2.y * B1.y; //dot(A2, B1); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub22 += A2.x * B2.x; //dot(A2, B2); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+      Csub22 += A2.y * B2.y; //dot(A2, B2); //bufA[row_thread_id * block_size + k] * bufB[k * block_size + col_thread_id];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    aBegin += block_size;
+    bBegin += block_size;
+  }
+  
+  C[ get_global_id(0)      * C_internal_cols + get_global_id(1)]     = Csub11;
+  C[ get_global_id(0)      * C_internal_cols + get_global_id(1) + 1] = Csub12;
+  C[(get_global_id(0) + 1) * C_internal_cols + get_global_id(1)]     = Csub21;
+  C[(get_global_id(0) + 1) * C_internal_cols + get_global_id(1) + 1] = Csub22;
+}

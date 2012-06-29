@@ -1,0 +1,87 @@
+
+\chapter{Benchmark Results}
+We have compared the performance gain of {\ViennaCL} with standard CPU implementations using a single core. The code used for the benchmarks can be found in the folder \texttt{examples/benchmark/} within the source-release of {\ViennaCL}. Results are grouped by computational complexity and can be found in the subsequent sections. 
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+CPU & AMD Phenom II X4-965 \\
+RAM & 8 GB \\
+OS  & Funtoo Linux 64 bit \\
+\hline
+Kernel for AMD cards: & 2.6.33 \\
+AMD driver version: & 10.4 \\
+\hline
+Kernel for Nvidia cards: & 2.6.34 \\
+Nvidia driver version: & 195.36.24 \\
+\hline
+{\ViennaCL} version  & 1.0.0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\NOTE{Compute kernels are not fully optimized yet, results are likely to improve considerably in future releases of {\ViennaCL}}
+
+\TIP{Due to only partial support of double precision by GPUs from ATI at the time of these benchmarks, double precision arithmetics is not included, cf.~Tab.~\ref{tab:double-precision-GPUs}.}
+
+\NOTE{When benchmarking {\ViennaCL}, first a dummy call to the functionality of interest should be issued prior to taking timings. Otherwise, benchmark results include the just-in-time compilation, which is a constant independent of the data size.}
+
+\section{Vector Operations}
+Benchmarks for the addition of two vectors and the computation of inner products are shown in Tab.~\ref{tab:vectorbench}.
+
+\begin{table}[tb]
+\begin{center}
+\begin{tabular}{l|c|c|c|c}
+Compute Device & add, float & add, double & prod, float & prod, double\\
+\hline
+CPU             & 0.174 & 0.347 & 0.408 & 0.430 \\
+NVIDIA GTX 260  & 0.087 & 0.089 & 0.044 & 0.072\\
+NVIDIA GTX 470  & 0.042 & 0.133 & 0.050 & 0.053 \\
+ATI Radeon 5850 & 0.026 & -     & 0.105 &   -      \\
+\end{tabular}
+\caption{Execution times (seconds) for vector addition and inner products.}
+\label{tab:vectorbench}
+\end{center}
+\end{table}
+
+
+\section{Matrix-Vector Multiplication}
+We have compared execution times of the operation
+\begin{align}
+ \mathbf{y} = \mathbf{A} \mathbf{x} \ ,
+\end{align}
+where $\mathbf{A}$ is a sparse matrix (ten entries per column on average). The results in Tab.~\ref{tab:sparsebench} shows that by the use of {\ViennaCL} and a mid-range GPU, performance gains of up to one order of magnitude can be obtained.
+
+\begin{table}[tb]
+\begin{center}
+\begin{tabular}{l|c|c}
+Compute Device & float & double \\
+\hline
+CPU             & 0.0333 & 0.0352 \\
+NVIDIA GTX 260  & 0.0028 & 0.0043 \\
+NVIDIA GTX 470  & 0.0024 & 0.0041 \\
+ATI Radeon 5850 & 0.0032 & - \\
+\end{tabular}
+\caption{Execution times (seconds) for sparse matrix-vector multiplication using \texttt{compressed\_matrix}.}
+\label{tab:sparsebench}
+\end{center}
+\end{table}
+
+\section{Iterative Solver Performance}
+The solution of a system of linear equations is encountered in many simulators. It is often seen as a black-box: System matrix and right hand side vector in, solution out. Thus, this black-box process allows to easily exchange existing solvers on the CPU with a GPU variant provided by {\ViennaCL}. Tab.~\ref{tab:solverbench} shows that the performance gain of GPU implementations can be significant. For applications where most time is spent on the solution of the linear systems, the use of {\ViennaCL} can reduce the total execution time by about a factor of five.
+
+\begin{table}[tb]
+\begin{center}
+\begin{tabular}{l|c| c|c| c|c|}
+Compute Device & CG, float & CG, double & GMRES, float & GMRES, double \\
+\hline
+CPU             & 0.407 & 0.450 & 4.84 & 7.58 \\
+NVIDIA GTX 260  & 0.067 & 0.092 & 4.27 & 5.08 \\
+NVIDIA GTX 470  & 0.063 & 0.087 & 3.63 & 4.68 \\
+ATI Radeon 5850 & 0.233 & -     & 22.7 & -\\
+\end{tabular}
+\caption{Execution times (seconds) for ten iterations of CG and GMRES without preconditioner. Results for BiCGStab are similar to that of CG.}
+\label{tab:solverbench}
+\end{center}
+\end{table}
+

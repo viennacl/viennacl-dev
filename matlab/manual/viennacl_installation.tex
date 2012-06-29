@@ -1,0 +1,136 @@
+\chapter{Installation and Usage}
+%The good news at the beginning of this chapter is that 
+%{\ViennaCL} is a header-only library. Therefore, you do NOT have to build any static or shared
+%libraries, copy them to the correct place and set linker paths appropriately
+%In fact, all you have to do is copy the folder \lstinline|viennacl/| either to
+%the global system include path or directly into your project directory.
+
+This chapter shows how the {\MATLAB} interface for {\ViennaCL} is compiled and how it can be used. The necessary steps are outlined for several different platforms, but we could not check every possible combination of hardware, operating system and compiler. If you experience any trouble, please write to the maining list at \\
+\begin{center}
+\texttt{viennacl-support$@$lists.sourceforge.net} 
+\end{center}
+
+
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+\section{Dependencies}
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+\label{dependencies}
+
+\begin{itemize}
+ \item A {\MATLAB} version with MEX-interface (eg.~R2009a)
+ \item A recent C++ compiler (~{\GCC} \texttt{4.2.x} and higher as well as the \texttt{Visual C++} compiler in Visual Studio 2008 are known to work)
+ \item {\OpenCL}~\cite{khronoscl,nvidiacl} for accessing compute devices (GPUs);
+see Section~\ref{opencllibs} for details.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+\section{Get the {\OpenCL} Library}
+\label{opencllibs}
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+The development of {\OpenCL} applications based on graphics cards 
+requires a suitable driver and a corresponding library, e.g.~\texttt{libOpenCL.so} under Unix based systems.
+This section describes how this library can be acquired.
+
+\TIP{Note, that for Mac OS X systems there is no need to install an {\OpenCL} 
+capable driver and the corresponding library. 
+The {\OpenCL} library is already present if a suitable graphics 
+card is present. Using {\ViennaCL} on Mac OS X is discussed in Section~\ref{apple}.}				
+
+\subsection{NVIDIA cards}
+NVIDIA provides the {\OpenCL} library with the driver. Therefore, if a 
+NVIDIA driver is present on the system, the library is too. However, 
+not all of the released drivers contain the {\OpenCL} library. 
+A driver which is known to support {\OpenCL}, and hence providing the required
+library, is $195.36.24$. 
+
+\subsection{ATI cards}
+As of the release of {\ViennaCL}, ATI cards lack the ability of full 
+double support~\cite{atidouble}. Since the {\MATLAB} interface for {\ViennaCL} requires double precision support,
+it cannot be used unless full standard-compliant double precision support is made available from AMD/ATI.
+
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+\section{Building the {\MATLAB} Interface}
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+
+In the following a generic description is given, then some OS-specific details are explained.
+
+The first step is to configure {\MATLAB}. Type
+\begin{lstlisting}
+ mex -setup
+\end{lstlisting}
+and choose a suitable C++ compiler.
+
+\TIP{Make sure that the selected compiler supports C++, not just C.}
+
+Then change into the base directory of the {\MATLAB} interface for {\ViennaCL}. If the {\OpenCL} include and library files are installed system-wide, the commands
+\begin{lstlisting}
+ mex viennacl_cg.cpp       -I. -lOpenCL
+ mex viennacl_bicgstab.cpp -I. -lOpenCL
+ mex viennacl_gmres.cpp    -I. -lOpenCL
+\end{lstlisting}
+build the three solvers.
+
+\NOTE{On 64-bit systems, you may have to append the \texttt{-largeArrayDims} option, otherwise you might get a runtime error when calling the solvers.}
+
+\subsection{Linux}
+If you are using a new version of \GCC (4.3.x and above), you may get linker errors when calling any of the solvers. In that case, install version 4.2 of {\GCC} and change the compiler call in 
+\begin{center}\texttt{\${HOME}/.matlab/{{\MATLAB}VERSION}/mexopts.sh} \end{center}
+to e.g.~\texttt{g++-4.2}, where \texttt{{\MATLAB}VERSION} refers to you {\MATLAB} version, e.g.~\texttt{R2010a}.
+
+\TIP{On Ubuntu, you can directly install \GCC in version 4.2.x from the repository. The executeable is called \texttt{g++-4.2}.}
+
+\subsection{Mac OS X}
+\label{apple}
+The tools mentioned in Section \ref{dependencies} are available on 
+macintosh platforms too. 
+For the {\GCC} compiler the Xcode~\cite{xcode} package has to be installed.
+To install {\CMake} and {\Boost} external portation tools have to be used, 
+for example, Fink~\cite{fink}, DarwinPorts~\cite{darwinports} 
+or MacPorts~\cite{macports}. Such portation tools provide the 
+aforementioned packages, {\CMake} and {\Boost}, for macintosh platforms. 
+
+For Mac OS X, the following linker flag has to be added to the compilation call.
+\begin{lstlisting}
+ -framework OpenCL
+\end{lstlisting}
+This is best done in the \text{mexopts.sh} file usually located at
+\begin{center}\texttt{\${HOME}/.matlab/{{\MATLAB}VERSION}/mexopts.sh} . \end{center}
+Typically, this is achieved by adding
+\begin{lstlisting}
+ -framework OpenCL
+\end{lstlisting}
+to the C++ compiler flags \texttt{CXXFLAGS} for your architecture (mind that the configuration for both 32 bit and 64 bit systems is located in the mexopts file).
+
+\subsection{Windows}
+Since the include and library files for {\OpenCL} are usually not available system-wide, you have to specify their location manually. Assuming that the NVidia CUDA SDK located at \texttt{C:$\setminus$CUDA$\setminus$} is used, type
+\begin{lstlisting}
+ mex viennacl_cg.cpp       -I. -IC:\CUDA\include -LC:\CUDA\lib -lOpenCL
+ mex viennacl_bicgstab.cpp -I. -IC:\CUDA\include -LC:\CUDA\lib -lOpenCL
+ mex viennacl_gmres.cpp    -I. -IC:\CUDA\include -LC:\CUDA\lib -lOpenCL
+\end{lstlisting}
+
+
+\section{Usage} \label{sec:usage}
+Simply call the {\ViennaCL} solver interface as for the built-in functions provided by {\MATLAB}:
+\begin{lstlisting}
+ result = viennacl_cg(A, rhs);
+ result = viennacl_bicgstab(A, rhs);
+ result = viennacl_gmres(A, rhs);
+\end{lstlisting}
+
+There are a few things to note about the performance of the solvers provided by {\ViennaCL}:
+\begin{itemize}
+ \item At the very first invocation of a {\ViennaCL}, the {\OpenCL} compute kernels are compiled, which may take a few seconds. Subsequent calls of any {\ViennaCL} solvers do not have this overhead.
+ \item Since {\MATLAB} stores sparse matrices column-wise, but {\ViennaCL} requires a row-wise storage, the non-symmetric system matrices for \texttt{BiCGStab} and \texttt{GMRES} have to be rearranged in system memory.
+ \item On 32-bit systems, matrix indices are stored as \texttt{signed integers}, whereas {\ViennaCL} requires \texttt{unsigned integers}. Thus, the data structures holding the matrix indices have to be converted, which is also a runtime penalty. At present, indices are also converted on 64-bit systems, even if this may not be required.
+ \item All data has to be transferred to the GPU before the solver can start.
+ \item The solution vector needs to be copied from the GPU back to the main memory, which also constitutes a runtime penalty.
+\end{itemize}
+Therefore, the use of the {\ViennaCL} solvers in {\MATLAB} does not pay off for small systems with only a few unknowns (say, less than $10.000$) and very well conditioned systems which need only a few solver iterations to converge. The general rule of thumb is that at least twenty to forty iterations are required to have a significant benefit using {\ViennaCL}, cf.~Chap.~\ref{chap:benchmarks}.
+

@@ -1,0 +1,30 @@
+foreach(tut bandwidth-reduction blas1 custom-kernels custom-context fft viennacl-info)
+   add_executable(${tut} ${tut}.cpp)
+   target_link_libraries(${tut} ${OPENCL_LIBRARIES})
+endforeach()
+
+if(ENABLE_UBLAS)
+   include_directories(${Boost_INCLUDE_DIRS})
+   foreach(tut amg blas2 blas3 iterative iterative-ublas lanczos matrix-range power-iter qr spai sparse structured-matrices vector-range)
+      add_executable(${tut} ${tut}.cpp)
+      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
+   endforeach()
+   
+   target_link_libraries(lanczos ${OPENCL_LIBRARIES} boost_system)
+   target_link_libraries(power-iter ${OPENCL_LIBRARIES} boost_system)
+endif()
+
+if(ENABLE_EIGEN)
+   include_directories(${EIGEN_INCLUDE_DIR})
+   add_executable(iterative-eigen iterative-eigen.cpp)
+   add_executable(eigen-with-viennacl
+      eigen-with-viennacl.cpp)
+   target_link_libraries(eigen-with-viennacl ${OPENCL_LIBRARIES})
+endif()
+
+if(ENABLE_MTL4)
+   foreach(tut iterative-mtl4 mtl4-with-viennacl)
+      add_executable(${tut} ${tut}.cpp)
+      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
+   endforeach()
+endif()

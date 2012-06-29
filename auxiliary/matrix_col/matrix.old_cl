@@ -1,0 +1,120 @@
+//helper:
+void helper_float_parallel_reduction( __local float * tmp_buffer )
+{
+  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2)
+  {
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if (get_global_id(0) < stride)
+      tmp_buffer[get_global_id(0)] += tmp_buffer[get_global_id(0)+stride];
+  }
+};
+
+
+/////////////////////////// MATRIX OPERATIONS ///////////////////////////////
+
+
+
+
+
+////// solver kernels for lower triangular systems /////////////
+
+//transposed upper triangular matrix
+
+// __kernel void float_trans_matvec_mul_align1(
+//           __global const float * matrix, //matrix is not transposed in memory!
+//           __global const float * vector,  
+//           __global float * result,
+//           unsigned int row_length,
+//           unsigned int size) 
+// { 
+//   for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0))
+//   {
+//     float dot_prod = 0.0f;
+//     for (unsigned int col = 0; col < row_length; ++col)
+//       dot_prod += matrix[row + col*size] * vector[col];
+//     result[row] = dot_prod;
+//   }
+// };
+
+
+
+
+
+
+
+
+
+//lu factorization of a matrix without pivoting:
+
+
+
+/*
+__kernel void float_matrix_lu_factorize(
+          __global float * matrix,
+          __local float * buffer,                              
+          unsigned int matrix_row_length,
+          unsigned int size) 
+{ 
+  float temp;
+  unsigned rowi;
+  unsigned rowk;
+  for (unsigned int i=1; i<size; ++i)
+  {
+    rowi = i * matrix_row_length;
+    
+    //first step: obtain a_ik from a triangular solution step:
+    for (unsigned int k=0; k<i; ++k)
+    {
+      rowk = k * matrix_row_length;
+      if (get_global_id(0) == 0)
+        matrix[rowi + k] = matrix[rowi + k] / matrix[rowk + k];
+      barrier(CLK_GLOBAL_MEM_FENCE);
+      
+      temp = matrix[rowi + k];
+      
+      for  (unsigned int j = k + 1 + get_global_id(0); j < i; j += get_global_size(0))
+        matrix[rowi + j] -= temp * matrix[rowk + j];
+    }
+
+
+    //second step: subtract block A(k,j) with k=0..i-1 and j=i+1...size-1
+    if (i < get_global_size(0))
+    {
+      //condense column down to matrix(i,j):
+      for (unsigned int j=i+get_global_id(0); j<size; j += get_global_size(0))
+      {
+        temp = 0.0;      
+        //subtraction of A(j, 0:i-1) from A(j,i):
+        for (unsigned int k=0; k<i; ++k)
+          temp += matrix[rowi + k] * matrix[k * matrix_row_length + j];
+        matrix[rowi + j] -= temp;
+      } 
+    }
+    else
+    {
+      //parallel columns:
+      for (unsigned int j=i; j<size; ++j)
+      {
+        temp = 0.0;
+        for (unsigned int k=0; k<= i / get_global_size(0); ++k)
+        {
+          rowk = k*get_global_size(0) + get_global_id(0); //reused as row index k in matrix
+          if (rowk < i)
+            buffer[get_global_id(0)] = matrix[rowi + rowk] * matrix[rowk * matrix_row_length + j];
+          else
+            buffer[get_global_id(0)] = 0.0;
+          helper_float_parallel_reduction(buffer);
+          if (get_global_id(0) == 0)
+            temp += buffer[0];
+        }
+        
+        if (get_global_id(0) == 0)
+          matrix[rowi + j] -= temp;
+      } //for j
+    } //if 
+    
+    barrier(CLK_GLOBAL_MEM_FENCE);
+  }
+} */
+
+

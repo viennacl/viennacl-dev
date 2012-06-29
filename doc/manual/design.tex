@@ -1,0 +1,148 @@
+\chapter{Design Decisions}
+During the implementation of {\ViennaCL}, several design decisions have been
+necessary, which are often a trade-off among various advantages and
+disadvantages. In the following, we discuss several design decisions and their alternatives.
+
+\section{Transfer CPU-GPU-CPU for Scalars}
+The {\ViennaCL} scalar type \lstinline|scalar<>| essentially behaves like a CPU
+scalar in order to make any access to GPU ressources as simple as possible, for example
+\begin{lstlisting}
+  float cpu_float = 1.0f;
+  viennacl::linalg::scalar<float> gpu_float = cpu_float;
+
+  gpu_float = gpu_float * gpu_float;
+  gpu_float -= cpu_float;
+  cpu_float = gpu_float;
+\end{lstlisting}
+As an alternative, the user could have been required to use \lstinline|copy| as
+for the vector and matrix classes, but this would unnecessarily complicate many
+commonly used operations like
+\begin{lstlisting}
+  if (norm_2(gpu_vector) < 1e-10) { ... }
+\end{lstlisting}
+or
+\begin{lstlisting}
+  gpu_vector[0] = 2.0f;
+\end{lstlisting}
+where one of the operands resides on the CPU and the other on the GPU. 
+Initialization of a separate type followed by a call to \lstinline|copy| is
+certainly not desired for the above examples.
+
+However, one should use \lstinline|scalar<>| with care, because the
+overhead for transfers from CPU to GPU and vice versa is very large for the
+simple \lstinline|scalar<>| type.
+
+\NOTE{Use \lstinline|scalar<>| with care, it is much slower than built-in types
+on the CPU!}
+
+
+\section{Transfer CPU-GPU-CPU for Vectors}
+
+The present way of data transfer for vectors and matrices from CPU to GPU to CPU
+is to use the provided \lstinline|copy| function, which is similar to its
+counterpart in the Standard Template Library (STL):
+\begin{lstlisting}
+ std::vector<float> cpu_vector(10);
+ ViennaCL::LinAlg::vector<float> gpu_vector(10);
+
+ /* fill cpu_vector here */
+
+ //transfer values to gpu:
+ copy(cpu_vector.begin(), cpu_vector.end(), gpu_vector.begin());
+
+ /* compute something on GPU here */
+
+ //transfer back to cpu:
+ copy(gpu_vector.begin(), gpu_vector.end(), cpu_vector.begin());
+\end{lstlisting}
+A first alternative
+approach would have been to to overload the assignment operator like this:
+\begin{lstlisting}
+ //transfer values to gpu:
+ gpu_vector = cpu_vector;
+
+ /* compute something on GPU here */
+
+ //transfer back to cpu:
+ cpu_vector = gpu_vector;
+\end{lstlisting}
+The first overload can be directly applied to the \lstinline|vector|-class
+provided by \ViennaCL. However, the question of accessing data in the
+\lstinline|cpu_vector| object arises. For \lstinline|std::vector| and C arrays, the bracket
+operator can be used, but the parenthesis operator cannot. However, other vector types
+may not provide a bracket operator. Using STL iterators is thus the more reliable variant.
+
+The transfer from GPU to CPU would require to overload the
+assignment operator for the CPU class, which cannot be done by {\ViennaCL}. Thus,
+the only possibility within {\ViennaCL} is to provide conversion operators.
+Since many different libraries could be used in principle, the only possibility
+is to provide conversion of the form
+\begin{lstlisting}
+  template <typename T>
+  operator T() {/* implementation here */}
+\end{lstlisting}
+for the types in {\ViennaCL}. However, this would allow even totally meaningless
+conversions, e.g.~from a GPU vector to a CPU boolean and may result in obscure unexpected behavior.
+
+Moreover, with the use of \texttt{copy} functions it is much clearer, at which
+point in the source code large amounts of data are transferred between CPU and GPU.
+
+\section{Solver Interface}
+We decided to provide an interface compatible to {\ublas} for dense matrix
+operations. The only possible generalization for iterative solvers was to use
+the tagging facility for the specification of the desired iterative solver.
+
+\section{Iterators}
+Since we use the iterator-driven \lstinline|copy| function for transfer from
+CPU to GPU to CPU, iterators have to be provided anyway. However, it has to be repeated
+that they are usually VERY slow, because each data access (i.e.~dereferentiation) implies a new
+transfer between CPU and GPU. Nevertheless, CPU-cached vector and matrix
+classes could be introduced in future releases of {\ViennaCL}.
+
+A remedy for quick iteration over the entries of e.g.~a vector is the following:
+\begin{lstlisting}
+ std::vector<double> temp(gpu_vector.size());
+ copy(gpu_vector.begin(), gpu_vector.end(), temp.begin());  
+ for (std::vector<double>::iterator it = temp.begin();
+      it != temp.end();
+     ++it)
+ {
+  //do something with the data here
+ }
+ copy(temp.begin(), temp.end(), gpu_vector.begin());
+\end{lstlisting}
+The three extra code lines can be wrapped into a separate iterator class by the library user, who also has to ensure data consistency during the loop.
+
+
+\section{Initialization of Compute Kernels}
+Since {\OpenCL} relies on passing the {\OpenCL} source code to a
+built-in just-in-time compiler at run time, the necessary kernels have to be generated every
+time an application using {\ViennaCL} is started.
+
+One possibility was to require a mandatory
+\begin{lstlisting}
+ viennacl::init();
+\end{lstlisting}
+before using any other objects provided by {\ViennaCL}, but this approach was discarded for the following two reasons:
+\begin{itemize}
+ \item If \lstinline|viennacl::init();| is accidentally forgotten by the user,
+the program will most likely terminate in a rather uncontrolled way. 
+ \item It requires the user to remember and write one extra line of code, even
+if the default settings are fine.
+\end{itemize}
+Initialization is instead done in the constructors of {\ViennaCL}
+objects. This allows a fine-grained control over which source code to compile
+where and when. For example, there is no reason to compile the sparse matrix
+compute kernels at program startup if there are no sparse matrices used at all.
+
+Moreover, the just-in-time compilation of all available compute kernels in
+{\ViennaCL} takes several seconds. Therefore, a request-based compilation is used to minimize any overhead due to just-in-time compilation.
+
+The request-based compilation is a two-step process: At the first instantiation
+of an object of a particular type from {\ViennaCL}, the full source code for all objects of the same type is
+compiled into a {\OpenCL} program for that type. Each program contains plenty of compute kernels, which are not yet
+initialized. Only if an argument for a compute kernel is set, the kernel
+actually cares about its own initialization. Any subsequent calls of that
+kernel reuse the already compiled and initialized compute kernel.
+
+\NOTE{When benchmarking {\ViennaCL}, first a dummy call to the functionality of interest should be issued prior to taking timings. Otherwise, benchmark results include the just-in-time compilation, which is a constant independent of the data size.}
