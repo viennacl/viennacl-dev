@@ -202,14 +202,14 @@ namespace viennacl
               float s = 1.0;
 
               //int l1 = l - 1;
-              int l2 = k;
+              //int l2 = k;
 
               for (int i = l; i <= k; i++) {
                 float f = s * e[i];
                 e[i] = c * e[i];
 
                 if (fabs(f) <= detail::EPS) {
-                  l2 = i - 1;
+                  //l2 = i - 1;
                   break;
                 }
 

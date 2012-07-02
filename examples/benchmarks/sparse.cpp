@@ -57,7 +57,7 @@ int run_benchmark()
    Timer timer;
    double exec_time;
    
-   ScalarType std_result = 0;
+   //ScalarType std_result = 0;
    
   ScalarType std_factor1 = ScalarType(3.1415);
   ScalarType std_factor2 = ScalarType(42.0);
@@ -138,7 +138,7 @@ int run_benchmark()
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_1, vcl_vec2); //startup calculation
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_4, vcl_vec2); //startup calculation
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_8, vcl_vec2); //startup calculation
-  std_result = 0.0;
+  //std_result = 0.0;
   
   viennacl::ocl::get_queue().finish();
   timer.start();
