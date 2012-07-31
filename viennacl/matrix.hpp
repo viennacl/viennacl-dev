@@ -431,6 +431,7 @@ namespace viennacl
       // operator +=
       matrix<SCALARTYPE, F, ALIGNMENT> & operator += (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
       {
+        //std::cout << "Adding something of size " << other.size1() << ", " << other.size2() << " to a matrix of size " << size1() << ", " << size2() << std::endl;
         viennacl::linalg::inplace_add(*this, other);
         return *this;
       }
@@ -481,6 +482,7 @@ namespace viennacl
       // operator -=
       matrix<SCALARTYPE, F, ALIGNMENT> & operator -= (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
       {
+        //std::cout << "Subtracting something of size " << other.size1() << ", " << other.size2() << " to a matrix of size " << size1() << ", " << size2() << std::endl;
         viennacl::linalg::inplace_sub(*this, other);
         return *this;
       }
@@ -550,10 +552,30 @@ namespace viennacl
                                                                               MatrixType2,
                                                                               op_prod > & proxy) 
       {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
 
+      //this += A * B and related (with trans())
+      template <typename MatrixType1, typename MatrixType2>
+      matrix<SCALARTYPE, F, ALIGNMENT> & operator += (const matrix_expression< MatrixType1,
+                                                                              MatrixType2,
+                                                                              op_prod > & proxy) 
+      {
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 1.0);
+        return *this;
+      }
+
+      //this -= A * B and related (with trans())
+      template <typename MatrixType1, typename MatrixType2>
+      matrix<SCALARTYPE, F, ALIGNMENT> & operator -= (const matrix_expression< MatrixType1,
+                                                                              MatrixType2,
+                                                                              op_prod > & proxy) 
+      {
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, -1.0, 1.0);
+        return *this;
+      }
+      
       //this = A + B
       template <typename T1, typename T2>
       matrix<SCALARTYPE, F, ALIGNMENT> &

@@ -65,7 +65,7 @@ namespace viennacl
                                                                       MatrixType2,
                                                                       op_prod > & proxy) 
       {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
       
@@ -103,8 +103,7 @@ namespace viennacl
                                                                        MatrixType2,
                                                                        op_prod > & proxy)
       {
-        MatrixType temp = proxy;
-        viennacl::linalg::inplace_add(*this, temp);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 1.0);
         return *this;
       }
       
@@ -121,8 +120,7 @@ namespace viennacl
                                                                        MatrixType2,
                                                                        op_prod > & proxy)
       {
-        MatrixType temp = proxy;
-        viennacl::linalg::inplace_sub(*this, temp);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, -1.0, 1.0);
         return *this;
       }
 
@@ -518,7 +516,7 @@ namespace viennacl
                                                                       MatrixType2,
                                                                       op_prod > & proxy) 
       {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
       
@@ -556,8 +554,7 @@ namespace viennacl
                                                                        MatrixType2,
                                                                        op_prod > & proxy)
       {
-        MatrixType temp = proxy;
-        viennacl::linalg::inplace_add(*this, temp);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 1.0);
         return *this;
       }
       
@@ -574,8 +571,7 @@ namespace viennacl
                                                                        MatrixType2,
                                                                        op_prod > & proxy)
       {
-        MatrixType temp = proxy;
-        viennacl::linalg::inplace_sub(*this, temp);
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, -1.0, 1.0);
         return *this;
       }
 

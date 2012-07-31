@@ -212,12 +212,14 @@ namespace viennacl
 
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    internal_size1(viennacl::matrix_range<MatrixType> const & mat) { return mat.get().internal_size1(); }
+    internal_size1(viennacl::matrix_range<MatrixType> const & mat) { return internal_size1(mat.get()); }
 
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    internal_size1(viennacl::matrix_slice<MatrixType> const & mat) { return mat.get().internal_size1(); }
+    internal_size1(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size1(mat.get()); }
 
+    
+    
 
     //
     // internal_size2: No. of internal (padded) columns for matrices
@@ -228,11 +230,11 @@ namespace viennacl
  
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    internal_size2(viennacl::matrix_range<MatrixType> const & mat) { return mat.get().internal_size2(); }
+    internal_size2(viennacl::matrix_range<MatrixType> const & mat) { return internal_size2(mat.get()); }
 
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    internal_size2(viennacl::matrix_slice<MatrixType> const & mat) { return mat.get().internal_size2(); }
+    internal_size2(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size2(mat.get()); }
  
   } //namespace traits
 } //namespace viennacl

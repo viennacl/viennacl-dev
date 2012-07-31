@@ -211,12 +211,12 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
 
   if (row_major_C)
   {
-    std::cout << "    C[c] = alpha * cv[i] + beta * C[c]; " << std::endl;
+    std::cout << "    C[c] = (beta == 0) ? alpha * cv[i] : alpha * cv[i] + beta * C[c]; " << std::endl;
     std::cout << "      c += C_internal_cols * C_row_inc; " << std::endl;
   }
   else
   {
-    std::cout << "    C[c] = alpha * cv[i] + beta * C[c]; " << std::endl;
+    std::cout << "    C[c] = (beta == 0) ? alpha * cv[i] : alpha * cv[i] + beta * C[c]; " << std::endl;
     std::cout << "      c += C_row_inc; " << std::endl;
   }
 

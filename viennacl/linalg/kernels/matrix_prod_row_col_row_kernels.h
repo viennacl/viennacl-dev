@@ -34,13 +34,13 @@ namespace viennacl
       {
         std::string source;
         source.append(matrix_prod_row_col_row_align1_prod16_AA);
-        source.append(matrix_prod_row_col_row_align1_prod16_AT);
-        source.append(matrix_prod_row_col_row_align1_prod16_TA);
-        source.append(matrix_prod_row_col_row_align1_prod_AT);
         source.append(matrix_prod_row_col_row_align1_prod16_TT);
         source.append(matrix_prod_row_col_row_align1_prod_TT);
-        source.append(matrix_prod_row_col_row_align1_prod_TA);
         source.append(matrix_prod_row_col_row_align1_prod_AA);
+        source.append(matrix_prod_row_col_row_align1_prod_AT);
+        source.append(matrix_prod_row_col_row_align1_prod16_AT);
+        source.append(matrix_prod_row_col_row_align1_prod16_TA);
+        source.append(matrix_prod_row_col_row_align1_prod_TA);
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
@@ -48,13 +48,13 @@ namespace viennacl
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
         prog_.add_kernel("prod16_AA");
-        prog_.add_kernel("prod16_AT");
-        prog_.add_kernel("prod16_TA");
-        prog_.add_kernel("prod_AT");
         prog_.add_kernel("prod16_TT");
         prog_.add_kernel("prod_TT");
-        prog_.add_kernel("prod_TA");
         prog_.add_kernel("prod_AA");
+        prog_.add_kernel("prod_AT");
+        prog_.add_kernel("prod16_AT");
+        prog_.add_kernel("prod16_TA");
+        prog_.add_kernel("prod_TA");
         init_done[context_.handle().get()] = true;
        } //if
      } //init
@@ -80,13 +80,13 @@ namespace viennacl
         std::string source;
         std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();
         source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_AA, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_AT, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_TA, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_AT, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_TT, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_TT, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_TA, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_AA, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_AT, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_AT, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod16_TA, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_prod_row_col_row_align1_prod_TA, fp64_ext));
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
@@ -94,13 +94,13 @@ namespace viennacl
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
         prog_.add_kernel("prod16_AA");
-        prog_.add_kernel("prod16_AT");
-        prog_.add_kernel("prod16_TA");
-        prog_.add_kernel("prod_AT");
         prog_.add_kernel("prod16_TT");
         prog_.add_kernel("prod_TT");
-        prog_.add_kernel("prod_TA");
         prog_.add_kernel("prod_AA");
+        prog_.add_kernel("prod_AT");
+        prog_.add_kernel("prod16_AT");
+        prog_.add_kernel("prod16_TA");
+        prog_.add_kernel("prod_TA");
         init_done[context_.handle().get()] = true;
        } //if
      } //init

@@ -96,7 +96,8 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F
          if (act > 0.1)
          {
            std::cout << "Offending index: " << i << ", " << j << std::endl;
-           exit(0);
+           std::cout << "Ublas: " << mat1(i,j) << " / ViennaCL: " << mat2_cpu(i,j) << std::endl;
+           //exit(EXIT_FAILURE);
          }
       }
     }
@@ -111,12 +112,12 @@ template< typename NumericT, typename MatrixTypeA, typename MatrixTypeB, typenam
 int test_prod(Epsilon const& epsilon)
 {
    int retval = EXIT_SUCCESS;
-   //long matrix_size1 = 157;  //some odd number, not too large
-   //long matrix_size2 = 91;  //some odd number, not too large
-   //long matrix_size3 = 73;  //some odd number, not too large
-   long matrix_size1 = 128;  //some odd number, not too large
-   long matrix_size2 = 64;  //some odd number, not too large
-   long matrix_size3 = 128;  //some odd number, not too large
+   long matrix_size1 = 157;  //some odd number, not too large
+   long matrix_size2 = 91;  //some odd number, not too large
+   long matrix_size3 = 73;  //some odd number, not too large
+   //long matrix_size1 = 128;  //some odd number, not too large
+   //long matrix_size2 = 64;  //some odd number, not too large
+   //long matrix_size3 = 128;  //some odd number, not too large
    NumericT act_diff = 0;
    
    // --------------------------------------------------------------------------            
@@ -147,7 +148,7 @@ int test_prod(Epsilon const& epsilon)
    viennacl::copy(A_trans, vcl_A_trans);
    viennacl::copy(B_trans, vcl_B_trans);
 
-   // Test: C = A * B --------------------------------------------------------------------------       
+   // Test: C +-= A * B --------------------------------------------------------------------------       
    C     = viennacl::linalg::prod(A, B);
    vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
    act_diff = fabs(diff(C, vcl_C));
@@ -161,7 +162,38 @@ int test_prod(Epsilon const& epsilon)
    else
      std::cout << "Test C = A * B passed!" << std::endl;
    
-   // Test: C = A * trans(B) --------------------------------------------------------------------------       
+   
+   C     += viennacl::linalg::prod(A, B);
+   vcl_C += viennacl::linalg::prod(vcl_A, vcl_B);
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C += A * B passed!" << std::endl;
+
+   C     -= viennacl::linalg::prod(A, B);
+   vcl_C -= viennacl::linalg::prod(vcl_A, vcl_B);
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C -= A * B passed!" << std::endl;
+   
+   
+   
+   
+   
+   // Test: C +-= A * trans(B) --------------------------------------------------------------------------       
    C     = boost::numeric::ublas::prod(A, trans(B_trans));
    vcl_C = viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
    act_diff = fabs(diff(C, vcl_C));
@@ -174,8 +206,38 @@ int test_prod(Epsilon const& epsilon)
    }
    else
      std::cout << "Test C = A * trans(B) passed!" << std::endl;
+
+
+   C     += boost::numeric::ublas::prod(A, trans(B_trans));
+   vcl_C += viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
+   act_diff = fabs(diff(C, vcl_C));
    
-   // Test: C = trans(A) * B --------------------------------------------------------------------------       
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C += A * trans(B) passed!" << std::endl;
+
+   
+   C     -= boost::numeric::ublas::prod(A, trans(B_trans));
+   vcl_C -= viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C -= A * trans(B) passed!" << std::endl;
+   
+   
+   
+   // Test: C +-= trans(A) * B --------------------------------------------------------------------------       
    C     = boost::numeric::ublas::prod(trans(A_trans), B);
    vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
    act_diff = fabs(diff(C, vcl_C));
@@ -190,7 +252,38 @@ int test_prod(Epsilon const& epsilon)
      std::cout << "Test C = trans(A) * B passed!" << std::endl;
    
    
-   // Test: C = trans(A) * trans(B) --------------------------------------------------------------------------       
+   C     += boost::numeric::ublas::prod(trans(A_trans), B);
+   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C += trans(A) * B passed!" << std::endl;
+   
+   
+   C     -= boost::numeric::ublas::prod(trans(A_trans), B);
+   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C -= trans(A) * B passed!" << std::endl;
+   
+   
+
+   
+   
+   // Test: C +-= trans(A) * trans(B) --------------------------------------------------------------------------       
    C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
    vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
    act_diff = fabs(diff(C, vcl_C));
@@ -203,6 +296,34 @@ int test_prod(Epsilon const& epsilon)
    }
    else
      std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
+   
+   C     += boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C += trans(A) * trans(B) passed!" << std::endl;
+   
+   
+   C     -= boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
+   act_diff = fabs(diff(C, vcl_C));
+   
+   if( act_diff > epsilon )
+   {
+     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+     std::cout << "  diff: " << act_diff << std::endl;
+     retval = EXIT_FAILURE;
+   }
+   else
+     std::cout << "Test C -= trans(A) * trans(B) passed!" << std::endl;
+   
    
    
    

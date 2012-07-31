@@ -168,6 +168,26 @@ namespace viennacl
                                                            T2,
                                                            op_trans> const & rhs) { return rhs.lhs().size1(); }
     };
+
+    
+    
+    // A^T * B^T 
+    
+    template <typename T1, typename T2>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<T1,
+                                                                 T1, op_trans>,
+                               const viennacl::matrix_expression<T2,
+                                                                 T2, op_trans>,
+                               viennacl::op_prod>
+    {
+      typedef viennacl::matrix_expression<T1, T1, op_trans>   LHSType;
+      typedef viennacl::matrix_expression<T2, T2, op_trans>   RHSType;
+      
+      static std::size_t size1(LHSType const & lhs,
+                               RHSType const & rhs) { return lhs.lhs().size2(); }
+      static std::size_t size2(LHSType const & lhs,
+                               RHSType const & rhs) { return rhs.lhs().size1(); }
+    };
     
   }
 }

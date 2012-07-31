@@ -7,6 +7,18 @@ namespace viennacl
  {
   namespace kernels
   {
+const char * const nmf_align1_sub_wise = 
+"__kernel void sub_wise(\n"
+"          __global const float * matrix1,\n"
+"          __global const float * matrix2,\n"
+"          __global float * result,\n"
+"          unsigned int size)\n"
+"{\n"
+"  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
+"    result[i] = matrix1[i] - matrix2[i];\n"
+"}\n"
+; //nmf_align1_sub_wise
+
 const char * const nmf_align1_el_wise_mul_div = 
 "__kernel void el_wise_mul_div(\n"
 "          __global float * matrix1,\n"
@@ -22,18 +34,6 @@ const char * const nmf_align1_el_wise_mul_div =
 "  };\n"
 "};\n"
 ; //nmf_align1_el_wise_mul_div
-
-const char * const nmf_align1_sub_wise = 
-"__kernel void sub_wise(\n"
-"          __global const float * matrix1,\n"
-"          __global const float * matrix2,\n"
-"          __global float * result,\n"
-"          unsigned int size)\n"
-"{\n"
-"  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
-"    result[i] = matrix1[i] - matrix2[i];\n"
-"}\n"
-; //nmf_align1_sub_wise
 
   }  //namespace kernels
  }  //namespace linalg

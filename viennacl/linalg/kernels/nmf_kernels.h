@@ -33,16 +33,16 @@ namespace viennacl
       if (!init_done[context_.handle().get()])
       {
         std::string source;
-        source.append(nmf_align1_el_wise_mul_div);
         source.append(nmf_align1_sub_wise);
+        source.append(nmf_align1_el_wise_mul_div);
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("el_wise_mul_div");
         prog_.add_kernel("sub_wise");
+        prog_.add_kernel("el_wise_mul_div");
         init_done[context_.handle().get()] = true;
        } //if
      } //init
@@ -67,16 +67,16 @@ namespace viennacl
       {
         std::string source;
         std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();
-        source.append(viennacl::tools::make_double_kernel(nmf_align1_el_wise_mul_div, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(nmf_align1_sub_wise, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(nmf_align1_el_wise_mul_div, fp64_ext));
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("el_wise_mul_div");
         prog_.add_kernel("sub_wise");
+        prog_.add_kernel("el_wise_mul_div");
         init_done[context_.handle().get()] = true;
        } //if
      } //init
