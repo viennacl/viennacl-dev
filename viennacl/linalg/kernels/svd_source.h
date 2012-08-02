@@ -7,6 +7,37 @@ namespace viennacl
  {
   namespace kernels
   {
+const char * const svd_align1_inverse_signs = 
+"__kernel void inverse_signs(__global float* v,\n"
+"                            __global float* signs,\n"
+"                            uint size,\n"
+"                            uint stride \n"
+"                            )\n"
+"{\n"
+"    uint glb_id_x = get_global_id(0);\n"
+"    uint glb_id_y = get_global_id(1);\n"
+"    if((glb_id_x < size) && (glb_id_y < size))\n"
+"        v[glb_id_x * stride + glb_id_y] *= signs[glb_id_x];\n"
+"}\n"
+; //svd_align1_inverse_signs
+
+const char * const svd_align1_copy_col = 
+"// probably, this is a ugly way\n"
+"__kernel void copy_col(__global float* A,\n"
+"                       __global float* V,\n"
+"                       uint row_start,\n"
+"                       uint col_start,\n"
+"                       uint size,\n"
+"                       uint stride\n"
+"                       ) {\n"
+"    uint glb_id = get_global_id(0);\n"
+"    uint glb_sz = get_global_size(0);\n"
+"    for(uint i = row_start + glb_id; i < size; i += glb_sz) {\n"
+"        V[i - row_start] = A[i * stride + col_start];\n"
+"    }    \n"
+"}\n"
+; //svd_align1_copy_col
+
 const char * const svd_align1_bidiag_pack = 
 "__kernel void bidiag_pack(__global float* A,\n"
 "                          __global float* D,\n"
@@ -24,6 +55,23 @@ const char * const svd_align1_bidiag_pack =
 "    }\n"
 "}\n"
 ; //svd_align1_bidiag_pack
+
+const char * const svd_align1_copy_row = 
+"// probably, this is too\n"
+"__kernel void copy_row(__global float* A,\n"
+"                       __global float* V,\n"
+"                       uint row_start,\n"
+"                       uint col_start,\n"
+"                       uint size,\n"
+"                       uint stride\n"
+"                       ) {\n"
+"    uint glb_id = get_global_id(0);\n"
+"    uint glb_sz = get_global_size(0);\n"
+"    for(uint i = col_start + glb_id; i < size; i += glb_sz) {\n"
+"        V[i - col_start] = A[row_start * stride + i];\n"
+"    }\n"
+"}\n"
+; //svd_align1_copy_row
 
 const char * const svd_align1_house_col = 
 "// calculates a sum of local array elements\n"
@@ -76,20 +124,6 @@ const char * const svd_align1_house_col =
 "    }\n"
 "}\n"
 ; //svd_align1_house_col
-
-const char * const svd_align1_inverse_signs = 
-"__kernel void inverse_signs(__global float* v,\n"
-"                            __global float* signs,\n"
-"                            uint size,\n"
-"                            uint stride \n"
-"                            )\n"
-"{\n"
-"    uint glb_id_x = get_global_id(0);\n"
-"    uint glb_id_y = get_global_id(1);\n"
-"    if((glb_id_x < size) && (glb_id_y < size))\n"
-"        v[glb_id_x * stride + glb_id_y] *= signs[glb_id_x];\n"
-"}\n"
-; //svd_align1_inverse_signs
 
 const char * const svd_align1_transpose_inplace = 
 "__kernel void transpose_inplace(__global float* input,\n"
@@ -168,40 +202,6 @@ const char * const svd_align1_house_row =
 "    }\n"
 "}\n"
 ; //svd_align1_house_row
-
-const char * const svd_align1_copy_col = 
-"// probably, this is a ugly way\n"
-"__kernel void copy_col(__global float* A,\n"
-"                       __global float* V,\n"
-"                       uint row_start,\n"
-"                       uint col_start,\n"
-"                       uint size,\n"
-"                       uint stride\n"
-"                       ) {\n"
-"    uint glb_id = get_global_id(0);\n"
-"    uint glb_sz = get_global_size(0);\n"
-"    for(uint i = row_start + glb_id; i < size; i += glb_sz) {\n"
-"        V[i - row_start] = A[i * stride + col_start];\n"
-"    }    \n"
-"}\n"
-; //svd_align1_copy_col
-
-const char * const svd_align1_copy_row = 
-"// probably, this is too\n"
-"__kernel void copy_row(__global float* A,\n"
-"                       __global float* V,\n"
-"                       uint row_start,\n"
-"                       uint col_start,\n"
-"                       uint size,\n"
-"                       uint stride\n"
-"                       ) {\n"
-"    uint glb_id = get_global_id(0);\n"
-"    uint glb_sz = get_global_size(0);\n"
-"    for(uint i = col_start + glb_id; i < size; i += glb_sz) {\n"
-"        V[i - col_start] = A[row_start * stride + i];\n"
-"    }\n"
-"}\n"
-; //svd_align1_copy_row
 
 const char * const svd_align1_givens_prev = 
 "__kernel void givens_prev(__global float* matr,\n"

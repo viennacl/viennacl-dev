@@ -33,28 +33,28 @@ namespace viennacl
       if (!init_done[context_.handle().get()])
       {
         std::string source;
-        source.append(spai_align1_block_qr);
-        source.append(spai_align1_block_qr_assembly);
-        source.append(spai_align1_block_q_mult);
-        source.append(spai_align1_block_qr_assembly_1);
-        source.append(spai_align1_block_bv_assembly);
-        source.append(spai_align1_block_r_assembly);
-        source.append(spai_align1_assemble_blocks);
         source.append(spai_align1_block_least_squares);
+        source.append(spai_align1_block_r_assembly);
+        source.append(spai_align1_block_qr);
+        source.append(spai_align1_assemble_blocks);
+        source.append(spai_align1_block_bv_assembly);
+        source.append(spai_align1_block_q_mult);
+        source.append(spai_align1_block_qr_assembly);
+        source.append(spai_align1_block_qr_assembly_1);
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("block_qr");
-        prog_.add_kernel("block_qr_assembly");
-        prog_.add_kernel("block_q_mult");
-        prog_.add_kernel("block_qr_assembly_1");
-        prog_.add_kernel("block_bv_assembly");
-        prog_.add_kernel("block_r_assembly");
-        prog_.add_kernel("assemble_blocks");
         prog_.add_kernel("block_least_squares");
+        prog_.add_kernel("block_r_assembly");
+        prog_.add_kernel("block_qr");
+        prog_.add_kernel("assemble_blocks");
+        prog_.add_kernel("block_bv_assembly");
+        prog_.add_kernel("block_q_mult");
+        prog_.add_kernel("block_qr_assembly");
+        prog_.add_kernel("block_qr_assembly_1");
         init_done[context_.handle().get()] = true;
        } //if
      } //init
@@ -79,28 +79,28 @@ namespace viennacl
       {
         std::string source;
         std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr_assembly, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_q_mult, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr_assembly_1, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_bv_assembly, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_block_r_assembly, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(spai_align1_assemble_blocks, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(spai_align1_block_least_squares, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_r_assembly, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_assemble_blocks, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_bv_assembly, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_q_mult, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr_assembly, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(spai_align1_block_qr_assembly_1, fp64_ext));
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("block_qr");
-        prog_.add_kernel("block_qr_assembly");
-        prog_.add_kernel("block_q_mult");
-        prog_.add_kernel("block_qr_assembly_1");
-        prog_.add_kernel("block_bv_assembly");
-        prog_.add_kernel("block_r_assembly");
-        prog_.add_kernel("assemble_blocks");
         prog_.add_kernel("block_least_squares");
+        prog_.add_kernel("block_r_assembly");
+        prog_.add_kernel("block_qr");
+        prog_.add_kernel("assemble_blocks");
+        prog_.add_kernel("block_bv_assembly");
+        prog_.add_kernel("block_q_mult");
+        prog_.add_kernel("block_qr_assembly");
+        prog_.add_kernel("block_qr_assembly_1");
         init_done[context_.handle().get()] = true;
        } //if
      } //init

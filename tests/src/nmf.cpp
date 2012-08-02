@@ -4,8 +4,6 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/nmf.hpp"
 
-#include "examples/benchmarks/benchmark-utils.hpp"
-
 typedef float ScalarType;
 
 const ScalarType EPS = 0.1;
@@ -30,11 +28,13 @@ float matrix_compare(viennacl::matrix<ScalarType>& res,
     return diff / mx;
 }
 
+
 void fill_random(std::vector<ScalarType>& v)
 {
     for(std::size_t j = 0; j < v.size(); j++)
         v[j] = static_cast<ScalarType>(rand()) / RAND_MAX;
 }
+
 
 void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 {
@@ -45,39 +45,44 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
     viennacl::matrix<ScalarType> w_ref(m, k);
     viennacl::matrix<ScalarType> h_ref(k, n);
 
-    viennacl::matrix<ScalarType> v_nmf(m, n);
-    viennacl::matrix<ScalarType> w_nmf(m, k);
-    viennacl::matrix<ScalarType> h_nmf(k, n);
-
     fill_random(stl_w);
     fill_random(stl_h);
 
     viennacl::fast_copy(&stl_w[0], &stl_w[0] + stl_w.size(), w_ref);
     viennacl::fast_copy(&stl_h[0], &stl_h[0] + stl_h.size(), h_ref);
 
-    v_ref = viennacl::linalg::prod(w_ref, h_ref);
+    v_ref = viennacl::linalg::prod(w_ref, h_ref);  //reference
 
-    viennacl::ocl::get_queue().finish();
+    // Fill again with random numbers:
+    fill_random(stl_w);
+    fill_random(stl_h);
 
-    //Timer timer;
-    //timer.start();
+    viennacl::matrix<ScalarType> w_nmf(m, k);
+    viennacl::matrix<ScalarType> h_nmf(k, n);
+    
+    viennacl::fast_copy(&stl_w[0], &stl_w[0] + stl_w.size(), w_nmf);
+    viennacl::fast_copy(&stl_h[0], &stl_h[0] + stl_h.size(), h_nmf);
+    
+    
 
-    viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, k);
-    viennacl::ocl::get_queue().finish();
+    viennacl::linalg::nmf_config conf;
+    viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
 
-    //double time_spent = timer.get();
-
-    v_nmf = viennacl::linalg::prod(w_nmf, h_nmf);
+    viennacl::matrix<ScalarType> v_nmf = viennacl::linalg::prod(w_nmf, h_nmf);
 
     float diff  = matrix_compare(v_ref, v_nmf);
     bool diff_ok = fabs(diff) < EPS;
 
-    printf("%6s [%lux%lux%lu] diff = %.6f\n", diff_ok?"[[OK]]":"[FAIL]", m, k, n, diff);
+    long iterations = static_cast<long>(conf.iters());
+    printf("%6s [%lux%lux%lu] diff = %.6f (%ld iterations)\n", diff_ok ? "[[OK]]":"[FAIL]", m, k, n, diff, iterations);
+    
+    if (!diff_ok)
+      exit(EXIT_FAILURE);
 }
 
 int main()
 {
-    srand(time(NULL));
+    //srand(time(NULL));  //let's use deterministic tests, so keep the default srand() initialization
 
     test_nmf(3, 3, 3);
     test_nmf(3, 2, 3);
@@ -85,5 +90,5 @@ int main()
     test_nmf(160, 73, 200);
     test_nmf(1000, 15, 1000);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
