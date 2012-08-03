@@ -32,13 +32,13 @@ __kernel void house_row(__global float* A,
     uint lcl_id = get_local_id(0);
     uint lcl_sz = get_local_size(0);
 
-    float ss = 0.0f;
+    float ss = 0;
 
     // update of QR matrix
     // Actually, we are calculating a transpose of right matrix. This allows to avoid cache
     // misses. 
     for(uint i = grp_id; i < size2; i += grp_nm) {
-        ss = 0.0f;
+        ss = 0;
         for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * QR[i * strideQ + j]);
         sums[lcl_id] = ss;
 
@@ -53,7 +53,7 @@ __kernel void house_row(__global float* A,
 
     // update of A matrix
     for(uint i = grp_id + row_start; i < size1; i += grp_nm) {
-        ss = 0.0f;
+        ss = 0;
 
         for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i * stride + j]);
         sums[lcl_id] = ss;

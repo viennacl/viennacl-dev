@@ -7,55 +7,18 @@ namespace viennacl
  {
   namespace kernels
   {
-const char * const scalar_align1_cpu_div = 
+const char * const scalar_align1_cpu_sub = 
 " \n"
-"__kernel void cpu_div(\n"
+"__kernel void cpu_sub(\n"
 "          __global const float * val1,\n"
 "          float val2, \n"
 "          __global float * result) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *result = *val1 / val2;\n"
+"    *result = *val1 - val2;\n"
 "}\n"
 " \n"
-; //scalar_align1_cpu_div
-
-const char * const scalar_align1_cpu_inplace_add = 
-" \n"
-"__kernel void cpu_inplace_add(\n"
-"          __global float * val1,\n"
-"          float val2) \n"
-"{ \n"
-"  if (get_global_id(0) == 0)\n"
-"    *val1 += val2;\n"
-"}\n"
-" \n"
-; //scalar_align1_cpu_inplace_add
-
-const char * const scalar_align1_add = 
-" \n"
-"__kernel void add(\n"
-"          __global const float * val1,\n"
-"          __global const float * val2, \n"
-"          __global float * result) \n"
-"{ \n"
-"  if (get_global_id(0) == 0)\n"
-"    *result = *val1 + *val2;\n"
-"}\n"
-" \n"
-; //scalar_align1_add
-
-const char * const scalar_align1_inplace_sub = 
-" \n"
-"__kernel void inplace_sub(\n"
-"          __global float * val1,\n"
-"          __global const float * val2) \n"
-"{ \n"
-"  if (get_global_id(0) == 0)\n"
-"    *val1 -= *val2;\n"
-"}\n"
-" \n"
-; //scalar_align1_inplace_sub
+; //scalar_align1_cpu_sub
 
 const char * const scalar_align1_cpu_inplace_mul = 
 " \n"
@@ -81,18 +44,30 @@ const char * const scalar_align1_inplace_mul =
 " \n"
 ; //scalar_align1_inplace_mul
 
-const char * const scalar_align1_cpu_inplace_div = 
+const char * const scalar_align1_cpu_inplace_sub = 
 " \n"
-"__kernel void cpu_inplace_div(\n"
+"__kernel void cpu_inplace_sub(\n"
 "          __global float * val1,\n"
 "          float val2) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *val1 /= val2;\n"
+"    *val1 -= val2;\n"
 "}\n"
-"\n"
 " \n"
-; //scalar_align1_cpu_inplace_div
+"\n"
+; //scalar_align1_cpu_inplace_sub
+
+const char * const scalar_align1_cpu_inplace_add = 
+" \n"
+"__kernel void cpu_inplace_add(\n"
+"          __global float * val1,\n"
+"          float val2) \n"
+"{ \n"
+"  if (get_global_id(0) == 0)\n"
+"    *val1 += val2;\n"
+"}\n"
+" \n"
+; //scalar_align1_cpu_inplace_add
 
 const char * const scalar_align1_mul = 
 " \n"
@@ -107,18 +82,54 @@ const char * const scalar_align1_mul =
 " \n"
 ; //scalar_align1_mul
 
-const char * const scalar_align1_cpu_add = 
+const char * const scalar_align1_inplace_sub = 
 " \n"
-"__kernel void cpu_add(\n"
-"          __global const float * val1,\n"
-"          float val2, \n"
-"          __global float * result) \n"
+"__kernel void inplace_sub(\n"
+"          __global float * val1,\n"
+"          __global const float * val2) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *result = *val1 + val2;\n"
+"    *val1 -= *val2;\n"
 "}\n"
 " \n"
-; //scalar_align1_cpu_add
+; //scalar_align1_inplace_sub
+
+const char * const scalar_align1_inplace_add = 
+" \n"
+"__kernel void inplace_add(\n"
+"          __global float * val1,\n"
+"          __global const float * val2) \n"
+"{ \n"
+"  if (get_global_id(0) == 0)\n"
+"    *val1 += *val2;\n"
+"}\n"
+" \n"
+; //scalar_align1_inplace_add
+
+const char * const scalar_align1_inplace_div = 
+" \n"
+"__kernel void inplace_div(\n"
+"          __global float * val1,\n"
+"          __global const float * val2) \n"
+"{ \n"
+"  if (get_global_id(0) == 0)\n"
+"    *val1 /= *val2;\n"
+"}\n"
+" \n"
+; //scalar_align1_inplace_div
+
+const char * const scalar_align1_cpu_inplace_div = 
+" \n"
+"__kernel void cpu_inplace_div(\n"
+"          __global float * val1,\n"
+"          float val2) \n"
+"{ \n"
+"  if (get_global_id(0) == 0)\n"
+"    *val1 /= val2;\n"
+"}\n"
+"\n"
+" \n"
+; //scalar_align1_cpu_inplace_div
 
 const char * const scalar_align1_divide = 
 " \n"
@@ -135,43 +146,31 @@ const char * const scalar_align1_divide =
 " \n"
 ; //scalar_align1_divide
 
-const char * const scalar_align1_cpu_sub = 
+const char * const scalar_align1_cpu_add = 
 " \n"
-"__kernel void cpu_sub(\n"
+"__kernel void cpu_add(\n"
 "          __global const float * val1,\n"
 "          float val2, \n"
 "          __global float * result) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *result = *val1 - val2;\n"
+"    *result = *val1 + val2;\n"
 "}\n"
 " \n"
-; //scalar_align1_cpu_sub
+; //scalar_align1_cpu_add
 
-const char * const scalar_align1_sub = 
+const char * const scalar_align1_add = 
 " \n"
-"__kernel void sub(\n"
+"__kernel void add(\n"
 "          __global const float * val1,\n"
 "          __global const float * val2, \n"
 "          __global float * result) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *result = *val1 - *val2;\n"
+"    *result = *val1 + *val2;\n"
 "}\n"
 " \n"
-; //scalar_align1_sub
-
-const char * const scalar_align1_inplace_div = 
-" \n"
-"__kernel void inplace_div(\n"
-"          __global float * val1,\n"
-"          __global const float * val2) \n"
-"{ \n"
-"  if (get_global_id(0) == 0)\n"
-"    *val1 /= *val2;\n"
-"}\n"
-" \n"
-; //scalar_align1_inplace_div
+; //scalar_align1_add
 
 const char * const scalar_align1_cpu_mul = 
 " \n"
@@ -186,30 +185,31 @@ const char * const scalar_align1_cpu_mul =
 " \n"
 ; //scalar_align1_cpu_mul
 
-const char * const scalar_align1_cpu_inplace_sub = 
+const char * const scalar_align1_sub = 
 " \n"
-"__kernel void cpu_inplace_sub(\n"
-"          __global float * val1,\n"
-"          float val2) \n"
+"__kernel void sub(\n"
+"          __global const float * val1,\n"
+"          __global const float * val2, \n"
+"          __global float * result) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *val1 -= val2;\n"
+"    *result = *val1 - *val2;\n"
 "}\n"
 " \n"
-"\n"
-; //scalar_align1_cpu_inplace_sub
+; //scalar_align1_sub
 
-const char * const scalar_align1_inplace_add = 
+const char * const scalar_align1_cpu_div = 
 " \n"
-"__kernel void inplace_add(\n"
-"          __global float * val1,\n"
-"          __global const float * val2) \n"
+"__kernel void cpu_div(\n"
+"          __global const float * val1,\n"
+"          float val2, \n"
+"          __global float * result) \n"
 "{ \n"
 "  if (get_global_id(0) == 0)\n"
-"    *val1 += *val2;\n"
+"    *result = *val1 / val2;\n"
 "}\n"
 " \n"
-; //scalar_align1_inplace_add
+; //scalar_align1_cpu_div
 
   }  //namespace kernels
  }  //namespace linalg

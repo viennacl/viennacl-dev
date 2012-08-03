@@ -11,7 +11,7 @@ __kernel void transpose_inplace(__global float* input,
 
         unsigned int new_pos = col * row_num + row;
 
-        //new_pos = col < row?0:1;
+        //new_pos = (col < row) ? 0 : 1;
         //input[i] = new_pos;
 
         if(i < new_pos) {

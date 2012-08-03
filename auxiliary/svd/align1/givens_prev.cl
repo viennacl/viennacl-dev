@@ -20,7 +20,7 @@ __kernel void givens_prev(__global float* matr,
     __local float cs_lcl[256];
     __local float ss_lcl[256];
 
-    float x = (j < size)?matr[(start_i - 1) * stride + j]:0;
+    float x = (j < size) ? matr[(start_i - 1) * stride + j] : 0;
 
     uint elems_num = end_i - start_i;
     uint block_num = (elems_num + lcl_sz - 1) / lcl_sz;

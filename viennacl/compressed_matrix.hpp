@@ -320,8 +320,8 @@ namespace viennacl
                && "Provided MTL4 compressed matrix is too small!");
         
         //get raw data from memory:
-        std::vector<unsigned int> row_buffer(gpu_matrix.size1() + 1);
-        std::vector<unsigned int> col_buffer(gpu_matrix.nnz());
+        std::vector<cl_uint> row_buffer(gpu_matrix.size1() + 1);
+        std::vector<cl_uint> col_buffer(gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
         cl_int err;

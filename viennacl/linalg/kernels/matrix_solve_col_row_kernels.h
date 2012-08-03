@@ -33,21 +33,21 @@ namespace viennacl
       if (!init_done[context_.handle().get()])
       {
         std::string source;
-        source.append(matrix_solve_col_row_align1_upper_solve);
-        source.append(matrix_solve_col_row_align1_trans_lower_solve);
-        source.append(matrix_solve_col_row_align1_trans_lower_trans_solve);
-        source.append(matrix_solve_col_row_align1_trans_upper_trans_solve);
-        source.append(matrix_solve_col_row_align1_trans_unit_upper_solve);
-        source.append(matrix_solve_col_row_align1_upper_trans_solve);
-        source.append(matrix_solve_col_row_align1_trans_upper_solve);
-        source.append(matrix_solve_col_row_align1_trans_unit_lower_solve);
-        source.append(matrix_solve_col_row_align1_trans_unit_lower_trans_solve);
-        source.append(matrix_solve_col_row_align1_trans_unit_upper_trans_solve);
         source.append(matrix_solve_col_row_align1_unit_lower_solve);
         source.append(matrix_solve_col_row_align1_lower_solve);
-        source.append(matrix_solve_col_row_align1_unit_upper_trans_solve);
-        source.append(matrix_solve_col_row_align1_lower_trans_solve);
         source.append(matrix_solve_col_row_align1_unit_upper_solve);
+        source.append(matrix_solve_col_row_align1_trans_lower_trans_solve);
+        source.append(matrix_solve_col_row_align1_trans_upper_trans_solve);
+        source.append(matrix_solve_col_row_align1_trans_unit_lower_solve);
+        source.append(matrix_solve_col_row_align1_upper_trans_solve);
+        source.append(matrix_solve_col_row_align1_lower_trans_solve);
+        source.append(matrix_solve_col_row_align1_unit_upper_trans_solve);
+        source.append(matrix_solve_col_row_align1_trans_upper_solve);
+        source.append(matrix_solve_col_row_align1_trans_unit_upper_solve);
+        source.append(matrix_solve_col_row_align1_trans_unit_lower_trans_solve);
+        source.append(matrix_solve_col_row_align1_trans_lower_solve);
+        source.append(matrix_solve_col_row_align1_upper_solve);
+        source.append(matrix_solve_col_row_align1_trans_unit_upper_trans_solve);
         source.append(matrix_solve_col_row_align1_unit_lower_trans_solve);
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
@@ -55,21 +55,21 @@ namespace viennacl
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("upper_solve");
-        prog_.add_kernel("trans_lower_solve");
-        prog_.add_kernel("trans_lower_trans_solve");
-        prog_.add_kernel("trans_upper_trans_solve");
-        prog_.add_kernel("trans_unit_upper_solve");
-        prog_.add_kernel("upper_trans_solve");
-        prog_.add_kernel("trans_upper_solve");
-        prog_.add_kernel("trans_unit_lower_solve");
-        prog_.add_kernel("trans_unit_lower_trans_solve");
-        prog_.add_kernel("trans_unit_upper_trans_solve");
         prog_.add_kernel("unit_lower_solve");
         prog_.add_kernel("lower_solve");
-        prog_.add_kernel("unit_upper_trans_solve");
-        prog_.add_kernel("lower_trans_solve");
         prog_.add_kernel("unit_upper_solve");
+        prog_.add_kernel("trans_lower_trans_solve");
+        prog_.add_kernel("trans_upper_trans_solve");
+        prog_.add_kernel("trans_unit_lower_solve");
+        prog_.add_kernel("upper_trans_solve");
+        prog_.add_kernel("lower_trans_solve");
+        prog_.add_kernel("unit_upper_trans_solve");
+        prog_.add_kernel("trans_upper_solve");
+        prog_.add_kernel("trans_unit_upper_solve");
+        prog_.add_kernel("trans_unit_lower_trans_solve");
+        prog_.add_kernel("trans_lower_solve");
+        prog_.add_kernel("upper_solve");
+        prog_.add_kernel("trans_unit_upper_trans_solve");
         prog_.add_kernel("unit_lower_trans_solve");
         init_done[context_.handle().get()] = true;
        } //if
@@ -95,21 +95,21 @@ namespace viennacl
       {
         std::string source;
         std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_upper_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_lower_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_lower_trans_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_upper_trans_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_upper_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_upper_trans_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_upper_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_lower_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_lower_trans_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_upper_trans_solve, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_unit_lower_solve, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_lower_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_unit_upper_trans_solve, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_lower_trans_solve, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_unit_upper_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_lower_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_upper_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_lower_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_upper_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_lower_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_unit_upper_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_upper_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_upper_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_lower_trans_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_lower_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_upper_solve, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_trans_unit_upper_trans_solve, fp64_ext));
         source.append(viennacl::tools::make_double_kernel(matrix_solve_col_row_align1_unit_lower_trans_solve, fp64_ext));
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
@@ -117,21 +117,21 @@ namespace viennacl
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("upper_solve");
-        prog_.add_kernel("trans_lower_solve");
-        prog_.add_kernel("trans_lower_trans_solve");
-        prog_.add_kernel("trans_upper_trans_solve");
-        prog_.add_kernel("trans_unit_upper_solve");
-        prog_.add_kernel("upper_trans_solve");
-        prog_.add_kernel("trans_upper_solve");
-        prog_.add_kernel("trans_unit_lower_solve");
-        prog_.add_kernel("trans_unit_lower_trans_solve");
-        prog_.add_kernel("trans_unit_upper_trans_solve");
         prog_.add_kernel("unit_lower_solve");
         prog_.add_kernel("lower_solve");
-        prog_.add_kernel("unit_upper_trans_solve");
-        prog_.add_kernel("lower_trans_solve");
         prog_.add_kernel("unit_upper_solve");
+        prog_.add_kernel("trans_lower_trans_solve");
+        prog_.add_kernel("trans_upper_trans_solve");
+        prog_.add_kernel("trans_unit_lower_solve");
+        prog_.add_kernel("upper_trans_solve");
+        prog_.add_kernel("lower_trans_solve");
+        prog_.add_kernel("unit_upper_trans_solve");
+        prog_.add_kernel("trans_upper_solve");
+        prog_.add_kernel("trans_unit_upper_solve");
+        prog_.add_kernel("trans_unit_lower_trans_solve");
+        prog_.add_kernel("trans_lower_solve");
+        prog_.add_kernel("upper_solve");
+        prog_.add_kernel("trans_unit_upper_trans_solve");
         prog_.add_kernel("unit_lower_trans_solve");
         init_done[context_.handle().get()] = true;
        } //if
