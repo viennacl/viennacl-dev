@@ -1,10 +1,10 @@
-#ifndef VIENNACL_NMF_KERNELS_HPP_
-#define VIENNACL_NMF_KERNELS_HPP_
+#ifndef VIENNACL_ILU_KERNELS_HPP_
+#define VIENNACL_ILU_KERNELS_HPP_
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
-#include "viennacl/linalg/kernels/nmf_source.h"
+#include "viennacl/linalg/kernels/ilu_source.h"
 
 //Automatically generated file from aux-directory, do not edit manually!
 namespace viennacl
@@ -14,16 +14,16 @@ namespace viennacl
   namespace kernels
   {
    template<class TYPE, unsigned int alignment>
-   struct nmf;
+   struct ilu;
 
 
     /////////////// single precision kernels //////////////// 
    template <>
-   struct nmf<float, 1>
+   struct ilu<float, 1>
    {
     static std::string program_name()
     {
-      return "f_nmf_1";
+      return "f_ilu_1";
     }
     static void init()
     {
@@ -33,16 +33,14 @@ namespace viennacl
       if (!init_done[context_.handle().get()])
       {
         std::string source;
-        source.append(nmf_align1_sub_wise);
-        source.append(nmf_align1_el_wise_mul_div);
+        source.append(ilu_align1_block_ilu_substitute);
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("sub_wise");
-        prog_.add_kernel("el_wise_mul_div");
+        prog_.add_kernel("block_ilu_substitute");
         init_done[context_.handle().get()] = true;
        } //if
      } //init
@@ -52,11 +50,11 @@ namespace viennacl
 
     /////////////// double precision kernels //////////////// 
    template <>
-   struct nmf<double, 1>
+   struct ilu<double, 1>
    {
     static std::string program_name()
     {
-      return "d_nmf_1";
+      return "d_ilu_1";
     }
     static void init()
     {
@@ -67,16 +65,14 @@ namespace viennacl
       {
         std::string source;
         std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();
-        source.append(viennacl::tools::make_double_kernel(nmf_align1_sub_wise, fp64_ext));
-        source.append(viennacl::tools::make_double_kernel(nmf_align1_el_wise_mul_div, fp64_ext));
+        source.append(viennacl::tools::make_double_kernel(ilu_align1_block_ilu_substitute, fp64_ext));
         std::string prog_name = program_name();
         #ifdef VIENNACL_BUILD_INFO
         std::cout << "Creating program " << prog_name << std::endl;
         #endif
         context_.add_program(source, prog_name);
         viennacl::ocl::program & prog_ = context_.get_program(prog_name);
-        prog_.add_kernel("sub_wise");
-        prog_.add_kernel("el_wise_mul_div");
+        prog_.add_kernel("block_ilu_substitute");
         init_done[context_.handle().get()] = true;
        } //if
      } //init

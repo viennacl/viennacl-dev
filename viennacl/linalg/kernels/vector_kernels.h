@@ -1,5 +1,5 @@
-#ifndef _VIENNACL_VECTOR_KERNELS_HPP_
-#define _VIENNACL_VECTOR_KERNELS_HPP_
+#ifndef VIENNACL_VECTOR_KERNELS_HPP_
+#define VIENNACL_VECTOR_KERNELS_HPP_
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"

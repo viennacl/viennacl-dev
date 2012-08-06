@@ -186,6 +186,26 @@ int run_test()
     
     
     
+    std::cout << std::endl;
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Copy CTORs //////////" << std::endl;
+    std::cout << "//" << std::endl;
+
+    viennacl::copy(ublas_v1, vcl_v1);
+    viennacl::copy(ublas_v2, vcl_v2);
+
+    {
+      std::cout << "Testing vector created from slice... ";
+      ublas_v2 = ublas_v1_sub1;
+      VCLVectorType vcl_ctor_1 = vcl_v1_sub1;
+      check_for_equality(ublas_v1, vcl_v1);
+      
+      std::cout << "Testing slice created from slice... ";
+      ublas_v1_sub1 = ublas_v1_sub3;
+      VCLVectorType vcl_ctor_sub1 = vcl_v1_sub3;
+      check_for_equality(ublas_v1, vcl_v1);
+    }
+    
     
     std::cout << "//" << std::endl;
     std::cout << "////////// Test: Inplace add //////////" << std::endl;
@@ -231,23 +251,23 @@ int run_test()
     std::cout << "Testing inplace sub at beginning of v1: ";
     ublas_v1_sub1 -= ublas_v1_sub1;
     vcl_v1_sub1 -= vcl_v1_sub1;
-    
     check_for_equality(ublas_v1, vcl_v1);
-    
 
     std::cout << "Testing inplace sub at middle of v1: ";
     ublas_v1_sub2 -= ublas_v1_sub2;
     vcl_v1_sub2 -= vcl_v1_sub2;
-
     check_for_equality(ublas_v1, vcl_v1);
-
 
     std::cout << "Testing inplace sub at end of v1: ";
     ublas_v1_sub3 -= ublas_v1_sub3;
     vcl_v1_sub3 -= vcl_v1_sub3;
-
     check_for_equality(ublas_v1, vcl_v1);
 
+    std::cout << "Testing inplace sub of slice with vector ";
+    ublas_v2 -= ublas_v1_sub3;
+    vcl_v2 -= vcl_v1_sub3;
+    check_for_equality(ublas_v2, vcl_v2);
+    
     std::cout << "Testing inplace sub of vector with slice: ";
     viennacl::copy(ublas_v2, vcl_v2);
     ublas_v1_sub2 -= ublas_v2;
@@ -361,6 +381,10 @@ int run_test()
       std::cout << "ViennaCL: " << result_viennacl << std::endl;
       return EXIT_FAILURE;
     }
+
+    std::cout << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << std::endl;
 
     return EXIT_SUCCESS;
 }    

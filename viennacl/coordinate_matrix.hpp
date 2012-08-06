@@ -183,7 +183,7 @@ namespace viennacl
     * @tparam SCALARTYPE    The floating point type (either float or double, checked at compile time)
     * @tparam ALIGNMENT     The internal memory size for the arrays, given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two.
     */
-    template<class SCALARTYPE, unsigned int ALIGNMENT /* see VCLForwards.h */ >
+    template<class SCALARTYPE, unsigned int ALIGNMENT /* see forwards.h */ >
     class coordinate_matrix
     {
     public:

@@ -286,9 +286,13 @@ set(NMF_SRCS
    nmf/align1/sub_wise.cl
    )
 
+set(ILU_SRCS
+   ilu/align1/block_ilu_substitute.cl
+   )
+
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS)
+      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
    configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
@@ -326,6 +330,7 @@ foreach(d
       svd
       spai
       nmf
+      ilu
       )
    set(f "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels/${d}")
    list(APPEND KERNEL_HDRS "${f}_kernels.h")

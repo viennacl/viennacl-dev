@@ -83,42 +83,14 @@ namespace viennacl
       /** @brief Convenience function, which allows to assign a vector directly to a vector range of suitable size */
       self_type & operator=(const VectorType & v) 
       {
-        assert(size() == v.size() && "Vector range and vector size mismatch!");
-        
-        if (size() > 0)
-        {
-          cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
-                                           v.handle().get(),     // src buffer
-                                           v_.handle().get(),    //dest buffer
-                                           0,                    // src offset
-                                           sizeof(cpu_value_type) * start(), //dest offset
-                                           sizeof(cpu_value_type) * size(),  //number of bytes to be copied
-                                           0, NULL, NULL);
-                                           
-          VIENNACL_ERR_CHECK(err);
-        }
-        
+        viennacl::linalg::assign(*this, v);
         return *this;
       }      
 
       /** @brief Convenience function, which allows to assign a vector range directly to another vector range of suitable size */
       self_type & operator=(const self_type & v) 
       {
-        assert(size() == v.size() && "Sizes of vector ranges don't match!");
-        
-        if (size() > 0)
-        {
-          cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
-                                           v.get().handle().get(),   // src buffer
-                                           v_.handle().get(),        //dest buffer
-                                           sizeof(cpu_value_type) * v.start(),   // src offset
-                                           sizeof(cpu_value_type) * start(),     //dest offset
-                                           sizeof(cpu_value_type) * size(),      //number of bytes to be copied
-                                           0, NULL, NULL);
-                                           
-          VIENNACL_ERR_CHECK(err);
-        }
-        
+        viennacl::linalg::assign(*this, v);
         return *this;
       }      
 
@@ -248,26 +220,32 @@ namespace viennacl
   };
   
   
+  //implement copy-CTOR for vector from vector_range:
+  
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(const vector_range< viennacl::vector<SCALARTYPE, ALIGNMENT> > & r) : size_(r.size())
+  {
+    assert(this->size() == r.size() && "Vector size mismatch!");
+    
+    if (this->size() > 0)
+    {
+      this->elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
+      
+      viennacl::linalg::assign(*this, r);
+    }
+    
+  }
+  
+  
+  
   //implement operator= for vector:
   
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
   viennacl::vector<SCALARTYPE, ALIGNMENT> & 
   viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const vector_range< viennacl::vector<SCALARTYPE, ALIGNMENT> > & r) 
   {
-    assert(this->size() == r.size() && "Vector size mismatch!");
-    
     if (this->size() > 0)
-    {
-      cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
-                                        r.get().handle().get(),      // src buffer
-                                        this->handle().get(),        //dest buffer
-                                        sizeof(SCALARTYPE) * r.start(),       // src offset
-                                        0,                                    //dest offset
-                                        sizeof(SCALARTYPE) * r.size(), //number of bytes to be copied
-                                        0, NULL, NULL);
-                                        
-      VIENNACL_ERR_CHECK(err);
-    }
+      viennacl::linalg::assign(*this, r);
     
     return *this;
   }
@@ -587,6 +565,22 @@ namespace viennacl
       VectorType & v_;
       slice entry_slice_;
   };
+  
+  
+  //implement copy-CTOR for vector from vector_slice:
+  
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(const vector_slice< viennacl::vector<SCALARTYPE, ALIGNMENT> > & r) : size_(r.size())
+  {
+    if (this->size() > 0)
+    {
+      this->elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
+      
+      viennacl::linalg::assign(*this, r);
+    }
+    
+  }
+  
   
   
   //implement operator= for vector:

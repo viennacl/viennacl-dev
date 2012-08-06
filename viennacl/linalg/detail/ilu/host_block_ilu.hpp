@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_DETAIL_BLOCK_ILU_HPP_
-#define VIENNACL_LINALG_DETAIL_BLOCK_ILU_HPP_
+#ifndef VIENNACL_LINALG_DETAIL_HOST_BLOCK_ILU_HPP_
+#define VIENNACL_LINALG_DETAIL_HOST_BLOCK_ILU_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,8 +17,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/detail/ilu/block_ilu.hpp
-    @brief Implementations of incomplete factorization preconditioners
+/** @file viennacl/linalg/detail/ilu/host_block_ilu.hpp
+    @brief Implementations of incomplete block factorization preconditioners (host-based, no OpenCL)
 */
 
 #include <vector>
@@ -204,114 +204,6 @@ namespace viennacl
         std::vector< InternalMatrixType > LU_blocks;
     };
 
-    
-    /** @brief ILUT preconditioner class, can be supplied to solve()-routines.
-    *
-    *  Specialization for compressed_matrix
-    */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT, typename ILUTag>
-    class block_ilu_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT>, ILUTag >
-    {
-        typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>        MatrixType;
-        typedef std::vector< std::map<unsigned int, ScalarType> >   InternalMatrixType;
-        typedef std::vector<ScalarType>                             STLVectorType;
-      
-      public:
-        typedef std::vector<std::pair<std::size_t, std::size_t> >    index_vector_type;   //the pair refers to index range [a, b) of each block
-          
-        
-        
-        block_ilu_precond(MatrixType const & mat,
-                          ILUTag const & tag,
-                          std::size_t num_blocks = 4
-                         ) : tag_(tag), LU_blocks(num_blocks)
-        {
-          
-          // Set up vector of block indices:
-          block_indices_.resize(num_blocks);
-          for (std::size_t i=0; i<num_blocks; ++i)
-          {
-            std::size_t start_index = (   i  * mat.size1()) / num_blocks;
-            std::size_t stop_index  = ((i+1) * mat.size1()) / num_blocks;
-            
-            block_indices_[i] = std::pair<std::size_t, std::size_t>(start_index, stop_index);
-          }
-          
-          //initialize preconditioner:
-          //std::cout << "Start CPU precond" << std::endl;
-          init(mat);          
-          //std::cout << "End CPU precond" << std::endl;
-        }
-
-        block_ilu_precond(MatrixType const & mat,
-                          ILUTag const & tag,
-                          index_vector_type const & block_boundaries
-                         ) : tag_(tag), block_indices_(block_boundaries), LU_blocks(block_boundaries.size())
-        {
-          //initialize preconditioner:
-          //std::cout << "Start CPU precond" << std::endl;
-          init(mat);          
-          //std::cout << "End CPU precond" << std::endl;
-        }
-        
-        
-        void apply(vector<ScalarType> & vec) const
-        {
-          viennacl::copy(vec, temp_vec);
-          
-          for (std::size_t i=0; i<block_indices_.size(); ++i)
-          {
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU_blocks[i],
-                                                                                      LU_blocks[i].size(),
-                                                                                      LU_blocks[i].size());
-            detail::ilu_vector_range<STLVectorType>  vec_range(temp_vec,
-                                                            block_indices_[i].first,
-                                                            LU_blocks[i].size());
-            viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec_range);
-          }
-                    
-          viennacl::copy(temp_vec, vec);
-        }
-        
-      private:
-        void init(MatrixType const & mat)
-        {
-          InternalMatrixType temp(mat.size1());
-          //std::vector< std::map<unsigned int, ScalarType> > LU_cpu(mat.size1());
-
-          //copy to cpu:
-          viennacl::copy(mat, temp);
-          
-          for (std::size_t i=0; i<block_indices_.size(); ++i)
-          {
-            // Step 1: Extract blocks
-            std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
-            InternalMatrixType mat_block(block_size);
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType>  temp_adapter(temp, temp.size(), temp.size());
-            detail::extract_block_matrix(temp_adapter, mat_block, block_indices_[i].first, block_indices_[i].second);
-            
-            
-            // Step 2: Precondition blocks:
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType>  mat_block_adapter(mat_block, block_size, block_size);
-            viennacl::tools::sparse_matrix_adapter<ScalarType>        LU_adapter(LU_blocks[i], block_size, block_size);
-            viennacl::linalg::precondition(mat_block_adapter, LU_adapter, tag_);
-          }
-          
-          //viennacl::tools::const_sparse_matrix_adapter<ScalarType>       temp_adapter(temp, temp.size(), temp.size());
-          //viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU, LU.size(), LU.size());
-          //viennacl::linalg::precondition(temp_adapter, LU_adapter, _tag);
-          
-          temp_vec.resize(mat.size1());
-          
-          //copy resulting preconditioner back to gpu:
-          //copy(LU_cpu, LU);
-        }
-        
-        ILUTag const & tag_;
-        index_vector_type block_indices_;
-        std::vector< InternalMatrixType > LU_blocks;
-        mutable STLVectorType temp_vec;
-    };
 
   }
 }

@@ -23,7 +23,8 @@
 
 #include "viennacl/linalg/detail/ilu/ilut.hpp"
 #include "viennacl/linalg/detail/ilu/ilu0.hpp"
-#include "viennacl/linalg/detail/ilu/block_ilu.hpp"
+#include "viennacl/linalg/detail/ilu/host_block_ilu.hpp"
+//#include "viennacl/linalg/detail/ilu/opencl_block_ilu.hpp" //to be enabled in 1.4.0
 
 #endif
 

@@ -115,7 +115,7 @@ int run_test()
     std::size_t dim_large = 151;
     std::size_t dim_small = 37;
     //std::size_t dim_large = 35;
-    //std::size_t dim_small = 17;
+    //std::size_t dim_small = 11;
     
     //setup ublas objects:
     MatrixType ublas_A(dim_large, dim_large);
@@ -163,6 +163,76 @@ int run_test()
     
     viennacl::matrix_range<VCLMatrixType>   vcl_C_sub(vcl_C, vcl_r1, vcl_r1);
     viennacl::matrix_range<VCLMatrixType>   vcl_D_sub(vcl_D, vcl_r1, vcl_r1);
+
+    std::cout << std::endl;
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Copy CTOR //////////" << std::endl;
+    std::cout << "//" << std::endl;
+
+    {
+      std::cout << "Testing matrix created from range... ";
+      ublas_B = ublas_A_sub1;
+      VCLMatrixType vcl_temp = vcl_A_sub1;
+      if (check_for_equality(ublas_B, vcl_temp))
+        std::cout << "PASSED!" << std::endl;
+      else
+      {
+        std::cout << std::endl << "TEST failed!";
+        return EXIT_FAILURE;
+      }
+      
+      std::cout << "Testing range created from range... ";
+      //ublas_A_sub1 = ublas_A_sub1;
+      VCLMatrixType vcl_ctor_sub1 = vcl_A_sub1;  //Note: This is mostly a compilation test only
+      if (check_for_equality(ublas_A, vcl_A))
+        std::cout << "PASSED!" << std::endl;
+      else
+      {
+        std::cout << std::endl << "TEST failed!";
+        return EXIT_FAILURE;
+      }
+    }
+    
+    
+    std::cout << std::endl;
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Assignments //////////" << std::endl;
+    std::cout << "//" << std::endl;
+
+    std::cout << "Testing matrix assigned to range... ";
+    ublas_A_sub1 = ublas_B;
+    vcl_A_sub1 = vcl_B;
+    if (check_for_equality(ublas_A, vcl_A))
+      std::cout << "PASSED!" << std::endl;
+    else
+    {
+      std::cout << std::endl << "TEST failed!";
+      return EXIT_FAILURE;
+    }
+    
+    std::cout << "Testing range assigned to matrix... ";
+    ublas_B = ublas_A_sub2;
+    vcl_B = vcl_A_sub2;
+    if (check_for_equality(ublas_B, vcl_B))
+      std::cout << "PASSED!" << std::endl;
+    else
+    {
+      std::cout << std::endl << "TEST failed!";
+      return EXIT_FAILURE;
+    }
+    
+    std::cout << "Testing range assigned to range... ";
+    ublas_A_sub1 = ublas_C_sub;
+    vcl_A_sub1 = vcl_C_sub;
+    if (check_for_equality(ublas_A, vcl_A))
+      std::cout << "PASSED!" << std::endl;
+    else
+    {
+      std::cout << std::endl << "TEST failed!";
+      return EXIT_FAILURE;
+    }
+    
+    
     
     std::cout << std::endl;
     std::cout << "//" << std::endl;
@@ -284,6 +354,18 @@ int run_test()
       std::cout << std::endl << "TEST failed!";
       return EXIT_FAILURE;
     }
+
+    std::cout << "Inplace add of matrix: ";
+    ublas_A_sub2 += ublas_B;
+    vcl_A_sub2 += vcl_B;
+
+    if (check_for_equality(ublas_A, vcl_A))
+      std::cout << "PASSED!" << std::endl;
+    else
+    {
+      std::cout << std::endl << "TEST failed!";
+      return EXIT_FAILURE;
+    }
     
     std::cout << "Add to submatrix: ";
     ublas_A_sub2 = ublas_A_sub2 + ublas_A_sub2;
@@ -309,12 +391,14 @@ int run_test()
       return EXIT_FAILURE;
     }
     
+    
+    
     std::cout << "//" << std::endl;
     std::cout << "////////// Test 4: Subtraction //////////" << std::endl;
     std::cout << "//" << std::endl;
     viennacl::copy(ublas_A_sub2, vcl_A_sub2);
     
-    std::cout << "Inplace add to submatrix: ";
+    std::cout << "Inplace sub to submatrix: ";
     ublas_A_sub2 -= ublas_A_sub2;
     vcl_A_sub2 -= vcl_A_sub2;
 
@@ -326,7 +410,7 @@ int run_test()
       return EXIT_FAILURE;
     }
 
-    std::cout << "Inplace add to matrix: ";
+    std::cout << "Inplace sub to matrix: ";
     ublas_B -= ublas_A_sub2;
     vcl_B -= vcl_A_sub2;
 
@@ -338,7 +422,19 @@ int run_test()
       return EXIT_FAILURE;
     }
     
-    std::cout << "Add to submatrix: ";
+    std::cout << "Inplace sub of matrix: ";
+    ublas_A_sub2 -= ublas_B;
+    vcl_A_sub2 -= vcl_B;
+
+    if (check_for_equality(ublas_A, vcl_A))
+      std::cout << "PASSED!" << std::endl;
+    else
+    {
+      std::cout << std::endl << "TEST failed!";
+      return EXIT_FAILURE;
+    }
+    
+    std::cout << "Sub from submatrix: ";
     ublas_A_sub2 = ublas_A_sub2 - ublas_A_sub2;
     vcl_A_sub2 = vcl_A_sub2 - vcl_A_sub2;
 
@@ -350,7 +446,7 @@ int run_test()
       return EXIT_FAILURE;
     }
 
-    std::cout << "Add to matrix: ";
+    std::cout << "Sub from matrix: ";
     ublas_B = ublas_A_sub2 - ublas_A_sub2;
     vcl_B = vcl_A_sub2 - vcl_A_sub2;
 
@@ -361,6 +457,7 @@ int run_test()
       std::cout << std::endl << "TEST failed!";
       return EXIT_FAILURE;
     }
+    
     
     std::cout << "//" << std::endl;
     std::cout << "////////// Test 5: Scaling //////////" << std::endl;
@@ -517,6 +614,10 @@ int run_test()
       std::cout << std::endl << "TEST failed!";
       return EXIT_FAILURE;
     }
+
+    std::cout << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << std::endl;
 
 
     return EXIT_SUCCESS;

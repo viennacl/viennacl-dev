@@ -285,6 +285,12 @@ namespace viennacl
           VIENNACL_ERR_CHECK(err);
         }
       }
+      
+      // copy-create vector range or vector slice (implemented in vector_proxy.hpp)
+      vector(const vector_range<self_type> &);
+      vector(const vector_slice<self_type> &);
+      
+      
 
       /** @brief Assignment operator. This vector is resized if 'vec' is of a different size.
       */
@@ -898,6 +904,22 @@ namespace viennacl
         return *this;
       }
 
+      /** @brief Inplace addition of a vector with a range
+      */
+      self_type & operator += (const vector_range<self_type> & vec)
+      {
+        viennacl::linalg::inplace_add(*this, vec);
+        return *this;
+      }
+
+      /** @brief Inplace addition of a vector with a slice
+      */
+      self_type & operator += (const vector_slice<self_type> & vec)
+      {
+        viennacl::linalg::inplace_add(*this, vec);
+        return *this;
+      }
+      
       /** @brief Inplace addition of a scaled vector, i.e. v1 += alpha * v2, where alpha is a GPU scalar
       */
       self_type & operator += (const vector_expression< const self_type,
@@ -938,6 +960,22 @@ namespace viennacl
         return *this;
       }
 
+      /** @brief Inplace addition of a vector with a range
+      */
+      self_type & operator -= (const vector_range<self_type> & vec)
+      {
+        viennacl::linalg::inplace_sub(*this, vec);
+        return *this;
+      }
+
+      /** @brief Inplace addition of a vector with a slice
+      */
+      self_type & operator -= (const vector_slice<self_type> & vec)
+      {
+        viennacl::linalg::inplace_sub(*this, vec);
+        return *this;
+      }
+      
       /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= alpha * v2, where alpha is a GPU scalar
       */
       self_type & operator -= (const vector_expression< const self_type,

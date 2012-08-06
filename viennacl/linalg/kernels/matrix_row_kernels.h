@@ -1,5 +1,5 @@
-#ifndef _VIENNACL_MATRIX_ROW_KERNELS_HPP_
-#define _VIENNACL_MATRIX_ROW_KERNELS_HPP_
+#ifndef VIENNACL_MATRIX_ROW_KERNELS_HPP_
+#define VIENNACL_MATRIX_ROW_KERNELS_HPP_
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"

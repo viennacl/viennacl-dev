@@ -266,8 +266,8 @@ void createKernelFile(const char * dirname)
     //Step 2: Write kernel header file preamble
     std::string dirname_uppercase(dirname);
     std::transform(dirname_uppercase.begin(), dirname_uppercase.end(), dirname_uppercase.begin(), toupper);
-    kernel_file << "#ifndef _VIENNACL_" << dirname_uppercase << "_KERNELS_HPP_" << std::endl;
-    kernel_file << "#define _VIENNACL_" << dirname_uppercase << "_KERNELS_HPP_" << std::endl;
+    kernel_file << "#ifndef VIENNACL_" << dirname_uppercase << "_KERNELS_HPP_" << std::endl;
+    kernel_file << "#define VIENNACL_" << dirname_uppercase << "_KERNELS_HPP_" << std::endl;
     kernel_file << "#include \"viennacl/tools/tools.hpp\"" << std::endl;
     kernel_file << "#include \"viennacl/ocl/kernel.hpp\"" << std::endl;
     kernel_file << "#include \"viennacl/ocl/platform.hpp\"" << std::endl;
@@ -379,5 +379,6 @@ int main(int args, char * argsv[])
     createHeaders("svd");
     createHeaders("spai");
     createHeaders("nmf");
+    createHeaders("ilu");
 }
 
