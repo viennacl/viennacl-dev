@@ -11,7 +11,7 @@ project(ViennaCL)
 
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 3)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 1)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosity
@@ -84,7 +84,7 @@ add_subdirectory(doc)
 # Install
 #########
 
-install(DIRECTORY viennacl ${PROJECT_SOURCE_DIR}/viennacl
+install(DIRECTORY viennacl ${CMAKE_CURRENT_BINARY_DIR}/viennacl
    DESTINATION ${INSTALL_INCLUDE_DIR} COMPONENT dev
    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
@@ -167,7 +167,7 @@ if(ENABLE_DIST)
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/viennacl" "${DISTDIR}/viennacl"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels"
+         "${CMAKE_CURRENT_BINARY_DIR}/viennacl/linalg/kernels"
          "${DISTDIR}/viennacl/linalg/kernels"
 
       COMMAND "${CMAKE_COMMAND}" -E tar czf ViennaCL-${VERSION}-all-arch.tar.gz
@@ -230,6 +230,8 @@ if(ENABLE_DIST)
          "${PROJECT_SOURCE_DIR}/auxiliary/spai" "${DIST_SOURCES_DIR}/auxiliary/spai"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/auxiliary/nmf" "${DIST_SOURCES_DIR}/auxiliary/nmf"
+      COMMAND "${CMAKE_COMMAND}" -E copy_directory
+         "${PROJECT_SOURCE_DIR}/auxiliary/ilu" "${DIST_SOURCES_DIR}/auxiliary/ilu"
       COMMAND "${CMAKE_COMMAND}" -E copy
          "${PROJECT_SOURCE_DIR}/auxiliary/CMakeLists.txt" "${DIST_SOURCES_DIR}/auxiliary/CMakeLists.txt"
       COMMAND "${CMAKE_COMMAND}" -E copy
@@ -261,7 +263,7 @@ if(ENABLE_DIST)
          "${PROJECT_SOURCE_DIR}/doc/manual/figures" "${DIST_SOURCES_DIR}/doc/manual/figures"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_SOURCE_DIR}/doc/Doxyfile.in.src" "${DIST_SOURCES_DIR}/doc/Doxyfile.in"
+         "${PROJECT_SOURCE_DIR}/doc/Doxyfile.in" "${DIST_SOURCES_DIR}/doc/Doxyfile.in"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/doc/CMakeLists.txt" "${DIST_SOURCES_DIR}/doc/CMakeLists.txt"

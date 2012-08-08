@@ -514,7 +514,7 @@ Here, \lstinline|A| is the inplace QR-factored matrix, \lstinline|betas| are the
 \NOTE{Singular Value Decomposition is experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
 be included in future releases!}
 
-\NOTE{Singular Value Decomposition in {\ViennaCLversion} is provided for a row-major matrix $A$ with single precision floating point entries (\lstinline|float|) only.}
+\NOTE{Singular Value Decomposition in {\ViennaCLversion} is provided for row-major dense matrices only.}
 
 Any matrix $A$ can be factored as
 \begin{align}
@@ -522,10 +522,11 @@ Any matrix $A$ can be factored as
 \end{align}
 with orthogonal matrices $U$ and $V$ and a diagonal matrix $\Sigma$ consisting of non-negative diagonal entries only.
 
+The implementation in \texttt{viennacl/linalg/svd.hpp} provides the singular value decomposition as follows:
 \begin{lstlisting}
- viennacl::matrix<ScalarType> A(size1, size2),
- viennacl::matrix<ScalarType> U(size1, size1),
- viennacl::matrix<ScalarType> V(size2, size2),
+ viennacl::matrix<ScalarType> A(size1, size2);
+ viennacl::matrix<ScalarType> U(size1, size1);
+ viennacl::matrix<ScalarType> V(size2, size2);
 
  viennacl::linalg::svd(A, U, V);
 \end{lstlisting}
@@ -539,11 +540,13 @@ In various fields such as text mining, a matrix $V$ needs to be factored into fa
 \begin{align*}
  f(W, H) = \Vert V - WH \Vert_{\mathrm{F}}^2
 \end{align*}
-is minimized. The algorithm proposed by Lee and Seoung \cite{lee:nmf} is available in ViennaCL as
+is minimized. The algorithm proposed by Lee and Seoung \cite{lee:nmf} is available in ViennaCL in the header file \texttt{viennacl/linalg/nmf.hpp} as
 \begin{lstlisting}
- viennacl::matrix<ScalarType> V(size1, size2),
- viennacl::matrix<ScalarType> W(size1, size1),
- viennacl::matrix<ScalarType> H(size2, size2),
+ viennacl::matrix<ScalarType> V(size1, size2);
+ viennacl::matrix<ScalarType> W(size1, k);
+ viennacl::matrix<ScalarType> H(k, size2);
 
- viennacl::linalg::nmf(V, W, H);
+ viennacl::linalg::nmf_config conf;
+ viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
 \end{lstlisting}
+For an overview of the parameters (tolerances) of the configuration object \lstinline|conf|, please refer to the Doxygen documentation in \texttt{doc/doxygen/}.

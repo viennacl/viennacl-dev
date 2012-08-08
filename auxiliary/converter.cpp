@@ -53,7 +53,7 @@ void createSourceFile(const char * dirname)
 {
     //Step 1: Open source file
     std::string header_name(dirname);
-    std::ofstream source_file(("../../viennacl/linalg/kernels/" + header_name + "_source.h").c_str());
+    std::ofstream source_file(("@PROJECT_BINARY_DIR@/viennacl/linalg/kernels/" + header_name + "_source.h").c_str());
 
     //Step 2: Write source header file preamble
     std::string dirname_uppercase(dirname);
@@ -261,7 +261,7 @@ void createKernelFile(const char * dirname)
 {
     //Step 1: Open kernel file
     std::string header_name(dirname);
-    std::ofstream kernel_file(("../../viennacl/linalg/kernels/" + header_name + "_kernels.h").c_str());
+    std::ofstream kernel_file(("@PROJECT_BINARY_DIR@/viennacl/linalg/kernels/" + header_name + "_kernels.h").c_str());
 
     //Step 2: Write kernel header file preamble
     std::string dirname_uppercase(dirname);

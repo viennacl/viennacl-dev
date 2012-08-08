@@ -300,7 +300,8 @@ foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS
 endforeach()
 list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
 
-add_executable(converter converter.cpp)
+configure_file(converter.cpp ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp @ONLY)
+add_executable(converter ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp)
 target_link_libraries(converter ${Boost_LIBRARIES})
 
 set(KERNEL_HDRS)
@@ -332,12 +333,12 @@ foreach(d
       nmf
       ilu
       )
-   set(f "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels/${d}")
+   set(f "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels/${d}")
    list(APPEND KERNEL_HDRS "${f}_kernels.h")
    list(APPEND KERNEL_SRCS "${f}_source.h")
 endforeach()
 
-file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/viennacl/linalg/kernels")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels")
 
 add_custom_command(OUTPUT ${KERNEL_HDRS} ${KERNEL_SRCS}
    COMMAND converter

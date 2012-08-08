@@ -44,38 +44,39 @@ namespace viennacl
       class runtime_wrapper
       {
         protected:
-	        bool is_temporary_;
-	        std::string name_;
-	        int arg_id_;
-	        
+          bool is_temporary_;
+          std::string name_;
+          int arg_id_;
+          
         public:
-	        runtime_wrapper(bool _is_temporary, std::string const & _name, int _arg_id) 
-	         : is_temporary_(_is_temporary), name_(_name), arg_id_(_arg_id) {}
-	         
-	        bool is_temporary() const { return is_temporary_; }
-	        int arg_id() const { return arg_id_; }
-	        std::string name() const { return name_; }
-	        
-	        virtual void enqueue(unsigned int arg_pos, 
-	                             viennacl::ocl::kernel & k,
-	                             std::map<unsigned int, viennacl::any> & runtime_args,
-	                             std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries) = 0;
+          runtime_wrapper(bool _is_temporary, std::string const & _name, int _arg_id) 
+            : is_temporary_(_is_temporary), name_(_name), arg_id_(_arg_id) {}
+          virtual ~runtime_wrapper() {}
+            
+          bool is_temporary() const { return is_temporary_; }
+          int arg_id() const { return arg_id_; }
+          std::string name() const { return name_; }
+
+          virtual void enqueue(unsigned int arg_pos, 
+                               viennacl::ocl::kernel & k,
+                               std::map<unsigned int, viennacl::any> & runtime_args,
+                               std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries) = 0;
       };
 
       class shared_memory_wrapper : public runtime_wrapper
       {
         public:
-	        shared_memory_wrapper() : runtime_wrapper(true, "shared_memory_ptr", -1 ){ }
-	
-	        void enqueue(unsigned int arg_pos,
-	                     viennacl::ocl::kernel & k,
-	                     std::map<unsigned int, viennacl::any> & runtime_args,
-	                     std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
-	        {
-		        unsigned int lmem_size = k.local_work_size();
-		        k.arg(arg_pos, viennacl::ocl::local_mem(lmem_size*sizeof(float)));
-	        }
-	
+          shared_memory_wrapper() : runtime_wrapper(true, "shared_memory_ptr", -1 ){ }
+  
+          void enqueue(unsigned int arg_pos,
+                       viennacl::ocl::kernel & k,
+                       std::map<unsigned int, viennacl::any> & runtime_args,
+                       std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
+          {
+            unsigned int lmem_size = k.local_work_size();
+            k.arg(arg_pos, viennacl::ocl::local_mem(lmem_size*sizeof(float)));
+          }
+      
       };
 
       template <class T, class SIZE_T>
@@ -96,7 +97,7 @@ namespace viennacl
           template<typename ScalarType, class F, unsigned int Alignment>
           typename SIZE_T::size_type internal_size(viennacl::matrix<ScalarType,F,Alignment> * size_arg) { return size_arg->internal_size2(); }
           
-    public:
+        public:
           vector_runtime_wrapper(bool _is_temporary, std::string const & _name, int _arg_id, unsigned int _size_id) 
             : runtime_wrapper(_is_temporary,_name,_arg_id),size_id_(_size_id) {}
             
@@ -110,23 +111,23 @@ namespace viennacl
             viennacl::ocl::handle<cl_mem> handle = NULL;
             if(is_temporary_)
             {
-	            if(temporaries.find(name_)==temporaries.end())
-	            {
-		            temporaries.insert(
-		             std::make_pair(name_,
-		                            viennacl::ocl::handle<cl_mem>(
-		                              viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-		                                                                             size_arg->internal_size()*sizeof(typename T::value_type))
-		                                                                            )
-		                           )
-		                              );
-	            }
-	            handle = temporaries[name_];
+              if(temporaries.find(name_)==temporaries.end())
+              {
+                temporaries.insert(
+                  std::make_pair(name_,
+                                 viennacl::ocl::handle<cl_mem>(
+                                 viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                size_arg->internal_size()*sizeof(typename T::value_type))
+                                                                                )
+                                )
+                                  );
+              }
+              handle = temporaries[name_];
             }
             else
             {
-	            T * current_arg = viennacl::any_cast<T * >(runtime_args[arg_id_]);
-	            handle = current_arg->handle();
+              T * current_arg = viennacl::any_cast<T * >(runtime_args[arg_id_]);
+              handle = current_arg->handle();
             }
             k.arg(arg_pos, handle );
             k.arg(arg_pos+1,cl_uint(size(size_arg)));
@@ -164,8 +165,8 @@ namespace viennacl
       struct matrix_runtime_wrapper : public runtime_wrapper
       {
         private:
-	        unsigned int size1_id_;
-	        unsigned int size2_id_;
+          unsigned int size1_id_;
+          unsigned int size2_id_;
         public:
           matrix_runtime_wrapper(bool _is_temporary, 
                                  std::string const & _name,
@@ -182,16 +183,16 @@ namespace viennacl
                        std::map<std::string,
                        viennacl::ocl::handle<cl_mem> > & temporaries)
           { 
-	          if (is_temporary_) {}
-	          
-	          T * current_arg = any_cast<T * >(runtime_args[arg_id_]);
-	          SIZE1_T * size1_arg = any_cast<SIZE1_T * >(runtime_args[size1_id_]);
-	          SIZE2_T * size2_arg = any_cast<SIZE2_T * >(runtime_args[size2_id_]);
-	          k.arg(arg_pos, current_arg->handle());
-	          k.arg(arg_pos+1,cl_uint(size1_arg->size1()));
-	          k.arg(arg_pos+2,cl_uint(size2_arg->size2()));
-	          k.arg(arg_pos+3,cl_uint(size1_arg->internal_size1()));
-	          k.arg(arg_pos+4,cl_uint(size2_arg->internal_size2()));
+            if (is_temporary_) {}
+            
+            T * current_arg = any_cast<T * >(runtime_args[arg_id_]);
+            SIZE1_T * size1_arg = any_cast<SIZE1_T * >(runtime_args[size1_id_]);
+            SIZE2_T * size2_arg = any_cast<SIZE2_T * >(runtime_args[size2_id_]);
+            k.arg(arg_pos, current_arg->handle());
+            k.arg(arg_pos+1,cl_uint(size1_arg->size1()));
+            k.arg(arg_pos+2,cl_uint(size2_arg->size2()));
+            k.arg(arg_pos+3,cl_uint(size1_arg->internal_size1()));
+            k.arg(arg_pos+4,cl_uint(size2_arg->internal_size2()));
           }
       };
           
@@ -243,10 +244,10 @@ namespace viennacl
       template <class LHS, class RHS, bool is_temporary>
       struct scalar_size_descriptor<compound_node<LHS,inner_prod_type,RHS,is_temporary> >
       {
-	      static unsigned int size(viennacl::ocl::kernel & k)
-	      {
-		      return k.global_work_size(0)/k.local_work_size(0);
-	      }
+        static unsigned int size(viennacl::ocl::kernel & k)
+        {
+          return k.global_work_size(0)/k.local_work_size(0);
+        }
       };
 
       template <class T>
@@ -263,30 +264,30 @@ namespace viennacl
                      std::map<std::string, 
                      viennacl::ocl::handle<cl_mem> > & temporaries)
         {
-		      if(is_temporary_)
-		      {
-			      if(temporaries.find(name_)==temporaries.end()) 
-			      {
-				      temporaries.insert(
-  				         std::make_pair(name_,
-                                  viennacl::ocl::handle<cl_mem>(
-                                  viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                 scalar_size_descriptor<T>::size(k)*sizeof(ScalarType))
-                                                               )
-                                 )
-                               );
-			      }
-			      k.arg(arg_pos, temporaries[name_]);
-		      }
-		      
-		      if(arg_id_==-2)
-			      k.arg(arg_pos, temporaries[name_]);
-		      else
-		      {
-			      viennacl::scalar<ScalarType>* current_arg = any_cast<viennacl::scalar<ScalarType> * >(runtime_args[arg_id_]);
-			      k.arg(arg_pos, current_arg->handle());
-		      }
-		
+          if(is_temporary_)
+          {
+            if(temporaries.find(name_)==temporaries.end()) 
+            {
+              temporaries.insert(
+                        std::make_pair(name_,
+                viennacl::ocl::handle<cl_mem>(
+                viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                scalar_size_descriptor<T>::size(k)*sizeof(ScalarType))
+                                              )
+                )
+              );
+            }
+            k.arg(arg_pos, temporaries[name_]);
+          }
+          
+          if(arg_id_==-2)
+                  k.arg(arg_pos, temporaries[name_]);
+          else
+          {
+            viennacl::scalar<ScalarType>* current_arg = any_cast<viennacl::scalar<ScalarType> * >(runtime_args[arg_id_]);
+            k.arg(arg_pos, current_arg->handle());
+          }
+    
         }
       };
 

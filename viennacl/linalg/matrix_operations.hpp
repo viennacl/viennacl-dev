@@ -440,31 +440,24 @@ namespace viennacl
                                          op_prod >(proxy, vec);
     }
 
-    /** @brief Unwraps the transposed matrix proxy and forwards to trans_prod_impl()
-    */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    void prod_impl(const viennacl::matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                      const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                      op_trans> & mat,
-                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec, 
-                          viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
-    {
-      trans_prod_impl(mat.lhs(), vec, result);
-    }
     
     /** @brief Carries out matrix-vector multiplication with a transposed matrix
     *
     * Implementation of the convenience expression result = trans(mat) * vec;
     *
-    * @param mat    The matrix
-    * @param vec    The vector
-    * @param result The result vector
+    * @param mat_trans  The transposed matrix proxy
+    * @param vec        The vector
+    * @param result     The result vector
     */
     template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    void trans_prod_impl(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                          const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec, 
-                                viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
+    void prod_impl(const viennacl::matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
+                                                      const matrix<SCALARTYPE, F, ALIGNMENT>,
+                                                      op_trans> & mat_trans,
+                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec, 
+                          viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
     {
+      const matrix<SCALARTYPE, F, ALIGNMENT> & mat = mat_trans.lhs();
+      
       assert(mat.size1() == vec.size());  //remember: mat is transposed!
       // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
       assert(vec.handle().get() != result.handle().get() && "No direct inplace matrix-vector product possible. Introduce a temporary!");
@@ -489,9 +482,6 @@ namespace viennacl
                                 cl_uint(viennacl::traits::size(result))
                              ) );
     }
-
-
-
 
 
     //

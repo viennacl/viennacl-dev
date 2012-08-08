@@ -88,6 +88,6 @@ add_subdirectory(doc)
 # Install
 #########
 
-install(DIRECTORY viennacl
+install(DIRECTORY viennacl ${CMAKE_CURRENT_BINARY_DIR}/viennacl
    DESTINATION ${INSTALL_INCLUDE_DIR} COMPONENT dev
    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
