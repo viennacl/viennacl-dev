@@ -13,7 +13,7 @@ The following bugfixes and enhancements have been applied:
  \item Block-ILU for \lstinline|compressed_matrix| is now applied on the GPU during the solver cycle phase. However, for the moment the implementation file in \newline \texttt{viennacl/linalg/detail/ilu/opencl\_block\_ilu.hpp} needs to be included separately in order to avoid an OpenCL dependency for all ILU implementations.
  \item SVD now supports double precision.
  \item Slighly adjusted the interface for NMF. The approximation rank is now specified by the supplied matrices $W$ and $H$.
- \item Fixed a problem with matrix-matrix products if the result matrix is not initialized properly.
+ \item Fixed a problem with matrix-matrix products if the result matrix is not initialized properly (thanks to Laszlo Marak for finding the issue and a fix).
  \item The operations $C += prod(A, B)$ and $C -= prod(A, B)$ for matrices A, B, and C no longer introduce temporaries if the three matrices are distinct.
 \end{itemize}
 
