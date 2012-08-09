@@ -156,7 +156,6 @@ namespace viennacl
           
           for (std::size_t i=0; i<block_indices_.size(); ++i)
           {
-            std::cout << "Extracting block " << i << std::endl;
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
             InternalMatrixType mat_block(block_size);
@@ -174,7 +173,6 @@ namespace viennacl
            * copy resulting preconditioner back to GPU:
            */
           
-          std::cout << "Copying to GPU..." << std::endl;
           std::vector<cl_uint> block_indices_uint(2 * block_indices_.size());
           for (std::size_t i=0; i<block_indices_.size(); ++i)
           {
@@ -208,7 +206,6 @@ namespace viennacl
           //
           for (std::size_t block_index = 0; block_index < LU_blocks.size(); ++block_index)
           {
-            std::cout << "Operating on block " << block_index << std::endl;
             InternalMatrixType const & current_block = LU_blocks[block_index];
             
             std::size_t block_start = block_indices_[block_index].first;
@@ -233,13 +230,9 @@ namespace viennacl
           //
           // Move data to GPU:
           //
-          std::cout << "Copying L^T..." << std::endl;
           viennacl::copy(L_transposed, gpu_L_trans);
-          std::cout << "Copying U^T..." << std::endl;
           viennacl::copy(U_transposed, gpu_U_trans);
-          std::cout << "Copying D..." << std::endl;
           viennacl::copy(entries_D, gpu_D);
-          std::cout << "Done!" << std::endl;
         }
         
         

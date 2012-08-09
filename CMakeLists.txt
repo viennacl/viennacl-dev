@@ -143,7 +143,7 @@ if(ENABLE_DIST)
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/doc/doxygen"
+         "${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen"
          "${DISTDIR}/doc/doxygen"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"

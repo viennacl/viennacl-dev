@@ -30,7 +30,6 @@
 #include <cmath>
 #include <algorithm>
 #include <stdio.h>
-#include <sys/time.h>
 #include <time.h>
 //#include <omp.h>
 #include "viennacl/scalar.hpp"
@@ -80,7 +79,7 @@ int main (int argc, const char * argv[])
     // Read system matrix from file
     //
     #ifdef _MSC_VER
-    if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
+    if (!viennacl::io::read_matrix_market_file(M, "../../examples/testdata/mat65k.mtx"))
     #else
     if (!viennacl::io::read_matrix_market_file(M, "../examples/testdata/mat65k.mtx"))
     #endif

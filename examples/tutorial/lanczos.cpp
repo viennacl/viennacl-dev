@@ -44,11 +44,10 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/operation.hpp> 
 #include <boost/numeric/ublas/vector_expression.hpp>
-#include <boost/filesystem.hpp>
 
 
 /*
-*   Tutorial: calculation of eigenvalues - lanczos and poweriteration
+*   Tutorial: calculation of eigenvalues - Lanczos
 */
 
 template <typename MatrixType>
@@ -70,15 +69,13 @@ int main()
   
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_A;
 
-  viennacl::compressed_matrix<double>  vcl_A(ublas_A.size1(), ublas_A.size2());  
-  viennacl::copy(ublas_A, vcl_A);
-  
   if (!viennacl::io::read_matrix_market_file(ublas_A, "../examples/testdata/mat65k.mtx"))
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
   
+  std::cout << "Running Lanczos algorithm (this might take a while)..." << std::endl;
   std::vector<double> eigenvalues = initEig(ublas_A);
 }
 

@@ -227,7 +227,7 @@ namespace viennacl {
         for(std::size_t i = 0; i < size; i++) {
             s << "(";
             for(std::size_t j = 0; j < size; j++) {
-                s << pow(tmp[i], j);
+                s << pow(tmp[i], static_cast<SCALARTYPE>(j));
                 if(j < (size - 1)) s << ",";
             }
             s << ")";

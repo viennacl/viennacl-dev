@@ -9,9 +9,6 @@ if(ENABLE_UBLAS)
       add_executable(${tut} ${tut}.cpp)
       target_link_libraries(${tut} ${OPENCL_LIBRARIES})
    endforeach()
-   
-   target_link_libraries(lanczos ${OPENCL_LIBRARIES} boost_system)
-   target_link_libraries(power-iter ${OPENCL_LIBRARIES} boost_system)
 endif()
 
 if(ENABLE_EIGEN)

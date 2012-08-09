@@ -68,9 +68,14 @@ namespace viennacl
         const viennacl::ocl::handle<cl_mem>& handle5() const { return csr_elements_; }  
     
       public:    
+      #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
+        template <typename CPU_MATRIX>
+        friend void copy(const CPU_MATRIX & cpu_matrix, hyb_matrix & gpu_matrix );
+      #else
         template <typename CPU_MATRIX, typename T, unsigned int ALIGN>
         friend void copy(const CPU_MATRIX & cpu_matrix, hyb_matrix<T, ALIGN> & gpu_matrix );
-
+      #endif
+        
       private:
         SCALARTYPE  csr_threshold_;
         std::size_t rows_;

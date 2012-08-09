@@ -65,9 +65,14 @@ namespace viennacl
         const viennacl::ocl::handle<cl_mem>& handle1( ) const { return elements_; } 
         const viennacl::ocl::handle<cl_mem>& handle2() const { return coords_; }
 
+      #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
+        template <typename CPU_MATRIX>
+        friend void copy(const CPU_MATRIX & cpu_matrix, ell_matrix & gpu_matrix );
+      #else
         template <typename CPU_MATRIX, typename T, unsigned int ALIGN>
         friend void copy(const CPU_MATRIX & cpu_matrix, ell_matrix<T, ALIGN> & gpu_matrix );
-
+      #endif        
+        
       private:
         std::size_t rows_;
         std::size_t cols_;

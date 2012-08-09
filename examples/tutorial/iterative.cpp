@@ -159,11 +159,13 @@ int main()
   //
   // set up ILUT preconditioners for ublas and ViennaCL objects:
   // 
+  std::cout << "Setting up preconditioners for uBLAS-matrix..." << std::endl;
   viennacl::linalg::ilut_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilut(ublas_matrix, viennacl::linalg::ilut_tag());
   viennacl::linalg::ilu0_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
   viennacl::linalg::block_ilu_precond< ublas::compressed_matrix<ScalarType>,
                                        viennacl::linalg::ilu0_tag>          ublas_block_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
   
+  std::cout << "Setting up preconditioners for ViennaCL-matrix..." << std::endl;
   viennacl::linalg::ilut_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilut(vcl_compressed_matrix, viennacl::linalg::ilut_tag());
   viennacl::linalg::ilu0_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilu0(vcl_compressed_matrix, viennacl::linalg::ilu0_tag());
   viennacl::linalg::block_ilu_precond< viennacl::compressed_matrix<ScalarType>,

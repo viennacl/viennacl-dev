@@ -636,7 +636,7 @@ namespace viennacl
   for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
   {
     y = col_iter.index2();
-    if (y == x || (std::abs(*col_iter) >= tag.get_threshold()*pow(0.5,level-1) * sqrt(std::abs(diag*A[level](y,y)))))
+    if (y == x || (std::abs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * sqrt(std::abs(diag*A[level](y,y)))))
     {
       // Neighborhood x includes point y
       Pointvector[level][x]->add_influencing_point(Pointvector[level][y]);
