@@ -64,9 +64,9 @@ namespace viennacl
         /** @brief The constructor
         *
         * @param factor                 Exponent of epsilon - tolerance for batches of Reorthogonalization
-        * @param num_eigenvalues        Number of eigenvalues to be returned
+        * @param numeig                 Number of eigenvalues to be returned
         * @param met                    Method for Lanczos-Algorithm: 0 for partial Reorthogonalization, 1 for full Reorthogonalization and 2 for Lanczos without Reorthogonalization
-        * @param krylov_size            Maximal krylov-space size
+        * @param krylov                 Maximum krylov-space size
         */
 
         lanczos_tag(double factor = 0.75,

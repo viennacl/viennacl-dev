@@ -26,9 +26,12 @@ ViennaCL requires the following:
 The first step is to extract the file:
 
 Unix-based OS:
-$> gunzip ViennaCL-1.3.0.tar.gz
-$> tar -xf ViennaCL-1.3.0.tar
-$> cd ViennaCL-1.3.0
+$> gunzip ViennaCL-1.3.1.tar.gz
+$> tar -xf ViennaCL-1.3.1.tar
+$> cd ViennaCL-1.3.1
+
+Windows:
+Extract the file using your favorite compressor/decompressor, e.g. 7-zip.
 
 ViennaCL is a header-only library, therefore it is sufficient to copy the subfolder viennacl/ (holding the header files) into you project directory or your system include directory. For instructions on how to set the include paths correctly, please refer to the documentation of your compiler.
 
@@ -39,23 +42,36 @@ Unix-based clients:
    $> cd build
  * call cmake
    $> cmake ..
+ * If CMake cannot find the OpenCL files, e.g. 'Could NOT find OPENCL (missing:  OPENCL_INCLUDE_DIR)', please set the paths manually, e.g.
+   $> cmake -DOPENCL_INCLUDE_DIR=../CL ..
+   or use the CMake GUI.
  * Use 'make' to build all examples:
    $> make
    (alternatively, you can build them individually via 'make blas1', 'make viennacl-info', etc.
  * Start the tutorials (optional)
-   $> ./blas1
-   $> ./custom-kernels
-   $> ./viennacl-info
+   $> examples/blas1
+   $> examples/custom-kernels
+   $> examples/viennacl-info
    (...)
 
+Windows:
+ * Open the CMake GUI
+ * Set the source code location ('Where is the source code:') to the extracted ViennaCL-1.x.x folder
+ * Set the build folder ('Where to build the binaries:') to the subfolder build/ in the ViennaCL-1.x.x folder.
+ * Click on 'Configure' and select your Compiler
+ * Click on 'Configure' again
+ * Click on 'Generate'
+ * Navigate to the build/ folder, open the generated project files with your favorite IDE, and build them.
 
 3. Project Layout
 -----------------
 
 ---- ViennaCL-1.X.X
    |
-   |-- auxiliary/ - Auxiliary files (i.e. the OpenCL source code tree and the converter for the header files)
+   |-- auxiliary/ - (only in src-Edition) Auxiliary files (i.e. the OpenCL source code tree and the converter for the header files)
    | 
+   |-- build/ - Build directory for building the examples
+   |
    |-- CL/ - The OpenCL headers
    |
    |-- cmake/ - Additional CMake configuration files

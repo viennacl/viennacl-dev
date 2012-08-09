@@ -77,9 +77,9 @@ namespace viennacl
         
         
         template <typename ScalarType>
-        friend void nmf(viennacl::matrix<ScalarType> const & v,
-                        viennacl::matrix<ScalarType> & w,
-                        viennacl::matrix<ScalarType> & h,
+        friend void nmf(viennacl::matrix<ScalarType> const & V,
+                        viennacl::matrix<ScalarType> & W,
+                        viennacl::matrix<ScalarType> & H,
                         nmf_config const & conf);
         
       private:

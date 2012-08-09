@@ -99,21 +99,30 @@ namespace viennacl
         typedef long                          difference_type;
         
         const_vector_iterator() {};
+        
         /** @brief Constructor
         *   @param vec    The vector over which to iterate
         *   @param index  The starting index of the iterator
+        *   @param start  First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
+        *   @param stride Stride for the support of vector_slice
         */        
         const_vector_iterator(vector<SCALARTYPE, ALIGNMENT> const & vec,
                               cl_uint index,
                               cl_uint start = 0,
                               vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {};
                               
+        /** @brief Constructor for vector-like treatment of arbitrary buffers
+        *   @param elements  The buffer over which to iterate
+        *   @param index     The starting index of the iterator
+        *   @param start     First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
+        *   @param stride    Stride for the support of vector_slice
+        */        
         const_vector_iterator(viennacl::ocl::handle<cl_mem> const & elements,
                               cl_uint index,
                               cl_uint start = 0,
                               vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {};
 
-        
+        /** @brief Dereferences the iterator and returns the value of the element. For convenience only, performance is poor due to OpenCL overhead! */
         value_type operator*(void) const 
         { 
            value_type result;
@@ -137,7 +146,10 @@ namespace viennacl
         self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff * stride_, start_, stride_); }
         
         //std::size_t index() const { return index_; }
+        /** @brief Offset of the current element index with respect to the beginning of the buffer */
         std::size_t offset() const { return start_ + index_ * stride_; }
+        
+        /** @brief Index increment in the underlying buffer when incrementing the iterator to the next element */
         std::size_t stride() const { return stride_; }
         viennacl::ocl::handle<cl_mem> const & handle() const { return elements_; }
 
