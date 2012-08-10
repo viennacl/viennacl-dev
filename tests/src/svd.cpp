@@ -12,7 +12,6 @@
 #include "examples/benchmarks/benchmark-utils.hpp"
 
 
-
 void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2) 
 {
   if(!f.is_open())

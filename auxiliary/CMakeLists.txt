@@ -260,14 +260,20 @@ set(FFT_SRCS
    )
 
 set(SVD_SRCS
+   svd/align1/bidiag_pack.cl
+   svd/align1/col_reduce_lcl_array.cl
    svd/align1/copy_col.cl
    svd/align1/copy_row.cl
-   svd/align1/transpose_inplace.cl
-   svd/align1/inverse_signs.cl
+   svd/align1/final_iter_update.cl
+   svd/align1/givens_next.cl
    svd/align1/givens_prev.cl
-   svd/align1/bidiag_pack.cl
-   svd/align1/house_col.cl
-   svd/align1/house_row.cl
+   svd/align1/house_update_A_left.cl
+   svd/align1/house_update_A_right.cl
+   svd/align1/house_update_QL.cl
+   svd/align1/house_update_QR.cl
+   svd/align1/inverse_signs.cl
+   svd/align1/transpose_inplace.cl
+   svd/align1/update_qr_column.cl
    )
 
 set(SPAI_SRCS

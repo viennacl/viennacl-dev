@@ -1,6 +1,6 @@
 foreach(PROG blas3 blas3range fft iterators
         generator_inner_product generator_matrix generator_matrix_vector_product generator_vector
-        matrix matrix_range matrix_slice nmf
+        matrix matrix_range matrix_slice nmf qr-method
         scalar sparse structured-matrices svd
         vector vector_range vector_slice)
    add_executable(${PROG}-test src/${PROG}.cpp)

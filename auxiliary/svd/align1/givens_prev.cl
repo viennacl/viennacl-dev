@@ -1,5 +1,3 @@
-
-
 __kernel void givens_prev(__global float* matr,
                             __global float* cs,
                             __global float* ss,

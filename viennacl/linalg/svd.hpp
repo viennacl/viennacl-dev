@@ -33,6 +33,7 @@
 
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/kernels/svd_kernels.h"
+#include "viennacl/linalg/qr-method-common.hpp"
 
 namespace viennacl 
 {
@@ -41,71 +42,6 @@ namespace viennacl
   
     namespace detail 
     {
-      const std::string SVD_BIDIAG_PACK_KERNEL = "bidiag_pack";
-      const std::string SVD_HOUSEHOLDER_COL_KERNEL = "house_col";
-      const std::string SVD_HOUSEHOLDER_ROW_KERNEL = "house_row";
-      const std::string SVD_COPY_COL_KERNEL = "copy_col";
-      const std::string SVD_COPY_ROW_KERNEL = "copy_row";
-      const std::string SVD_MATRIX_TRANSPOSE_KERNEL = "transpose_inplace";
-      const std::string SVD_INVERSE_SIGNS_KERNEL = "inverse_signs";
-      const std::string SVD_GIVENS_PREV_KERNEL = "givens_prev";
-      
-      static const double EPS = 1e-10;
-      static const std::size_t ITER_MAX = 50;
-
-      template <typename SCALARTYPE>
-      inline SCALARTYPE pythag(SCALARTYPE a, SCALARTYPE b) 
-      {
-        return std::sqrt(a*a + b*b);
-      }
-
-      template <typename SCALARTYPE>
-      inline SCALARTYPE sign(SCALARTYPE val) 
-      {
-          return (val >= 0) ? SCALARTYPE(1) : SCALARTYPE(-1);
-      }
-
-      // DEPRECATED: Replace with viennacl::linalg::norm_2
-      template <typename SCALARTYPE>
-      inline SCALARTYPE norm_lcl(std::vector<SCALARTYPE> const & x, unsigned int size) 
-      {
-        SCALARTYPE x_norm = 0.0;
-        for(std::size_t i = 0; i < size; i++)
-          x_norm += std::pow(x[i], 2);
-        return std::sqrt(x_norm);
-      }
-
-      template <typename SCALARTYPE>
-      void normalize(std::vector<SCALARTYPE>& x, unsigned int size) 
-      {
-        SCALARTYPE x_norm = norm_lcl(x, size);
-        for(std::size_t i = 0; i < size; i++)
-            x[i] /= x_norm;
-      }
-
-      template <typename SCALARTYPE>
-      void householder_vector(std::vector<SCALARTYPE> & v, unsigned int start)
-      {
-        SCALARTYPE x_norm = norm_lcl(v, v.size());
-        SCALARTYPE alpha = -sign(v[start]) * x_norm;
-        v[start] += alpha;
-        normalize(v, v.size());
-      }
-
-      template <typename MatrixType>
-      void transpose(MatrixType & A)
-      {
-        typedef typename MatrixType::value_type                                   ScalarType;
-        typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-        
-        viennacl::ocl::kernel & kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
-
-        viennacl::ocl::enqueue(kernel(A,
-                                      static_cast<cl_uint>(A.internal_size1()),
-                                      static_cast<cl_uint>(A.internal_size2())
-                                     )
-                              );
-      }
 
       template<typename MatrixType, typename VectorType>
       void givens_prev(MatrixType & matrix,
@@ -342,46 +278,8 @@ namespace viennacl
         detail::transpose(vcl_v);
       }
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
-      void eye(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A)
-      {
-      
-        std::vector<SCALARTYPE> foo(A.size1() * A.size1(), 0);
-        
-        for(std::size_t i = 0; i < A.size1(); i++)
-        {
-          foo[i*A.size1() + i] = 1;
-        }
 
-        viennacl::fast_copy(&foo[0], &foo[0] + foo.size(), A);
-      }
-      
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
-      void copy_vec(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
-                    viennacl::vector<SCALARTYPE, ALIGNMENT>& V,
-                    std::size_t row_start, 
-                    std::size_t col_start, 
-                    bool copy_col
-      )
-      {
-
-        std::string kernel_name = copy_col ? SVD_COPY_COL_KERNEL : SVD_COPY_ROW_KERNEL;
-        viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(),
-                                                                  kernel_name);
-
-        viennacl::ocl::enqueue(kernel(
-                                      A, 
-                                      V, 
-                                      static_cast<cl_uint>(row_start), 
-                                      static_cast<cl_uint>(col_start),
-                                      copy_col ? static_cast<cl_uint>(A.size1())
-                                               : static_cast<cl_uint>(A.size2()),
-                                      static_cast<cl_uint>(A.internal_size2())
-                              ));
-
-      }
-
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      /*template <typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT> & D,
@@ -421,8 +319,51 @@ namespace viennacl
                               ));
 
         return true;
-      }
+      }*/
 
+      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
+                          viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
+                          viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
+                          std::size_t row_start, std::size_t col_start) 
+      {
+        if(row_start + 1 >= A.size1()) 
+          return false;
+
+        prepare_householder_vector(A, D, A.size1(), row_start, col_start, row_start, true);
+
+        {
+          viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_LEFT_KERNEL);
+
+          viennacl::ocl::enqueue(kernel(
+                                        A,
+                                        D,
+                                        static_cast<cl_uint>(row_start),
+                                        static_cast<cl_uint>(col_start),
+                                        static_cast<cl_uint>(A.size1()),
+                                        static_cast<cl_uint>(A.size2()),
+                                        static_cast<cl_uint>(A.internal_size2()),
+                                        viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
+                                ));
+        }
+
+        {
+          viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_QL_KERNEL);
+
+          viennacl::ocl::enqueue(kernel(
+                                        Q,
+                                        D,
+                                        static_cast<cl_uint>(A.size1()),
+                                        static_cast<cl_uint>(A.size2()),
+                                        static_cast<cl_uint>(Q.internal_size2()),
+                                        viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
+                                ));
+        }
+
+        return true;
+      }
+      
+      /*
       template <typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
@@ -461,26 +402,50 @@ namespace viennacl
                                       viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
                                 ));
         return true;
-      }
+      } */
 
       template <typename SCALARTYPE, unsigned int ALIGNMENT>
-      void bidiag_pack(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
-                        viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
-                        viennacl::vector<SCALARTYPE, ALIGNMENT>& S
-                      )
+      bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
+                          viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
+                          viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
+                          std::size_t row_start, std::size_t col_start)
       {
-        viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_BIDIAG_PACK_KERNEL);
+        if(col_start + 1 >= A.size2()) 
+          return false;
 
-        viennacl::ocl::enqueue(kernel(
-                                      A, 
-                                      D, 
-                                      S,
-                                      static_cast<cl_uint>(A.size1()), 
-                                      static_cast<cl_uint>(A.size2()),
-                                      static_cast<cl_uint>(A.internal_size2())
-                                    ));
+        prepare_householder_vector(A, D, A.size2(), row_start, col_start, col_start, false);
+
+        {
+          viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_RIGHT_KERNEL);
+
+          viennacl::ocl::enqueue(kernel(
+                                        A,
+                                        D,
+                                        static_cast<cl_uint>(row_start),
+                                        static_cast<cl_uint>(col_start),
+                                        static_cast<cl_uint>(A.size1()),
+                                        static_cast<cl_uint>(A.size2()),
+                                        static_cast<cl_uint>(A.internal_size2()),
+                                        viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
+                                ));
+        }
+
+        {
+          viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_QR_KERNEL);
+
+          viennacl::ocl::enqueue(kernel(
+                                        Q,
+                                        D,
+                                        static_cast<cl_uint>(A.size1()),
+                                        static_cast<cl_uint>(A.size2()),
+                                        static_cast<cl_uint>(Q.internal_size2()),
+                                        viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
+                                ));
+        }
+
+        return true;
       }
-
+      
       template <typename SCALARTYPE, unsigned int ALIGNMENT>
       void bidiag(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Ai,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
@@ -500,8 +465,8 @@ namespace viennacl
 
         for(std::size_t i = 0; i < to; i++) 
         {
-          householder_c(Ai, QL, hh_vector, i);
-          householder_r(Ai, QR, hh_vector, i);
+          householder_c(Ai, QL, hh_vector, i, i);
+          householder_r(Ai, QR, hh_vector, i, i+1);
         }
       }
 
@@ -527,25 +492,21 @@ namespace viennacl
       std::size_t to = std::min(row_num, col_num);
 
 
-      viennacl::vector<SCALARTYPE, ALIGNMENT> d(to);
-      viennacl::vector<SCALARTYPE, ALIGNMENT> s(to + 1);
+      //viennacl::vector<SCALARTYPE, ALIGNMENT> d(to);
+      //viennacl::vector<SCALARTYPE, ALIGNMENT> s(to + 1);
       
       // first stage
       detail::bidiag(A, QL, QR);
-      detail::bidiag_pack(A, d, s);
       
       // second stage
-      std::vector<SCALARTYPE> dh(to, 0);
-      std::vector<SCALARTYPE> sh(to + 1, 0);
+      //std::vector<SCALARTYPE> dh(to, 0);
+      //std::vector<SCALARTYPE> sh(to + 1, 0);
+      boost::numeric::ublas::vector<SCALARTYPE> dh(to, 0);
+      boost::numeric::ublas::vector<SCALARTYPE> sh(to + 1, 0);
 
-      //boost::numeric::ublas::matrix<SCALARTYPE> h_U(row_num, row_num);
-      //boost::numeric::ublas::matrix<SCALARTYPE> h_V(col_num, col_num);
-
-      fast_copy(d, dh);
-      fast_copy(s, sh);
-
+      detail::bidiag_pack(A, dh, sh);
+      
       detail::svd_qr_shift( QL, QR, dh, sh);
-
       
       // Write resulting diagonal matrix with singular values to A:
       boost::numeric::ublas::matrix<SCALARTYPE> h_Sigma(row_num, col_num);
