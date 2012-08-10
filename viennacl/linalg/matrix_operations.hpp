@@ -512,8 +512,8 @@ namespace viennacl
         k.local_work_size(0, 16);
         k.local_work_size(1, 16);
         
-        cpu_value_type cl_alpha(alpha);
-        cpu_value_type cl_beta(beta);
+        cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
+        cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
         
         viennacl::ocl::enqueue(k(cl_alpha,
                                  viennacl::traits::handle(A), 
@@ -558,24 +558,24 @@ namespace viennacl
         k.local_work_size(0, 16);  //columns
         k.local_work_size(1, 4);   //rows
         
-        cpu_value_type cl_alpha(alpha);
-        cpu_value_type cl_beta(beta);
+        cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
+        cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
         
         viennacl::ocl::enqueue(k(cl_alpha,
                                  viennacl::traits::handle(A), 
                                         cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)), 
-                                        cl_uint(viennacl::traits::stride1(A)),             cl_uint(viennacl::traits::stride2(A)),
+                                        cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
                                         cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
                                         cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
                                  viennacl::traits::handle(B), 
                                         cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)), 
-                                        cl_uint(viennacl::traits::stride1(B)),             cl_uint(viennacl::traits::stride2(B)),
+                                        cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
                                         cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
                                         cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
                                  cl_beta,
                                  viennacl::traits::handle(C), 
                                         cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
-                                        cl_uint(viennacl::traits::stride1(C)),             cl_uint(viennacl::traits::stride2(C)),
+                                        cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
                                         cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
                                         cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
                                 )
