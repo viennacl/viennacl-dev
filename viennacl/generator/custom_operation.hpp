@@ -39,6 +39,21 @@ namespace viennacl
   namespace generator 
   {
 
+    template<class T>
+    struct is_double_type{
+        enum { value = 0};
+    };
+
+    template<unsigned int ID>
+    struct is_double_type<symbolic_vector<ID,double> >{
+        enum { value = 1};
+    };
+
+    template<unsigned int ID, class F>
+    struct is_double_type<symbolic_matrix<ID,F,double> >{
+        enum { value = 1};
+    };
+
     /** @brief A class for making a custom operation */
     class custom_operation 
     { 
@@ -54,7 +69,7 @@ namespace viennacl
         custom_operation ( T const & expression, std::string const & program_name_hint="" ) 
         {
           program_name_ = viennacl::generator::program_infos<T>::value (program_name_hint, sources_,runtime_wrappers_);
-          create_program ( static_cast<bool> ( viennacl::generator::tree_utils::count_if<T,viennacl::generator::is_inner_product_leaf>::value ) );
+          create_program ( static_cast<bool> ( viennacl::generator::tree_utils::count_if<T,viennacl::generator::is_double_type>::value ) );
         }
         
         /** @brief DTor */
@@ -194,7 +209,7 @@ namespace viennacl
 
       private:
 
-        void create_program ( bool include_sum_kernel )
+        void create_program ( bool has_double )
         {
           std::string kernels_string;
           for (viennacl::generator::KernelsSources::iterator it  = sources_.begin(); 
@@ -203,7 +218,8 @@ namespace viennacl
           {
             kernels_string += it->second + "\n";
           }
-          
+          if(has_double)
+              kernels_string = viennacl::tools::make_double_kernel(kernels_string,viennacl::ocl::current_device().double_support_extension());
           viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(kernels_string, program_name_);
           
           for (viennacl::generator::KernelsSources::iterator it  = sources_.begin(); 

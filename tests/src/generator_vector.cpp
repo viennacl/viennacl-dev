@@ -313,7 +313,7 @@ int main() {
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << std::endl;
     {
-        typedef float NumericT;
+        typedef double NumericT;
         NumericT epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;
         std::cout << "  eps:     " << epsilon << std::endl;

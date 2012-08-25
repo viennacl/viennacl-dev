@@ -291,6 +291,19 @@ namespace viennacl
         }
       };
 
+      template<class T>
+      struct cl_type_deducer;
+
+      template<>
+      struct cl_type_deducer<float>{
+          typedef cl_float Result;
+      };
+
+      template<>
+      struct cl_type_deducer<double>{
+          typedef cl_double Result;
+      };
+
       template <unsigned int ID, class ScalarType>
       struct scalar_runtime_wrapper<viennacl::generator::cpu_symbolic_scalar<ID, ScalarType> >: public runtime_wrapper
       {
@@ -302,7 +315,7 @@ namespace viennacl
                      std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
         {
           ScalarType* current_arg = any_cast<ScalarType * >(runtime_args[arg_id_]);
-          k.arg(arg_pos, cl_float(*current_arg));
+          k.arg(arg_pos, static_cast<typename cl_type_deducer<ScalarType>::Result>(*current_arg));
         }
       };
           
