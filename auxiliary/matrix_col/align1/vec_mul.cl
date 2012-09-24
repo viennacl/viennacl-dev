@@ -16,7 +16,8 @@ __kernel void vec_mul(
           __global float * result,
           unsigned int result_start,
           unsigned int result_inc,
-          unsigned int result_size) 
+          unsigned int result_size,
+          __local float * work) 
 { 
   for (unsigned int row = get_global_id(0); row < A_row_size; row += get_global_size(0))
   {

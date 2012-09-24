@@ -390,6 +390,8 @@ namespace viennacl
               const VectorType1 & vec, 
                     VectorType2 & result)
     {
+      typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+      
       assert(mat.size2() == vec.size());
       // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
       assert(viennacl::traits::handle(vec).get() != viennacl::traits::handle(result).get() && "No direct inplace matrix-vector product possible. Introduce a temporary!");
@@ -410,7 +412,8 @@ namespace viennacl
                                viennacl::traits::handle(result),
                                 cl_uint(viennacl::traits::start(result)),
                                 cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result))
+                                cl_uint(viennacl::traits::size(result)),
+                               viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size())
                              ) );
     }
 
