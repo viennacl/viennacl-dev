@@ -482,7 +482,8 @@ namespace viennacl
                                viennacl::traits::handle(result),
                                 cl_uint(viennacl::traits::start(result)),
                                 cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result))
+                                cl_uint(viennacl::traits::size(result)),
+                               viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size())
                              ) );
     }
 
