@@ -15,7 +15,7 @@
 //
 //#define VIENNACL_DEBUG_ALL
 #define VIENNACL_HAVE_UBLAS 1
-#define VIENNACL_DEBUG_CUSTOM_OPERATION
+//#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/norm_1.hpp"
@@ -23,7 +23,7 @@
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/generator/custom_operation.hpp"
 #include "viennacl/generator/elementwise_modifier.hpp"
-#include "viennacl/generator/symbolic_types/convenience_typedef.hpp"
+#include "viennacl/generator/convenience_typedef.hpp"
 
 using namespace boost::numeric;
 using namespace viennacl::generator;
@@ -107,7 +107,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
     
     std::cout << "testing addition..." << std::endl;
     vec     = ( vec - vec2 );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - symv2 ) ( vcl_vec, vcl_vec2 ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - symv2, "vec_add") ( vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: addition" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -116,7 +116,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "Testing inplace addition..." << std::endl;
     vec     += vec2;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv += symv2 ) ( vcl_vec, vcl_vec2 ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv += symv2, "vec_inplace_add" ) ( vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: inplace addition" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -125,7 +125,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing substraction..." << std::endl;
     vec     = vec - vec2;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - symv2 ) ( vcl_vec, vcl_vec2 ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - symv2, "vec_sub" ) ( vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: substraction" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -134,9 +134,9 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "Testing inplace substraction..." << std::endl;
     vec     -= vec2;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv -= symv2 ) ( vcl_vec, vcl_vec2 ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv -= symv2, "vec_inplace_sub" ) ( vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: inplace addition" << std::endl;
+        std::cout << "# Error at operation: inplace substraction" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
@@ -145,7 +145,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing cpu scalar multiplication ..." << std::endl;
     vec     = vec*cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv*cpu_sym_scal2 ) ( vcl_vec, cpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv*cpu_sym_scal2, "vec_cpu_scal_mul") ( vcl_vec, cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: cpu scalar multiplication " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -154,7 +154,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing inplace cpu scalar multiplication ..." << std::endl;
     vec     *= cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv *= cpu_sym_scal2 ) ( vcl_vec, cpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv *= cpu_sym_scal2, "vec_inplace_cpu_scal_mul" ) ( vcl_vec, cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: inplace cpu scalar multiplication " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -163,7 +163,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing cpu scalar division ..." << std::endl;
     vec     = vec/cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv/cpu_sym_scal2 ) ( vcl_vec, cpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv/cpu_sym_scal2, "vec_cpu_scal_div") ( vcl_vec, cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: cpu scalar division " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -172,7 +172,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing inplace cpu scalar division ..." << std::endl;
     vec     /= cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv /= cpu_sym_scal2 ) ( vcl_vec, cpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv /= cpu_sym_scal2, "vec_inplace_cpu_scal_div" ) ( vcl_vec, cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: inplace cpu scalar division " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -181,7 +181,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing gpu scalar multiplication ..." << std::endl;
     vec     = vec*cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv*gpu_sym_scal2 ) ( vcl_vec, gpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv*gpu_sym_scal2, "vec_gpu_scal_mul" ) ( vcl_vec, gpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: gpu scalar multiplication " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -190,36 +190,9 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing cpu and gpu scalar multiplication ..." << std::endl;
     vec     = cpu_scal*vec*cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = cpu_sym_scal2*symv*gpu_sym_scal3 ) ( vcl_vec, cpu_scal, gpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = cpu_sym_scal2*symv*gpu_sym_scal3, "vec_cpu_gpu_scal_mul" ) ( vcl_vec, cpu_scal, gpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: cpu and gpu scalar multiplication " << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing inplace gpu scalar multiplication ..." << std::endl;
-    vec     *= cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv *= gpu_sym_scal2 ) ( vcl_vec, gpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: inplace gpu scalar multiplication " << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing gpu scalar division ..." << std::endl;
-    vec     = vec/cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv/gpu_sym_scal2 ) ( vcl_vec, gpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: gpu scalar division " << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing inplace gpu scalar division ..." << std::endl;
-    vec     /=cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv /= gpu_sym_scal2 ) ( vcl_vec, gpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: inplace gpu scalar division " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
@@ -228,7 +201,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing addition scalar multiplication..." << std::endl;
     vec     = vec + cpu_scal*vec2;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + cpu_sym_scal3*symv2 ) ( vcl_vec, vcl_vec2, cpu_scal ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + cpu_sym_scal3*symv2, "vec_multiply_add" ) ( vcl_vec, vcl_vec2, cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: addition scalar multiplication" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
@@ -237,56 +210,11 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
 
     // --------------------------------------------------------------------------
-    std::cout << "testing multiple addition..." << std::endl;
-    vec     = vec + vec2 + vec;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + symv2 + symv ) ( vcl_vec, vcl_vec2 ) );
+    std::cout << "testing packed operations..." << std::endl;
+    vec     = vec - cpu_scal*(vec2 + vec);
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - cpu_sym_scal3*(symv2+symv), "vec_packed_operations" ) ( vcl_vec, vcl_vec2,cpu_scal ) );
     if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
         std::cout << "# Error at operation: multiple addition" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing substraction with parenthesis" << std::endl;
-    vec     = vec - ( vec2 - vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - ( symv2 - symv ) ) ( vcl_vec, vcl_vec2 ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: substraction with parenthesis" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing tree expansion right minus" << std::endl;
-    vec     = vec + cpu_scal* ( vec2 - vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + cpu_sym_scal3* ( symv2 - symv ) ) ( vcl_vec, vcl_vec2,cpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: tree expansion right minus" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing tree expansion right plus" << std::endl;
-    vec     = vec + cpu_scal* ( vec2 + vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + cpu_sym_scal3* ( symv2 + symv ) ) ( vcl_vec, vcl_vec2,cpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: tree expansion right plus" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing tree expansion left minus" << std::endl;
-    vec     = vec + ( vec2 - vec ) *cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + ( symv2 - symv ) *cpu_sym_scal3 ) ( vcl_vec, vcl_vec2,cpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: tree expansion left minus" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-    std::cout << "testing tree expansion left plus" << std::endl;
-    vec     = vec + ( vec2 + vec ) *cpu_scal;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + ( symv2 + symv ) *cpu_sym_scal3 ) ( vcl_vec, vcl_vec2,cpu_scal ) );
-    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
-        std::cout << "# Error at operation: tree expansion left plus" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
@@ -320,9 +248,10 @@ int main() {
         std::cout << "  numeric: float" << std::endl;
         retval = test<NumericT,1> ( epsilon, vecfile, resultfile );
 // 		retval &= test<NumericT,2> ( epsilon, vecfile, resultfile );
-		retval &= test<NumericT,4> ( epsilon, vecfile, resultfile );
+        retval &= test<NumericT,4> ( epsilon, vecfile, resultfile );
 // 		retval &= test<NumericT,8> ( epsilon, vecfile, resultfile );
-		retval &= test<NumericT,16> ( epsilon, vecfile, resultfile );
+        retval &= test<NumericT,16> ( epsilon, vecfile, resultfile );
+
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
         else

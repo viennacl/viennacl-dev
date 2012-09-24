@@ -14,7 +14,7 @@
 // *** ViennaCL
 //
 // #define VIENNACL_DEBUG_ALL
-// #define VIENNACL_DEBUG_BUILD
+ #define VIENNACL_DEBUG_BUILD
 // #define VIENNACL_HAVE_UBLAS 1
 // #define VIENNACL_DEBUG_CUSTOM_OPERATION
 #include "viennacl/vector.hpp"
@@ -91,8 +91,9 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
     std::cout << "testing inner product..." << std::endl;
 	
     res = ublas::inner_prod ( vec, vec2 );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) ) ( vcl_res, vcl_vec, vcl_vec2 ) );
-	if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation(symres = inner_prod ( symv, symv2 ), "inner_prod") ( vcl_res, vcl_vec, vcl_vec2 ) );
+    std::cout << viennacl::generator::custom_operation(symres = inner_prod ( symv, symv2 ), "inner_prod") .kernels_source_code() << std::endl;
+    if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: inner product" << std::endl;
         std::cout << "  Diff " << fabs ( diff ( res, vcl_res ) ) << std::endl;
         retval = EXIT_FAILURE;
@@ -100,7 +101,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing inner product division..." << std::endl;
     res = ublas::inner_prod ( vec, vec2 ) /ublas::inner_prod ( vec, vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) /inner_prod ( symv,symv ) ) ( vcl_res, vcl_vec, vcl_vec2 ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) /inner_prod ( symv,symv ), "inner_prod_division" ) ( vcl_res, vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: inner product" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
@@ -109,7 +110,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing scalar over inner product..." << std::endl;
     res = 4/ublas::inner_prod ( vec, vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ) ) ( vcl_res, vcl_vec, 4.0f ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ),"scal_over_inner_prod" ) ( vcl_res, vcl_vec, 4.0f ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: scalar over inner product" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
@@ -118,21 +119,21 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
     std::cout << "testing inner_prod minus ( scal minus inner_prod ) " << std::endl;
     res = ublas::inner_prod ( vec, vec2 ) - ( 5.0f - inner_prod ( vec,vec2 ) );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) - ( symscal - inner_prod ( symv,symv2 ) ) ) ( vcl_res, vcl_vec, vcl_vec2, 5.0f ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) - ( symscal - inner_prod ( symv,symv2 ) ), "inner_prod_minus_scal_minus_inprod" ) ( vcl_res, vcl_vec, vcl_vec2, 5.0f ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: inner_prod minus ( scal minus inner_prod ) " << std::endl;
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
 
-    std::cout << "testing nested inner product" << std::endl;
-    res = ublas::inner_prod ( vec, ublas::inner_prod ( vec,vec2 ) * vec2 );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, inner_prod ( symv,symv2 ) * symv2 ) ) ( vcl_res, vcl_vec, vcl_vec2 ) );
-    if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
-        std::cout << "# Error at operation: nested inner product"  << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
+//    std::cout << "testing nested inner product" << std::endl;
+//    res = ublas::inner_prod ( vec, ublas::inner_prod ( vec,vec2 ) * vec2 );
+//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, inner_prod ( symv,symv2 ) * symv2 ) ) ( vcl_res, vcl_vec, vcl_vec2 ) );
+//    if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
+//        std::cout << "# Error at operation: nested inner product"  << std::endl;
+//        std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
+//        retval = EXIT_FAILURE;
+//    }
 
     return retval;
 }
@@ -163,7 +164,7 @@ int main() {
         std::cout << "  numeric: float" << std::endl;
         retval = test<NumericT,1> ( epsilon, vecfile, resultfile );
 //  		retval = test<NumericT,4> ( epsilon, vecfile, resultfile );
-        retval = test<NumericT,16> ( epsilon, vecfile, resultfile );
+//        retval = test<NumericT,16> ( epsilon, vecfile, resultfile );
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
         else

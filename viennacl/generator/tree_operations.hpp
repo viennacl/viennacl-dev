@@ -25,8 +25,7 @@
 
 
 #include "viennacl/generator/elementwise_modifier.hpp"
-#include "viennacl/generator/traits/general_purpose_traits.hpp"
-
+#include "viennacl/generator/meta_tools/typelist.hpp"
 namespace viennacl 
 {
   namespace generator
@@ -44,6 +43,12 @@ namespace viennacl
         enum { value = Pred<T>::value };
       };
 
+      template<class Head, class Tail, template<class> class Pred>
+      struct count_if<typelist<Head,Tail>,Pred>
+      {
+          enum { value = count_if<Head,Pred>::value + count_if<Tail,Pred>::value };
+      };
+
       template <class T, std::string (*U)(), template<class> class Pred>
       struct count_if<elementwise_modifier_impl<T,U>, Pred>
       {
@@ -57,11 +62,11 @@ namespace viennacl
       };
 
 
-      template<class LHS, class RHS, class OP, bool is_temporary, template<class> class Pred>
-      struct count_if<compound_node<LHS,OP,RHS,is_temporary>,Pred>
+      template<class LHS, class RHS, class OP, template<class> class Pred>
+      struct count_if<compound_node<LHS,OP,RHS>,Pred>
       {
         private:
-          typedef compound_node<LHS,OP,RHS,is_temporary> T;
+          typedef compound_node<LHS,OP,RHS> T;
           
         public:
           enum { value = Pred<T>::value
@@ -79,6 +84,12 @@ namespace viennacl
       struct count_if_type 
       {
         enum { value = 0 };
+      };
+
+      template<class Head, class Tail, class Searched>
+      struct count_if_type<typelist<Head,Tail>,Searched>
+      {
+          enum { value = count_if_type<Head,Searched>::value + count_if_type<Tail,Searched>::value };
       };
 
       template<class T>
@@ -99,20 +110,20 @@ namespace viennacl
         enum { value = 1 + count_if_type<T, elementwise_modifier_impl<T,U> >::value };
       };
 
-      template <class LHS, class OP, class RHS, bool is_temporary>
-      struct count_if_type<compound_node<LHS, OP, RHS, is_temporary>,
-                           compound_node<LHS, OP, RHS, is_temporary> > 
+      template <class LHS, class OP, class RHS>
+      struct count_if_type<compound_node<LHS, OP, RHS>,
+                           compound_node<LHS, OP, RHS> >
       {
         private:
-          typedef compound_node<LHS, OP, RHS, is_temporary> T;
+          typedef compound_node<LHS, OP, RHS> T;
         public:
           enum { value = 1 +  count_if_type<LHS, T>::value
                            +  count_if_type<RHS, T>::value
                };
       };
 
-      template <class LHS, class OP, class RHS, bool is_temporary, class Searched>
-      struct count_if_type< compound_node<LHS,OP,RHS,is_temporary>, Searched> 
+      template <class LHS, class OP, class RHS, class Searched>
+      struct count_if_type< compound_node<LHS,OP,RHS>, Searched>
       {
         enum { value = count_if_type<LHS, Searched>::value
                       +  count_if_type<RHS, Searched>::value
@@ -124,22 +135,20 @@ namespace viennacl
       * Expand
       */
 
-      template <class LHS, class OP, bool is_temporary, class RHS_LHS, class RHS_OP, class RHS_RHS, bool RHS_is_temporary>
+      template <class LHS, class OP, class RHS_LHS, class RHS_OP, class RHS_RHS>
       struct expand_right 
       {
-          typedef compound_node< compound_node<LHS, OP, RHS_LHS, RHS_is_temporary>,
+          typedef compound_node< compound_node<LHS, OP, RHS_LHS>,
                                  RHS_OP,
-                                 compound_node<LHS, OP, RHS_RHS, RHS_is_temporary>,
-                                 is_temporary>   Result;
+                                 compound_node<LHS, OP, RHS_RHS> >   Result;
       };
 
-      template <class LHS_LHS, class LHS_OP, class LHS_RHS, bool LHS_is_temporary, class OP, class RHS, bool is_temporary>
+      template <class LHS_LHS, class LHS_OP, class LHS_RHS, class OP, class RHS>
       struct expand_left 
       {
-          typedef compound_node< compound_node<LHS_LHS, OP, RHS, LHS_is_temporary>,
+          typedef compound_node< compound_node<LHS_LHS, OP, RHS>,
                                  LHS_OP,
-                                 compound_node<LHS_RHS, OP, RHS, LHS_is_temporary>,
-                                 is_temporary>        Result;
+                                 compound_node<LHS_RHS, OP, RHS> >        Result;
       };
 
       template <class T>
@@ -167,39 +176,36 @@ namespace viennacl
       };
 
 
-      template<class LHS,class OP,class RHS,bool is_temporary>
-      struct expand< compound_node<LHS,OP,RHS,is_temporary> >
+      template<class LHS,class OP,class RHS>
+      struct expand< compound_node<LHS,OP,RHS> >
       {
-        typedef compound_node<typename expand<LHS>::Result, OP, typename expand<RHS>::Result, is_temporary>   Result;
+        typedef compound_node<typename expand<LHS>::Result, OP, typename expand<RHS>::Result>   Result;
       };
 
       #define make_right_expandable(__OPERATOR1__ , __OPERATOR2__) \
-                      template<class LHS, class RHS_LHS, class RHS_RHS, bool RHS_is_temporary, bool is_temporary>\
-                      struct expand< compound_node<LHS, __OPERATOR1__, compound_node<RHS_LHS, __OPERATOR2__, RHS_RHS, RHS_is_temporary>, is_temporary> >\
+                      template<class LHS, class RHS_LHS, class RHS_RHS>\
+                      struct expand< compound_node<LHS, __OPERATOR1__, compound_node<RHS_LHS, __OPERATOR2__, RHS_RHS> > >\
                       {\
                         typedef typename expand_right<typename expand<LHS>::Result\
                                                     , __OPERATOR1__\
-                                                    , is_temporary\
                                                     , typename expand<RHS_LHS>::Result\
                                                     , __OPERATOR2__\
                                                     , typename expand<RHS_RHS>::Result\
-                                                    , RHS_is_temporary>::Result Result;\
+                                                    >::Result Result;\
                       }
 
       #define make_left_expandable(__OPERATOR1__ , __OPERATOR2__) \
-                      template<class LHS_LHS, class LHS_RHS, bool LHS_is_temporary, class RHS, bool is_temporary>\
-                      struct expand< compound_node< compound_node<LHS_LHS, __OPERATOR2__ , LHS_RHS , LHS_is_temporary>\
+                      template<class LHS_LHS, class LHS_RHS, class RHS>\
+                      struct expand< compound_node< compound_node<LHS_LHS, __OPERATOR2__ , LHS_RHS>\
                                                     , __OPERATOR1__\
                                                     , RHS\
-                                                    , is_temporary> >\
+                                                    > >\
                       {\
                         typedef typename expand_left< typename expand<LHS_LHS>::Result\
                                                     , __OPERATOR2__\
                                                     , typename expand<LHS_RHS>::Result\
-                                                    , LHS_is_temporary\
                                                     , __OPERATOR1__\
                                                     , typename expand<RHS>::Result\
-                                                    , is_temporary\
                                                       >	::Result Result;\
                       }
 
@@ -212,60 +218,74 @@ namespace viennacl
       #undef make_left_expandable
       #undef make_right_expandable
 
-      ////////////////////////////
-      // REGISTER TEMPORARIES  //
-      ///////////////////////////
+//      ////////////////////////////
+//      // REGISTER TEMPORARIES  //
+//      ///////////////////////////
 
-      template <class T>
-      struct make_temporary;
+//      template <class T>
+//      struct make_temporary;
+      
+//      template <unsigned int ID, class SCALARTYPE, unsigned int ALIGNMENT>
+//      struct make_temporary<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> >
+//      {
+//        typedef tmp_symbolic_vector< symbolic_vector<ID,SCALARTYPE,ALIGNMENT> > Result;
+//      };
 
-      template <unsigned int ID, class SCALARTYPE, unsigned int ALIGNMENT>
-      struct make_temporary<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> > 
-      {
-        typedef tmp_symbolic_vector< symbolic_vector<ID,SCALARTYPE,ALIGNMENT> > Result;
-      };
+//      template <unsigned int ID,typename SCALARTYPE, class F, unsigned int ALIGNMENT>
+//      struct make_temporary<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > {
+//        typedef tmp_symbolic_matrix< symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > Result;
+//      };
 
-      template <unsigned int ID,typename SCALARTYPE, class F, unsigned int ALIGNMENT>
-      struct make_temporary<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > {
-        typedef tmp_symbolic_matrix< symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > Result;
-      };
+//      template <class T, bool only_first_order, class Assigned = void, bool is_nested = false>
+//      struct register_temporaries
+//      {
+//        typedef T Result;
+//      };
 
-      template <class T, bool only_first_order, class Assigned = void, bool is_nested = false>
-      struct register_temporaries 
-      {
-        typedef T Result;
-      };
+//      template <class Head, class Tail,bool only_first_order, class Assigned, bool is_nested>
+//      struct register_temporaries<typelist<Head, Tail>,only_first_order,Assigned,is_nested>{
+//      private:
+//	typedef typename register_temporaries<Tail,only_first_order,Assigned,is_nested>::Result TailResult;
+//	typedef typename register_temporaries<Head,only_first_order,Assigned,is_nested>::Result HeadResult;
+//      public:
+//	typedef typelist<HeadResult,TailResult> Result;
+//      };
+      
+//      template<bool only_first_order, class Assigned, bool is_nested>
+//      struct register_temporaries<NullType,only_first_order,Assigned,is_nested>{
+//	typedef NullType Result;
+//      };
+      
+//      template <class T, bool only_first_order>
+//      struct register_temporaries<T, only_first_order, T, true>
+//      {
+//        typedef T     Result;
+//      };
 
-      template <class T, bool only_first_order>
-      struct register_temporaries<T, only_first_order, T, true> 
-      {
-        typedef typename make_temporary<T>::Result     Result;
-      };
-
-      template <class T, std::string (*U)(), bool only_first_order, class Assigned, bool is_nested>
-      struct register_temporaries<elementwise_modifier_impl<T,U>, only_first_order, Assigned, is_nested> 
-      {
-        private:
-          typedef typename register_temporaries<T, only_first_order, Assigned, is_nested>::Result   SUB_Result;
-        public:
-          typedef elementwise_modifier_impl<SUB_Result,U>     Result;
-      };
+//      template <class T, std::string (*U)(), bool only_first_order, class Assigned, bool is_nested>
+//      struct register_temporaries<elementwise_modifier_impl<T,U>, only_first_order, Assigned, is_nested>
+//      {
+//        private:
+//          typedef typename register_temporaries<T, only_first_order, Assigned, is_nested>::Result   SUB_Result;
+//        public:
+//          typedef elementwise_modifier_impl<SUB_Result,U>     Result;
+//      };
 
 
-      template <class LHS, class OP, class RHS, bool is_temporary, bool only_first_order, class Assigned, bool is_nested>
-      struct register_temporaries<compound_node<LHS,OP,RHS,is_temporary>, only_first_order, Assigned, is_nested> 
-      {
-        private:
-          typedef compound_node<LHS,OP,RHS,is_temporary> T;
-          static const bool is_non_trivial =  is_pure_product_leaf<T>::value ||is_pure_inner_product_leaf<T>::value;
-          typedef typename register_temporaries<LHS, only_first_order, Assigned, is_nested || is_non_trivial>::Result LHS_Result;
-          typedef typename register_temporaries<RHS, only_first_order, Assigned, is_nested || is_non_trivial>::Result RHS_Result;
+//      template <class LHS, class OP, class RHS, bool only_first_order, class Assigned, bool is_nested>
+//      struct register_temporaries<compound_node<LHS,OP,RHS>, only_first_order, Assigned, is_nested>
+//      {
+//        private:
+//          typedef compound_node<LHS,OP,RHS> T;
+//          static const bool is_non_trivial =  is_product_leaf<T>::value ||is_inner_product_leaf<T>::value;
+//          typedef typename register_temporaries<LHS, only_first_order,Assigned, is_nested || is_non_trivial>::Result LHS_Result;
+//          typedef typename register_temporaries<RHS, only_first_order,typename get_type_if<LHS,Assigned,is_assignment<OP>::value>::Result, is_nested || is_non_trivial>::Result RHS_Result;
 
-          typedef compound_node<LHS_Result,OP,RHS_Result, is_non_trivial&& ( is_temporary || is_nested )  > RecursiveResult;
-          typedef compound_node<LHS,OP,RHS,true> EarlyStoppingResult;
-        public:
-          typedef typename get_type_if<EarlyStoppingResult, RecursiveResult,is_non_trivial && only_first_order && is_nested>::Result Result;
-      };
+//          typedef compound_node<LHS_Result,OP,RHS_Result, is_non_trivial&& ( is_nested )  > RecursiveResult;
+//          typedef compound_node<LHS,OP,RHS,true> EarlyStoppingResult;
+//        public:
+//          typedef typename get_type_if<EarlyStoppingResult, RecursiveResult,is_non_trivial && only_first_order && is_nested>::Result Result;
+//      };
 
 
       ////////////////////////////////
@@ -286,6 +306,21 @@ namespace viennacl
           typedef typename get_type_if<TypeTrue, TypeFalse, Pred<T>::value>::Result      Result;
       };
 
+      template <class Head,  class Tail,
+                template<class> class Pred,
+                template<class, class> class Comp,
+                class TList>
+      struct extract_if <typelist<Head,Tail>, Pred, Comp, TList>
+      {
+      private:
+	typedef typename extract_if<Head,Pred,Comp,TList>::Result HeadResult;
+	typedef typename extract_if<Tail,Pred, Comp, TList>::Result TailResult;
+	typedef typename typelist_utils::fuse<TList, HeadResult>::Result       TmpResult1;
+      public:
+        typedef typename typelist_utils::fuse<TmpResult1, TailResult>::Result  Result;
+      };
+
+      
       template <class T,
                 std::string (*U)(),
                 template<class> class Pred,
@@ -320,25 +355,36 @@ namespace viennacl
           typedef typename get_type_if<TypeTrue, TypeFalse, Pred< inner_prod_impl_t<T> >::value>::Result   Result;
       };
 
-      template <class LHS, class OP, class RHS, bool is_temporary,
+      template <class LHS, class OP, class RHS,
                 template<class> class Pred,
                 template<class,class> class Comp,
                 class TList>
-      struct extract_if< compound_node<LHS, OP, RHS, is_temporary>, Pred, Comp, TList>
+      struct extract_if< compound_node<LHS, OP, RHS>, Pred, Comp, TList>
       {
         private:
-          typedef compound_node<LHS,OP,RHS,is_temporary> T;
+          typedef compound_node<LHS,OP,RHS> T;
           typedef typename extract_if<LHS,Pred,Comp,TList>::Result LHS_Result;
           typedef typename extract_if<RHS,Pred,Comp,TList>::Result RHS_Result;
 
           typedef typename typelist_utils::fuse< typename typelist_utils::fuse<TList, LHS_Result, Comp>::Result,
                                                  RHS_Result, 
                                                  Comp >::Result     TypeFalse;
-          typedef typelist<T, TList>                                TypeTrue;
+          typedef typelist<T, TypeFalse>                                TypeTrue;
         public:
           typedef typename get_type_if<TypeTrue, TypeFalse, Pred<T>::value>::Result       Result;
       };
 
+
+      ///////////////////////////////
+
+      template <class T,
+                template<class> class Pred,
+                template<class, class> class Comp = typelist_utils::true_comp>
+      struct extract_if_unique
+      {
+        typedef typename extract_if<T,Pred,Comp>::Result Tmp;
+        typedef typename typelist_utils::no_duplicates<Tmp>::Result Result;
+      };
 
       ///////////////////////////////
       //////// FLIP_TREE  ///////////
@@ -389,15 +435,15 @@ namespace viennacl
           typedef elementwise_modifier_impl<SUB_Result,U>   Result;
       };
 
-      template <class LHS, class OP, class RHS, bool is_temporary, bool flip>
-      struct flip_tree< compound_node<LHS, OP, RHS, is_temporary>, flip>
+      template <class LHS, class OP, class RHS, bool flip>
+      struct flip_tree< compound_node<LHS, OP, RHS>, flip>
       {
         private:
           typedef typename flip_tree<LHS,flip>::Result LHS_Result;
           typedef typename flip_tree<RHS, invert_flip<OP, flip>::value >::Result RHS_Result;
 
         public:
-          typedef compound_node<LHS_Result, typename flip_operator<OP, flip>::Result , RHS_Result, is_temporary> Result;
+          typedef compound_node<LHS_Result, typename flip_operator<OP, flip>::Result , RHS_Result> Result;
       };
 
       ////////////////////////////////
@@ -428,6 +474,12 @@ namespace viennacl
         typedef LHS Result;
       };
 
+      template <class OP>
+      struct compound_to_simple<compound_node<NullType, OP, NullType> > 
+      {
+        typedef NullType Result;
+      };
+      
       template <class OP, class RHS>
       struct compound_to_simple<compound_node<NullType, OP, RHS> > 
       {
@@ -446,39 +498,41 @@ namespace viennacl
         typedef RHS_OP Result;
       };
 
-      template <class T, template<class> class Pred>
+      template <class T, template<class> class Pred, bool inspect_nested=true>
       struct remove_if 
       {
         typedef typename get_type_if<NullType,T,Pred<T>::value>::Result    Result;
         typedef typename get_type_if<NullType,T,Pred<T>::value>::Result    TmpTree;
       };
 
-      template <class T, std::string (*U)(), template<class> class Pred>
-      struct remove_if<elementwise_modifier_impl<T,U>,Pred > 
+      template <class T, std::string (*U)(), template<class> class Pred, bool inspect_nested>
+      struct remove_if<elementwise_modifier_impl<T,U>,Pred,inspect_nested > 
       {
         typedef elementwise_modifier_impl<typename remove_if<T,Pred>::Result, U> Result;
       };
 
-      template <class LHS, class OP, class RHS, bool is_temporary, template<class> class Pred>
-      struct remove_if<compound_node<LHS,OP,RHS,is_temporary>, Pred> 
+      template <class LHS, class OP, class RHS, template<class> class Pred, bool inspect_nested>
+      struct remove_if<compound_node<LHS,OP,RHS>, Pred, inspect_nested>
       {
         private:
-          typedef compound_node<LHS,OP,RHS,is_temporary> T;
+          typedef compound_node<LHS,OP,RHS> T;
 
-          typedef typename remove_if<LHS,Pred>::TmpTree LHS_TmpTree;
-          typedef typename remove_if<RHS,Pred>::TmpTree RHS_TmpTree;
-
-          typedef typename compound_to_simple<typename remove_if<LHS,Pred>::Result>::Result LHS_Result;
-          typedef typename compound_to_simple<typename remove_if<RHS,Pred>::Result>::Result RHS_Result;
-
+          typedef typename remove_if<LHS,Pred,inspect_nested>::TmpTree LHS_TmpTree;
+          typedef typename remove_if<RHS,Pred,inspect_nested>::TmpTree RHS_TmpTree;
           typedef compound_node<LHS_TmpTree,OP,RHS_TmpTree> TmpTree0;
+      typedef typename get_type_if<TmpTree0,T,! (is_product_leaf<T>::value || is_inner_product_leaf<T>::value) || inspect_nested>::Result TmpTree1;
+
+          typedef typename compound_to_simple<typename remove_if<LHS,Pred,inspect_nested>::Result>::Result LHS_Result;
+          typedef typename compound_to_simple<typename remove_if<RHS,Pred,inspect_nested>::Result>::Result RHS_Result;
           typedef typename compound_to_simple<compound_node<LHS_Result,
                                                             typename get_new_operator<OP,RHS_TmpTree>::Result,
-                                                            RHS_Result,
-                                                            is_temporary> >::Result    Result0;
+                                                            RHS_Result
+                                                            > >::Result    Result0;
+          typedef typename get_type_if<Result0,T,!(is_product_leaf<T>::value || is_inner_product_leaf<T>::value) || inspect_nested>::Result Result1;
+
         public:
-          typedef typename get_type_if<NullType, TmpTree0,  Pred<T>::value>::Result    TmpTree;
-          typedef typename get_type_if<NullType, Result0,   Pred<T>::value>::Result    Result;
+          typedef typename get_type_if<NullType, TmpTree1,  Pred<T>::value>::Result    TmpTree;
+          typedef typename get_type_if<NullType, Result1,   Pred<T>::value>::Result    Result;
       };
       
     }  // namespace tree_utils

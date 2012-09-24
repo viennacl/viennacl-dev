@@ -31,20 +31,18 @@ namespace viennacl
   namespace generator
   {
 
-    template<class T>
-    struct is_temporary;
-
-    template<class LHS, class OP_TYPE, class RHS, bool is_temporary = false>
+    template<class LHS, class OP_TYPE, class RHS>
     class compound_node;
 
     template<class T>
     struct inner_prod_impl_t;
 
+    struct prod_type;
+
+    struct inner_prod_type;
+
     template< unsigned int ID, typename SCALARTYPE, unsigned int ALIGNMENT = 1>
     class symbolic_vector;
-
-    template<class REF>
-    class tmp_symbolic_vector;
 
     template<unsigned int ID,
              typename SCALARTYPE, class F = viennacl::row_major, unsigned int ALIGNMENT = 1>
@@ -58,6 +56,24 @@ namespace viennacl
 
     template<unsigned int ID,typename SCALARTYPE>
     class gpu_symbolic_scalar;
+
+    template<class Expr>
+    struct MatVecToken;
+
+    template<class Expr, class OP, class Assigned>
+    struct MatMatToken;
+
+    template<class Expr,unsigned int NestedLevel>
+    struct InProdToken;
+
+    template<class Expr>
+    struct ArithmeticToken;
+
+    template<class T>
+    struct is_inner_product_leaf;
+
+    template<class T>
+    struct is_inner_product_impl;
 
   }
 }
