@@ -277,6 +277,35 @@ namespace viennacl
       #endif
 
       
+      template <typename T>
+      struct reference_if_nonscalar
+      {
+        typedef T &    type;
+      };
+    
+      template <>
+      struct reference_if_nonscalar<float>
+      {
+        typedef float    type;
+      };
+
+      template <>
+      struct reference_if_nonscalar<const float>
+      {
+        typedef const float    type;
+      };
+      
+      template <>
+      struct reference_if_nonscalar<double>
+      {
+        typedef double    type;
+      };
+      
+      template <>
+      struct reference_if_nonscalar<const double>
+      {
+        typedef const double    type;
+      };
       
     } //namespace result_of
 } //namespace viennacl

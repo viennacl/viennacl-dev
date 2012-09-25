@@ -44,6 +44,8 @@ namespace viennacl
       return obj.handle();
     }
 
+    inline float  handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline double handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
     template <typename T>
     viennacl::ocl::handle<cl_mem> handle(viennacl::vector_range<T> & obj)

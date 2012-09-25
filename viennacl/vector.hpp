@@ -29,6 +29,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/entry_proxy.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
+#include "viennacl/meta/result_of.hpp"
 
 namespace viennacl
 {
@@ -48,28 +49,31 @@ namespace viennacl
     template <typename LHS, typename RHS, typename OP>
     class vector_expression
     {
+        typedef typename result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
+        typedef typename result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
+      
       public:
         /** @brief Extracts the vector type from the two operands.
         */
         typedef typename viennacl::tools::VECTOR_EXTRACTOR<LHS, RHS>::ResultType    VectorType;
       
-        vector_expression(LHS & lhs, RHS & rhs) : _lhs(lhs), _rhs(rhs) {}
+        vector_expression(LHS & l, RHS & r) : lhs_(l), rhs_(r) {}
         
         /** @brief Get left hand side operand
         */
-        LHS & lhs() const { return _lhs; }
+        lhs_reference_type lhs() const { return lhs_; }
         /** @brief Get right hand side operand
         */
-        RHS & rhs() const { return _rhs; }
+        rhs_reference_type rhs() const { return rhs_; }
         
         /** @brief Returns the size of the result vector */
-        std::size_t size() const { return viennacl::tools::VECTOR_SIZE_DEDUCER<LHS, RHS, OP>::size(_lhs, _rhs); }
+        std::size_t size() const { return viennacl::tools::VECTOR_SIZE_DEDUCER<LHS, RHS, OP>::size(lhs_, rhs_); }
         
       private:
         /** @brief The left hand side operand */
-        LHS & _lhs;
+        lhs_reference_type lhs_;
         /** @brief The right hand side operand */
-        RHS & _rhs;
+        rhs_reference_type rhs_;
     };
     
     /** @brief A STL-type const-iterator for vector elements. Elements can be accessed, but cannot be manipulated. VERY SLOW!!
@@ -912,7 +916,9 @@ namespace viennacl
       */
       self_type & operator += (const self_type & vec)
       {
-        viennacl::linalg::inplace_add(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
 
@@ -920,7 +926,10 @@ namespace viennacl
       */
       self_type & operator += (const vector_range<self_type> & vec)
       {
-        viennacl::linalg::inplace_add(*this, vec);
+        //viennacl::linalg::inplace_add(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
 
@@ -928,7 +937,10 @@ namespace viennacl
       */
       self_type & operator += (const vector_slice<self_type> & vec)
       {
-        viennacl::linalg::inplace_add(*this, vec);
+        //viennacl::linalg::inplace_add(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
       
@@ -938,7 +950,10 @@ namespace viennacl
                                                         const scalar<SCALARTYPE>,
                                                         op_prod> & proxy)
       {
-        viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, false, false);
         return *this;
       }
 
@@ -948,17 +963,23 @@ namespace viennacl
                                                         const SCALARTYPE,
                                                         op_prod> & proxy)
       {
-        viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, false, false);
         return *this;
       }
 
-      /** @brief Inplace addition of a scaled vector, i.e. v1 += alpha * v2, where alpha is a GPU scalar
+      /** @brief Inplace addition of a scaled vector, i.e. v1 += v2 / alpha, where alpha is a GPU scalar
       */
       self_type & operator += (const vector_expression< const self_type,
                                                         const scalar<SCALARTYPE>,
                                                         op_div> & proxy)
       {
-        viennacl::linalg::inplace_div_add(*this, proxy.lhs(), proxy.rhs());
+        //viennacl::linalg::inplace_div_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, true, false);
         return *this;
       }
 
@@ -968,7 +989,10 @@ namespace viennacl
       */
       self_type & operator -= (const self_type & vec)
       {
-        viennacl::linalg::inplace_sub(*this, vec);
+        //viennacl::linalg::inplace_sub(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(-1.0), 1, false, false);
         return *this;
       }
 
@@ -976,7 +1000,10 @@ namespace viennacl
       */
       self_type & operator -= (const vector_range<self_type> & vec)
       {
-        viennacl::linalg::inplace_sub(*this, vec);
+        //viennacl::linalg::inplace_sub(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(-1.0), 1, false, false);
         return *this;
       }
 
@@ -984,7 +1011,10 @@ namespace viennacl
       */
       self_type & operator -= (const vector_slice<self_type> & vec)
       {
-        viennacl::linalg::inplace_sub(*this, vec);
+        //viennacl::linalg::inplace_sub(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               vec, SCALARTYPE(-1.0), 1, false, false);
         return *this;
       }
       
@@ -994,7 +1024,10 @@ namespace viennacl
                                                         const scalar<SCALARTYPE>,
                                                         op_prod> & proxy)
       {
-        viennacl::linalg::inplace_mul_sub(*this, proxy.lhs(), proxy.rhs());
+        //viennacl::linalg::inplace_mul_sub(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, false, true);
         return *this;
       }
 
@@ -1004,17 +1037,23 @@ namespace viennacl
                                                         const SCALARTYPE,
                                                         op_prod> & proxy)
       {
-        viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), -proxy.rhs());
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), -proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, false, true);
         return *this;
       }
 
-      /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= alpha * v2, where alpha is a CPU scalar
+      /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= v2 / alpha, where alpha is a GPU scalar
       */
       self_type & operator -= (const vector_expression< const self_type,
                                                         const scalar<SCALARTYPE>,
                                                         op_div> & proxy)
       {
-        viennacl::linalg::inplace_div_sub(*this, proxy.lhs(), proxy.rhs());
+        //viennacl::linalg::inplace_div_sub(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this, SCALARTYPE(1.0), 1, false, false,
+                               proxy.lhs(), proxy.rhs(), 1, true, true);
         return *this;
       }
       
@@ -1149,10 +1188,10 @@ namespace viennacl
       //free division
       /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
       */
-      vector_expression< const self_type, const SCALARTYPE, op_div> 
+      vector_expression< const self_type, const SCALARTYPE, op_prod> 
       operator / (SCALARTYPE value) const
       {
-        return vector_expression< const vector<SCALARTYPE, ALIGNMENT>, const SCALARTYPE, op_div>(*this, value);
+        return vector_expression< const self_type, const SCALARTYPE, op_prod>(*this, SCALARTYPE(1.0) / value);
       }
 
       /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
@@ -1160,7 +1199,7 @@ namespace viennacl
       vector_expression< const self_type, const scalar<SCALARTYPE>, op_div> 
       operator / (scalar<SCALARTYPE> const & value) const
       {
-        return vector_expression< const vector<SCALARTYPE, ALIGNMENT>, const scalar<SCALARTYPE>, op_div>(*this, value);
+        return vector_expression< const self_type, const scalar<SCALARTYPE>, op_div>(*this, value);
       }
       
       

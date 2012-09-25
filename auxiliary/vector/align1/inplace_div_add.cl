@@ -13,5 +13,5 @@ __kernel void inplace_div_add(
 { 
   float factor = *fac;
   for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0))
-    vec1[i*inc1+start1] -= vec2[i*inc2+start2] / factor;
+    vec1[i*inc1+start1] += vec2[i*inc2+start2] / factor;
 }

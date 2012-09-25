@@ -39,6 +39,65 @@ namespace viennacl
 {
   namespace linalg
   {
+    template <typename V1,
+              typename V2, typename ScalarType1,
+              typename V3, typename ScalarType2>
+    typename viennacl::enable_if< viennacl::is_vector<V1>::value
+                                  && viennacl::is_vector<V2>::value
+                                  && viennacl::is_vector<V3>::value
+                                  && (viennacl::is_scalar<ScalarType1>::value || viennacl::is_cpu_scalar<ScalarType1>::value)
+                                  && (viennacl::is_scalar<ScalarType2>::value || viennacl::is_cpu_scalar<ScalarType2>::value)
+                                >::type
+    avbv(V1 & vec1, 
+         V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+         V3 const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+      
+      std::stringstream ss;
+      ss << "avbv" 
+         << (viennacl::is_cpu_scalar<ScalarType1>::value ? "_cpu" : "_gpu")
+         << (viennacl::is_cpu_scalar<ScalarType2>::value ? "_cpu" : "_gpu");
+         
+      const unsigned int ALIGNMENT = V1::alignment;
+      
+      cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
+                              + (reciprocal_alpha ? 2 : 0)
+                              + (flip_sign_alpha ? 1 : 0);
+      cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
+                              + (reciprocal_beta ? 2 : 0)
+                              + (flip_sign_beta ? 1 : 0);
+
+      /*std::cout << "kernel name: " << ss.str() << std::endl;                              
+      std::cout << "alpha: " << alpha << std::endl;
+      std::cout << "options_alpha: " << options_alpha << std::endl;
+      std::cout << "beta: " << beta << std::endl;
+      std::cout << "options_beta: " << options_beta << std::endl;*/
+                              
+      viennacl::ocl::kernel k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), ss.str());
+      viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
+                              cl_uint(viennacl::traits::start(vec1)),
+                              cl_uint(viennacl::traits::stride(vec1)),
+                              cl_uint(viennacl::traits::size(vec1)),
+                              
+                              viennacl::traits::handle(alpha),
+                              options_alpha,
+                              viennacl::traits::handle(vec2),
+                              cl_uint(viennacl::traits::start(vec2)),
+                              cl_uint(viennacl::traits::stride(vec2)),
+                              cl_uint(viennacl::traits::size(vec2)),
+                              
+                              viennacl::traits::handle(beta),
+                              options_beta,
+                              viennacl::traits::handle(vec3),
+                              cl_uint(viennacl::traits::start(vec3)),
+                              cl_uint(viennacl::traits::stride(vec3)),
+                              cl_uint(viennacl::traits::size(vec3)) )
+                            );
+    }
+    
+    
+    
     /** @brief Assign a vector (-range/-slice) to another vector (-range/slice).
     *
     * Computes vec1 += vec2.
