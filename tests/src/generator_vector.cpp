@@ -72,6 +72,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 	
     ublas::vector<NumericT> vec;
     ublas::vector<NumericT> vec2;
+    ublas::vector<NumericT> vec3;
 
     NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
     viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
@@ -85,7 +86,8 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
     viennacl::generator::cpu_symbolic_scalar<2,NumericT> cpu_sym_scal3;
     viennacl::generator::gpu_symbolic_scalar<2,NumericT> gpu_sym_scal3;
 
-	
+    viennacl::generator::symbolic_vector<3, NumericT, Alignment> symv4;
+    
     if ( !readVectorFromFile<NumericT> ( vecfile, vec ) ) {
         std::cout << "Error reading vec file" << std::endl;
         retval = EXIT_FAILURE;
@@ -93,14 +95,17 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
 
 
     std::cout << "Running tests for vector of size " << vec.size() << std::endl;
-	std::cout << "----- Alignment " << Alignment << " -----" << std::endl;
-	
-	viennacl::vector<NumericT,Alignment> vcl_vec ( vec.size() );
-    viennacl::vector<NumericT,Alignment> vcl_vec2 ( vec.size() );
-	
+    std::cout << "----- Alignment " << Alignment << " -----" << std::endl;
+
+    viennacl::vector<NumericT,Alignment> vcl_vec ( vec.size() );
+    viennacl::vector<NumericT,Alignment> vcl_vec2( vec.size() );
+    viennacl::vector<NumericT,Alignment> vcl_vec3( vec.size() );
+
     vec2 = vec;
+    vec3 = 5.0 * vec;
     viennacl::copy ( vec.begin(), vec.end(), vcl_vec.begin() );
     viennacl::copy ( vec2.begin(), vec2.end(), vcl_vec2.begin() );
+    viennacl::copy ( vec3.begin(), vec3.end(), vcl_vec3.begin() );
 
     // --------------------------------------------------------------------------
 
@@ -219,6 +224,22 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
         retval = EXIT_FAILURE;
     }
 
+    
+    // --------------------------------------------------------------------------
+    std::cout << "testing multi-line operations..." << std::endl;
+    vec3    = vec - cpu_scal*vec2;
+    vec     = vec + cpu_scal*vec2;
+    viennacl::generator::custom_operation multi_op( symv4 = symv - cpu_sym_scal3 * symv2,
+                                                    symv  = symv + cpu_sym_scal3 * symv2,
+                                                    "vec_multi_operations" ) ;
+    //std::cout << "source: " << multi_op.kernels_source_code() << std::endl;
+    viennacl::ocl::enqueue ( multi_op( vcl_vec, vcl_vec2, cpu_scal, vcl_vec3 ) );
+    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
+        std::cout << "# Error at operation: multiple addition" << std::endl;
+        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
+        retval = EXIT_FAILURE;
+    }
+    
     return retval;
 }
 

@@ -45,8 +45,8 @@ namespace viennacl
     typename viennacl::enable_if< viennacl::is_vector<V1>::value
                                   && viennacl::is_vector<V2>::value
                                   && viennacl::is_vector<V3>::value
-                                  && (viennacl::is_scalar<ScalarType1>::value || viennacl::is_cpu_scalar<ScalarType1>::value)
-                                  && (viennacl::is_scalar<ScalarType2>::value || viennacl::is_cpu_scalar<ScalarType2>::value)
+                                  && viennacl::is_any_scalar<ScalarType1>::value
+                                  && viennacl::is_any_scalar<ScalarType2>::value
                                 >::type
     avbv(V1 & vec1, 
          V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,

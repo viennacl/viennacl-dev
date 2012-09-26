@@ -219,8 +219,33 @@ namespace viennacl
     {
       typedef VectorType   ResultType;
     };
+
+    template <typename LHS, typename V2, typename S2, typename OP2>
+    struct VECTOR_EXTRACTOR_IMPL<LHS, viennacl::vector_expression<const V2, const S2, OP2> >
+    {
+      typedef typename VECTOR_EXTRACTOR_IMPL<V2, S2>::ResultType      ResultType;
+    };
     
     //resolve ambiguities for previous cases:
+    template <typename ScalarType, unsigned int A, typename V2, typename S2, typename OP2>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A>, viennacl::vector_expression<const V2, const S2, OP2> >
+    {
+      typedef viennacl::vector<ScalarType, A>      ResultType;
+    };
+
+    template <typename VectorType, typename V2, typename S2, typename OP2>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_range<VectorType>, viennacl::vector_expression<const V2, const S2, OP2> >
+    {
+      typedef VectorType   ResultType;
+    };
+
+    template <typename VectorType, typename V2, typename S2, typename OP2>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_slice<VectorType>, viennacl::vector_expression<const V2, const S2, OP2> >
+    {
+      typedef VectorType   ResultType;
+    };
+
+    
     template <typename ScalarType, unsigned int A>
     struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A>, viennacl::vector<ScalarType, A> >
     {

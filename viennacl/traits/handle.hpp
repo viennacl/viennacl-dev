@@ -48,6 +48,12 @@ namespace viennacl
     inline double handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
     template <typename T>
+    viennacl::ocl::handle<cl_mem> handle(viennacl::scalar_expression< const scalar<T>, const scalar<T>, op_flip_sign> const & obj)
+    {
+      return viennacl::ocl::handle<cl_mem>(obj.get_lhs().handle());
+    }
+    
+    template <typename T>
     viennacl::ocl::handle<cl_mem> handle(viennacl::vector_range<T> & obj)
     {
       return viennacl::ocl::handle<cl_mem>(obj.get().handle());

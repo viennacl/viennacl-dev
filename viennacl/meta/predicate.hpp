@@ -63,6 +63,33 @@ namespace viennacl
     {
       enum { value = true };
     };
+
+    //
+    // is_flip_sign_scalar: checks for viennacl::scalar modified with unary operator-
+    //
+    template <typename T>
+    struct is_flip_sign_scalar
+    {
+      enum { value = false };
+    };
+  
+    template <typename T>
+    struct is_flip_sign_scalar<viennacl::scalar_expression< const scalar<T>,
+                                                            const scalar<T>,
+                                                            op_flip_sign> >
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_any_scalar: checks for either CPU and GPU scalars, i.e. is_cpu_scalar<>::value || is_scalar<>::value
+    //
+    template <typename T>
+    struct is_any_scalar
+    {
+      enum { value = (is_scalar<T>::value || is_cpu_scalar<T>::value || is_flip_sign_scalar<T>::value )};
+    };
+  
   
     //
     // is_vector
@@ -119,6 +146,70 @@ namespace viennacl
       enum { value = true };
     };
 
+    
+    //////////////// Part 2: Operator predicates ////////////////////
+    
+    //
+    // is_addition
+    //
+    template <typename T>
+    struct is_addition
+    {
+      enum { value = false };
+    };
+    
+    template <>
+    struct is_addition<viennacl::op_add>
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_subtraction
+    //
+    template <typename T>
+    struct is_subtraction
+    {
+      enum { value = false };
+    };
+    
+    template <>
+    struct is_subtraction<viennacl::op_sub>
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_product
+    //
+    template <typename T>
+    struct is_product
+    {
+      enum { value = false };
+    };
+    
+    template <>
+    struct is_product<viennacl::op_prod>
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_subtraction
+    //
+    template <typename T>
+    struct is_division
+    {
+      enum { value = false };
+    };
+    
+    template <>
+    struct is_division<viennacl::op_div>
+    {
+      enum { value = true };
+    };
+    
+    
 } //namespace viennacl
     
 

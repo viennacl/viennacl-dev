@@ -204,7 +204,7 @@ struct program_infos
 
     static void fill(std::string const & operation_name, std::map<std::string,std::string> & sources, runtime_wrappers_t & runtime_wrappers)
     {
-        std::cout << KernelsList::name() << std::endl;
+        //std::cout << KernelsList::name() << std::endl;
         typelist_utils::ForEach<KernelsList,fill_sources>::execute(sources,operation_name);
         typelist_utils::ForEach<KernelsList,fill_args>::execute(runtime_wrappers,operation_name);
     }

@@ -138,11 +138,16 @@ namespace viennacl
       };
       
       template <typename T1, typename T2, typename OP>
-      struct cpu_value_type<viennacl::vector_expression<T1, T2, OP> >
+      struct cpu_value_type<viennacl::vector_expression<const T1, const T2, OP> >
       {
         typedef typename cpu_value_type<T1>::type    type; 
       };
       
+      template <typename T1, typename T2, typename OP>
+      struct cpu_value_type<const viennacl::vector_expression<const T1, const T2, OP> >
+      {
+        typedef typename cpu_value_type<T1>::type    type; 
+      };
       
       
       template <typename T, typename F, unsigned int ALIGNMENT>

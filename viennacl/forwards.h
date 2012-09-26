@@ -45,6 +45,8 @@ namespace viennacl
   struct op_add;
   /** @brief A tag class representing subtraction */
   struct op_sub;
+  /** @brief A tag class representing multiplication */
+  struct op_prod;
   /** @brief A tag class representing division */
   struct op_div;
   
@@ -59,12 +61,12 @@ namespace viennacl
 
   /** @brief A tag class representing the 2-norm of a vector */
   struct op_norm_inf;
-
-  /** @brief A tag class representing a matrix-vector product */
-  struct op_prod;
   
   /** @brief A tag class representing transposed matrices */
   struct op_trans;
+
+  /** @brief A tag class representing sign flips (for scalars only. Vectors and matrices use the standard multiplication by the scalar -1.0) */
+  struct op_flip_sign;
   
 
   //forward declaration of basic types:

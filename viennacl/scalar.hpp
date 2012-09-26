@@ -23,6 +23,7 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/ocl/backend.hpp"
+#include "viennacl/meta/result_of.hpp"
 #include "viennacl/linalg/kernels/scalar_kernels.h"
 
 #include <iostream>
@@ -41,7 +42,7 @@ namespace viennacl
     {
         typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
       public:
-        typedef typename DummyType::value_type    ScalarType;
+        typedef typename viennacl::result_of::cpu_value_type<DummyType>::type    ScalarType;
         
         scalar_expression(LHS & lhs, RHS & rhs) : _lhs(lhs), _rhs(rhs) {}
         
@@ -73,6 +74,7 @@ namespace viennacl
     template<class TYPE>
     class scalar
     {
+      typedef scalar<TYPE>         self_type;
     public:
       /** @brief Returns the underlying host scalar type. */
       typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<TYPE>::ResultType   value_type;
@@ -234,6 +236,19 @@ namespace viennacl
         viennacl::linalg::norm_inf_impl(proxy.get_lhs(), *this);
         return *this;
       }
+      
+      /** @brief Sets the scalar to the inverse with respect to addition of the supplied sub-expression */
+      template <typename T1, typename T2>
+      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
+      {
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_mul");
+        k.local_work_size(0, 1);
+        k.global_work_size(0, 1);
+
+        viennacl::ocl::enqueue(k(proxy.lhs().handle(), TYPE(-1.0), *this));        
+        return *this;
+      }
+      
 
       /** @brief Inplace addition of a ViennaCL scalar */
       scalar<TYPE> & operator += (scalar<TYPE> const & other)
@@ -373,6 +388,14 @@ namespace viennacl
 
 
       //////////////// operator - ////////////////////////////
+      
+      /** @brief Sign flip of the scalar. Does not evaluate immediately, but instead returns an expression template object */
+      scalar_expression<const self_type, const self_type, op_flip_sign> operator-() const
+      {
+        return scalar_expression<const self_type, const self_type, op_flip_sign>(*this, *this);
+      }
+      
+      
       /** @brief Subtraction of two ViennaCL scalars */
       scalar<TYPE> operator - (scalar<TYPE> const & other) const
       {
