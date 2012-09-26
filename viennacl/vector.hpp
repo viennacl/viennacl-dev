@@ -290,8 +290,7 @@ namespace viennacl
       *
       * Entries of 'vec' are directly copied to this vector.
       */
-      vector(const self_type & vec) :
-        size_(vec.size())
+      vector(const self_type & vec) : size_(vec.size())
       {
         viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
         
@@ -327,68 +326,42 @@ namespace viennacl
       }
 
 
-      /** @brief Implementation of the operation v1 = alpha * v2, where alpha is a GPU scalar
+      /** @brief Implementation of the operation v1 = v2 * alpha, where alpha is either a CPU or a GPU scalar
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename VectorType>   //use template to cover const/non-const of VectorType:
-      self_type & operator = (const vector_expression< VectorType,
-                                                       const scalar<SCALARTYPE>,
-                                                       op_prod> & proxy)
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type & >
+      operator = (const vector_expression< const V1, const S1, op_prod> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
         //resize(proxy.lhs().size());
         //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
+        //viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
+        viennacl::linalg::av(*this,
+                             proxy.lhs(), proxy.rhs(), 1, false, false);
         return *this;
       }
 
-      /** @brief Implementation of the operation v1 = alpha * v2, where alpha is a CPU scalar
+      /** @brief Implementation of the operation v1 = v2 / alpha, where alpha is either a CPU or a GPU scalar
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename VectorType>   //use template to cover const/non-const of VectorType:
-      self_type & operator = (const vector_expression< VectorType,
-                                                       const SCALARTYPE,
-                                                       op_prod> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
-        return *this;
-      }
-
-      /** @brief Implementation of the operation v1 = v2 / alpha, where alpha is a GPU scalar
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename VectorType>   //use template to cover const/non-const of VectorType:
-      self_type & operator = (const vector_expression< VectorType,
-                                                       const scalar<SCALARTYPE>,
-                                                       op_div> & proxy)
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type & >
+      operator = (const vector_expression< const V1, const S1, op_div> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
         //resize(proxy.lhs().size());
         //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        viennacl::linalg::divide(proxy.lhs(), proxy.rhs(), *this);
+        //viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
+        viennacl::linalg::av(*this,
+                             proxy.lhs(), proxy.rhs(), 1, true, false);
         return *this;
       }
 
-      /** @brief Implementation of the operation v1 = v2 / alpha, where alpha is a CPU scalar
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename VectorType>   //use template to cover const/non-const of VectorType:
-      self_type & operator = (const vector_expression< VectorType,
-                                                       const SCALARTYPE,
-                                                       op_div> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        viennacl::linalg::mult(proxy.lhs(), static_cast<SCALARTYPE>(1.0) / proxy.rhs(), *this);
-        return *this;
-      }
 
       //v1 = v2 +- v3; 
       /** @brief Implementation of the operation v1 = v2 +- v3
@@ -1079,15 +1052,23 @@ namespace viennacl
       */
       self_type & operator *= (SCALARTYPE val)
       {
-        viennacl::linalg::inplace_mult(*this, val);
+        //viennacl::linalg::inplace_mult(*this, val);
+        viennacl::linalg::av(*this,
+                             *this, val, 1, false, false);
         return *this;
       }
 
       /** @brief Scales this vector by a GPU scalar value
       */
-      self_type & operator *= (scalar<SCALARTYPE> const & gpu_val)
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator *= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_mult(*this, gpu_val);
+        //viennacl::linalg::inplace_mult(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
 
@@ -1095,15 +1076,23 @@ namespace viennacl
       */
       self_type & operator /= (SCALARTYPE val)
       {
-        viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
+        //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
+        viennacl::linalg::av(*this,
+                             *this, val, 1, true, false);
         return *this;
       }
       
       /** @brief Scales this vector by a CPU scalar value
       */
-      self_type & operator /= (scalar<SCALARTYPE> const & gpu_val)
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator /= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_divide(*this, gpu_val);
+        //viennacl::linalg::inplace_divide(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
       

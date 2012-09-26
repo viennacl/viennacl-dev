@@ -207,6 +207,8 @@ set(VECTOR_SRCS
    vector/align16/mult.cl
    vector/align16/sub.cl
    vector/align1/add.cl
+   vector/align1/av_cpu.cl
+   vector/align1/av_gpu.cl
    vector/align1/avbv_cpu_cpu.cl
    vector/align1/avbv_cpu_gpu.cl
    vector/align1/avbv_gpu_cpu.cl
