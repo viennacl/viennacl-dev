@@ -80,20 +80,39 @@ namespace viennacl
       }      
 
 
-      /** @brief Convenience function, which allows to assign a vector directly to a vector range of suitable size */
-      self_type & operator=(const VectorType & v) 
-      {
-        viennacl::linalg::assign(*this, v);
-        return *this;
-      }      
-
       /** @brief Convenience function, which allows to assign a vector range directly to another vector range of suitable size */
-      self_type & operator=(const self_type & v) 
+      self_type & operator=(const self_type & vec) 
       {
-        viennacl::linalg::assign(*this, v);
+        viennacl::linalg::av(*this, 
+                              vec,   cpu_value_type(1.0), 1, false, false);
         return *this;
       }      
 
+      /** @brief Assignment of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator = (const V1 & vec)
+      {
+        viennacl::linalg::av(*this, 
+                              vec,   cpu_value_type(1.0), 1, false, false);
+        return *this;
+      }
+      
+      /** @brief Assignment of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator = (const vector_expression< const V1,
+                                           const S1,
+                                           OP> & proxy)
+      {
+        viennacl::linalg::av(*this, 
+                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
+        return *this;
+      }
+      
       ///////////// operator +=
 
       /** @brief Inplace addition of a vector (or -range or -slice) */
@@ -284,7 +303,8 @@ namespace viennacl
     {
       this->elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
       
-      viennacl::linalg::assign(*this, r);
+      viennacl::linalg::av(*this, 
+                           r, SCALARTYPE(1.0), 1, false, false);
     }
     
   }
@@ -298,7 +318,8 @@ namespace viennacl
   viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const vector_range< viennacl::vector<SCALARTYPE, ALIGNMENT> > & r) 
   {
     if (this->size() > 0)
-      viennacl::linalg::assign(*this, r);
+      viennacl::linalg::av(*this, 
+                           r, SCALARTYPE(1.0), 1, false, false);
     
     return *this;
   }
@@ -472,27 +493,39 @@ namespace viennacl
       }      
 
 
-      /** @brief Convenience function, which allows to assign a vector directly to a vector slice of suitable size */
-      self_type & operator=(const VectorType & v) 
+      /** @brief Convenience function, which allows to assign a vector range directly to another vector slice of suitable size */
+      self_type & operator=(const self_type & vec) 
       {
-        assert(size() == v.size() && "Vector slice and vector size mismatch!");
-        
-        if (size() > 0)
-          viennacl::linalg::assign(*this, v);
-        
+        viennacl::linalg::av(*this, 
+                              vec,   cpu_value_type(1.0), 1, false, false);
         return *this;
       }      
 
-      /** @brief Convenience function, which allows to assign a vector slice directly to another vector slice of suitable size */
-      self_type & operator=(const self_type & v) 
+      /** @brief Assignment of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator = (const V1 & vec)
       {
-        assert(size() == v.size() && "Sizes of vector slices don't match!");
-        
-        if (size() > 0)
-          viennacl::linalg::assign(*this, v);
-        
+        viennacl::linalg::av(*this, 
+                              vec,   cpu_value_type(1.0), 1, false, false);
         return *this;
-      }      
+      }
+      
+      /** @brief Assignment of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator = (const vector_expression< const V1,
+                                           const S1,
+                                           OP> & proxy)
+      {
+        viennacl::linalg::av(*this, 
+                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
+        return *this;
+      }
+      
 
       ///////////// operator +=
 
@@ -683,7 +716,8 @@ namespace viennacl
     {
       this->elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
       
-      viennacl::linalg::assign(*this, r);
+      viennacl::linalg::av(*this, 
+                           r, SCALARTYPE(1.0), 1, false, false);
     }
     
   }
@@ -699,7 +733,8 @@ namespace viennacl
     assert(this->size() == r.size() && "Vector size mismatch!");
     
     if (this->size() > 0)
-      viennacl::linalg::assign(*this, r);
+      viennacl::linalg::av(*this, 
+                           r, SCALARTYPE(1.0), 1, false, false);
     
     return *this;
   }

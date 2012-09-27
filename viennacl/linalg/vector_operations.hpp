@@ -60,9 +60,7 @@ namespace viennacl
                               
       viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
       k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size())
-                                                 )
-                        );
+                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
       viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
                               cl_uint(viennacl::traits::start(vec1)),
                               cl_uint(viennacl::traits::stride(vec1)),
@@ -113,9 +111,7 @@ namespace viennacl
 
       viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
       k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size())
-                                                 )
-                        );
+                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
       viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
                               cl_uint(viennacl::traits::start(vec1)),
                               cl_uint(viennacl::traits::stride(vec1)),
@@ -136,6 +132,62 @@ namespace viennacl
     }
     
     
+    template <typename V1,
+              typename V2, typename ScalarType1,
+              typename V3, typename ScalarType2>
+    typename viennacl::enable_if< viennacl::is_vector<V1>::value
+                                  && viennacl::is_vector<V2>::value
+                                  && viennacl::is_vector<V3>::value
+                                  && viennacl::is_any_scalar<ScalarType1>::value
+                                  && viennacl::is_any_scalar<ScalarType2>::value
+                                >::type
+    avbv_v(V1 & vec1,
+           V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+      
+     std::string kernel_name;
+     if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
+       kernel_name = "avbv_v_cpu_cpu";
+     else if (viennacl::is_cpu_scalar<ScalarType1>::value && !viennacl::is_cpu_scalar<ScalarType2>::value)
+       kernel_name = "avbv_v_cpu_gpu";
+     else if (!viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
+       kernel_name = "avbv_v_gpu_cpu";
+     else 
+       kernel_name = "avbv_v_gpu_gpu";
+        
+      const unsigned int ALIGNMENT = V1::alignment;
+      
+      cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
+                              + (reciprocal_alpha ? 2 : 0)
+                              + (flip_sign_alpha ? 1 : 0);
+      cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
+                              + (reciprocal_beta ? 2 : 0)
+                              + (flip_sign_beta ? 1 : 0);
+
+      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
+      k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
+                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+      viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
+                              cl_uint(viennacl::traits::start(vec1)),
+                              cl_uint(viennacl::traits::stride(vec1)),
+                              cl_uint(viennacl::traits::size(vec1)),
+                              
+                              viennacl::traits::handle(alpha),
+                              options_alpha,
+                              viennacl::traits::handle(vec2),
+                              cl_uint(viennacl::traits::start(vec2)),
+                              cl_uint(viennacl::traits::stride(vec2)),
+                              
+                              viennacl::traits::handle(beta),
+                              options_beta,
+                              viennacl::traits::handle(vec3),
+                              cl_uint(viennacl::traits::start(vec3)),
+                              cl_uint(viennacl::traits::stride(vec3)) )
+                            );
+    }
+    
     
     /** @brief Assign a vector (-range/-slice) to another vector (-range/slice).
     *
@@ -144,34 +196,26 @@ namespace viennacl
     * @param vec1  The result. 
     * @param vec2  The addend
     */
-    template <typename V1, typename V2>
+    template <typename V1, typename S1>
     typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                  && viennacl::is_vector<V2>::value
+                                  && viennacl::is_cpu_scalar<S1>::value
                                 >::type
     assign(V1 & vec1,
-           const V2 & vec2)
+           const S1 & alpha)
     {
       typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
       
-      //TODO: Ensure that correct alignment is chosen for the kernels.
       const unsigned int ALIGNMENT = V1::alignment;
       
-      assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
-             && "Incompatible vector sizes in inplace_add()!");
-      
-      
-      //unsigned int size = std::min(vec1.internal_size(), vec2.internal_size());
       
       viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "assign");
-
+      k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
+                                                  viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
       viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
-                                cl_uint(viennacl::traits::start(vec1)),
-                                cl_uint(viennacl::traits::stride(vec1)),
-                                cl_uint(viennacl::traits::size(vec1)),
-                               viennacl::traits::handle(vec2),
-                                cl_uint(viennacl::traits::start(vec2)),
-                                cl_uint(viennacl::traits::stride(vec2)),
-                                cl_uint(viennacl::traits::size(vec2)))
+                               cl_uint(viennacl::traits::start(vec1)),
+                               cl_uint(viennacl::traits::stride(vec1)),
+                               cl_uint(viennacl::traits::size(vec1)),
+                               viennacl::traits::handle(alpha) )
                             );
     }
     

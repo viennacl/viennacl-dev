@@ -202,8 +202,11 @@ set(VECTOR_SRCS
    vector/align1/avbv_cpu_gpu.cl
    vector/align1/avbv_gpu_cpu.cl
    vector/align1/avbv_gpu_gpu.cl
-   vector/align1/assign.cl
-   vector/align1/clear.cl
+   vector/align1/avbv_v_cpu_cpu.cl
+   vector/align1/avbv_v_cpu_gpu.cl
+   vector/align1/avbv_v_gpu_cpu.cl
+   vector/align1/avbv_v_gpu_gpu.cl
+   vector/align1/assign_cpu.cl
    vector/align1/diag_precond.cl
    vector/align1/index_norm_inf.cl
    vector/align1/inner_prod.cl

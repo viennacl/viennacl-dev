@@ -588,11 +588,11 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string resultfile)
       retval = EXIT_FAILURE;
    }          
    // --------------------------------------------------------------------------         
-   rhs2 = rhs;
+   rhs2 = 5.0 * rhs;
    copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
    copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
 
-   std::cout << "Testing another complicated vector expression with GPU scalar..." << std::endl;
+   std::cout << "Testing another complicated vector expression with CPU scalars..." << std::endl;
    rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
    vcl_rhs = vcl_rhs2 / alpha + beta * (vcl_rhs - alpha*vcl_rhs2);
 
@@ -603,9 +603,25 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string resultfile)
       retval = EXIT_FAILURE;
    }             
    
-   std::cout << "Testing another complicated vector expression with GPU scalar..." << std::endl;
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
+   std::cout << "Testing another complicated vector expression with GPU scalars..." << std::endl;
+   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
+   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+   rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
    vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * (vcl_rhs - gpu_alpha*vcl_rhs2);
+
+   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   {
+      std::cout << "# Error at operation: complex vector operations with GPU scalars" << std::endl;
+      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      retval = EXIT_FAILURE;
+   }             
+
+   
+   std::cout << "Testing lenghty sum of scaled vectors..." << std::endl;
+   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
+   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+   rhs     = rhs2 / alpha + beta * rhs - alpha*rhs2 + beta * rhs - alpha * rhs;
+   vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * vcl_rhs - alpha*vcl_rhs2 + beta * vcl_rhs - alpha * vcl_rhs;
 
    if( fabs(diff(rhs, vcl_rhs)) > epsilon )
    {

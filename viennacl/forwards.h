@@ -177,10 +177,16 @@ namespace viennacl
   struct is_scalar;
 
   template <typename T>
+  struct is_any_scalar;
+  
+  template <typename T>
   struct is_vector;
 
   template <typename T>
   struct is_matrix;
+
+  template <typename T>
+  struct is_any_matrix;
   
   namespace tools
   {

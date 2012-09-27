@@ -76,6 +76,8 @@ namespace viennacl
     {
       typedef scalar<TYPE>         self_type;
     public:
+      typedef vcl_size_t                                        size_type;
+      
       /** @brief Returns the underlying host scalar type. */
       typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<TYPE>::ResultType   value_type;
       

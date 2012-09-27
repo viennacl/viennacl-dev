@@ -220,10 +220,71 @@ namespace viennacl
       typedef VectorType   ResultType;
     };
 
+    template <typename ScalarType, unsigned int A1, unsigned int A2>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A1>, viennacl::vector<ScalarType, A2> >
+    {
+      typedef viennacl::vector<ScalarType, A1>   ResultType;
+    };
+
+    template <typename ScalarType, unsigned int A, typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A>, viennacl::vector_range<VectorType> >
+    {
+      typedef viennacl::vector<ScalarType, A>   ResultType;
+    };
+
+    template <typename ScalarType, unsigned int A, typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A>, viennacl::vector_slice<VectorType> >
+    {
+      typedef viennacl::vector<ScalarType, A>   ResultType;
+    };
+    
+    
+    template <typename VectorType, typename ScalarType, unsigned int A>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_range<VectorType>, viennacl::vector<ScalarType, A> >
+    {
+      typedef viennacl::vector<ScalarType, A>   ResultType;
+    };
+    
+    template <typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_range<VectorType>, viennacl::vector_range<VectorType> >
+    {
+      typedef VectorType   ResultType;
+    };
+
+    template <typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_range<VectorType>, viennacl::vector_slice<VectorType> >
+    {
+      typedef VectorType   ResultType;
+    };
+
+    
+    template <typename VectorType, typename ScalarType, unsigned int A>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_slice<VectorType>, viennacl::vector<ScalarType, A> >
+    {
+      typedef viennacl::vector<ScalarType, A>   ResultType;
+    };
+    
+    template <typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_slice<VectorType>, viennacl::vector_range<VectorType> >
+    {
+      typedef VectorType   ResultType;
+    };
+    
+    template <typename VectorType>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_slice<VectorType>, viennacl::vector_slice<VectorType> >
+    {
+      typedef VectorType   ResultType;
+    };
+    
+    
+    // adding vector_expression to the resolution:
+    template <typename LHS, typename RHS>
+    struct VECTOR_EXTRACTOR;
+
     template <typename LHS, typename V2, typename S2, typename OP2>
     struct VECTOR_EXTRACTOR_IMPL<LHS, viennacl::vector_expression<const V2, const S2, OP2> >
     {
-      typedef typename VECTOR_EXTRACTOR_IMPL<V2, S2>::ResultType      ResultType;
+      typedef typename VECTOR_EXTRACTOR<V2, S2>::ResultType      ResultType;
     };
     
     //resolve ambiguities for previous cases:
@@ -246,23 +307,6 @@ namespace viennacl
     };
 
     
-    template <typename ScalarType, unsigned int A>
-    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector<ScalarType, A>, viennacl::vector<ScalarType, A> >
-    {
-      typedef viennacl::vector<ScalarType, A>   ResultType;
-    };
-
-    template <typename VectorType>
-    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_range<VectorType>, viennacl::vector_range<VectorType> >
-    {
-      typedef VectorType   ResultType;
-    };
-    
-    template <typename VectorType>
-    struct VECTOR_EXTRACTOR_IMPL<viennacl::vector_slice<VectorType>, viennacl::vector_slice<VectorType> >
-    {
-      typedef VectorType   ResultType;
-    };
     
     
     template <typename LHS, typename RHS>
@@ -272,109 +316,6 @@ namespace viennacl
                                               typename CONST_REMOVER<RHS>::ResultType>::ResultType      ResultType;
     };
 
-    /** @brief Deduces the size of the resulting vector represented by a vector_expression from the operands
-    *
-    * @tparam LHS   The left hand side operand
-    * @tparam RHS   The right hand side operand
-    * @tparam OP    The operation tag
-    */
-    template <typename LHS, typename RHS, typename OP>
-    struct VECTOR_SIZE_DEDUCER
-    {
-      //take care: using a plain, naive .size() on the left hand side type can cause subtle side-effects!
-    };
-
-    
-    template <typename ScalarType, unsigned int A, typename RHS>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::vector<ScalarType, A>, RHS, viennacl::op_add>
-    {
-      static size_t size(const viennacl::vector<ScalarType, A> & lhs,
-                         const RHS & rhs) { return lhs.size(); }
-    };
-
-    template <typename ScalarType, unsigned int A, typename RHS>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::vector<ScalarType, A>, RHS, viennacl::op_sub>
-    {
-      static size_t size(const viennacl::vector<ScalarType, A> & lhs,
-                         const RHS & rhs) { return lhs.size(); }
-    };
-    
-    
-   
-    //Standard case: LHS is the vector type and carries the correct size
-    template <typename ScalarType, unsigned int A, typename RHS>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::vector<ScalarType, A>, RHS, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::vector<ScalarType, A> & lhs,
-                         const RHS & rhs) { return lhs.size(); }
-    };
-
-    template <typename ScalarType, unsigned int A, typename RHS>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::vector<ScalarType, A>, RHS, viennacl::op_div>
-    {
-      static size_t size(const viennacl::vector<ScalarType, A> & lhs,
-                         const RHS & rhs) { return lhs.size(); }
-    };
-    
-    //special case: matrix-vector product: Return the number of rows of the matrix
-    template <typename ScalarType, typename F, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::matrix<ScalarType, F, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::matrix<ScalarType, F, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-
-    template <typename ScalarType, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::circulant_matrix<ScalarType, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::circulant_matrix<ScalarType, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-    
-    template <typename ScalarType, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::compressed_matrix<ScalarType, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::compressed_matrix<ScalarType, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-
-    template <typename ScalarType, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::coordinate_matrix<ScalarType, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::coordinate_matrix<ScalarType, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-
-    template <typename ScalarType, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::ell_matrix<ScalarType, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::ell_matrix<ScalarType, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-
-    template <typename ScalarType, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::hyb_matrix<ScalarType, Amat>, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
-    {
-      static size_t size(const viennacl::hyb_matrix<ScalarType, Amat> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };
-    
-    
-    //special case: transposed matrix-vector product: Return the number of cols(!) of the matrix
-    template <typename ScalarType, typename F, unsigned int Amat, unsigned int A>
-    struct VECTOR_SIZE_DEDUCER<const viennacl::matrix_expression< const viennacl::matrix<ScalarType, F, Amat>,
-                                                                  const viennacl::matrix<ScalarType, F, Amat>,
-                                                                  op_trans>,
-                               const viennacl::vector<ScalarType, A>,
-                               viennacl::op_prod>
-    {
-      static size_t size(const viennacl::matrix_expression< const viennacl::matrix<ScalarType, F, Amat>,
-                                                            const viennacl::matrix<ScalarType, F, Amat>,
-                                                            op_trans> & lhs,
-                         const viennacl::vector<ScalarType, A> & rhs) { return lhs.lhs().size2(); }
-    };
-
-    
     
     
     

@@ -146,6 +146,142 @@ namespace viennacl
       enum { value = true };
     };
 
+    //
+    // is_circulant_matrix
+    //
+    template <typename T>
+    struct is_circulant_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_circulant_matrix<viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_hankel_matrix
+    //
+    template <typename T>
+    struct is_hankel_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_hankel_matrix<viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_toeplitz_matrix
+    //
+    template <typename T>
+    struct is_toeplitz_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_toeplitz_matrix<viennacl::toeplitz_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
+    //
+    // is_vandermonde_matrix
+    //
+    template <typename T>
+    struct is_vandermonde_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_vandermonde_matrix<viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
+    
+    
+    //
+    // is_compressed_matrix
+    //
+    template <typename T>
+    struct is_compressed_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_compressed_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    //
+    // is_coordinate_matrix
+    //
+    template <typename T>
+    struct is_coordinate_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_coordinate_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    //
+    // is_ell_matrix
+    //
+    template <typename T>
+    struct is_ell_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_ell_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    //
+    // is_hyb_matrix
+    //
+    template <typename T>
+    struct is_hyb_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_hyb_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    
+    
+    
+    
+    //
+    // is_any_matrix
+    //
+    template <typename T>
+    struct is_any_matrix
+    {
+      enum { value = viennacl::is_matrix<T>::value || viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value
+                     || viennacl::is_compressed_matrix<T>::value || viennacl::is_coordinate_matrix<T>::value || viennacl::is_ell_matrix<T>::value || viennacl::is_hyb_matrix<T>::value };
+    };
+
     
     //////////////// Part 2: Operator predicates ////////////////////
     

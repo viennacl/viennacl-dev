@@ -216,11 +216,6 @@ int test(Epsilon const& epsilon)
    result     = viennacl::linalg::prod(matrix, rhs);
    vcl_result = viennacl::linalg::prod(vcl_matrix, vcl_rhs);
    
-   for (std::size_t i=0; i<result.size(); ++i)
-   {
-     std::cout << rhs(i) << ", " << vcl_rhs(i) << ", " << result(i) << ", " << vcl_result(i) << std::endl; 
-   }
-   
    if( fabs(diff(result, vcl_result)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
