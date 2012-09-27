@@ -96,55 +96,108 @@ namespace viennacl
 
       ///////////// operator +=
 
-      self_type & operator += (VectorType const & other)
+      /** @brief Inplace addition of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator += (const V1 & vec)
       {
-        viennacl::linalg::inplace_add(*this, other);
+        viennacl::linalg::avbv(*this, 
+                               *this, cpu_value_type(1.0), 1, false, false,
+                               vec,   cpu_value_type(1.0), 1, false, false);
         return *this;
       }
-
-      self_type & operator += (self_type const & other)
+      
+      /** @brief Inplace addition of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator += (const vector_expression< const V1,
+                                            const S1,
+                                            OP> & proxy)
       {
-        viennacl::linalg::inplace_add(*this, other);
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this,   cpu_value_type(1.0), 1, false,                                         false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
       
       ///////////// operator -=
 
-      self_type & operator -= (VectorType const & other)
+      /** @brief Inplace subtraction of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator -= (const V1 & vec)
       {
-        viennacl::linalg::inplace_sub(*this, other);
+        //viennacl::linalg::inplace_sub(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, cpu_value_type(1.0),  1, false, false,
+                               vec,   cpu_value_type(-1.0), 1, false, false);
         return *this;
       }
-
-      self_type & operator -= (self_type const & other)
+      
+      /** @brief Inplace subtraction of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator -= (const vector_expression< const V1,
+                                            const S1,
+                                            OP> & proxy)
       {
-        viennacl::linalg::inplace_sub(*this, other);
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this,   cpu_value_type(1.0), 1, false,                                             false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true));
         return *this;
       }
+      
 
       ///////////// operator *=
-      self_type & operator *= (cpu_value_type const & cpu_val)
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      self_type & operator *= (cpu_value_type val)
       {
-        viennacl::linalg::inplace_mult(*this, cpu_val);
-        return *this;
-      }
-      
-      self_type & operator *= (value_type const & gpu_val)
-      {
-        viennacl::linalg::inplace_mult(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, val, 1, false, false);
         return *this;
       }
 
-      ///////////// operator /=
-      self_type & operator /= (cpu_value_type const & cpu_val)
+      /** @brief Scales this vector range by a GPU scalar value
+      */
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator *= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_mult(*this, cpu_value_type(1) / cpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+        return *this;
+      }
+
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      self_type & operator /= (cpu_value_type val)
+      {
+        viennacl::linalg::av(*this,
+                             *this, val, 1, true, false);
         return *this;
       }
       
-      self_type & operator /= (value_type const & gpu_val)
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator /= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_divide(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
       
@@ -443,57 +496,111 @@ namespace viennacl
 
       ///////////// operator +=
 
-      self_type & operator += (VectorType const & other)
+      /** @brief Inplace addition of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator += (const V1 & vec)
       {
-        viennacl::linalg::inplace_add(*this, other);
+        viennacl::linalg::avbv(*this, 
+                               *this, cpu_value_type(1.0), 1, false, false,
+                               vec,   cpu_value_type(1.0), 1, false, false);
         return *this;
       }
-
-      self_type & operator += (self_type const & other)
+      
+      /** @brief Inplace addition of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator += (const vector_expression< const V1,
+                                            const S1,
+                                            OP> & proxy)
       {
-        viennacl::linalg::inplace_add(*this, other);
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this,   cpu_value_type(1.0), 1, false,                                         false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
       
       ///////////// operator -=
 
-      self_type & operator -= (VectorType const & other)
+      /** @brief Inplace subtraction of a vector (or -range or -slice) */
+      template <typename V1>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+                                    self_type &>::type
+      operator -= (const V1 & vec)
       {
-        viennacl::linalg::inplace_sub(*this, other);
+        //viennacl::linalg::inplace_sub(*this, vec);
+        viennacl::linalg::avbv(*this, 
+                               *this, cpu_value_type(1.0),  1, false, false,
+                               vec,   cpu_value_type(-1.0), 1, false, false);
         return *this;
       }
-
-      self_type & operator -= (self_type const & other)
+      
+      /** @brief Inplace subtraction of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename V1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator -= (const vector_expression< const V1,
+                                            const S1,
+                                            OP> & proxy)
       {
-        viennacl::linalg::inplace_sub(*this, other);
+        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
+        viennacl::linalg::avbv(*this, 
+                               *this,   cpu_value_type(1.0), 1, false,                                             false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true));
         return *this;
       }
+      
 
       ///////////// operator *=
-      self_type & operator *= (cpu_value_type const & cpu_val)
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      self_type & operator *= (cpu_value_type val)
       {
-        viennacl::linalg::inplace_mult(*this, cpu_val);
-        return *this;
-      }
-      
-      self_type & operator *= (value_type const & gpu_val)
-      {
-        viennacl::linalg::inplace_mult(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, val, 1, false, false);
         return *this;
       }
 
-      ///////////// operator /=
-      self_type & operator /= (cpu_value_type const & cpu_val)
+      /** @brief Scales this vector range by a GPU scalar value
+      */
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator *= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_mult(*this, cpu_value_type(1) / cpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+        return *this;
+      }
+
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      self_type & operator /= (cpu_value_type val)
+      {
+        viennacl::linalg::av(*this,
+                             *this, val, 1, true, false);
         return *this;
       }
       
-      self_type & operator /= (value_type const & gpu_val)
+      /** @brief Scales this vector range by a CPU scalar value
+      */
+      template <typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                    self_type & 
+                                  >::type
+      operator /= (S1 const & gpu_val)
       {
-        viennacl::linalg::inplace_divide(*this, gpu_val);
+        viennacl::linalg::av(*this,
+                             *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
+      
       
       
       ///////////// Direct manipulation via operator() and operator[]

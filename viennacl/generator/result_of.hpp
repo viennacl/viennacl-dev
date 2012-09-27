@@ -50,6 +50,8 @@ namespace viennacl
         public:
             runtime_wrapper(std::string const & _name, int _arg_id)
              : name_(_name), arg_id_(_arg_id) {}
+             
+            virtual ~runtime_wrapper() {}
 	         
 	        int arg_id() const { return arg_id_; }
 	        std::string name() const { return name_; }

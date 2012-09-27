@@ -196,17 +196,6 @@ set(SCALAR_SRCS
    scalar/align1/sub.cl)
 
 set(VECTOR_SRCS
-   vector/align16/add.cl
-   vector/align16/cpu_inplace_mul.cl
-   vector/align16/cpu_mult.cl
-   vector/align16/divide.cl
-   vector/align16/inplace_add.cl
-   vector/align16/inplace_divide.cl
-   vector/align16/inplace_mult.cl
-   vector/align16/inplace_sub.cl
-   vector/align16/mult.cl
-   vector/align16/sub.cl
-   vector/align1/add.cl
    vector/align1/av_cpu.cl
    vector/align1/av_gpu.cl
    vector/align1/avbv_cpu_cpu.cl
@@ -215,41 +204,19 @@ set(VECTOR_SRCS
    vector/align1/avbv_gpu_gpu.cl
    vector/align1/assign.cl
    vector/align1/clear.cl
-   vector/align1/cpu_inplace_mul_add.cl
-   vector/align1/cpu_inplace_mult.cl
-   vector/align1/cpu_mul_add.cl
-   vector/align1/cpu_mult.cl
    vector/align1/diag_precond.cl
-   vector/align1/divide.cl
    vector/align1/index_norm_inf.cl
    vector/align1/inner_prod.cl
-   vector/align1/inplace_add.cl
-   vector/align1/inplace_div_add.cl
-   vector/align1/inplace_divide.cl
-   vector/align1/inplace_div_sub.cl
-   vector/align1/inplace_mul_add.cl
-   vector/align1/inplace_mul_sub.cl
-   vector/align1/inplace_mult.cl
-   vector/align1/inplace_sub.cl
-   vector/align1/mul_add.cl
-   vector/align1/mul_sub.cl
-   vector/align1/mult.cl
    vector/align1/norm_1.cl
    vector/align1/norm_2.cl
    vector/align1/norm_inf.cl
    vector/align1/plane_rotation.cl
    vector/align1/sqrt_sum.cl
-   vector/align1/sub.cl
    vector/align1/sum.cl
    vector/align1/swap.cl
    vector/align1/vmax.cl
-   vector/align4/cpu_inplace_mul_add.cl
-   vector/align4/cpu_mul_add.cl
-   vector/align4/inplace_div_add.cl
-   vector/align4/inplace_div_sub.cl
-   vector/align4/inplace_mul_add.cl
-   vector/align4/inplace_mul_sub.cl
-   vector/align4/mul_add.cl)
+   vector/align4/dummy
+   vector/align16/dummy)
 
 set(FFT_SRCS
    fft/align1/bluestein_post.cl

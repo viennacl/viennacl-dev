@@ -185,7 +185,7 @@ namespace viennacl
         custom_operation & operator() ( T0 const & t0) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
           add_operation_arguments();
           return *this;
         }
@@ -195,8 +195,8 @@ namespace viennacl
         custom_operation & operator() ( T0 const & t0, T1 const & t1 ) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
           add_operation_arguments();
           return *this;
         }
@@ -206,9 +206,9 @@ namespace viennacl
         custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2 ) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
           add_operation_arguments();
           return *this;
         }
@@ -218,10 +218,10 @@ namespace viennacl
         custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3 ) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
-          user_args_.insert( std::make_pair(3, viennacl::any((T3*)&t3)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
           add_operation_arguments();
           return *this;
         }
@@ -231,11 +231,11 @@ namespace viennacl
         custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4 ) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
-          user_args_.insert( std::make_pair(3, viennacl::any((T3*)&t3)) );
-          user_args_.insert( std::make_pair(4, viennacl::any((T4*)&t4)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
           add_operation_arguments();
           return *this;
         }
@@ -245,12 +245,12 @@ namespace viennacl
         custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5 ) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
-          user_args_.insert( std::make_pair(3, viennacl::any((T3*)&t3)) );
-          user_args_.insert( std::make_pair(4, viennacl::any((T4*)&t4)) );
-          user_args_.insert( std::make_pair(5, viennacl::any((T5*)&t5)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
           add_operation_arguments();
           return *this;
         }
@@ -260,13 +260,13 @@ namespace viennacl
         custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5, T6 & t6) 
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
-          user_args_.insert( std::make_pair(3, viennacl::any((T3*)&t3)) );
-          user_args_.insert( std::make_pair(4, viennacl::any((T4*)&t4)) );
-          user_args_.insert( std::make_pair(5, viennacl::any((T5*)&t5)) );
-          user_args_.insert( std::make_pair(6, viennacl::any((T6*)&t6)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
           add_operation_arguments();
           return *this;
         }
@@ -276,18 +276,365 @@ namespace viennacl
         custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5, T6 & t6, T7 & t7 )
         {
           user_args_.clear();
-          user_args_.insert( std::make_pair(0, viennacl::any((T0*)&t0)) );
-          user_args_.insert( std::make_pair(1, viennacl::any((T1*)&t1)) );
-          user_args_.insert( std::make_pair(2, viennacl::any((T2*)&t2)) );
-          user_args_.insert( std::make_pair(3, viennacl::any((T3*)&t3)) );
-          user_args_.insert( std::make_pair(4, viennacl::any((T4*)&t4)) );
-          user_args_.insert( std::make_pair(5, viennacl::any((T5*)&t5)) );
-          user_args_.insert( std::make_pair(6, viennacl::any((T6*)&t6)) );
-          user_args_.insert( std::make_pair(7, viennacl::any((T7*)&t7)) );
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
           add_operation_arguments();
           return *this;
         }
 
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8 )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          add_operation_arguments();
+          return *this;
+        }
+
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9 )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10 >
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11 >
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12 >
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13 >
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14 >
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14,
+                  class T15>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
+                                        T15 & t15
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          user_args_.insert( std::make_pair(15, viennacl::any(const_cast<T15*>(&t15))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14,
+                  class T15, class T16>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
+                                        T15 & t15, T16 & t16
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          user_args_.insert( std::make_pair(15, viennacl::any(const_cast<T15*>(&t15))) );
+          user_args_.insert( std::make_pair(16, viennacl::any(const_cast<T16*>(&t16))) );
+          add_operation_arguments();
+          return *this;
+        }
+
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14,
+                  class T15, class T16, class T17>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
+                                        T15 & t15, T16 & t16, T17 & t17
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          user_args_.insert( std::make_pair(15, viennacl::any(const_cast<T15*>(&t15))) );
+          user_args_.insert( std::make_pair(16, viennacl::any(const_cast<T16*>(&t16))) );
+          user_args_.insert( std::make_pair(17, viennacl::any(const_cast<T17*>(&t17))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14,
+                  class T15, class T16, class T17, class T18>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
+                                        T15 & t15, T16 & t16, T17 & t17, T18 & t18
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          user_args_.insert( std::make_pair(15, viennacl::any(const_cast<T15*>(&t15))) );
+          user_args_.insert( std::make_pair(16, viennacl::any(const_cast<T16*>(&t16))) );
+          user_args_.insert( std::make_pair(17, viennacl::any(const_cast<T17*>(&t17))) );
+          user_args_.insert( std::make_pair(18, viennacl::any(const_cast<T18*>(&t18))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        /** @brief Convenience for enqueuing the custom operation */
+        template <class T0, class T1, class T2, class T3, class T4,
+                  class T5, class T6, class T7, class T8, class T9,
+                  class T10, class T11, class T12, class T13, class T14,
+                  class T15, class T16, class T17, class T18, class T19>
+        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
+                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
+                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
+                                        T15 & t15, T16 & t16, T17 & t17, T18 & t18, T19 & t19
+                                      )
+        {
+          user_args_.clear();
+          user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
+          user_args_.insert( std::make_pair(1, viennacl::any(const_cast<T1*>(&t1))) );
+          user_args_.insert( std::make_pair(2, viennacl::any(const_cast<T2*>(&t2))) );
+          user_args_.insert( std::make_pair(3, viennacl::any(const_cast<T3*>(&t3))) );
+          user_args_.insert( std::make_pair(4, viennacl::any(const_cast<T4*>(&t4))) );
+          user_args_.insert( std::make_pair(5, viennacl::any(const_cast<T5*>(&t5))) );
+          user_args_.insert( std::make_pair(6, viennacl::any(const_cast<T6*>(&t6))) );
+          user_args_.insert( std::make_pair(7, viennacl::any(const_cast<T7*>(&t7))) );
+          user_args_.insert( std::make_pair(8, viennacl::any(const_cast<T8*>(&t8))) );
+          user_args_.insert( std::make_pair(9, viennacl::any(const_cast<T9*>(&t9))) );
+          user_args_.insert( std::make_pair(10, viennacl::any(const_cast<T10*>(&t10))) );
+          user_args_.insert( std::make_pair(11, viennacl::any(const_cast<T11*>(&t11))) );
+          user_args_.insert( std::make_pair(12, viennacl::any(const_cast<T12*>(&t12))) );
+          user_args_.insert( std::make_pair(13, viennacl::any(const_cast<T13*>(&t13))) );
+          user_args_.insert( std::make_pair(14, viennacl::any(const_cast<T14*>(&t14))) );
+          user_args_.insert( std::make_pair(15, viennacl::any(const_cast<T15*>(&t15))) );
+          user_args_.insert( std::make_pair(16, viennacl::any(const_cast<T16*>(&t16))) );
+          user_args_.insert( std::make_pair(17, viennacl::any(const_cast<T17*>(&t17))) );
+          user_args_.insert( std::make_pair(18, viennacl::any(const_cast<T18*>(&t18))) );
+          user_args_.insert( std::make_pair(19, viennacl::any(const_cast<T19*>(&t19))) );
+          add_operation_arguments();
+          return *this;
+        }
+        
+        
       private:
 
 

@@ -326,42 +326,23 @@ namespace viennacl
       }
 
 
-      /** @brief Implementation of the operation v1 = v2 * alpha, where alpha is either a CPU or a GPU scalar
+      /** @brief Implementation of the operation v1 = v2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
       *
       * @param proxy  An expression template proxy class.
       */
       template <typename V1, typename S1, typename OP>
       typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type & >
-      operator = (const vector_expression< const V1, const S1, op_prod> & proxy)
+                                    self_type & >::type
+      operator = (const vector_expression< const V1, const S1, OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
         //resize(proxy.lhs().size());
         //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
         //viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
         viennacl::linalg::av(*this,
-                             proxy.lhs(), proxy.rhs(), 1, false, false);
+                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), false);
         return *this;
       }
-
-      /** @brief Implementation of the operation v1 = v2 / alpha, where alpha is either a CPU or a GPU scalar
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type & >
-      operator = (const vector_expression< const V1, const S1, op_div> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::av(*this,
-                             proxy.lhs(), proxy.rhs(), 1, true, false);
-        return *this;
-      }
-
 
       //v1 = v2 +- v3; 
       /** @brief Implementation of the operation v1 = v2 +- v3
@@ -1014,8 +995,7 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Inplace subtraction of a vector
-      */
+      /** @brief Inplace subtraction of a vector */
       template <typename V1>
       typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
                                     self_type &>::type
