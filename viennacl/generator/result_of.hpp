@@ -113,6 +113,7 @@ namespace viennacl
             viennacl::ocl::handle<cl_mem> handle = NULL;
             T * current_arg = viennacl::any_cast<T * >(runtime_args[arg_id_]);
             handle = current_arg->handle();
+
             k.arg(arg_pos, handle );
             k.arg(arg_pos+1,cl_uint(size(size_arg)));
             k.arg(arg_pos+2,cl_uint(internal_size(size_arg)));

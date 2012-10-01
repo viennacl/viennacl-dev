@@ -34,13 +34,14 @@
 #include "viennacl/generator/make_code.hpp"
 #include "viennacl/generator/meta_tools/typelist.hpp"
 #include "viennacl/generator/result_of.hpp"
+#include "boost/shared_ptr.hpp"
 
-namespace viennacl 
+namespace viennacl
 {
 namespace generator
 {
 
-typedef std::multimap<std::string, std::pair<unsigned int, result_of::runtime_wrapper*> > runtime_wrappers_t;
+typedef std::multimap<std::string, std::pair<unsigned int, boost::shared_ptr<result_of::runtime_wrapper> > > runtime_wrappers_t;
 
 template<class T>
 struct get_head{
@@ -142,7 +143,7 @@ struct program_infos
             unsigned int arg_pos = 0;
             std::string current_kernel_name("__" + operation_name + "_k" + to_string(typelist_utils::index_of<KernelsList,Operations>::value));
             typelist_utils::ForEach<Arguments,functor>::execute(arg_pos,runtime_wrappers,current_kernel_name);
-            if(tree_utils::count_if<Operations,is_inner_product_leaf>::value){
+            if(tree_utils::count_if<Operations,is_inner_product_leaf>::value || tree_utils::count_if<Operations,is_product_leaf>::value){
                 runtime_wrappers.insert(runtime_wrappers_t::value_type(current_kernel_name,
                                                                        std::make_pair(arg_pos,
                                                                                       new result_of::shared_memory_wrapper())));
@@ -184,7 +185,7 @@ struct program_infos
                 res+="__kernel void " + name + "(\n";
                 bool state=true;
                 typelist_utils::ForEach<Arguments,functor>::execute(res,state);
-                if(tree_utils::count_if<TList,is_inner_product_leaf>::value)
+                if(tree_utils::count_if<TList,is_inner_product_leaf>::value || tree_utils::count_if<Operations,is_product_leaf>::value)
                     res+=",__local float* shared_memory_ptr\n";
                 res+=")\n";
                 return res;

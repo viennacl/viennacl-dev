@@ -112,6 +112,7 @@ public:
     }
 };
 
+
 template< >
 struct make_expression_code< NullType >
 {
@@ -142,14 +143,7 @@ struct make_expression_code<compound_node<LHS, OP, RHS> >
     }
 };
 
-template<class LHS, class RHS>
-struct make_expression_code<compound_node<LHS, prod_type, RHS> >
-{
-    static const std::string value(std::string const & loop_accessor)
-    {
-        return "dp"+compound_node<LHS, prod_type, RHS>::name();
-    }
-};
+
 
 template<class LHS, class RHS, unsigned int Alignment>
 struct dot_product_impl
@@ -200,6 +194,15 @@ struct dot_product
         return dot_product_impl<LHS,RHS,LHS::Alignment>::value(lhs_loop_id,rhs_loop_id);
     }
 };
+
+template<class LHS, class RHS>
+struct make_expression_code< compound_node<LHS,prod_type,RHS> >
+{
+    static const std::string value(std::string const & loop_accessor){
+        return dot_product<LHS,RHS>::value("row *" +result_of::expression_type<LHS>::Result::internal_size2_expression() + " + col","col");
+    }
+};
+
 
 template <class TOKEN>
 struct make_code;
@@ -327,90 +330,137 @@ struct make_code<InProdToken<T, 0> >
 };
 
 
-
-template<class T>
-struct make_code<MatVecToken<T> >
+template<class T, class OP, class Assigned>
+struct make_code<MatVecToken<T,OP,Assigned> >
 {
 private:
-    template<class U>
-    struct fill_dot_prod
-    {
-        typedef typename U::LHS                                   LHS;
-        typedef typename U::RHS                                   RHS;
-        typedef typename result_of::expression_type<LHS>::Result    MatExpr;
-        typedef typename MatExpr::ScalarType                        ScalarType;
-        typedef typename MatExpr::Layout                            Layout;
 
-        static const unsigned int Alignment = result_of::expression_type<LHS>::Result::Alignment;
+      typedef typename tree_utils::remove_if<T,is_symbolic_vector,false >::Result Products;
+    typedef typename tree_utils::remove_if<T,is_product_leaf,false >::Result Vectors;
 
-    private:
+//    template<class U>
+//    struct fill_dot_prod
+//    {
+//        typedef typename U::LHS                                   LHS;
+//        typedef typename U::RHS                                   RHS;
+//        typedef typename result_of::expression_type<LHS>::Result    MatExpr;
+//        typedef typename MatExpr::ScalarType                        ScalarType;
+//        typedef typename MatExpr::Layout                            Layout;
 
-        static const std::string evaluate(std::string dot_prod_name, viennacl::row_major)
-        {
-            std::string internal_size_2_expression = MatExpr::internal_size2_expression();
-            VIENNACL_STATIC_ASSERT(Alignment==1 || Alignment==16,AlignmentNotSupported);
-            if(Alignment==1)
-                return  dot_prod_name + " +=  " + dot_product<LHS,RHS>::value("gid *" + internal_size_2_expression + " + col","col") + ";\n";
-            else{
-                return dot_prod_name + ".s0 +=  " + dot_product<LHS,RHS>::value("scaled_row *" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s1 +=  " + dot_product<LHS,RHS>::value("(scaled_row+1)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s2 +=  " + dot_product<LHS,RHS>::value("(scaled_row+2)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s3 +=  " + dot_product<LHS,RHS>::value("(scaled_row+3)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s4 +=  " + dot_product<LHS,RHS>::value("(scaled_row+4)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s5 +=  " + dot_product<LHS,RHS>::value("(scaled_row+5)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s6 +=  " + dot_product<LHS,RHS>::value("(scaled_row+6)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s7 +=  " + dot_product<LHS,RHS>::value("(scaled_row+7)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s8 +=  " + dot_product<LHS,RHS>::value("(scaled_row+8)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".s9 +=  " + dot_product<LHS,RHS>::value("(scaled_row+9)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".sa +=  " + dot_product<LHS,RHS>::value("(scaled_row+10)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".sb +=  " + dot_product<LHS,RHS>::value("(scaled_row+11)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".sc +=  " + dot_product<LHS,RHS>::value("(scaled_row+12)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".sd +=  " + dot_product<LHS,RHS>::value("(scaled_row+13)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".se +=  " + dot_product<LHS,RHS>::value("(scaled_row+14)*" + internal_size_2_expression + " + col","col") + ";\n"
-                        + dot_prod_name + ".sf +=  " + dot_product<LHS,RHS>::value("(scaled_row+15)*" + internal_size_2_expression + " + col","col") + ";\n";
-            }
-        }
+//        static const unsigned int Alignment = result_of::expression_type<LHS>::Result::Alignment;
 
-        static const std::string evaluate(std::string dot_prod_name, viennacl::column_major)
-        {
-            std::string internal_size_1_expression = MatExpr::internal_size1_expression();
-            VIENNACL_STATIC_ASSERT(Alignment==1,AlignmentNotSupported);
-            return   dot_prod_name + "+=  " + dot_product<LHS,RHS>::value("gid  + col * " +  internal_size_1_expression, "col") + ";\n";
-        }
-    public:
-        static void execute(std::string & res)
-        {
-//            std::string dot_prod_name = "dp"+U::name();
-//            res += print_type<ScalarType,Alignment>::value()+ " " + dot_prod_name + " = 0;\n";
-//            res += "{";
-//            res += "   unsigned int row_gid = get_global_id(0)/get_local_size(0);\n";
-//            res += "   unsigned int col_gid = get_global_id(0)%get_local_size(0);\n";
-//            res += "   unsigned int lid = get_local_id(0);";
-//            res += "   for(unsigned int row = row_gid ; row < n_rows ; row+=get_num_groups(0)){";
-//            res += "       ScalarType sum = 0;\n";
-//            res += "       for(unsigned int col = col_gid ; col < n_cols ; col+=get_local_size(0)){\n";
-//            res += "            sum+=mat[row*n_cols+col]*vec[col];\n";
-//            res += "       }";
-//            res += "       work[lid]=sum;";
-//            res += "       for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){";
-//            res += "           barrier(CLK_LOCAL_MEM_FENCE);\n";
-//            res += "           if(lid < stride) work[lid]+=work[lid+stride];\n";
-//            res += "       }\n";
-//            res += "       if(lid==0) res[row]=work[0];";
-//            res += "   }";
-//            res += "}";
-        }
-    };
+//    private:
 
-    typedef typename result_of::expression_type<typename T::Head>::Result    IntermediateType;
+//        static const std::string evaluate(std::string dot_prod_name, viennacl::row_major)
+//        {
+//            std::string internal_size_2_expression = MatExpr::internal_size2_expression();
+//            VIENNACL_STATIC_ASSERT(Alignment==1, AlignmentNotSupported);
+////            if(Alignment==1)
+//                return  dot_prod_name + " +=  " + dot_product<LHS,RHS>::value("row *" + internal_size_2_expression + " + col","col") + ";\n";
+////                return make_expression_code<LHS>::value("(row * " + LHS::row_inc_name() + "+ " + LHS ::row_start_name() + ") * " + LHS::internal_size2_name() + " col * " + LHS::col_inc_name() + "+" + LHS::col_start_name())
+////                        + "*"
+////                        + make_expression_code<RHS>::value(RHS::start_name() + " + " + RHS::inc_name() + " * col")
+////                        +";\n";
+////            else{
+////                return dot_prod_name + ".s0 +=  " + dot_product<LHS,RHS>::value("scaled_row *" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s1 +=  " + dot_product<LHS,RHS>::value("(scaled_row+1)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s2 +=  " + dot_product<LHS,RHS>::value("(scaled_row+2)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s3 +=  " + dot_product<LHS,RHS>::value("(scaled_row+3)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s4 +=  " + dot_product<LHS,RHS>::value("(scaled_row+4)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s5 +=  " + dot_product<LHS,RHS>::value("(scaled_row+5)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s6 +=  " + dot_product<LHS,RHS>::value("(scaled_row+6)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s7 +=  " + dot_product<LHS,RHS>::value("(scaled_row+7)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s8 +=  " + dot_product<LHS,RHS>::value("(scaled_row+8)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".s9 +=  " + dot_product<LHS,RHS>::value("(scaled_row+9)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".sa +=  " + dot_product<LHS,RHS>::value("(scaled_row+10)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".sb +=  " + dot_product<LHS,RHS>::value("(scaled_row+11)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".sc +=  " + dot_product<LHS,RHS>::value("(scaled_row+12)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".sd +=  " + dot_product<LHS,RHS>::value("(scaled_row+13)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".se +=  " + dot_product<LHS,RHS>::value("(scaled_row+14)*" + internal_size_2_expression + " + col","col") + ";\n"
+////                        + dot_prod_name + ".sf +=  " + dot_product<LHS,RHS>::value("(scaled_row+15)*" + internal_size_2_expression + " + col","col") + ";\n";
+////            }
+//        }
+
+//        static const std::string evaluate(std::string dot_prod_name, viennacl::column_major)
+//        {
+//            std::string internal_size_1_expression = MatExpr::internal_size1_expression();
+//            VIENNACL_STATIC_ASSERT(Alignment==1,AlignmentNotSupported);
+//            return   dot_prod_name + "+=  " + dot_product<LHS,RHS>::value("gid  + col * " +  internal_size_1_expression, "col") + ";\n";
+//        }
+//    public:
+//        static void execute(std::string & res)
+//        {
+////            std::string dot_prod_name = "dp"+U::name();
+
+
+
+
+
+
+
+// //ROW MAJOR
+
+////            "  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n"
+////            "  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n"
+////            "  unsigned int lid = get_local_id(0);\n"
+////            "  \n"
+////            "  for (unsigned int row = row_gid; row < A_row_size; row += get_num_groups(0))\n"
+////            "  {\n"
+////            "    float dot_prod = 0;\n"
+////            "    for (unsigned int col = col_gid; col < A_col_size; col+=get_local_size(0))\n"
+////            "      dot_prod += A[(row * A_row_inc + A_row_start) * A_internal_cols + col * A_col_inc + A_col_start] * v[v_start + v_inc * col];\n"
+////            "    work[lid] = dot_prod;\n"
+////            "    \n"
+////            "    for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){\n"
+////            "      barrier(CLK_LOCAL_MEM_FENCE);\n"
+////            "      if(lid < stride)\n"
+////            "        work[lid] += work[lid+stride];\n"
+////            "    }\n"
+////            "    \n"
+////            "    if(lid == 0)\n"
+////            "      result[row * result_inc + result_start] = work[0];\n"
+////            "  }\n"
+
+// //COL MAJOR
+////            "    float dot_prod = 0;\n"
+////            "    for (unsigned int col = 0; col < A_col_size; ++col)\n"
+////            "      dot_prod += A[(row * A_row_inc + A_row_start) + (col * A_col_inc + A_col_start) * A_internal_rows] * v[v_start + v_inc * col];\n"
+////            "    result[row * result_inc + result_start] = dot_prod;\n"
+//        }
+//    };
+
+    typedef typename result_of::expression_type<T>::Result    IntermediateType;
     static const unsigned int Alignment = IntermediateType::Alignment;
+
 
 public:
     static const std::string value()
     {
         std::string res;
-        if(Alignment!=1) res+= " unsigned int scaled_row = gid * " + to_string(Alignment) + ";\n";
-        typelist_utils::ForEach<T, fill_dot_prod>::execute(res);
+        VIENNACL_STATIC_ASSERT(Alignment==1,AlignmentNotSupported);
+        typedef typename tree_utils::extract_if<Products,is_symbolic_matrix>::Result::Head FirstMatrix;
+        if (is_row_major<FirstMatrix>::value){
+           res += "{\n";
+           res += "   unsigned int row_gid = get_global_id(0)/get_local_size(0);\n";
+           res += "   unsigned int col_gid = get_global_id(0)%get_local_size(0);\n";
+           res += "   unsigned int lid = get_local_id(0);\n";
+           res += "   for(unsigned int row = row_gid ; row < " + FirstMatrix::internal_size1_name() + " ; row+=get_num_groups(0)){\n";
+           res += "       " + print_type<typename FirstMatrix::ScalarType,1>::value() + " sum = 0;\n";
+           res += "       for(unsigned int col = col_gid ; col < " + FirstMatrix::internal_size2_name() + " ; col+=get_local_size(0)){\n";
+           res += "            sum +=  " + make_expression_code<Products>::value("") + ";\n";
+           res += "       }\n";
+           res += "       shared_memory_ptr[lid]=sum;\n";
+           res += "       for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){\n";
+           res += "           barrier(CLK_LOCAL_MEM_FENCE);\n";
+           res += "           if(lid < stride) shared_memory_ptr[lid]+=shared_memory_ptr[lid+stride];\n";
+           res += "       }\n";
+           res += "       if(lid==0) " + Assigned::name()+ "[row]" + OP::expression_string() + " shared_memory_ptr[0] ";
+           if(!is_null_type<Vectors>::value) res+= " + " + make_expression_code<Vectors>::value("row");
+           res+=";\n";
+           res += "   }\n";
+           res += "}\n";
+        }
+
         return res;
     }
 
@@ -549,7 +599,7 @@ public:
 
         replace(rhs_expr,RHS::name(),"bp");
 
-        // run computations
+        // compute
         res += "    for(size_t i = 0; i < " + to_string(block_size) + "; i++) { \n";
         res += "      float bv = " + rhs_expr + "; \n";
         res += "\n";

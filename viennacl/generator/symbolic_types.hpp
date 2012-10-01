@@ -155,6 +155,8 @@ namespace viennacl
      * @tparam SCALARTYPE The Scalartype of the vector in the generated code
      * @tparam ALIGNMENT The Alignment of the vector in the generated code
      */
+
+    //TODO: Add start and inc...
     template <unsigned int ID, typename SCALARTYPE, unsigned int ALIGNMENT>
     class symbolic_vector
     {
@@ -545,7 +547,7 @@ namespace viennacl
     template <class T>
     struct is_transposed
     {
-      enum { value = 1 };
+      enum { value = 0 };
     };
 
     template <class T>
@@ -615,6 +617,11 @@ namespace viennacl
       enum { value = 1};
     };
 
+    template <class LHS,class RHS>
+    struct is_product_leaf<compound_node<LHS,scal_mul_type,RHS> >
+    {
+      enum { value = is_product_leaf<RHS>::value || is_product_leaf<LHS>::value };
+    };
 
     template <class T>
     struct is_null_type

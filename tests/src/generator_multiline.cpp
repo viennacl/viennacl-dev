@@ -1,4 +1,6 @@
-// #define VIENNACL_DEBUG_CUSTOM_OPERATION
+
+ #define VIENNACL_DEBUG_CUSTOM_OPERATION
+#define VIENNACL_DEBUG_BUILD
 
 //
 
@@ -18,7 +20,7 @@
 // #define VIENNACL_DEBUG_ALL
 // #define VIENNACL_HAVE_UBLAS 1
 // #define VIENNACL_DEBUG_CUSTOM_OPERATION
-// #define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
@@ -28,11 +30,13 @@
 #include "viennacl/linalg/direct_solve.hpp"
 #include "examples/tutorial/Random.hpp"
 #include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/symbolic_types.hpp"
 
 //
 // -------------------------------------------------------------
 //
 using namespace boost::numeric;
+using namespace viennacl::generator;
 //
 // -------------------------------------------------------------
 //
@@ -55,6 +59,7 @@ int test ( Epsilon const& epsilon ) {
     int retval = EXIT_SUCCESS;
     static const unsigned int SIZE = 10;
     // --------------------------------------------------------------------------
+    NumericT scalar;
     ublas::vector<NumericT> rhs ( SIZE );
     for ( unsigned int i = 0; i < rhs.size(); ++i )
         rhs ( i ) = i;
@@ -75,6 +80,7 @@ int test ( Epsilon const& epsilon ) {
 
     std::cout << "----- Alignment " << Alignment << " -----" << std::endl;
 
+    viennacl::scalar<NumericT> vcl_scalar;
     viennacl::vector<NumericT,Alignment> vcl_rhs ( rhs.size() );
     viennacl::vector<NumericT,Alignment> vcl_rhs_trans ( rhs_trans.size() );
     viennacl::vector<NumericT,Alignment> vcl_result_trans ( result_trans.size() );
@@ -87,82 +93,36 @@ int test ( Epsilon const& epsilon ) {
 
     // --------------------------------------------------------------------------
 
-    viennacl::generator::symbolic_matrix<1,NumericT,F,Alignment> symm2;
-
-    viennacl::generator::symbolic_vector<0,NumericT,Alignment> symv;
-    viennacl::generator::symbolic_vector<2,NumericT,Alignment> symv3;
-
+    symbolic_vector<0,float> symv0;
+    symbolic_matrix<1,float> symm1;
+    symbolic_vector<2,float> symv2;
+    gpu_symbolic_scalar<3,float> syms3;
     // --------------------------------------------------------------------------
     std::cout << "matrix-vector product" << std::endl;
     result     = ublas::prod ( matrix, rhs );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,symv3 ), "prod" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
+    scalar = ublas::inner_prod(rhs, rhs);
+    rhs = scalar*result;
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation (symv0 = prod ( symm1,symv2 ),
+                                                                    syms3 = inner_prod(symv2,symv2),
+                                                                    symv2 = syms3 * symv0,
+                                                                     "test") ( vcl_result,vcl_matrix,vcl_rhs,vcl_scalar ) );
     viennacl::ocl::get_queue().finish();
+
     if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
         std::cout << "# Error at operation: matrix-vector product" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
 
-    std::cout << "Prod times inprod" << std::endl;
-    result     = ublas::inner_prod ( rhs,rhs ) *ublas::prod ( matrix, rhs );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = inner_prod ( symv3,symv3 ) *prod ( symm2,symv3 ), "prod_times_inprod" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
-    viennacl::ocl::get_queue().finish();
-    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-        std::cout << "# Error at operation: Prod times inprod" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-//
-    //--------------------------------------------------------------------------
-    std::cout << "prod minus ( v minus prod ) " << std::endl;
-    result     = ublas::prod ( matrix, rhs ) - ( rhs - ublas::prod ( matrix,rhs ) ) ;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,symv3 ) - ( symv3 - prod ( symm2,symv3 ) ), "prod_min_v_min_prod" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
-    viennacl::ocl::get_queue().finish();
-    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-        std::cout << "# Error at operation: prod minus ( v minus prod )" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }
-
-
-//    //--------------------------------------------------------------------------
-//    std::cout << "Nested matrix-vector product" << std::endl;
-//    result     = ublas::prod ( matrix, ublas::vector<NumericT> ( ublas::prod ( matrix,result ) ) );
-//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,prod ( symm2,symv ) ) ) ( vcl_result,vcl_matrix ) );
-//    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-//        std::cout << "# Error at operation: nested matrix-vector product" << std::endl;
-//        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-//        retval = EXIT_FAILURE;
-//    }
-
-
-////    --------------------------------------------------------------------------
-//    std::cout << "Double nested matrix-vector product" << std::endl;
-//    result	  = ublas::prod ( matrix,ublas::vector<NumericT> ( ublas::prod ( matrix, ublas::vector<NumericT> ( ublas::prod ( matrix,rhs ) ) ) ) );
-//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,prod ( symm2,prod ( symm2,symv3 ) ) ) ) ( vcl_result,vcl_matrix,vcl_rhs ) );
-//    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-//        std::cout << "# Error at operation: double nested matrix-vector product" << std::endl;
-//        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-//        retval = EXIT_FAILURE;
-
-//    }
-
-    /*std::cout << "Complicated mess..." << std::endl;
-    result     = result + ublas::prod ( matrix,result ) + ublas::inner_prod ( result, rhs ) *ublas::prod ( matrix,rhs );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + prod ( symm2,symv ) + inner_prod ( symv,symv3 ) *prod ( symm2,symv3 ) ) ( vcl_result,vcl_matrix,vcl_rhs ) );
-    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-        std::cout << "# Error at operation : complicated mess" << std::endl;
-        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-        retval = EXIT_FAILURE;
-    }*/
-
     return retval;
+
 }
+
 int main() {
     std::cout << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "## Test :: Matrix-Vector Product" << std::endl;
+    std::cout << "## Test :: Multiline Operations" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << std::endl;
@@ -181,10 +141,9 @@ int main() {
 
         std::cout << "---- Layout : Row Major" << std::endl;
         retval = test<NumericT, viennacl::row_major,ublas::row_major,1> ( epsilon );
-//        retval = test<NumericT, viennacl::row_major,ublas::row_major,16> ( epsilon );
 
         std::cout << "---- Layout : Column Major" << std::endl;
-//        retval = test<NumericT, viennacl::column_major,ublas::column_major,1> ( epsilon );
+        retval = test<NumericT, viennacl::column_major,ublas::column_major,1> ( epsilon );
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;

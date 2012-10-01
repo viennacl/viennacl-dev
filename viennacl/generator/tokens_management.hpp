@@ -11,7 +11,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -19,7 +19,7 @@
 
 /** @file viennacl/generator/tokens_management.hpp
  *  @brief Creation and management of the tokens list
- * 
+ *
  *  Generator code contributed by Philippe Tillet
  */
 
@@ -29,7 +29,7 @@
 #include "viennacl/generator/meta_tools/typelist.hpp"
 #include "viennacl/generator/make_code.hpp"
 
-namespace viennacl 
+namespace viennacl
 {
   namespace generator
   {
@@ -48,10 +48,11 @@ namespace viennacl
         typedef Assigned_ Assigned;
     };
 
-    template<class Expr>
+    template<class Expr, class OP_, class Assigned_>
     struct MatVecToken : public Token<Expr>
     {
-
+        typedef OP_ OP;
+        typedef Assigned_ Assigned;
     };
 
     template<class Expr, unsigned int NestedLevel_>
@@ -80,6 +81,22 @@ namespace viennacl
         enum { value = is_arithmetic_operator<OP>::value && is_symbolic_vector<LHS>::value };
     };
 
+
+    template<class T, class Enable = void>
+    struct get_operations_lhs{
+        typedef NullType Result;
+    };
+
+    template<class T>
+    struct get_operations_lhs<T,typename viennacl::enable_if<is_assignment_compound<T, true_pred>::value>::type>{
+        typedef typename T::LHS Result;
+    };
+
+    template<class Head, class Tail>
+    struct get_operations_lhs<typelist<Head,Tail> >{
+        typedef typelist<typename get_operations_lhs<Head>::Result,
+                        typename get_operations_lhs<Tail>::Result> Result;
+    };
 
     template<class OperationsList>
     struct body_code{
@@ -135,7 +152,7 @@ namespace viennacl
         public:
             static void execute(std::string & generated_code)
             {
-                typelist_utils::ForEach<typename typelist_utils::no_duplicates< typename tree_utils::extract_if<OperationsList
+                typelist_utils::ForEach<typename typelist_utils::no_duplicates< typename tree_utils::extract_if<typename  get_operations_lhs<OperationsList>::Result
                                                                                                         ,Pred >::Result
                                                                                >::Result
                                         ,functor>::execute(generated_code);
@@ -171,11 +188,29 @@ namespace viennacl
         {
 
         }
+
+        static const std::string vector_code_impl(Int2Type<0> linear_expression){
+            typedef typename tree_utils::extract_if<OperationsList,or_is<is_vector_assignment, is_inner_product_impl>::Pred>::Result RequireGidLoopTmp;
+            typedef typename typelist_utils::no_duplicates<RequireGidLoopTmp>::Result RequireGidLoop;
+            std::string res;
+            fill_vector_expression<RequireGidLoop>(Int2Type<is_null_type<RequireGidLoop>::value>(),res);
+            return res;
+        }
+
+        static const std::string vector_code_impl(Int2Type<1> matvec_prod){
+            VIENNACL_STATIC_ASSERT(typelist_utils::length<OperationsList>::value == 1, MatVecHasDedicatedKernel);
+            typedef typename OperationsList::Head Root;
+            std::string res;
+            res+=make_code<MatVecToken<typename Root::RHS,typename Root::OP,typename Root::LHS> >::value();
+            return res;
+        }
+
     public:
 
         static const std::string value(){
             std::string res;
             res+="{\n";
+
 
             declarations<is_symbolic_gpu_scalar>::execute(res);
             declarations<is_inner_product_impl>::execute(res);
@@ -186,20 +221,12 @@ namespace viennacl
             typedef typename get_type_if<NullType,InProdToken<InProd0,0>,is_null_type<InProd0>::value>::Result InProd0Token_;
             res+=make_code<InProd0Token_>::value();
 
-
-            typedef typename tree_utils::extract_if<OperationsList,or_is<is_vector_assignment, is_inner_product_impl>::Pred>::Result RequireGidLoopTmp;
-            typedef typename typelist_utils::no_duplicates<RequireGidLoopTmp>::Result RequireGidLoop;
-            fill_vector_expression<RequireGidLoop>(Int2Type<is_null_type<RequireGidLoop>::value>(),res);
+            res += vector_code_impl(Int2Type< (tree_utils::count_if<typename OperationsList::Head, is_product_leaf>::value > 0) >());
 
             //Inner Product - Step 1 - Reduction
             typedef typename tree_utils::extract_if_unique<OperationsList,is_inner_product_impl>::Result InProd1;
             typedef typename get_type_if<NullType,InProdToken<InProd1,1>,is_null_type<InProd1>::value>::Result InProd1Token_;
             res+=make_code<InProd1Token_>::reduction();
-
-            //Matrix-Vector Product Code
-            typedef typename tree_utils::extract_if_unique<RequireGidLoop,is_product_leaf>::Result MatVec;
-            typedef typename get_type_if<NullType,MatVecToken<MatVec>,is_null_type<MatVec>::value>::Result MatVecToken_;
-            res+=make_code<MatVecToken_>::value();
 
             fill_expression_updates<OperationsList,is_symbolic_gpu_scalar>::execute(res);
             assignements<is_symbolic_gpu_scalar>::execute(res);

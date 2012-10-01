@@ -11,7 +11,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -19,14 +19,14 @@
 
 /** @file viennacl/generator/forwards.h
  *  @brief Forward declarations of the important structures for the kernel generator
- * 
+ *
  *  Generator code contributed by Philippe Tillet
  */
 
 #include <string>
 #include "viennacl/forwards.h"
 
-namespace viennacl 
+namespace viennacl
 {
   namespace generator
   {
@@ -57,7 +57,7 @@ namespace viennacl
     template<unsigned int ID,typename SCALARTYPE>
     class gpu_symbolic_scalar;
 
-    template<class Expr>
+    template<class Expr, class OP, class Assigned>
     struct MatVecToken;
 
     template<class Expr, class OP, class Assigned>

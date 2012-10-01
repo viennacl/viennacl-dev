@@ -88,7 +88,7 @@ namespace viennacl
       template <class value_type>
       any(const value_type& v_) : v(new value<value_type>(v_)) { }
 
-      any(any const & other) : v(other.v ? other.v->clone() : 0) {}
+      any(any const & other) : v(other.v ? other.v->clone() : 0) {      }
 
       any& operator=(const any& other)
       {
@@ -134,6 +134,11 @@ namespace viennacl
       return v->t;
   }
 
+  template<class T>
+  struct true_pred{
+      enum { value = 1 };
+  };
+
   template<template<class> class T>
   struct is_not{
     template<class U>
@@ -166,6 +171,7 @@ namespace viennacl
 
   namespace generator
   {
+
     struct NullType 
     {
       static const std::string name() 
