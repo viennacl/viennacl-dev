@@ -14,7 +14,7 @@ __kernel void avbv_cpu_gpu(
           
           __global const float * fac3,
           unsigned int options3,
-          __global float * vec3,
+          __global const float * vec3,
           unsigned int start3,
           unsigned int inc3
           )

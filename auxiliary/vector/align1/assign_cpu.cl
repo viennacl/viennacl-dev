@@ -1,5 +1,5 @@
 
-__kernel void assign_gpu(
+__kernel void assign_cpu(
           __global float * vec1,
           unsigned int start1,
           unsigned int inc1,

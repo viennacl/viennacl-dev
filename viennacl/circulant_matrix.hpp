@@ -40,6 +40,9 @@ namespace viennacl
     class circulant_matrix
     {
       public:     
+        typedef viennacl::backend::mem_handle                                                              handle_type;
+        typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+        
         /**
          * @brief The default constructor. Does not allocate any memory.
          *
@@ -76,7 +79,7 @@ namespace viennacl
         *
         *   @return OpenCL handle
         */
-        viennacl::ocl::handle<cl_mem> handle() const { return elements_.handle(); }
+        handle_type handle() const { return elements_.handle(); }
 
         /**
          * @brief Returns an internal viennacl::vector, which represents a circulant matrix elements

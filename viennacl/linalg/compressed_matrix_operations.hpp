@@ -1,5 +1,5 @@
-#ifndef VIENNACL_COMPRESSED_MATRIX_OPERATIONS_HPP_
-#define VIENNACL_COMPRESSED_MATRIX_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_COMPRESSED_MATRIX_OPERATIONS_HPP_
+#define VIENNACL_LINALG_COMPRESSED_MATRIX_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file compressed_matrix_operations.hpp
+/** @file viennacl/linalg/compressed_matrix_operations.hpp
     @brief Implementations of operations using compressed_matrix
 */
 
@@ -28,7 +28,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/kernels/compressed_matrix_kernels.h"
+#include "viennacl/linalg/opencl/compressed_matrix_operations.hpp"
 
 namespace viennacl
 {
@@ -65,15 +65,19 @@ namespace viennacl
     template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & mat, 
                    const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
-                         viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result, 
-                   size_t NUM_THREADS = 0)
+                         viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
     {
-      assert(mat.size1() == result.size());
-      assert(mat.size2() == vec.size());
+      assert( (mat.size1() == result.size()) && "Size check failed for compressed matrix-vector product: size1(mat) != size(result)");
+      assert( (mat.size2() == vec.size())    && "Size check failed for compressed matrix-vector product: size2(mat) != size(x)");
 
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
-      
-      viennacl::ocl::enqueue(k(mat.handle1(), mat.handle2(), mat.handle(), vec, result, static_cast<cl_uint>(mat.size1())));
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(mat, vec, result);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
     /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
@@ -84,14 +88,17 @@ namespace viennacl
     template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
     void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::unit_lower_tag)
     {
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
-      unsigned int threads = k.local_work_size();
+      assert( (L.size1() == vec.size()) && "Size check failed for compressed lower triangular solver: size1(mat) != size(x)");
+      assert( (L.size2() == vec.size()) && "Size check failed for compressed lower triangular solver: size2(mat) != size(x)");
 
-      k.global_work_size(k.local_work_size());
-      viennacl::ocl::enqueue(k(L.handle1(), L.handle2(), L,
-                                                              viennacl::ocl::local_mem(sizeof(int) * (threads+1)),
-                                                              viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
-                                                              vec, L.size1()));        
+      switch (viennacl::traits::handle(L).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(L, vec, viennacl::linalg::unit_lower_tag());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
     
     /** @brief Convenience functions for result = solve(trans(mat), vec, unit_lower_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
@@ -123,14 +130,17 @@ namespace viennacl
     template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
     void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::upper_tag)
     {
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
-      unsigned int threads = k.local_work_size();
-      
-      k.global_work_size(k.local_work_size());
-      viennacl::ocl::enqueue(k(U.handle1().get(), U.handle2().get(), U.handle().get(),
-                                                              viennacl::ocl::local_mem(sizeof(int) * (threads+2)),
-                                                              viennacl::ocl::local_mem(sizeof(SCALARTYPE) * (threads+2)),
-                                                              vec, U.size1()));        
+      assert( (U.size1() == vec.size()) && "Size check failed for compressed lower triangular solver: size1(mat) != size(x)");
+      assert( (U.size2() == vec.size()) && "Size check failed for compressed lower triangular solver: size2(mat) != size(x)");
+
+      switch (viennacl::traits::handle(U).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(U, vec, viennacl::linalg::upper_tag());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
     /** @brief Convenience functions for result = solve(trans(mat), vec, unit_lower_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
@@ -171,7 +181,7 @@ namespace viennacl
                                                                                           viennacl::op_prod> & proxy) 
     {
       // check for the special case x = A * x
-      if (proxy.rhs().handle().get() == this->handle().get())
+      if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
       {
         viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);

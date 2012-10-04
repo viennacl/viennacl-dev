@@ -127,7 +127,7 @@ namespace viennacl
   T any_cast(any& a)
   {
     value<T>* v = dynamic_cast<value<T>*>(a.v);
-    
+    std::cout << a.type().name() << typeid(T).name() << std::endl;
     if(v == 0)
       throw bad_any_cast();
     else

@@ -84,5 +84,10 @@ int main()
   //this is the external linkage check:
   other_func();
   
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+   
+  
   return EXIT_SUCCESS;
 }

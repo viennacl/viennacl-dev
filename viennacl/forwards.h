@@ -183,8 +183,14 @@ namespace viennacl
   struct is_vector;
 
   template <typename T>
+  struct is_any_dense_nonstructured_vector;
+  
+  template <typename T>
   struct is_matrix;
 
+  template <typename T>
+  struct is_any_dense_nonstructured_matrix;
+  
   template <typename T>
   struct is_any_matrix;
   
@@ -209,31 +215,37 @@ namespace viennacl
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& input2,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& output);
     
-#ifndef _MSC_VER
+
+    template <typename V1, typename V2, typename S3>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_scalar<S3>::value
+                                >::type
+    inner_prod_impl(V1 const & vec1,
+                    V2 const & vec2,
+                    S3 & result);
+    
     //forward definition of norm_1_impl function
     template <typename V1, typename S2>
-    void norm_1_impl(V1 const & vec,
-                     S2 & result,
-                      typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                                    && viennacl::is_scalar<S2>::value
-                                                  >::type * dummy = 0);
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_scalar<S2>::value
+                                >::type
+    norm_1_impl(V1 const & vec, S2 & result);
 
     //forward definition of norm_2_impl function
     template <typename V1, typename S2>
-    void norm_2_impl(V1 const & vec,
-                     S2 & result,
-                     typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                                   && viennacl::is_scalar<S2>::value
-                                                 >::type * dummy = 0);
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_scalar<S2>::value
+                                >::type
+    norm_2_impl(V1 const & vec, S2 & result);
 
     //forward definition of norm_inf_impl function
     template <typename V1, typename S2>
-    void norm_inf_impl(V1 const & vec,
-                       S2 & result,
-                       typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                                     && viennacl::is_scalar<S2>::value
-                                                   >::type * dummy = 0);
-#endif    
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_scalar<S2>::value
+                                >::type
+    norm_inf_impl(V1 const & vec, S2 & result);
+    
     
     //forward definition of prod_impl functions
     template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
@@ -241,6 +253,14 @@ namespace viennacl
                                 const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
                                 op_prod > prod_impl(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> &, 
                                                     const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
+
+    template <typename MatrixType, typename VectorType1, typename VectorType2>
+    typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
+                                  && viennacl::is_any_dense_nonstructured_vector<VectorType1>::value 
+                                  && viennacl::is_any_dense_nonstructured_vector<VectorType2>::value >::type
+    prod_impl(const MatrixType & mat, 
+              const VectorType1 & vec, 
+                    VectorType2 & result);
 
     template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     viennacl::vector_expression<const viennacl::compressed_matrix<SCALARTYPE, ALIGNMENT>,
@@ -266,27 +286,6 @@ namespace viennacl
                                 op_prod > prod_impl(const viennacl::hyb_matrix<SCALARTYPE, ALIGNMENT> & , 
                                                     const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
                                 
-    //forward definition of inner_prod_impl function
-    /*template <typename V1, typename V2>
-    typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                  && viennacl::is_vector<V2>::value,
-                                  viennacl::scalar_expression< const V1, 
-                                                               const V2,
-                                                               viennacl::op_inner_prod >
-                                >::type
-    inner_prod_impl(V1 const & vec1,
-                    V2 const & vec2);*/
-    
-#ifndef _MSC_VER
-    template <typename V1, typename V2, typename S3>
-    void inner_prod_impl(V1 const & vec1,
-                         V2 const & vec2,
-                         S3 & result,
-                         typename viennacl::enable_if< viennacl::is_vector<V1>::value
-                                                       && viennacl::is_vector<V2>::value
-                                                       && viennacl::is_scalar<S3>::value
-                                                     >::type * dummy = 0);
-#endif                                                   
                     
       
     /** @brief A tag class representing a lower triangular matrix */

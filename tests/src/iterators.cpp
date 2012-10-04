@@ -43,8 +43,8 @@ int test()
    vcl_cont[1] = 2;
    vcl_cont[2] = 3;
 
-   typename VclVector::const_iterator const_iter_def_const;
-   typename VclVector::iterator       iter_def_const;
+   //typename VclVector::const_iterator const_iter_def_const;
+   //typename VclVector::iterator       iter_def_const;
 
    for(typename VclVector::const_iterator iter = vcl_cont.begin();
        iter != vcl_cont.end(); iter++)
@@ -107,5 +107,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
+   
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+   
+   
    return retval;
 }

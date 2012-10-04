@@ -1,5 +1,5 @@
 
-// generic kernel for the vector operation v1 = alpha * v2 + beta * v3 + gamma * v4, where v1, v2, v3 are not necessarily distinct vectors
+// generic kernel for the vector operation v1 += alpha * v2 + beta * v3, where v1, v2, v3 are not necessarily distinct vectors
 __kernel void avbv_v_cpu_cpu(
           __global float * vec1,
           unsigned int start1,
@@ -14,7 +14,7 @@ __kernel void avbv_v_cpu_cpu(
           
           float fac3,
           unsigned int options3,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-          __global float * vec3,
+          __global const float * vec3,
           unsigned int start3,
           unsigned int inc3)
 { 

@@ -37,8 +37,10 @@ namespace viennacl
     template<typename SCALARTYPE, unsigned int ALIGNMENT /* see forwards.h for default argument */>
     class ell_matrix
     {
-
       public:
+        typedef viennacl::backend::mem_handle                                                              handle_type;
+        typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+        
         ell_matrix() 
         {
           viennacl::linalg::kernels::ell_matrix<SCALARTYPE, ALIGNMENT>::init();
@@ -62,8 +64,8 @@ namespace viennacl
         std::size_t nnz() const { return rows_ * maxnnz_; }
         std::size_t internal_nnz() const { return internal_size1() * internal_maxnnz(); }
 
-        const viennacl::ocl::handle<cl_mem>& handle1( ) const { return elements_; } 
-        const viennacl::ocl::handle<cl_mem>& handle2() const { return coords_; }
+        const handle_type & handle1() const { return elements_; } 
+        const handle_type & handle2() const { return coords_; }
 
       #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
         template <typename CPU_MATRIX>
@@ -78,8 +80,8 @@ namespace viennacl
         std::size_t cols_;
         std::size_t maxnnz_;
 
-        viennacl::ocl::handle<cl_mem> coords_;
-        viennacl::ocl::handle<cl_mem> elements_;        
+        handle_type coords_;
+        handle_type elements_;        
     };
 
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
@@ -126,9 +128,10 @@ namespace viennacl
           }
         }
 
-
-        gpu_matrix.coords_   = viennacl::ocl::current_context().create_memory(CL_MEM_READ_ONLY, coords);
-        gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_ONLY, elements);
+        gpu_matrix.coords_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        gpu_matrix.elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(gpu_matrix.coords_,   sizeof(SCALARTYPE) * coords.size(), &(coords[0]));
+        viennacl::backend::memory_create(gpu_matrix.elements_, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
       }
     }
 
@@ -142,14 +145,8 @@ namespace viennacl
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
         std::vector<cl_uint> coords(gpu_matrix.internal_nnz());
 
-        cl_int err;
-
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle(), gpu_matrix.handle1(), CL_TRUE, 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle(), gpu_matrix.handle2(), CL_TRUE, 0, sizeof(cl_uint) * coords.size(), &(coords[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)    * coords.size(),   &(coords[0]));
 
         for(std::size_t row = 0; row < gpu_matrix.size1(); row++)
         {
@@ -158,9 +155,7 @@ namespace viennacl
             std::size_t offset = gpu_matrix.internal_size1() * ind + row;
             
             if(elements[offset] == static_cast<SCALARTYPE>(0.0))
-            {
                 continue;
-            }
 
             if(coords[offset] >= gpu_matrix.size2())
             {
@@ -195,8 +190,7 @@ namespace viennacl
       }
       
       template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      void prod_impl(
-                      const viennacl::ell_matrix<TYPE, ALIGNMENT>& mat, 
+      void prod_impl( const viennacl::ell_matrix<TYPE, ALIGNMENT>& mat, 
                       const viennacl::vector<TYPE, VECTOR_ALIGNMENT>& vec,
                       viennacl::vector<TYPE, VECTOR_ALIGNMENT>& result)
       {
@@ -215,10 +209,10 @@ namespace viennacl
         k.local_work_size(0, thread_num);
         k.global_work_size(0, thread_num * group_num);
 
-        viennacl::ocl::enqueue(k(mat.handle2(), 
-                                 mat.handle1(),
-                                 vec,
-                                 result,
+        viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(), 
+                                 mat.handle1().opencl_handle(),
+                                 viennacl::traits::opencl_handle(vec),
+                                 viennacl::traits::opencl_handle(result),
                                  cl_uint(mat.size1()),
                                  cl_uint(mat.size2()),
                                  cl_uint(mat.internal_size1()),
@@ -244,7 +238,7 @@ namespace viennacl
                                                                                           viennacl::op_prod> & proxy) 
     {
       // check for the special case x = A * x
-      if (proxy.rhs().handle().get() == this->handle().get())
+      if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
       {
         viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);

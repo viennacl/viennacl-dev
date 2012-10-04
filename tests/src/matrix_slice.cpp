@@ -633,6 +633,11 @@ int main (int argc, const char * argv[])
       return EXIT_FAILURE;
   }
 
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+  
   return EXIT_SUCCESS;
 }
 

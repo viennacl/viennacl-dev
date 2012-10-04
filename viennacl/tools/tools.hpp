@@ -367,7 +367,31 @@ namespace viennacl
       typedef T       ResultType;
     };
 
-        
+    //
+    // Converts a scalar type when necessary unless it is a viennacl::scalar<> (typical use-case: convert user-provided floats to double (and vice versa) for OpenCL kernels)
+    //
+    
+    template <typename HostScalarType>
+    viennacl::scalar<HostScalarType> const & promote_if_host_scalar(viennacl::scalar<HostScalarType> const & s) { return s; }
+
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(float s) { return s; }
+
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(double s) { return s; }
+    
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(long s) { return s; }
+    
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(unsigned long s) { return s; }
+    
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(int s) { return s; }
+    
+    template <typename HostScalarType>
+    HostScalarType promote_if_host_scalar(unsigned int s) { return s; }
+    
   } //namespace tools
 } //namespace viennacl
     

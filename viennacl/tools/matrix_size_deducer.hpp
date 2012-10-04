@@ -45,29 +45,34 @@ namespace viennacl
     struct MATRIX_SIZE_DEDUCER
     {
       //Standard case: size1 from lhs, size2 from rhs (fits most cases)
-      static size_t size1(LHS & lhs, RHS & rhs) { return lhs.size1(); }
-      static size_t size2(LHS & lhs, RHS & rhs) { return rhs.size2(); }
+      static std::size_t size1(LHS & lhs, RHS & rhs) { return lhs.size1(); }
+      static std::size_t size2(LHS & lhs, RHS & rhs) { return rhs.size2(); }
     };
     
     //special case: outer vector product:
     template <typename ScalarType, unsigned int A1, unsigned int A2>
-    struct MATRIX_SIZE_DEDUCER<viennacl::vector<ScalarType, A1>,
-                               viennacl::vector<ScalarType, A2>,
+    struct MATRIX_SIZE_DEDUCER<const viennacl::vector<ScalarType, A1>,
+                               const viennacl::vector<ScalarType, A2>,
                                viennacl::op_prod>
     {
-      static size_t size1(viennacl::vector<ScalarType, A1> & lhs,
-                          viennacl::vector<ScalarType, A2> & rhs) { return lhs.size1(); }
+      static std::size_t size1(viennacl::vector<ScalarType, A1> const & lhs,
+                               viennacl::vector<ScalarType, A2> const & rhs) { return lhs.size(); }
 
-      static size_t size2(viennacl::vector<ScalarType, A1> & lhs,
-                          viennacl::vector<ScalarType, A2> & rhs) { return rhs.size2(); }
+      static std::size_t size2(viennacl::vector<ScalarType, A1> const & lhs,
+                               viennacl::vector<ScalarType, A2> const & rhs) { return rhs.size(); }
     };
 
-    //special case: transposed matrix-Something product: Return the number of rows of the matrix
-    /*template <typename MatrixType, typename ScalarType, unsigned int A>
-    struct MATRIX_SIZE_DEDUCER<MatrixType, const viennacl::vector<ScalarType, A>, viennacl::op_prod>
+    //special case: transposed matrix-vector product: Return the number of rows of the matrix
+    template <typename MatrixType>
+    struct MATRIX_SIZE_DEDUCER<MatrixType,
+                               MatrixType,
+                               viennacl::op_trans>
     {
-      static unsigned int size(MatrixType & lhs, const viennacl::vector<ScalarType, A> & rhs) { return lhs.size1(); }
-    };*/
+      static std::size_t size1(const MatrixType & lhs,
+                               const MatrixType & rhs) { return lhs.size2(); }
+      static std::size_t size2(const MatrixType & lhs,
+                               const MatrixType & rhs) { return lhs.size1(); }
+    };
 
     // A^T * B
     template <typename ScalarType, typename T1, typename F2, unsigned int A2>

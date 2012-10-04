@@ -92,13 +92,14 @@ namespace viennacl
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
         
+        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp(vec.size() * 4); tmp.clear();
+        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp2(vec.size() * 4);
+        
         viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tep(mat.elements().size() * 2);
         viennacl::detail::fft::real_to_complex(mat.elements(), tep, mat.elements().size());
 
-        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp(vec.size() * 4);
-        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp2(vec.size() * 4);
 
-        tmp.clear();
+        
         copy(vec, tmp);
         viennacl::detail::fft::real_to_complex(tmp, tmp2, vec.size() * 2);
         viennacl::linalg::convolve(tep, tmp2, tmp);
@@ -122,7 +123,7 @@ namespace viennacl
                                                                                           viennacl::op_prod> & proxy) 
     {
       // check for the special case x = A * x
-      if (proxy.rhs().handle().get() == this->handle().get())
+      if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
       {
         viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);

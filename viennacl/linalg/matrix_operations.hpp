@@ -36,316 +36,84 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
-#include "viennacl/tools/matrix_kernel_class_deducer.hpp"
-#include "viennacl/tools/matrix_prod_kernel_class_deducer.hpp"
-#include "viennacl/linalg/kernels/vector_kernels.h"
-#include "viennacl/linalg/kernels/matrix_row_kernels.h"
-#include "viennacl/linalg/kernels/matrix_col_kernels.h"
 
-#include "viennacl/linalg/kernels/matrix_prod_col_col_col_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_col_col_row_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_col_row_col_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_col_row_row_kernels.h"
-
-#include "viennacl/linalg/kernels/matrix_prod_row_col_col_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_row_col_row_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_row_row_col_kernels.h"
-#include "viennacl/linalg/kernels/matrix_prod_row_row_row_kernels.h"
+#include "viennacl/linalg/opencl/matrix_operations.hpp"
 
 namespace viennacl
 {
   namespace linalg
   {
     
-    /** @brief Assign a matrix (-range/-slice) to another matrix (-range/slice).
-    *
-    * Computes mat1 = mat2.
-    * 
-    * @param mat1  The destination matrix
-    * @param mat2  The source matrix
-    */
-    template <typename M1, typename M2>
-    typename viennacl::enable_if< viennacl::is_matrix<M1>::value
-                                  && viennacl::is_matrix<M2>::value
+    template <typename M1,
+              typename M2, typename ScalarType1>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  && viennacl::is_any_scalar<ScalarType1>::value
                                 >::type
-    assign(M1       & mat1,
-           M2 const & mat2)
+    am(M1 & mat1, 
+       M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
     {
-      typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
-      
-      assert( (viennacl::traits::size1(mat1) == viennacl::traits::size1(mat2))
-             && (viennacl::traits::size2(mat1) == viennacl::traits::size2(mat2))
-             && "Incompatible matrix sizes in assign()!");
-      
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
-      
-      
-      std::size_t block_size = 16;
-      
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "assign");
-      k.global_work_size(0, block_size*block_size);
-      k.global_work_size(1, block_size*block_size);
-      k.local_work_size(0, block_size);
-      k.local_work_size(1, block_size);
-
-        viennacl::ocl::enqueue(k(viennacl::traits::handle(mat1), 
-                                        cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)), 
-                                        cl_uint(viennacl::traits::stride1(mat1)),             cl_uint(viennacl::traits::stride2(mat1)),
-                                        cl_uint(viennacl::traits::size1(mat1)),            cl_uint(viennacl::traits::size2(mat1)),
-                                        cl_uint(viennacl::traits::internal_size1(mat1)),   cl_uint(viennacl::traits::internal_size2(mat1)),
-                                 viennacl::traits::handle(mat2), 
-                                        cl_uint(viennacl::traits::start1(mat2)),           cl_uint(viennacl::traits::start2(mat2)), 
-                                        cl_uint(viennacl::traits::stride1(mat2)),             cl_uint(viennacl::traits::stride2(mat2)),
-                                        cl_uint(viennacl::traits::size1(mat2)),            cl_uint(viennacl::traits::size2(mat2)),
-                                        cl_uint(viennacl::traits::internal_size1(mat2)),   cl_uint(viennacl::traits::internal_size2(mat2))
-                                )
-                              );
-    }
-    
-    
-    //
-    ///////////////////////////////////// addition and subtraction///////////////////////////////////////////////
-    //
-    
-    namespace detail
-    {
-      template<class T1, class T2, class T3>
-      typename viennacl::enable_if<   viennacl::is_matrix<T1>::value 
-                                   && viennacl::is_matrix<T2>::value 
-                                   && viennacl::is_matrix<T3>::value >::type
-      add_sub_impl(const T1 & mat1, 
-                   const T2 & mat2,
-                         T3 & result,
-                   std::string kernel_name
-                  )
+      switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
-        assert(result.size1() == mat1.size1());
-        assert(result.size2() == mat1.size2());
-        assert(result.size1() == mat2.size1());
-        assert(result.size2() == mat2.size2());
-
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< T1 >::ResultType    KernelClass;
-        
-        std::size_t block_size = 16;
-        
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
-        k.global_work_size(0, block_size*block_size);
-        k.global_work_size(1, block_size*block_size);
-        k.local_work_size(0, block_size);
-        k.local_work_size(1, block_size);
-        viennacl::ocl::enqueue(k(viennacl::traits::handle(mat1), 
-                                        cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)), 
-                                        cl_uint(viennacl::traits::stride1(mat1)),             cl_uint(viennacl::traits::stride2(mat1)),
-                                        cl_uint(viennacl::traits::size1(mat1)),            cl_uint(viennacl::traits::size2(mat1)),
-                                        cl_uint(viennacl::traits::internal_size1(mat1)),   cl_uint(viennacl::traits::internal_size2(mat1)),
-                                viennacl::traits::handle(mat2), 
-                                        cl_uint(viennacl::traits::start1(mat2)),           cl_uint(viennacl::traits::start2(mat2)), 
-                                        cl_uint(viennacl::traits::stride1(mat2)),             cl_uint(viennacl::traits::stride2(mat2)),
-                                        cl_uint(viennacl::traits::size1(mat2)),            cl_uint(viennacl::traits::size2(mat2)),
-                                        cl_uint(viennacl::traits::internal_size1(mat2)),   cl_uint(viennacl::traits::internal_size2(mat2)),
-                                viennacl::traits::handle(result), 
-                                        cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)), 
-                                        cl_uint(viennacl::traits::stride1(result)),           cl_uint(viennacl::traits::stride2(result)),
-                                        cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
-                                        cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result))
-                                )
-                              );        
-      }
-      
-
-
-      template <typename T1, typename T2>
-      typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                    && viennacl::is_matrix<T2>::value
-                                  >::type
-      inplace_add_sub_impl(T1 & result, T2 const & mat2, std::string kernel_name)
-      {
-        assert(viennacl::traits::size1(result) == viennacl::traits::size1(mat2));
-        assert(viennacl::traits::size2(result) == viennacl::traits::size2(mat2));
-
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< T1 >::ResultType    KernelClass;
-        
-        std::size_t block_size = 16;
-        
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
-        k.global_work_size(0, block_size*block_size);
-        k.global_work_size(1, block_size*block_size);
-        k.local_work_size(0, block_size);
-        k.local_work_size(1, block_size);
-        
-        viennacl::ocl::enqueue(k(viennacl::traits::handle(result),
-                                        cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)), 
-                                        cl_uint(viennacl::traits::stride1(result)),           cl_uint(viennacl::traits::stride2(result)),
-                                        cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
-                                        cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
-                                viennacl::traits::handle(mat2), 
-                                        cl_uint(viennacl::traits::start1(mat2)),            cl_uint(viennacl::traits::start2(mat2)), 
-                                        cl_uint(viennacl::traits::stride1(mat2)),              cl_uint(viennacl::traits::stride2(mat2)),
-                                        cl_uint(viennacl::traits::size1(mat2)),             cl_uint(viennacl::traits::size2(mat2)),
-                                        cl_uint(viennacl::traits::internal_size1(mat2)),    cl_uint(viennacl::traits::internal_size2(mat2))
-                                )
-                              );
-      }
-      
-    }
-    
-    /** @brief Adds two dense matrices or submatrices and writes the result to a third matrix or submatrix
-    *
-    * This is the implementation of the convenience expression result = mat1 + mat2;
-    *
-    * @param mat1   The left hand side operand
-    * @param mat2   The right hand side operand
-    * @param result The resulting matrix
-    */
-    template<class T1, class T2, class T3>
-    typename viennacl::enable_if<   viennacl::is_matrix<T1>::value 
-                                 && viennacl::is_matrix<T2>::value 
-                                 && viennacl::is_matrix<T3>::value >::type
-    add(const T1 & mat1, 
-        const T2 & mat2,
-              T3 & result)
-    {
-      detail::add_sub_impl(mat1, mat2, result, "add");
-    }
-
-    /** @brief Adds a dense matrix or submatrix to another
-    *
-    * This is the implementation of the convenience expression result += mat1;
-    *
-    * @param mat2   The addend (either a matrix or a matrix_range)
-    * @param result The resulting matrix  (either a matrix or a matrix_range)
-    */
-    template <typename T1, typename T2>
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                >::type
-    inplace_add(T1 & result, T2 const & mat2)
-    {
-      detail::inplace_add_sub_impl(result, mat2, "inplace_add");
-    }
-
-
-
-    /** @brief Subtracts two dense matrices or submatrices and writes the result to a third matrix or submatrix
-    *
-    * This is the implementation of the convenience expression result = mat1 - mat2;
-    *
-    * @param mat1   The left hand side operand
-    * @param mat2   The right hand side operand
-    * @param result The resulting matrix
-    */
-    template<class T1, class T2, class T3>
-    typename viennacl::enable_if<   viennacl::is_matrix<T1>::value 
-                                 && viennacl::is_matrix<T2>::value 
-                                 && viennacl::is_matrix<T3>::value >::type
-    sub(const T1 & mat1, 
-        const T2 & mat2,
-              T3 & result)
-    {
-      detail::add_sub_impl(mat1, mat2, result, "sub");
-    }
-
-    /** @brief Subtracts a dense matrix or submatrix from another
-    *
-    * This is the implementation of the convenience expression result -= mat1;
-    *
-    * @param mat2   The addend (either a matrix or a matrix_range)
-    * @param result The resulting matrix  (either a matrix or a matrix_range)
-    */
-    template <typename T1, typename T2>
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                >::type
-    inplace_sub(T1 & result, T2 const & mat2)
-    {
-      detail::inplace_add_sub_impl(result, mat2, "inplace_sub");
-    }
-
-
-
-
-    //
-    /////////////////////////   inplace multiplication and division /////////////////////////////////
-    //
-
-    namespace detail
-    {
-      template <typename  T1, typename ScalarType>
-      typename viennacl::enable_if< viennacl::is_matrix<T1>::value >::type
-      inplace_mult_div_impl(T1 & result, 
-                            ScalarType val,
-                            std::string kernel_name)
-      {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< T1 >::ResultType    KernelClass;
-        
-        std::size_t block_size = 16;
-          
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
-        
-        k.global_work_size(0, block_size*block_size);
-        k.global_work_size(1, block_size*block_size);
-        k.local_work_size(0, block_size);
-        k.local_work_size(1, block_size);
-        
-        viennacl::ocl::enqueue(k(viennacl::traits::handle(result),
-                                        cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)), 
-                                        cl_uint(viennacl::traits::stride1(result)),           cl_uint(viennacl::traits::stride2(result)),
-                                        cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
-                                        cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
-                                val)
-                              );
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::am(mat1, mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          break;
+        default:
+          throw "not implemented";
       }
     }
-
-
-    /** @brief Multiplies a dense matrix or submatrix by a scalar
-    *
-    * This is the implementation of the convenience expression matrix *= val;
-    *
-    * @param result The matrix to be manipulated
-    * @param val    The CPU scalar by which all entries of the matrix are multiplied
-    */
-    template <typename  T1>
-    typename viennacl::enable_if< viennacl::is_matrix<T1>::value >::type
-    inplace_mult(T1 & result, 
-                 typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type val)
+    
+    
+    template <typename M1,
+              typename M2, typename ScalarType1,
+              typename M3, typename ScalarType2>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M3>::value
+                                  && viennacl::is_any_scalar<ScalarType1>::value
+                                  && viennacl::is_any_scalar<ScalarType2>::value
+                                >::type
+    ambm(M1 & mat1, 
+         M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+         M3 const & mat3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
     {
-      detail::inplace_mult_div_impl(result, val, "cpu_inplace_mult");
+      switch (viennacl::traits::handle(mat1).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::ambm(mat1,
+                                         mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                         mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
-
-
-    /** @brief Multiplies a dense matrix or submatrix by a scalar
-    *
-    * This is the implementation of the convenience expression matrix *= val;
-    *
-    * @param result The matrix to be manipulated
-    * @param val    The scalar by which all entries of the matrix are multiplied
-    */
-    template <typename  T1>
-    typename viennacl::enable_if< viennacl::is_matrix<T1>::value >::type
-    inplace_mult(T1 & result, 
-                 typename T1::value_type val)
+    
+    
+    template <typename M1,
+              typename M2, typename ScalarType1,
+              typename M3, typename ScalarType2>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M3>::value
+                                  && viennacl::is_any_scalar<ScalarType1>::value
+                                  && viennacl::is_any_scalar<ScalarType2>::value
+                                >::type
+    ambm_m(M1 & mat1,
+           M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           M3 const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
-      detail::inplace_mult_div_impl(result, val, "inplace_mult");
+      switch (viennacl::traits::handle(mat1).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::ambm_m(mat1,
+                                           mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                           mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
-
-
-
-    /** @brief Divides a dense matrix or submatrix by a scalar
-    *
-    * This is the implementation of the convenience expression matrix /= val;
-    *
-    * @param result The matrix to be manipulated
-    * @param val    The scalar by which all entries of the matrix are divided
-    */
-    template <typename  T1>
-    typename viennacl::enable_if< viennacl::is_matrix<T1>::value >::type
-    inplace_divide(T1 & result, 
-                   typename T1::value_type val)
-    {
-      detail::inplace_mult_div_impl(result, val, "inplace_divide");
-    }
-
 
 
     //
@@ -383,38 +151,24 @@ namespace viennacl
     * @param result The result vector
     */
     template <typename MatrixType, typename VectorType1, typename VectorType2>
-    typename viennacl::enable_if<   viennacl::is_matrix<MatrixType>::value 
-                                  && viennacl::is_vector<VectorType1>::value 
-                                  && viennacl::is_vector<VectorType2>::value >::type
+    typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
+                                  && viennacl::is_any_dense_nonstructured_vector<VectorType1>::value 
+                                  && viennacl::is_any_dense_nonstructured_vector<VectorType2>::value >::type
     prod_impl(const MatrixType & mat, 
               const VectorType1 & vec, 
                     VectorType2 & result)
     {
-      typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+      assert( (viennacl::traits::size1(mat) == viennacl::traits::size(result)) && "Size check failed at v1 = prod(A, v2): size1(A) != size(v1)");
+      assert( (viennacl::traits::size2(mat) == viennacl::traits::size(vec))    && "Size check failed at v1 = prod(A, v2): size2(A) != size(v2)");
       
-      assert(mat.size2() == vec.size());
-      // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-      assert(viennacl::traits::handle(vec).get() != viennacl::traits::handle(result).get() && "No direct inplace matrix-vector product possible. Introduce a temporary!");
-      //result.resize(mat.size1());
-
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< MatrixType >::ResultType    KernelClass;
-      
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "vec_mul");
-      viennacl::ocl::enqueue(k(viennacl::traits::handle(mat),
-                               cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)), 
-                               cl_uint(viennacl::traits::stride1(mat)),           cl_uint(viennacl::traits::stride2(mat)),
-                               cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                               cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-                               viennacl::traits::handle(vec),
-                                cl_uint(viennacl::traits::start(vec)),
-                                cl_uint(viennacl::traits::stride(vec)),
-                                cl_uint(viennacl::traits::size(vec)), 
-                               viennacl::traits::handle(result),
-                                cl_uint(viennacl::traits::start(result)),
-                                cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result)),
-                               viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size())
-                             ) );
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(mat, vec, result);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -452,39 +206,26 @@ namespace viennacl
     * @param vec        The vector
     * @param result     The result vector
     */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    void prod_impl(const viennacl::matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                      const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                      op_trans> & mat_trans,
-                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec, 
-                          viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
+    template <typename M1, typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                >::type
+    prod_impl(const viennacl::matrix_expression< const M1, const M1, op_trans> & mat_trans,
+              const V1 & vec, 
+                    V2 & result)
     {
-      const matrix<SCALARTYPE, F, ALIGNMENT> & mat = mat_trans.lhs();
+      assert( (viennacl::traits::size1(mat_trans.lhs()) == viennacl::traits::size(vec))    && "Size check failed at v1 = trans(A) * v2: size1(A) != size(v2)");
+      assert( (viennacl::traits::size2(mat_trans.lhs()) == viennacl::traits::size(result)) && "Size check failed at v1 = trans(A) * v2: size2(A) != size(v1)");
       
-      assert(mat.size1() == vec.size());  //remember: mat is transposed!
-      // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-      assert(vec.handle().get() != result.handle().get() && "No direct inplace matrix-vector product possible. Introduce a temporary!");
-      result.resize(mat.size2());
-
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-      
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "trans_vec_mul");
-      
-      viennacl::ocl::enqueue(k(viennacl::traits::handle(mat),
-                               cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)), 
-                               cl_uint(viennacl::traits::stride1(mat)),           cl_uint(viennacl::traits::stride2(mat)),
-                               cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                               cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-                               viennacl::traits::handle(vec),
-                                cl_uint(viennacl::traits::start(vec)),
-                                cl_uint(viennacl::traits::stride(vec)),
-                                cl_uint(viennacl::traits::size(vec)), 
-                               viennacl::traits::handle(result),
-                                cl_uint(viennacl::traits::start(result)),
-                                cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result)),
-                               viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size())
-                             ) );
+      switch (viennacl::traits::handle(mat_trans.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(mat_trans, vec, result);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -492,140 +233,15 @@ namespace viennacl
     /////////////////////////   matrix-matrix products /////////////////////////////////
     //
     
-    namespace detail
-    {
-      // C = A * B and possibly transposed variants
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      void prod_slow_kernel(const T1 & A, 
-                            const T2 & B, 
-                            T3 & C,
-                            ScalarType alpha,
-                            ScalarType beta,
-                            std::string kernel_name)
-      {
-        typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-        
-        typedef typename viennacl::tools::MATRIX_PROD_KERNEL_CLASS_DEDUCER< T1, T2, T3 >::ResultType    KernelClass;
-        KernelClass::init();
-        
-        //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
-        
-        k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size1(C), 16));
-        k.global_work_size(1, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size2(C), 16));
-        k.local_work_size(0, 16);
-        k.local_work_size(1, 16);
-        
-        cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-        cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
-        
-        viennacl::ocl::enqueue(k(cl_alpha,
-                                 viennacl::traits::handle(A), 
-                                        cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)), 
-                                        cl_uint(viennacl::traits::stride1(A)),             cl_uint(viennacl::traits::stride2(A)),
-                                        cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                        cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-                                 viennacl::traits::handle(B), 
-                                        cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)), 
-                                        cl_uint(viennacl::traits::stride1(B)),             cl_uint(viennacl::traits::stride2(B)),
-                                        cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                                        cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-                                 cl_beta,
-                                 viennacl::traits::handle(C), 
-                                        cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
-                                        cl_uint(viennacl::traits::stride1(C)),             cl_uint(viennacl::traits::stride2(C)),
-                                        cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                                        cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-                                )
-                              );        
-      }
-      
-      // C = A * B, using fast kernel
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      void prod_fast_kernel(const T1 & A, 
-                            const T2 & B, 
-                            T3 & C,
-                            ScalarType alpha,
-                            ScalarType beta,
-                            std::string kernel_name)
-      {
-        typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-        
-        typedef typename viennacl::tools::MATRIX_PROD_KERNEL_CLASS_DEDUCER< T1, T2, T3 >::ResultType    KernelClass;
-        KernelClass::init();
-        
-        //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
-        
-        k.global_work_size(0, viennacl::traits::size2(C) / 4); //column blocks
-        k.global_work_size(1, viennacl::traits::size1(C) / 4); //row blocks
-        k.local_work_size(0, 16);  //columns
-        k.local_work_size(1, 4);   //rows
-        
-        cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-        cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
-        
-        viennacl::ocl::enqueue(k(cl_alpha,
-                                 viennacl::traits::handle(A), 
-                                        cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)), 
-                                        cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                                        cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                        cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-                                 viennacl::traits::handle(B), 
-                                        cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)), 
-                                        cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
-                                        cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                                        cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-                                 cl_beta,
-                                 viennacl::traits::handle(C), 
-                                        cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
-                                        cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-                                        cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                                        cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-                                )
-                              );        
-      }
-      
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      void prod(const T1 & A, 
-                const T2 & B, 
-                T3 & C,
-                ScalarType alpha,
-                ScalarType beta,
-                std::string fast_kernel_name,
-                std::string slow_kernel_name)
-      {
-        if (   (viennacl::traits::size1(A) < 64)
-            || (viennacl::traits::size2(A) < 64)
-            || (viennacl::traits::size1(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
-        {
-          prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-        }
-        else if (   (viennacl::traits::size1(A) % 64 == 0)
-                 && (viennacl::traits::size2(A) % 64 == 0)
-                 && (viennacl::traits::size1(B) % 64 == 0) )   // allows the use of the fast kernel only
-        {
-          prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
-          //prod_slow_kernel(A, B, C, slow_kernel_name);
-        }
-        else //TODO: use four kernels
-        {
-          prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-        }
-        
-      }
-    }
-
-
     /** @brief Carries out matrix-matrix multiplication
     *
     * Implementation of C = prod(A, B);
     *
     */
     template <typename T1, typename T2, typename T3, typename ScalarType >
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                  && viennacl::is_matrix<T3>::value
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T3>::value
                                 >::type
     prod_impl(const T1 & A, 
               const T2 & B, 
@@ -633,16 +249,19 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size1(A) == viennacl::traits::size1(C));
-      assert(viennacl::traits::size2(A) == viennacl::traits::size1(B));
-      assert(viennacl::traits::size2(B) == viennacl::traits::size2(C));
-      // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-      assert(viennacl::traits::handle(C).get() != viennacl::traits::handle(A).get() 
-            && viennacl::traits::handle(C).get() != viennacl::traits::handle(B).get()
-            && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && "Size check failed at C = prod(A, B): size1(A) != size1(C)");
+      assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && "Size check failed at C = prod(A, B): size2(A) != size1(B)");
+      assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && "Size check failed at C = prod(A, B): size2(B) != size2(C)");
 
       
-      detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -653,9 +272,9 @@ namespace viennacl
     *
     */
     template <typename T1, typename T2, typename T3, typename ScalarType >
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                  && viennacl::is_matrix<T3>::value
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T3>::value
                                 >::type
     prod_impl(const viennacl::matrix_expression< const T1,
                                                  const T1,
@@ -665,17 +284,18 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      //std::cout << "size2(A): " << viennacl::traits::size2(A.lhs()) << std::endl;
-      //std::cout << "size1(C): " << viennacl::traits::size1(C) << std::endl;
-      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C));
-      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B));
-      assert(viennacl::traits::size2(B) == viennacl::traits::size2(C));
-      // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-      assert(viennacl::traits::handle(C).get() != viennacl::traits::handle(A.lhs()).get() 
-            && viennacl::traits::handle(C).get() != viennacl::traits::handle(B).get()
-            && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C) && "Size check failed at C = prod(trans(A), B): size2(A) != size1(C)");
+      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B) && "Size check failed at C = prod(trans(A), B): size1(A) != size1(B)");
+      assert(viennacl::traits::size2(B)       == viennacl::traits::size2(C) && "Size check failed at C = prod(trans(A), B): size2(B) != size2(C)");
       
-      detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
+      switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -687,27 +307,28 @@ namespace viennacl
     *
     */
     template <typename T1, typename T2, typename T3, typename ScalarType >
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                  && viennacl::is_matrix<T3>::value
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T3>::value
                                 >::type
     prod_impl(const T1 & A, 
-              const viennacl::matrix_expression< const T2,
-                                                 const T2,
-                                                 op_trans> & B,
+              const viennacl::matrix_expression< const T2, const T2, op_trans> & B,
                     T3 & C,
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size1(A) == viennacl::traits::size1(C));
-      assert(viennacl::traits::size2(A) == viennacl::traits::size2(B.lhs()));
-      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C));
-      // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-      assert(viennacl::traits::handle(C).get() != viennacl::traits::handle(A).get() 
-            && viennacl::traits::handle(C).get() != viennacl::traits::handle(B.lhs()).get()
-            && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+      assert(viennacl::traits::size1(A)       == viennacl::traits::size1(C)       && "Size check failed at C = prod(A, trans(B)): size1(A) != size1(C)");
+      assert(viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs()) && "Size check failed at C = prod(A, trans(B)): size2(A) != size2(B)");
+      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && "Size check failed at C = prod(A, trans(B)): size1(B) != size2(C)");
       
-      detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -718,29 +339,28 @@ namespace viennacl
     *
     */
     template <typename T1, typename T2, typename T3, typename ScalarType >
-    typename viennacl::enable_if<    viennacl::is_matrix<T1>::value
-                                  && viennacl::is_matrix<T2>::value
-                                  && viennacl::is_matrix<T3>::value
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T2>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<T3>::value
                                 >::type
-    prod_impl(const viennacl::matrix_expression< const T1,
-                                                 const T1,
-                                                 op_trans> & A,
-              const viennacl::matrix_expression< const T2,
-                                                 const T2,
-                                                 op_trans> & B,
-                    T3 & C,
+    prod_impl(const viennacl::matrix_expression< const T1, const T1, op_trans> & A,
+              const viennacl::matrix_expression< const T2, const T2, op_trans> & B,
+              T3 & C,
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C));
-      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()));
-      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C));
-      // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-      assert(viennacl::traits::handle(C).get() != viennacl::traits::handle(A.lhs()).get() 
-            && viennacl::traits::handle(C).get() != viennacl::traits::handle(B.lhs()).get()
-            && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && "Size check failed at C = prod(trans(A), trans(B)): size2(A) != size1(C)");
+      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && "Size check failed at C = prod(trans(A), trans(B)): size1(A) != size2(B)");
+      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && "Size check failed at C = prod(trans(A), trans(B)): size1(B) != size2(C)");
       
-      detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
+      switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 
@@ -751,50 +371,19 @@ namespace viennacl
     //
 
 
-
-
-
-
     /** @brief Returns a proxy class for the operation mat += vec1 * vec2^T, i.e. a rank 1 update
     *
     * @param vec1    The first vector
     * @param vec2    The second vector
     */
-    template<class SCALARTYPE, unsigned int VA1, unsigned int VA2>
-    viennacl::matrix_expression< const viennacl::vector<SCALARTYPE, VA1>,
-                                 const viennacl::vector<SCALARTYPE, VA2>,
-                                 op_prod> outer_prod(const viennacl::vector<SCALARTYPE, VA1> & vec1, 
-                                                     const viennacl::vector<SCALARTYPE, VA2> & vec2)
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::matrix_expression<const V1, const V2, op_prod>
+                                >::type
+    outer_prod(const V1 & vec1, const V2 & vec2)
     {
-      return viennacl::matrix_expression< const viennacl::vector<SCALARTYPE, VA1>,
-                                          const viennacl::vector<SCALARTYPE, VA2>,
-                                          op_prod>(vec1, vec2);
-    }
-    
-    
-
-    /** @brief The implementation of the operation mat += vec1 * vec2^T, i.e. a rank 1 update
-    *
-    * Implementation of the convenience expression result += outer_prod(vec1, vec2);
-    *
-    * @param mat1    The matrix to be updated
-    * @param vec1    The first vector
-    * @param vec2    The second vector
-    */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
-    void rank_1_update(viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat1, 
-                       const viennacl::vector<SCALARTYPE, ALIGNMENT> & vec1, 
-                       const viennacl::vector<SCALARTYPE, ALIGNMENT> & vec2)
-    {
-      assert(mat1.size1() == vec1.size());
-      assert(mat1.size2() == vec2.size());
-
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-      
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "rank1_update");
-
-      viennacl::ocl::enqueue(k(mat1, cl_uint(mat1.size1()), cl_uint(mat1.size2()),
-                                     cl_uint(mat1.internal_size1()), cl_uint(mat1.internal_size2()), vec1, vec2));        
+      return viennacl::matrix_expression< const V1, const V2, op_prod>(vec1, vec2);
     }
     
     
@@ -807,22 +396,27 @@ namespace viennacl
     * @param vec1    The first vector
     * @param vec2    The second vector
     */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
-    void scaled_rank_1_update(viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat1,
-                              SCALARTYPE val,
-                              const viennacl::vector<SCALARTYPE, ALIGNMENT> & vec1, 
-                              const viennacl::vector<SCALARTYPE, ALIGNMENT> & vec2)
+    template <typename M1, typename S1, typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                >::type
+    scaled_rank_1_update(M1 & mat1,
+                         S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                         const V1 & vec1, 
+                         const V2 & vec2)
     {
-      assert(mat1.size1() == vec1.size());
-      assert(mat1.size2() == vec2.size());
-
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-      
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "scaled_rank1_update");
-
-      viennacl::ocl::enqueue(k(mat1, cl_uint(mat1.size1()), cl_uint(mat1.size2()),
-                                     cl_uint(mat1.internal_size1()), cl_uint(mat1.internal_size2()), 
-                                                           val, vec1, vec2));        
+      switch (viennacl::traits::handle(mat1).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::scaled_rank_1_update(mat1,
+                                                         alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                                         vec1, vec2);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
     
   } //namespace linalg
@@ -844,16 +438,21 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                        const viennacl::vector<SCALARTYPE, ALIGNMENT>,
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+                               >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const M1,
+                                                                                        const V1,
                                                                                         viennacl::op_prod> & proxy) 
   {
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 = A * v2: size1(A) != size(v1)");
+    
     // check for the special case x = A * x
-    if (proxy.rhs().handle().get() == this->handle().get())
+    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
     {
-      viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
+      viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
       *this = result;
     }
@@ -863,73 +462,6 @@ namespace viennacl
     }
     return *this;
   }
-
-
-  /** @brief Implementation of the operation v1 = A * v2, where A is a matrix and v1, v2 are vector ranges
-  *
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename VectorType>
-  template <typename MatrixType>
-  typename viennacl::enable_if< viennacl::is_matrix<MatrixType>::value,
-                                viennacl::vector_range<VectorType> & >::type
-  viennacl::vector_range<VectorType>::operator=(const vector_expression< const MatrixType,
-                                                                         const viennacl::vector_range<VectorType>,
-                                                                         op_prod> & proxy)
-  {
-    typedef typename viennacl::result_of::cpu_value_type<VectorType>::type   cpu_value_type;
-    
-    
-    // check for the special case x = A * x
-    if (proxy.rhs().get().handle().get() == this->get().handle().get())
-    {
-      viennacl::vector<cpu_value_type> result(proxy.rhs().size());
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-      *this = result;
-    }
-    else
-    {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-    }
-    return *this;
-  }
-
-
-  /** @brief Implementation of the operation v1 = A * v2, where A is a matrix and v1, v2 are vector slices
-  *
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename VectorType>
-  template <typename MatrixType>
-  typename viennacl::enable_if< viennacl::is_matrix<MatrixType>::value,
-                                viennacl::vector_slice<VectorType> & >::type
-  viennacl::vector_slice<VectorType>::operator=(const vector_expression< const MatrixType,
-                                                                         const viennacl::vector_slice<VectorType>,
-                                                                         op_prod> & proxy)
-  {
-    typedef typename viennacl::result_of::cpu_value_type<VectorType>::type   cpu_value_type;
-    
-    
-    // check for the special case x = A * x
-    if (proxy.rhs().get().handle().get() == this->get().handle().get())
-    {
-      viennacl::vector<cpu_value_type> result(proxy.rhs().size());
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-      *this = result;
-    }
-    else
-    {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-    }
-    return *this;
-  }
-
-
-
-
-
-
-
 
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
@@ -937,13 +469,18 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
-                                                                                op_prod> & proxy) 
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+                               >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const viennacl::vector_expression< const M1,
+                                                                                         const V1,
+                                                                                         viennacl::op_prod> & proxy) 
   {
-    vector<SCALARTYPE, ALIGNMENT> result(proxy.lhs().size1());
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 += A * v2: size1(A) != size(v1)");
+    
+    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
     *this += result;
     return *this;
@@ -954,17 +491,25 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
-                                                                                op_prod> & proxy) 
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+                               >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const viennacl::vector_expression< const M1,
+                                                                                         const V1,
+                                                                                         viennacl::op_prod> & proxy) 
   {
-    vector<SCALARTYPE, ALIGNMENT> result(proxy.lhs().size1());
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 -= A * v2: size1(A) != size(v1)");
+    
+    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
     *this -= result;
     return *this;
   }
+  
+  
+  
   
   
   //free functions:
@@ -972,17 +517,22 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                              const vector<SCALARTYPE, ALIGNMENT>,
-                                                                              op_prod> & proxy) 
+  template <typename M1, typename V1, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+                                                 viennacl::result_of::alignment<V1>::value> 
+                              >::type
+  operator+(const V1 & v1,
+            const vector_expression< const M1, const V2, op_prod> & proxy) 
   {
-    assert(proxy.lhs().size1() == size());
-    vector<SCALARTYPE, ALIGNMENT> result(size());
+    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed for v1 + A * v2: size1(A) != size(v1)");
+    
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+           viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    result += *this;
+    result += v1;
     return result;
   }
 
@@ -990,17 +540,22 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                              const vector<SCALARTYPE, ALIGNMENT>,
-                                                                              op_prod> & proxy) 
+  template <typename M1, typename V1, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+                                                 viennacl::result_of::alignment<V1>::value> 
+                              >::type
+  operator-(const V1 & v1,
+            const vector_expression< const M1, const V2, op_prod> & proxy) 
   {
-    assert(proxy.lhs().size1() == size());
-    vector<SCALARTYPE, ALIGNMENT> result(size());
+    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed for v1 - A * v2: size1(A) != size(v1)");
+    
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+           viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    result = *this - result;
+    result = v1 - result;
     return result;
   }
 
@@ -1014,18 +569,21 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                                  const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                                  op_trans>,
-                                                                                        const viennacl::vector<SCALARTYPE, ALIGNMENT>,
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
+                              >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const matrix_expression< const M1, const M1, op_trans>,
+                                                                                        const V1,
                                                                                         viennacl::op_prod> & proxy) 
   {
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)");
+
     // check for the special case x = trans(A) * x
-    if (proxy.rhs().handle().get() == this->handle().get())
+    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
     {
-      viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
+      viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
       *this = result;
       return *this;
@@ -1044,15 +602,18 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        op_trans>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
-                                                                                op_prod> & proxy) 
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
+                              >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
+                                                                               const V1,
+                                                                               op_prod> & proxy) 
   {
-    vector<SCALARTYPE, ALIGNMENT> result(proxy.lhs().size1());
+    assert(viennacl::traits::size2(proxy.lhs()) == size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
     *this += result;
     return *this;
@@ -1063,15 +624,18 @@ namespace viennacl
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        op_trans>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
-                                                                                op_prod> & proxy) 
+  template <typename M1, typename V1>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
+                              >::type
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
+                                                                               const V1,
+                                                                               op_prod> & proxy) 
   {
-    vector<SCALARTYPE, ALIGNMENT> result(proxy.lhs().size1());
+    assert(viennacl::traits::size2(proxy.lhs()) == size() && "Size check failed in v1 -= trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
     *this -= result;
     return *this;
@@ -1083,19 +647,24 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        op_trans>,
-                                                                              const vector<SCALARTYPE, ALIGNMENT>,
-                                                                              op_prod> & proxy) 
+  template <typename M1, typename V1, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+                                                 viennacl::result_of::alignment<V1>::value> 
+                              >::type
+  operator+(const V1 & v1,
+            const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
+                                    const V2,
+                                    op_prod> & proxy) 
   {
-    assert(proxy.lhs().size1() == size());
-    vector<SCALARTYPE, ALIGNMENT> result(size());
+    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed in v1 + trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+           viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    result += *this;
+    result += v1;
     return result;
   }
 
@@ -1103,19 +672,24 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename F, unsigned int MAT_ALIGNMENT>
-  viennacl::vector<SCALARTYPE, ALIGNMENT> 
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                                                        op_trans>,
-                                                                              const vector<SCALARTYPE, ALIGNMENT>,
-                                                                              op_prod> & proxy) 
+  template <typename M1, typename V1, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+                                                 viennacl::result_of::alignment<V1>::value> 
+                              >::type
+  operator-(const V1 & v1,
+            const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
+                                     const V2,
+                                     op_prod> & proxy) 
   {
-    assert(proxy.lhs().size1() == size());
-    vector<SCALARTYPE, ALIGNMENT> result(size());
+    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed in v1 - trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type,
+           viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    result = *this - result;
+    result = v1 - result;
     return result;
   }
 

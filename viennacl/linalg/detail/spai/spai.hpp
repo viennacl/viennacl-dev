@@ -528,7 +528,7 @@ namespace viennacl
                 viennacl::ocl::kernel& assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "assemble_blocks");
                 assembly_kernel.local_work_size(0, 1);
                 assembly_kernel.global_work_size(0, 256);
-                viennacl::ocl::enqueue(assembly_kernel(A.handle1(), A.handle2(), A.handle(), 
+                viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), 
                                                        set_I_vcl.handle(), set_J_vcl.handle(), set_I_vcl.handle1(), 
                                                        set_J_vcl.handle1(), 
                                                        g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(), g_A_I_J_vcl.handle(),

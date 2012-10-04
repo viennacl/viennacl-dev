@@ -746,11 +746,11 @@ namespace viennacl
         {
           old_result = x;    
           x.clear();
-          viennacl::ocl::enqueue(k(A[level].handle1(), A[level].handle2(), A[level].handle(),
+          viennacl::ocl::enqueue(k(A[level].handle1().opencl_handle(), A[level].handle2().opencl_handle(), A[level].handle().opencl_handle(),
                                   static_cast<ScalarType>(_tag.get_jacobiweight()), 
-                                  old_result,
-                                  x,
-                                  rhs,
+                                  viennacl::traits::opencl_handle(old_result),
+                                  viennacl::traits::opencl_handle(x),
+                                  viennacl::traits::opencl_handle(rhs),
                                   static_cast<cl_uint>(rhs.size()))); 
           
         }

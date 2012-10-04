@@ -49,6 +49,41 @@ namespace viennacl
     namespace result_of
     {
       //
+      // Retrieve alignment from vector
+      //
+      template <typename T>
+      struct alignment
+      {
+        typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_VECTOR   error_type;
+        enum { value = 1 };
+      };
+      
+      template <typename T>
+      struct alignment<const T>
+      {
+        enum { value = alignment<T>::value };
+      };
+      
+      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      struct alignment< vector<SCALARTYPE, ALIGNMENT> >
+      {
+        enum { value = ALIGNMENT };
+      };
+
+      template <typename T>
+      struct alignment< vector_range<T> >
+      {
+        enum { value = alignment<T>::value };
+      };
+
+      template <typename T>
+      struct alignment< vector_slice<T> >
+      {
+        enum { value = alignment<T>::value };
+      };
+      
+      
+      //
       // Retrieve size_type 
       //
       template <typename T>

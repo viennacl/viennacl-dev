@@ -40,14 +40,16 @@ namespace viennacl
     class entry_proxy
     {
       public:
+        typedef viennacl::backend::mem_handle      handle_type;
+        
         /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
         *
         * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
         * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
         */
         explicit entry_proxy(unsigned int mem_offset, 
-                             viennacl::ocl::handle<cl_mem> const & mem_handle) 
-         : _index(mem_offset), _mem_handle(mem_handle) {};
+                             handle_type & mem_handle) 
+         : index_(mem_offset), mem_handle_(mem_handle) {};
         
          
         //operators:
@@ -103,9 +105,7 @@ namespace viennacl
         */
         entry_proxy & operator=(scalar<SCALARTYPE> const & value)
         {
-          cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), value.handle().get(), _mem_handle.get(), 0, sizeof(SCALARTYPE)*_index, sizeof(SCALARTYPE), 0, NULL, NULL);
-          //assert(err == CL_SUCCESS);
-          VIENNACL_ERR_CHECK(err);
+          viennacl::backend::memory_copy(value.handle(), mem_handle_, 0, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE));
           return *this;
         }
 
@@ -113,13 +113,7 @@ namespace viennacl
         */
         entry_proxy &  operator=(entry_proxy const & other)
         {
-          cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
-                                           other._mem_handle.get(), //src
-                                           _mem_handle.get(),       //dest
-                                           sizeof(SCALARTYPE) * other._index, //offset src
-                                           sizeof(SCALARTYPE) * _index,       //offset dest
-                                           sizeof(SCALARTYPE), 0, NULL, NULL);
-          VIENNACL_ERR_CHECK(err);
+          viennacl::backend::memory_copy(other.handle(), mem_handle_, sizeof(SCALARTYPE) * other.index_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE));
           return *this;
         }
 
@@ -140,11 +134,11 @@ namespace viennacl
         
         /** @brief Returns the index of the represented element
         */
-        unsigned int index() const { return _index; }
+        unsigned int index() const { return index_; }
         
         /** @brief Returns the memory viennacl::ocl::handle
         */
-        viennacl::ocl::handle<cl_mem> const & handle() const { return _mem_handle; }
+        handle_type const & handle() const { return mem_handle_; }
 
       private:
         /** @brief Reads an element from the GPU to the CPU
@@ -152,11 +146,7 @@ namespace viennacl
         SCALARTYPE read() const
         {
           SCALARTYPE temp;
-          cl_int err;
-          err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), _mem_handle.get(), CL_TRUE, sizeof(SCALARTYPE)*_index, sizeof(SCALARTYPE), &temp, 0, NULL, NULL);
-          //assert(err == CL_SUCCESS);
-          VIENNACL_ERR_CHECK(err);
-          viennacl::ocl::get_queue().finish();
+          viennacl::backend::memory_read(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &temp);
           return temp;
         }
         
@@ -164,14 +154,78 @@ namespace viennacl
         */
         void write(SCALARTYPE value)
         {
-          cl_int err;
-          err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), _mem_handle.get(), CL_TRUE, sizeof(SCALARTYPE)*_index, sizeof(SCALARTYPE), &value, 0, NULL, NULL);
-          //assert(err == CL_SUCCESS);
-          VIENNACL_ERR_CHECK(err);
+          viennacl::backend::memory_write(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &value);
         }
         
-        unsigned int _index;
-        viennacl::ocl::handle<cl_mem> const & _mem_handle;
+        std::size_t index_;
+        viennacl::backend::mem_handle & mem_handle_;
+    }; //entry_proxy
+
+    
+    
+    
+    
+    
+    
+    /**
+    * @brief A proxy class for a single element of a vector or matrix. This proxy should not be noticed by end-users of the library.
+    *
+    * This proxy provides access to a single entry of a vector. If the element is assigned to a GPU object, no unnecessary transfers to the CPU and back to GPU are initiated.
+    *
+    * @tparam SCALARTYPE Either float or double
+    */
+    template <typename SCALARTYPE>
+    class const_entry_proxy
+    {
+        typedef const_entry_proxy<SCALARTYPE>      self_type;
+      public:
+        typedef viennacl::backend::mem_handle      handle_type;
+        
+        /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
+        *
+        * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
+        * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
+        */
+        explicit const_entry_proxy(unsigned int mem_offset, 
+                                   handle_type const & mem_handle) 
+         : index_(mem_offset), mem_handle_(mem_handle) {};
+        
+
+        //type conversion:
+        // allows to write something like:
+        //  double test = vector(4);
+        /** @brief Conversion to a CPU floating point value.
+        *
+        *  This conversion allows to write something like
+        *    double test = vector(4);
+        *  However, one has to keep in mind that CPU<->GPU transfers are very slow compared to CPU<->CPU operations.
+        */
+        operator SCALARTYPE () const
+        {
+          SCALARTYPE temp = read();
+          return temp;
+        }
+        
+        /** @brief Returns the index of the represented element
+        */
+        unsigned int index() const { return index_; }
+        
+        /** @brief Returns the memory handle
+        */
+        handle_type const & handle() const { return mem_handle_; }
+
+      private:
+        /** @brief Reads an element from the GPU to the CPU
+        */
+        SCALARTYPE read() const
+        {
+          SCALARTYPE temp;
+          viennacl::backend::memory_read(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &temp);
+          return temp;
+        }
+        
+        std::size_t index_;
+        viennacl::backend::mem_handle const & mem_handle_;
     }; //entry_proxy
     
 }

@@ -14,7 +14,7 @@ __kernel void avbv_gpu_cpu(
           
           float fac3,
           unsigned int options3,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-          __global float * vec3,
+          __global const float * vec3,
           unsigned int start3,
           unsigned int inc3
           )

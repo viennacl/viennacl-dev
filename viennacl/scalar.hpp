@@ -22,8 +22,9 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/ocl/backend.hpp"
+#include "viennacl/backend/memory.hpp"
 #include "viennacl/meta/result_of.hpp"
+#include "viennacl/linalg/scalar_operations.hpp"
 #include "viennacl/linalg/kernels/scalar_kernels.h"
 
 #include <iostream>
@@ -44,12 +45,12 @@ namespace viennacl
       public:
         typedef typename viennacl::result_of::cpu_value_type<DummyType>::type    ScalarType;
         
-        scalar_expression(LHS & lhs, RHS & rhs) : _lhs(lhs), _rhs(rhs) {}
+        scalar_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
         
         /** @brief Returns the left hand side operand */
-        LHS & get_lhs() const { return _lhs; }
+        LHS & lhs() const { return lhs_; }
         /** @brief Returns the left hand side operand */
-        RHS & get_rhs() const { return _rhs; }
+        RHS & rhs() const { return rhs_; }
 
         /** @brief Conversion operator to a ViennaCL scalar */
         operator ScalarType () const
@@ -60,8 +61,8 @@ namespace viennacl
         }
 
       private:
-        LHS & _lhs;
-        RHS & _rhs;
+        LHS & lhs_;
+        RHS & rhs_;
     };
     
     /** @brief This class represents a single scalar value on the GPU and behaves mostly like a built-in scalar type like float or double.
@@ -69,29 +70,32 @@ namespace viennacl
     * Since every read and write operation requires a CPU->GPU or GPU->CPU transfer, this type should be used with care.
     * The advantage of this type is that the GPU command queue can be filled without blocking read operations.
     *
-    * @tparam TYPE  Either float or double. Checked at compile time.
+    * @tparam SCALARTYPE  Either float or double. Checked at compile time.
     */
-    template<class TYPE>
+    template<class SCALARTYPE>
     class scalar
     {
-      typedef scalar<TYPE>         self_type;
+      typedef scalar<SCALARTYPE>         self_type;
     public:
+      typedef backend::mem_handle                               handle_type;
       typedef vcl_size_t                                        size_type;
       
       /** @brief Returns the underlying host scalar type. */
-      typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<TYPE>::ResultType   value_type;
+      typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType   value_type;
       
       /** @brief Allocates the memory for the scalar, but does not set it to zero. */
       scalar()
       {
-        viennacl::linalg::kernels::scalar<TYPE, 1>::init(); 
-        val_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(TYPE));
+        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
+        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
       }
       /** @brief Allocates the memory for the scalar and sets it to the supplied value. */
-      scalar(TYPE val)
+      scalar(SCALARTYPE val)
       {
-        viennacl::linalg::kernels::scalar<TYPE, 1>::init(); 
-        val_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(TYPE), &val);
+        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
+        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), &val);
       }
       
       /** @brief Wraps an existing memory entry into a scalar 
@@ -99,292 +103,242 @@ namespace viennacl
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
-      explicit scalar(cl_mem mem, size_t size) : val_(mem) { val_.inc(); }
+      explicit scalar(cl_mem mem, size_t size) : val_(mem) 
+      {
+        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
+        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        val_.opencl_handle() = mem;
+        val_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+      }
 
       /** @brief Allocates memory for the scalar and sets it to the result of supplied expression. */
       template <typename T1, typename T2, typename OP>
       scalar(scalar_expression<T1, T2, OP> const & proxy)
       {
-        viennacl::linalg::kernels::scalar<TYPE, 1>::init(); 
-        val_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(TYPE));
+        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
+        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
         *this = proxy;
       }
 
       //copy constructor
       /** @brief Copy constructor. Allocates new memory for the scalar and copies the value of the supplied scalar */
-      scalar(const scalar & other) : val_(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(TYPE)))
+      scalar(const scalar & other)
       {
         //copy value:
-        cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), other.handle().get(), val_.get(), 0, 0, sizeof(TYPE), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
+        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+        viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
       }
 
       /** @brief Reads the value of the scalar from the GPU and returns the float or double value. */
-      operator TYPE() const
+      operator SCALARTYPE() const
       {
-        TYPE tmp;
-        cl_int err;
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &tmp, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
+        SCALARTYPE tmp;
+        viennacl::backend::memory_read(val_, 0, sizeof(SCALARTYPE), &tmp);
         return tmp;
       } 
       
       /** @brief Assigns a vector entry. */
-      scalar<TYPE> & operator= (entry_proxy<TYPE> const & other)
+      self_type & operator= (entry_proxy<SCALARTYPE> const & other)
       {
-        //copy value:
-        cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), other.handle().get(), val_.get(), other.index() * sizeof(TYPE), 0, sizeof(TYPE), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
+        viennacl::backend::memory_copy(other.handle(), val_, other.index() * sizeof(SCALARTYPE), 0, sizeof(SCALARTYPE));
         return *this;
       }
 
       /** @brief Assigns the value from another scalar. */
-      scalar<TYPE> & operator= (scalar<TYPE> const & other)
+      self_type & operator= (scalar<SCALARTYPE> const & other)
       {
-        //copy value:
-        cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), other.handle().get(), val_.get(), 0, 0, sizeof(TYPE), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
         return *this;
       }
 
-      scalar<TYPE> & operator= (float cpu_other)
+      self_type & operator= (float cpu_other)
       {
         //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
 
-      scalar<TYPE> & operator= (double cpu_other)
+      self_type & operator= (double cpu_other)
       {
-        //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
 
-      scalar<TYPE> & operator= (long cpu_other)
+      self_type & operator= (long cpu_other)
       {
-        //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
 
-      scalar<TYPE> & operator= (unsigned long cpu_other)
+      self_type & operator= (unsigned long cpu_other)
       {
-        //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
 
-      scalar<TYPE> & operator= (int cpu_other)
+      self_type & operator= (int cpu_other)
       {
-        //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
 
-      scalar<TYPE> & operator= (unsigned int cpu_other)
+      self_type & operator= (unsigned int cpu_other)
       {
-        //copy value:
-        TYPE other = static_cast<TYPE>(cpu_other);
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), val_.get(), CL_TRUE, 0, sizeof(TYPE), &other, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
+        SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
+        viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
       }
+      
       /** @brief Sets the scalar to the result of supplied inner product expression. */
       template <typename T1, typename T2>
-      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
+      self_type & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
       {
-        viennacl::linalg::inner_prod_impl(proxy.get_lhs(), proxy.get_rhs(), *this);
+        viennacl::linalg::inner_prod_impl(proxy.lhs(), proxy.rhs(), *this);
         return *this;
       }
 
       /** @brief Sets the scalar to the result of supplied norm_1 expression. */
       template <typename T1, typename T2>
-      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
+      self_type & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
       {
-        viennacl::linalg::norm_1_impl(proxy.get_lhs(), *this);
+        viennacl::linalg::norm_1_impl(proxy.lhs(), *this);
         return *this;
       }
 
       /** @brief Sets the scalar to the result of supplied norm_2 expression. */
       template <typename T1, typename T2>
-      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
+      self_type & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
       {
-        viennacl::linalg::norm_2_impl(proxy.get_lhs(), *this);
+        viennacl::linalg::norm_2_impl(proxy.lhs(), *this);
         return *this;
       }
 
       /** @brief Sets the scalar to the result of supplied norm_inf expression. */
       template <typename T1, typename T2>
-      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
+      self_type & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
       {
-        viennacl::linalg::norm_inf_impl(proxy.get_lhs(), *this);
+        viennacl::linalg::norm_inf_impl(proxy.lhs(), *this);
         return *this;
       }
       
       /** @brief Sets the scalar to the inverse with respect to addition of the supplied sub-expression */
       template <typename T1, typename T2>
-      scalar<TYPE> & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
+      self_type & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
       {
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-
-        viennacl::ocl::enqueue(k(proxy.lhs().handle(), TYPE(-1.0), *this));        
+        viennacl::linalg::as(*this, proxy.lhs(), SCALARTYPE(-1.0), 1, false, true);
         return *this;
       }
       
 
       /** @brief Inplace addition of a ViennaCL scalar */
-      scalar<TYPE> & operator += (scalar<TYPE> const & other)
+      self_type & operator += (scalar<SCALARTYPE> const & other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "inplace_add");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-        
-        viennacl::ocl::enqueue(k(val_, other.val_));
+        viennacl::linalg::asbs(*this,                                       // s1 =
+                               *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
+                               other, SCALARTYPE(1.0), 1, false, false);    //     + s2 * 1.0
         return *this;
       }
       /** @brief Inplace addition of a host scalar (float or double) */
-      scalar<TYPE> & operator += (TYPE other)
+      self_type & operator += (SCALARTYPE other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_inplace_add");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-
-        viennacl::ocl::enqueue(k(val_, other.val_));        
+        viennacl::linalg::asbs(*this,                                       // s1 =
+                               *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
+                               other, SCALARTYPE(1.0), 1, false, false);    //     + s2 * 1.0
         return *this;
       }
 
 
       /** @brief Inplace subtraction of a ViennaCL scalar */
-      scalar<TYPE> & operator -= (scalar<TYPE> const & other)
+      self_type & operator -= (scalar<SCALARTYPE> const & other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "inplace_sub");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-        
-        viennacl::ocl::enqueue(k(val_, other.val_));
+        viennacl::linalg::asbs(*this,                                       // s1 =
+                               *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
+                               other, SCALARTYPE(-1.0), 1, false, false);   //     + s2 * (-1.0)
         return *this;
       }
       /** @brief Inplace subtraction of a host scalar (float or double) */
-      scalar<TYPE> & operator -= (TYPE other)
+      self_type & operator -= (SCALARTYPE other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_inplace_sub");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-
-        viennacl::ocl::enqueue(k(val_, other.val_));        
+        viennacl::linalg::asbs(*this,                                       // s1 =
+                               *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
+                               other, SCALARTYPE(-1.0), 1, false, false);   //     + s2 * (-1.0)
         return *this;
       }
 
 
       /** @brief Inplace multiplication with a ViennaCL scalar */
-      scalar<TYPE> & operator *= (scalar<TYPE> const & other)
+      self_type & operator *= (scalar<SCALARTYPE> const & other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "inplace_mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-        
-        viennacl::ocl::enqueue(k(val_, other.val_));
+        viennacl::linalg::as(*this,                                       // s1 =
+                             *this, other, 1, false, false);              //      s1 * s2
         return *this;
       }
       /** @brief Inplace  multiplication with a host scalar (float or double) */
-      scalar<TYPE> & operator *= (TYPE other)
+      self_type & operator *= (SCALARTYPE other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_inplace_mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-
-        viennacl::ocl::enqueue(k(val_, other.val_));        
+        viennacl::linalg::as(*this,                                       // s1 =
+                             *this, other, 1, false, false);              //      s1 * s2
         return *this;
       }
 
 
       //////////////// operator /=    ////////////////////////////
       /** @brief Inplace division with a ViennaCL scalar */
-      scalar<TYPE> & operator /= (scalar<TYPE> const & other)
+      self_type & operator /= (scalar<SCALARTYPE> const & other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "inplace_div");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-        
-        viennacl::ocl::enqueue(k(val_, other.val_));
+        viennacl::linalg::as(*this,                                       // s1 =
+                             *this, other, 1, true, false);              //      s1 / s2
         return *this;
       }
       /** @brief Inplace division with a host scalar (float or double) */
-      scalar<TYPE> & operator /= (TYPE other)
+      self_type & operator /= (SCALARTYPE other)
       {
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_inplace_div");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
-
-        viennacl::ocl::enqueue(k(val_, other.val_));        
+        viennacl::linalg::as(*this,                                       // s1 =
+                             *this, other, 1, true, false);              //      s1 / s2
         return *this;
       }
       
       
       //////////////// operator + ////////////////////////////
       /** @brief Addition of two ViennaCL scalars */
-      scalar<TYPE> operator + (scalar<TYPE> const & other)
+      self_type operator + (scalar<SCALARTYPE> const & other)
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "add");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
 
-        viennacl::ocl::enqueue(k(val_, other.val_, result));        
+        viennacl::linalg::asbs(result,                                       // result =
+                               *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
+                               other, SCALARTYPE(1.0), 1, false, false);     //          + other * 1.0
+
         return result;
       }
       /** @brief Addition of a ViennaCL scalar with a scalar expression */
       template <typename T1, typename T2, typename OP>
-      scalar<TYPE> operator + (scalar_expression<T1, T2, OP> const & proxy) const
+      self_type operator + (scalar_expression<T1, T2, OP> const & proxy) const
       {
-        scalar<TYPE> result = proxy;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "add");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result = proxy;
 
-        viennacl::ocl::enqueue(k(val_, result, result));        
+        viennacl::linalg::asbs(result,                                       // result =
+                               *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
+                               result, SCALARTYPE(1.0), 1, false, false);     //        + result * 1.0
+
         return result;
       }
       /** @brief Addition of a ViennaCL scalar with a host scalar (float, double) */
-      scalar<TYPE> operator + (TYPE other)
+      self_type operator + (SCALARTYPE other)
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_add");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
+        
+        viennacl::linalg::asbs(result,                                       // result =
+                               *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
+                               other, SCALARTYPE(1.0), 1, false, false);     //          + other * 1.0
 
-        viennacl::ocl::enqueue(k(val_, other, result));        
         return result;
       }
 
@@ -399,128 +353,114 @@ namespace viennacl
       
       
       /** @brief Subtraction of two ViennaCL scalars */
-      scalar<TYPE> operator - (scalar<TYPE> const & other) const
+      self_type operator - (scalar<SCALARTYPE> const & other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "sub");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
 
-        viennacl::ocl::enqueue(k(val_, other.val_, result));        
+        viennacl::linalg::asbs(result,                                       // result =
+                               *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
+                               other, SCALARTYPE(-1.0), 1, false, false);    //          + other * (-1.0)
+
         return result;
       }
       /** @brief Subtraction of a ViennaCL scalar from a scalar expression */
       template <typename T1, typename T2, typename OP>
-      scalar<TYPE> operator - (scalar_expression<T1, T2, OP> const & proxy) const
+      self_type operator - (scalar_expression<T1, T2, OP> const & proxy) const
       {
-        scalar<TYPE> result = *this;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "sub");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result = *this;
 
-        viennacl::ocl::enqueue(k(val_, result, result));        
+        viennacl::linalg::asbs(result,                                       // result =
+                                *this, SCALARTYPE(1.0), 1 , false, false,    //            *this * 1.0
+                               result, SCALARTYPE(-1.0), 1, false, false);  //          + result * (-1.0)
+
         return result;
       }
       /** @brief Subtraction of a host scalar (float, double) from a ViennaCL scalar */
-      scalar<TYPE> operator - (TYPE other) const
+      scalar<SCALARTYPE> operator - (SCALARTYPE other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_sub");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
 
-        viennacl::ocl::enqueue(k(val_, other, result));        
-        return result;
-        
+        viennacl::linalg::asbs(result,                                       // result =
+                               *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
+                               other, SCALARTYPE(-1.0), 1, false, false);    //          + other * (-1.0)
+                               
         return result;
       }
 
       //////////////// operator * ////////////////////////////
       /** @brief Multiplication of two ViennaCL scalars */
-      scalar<TYPE> operator * (scalar<TYPE> const & other) const
+      self_type operator * (scalar<SCALARTYPE> const & other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        scalar<SCALARTYPE> result;
 
-        viennacl::ocl::enqueue(k(val_, other.val_, result));        
+        viennacl::linalg::as(result,                                     // result =
+                             *this, other, 1, false, false);              //          *this * other
+
         return result;
       }
       /** @brief Multiplication of a ViennaCL scalar with a scalar expression */
       template <typename T1, typename T2, typename OP>
-      scalar<TYPE> operator * (scalar_expression<T1, T2, OP> const & proxy) const
+      self_type operator * (scalar_expression<T1, T2, OP> const & proxy) const
       {
-        scalar<TYPE> result = proxy;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result = proxy;
 
-        viennacl::ocl::enqueue(k(val_, result, result));        
+        viennacl::linalg::as(result,                                       // result =
+                             *this, result, 1, false, false);              //            *this * proxy
+
         return result;
       }
       /** @brief Multiplication of a host scalar (float, double) with a ViennaCL scalar */
-      scalar<TYPE> operator * (TYPE other) const
+      self_type operator * (SCALARTYPE other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_mul");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        scalar<SCALARTYPE> result;
 
-        viennacl::ocl::enqueue(k(val_, other, result));        
+        viennacl::linalg::as(result,                                     // result =
+                             *this, other, 1, false, false);              //          *this * other
+
         return result;
       }
       
       //////////////// operator /    ////////////////////////////
       /** @brief Division of two ViennaCL scalars */
-      scalar<TYPE> operator / (scalar<TYPE> const & other) const
+      self_type operator / (scalar<SCALARTYPE> const & other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "divide");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
 
-        viennacl::ocl::enqueue(k(val_, other.val_, result));        
+        viennacl::linalg::as(result,                                     // result =
+                             *this, other, 1, true, false);              //           *this / other
+
         return result;
       }
       /** @brief Division of a ViennaCL scalar by a scalar expression */
       template <typename T1, typename T2, typename OP>
-      scalar<TYPE> operator / (scalar_expression<T1, T2, OP> const & proxy) const
+      self_type operator / (scalar_expression<T1, T2, OP> const & proxy) const
       {
-        scalar<TYPE> result = proxy;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "divide");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result = proxy;
 
-        viennacl::ocl::enqueue(k(val_, result, result));        
+        viennacl::linalg::as(result,                                     // result =
+                             *this, result, 1, true, false);              //          *this / proxy
+
         return result;
       }
       /** @brief Division of a ViennaCL scalar by a host scalar (float, double)*/
-      scalar<TYPE> operator / (TYPE other) const
+      self_type operator / (SCALARTYPE other) const
       {
-        scalar<TYPE> result;
-        //get kernel:
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<TYPE, 1>::program_name(), "cpu_div");
-        k.local_work_size(0, 1);
-        k.global_work_size(0, 1);
+        self_type result;
 
-        viennacl::ocl::enqueue(k(val_, other, result));        
+        viennacl::linalg::as(result,                                     // result =
+                             *this, other, 1, true, false);              //            *this / other
+
         return result;
       }
 
-      /** @brief Returns the OpenCL handle */
-      const viennacl::ocl::handle<cl_mem> & handle() const { return val_; }
+      /** @brief Returns the memory handle, non-const version */
+      handle_type & handle() { return val_; }
+
+      /** @brief Returns the memory handle, const version */
+      const handle_type & handle() const { return val_; }
       
     private:
-      viennacl::ocl::handle<cl_mem> val_;
+      handle_type val_;
     };
     
     

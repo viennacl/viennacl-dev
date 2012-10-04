@@ -198,36 +198,6 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-   {
-      typedef float NumericT;
-      NumericT epsilon = NumericT(1.0E-6);
-      std::cout << "# Testing setup:" << std::endl;
-      std::cout << "  eps:     " << epsilon << std::endl;
-      std::cout << "  numeric: float" << std::endl;
-      retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
-         std::cout << "# Test passed" << std::endl;
-      else
-         return retval;
-   }
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
-   {
-      typedef float NumericT;
-      NumericT epsilon = NumericT(1.0E-7);
-      std::cout << "# Testing setup:" << std::endl;
-      std::cout << "  eps:     " << epsilon << std::endl;
-      std::cout << "  numeric: float" << std::endl;
-      retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
-         std::cout << "# Test passed" << std::endl;
-      else
-         return retval;
-   }
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
    if( viennacl::ocl::current_device().double_support() )
    {
       {
@@ -243,84 +213,13 @@ int main()
            return retval;
       }
       std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-15;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon);
-         if( retval == EXIT_SUCCESS )
-            std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-20;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-25;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-30;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-35;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
    }
+   
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+   
    return retval;
 }
 //

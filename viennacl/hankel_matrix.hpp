@@ -40,7 +40,10 @@ namespace viennacl {
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     class hankel_matrix 
     {
-    public:
+      public:
+        typedef viennacl::backend::mem_handle                                                              handle_type;
+        typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      
         /**
          * @brief The default constructor. Does not allocate any memory.
          *

@@ -146,8 +146,8 @@ namespace viennacl
                                               viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(),
                                               "jacobi_precond");
 
-          viennacl::ocl::enqueue( k(system_matrix.handle1(), system_matrix.handle2(), system_matrix.handle(), 
-                                    diag_A_inv, static_cast<cl_uint>(diag_A_inv.size())) );        
+          viennacl::ocl::enqueue( k(system_matrix.handle1().opencl_handle(), system_matrix.handle2().opencl_handle(), system_matrix.handle().opencl_handle(), 
+                                    viennacl::traits::opencl_handle(diag_A_inv), static_cast<cl_uint>(diag_A_inv.size())) );        
         }
         
         
@@ -161,11 +161,11 @@ namespace viennacl
                                                                 "diag_precond");
 
           viennacl::ocl::enqueue(
-             k(viennacl::traits::handle(diag_A_inv),
+             k(viennacl::traits::opencl_handle(diag_A_inv),
                 cl_uint(viennacl::traits::start(diag_A_inv)),
                 cl_uint(viennacl::traits::stride(diag_A_inv)),
                 cl_uint(viennacl::traits::size(diag_A_inv)),
-               viennacl::traits::handle(vec),
+               viennacl::traits::opencl_handle(vec),
                 cl_uint(viennacl::traits::start(vec)),
                 cl_uint(viennacl::traits::stride(vec)),
                 cl_uint(viennacl::traits::size(vec)) )

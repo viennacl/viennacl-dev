@@ -22,6 +22,8 @@
 
 //#define VIENNACL_BUILD_INFO
 
+//#define VIENNACL_DEBUG_ALL
+
 #include "viennacl/toeplitz_matrix.hpp"
 #include "viennacl/circulant_matrix.hpp"
 #include "viennacl/vandermonde_matrix.hpp"
@@ -609,5 +611,10 @@ int main()
       return EXIT_FAILURE;
   }
 
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+  
   return EXIT_SUCCESS;
 }

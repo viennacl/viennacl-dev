@@ -160,6 +160,28 @@ namespace viennacl
         }*/
         
         ////////////////////// create memory /////////////////////////////
+        
+        /** @brief Creates a memory buffer within the context. Does not wrap the OpenCL handle into the smart-pointer-like viennacl::ocl::handle, which saves an OpenCL backend call, yet the user has to ensure that the OpenCL memory handle is free'd or passed to a viennacl::ocl::handle later on.
+        *
+        *  @param flags  OpenCL flags for the buffer creation
+        *  @param size   Size of the memory buffer in bytes
+        *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
+        *  @return       A plain OpenCL handle. Either assign it to a viennacl::ocl::handle<cl_mem> directly, or make sure that you free to memory manually if you no longer need the allocated memory.
+        */
+        cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
+        {
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
+          #endif
+          if (ptr)
+            flags |= CL_MEM_COPY_HOST_PTR;
+          cl_int err;
+          cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
+          VIENNACL_ERR_CHECK(err);
+          return mem;
+        }
+        
+        
         /** @brief Creates a memory buffer within the context
         *
         *  @param flags  OpenCL flags for the buffer creation
@@ -168,15 +190,7 @@ namespace viennacl
         */
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
         {
-          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-          std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << std::endl;
-          #endif
-          if (ptr)
-            flags |= CL_MEM_COPY_HOST_PTR;
-          cl_int err;
-          viennacl::ocl::handle<cl_mem> mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
-          VIENNACL_ERR_CHECK(err);
-          return mem;
+          return create_memory_without_smart_handle(flags, size, ptr);
         }
 
         /** @brief Creates a memory buffer within the context initialized from the supplied data
@@ -187,7 +201,7 @@ namespace viennacl
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & _buffer)
         {
-          return create_memory(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * _buffer.size()), (void*)&_buffer[0]);
+          return create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * _buffer.size()), (void*)&_buffer[0]);
         }
         
         //////////////////// create queues ////////////////////////////////

@@ -36,7 +36,7 @@
 //
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_INFO_ALL
+//#define VIENNACL_DEBUG_ALL
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_HAVE_UBLAS 1
 #include "viennacl/scalar.hpp"
@@ -702,5 +702,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
+   
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+   
+   
    return retval;
 }

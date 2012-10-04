@@ -45,25 +45,25 @@ using namespace boost::numeric;
 template <class TYPE>
 bool readVectorFromFile(const std::string & filename, boost::numeric::ublas::vector<TYPE> & vec)
 {
-	std::ifstream file(filename.c_str());
+  std::ifstream file(filename.c_str());
 
-	if (!file) return false;
+  if (!file) return false;
 
-	unsigned int size;
-	file >> size;
+  unsigned int size;
+  file >> size;
   
   if (size > 30000)  //keep execution times short
     size = 30000;
-	vec.resize(size);
+  vec.resize(size);
 
-	for (unsigned int i = 0; i < size; ++i)
-	{
-		TYPE element;
-		file >> element;
-		vec[i] = element;
-	}
+  for (unsigned int i = 0; i < size; ++i)
+  {
+    TYPE element;
+    file >> element;
+    vec[i] = element;
+  }
 
-	return true;
+  return true;
 }
 
 //
@@ -103,7 +103,7 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
-   fast_copy(v2.begin(), v2.end(), v2_cpu.begin());
+   viennacl::fast_copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
@@ -113,7 +113,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
          v2_cpu[i] = 0.0;
    }
 
-   return norm_inf(v2_cpu);
+   return ublas::norm_inf(v2_cpu);
 }
 //
 // -------------------------------------------------------------
@@ -142,11 +142,11 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string resultfile)
 //    }
 
    viennacl::vector<NumericT> vcl_rhs(rhs.size());
-   fast_copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
+   viennacl::fast_copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
    viennacl::vector<NumericT> vcl_rhs2(rhs.size()); 
-   copy(rhs.begin(), rhs.end(), vcl_rhs2.begin());
+   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs2.begin());
    
-   NumericT                            cpu_result;
+   NumericT                    cpu_result;
    viennacl::scalar<NumericT>  gpu_result;
    // --------------------------------------------------------------------------
    std::cout << "Testing inner_prod..." << std::endl;
@@ -159,6 +159,7 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string resultfile)
       std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
+   
    // --------------------------------------------------------------------------
    std::cout << "Testing norm_1..." << std::endl;
    cpu_result = norm_1(rhs);
@@ -717,5 +718,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
+   
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+   
    return retval;
 }

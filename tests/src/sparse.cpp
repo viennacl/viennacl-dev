@@ -89,55 +89,61 @@ template <typename ScalarType, typename VCL_MATRIX>
 ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & gpu_matrix)
 {
   typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;
-   CPU_MATRIX from_gpu;
+  CPU_MATRIX from_gpu;
    
-   copy(gpu_matrix, from_gpu);
+  copy(gpu_matrix, from_gpu);
 
-   ScalarType error = 0;
+  ScalarType error = 0;
    
-   //step 1: compare all entries from cpu_matrix with gpu_matrix:
-    for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
-          row_it != cpu_matrix.end1();
-          ++row_it)
+  //step 1: compare all entries from cpu_matrix with gpu_matrix:
+  //std::cout << "Ublas matrix: " << std::endl;
+  for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
+        row_it != cpu_matrix.end1();
+        ++row_it)
+  {
+    //std::cout << "Row " << row_it.index1() << ": " << std::endl;
+    for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
+          col_it != row_it.end();
+          ++col_it)
     {
-      for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
-            col_it != row_it.end();
-            ++col_it)
-      {
-        ScalarType current_error = 0;
-        
-        if ( std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
-                       fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
-          current_error = fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2())) 
-                            / std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
-                                        fabs(from_gpu(col_it.index1(), col_it.index2()))   );
-        if (current_error > error)
-          error = current_error;
-      }
+      //std::cout << "(" << col_it.index2() << ", " << *col_it << std::endl;
+      ScalarType current_error = 0;
+      
+      if ( std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
+                      fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
+        current_error = fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2())) 
+                          / std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
+                                      fabs(from_gpu(col_it.index1(), col_it.index2()))   );
+      if (current_error > error)
+        error = current_error;
     }
+  }
 
-   //step 2: compare all entries from gpu_matrix with cpu_matrix (sparsity pattern might differ):
-    for (typename CPU_MATRIX::const_iterator1 row_it = from_gpu.begin1();
-          row_it != from_gpu.end1();
-          ++row_it)
+  //step 2: compare all entries from gpu_matrix with cpu_matrix (sparsity pattern might differ):
+  //std::cout << "ViennaCL matrix: " << std::endl;
+  for (typename CPU_MATRIX::const_iterator1 row_it = from_gpu.begin1();
+        row_it != from_gpu.end1();
+        ++row_it)
+  {
+    //std::cout << "Row " << row_it.index1() << ": " << std::endl;
+    for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
+          col_it != row_it.end();
+          ++col_it)
     {
-      for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
-            col_it != row_it.end();
-            ++col_it)
-      {
-        ScalarType current_error = 0;
-        
-        if ( std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
-                       fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
-          current_error = fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2())) 
-                            / std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
-                                        fabs(from_gpu(col_it.index1(), col_it.index2()))   );
-        if (current_error > error)
-          error = current_error;
-      }
+      //std::cout << "(" << col_it.index2() << ", " << *col_it << std::endl;
+      ScalarType current_error = 0;
+      
+      if ( std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
+                      fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
+        current_error = fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2())) 
+                          / std::max( fabs(cpu_matrix(col_it.index1(), col_it.index2())), 
+                                      fabs(from_gpu(col_it.index1(), col_it.index2()))   );
+      if (current_error > error)
+        error = current_error;
     }
+  }
 
-   return error;
+  return error;
 }
 
 
@@ -155,15 +161,16 @@ int resize_test(Epsilon const& epsilon)
    ublas_matrix(3,0) = 3.0; ublas_matrix(3, 1) = 3.1; ublas_matrix(3, 2) = 3.2; ublas_matrix(3, 3) = 3.3; ublas_matrix(3, 4) = 3.4;
    ublas_matrix(4,0) = 4.0; ublas_matrix(4, 1) = 4.1; ublas_matrix(4, 2) = 4.2; ublas_matrix(4, 3) = 4.3; ublas_matrix(4, 4) = 4.4;
    
-   copy(ublas_matrix, vcl_matrix); ublas_matrix.clear();
-   copy(vcl_matrix, ublas_matrix);
+   copy(ublas_matrix, vcl_matrix);
+   ublas::compressed_matrix<NumericT> other_matrix(ublas_matrix.size1(), ublas_matrix.size2());
+   copy(vcl_matrix, other_matrix);
    
    std::cout << "Checking for equality after copy..." << std::endl;   
     if( fabs(diff(ublas_matrix, vcl_matrix)) > epsilon )
     {
         std::cout << "# Error at operation: equality after copy with sparse matrix" << std::endl;
         std::cout << "  diff: " << fabs(diff(ublas_matrix, vcl_matrix)) << std::endl;
-        retval = EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
    
    std::cout << "Testing resize to larger..." << std::endl;
@@ -181,7 +188,7 @@ int resize_test(Epsilon const& epsilon)
     {
         std::cout << "# Error at operation: resize (to larger) with sparse matrix" << std::endl;
         std::cout << "  diff: " << fabs(diff(ublas_matrix, vcl_matrix)) << std::endl;
-        retval = EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
    ublas_matrix(5,5) = 5.5; ublas_matrix(5, 6) = 5.6; ublas_matrix(5, 7) = 5.7; ublas_matrix(5, 8) = 5.8; ublas_matrix(5, 9) = 5.9;
@@ -223,9 +230,13 @@ int test(Epsilon const& epsilon)
 {
    std::cout << "Testing resizing of compressed_matrix..." << std::endl;
    int retval = resize_test<NumericT, viennacl::compressed_matrix<NumericT> >(epsilon);
+   if (retval != EXIT_SUCCESS)
+     return retval;
    std::cout << "Testing resizing of coordinate_matrix..." << std::endl;
    if (retval != EXIT_FAILURE)
      retval = resize_test<NumericT, viennacl::coordinate_matrix<NumericT> >(epsilon);
+   else
+     return retval;
    
    // --------------------------------------------------------------------------            
    ublas::vector<NumericT> rhs;
@@ -444,5 +455,11 @@ int main()
    }
    else
      std::cout << "No double precision support..." << std::endl;
+   
+   
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+   
    return retval;
 }

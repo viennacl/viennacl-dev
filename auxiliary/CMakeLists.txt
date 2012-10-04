@@ -120,80 +120,64 @@ set(HYB_MATRIX_SRCS
    hyb_matrix/align1/vec_mul.cl)
 
 set(MATRIX_COL_SRCS
-   matrix_col/align1/add.cl
-   matrix_col/align1/assign.cl
-   matrix_col/align1/clear.cl
-   matrix_col/align1/cpu_inplace_mult.cl
+   matrix_col/align1/am_cpu.cl
+   matrix_col/align1/am_gpu.cl
+   matrix_col/align1/ambm_cpu_cpu.cl
+   matrix_col/align1/ambm_cpu_gpu.cl
+   matrix_col/align1/ambm_gpu_cpu.cl
+   matrix_col/align1/ambm_gpu_gpu.cl
+   matrix_col/align1/ambm_m_cpu_cpu.cl
+   matrix_col/align1/ambm_m_cpu_gpu.cl
+   matrix_col/align1/ambm_m_gpu_cpu.cl
+   matrix_col/align1/ambm_m_gpu_gpu.cl
+   matrix_col/align1/assign_cpu.cl
    matrix_col/align1/fft_direct.cl
    matrix_col/align1/fft_radix2.cl
    matrix_col/align1/fft_radix2_local.cl
    matrix_col/align1/fft_reorder.cl
-   matrix_col/align1/inplace_add.cl
-   matrix_col/align1/inplace_divide.cl
-   matrix_col/align1/inplace_mult.cl
-   matrix_col/align1/inplace_sub.cl
-   matrix_col/align1/lower_triangular_substitute_inplace.cl
+   matrix_col/align1/triangular_substitute_inplace.cl
    matrix_col/align1/lu_factorize.cl
-   matrix_col/align1/rank1_update.cl
-   matrix_col/align1/scaled_rank1_update.cl
-   matrix_col/align1/sub.cl
-   matrix_col/align1/trans_lower_triangular_substitute_inplace.cl
-   matrix_col/align1/trans_unit_lower_triangular_substitute_inplace.cl
-   matrix_col/align1/trans_unit_upper_triangular_substitute_inplace.cl
-   matrix_col/align1/trans_upper_triangular_substitute_inplace.cl
+   matrix_col/align1/scaled_rank1_update_cpu.cl
+   matrix_col/align1/scaled_rank1_update_gpu.cl
    matrix_col/align1/trans_vec_mul.cl
-   matrix_col/align1/unit_lower_triangular_substitute_inplace.cl
-   matrix_col/align1/unit_upper_triangular_substitute_inplace.cl
-   matrix_col/align1/upper_triangular_substitute_inplace.cl
    matrix_col/align1/vec_mul.cl
    matrix_col/align16/dummy)
 
 set(MATRIX_ROW_SRCS
-   matrix_row/align1/add.cl
-   matrix_row/align1/assign.cl
-   matrix_row/align1/clear.cl
-   matrix_row/align1/cpu_inplace_mult.cl
+   matrix_row/align1/am_cpu.cl
+   matrix_row/align1/am_gpu.cl
+   matrix_row/align1/ambm_cpu_cpu.cl
+   matrix_row/align1/ambm_cpu_gpu.cl
+   matrix_row/align1/ambm_gpu_cpu.cl
+   matrix_row/align1/ambm_gpu_gpu.cl
+   matrix_row/align1/ambm_m_cpu_cpu.cl
+   matrix_row/align1/ambm_m_cpu_gpu.cl
+   matrix_row/align1/ambm_m_gpu_cpu.cl
+   matrix_row/align1/ambm_m_gpu_gpu.cl
+   matrix_row/align1/assign_cpu.cl
    matrix_row/align1/fft_direct.cl
    matrix_row/align1/fft_radix2.cl
    matrix_row/align1/fft_radix2_local.cl
    matrix_row/align1/fft_reorder.cl
-   matrix_row/align1/inplace_add.cl
-   matrix_row/align1/inplace_divide.cl
-   matrix_row/align1/inplace_mult.cl
-   matrix_row/align1/inplace_sub.cl
-   matrix_row/align1/lower_triangular_substitute_inplace.cl
+   matrix_row/align1/triangular_substitute_inplace.cl
    matrix_row/align1/lu_factorize.cl
-   matrix_row/align1/rank1_update.cl
-   matrix_row/align1/scaled_rank1_update.cl
-   matrix_row/align1/sub.cl
-   matrix_row/align1/trans_lower_triangular_substitute_inplace.cl
-   matrix_row/align1/trans_unit_lower_triangular_substitute_inplace.cl
-   matrix_row/align1/trans_unit_upper_triangular_substitute_inplace.cl
-   matrix_row/align1/trans_upper_triangular_substitute_inplace.cl
+   matrix_row/align1/scaled_rank1_update_cpu.cl
+   matrix_row/align1/scaled_rank1_update_gpu.cl
    matrix_row/align1/trans_vec_mul.cl
-   matrix_row/align1/unit_lower_triangular_substitute_inplace.cl
-   matrix_row/align1/unit_upper_triangular_substitute_inplace.cl
-   matrix_row/align1/upper_triangular_substitute_inplace.cl
    matrix_row/align1/vec_mul.cl
    matrix_row/align16/dummy)
 
 set(SCALAR_SRCS
-   scalar/align1/add.cl
-   scalar/align1/cpu_add.cl
-   scalar/align1/cpu_div.cl
-   scalar/align1/cpu_inplace_add.cl
-   scalar/align1/cpu_inplace_div.cl
-   scalar/align1/cpu_inplace_mul.cl
-   scalar/align1/cpu_inplace_sub.cl
-   scalar/align1/cpu_mul.cl
-   scalar/align1/cpu_sub.cl
-   scalar/align1/divide.cl
-   scalar/align1/inplace_add.cl
-   scalar/align1/inplace_div.cl
-   scalar/align1/inplace_mul.cl
-   scalar/align1/inplace_sub.cl
-   scalar/align1/mul.cl
-   scalar/align1/sub.cl)
+   scalar/align1/as_cpu.cl
+   scalar/align1/as_gpu.cl
+   scalar/align1/asbs_cpu_cpu.cl
+   scalar/align1/asbs_cpu_gpu.cl
+   scalar/align1/asbs_gpu_cpu.cl
+   scalar/align1/asbs_gpu_gpu.cl
+   scalar/align1/asbs_s_cpu_cpu.cl
+   scalar/align1/asbs_s_cpu_gpu.cl
+   scalar/align1/asbs_s_gpu_cpu.cl
+   scalar/align1/asbs_s_gpu_gpu.cl)
 
 set(VECTOR_SRCS
    vector/align1/av_cpu.cl

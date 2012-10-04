@@ -124,7 +124,7 @@ namespace viennacl
                                                                                           viennacl::op_prod> & proxy) 
     {
       // check for the special case x = A * x
-      if (proxy.rhs().handle().get() == this->handle().get())
+      if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
       {
         viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);

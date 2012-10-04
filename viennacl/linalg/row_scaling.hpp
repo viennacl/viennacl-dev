@@ -181,8 +181,8 @@ namespace viennacl
                                                 viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(),
                                                 "row_scaling_1");
 
-            viennacl::ocl::enqueue( k(system_matrix.handle1(), system_matrix.handle2(), system_matrix.handle(), 
-                                      diag_M_inv, static_cast<cl_uint>(diag_M_inv.size())) );        
+            viennacl::ocl::enqueue( k(system_matrix.handle1().opencl_handle(), system_matrix.handle2().opencl_handle(), system_matrix.handle().opencl_handle(), 
+                                      viennacl::traits::opencl_handle(diag_M_inv), static_cast<cl_uint>(diag_M_inv.size())) );        
           }
           else
           {
@@ -190,8 +190,8 @@ namespace viennacl
                                                 viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(),
                                                 "row_scaling_2");
 
-            viennacl::ocl::enqueue( k(system_matrix.handle1(), system_matrix.handle2(), system_matrix.handle(), 
-                                      diag_M_inv, static_cast<cl_uint>(diag_M_inv.size())) );        
+            viennacl::ocl::enqueue( k(system_matrix.handle1().opencl_handle(), system_matrix.handle2().opencl_handle(), system_matrix.handle().opencl_handle(), 
+                                      viennacl::traits::opencl_handle(diag_M_inv), static_cast<cl_uint>(diag_M_inv.size())) );        
           }
         }
         
@@ -205,11 +205,11 @@ namespace viennacl
                                                                 "diag_precond");
 
           viennacl::ocl::enqueue(
-             k(viennacl::traits::handle(diag_M_inv),
+             k(viennacl::traits::opencl_handle(diag_M_inv),
                 cl_uint(viennacl::traits::start(diag_M_inv)),
                 cl_uint(viennacl::traits::stride(diag_M_inv)),
                 cl_uint(viennacl::traits::size(diag_M_inv)),
-               viennacl::traits::handle(vec),
+               viennacl::traits::opencl_handle(vec),
                 cl_uint(viennacl::traits::start(vec)),
                 cl_uint(viennacl::traits::stride(vec)),
                 cl_uint(viennacl::traits::size(vec)) )

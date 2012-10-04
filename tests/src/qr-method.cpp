@@ -220,14 +220,18 @@ void test_eigen(const std::string& fn, bool is_symm)
 
 int main()
 {
-    // test_eigen("../../examples/testdata/eigen/symm1.example", true);
-    // test_eigen("../../examples/testdata/eigen/symm2.example", true);
-    // test_eigen("../../examples/testdata/eigen/symm3.example", true);
+  // test_eigen("../../examples/testdata/eigen/symm1.example", true);
+  // test_eigen("../../examples/testdata/eigen/symm2.example", true);
+  // test_eigen("../../examples/testdata/eigen/symm3.example", true);
 
-    test_eigen("../../examples/testdata/eigen/nsm1.example", false);
-    test_eigen("../../examples/testdata/eigen/nsm2.example", false);
-    test_eigen("../../examples/testdata/eigen/nsm3.example", false);
-    test_eigen("../../examples/testdata/eigen/nsm4.example", false);
+  test_eigen("../../examples/testdata/eigen/nsm1.example", false);
+  test_eigen("../../examples/testdata/eigen/nsm2.example", false);
+  test_eigen("../../examples/testdata/eigen/nsm3.example", false);
+  test_eigen("../../examples/testdata/eigen/nsm4.example", false);
 
-    return 0;
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+  return EXIT_SUCCESS;
 }

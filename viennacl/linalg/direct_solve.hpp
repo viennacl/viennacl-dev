@@ -1,5 +1,5 @@
-#ifndef VIENNACL_DIRECT_SOLVE_HPP_
-#define VIENNACL_DIRECT_SOLVE_HPP_
+#ifndef VIENNACL_LINALG_DIRECT_SOLVE_HPP_
+#define VIENNACL_LINALG_DIRECT_SOLVE_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,18 +17,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file direct_solve.hpp
+/** @file viennacl/linalg/direct_solve.hpp
     @brief Implementations of dense direct solvers are found here.
 */
 
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/tools/matrix_kernel_class_deducer.hpp"
-#include "viennacl/tools/matrix_solve_kernel_class_deducer.hpp"
-#include "viennacl/ocl/kernel.hpp"
-#include "viennacl/ocl/device.hpp"
-#include "viennacl/ocl/handle.hpp"
-
+#include "viennacl/linalg/opencl/direct_solve.hpp"
 
 namespace viennacl
 {
@@ -45,23 +40,17 @@ namespace viennacl
                        matrix<SCALARTYPE, F2, A2> & B,
                        SOLVERTAG)
     {
-      assert(mat.size1() == mat.size2());
-      assert(mat.size2() == B.size1());
+      assert( (mat.size1() == mat.size2()) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
+      assert( (mat.size2() == B.size1())   && "Size check failed in inplace_solve(): size1(A) != size1(B)");
       
-      typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                           matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
-      KernelClass::init();
-      
-      std::stringstream ss;
-      ss << SOLVERTAG::name() << "_solve";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-
-      k.global_work_size(0, B.size2() * k.local_work_size());
-      viennacl::ocl::enqueue(k(mat, cl_uint(mat.size1()), cl_uint(mat.size2()),
-                                    cl_uint(mat.internal_size1()), cl_uint(mat.internal_size2()),
-                               B,   cl_uint(B.size1()), cl_uint(B.size2()),
-                                    cl_uint(B.internal_size1()), cl_uint(B.internal_size2()))
-                            );        
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(mat, B, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
     
     /** @brief Direct inplace solver for dense upper triangular systems
@@ -76,23 +65,17 @@ namespace viennacl
                                                 op_trans> & B,
                        SOLVERTAG)
     {
-      assert(mat.size1() == mat.size2());
-      assert(mat.size2() == B.lhs().size2());
+      assert( (mat.size1() == mat.size2())     && "Size check failed in inplace_solve(): size1(A) != size2(A)");
+      assert( (mat.size2() == B.lhs().size2()) && "Size check failed in inplace_solve(): size1(A) != size1(B^T)");
       
-      typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                           matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
-      KernelClass::init();
-
-      std::stringstream ss;
-      ss << SOLVERTAG::name() << "_trans_solve";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-
-      k.global_work_size(0, B.lhs().size1() * k.local_work_size());
-      viennacl::ocl::enqueue(k(mat, cl_uint(mat.size1()), cl_uint(mat.size2()),
-                                    cl_uint(mat.internal_size1()), cl_uint(mat.internal_size2()),
-                               B.lhs(), cl_uint(B.lhs().size1()), cl_uint(B.lhs().size2()),
-                                        cl_uint(B.lhs().internal_size1()), cl_uint(B.lhs().internal_size2()))
-                            );     
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(mat, B, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
     
     //upper triangular solver for transposed lower triangular matrices
@@ -108,23 +91,17 @@ namespace viennacl
                        matrix<SCALARTYPE, F2, A2> & B,
                        SOLVERTAG)
     {
-      assert(proxy.lhs().size1() == proxy.lhs().size2());
-      assert(proxy.lhs().size2() == B.size1());
+      assert( (proxy.lhs().size1() == proxy.lhs().size2()) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
+      assert( (proxy.lhs().size2() == B.size1())           && "Size check failed in inplace_solve(): size1(A^T) != size1(B)");
       
-      typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                           matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
-      KernelClass::init();
-
-      std::stringstream ss;
-      ss << "trans_" << SOLVERTAG::name() << "_solve";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-
-      k.global_work_size(0, B.size2() * k.local_work_size());
-      viennacl::ocl::enqueue(k(proxy.lhs(), cl_uint(proxy.lhs().size1()), cl_uint(proxy.lhs().size2()),
-                                            cl_uint(proxy.lhs().internal_size1()), cl_uint(proxy.lhs().internal_size2()),
-                                         B, cl_uint(B.size1()), cl_uint(B.size2()),
-                                            cl_uint(B.internal_size1()), cl_uint(B.internal_size2()))
-                            );        
+      switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(proxy, B, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
     /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
@@ -141,23 +118,17 @@ namespace viennacl
                                                 op_trans> & B,
                        SOLVERTAG)
     {
-      assert(proxy.lhs().size1() == proxy.lhs().size2());
-      assert(proxy.lhs().size2() == B.lhs().size2());
+      assert( (proxy.lhs().size1() == proxy.lhs().size2()) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
+      assert( (proxy.lhs().size2() == B.lhs().size2())     && "Size check failed in inplace_solve(): size1(A^T) != size1(B^T)");
       
-      typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                           matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
-      KernelClass::init();
-
-      std::stringstream ss;
-      ss << "trans_" << SOLVERTAG::name() << "_trans_solve";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-
-      k.global_work_size(0, B.lhs().size1() * k.local_work_size());
-      viennacl::ocl::enqueue(k(proxy.lhs(), cl_uint(proxy.lhs().size1()), cl_uint(proxy.lhs().size2()),
-                                            cl_uint(proxy.lhs().internal_size1()), cl_uint(proxy.lhs().internal_size2()),
-                               B.lhs(), cl_uint(B.lhs().size1()), cl_uint(B.lhs().size2()),
-                                        cl_uint(B.lhs().internal_size1()), cl_uint(B.lhs().internal_size2()))
-                            );        
+      switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(proxy, B, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
     template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
@@ -165,18 +136,17 @@ namespace viennacl
                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                        SOLVERTAG)
     {
-      assert(mat.size1() == vec.size());
-      assert(mat.size2() == vec.size());
+      assert( (mat.size1() == vec.size()) && "Size check failed in inplace_solve(): size1(A) != size(b)");
+      assert( (mat.size2() == vec.size()) && "Size check failed in inplace_solve(): size2(A) != size(b)");
       
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-
-      std::stringstream ss;
-      ss << SOLVERTAG::name() << "_triangular_substitute_inplace";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-
-      k.global_work_size(0, k.local_work_size());
-      viennacl::ocl::enqueue(k(mat, cl_uint(mat.size1()), cl_uint(mat.size2()), 
-                                    cl_uint(mat.internal_size1()), cl_uint(mat.internal_size2()), vec));        
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
     /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
@@ -191,18 +161,17 @@ namespace viennacl
                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                        SOLVERTAG)
     {
-      assert(proxy.lhs().size1() == vec.size());
-      assert(proxy.lhs().size2() == vec.size());
+      assert( (proxy.lhs().size1() == vec.size()) && "Size check failed in inplace_solve(): size1(A) != size(b)");
+      assert( (proxy.lhs().size2() == vec.size()) && "Size check failed in inplace_solve(): size2(A) != size(b)");
 
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-      
-      std::stringstream ss;
-      ss << "trans_" << SOLVERTAG::name() << "_triangular_substitute_inplace";
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
-      
-      k.global_work_size(0, k.local_work_size());
-      viennacl::ocl::enqueue(k(proxy.lhs(), cl_uint(proxy.lhs().size1()), cl_uint(proxy.lhs().size2()),
-                                            cl_uint(proxy.lhs().internal_size1()), cl_uint(proxy.lhs().internal_size2()), vec));        
+      switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
+          break;
+        default:
+          throw "not implemented";
+      }
     }
     
     /////////////////// general wrappers for non-inplace solution //////////////////////    
@@ -349,15 +318,18 @@ namespace viennacl
     template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
     void lu_factorize(matrix<SCALARTYPE, F, ALIGNMENT> & mat)
     {
-      assert(mat.size1() == mat.size2());
+      assert( (mat.size1() == mat.size2()) && "Size check failed for LU factorization: size1(A) != size2(A)");
 
       typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
       
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "lu_factorize");
-      
-      k.global_work_size(0, k.local_work_size());
-      viennacl::ocl::enqueue(k(mat, cl_uint(mat.size1()), cl_uint(mat.size2()),
-                                    cl_uint(mat.internal_size1()), cl_uint(mat.internal_size2())) );        
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::lu_factorize(mat);
+          break;
+        default:
+          throw "not implemented";
+      }
     }
 
 

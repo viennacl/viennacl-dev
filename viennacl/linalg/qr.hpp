@@ -113,9 +113,9 @@ namespace viennacl
         //ScalarType sigma = 0;
         //for (std::size_t k = j+1; k<A.size1(); ++k)
         //  sigma += A(k, j) * A(k, j);
-        matrix_1x1 = prod( trans(project(A, range(j+1, A.size1()), range(j, j+1))),
-                                 project(A, range(j+1, A.size1()), range(j, j+1))
-                         );
+        matrix_1x1 = boost::numeric::ublas::prod( trans(project(A, range(j+1, A.size1()), range(j, j+1))),
+                                                        project(A, range(j+1, A.size1()), range(j, j+1))
+                                                );
         ScalarType sigma = matrix_1x1(0,0);
         ScalarType beta = 0;
         ScalarType A_jj = A(j,j);
@@ -241,8 +241,8 @@ namespace viennacl
         //for (std::size_t i=j+1; i<A.size1(); ++i)
         //  v_in_col += v[i] * A(i,k);
 
-        matrix_1x1 = prod(trans(project(v, range(j+1, A.size1()), range(0, 1))),
-                         project(A, range(j+1, A.size1()), range(k,k+1)));
+        matrix_1x1 = boost::numeric::ublas::prod(trans(project(v, range(j+1, A.size1()), range(0, 1))),
+                                                       project(A, range(j+1, A.size1()), range(k,k+1)));
         v_in_col += matrix_1x1(0,0);
                          
         //for (std::size_t i=j; i<A.size1(); ++i)

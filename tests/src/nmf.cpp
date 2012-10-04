@@ -82,13 +82,18 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 
 int main()
 {
-    //srand(time(NULL));  //let's use deterministic tests, so keep the default srand() initialization
+  //srand(time(NULL));  //let's use deterministic tests, so keep the default srand() initialization
 
-    test_nmf(3, 3, 3);
-    test_nmf(3, 2, 3);
-    test_nmf(16, 7, 12);
-    test_nmf(160, 73, 200);
-    test_nmf(1000, 15, 1000);
+  test_nmf(3, 3, 3);
+  test_nmf(3, 2, 3);
+  test_nmf(16, 7, 12);
+  test_nmf(160, 73, 200);
+  test_nmf(1000, 15, 1000);
 
-    return EXIT_SUCCESS;
+  std::cout << std::endl;
+  std::cout << "------- Test completed --------" << std::endl;
+  std::cout << std::endl;
+   
+    
+  return EXIT_SUCCESS;
 }

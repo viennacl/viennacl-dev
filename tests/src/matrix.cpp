@@ -115,8 +115,7 @@ int test(Epsilon const& epsilon)
    ublas::vector<NumericT> rhs2 = rhs;
    ublas::vector<NumericT> result = ublas::scalar_vector<NumericT>(num_cols, NumericT(3.1415));
    ublas::vector<NumericT> result2 = result;
-   ublas::vector<NumericT> rhs_trans = rhs;
-   rhs_trans.resize(result.size(), true);
+   ublas::vector<NumericT> rhs_trans = result;
    ublas::vector<NumericT> result_trans = ublas::zero_vector<NumericT>(rhs.size());
 
   
@@ -132,9 +131,11 @@ int test(Epsilon const& epsilon)
    viennacl::vector<NumericT> vcl_result(result.size()); 
    viennacl::matrix<NumericT, F> vcl_matrix(result.size(), rhs.size());
 
+   std::cout << "Creating mem" << std::endl;
    viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
    viennacl::copy(result, vcl_result);
    viennacl::copy(matrix, vcl_matrix);
+   std::cout << "eating mem" << std::endl;
    
    std::cout << "Matrix resizing (to larger)" << std::endl;
    matrix.resize(2*num_rows, 2*num_cols, true);
@@ -524,5 +525,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
+   
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+   
+   
    return retval;
 }

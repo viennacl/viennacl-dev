@@ -146,13 +146,23 @@ namespace viennacl
     }
     
     template <typename LHS, typename RHS>
-    typename viennacl::enable_if< viennacl::is_vector<RHS>::value,
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<RHS>::value,
                                   vcl_size_t >::type
     size(vector_expression<const LHS, const RHS, op_prod> const & proxy)  //matrix-vector product
     {
       return proxy.lhs().size1();
     }
 
+    template <typename M1, typename RHS>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<RHS>::value,
+                                  vcl_size_t >::type
+    size(vector_expression<const matrix_expression<M1, M1, op_trans>,
+                           const RHS,
+                           op_prod> const & proxy)  //transposed matrix-vector product
+    {
+      return proxy.lhs().lhs().size2();
+    }
+    
     
     
     #ifdef VIENNACL_HAVE_MTL4

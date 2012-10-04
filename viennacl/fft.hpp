@@ -49,9 +49,12 @@ namespace viennacl
 }
 
 /// @cond
-namespace viennacl {
-  namespace detail {
-    namespace fft {
+namespace viennacl 
+{
+  namespace detail 
+  {
+    namespace fft 
+    {
 
         inline bool is_radix2(std::size_t data_size) {
             return !((data_size > 2) && (data_size & (data_size - 1)));
@@ -382,8 +385,8 @@ namespace viennacl {
       if(!detail::fft::is_radix2(size)) 
       {
           viennacl::vector<SCALARTYPE, ALIGNMENT> output(input.size());
-          detail::fft::direct(input.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(input),
+                              viennacl::traits::opencl_handle(output),
                               size,
                               size,
                               batch_num,
@@ -391,7 +394,7 @@ namespace viennacl {
 
           viennacl::copy(output, input);
       } else {
-          detail::fft::radix2(input.handle(), size, size, batch_num, sign);
+          detail::fft::radix2(viennacl::traits::opencl_handle(input), size, size, batch_num, sign);
       }
   }
 
@@ -415,10 +418,10 @@ namespace viennacl {
       if(detail::fft::is_radix2(size))
       {
           viennacl::copy(input, output);
-          detail::fft::radix2(output.handle(), size, size, batch_num, sign);
+          detail::fft::radix2(viennacl::traits::opencl_handle(output), size, size, batch_num, sign);
       } else {
-          detail::fft::direct(input.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(input),
+                              viennacl::traits::opencl_handle(output),
                               size,
                               size,
                               batch_num,
@@ -444,14 +447,14 @@ namespace viennacl {
       // batch with rows
       if(detail::fft::is_radix2(cols_num)) 
       {
-          detail::fft::radix2(input.handle(), cols_num, cols_int, rows_num, sign, detail::fft::FFT_DATA_ORDER::ROW_MAJOR);
+          detail::fft::radix2(viennacl::traits::opencl_handle(input), cols_num, cols_int, rows_num, sign, detail::fft::FFT_DATA_ORDER::ROW_MAJOR);
       } 
       else
       {
           viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2());
 
-          detail::fft::direct(input.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(input),
+                              viennacl::traits::opencl_handle(output),
                               cols_num,
                               cols_int,
                               rows_num,
@@ -464,12 +467,12 @@ namespace viennacl {
 
       // batch with cols
       if (detail::fft::is_radix2(rows_num)) {
-          detail::fft::radix2(input.handle(), rows_num, cols_int, cols_num, sign, detail::fft::FFT_DATA_ORDER::COL_MAJOR);
+          detail::fft::radix2(viennacl::traits::opencl_handle(input), rows_num, cols_int, cols_num, sign, detail::fft::FFT_DATA_ORDER::COL_MAJOR);
       } else {
           viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2());
 
-          detail::fft::direct(input.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(input),
+                              viennacl::traits::opencl_handle(output),
                               rows_num,
                               cols_int,
                               cols_num,
@@ -502,12 +505,12 @@ namespace viennacl {
       if(detail::fft::is_radix2(cols_num))
       {
           output = input;
-          detail::fft::radix2(output.handle(), cols_num, cols_int, rows_num, sign, detail::fft::FFT_DATA_ORDER::ROW_MAJOR);
+          detail::fft::radix2(viennacl::traits::opencl_handle(output), cols_num, cols_int, rows_num, sign, detail::fft::FFT_DATA_ORDER::ROW_MAJOR);
       } 
       else
       {
-          detail::fft::direct(input.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(input),
+                              viennacl::traits::opencl_handle(output),
                               cols_num,
                               cols_int,
                               rows_num,
@@ -519,15 +522,15 @@ namespace viennacl {
       // batch with cols
       if(detail::fft::is_radix2(rows_num))
       {
-          detail::fft::radix2(output.handle(), rows_num, cols_int, cols_num, sign, detail::fft::FFT_DATA_ORDER::COL_MAJOR);
+          detail::fft::radix2(viennacl::traits::opencl_handle(output), rows_num, cols_int, cols_num, sign, detail::fft::FFT_DATA_ORDER::COL_MAJOR);
       } 
       else
       {
           viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> tmp(output.size1(), output.size2());
           tmp = output;
 
-          detail::fft::direct(tmp.handle(),
-                              output.handle(),
+          detail::fft::direct(viennacl::traits::opencl_handle(tmp),
+                              viennacl::traits::opencl_handle(output),
                               rows_num,
                               cols_int,
                               cols_num,

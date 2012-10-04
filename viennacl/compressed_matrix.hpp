@@ -54,7 +54,7 @@ namespace viennacl
     */
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const CPU_MATRIX & cpu_matrix,
-                     compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
+              compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
       //std::cout << "copy for (" << cpu_matrix.size1() << ", " << cpu_matrix.size2() << ", " << cpu_matrix.nnz() << ")" << std::endl;
       
@@ -216,14 +216,9 @@ namespace viennacl
         
         //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
         
-        cl_int err;
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle1().get(), CL_TRUE, 0, sizeof(cl_uint)*(gpu_matrix.size1() + 1), &(row_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle2().get(), CL_TRUE, 0, sizeof(cl_uint)*gpu_matrix.nnz(), &(col_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle().get(), CL_TRUE, 0, sizeof(SCALARTYPE)*gpu_matrix.nnz(), &(elements[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(cl_uint)   *(gpu_matrix.size1() + 1), &(row_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)   * gpu_matrix.nnz(),        &(col_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(),        &(elements[0]));
         
         //fill the cpu_matrix:
         std::size_t data_index = 0;
@@ -368,292 +363,237 @@ namespace viennacl
     template<class SCALARTYPE, unsigned int ALIGNMENT /* see VCLForwards.h */>
     class compressed_matrix
     {
-    public:
-      typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
-      
-      /** @brief Default construction of a compressed matrix. No memory is allocated */
-      compressed_matrix() : _rows(0), _cols(0), _nonzeros(0) { viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, ALIGNMENT>::init(); }
-      
-      /** @brief Construction of a compressed matrix with the supplied number of rows and columns. If the number of nonzeros is positive, memory is allocated
-      *
-      * @param rows     Number of rows
-      * @param cols     Number of columns
-      * @param nonzeros Optional number of nonzeros for memory preallocation
-      */
-      explicit compressed_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0) : 
-        _rows(rows), _cols(cols), _nonzeros(nonzeros)
-      {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, ALIGNMENT>::init();
+      public:
+        typedef viennacl::backend::mem_handle                                                              handle_type;
+        typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
         
-        if (rows > 0)
-          _row_buffer = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * rows);
-        if (nonzeros > 0)
-        {
-          _col_buffer = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * nonzeros);
-          _elements = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE) * nonzeros);
-        }
-      }
-      
-      explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements, 
-                                 std::size_t rows, std::size_t cols, std::size_t nonzeros) : 
-        _rows(rows), _cols(cols), _nonzeros(nonzeros)
-      {
-          _row_buffer = mem_row_buffer;
-          _row_buffer.inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
-          _col_buffer = mem_col_buffer;
-          _col_buffer.inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
-          _elements = mem_elements;
-          _elements.inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
-      }
-      
-      
-      /** @brief Sets the row, column and value arrays of the compressed matrix
-      *
-      * @param row_jumper     Pointer to an array holding the indices of the first element of each row (starting with zero). E.g. row_jumper[10] returns the index of the first entry of the 11th row. The array length is 'cols + 1'
-      * @param col_buffer     Pointer to an array holding the column index of each entry. The array length is 'nonzeros'
-      * @param elements       Pointer to an array holding the entries of the sparse matrix. The array length is 'elements'
-      * @param rows           Number of rows of the sparse matrix
-      * @param cols           Number of columns of the sparse matrix
-      * @param nonzeros       Number of nonzeros
-      */
-      void set(cl_uint * row_jumper, 
-               cl_uint * col_buffer,
-               SCALARTYPE * elements, 
-               std::size_t rows,
-               std::size_t cols,
-               std::size_t nonzeros)
-      {
-        assert(cols > 0);
-        assert(nonzeros > 0);
-        //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
-        _row_buffer = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * (rows + 1), row_jumper);
-        _col_buffer = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * nonzeros, col_buffer);
-        _elements = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE) * nonzeros, elements);
-        _nonzeros = nonzeros;
-        _rows = rows;
-        _cols = cols;
-      }
+        /** @brief Default construction of a compressed matrix. No memory is allocated */
+        compressed_matrix() : rows_(0), cols_(0), nonzeros_(0) { viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, ALIGNMENT>::init(); }
         
-      /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
-      void reserve(std::size_t new_nonzeros)
-      {
-        if (new_nonzeros > _nonzeros)
+        /** @brief Construction of a compressed matrix with the supplied number of rows and columns. If the number of nonzeros is positive, memory is allocated
+        *
+        * @param rows     Number of rows
+        * @param cols     Number of columns
+        * @param nonzeros Optional number of nonzeros for memory preallocation
+        */
+        explicit compressed_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0) : rows_(rows), cols_(cols), nonzeros_(nonzeros)
         {
-          viennacl::ocl::handle<cl_mem> _col_buffer_old = _col_buffer;
-          viennacl::ocl::handle<cl_mem> _elements_old = _elements;
-          _col_buffer = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * new_nonzeros);
-          _elements = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE) * new_nonzeros);
+          viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, ALIGNMENT>::init();
           
-          cl_int err;
-          err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), _col_buffer_old.get(), _col_buffer.get(), 0, 0, sizeof(cl_uint)*_nonzeros, 0, NULL, NULL);
-          VIENNACL_ERR_CHECK(err);
-          err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), _elements_old.get(), _elements.get(), 0, 0, sizeof(SCALARTYPE)*_nonzeros, 0, NULL, NULL);
-          VIENNACL_ERR_CHECK(err);
-
-          _nonzeros = new_nonzeros;
-        }
-      }
-
-      /** @brief Resize the matrix.
-      *
-      * @param new_size1    New number of rows
-      * @param new_size2    New number of columns
-      * @param preserve     If true, the old values are preserved. At present, old values are always discarded.
-      */
-      void resize(std::size_t new_size1, std::size_t new_size2, bool preserve = true)
-      {
-        assert(new_size1 > 0 && new_size2 > 0);
-        //std::cout << "Resizing from (" << _rows << ", " << _cols << ") to (" << new_size1 << ", " << new_size2 << ")" << std::endl;
-        
-        if (new_size1 != _rows || new_size2 != _cols)
-        {
-          std::vector<std::map<unsigned int, SCALARTYPE> > stl_sparse_matrix;
-          if (_rows > 0)
-            stl_sparse_matrix.resize(_rows);
-          
-          if (preserve && _rows > 0)
-            viennacl::copy(*this, stl_sparse_matrix);
-            
-          stl_sparse_matrix.resize(new_size1);
-          
-          //discard entries with column index larger than new_size2
-          if (new_size2 < _cols && _rows > 0)
+          if (rows > 0)
           {
-            for (size_t i=0; i<stl_sparse_matrix.size(); ++i)
-            {
-              std::list<unsigned int> to_delete;
-              for (typename std::map<unsigned int, SCALARTYPE>::iterator it = stl_sparse_matrix[i].begin();
-                   it != stl_sparse_matrix[i].end();
-                  ++it)
-              {
-                if (it->first >= new_size2)
-                  to_delete.push_back(it->first);
-              }
+            row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            viennacl::backend::memory_create(row_buffer_, sizeof(cl_uint) * (rows + 1));
+          }
+          if (nonzeros > 0)
+          {
+            col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            viennacl::backend::memory_create(col_buffer_, sizeof(cl_uint) * nonzeros);
+            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros);
+          }
+        }
+        
+        explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements, 
+                                  std::size_t rows, std::size_t cols, std::size_t nonzeros) : 
+          rows_(rows), cols_(cols), nonzeros_(nonzeros)
+        {
+            row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            row_buffer_.opencl_handle() = mem_row_buffer;
+            row_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+            
+            col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            col_buffer_.opencl_handle() = mem_col_buffer;
+            col_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+            
+            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            elements_ = mem_elements;
+            elements_.opencl_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+        }
+        
+        
+        /** @brief Sets the row, column and value arrays of the compressed matrix
+        *
+        * @param row_jumper     Pointer to an array holding the indices of the first element of each row (starting with zero). E.g. row_jumper[10] returns the index of the first entry of the 11th row. The array length is 'cols + 1'
+        * @param col_buffer     Pointer to an array holding the column index of each entry. The array length is 'nonzeros'
+        * @param elements       Pointer to an array holding the entries of the sparse matrix. The array length is 'elements'
+        * @param rows           Number of rows of the sparse matrix
+        * @param cols           Number of columns of the sparse matrix
+        * @param nonzeros       Number of nonzeros
+        */
+        void set(cl_uint * row_jumper, 
+                cl_uint * col_buffer,
+                SCALARTYPE * elements, 
+                std::size_t rows,
+                std::size_t cols,
+                std::size_t nonzeros)
+        {
+          assert( (rows > 0)     && "Error in compressed_matrix::set(): Number of rows must be larger than zero!");
+          assert( (cols > 0)     && "Error in compressed_matrix::set(): Number of columns must be larger than zero!");
+          assert( (nonzeros > 0) && "Error in compressed_matrix::set(): Number of nonzeros must be larger than zero!");
+          //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
+          
+          row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(row_buffer_, sizeof(cl_uint) * (rows + 1), row_jumper);
+
+          col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(col_buffer_, sizeof(cl_uint) * nonzeros, col_buffer);
+
+          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, elements);
+          
+          nonzeros_ = nonzeros;
+          rows_ = rows;
+          cols_ = cols;
+        }
+          
+        /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
+        void reserve(std::size_t new_nonzeros)
+        {
+          if (new_nonzeros > nonzeros_)
+          {
+            // TODO: Remove OpenCL code here
+            
+            viennacl::ocl::handle<cl_mem> col_buffer_old = col_buffer_.opencl_handle();
+            viennacl::ocl::handle<cl_mem> elements_old   = elements_.opencl_handle();
+            col_buffer_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * new_nonzeros);
+            elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE) * new_nonzeros);
+            
+            cl_int err;
+            err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), col_buffer_old.get(), col_buffer_.opencl_handle().get(), 0, 0, sizeof(cl_uint)*nonzeros_, 0, NULL, NULL);
+            VIENNACL_ERR_CHECK(err);
+            err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), elements_old.get(), elements_.opencl_handle().get(), 0, 0, sizeof(SCALARTYPE)*nonzeros_, 0, NULL, NULL);
+            VIENNACL_ERR_CHECK(err);
+
+            nonzeros_ = new_nonzeros;
+          }
+        }
+
+        /** @brief Resize the matrix.
+        *
+        * @param new_size1    New number of rows
+        * @param new_size2    New number of columns
+        * @param preserve     If true, the old values are preserved. At present, old values are always discarded.
+        */
+        void resize(std::size_t new_size1, std::size_t new_size2, bool preserve = true)
+        {
+          assert(new_size1 > 0 && new_size2 > 0);
+          //std::cout << "Resizing from (" << _rows << ", " << _cols << ") to (" << new_size1 << ", " << new_size2 << ")" << std::endl;
+          
+          if (new_size1 != rows_ || new_size2 != cols_)
+          {
+            std::vector<std::map<unsigned int, SCALARTYPE> > stl_sparse_matrix;
+            if (rows_ > 0)
+              stl_sparse_matrix.resize(rows_);
+            
+            if (preserve && rows_ > 0)
+              viennacl::copy(*this, stl_sparse_matrix);
               
-              for (std::list<unsigned int>::iterator it = to_delete.begin(); it != to_delete.end(); ++it)
-                stl_sparse_matrix[i].erase(*it);
+            stl_sparse_matrix.resize(new_size1);
+            
+            //discard entries with column index larger than new_size2
+            if (new_size2 < cols_ && rows_ > 0)
+            {
+              for (size_t i=0; i<stl_sparse_matrix.size(); ++i)
+              {
+                std::list<unsigned int> to_delete;
+                for (typename std::map<unsigned int, SCALARTYPE>::iterator it = stl_sparse_matrix[i].begin();
+                    it != stl_sparse_matrix[i].end();
+                    ++it)
+                {
+                  if (it->first >= new_size2)
+                    to_delete.push_back(it->first);
+                }
+                
+                for (std::list<unsigned int>::iterator it = to_delete.begin(); it != to_delete.end(); ++it)
+                  stl_sparse_matrix[i].erase(*it);
+              }
             }
+            
+            copy(stl_sparse_matrix, *this);
+            
+            rows_ = new_size1;
+            cols_ = new_size2;
+          }
+        }
+        
+        /** @brief Returns a reference to the (i,j)-th entry of the sparse matrix. If (i,j) does not exist (zero), it is inserted (slow!) */
+        entry_proxy<SCALARTYPE> operator()(std::size_t i, std::size_t j)
+        {
+          assert( (i < rows_) && (j < cols_) && "compressed_matrix access out of bounds!");
+          
+          std::size_t index = element_index(i, j);
+          
+          // check for element in sparsity pattern
+          if (index < nonzeros_)
+            return entry_proxy<SCALARTYPE>(index, elements_);
+
+          // Element not found. Copying required. Very slow, but direct entry manipulation is painful anyway...
+          std::vector< std::map<unsigned int, SCALARTYPE> > cpu_backup(rows_);
+          viennacl::copy(*this, cpu_backup);
+          cpu_backup[i][j] = 0.0;
+          viennacl::copy(cpu_backup, *this);
+          
+          index = element_index(i, j);
+          
+          assert(index < nonzeros_);
+          
+          return entry_proxy<SCALARTYPE>(index, elements_);
+        }
+
+        /** @brief  Returns the number of rows */
+        const std::size_t & size1() const { return rows_; }
+        /** @brief  Returns the number of columns */
+        const std::size_t & size2() const { return cols_; }
+        /** @brief  Returns the number of nonzero entries */
+        const std::size_t & nnz() const { return nonzeros_; }
+        
+        /** @brief  Returns the OpenCL handle to the row index array */
+        const handle_type & handle1() const { return row_buffer_; }
+        /** @brief  Returns the OpenCL handle to the column index array */
+        const handle_type & handle2() const { return col_buffer_; }
+        /** @brief  Returns the OpenCL handle to the matrix entry array */
+        const handle_type & handle() const { return elements_; }
+        
+      private:
+        
+        std::size_t element_index(std::size_t i, std::size_t j)
+        {
+          //read row indices
+          std::vector<cl_uint> row_indices(2);
+          viennacl::backend::memory_read(row_buffer_, sizeof(cl_uint)*i, sizeof(cl_uint)*2, &(row_indices[0]));
+
+          //get column indices for row i:
+          std::vector<cl_uint> col_indices(row_indices[1] - row_indices[0]);
+          viennacl::backend::memory_read(col_buffer_, sizeof(cl_uint)*row_indices[0], sizeof(cl_uint)*col_indices.size(), &(col_indices[0]));
+
+          //get entries for row i:
+          std::vector<SCALARTYPE> row_entries(row_indices[1] - row_indices[0]);
+          viennacl::backend::memory_read(elements_, sizeof(SCALARTYPE)*row_indices[0], sizeof(SCALARTYPE)*row_entries.size(), &(row_entries[0]));
+
+          for (std::size_t k=0; k<col_indices.size(); ++k)
+          {
+            if (col_indices[k] == j)
+              return row_indices[0] + k;
           }
           
-          copy(stl_sparse_matrix, *this);
-          
-          _rows = new_size1;
-          _cols = new_size2;
-        }
-      }
-      
-      /** @brief Returns a reference to the (i,j)-th entry of the sparse matrix. If (i,j) does not exist (zero), it is inserted (slow!) */
-      entry_proxy<SCALARTYPE> operator()(std::size_t i, std::size_t j)
-      {
-        assert( (i < _rows) && (j < _cols) && "compressed_matrix access out of bounds!");
-        
-        std::size_t index = element_index(i, j);
-        
-        // check for element in sparsity pattern
-        if (index < _nonzeros)
-          return entry_proxy<SCALARTYPE>(index, _elements);
-
-        // Element not found. Copying required. Very slow, but direct entry manipulation is painful anyway...
-        std::vector< std::map<unsigned int, SCALARTYPE> > cpu_backup(_rows);
-        viennacl::copy(*this, cpu_backup);
-        cpu_backup[i][j] = 0.0;
-        viennacl::copy(cpu_backup, *this);
-        
-        index = element_index(i, j);
-        
-        assert(index < _nonzeros);
-        
-        return entry_proxy<SCALARTYPE>(index, _elements);        
-      }
-      /*void operator()(std::size_t i, std::size_t j, SCALARTYPE new_entry)
-      {
-        //read row indices
-        std::vector<cl_uint> row_indices(2);
-        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                          _row_buffer.get(), //row handle
-                                          CL_TRUE, //blocking
-                                          sizeof(cl_uint)*i, //offset
-                                          sizeof(cl_uint)*2, //size
-                                          &(row_indices[0]), //destination
-                                          0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        //get column indices for row i:
-        std::vector<cl_uint> col_indices(row_indices[1] - row_indices[0]);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                  _col_buffer.get(), //col handle
-                                  CL_TRUE, //blocking
-                                  sizeof(cl_uint)*row_indices[0], //offset
-                                  sizeof(cl_uint)*col_indices.size(), //size
-                                  &(col_indices[0]), //destination
-                                  0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        //get entries for row i:
-        std::vector<SCALARTYPE> row_entries(row_indices[1] - row_indices[0]);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                  _elements.get(), //entry handle
-                                  CL_TRUE, //blocking
-                                  sizeof(SCALARTYPE)*row_indices[0], //offset
-                                  sizeof(SCALARTYPE)*row_entries.size(), //size
-                                  &(row_entries[0]), //destination
-                                  0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        
-        
-        // update entries:
-        for (std::size_t k=0; k<col_indices.size(); ++k)
-        {
-          if (col_indices[k] == j)
-            row_entries[k] = new_entry;
+          // if not found, return index past the end of the matrix (cf. matrix.end() in the spirit of the STL)
+          return nonzeros_;
         }
         
-        // write back:
-        err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(),
-                                   _elements.get(),
-                                   CL_TRUE,
-                                   sizeof(SCALARTYPE)*row_indices[0], //offset
-                                   sizeof(SCALARTYPE)*row_entries.size(), //size
-                                   &(row_entries[0]), //data ptr
-                                   0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-      }*/
-      
-
-      /** @brief  Returns the number of rows */
-      const std::size_t & size1() const { return _rows; }
-      /** @brief  Returns the number of columns */
-      const std::size_t & size2() const { return _cols; }
-      /** @brief  Returns the number of nonzero entries */
-      const std::size_t & nnz() const { return _nonzeros; }
-      
-      /** @brief  Returns the OpenCL handle to the row index array */
-      const viennacl::ocl::handle<cl_mem> & handle1() const { return _row_buffer; }
-      /** @brief  Returns the OpenCL handle to the column index array */
-      const viennacl::ocl::handle<cl_mem> & handle2() const { return _col_buffer; }
-      /** @brief  Returns the OpenCL handle to the matrix entry array */
-      const viennacl::ocl::handle<cl_mem> & handle() const { return _elements; }
-      
-    private:
-      
-      std::size_t element_index(std::size_t i, std::size_t j)
-      {
-        //read row indices
-        std::vector<cl_uint> row_indices(2);
-        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                          _row_buffer.get(), //row handle
-                                          CL_TRUE, //blocking
-                                          sizeof(cl_uint)*i, //offset
-                                          sizeof(cl_uint)*2, //size
-                                          &(row_indices[0]), //destination
-                                          0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        //get column indices for row i:
-        std::vector<cl_uint> col_indices(row_indices[1] - row_indices[0]);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                  _col_buffer.get(), //col handle
-                                  CL_TRUE, //blocking
-                                  sizeof(cl_uint)*row_indices[0], //offset
-                                  sizeof(cl_uint)*col_indices.size(), //size
-                                  &(col_indices[0]), //destination
-                                  0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        //get entries for row i:
-        std::vector<SCALARTYPE> row_entries(row_indices[1] - row_indices[0]);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                  _elements.get(), //entry handle
-                                  CL_TRUE, //blocking
-                                  sizeof(SCALARTYPE)*row_indices[0], //offset
-                                  sizeof(SCALARTYPE)*row_entries.size(), //size
-                                  &(row_entries[0]), //destination
-                                  0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-
-        for (std::size_t k=0; k<col_indices.size(); ++k)
-        {
-          if (col_indices[k] == j)
-            return row_indices[0] + k;
-        }
+        // /** @brief Copy constructor is by now not available. */
+        //compressed_matrix(compressed_matrix const &);
         
-        // if not found, return index past the end of the matrix (cf. matrix.end() in the spirit of the STL)
-        return _nonzeros;
-      }
-      
-      // /** @brief Copy constructor is by now not available. */
-      //compressed_matrix(compressed_matrix const &);
-      
-      /** @brief Assignment is by now not available. */
-      compressed_matrix & operator=(compressed_matrix const &);
-      
-      
-      std::size_t _rows;
-      std::size_t _cols;
-      std::size_t _nonzeros;
-      viennacl::ocl::handle<cl_mem> _row_buffer;
-      viennacl::ocl::handle<cl_mem> _col_buffer;
-      viennacl::ocl::handle<cl_mem> _elements;
+        /** @brief Assignment is by now not available. */
+        compressed_matrix & operator=(compressed_matrix const &);
+        
+        
+        std::size_t rows_;
+        std::size_t cols_;
+        std::size_t nonzeros_;
+        handle_type row_buffer_;
+        handle_type col_buffer_;
+        handle_type elements_;
     };
 
     

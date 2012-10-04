@@ -24,12 +24,13 @@
 
 
 #include "viennacl/forwards.h"
-#include "viennacl/ocl/backend.hpp"
+#include "viennacl/backend/memory.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/entry_proxy.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
+
 
 namespace viennacl
 {
@@ -104,8 +105,9 @@ namespace viennacl
       public:
         typedef scalar<SCALARTYPE>            value_type;
         typedef long                          difference_type;
+        typedef backend::mem_handle           handle_type;
         
-        const_vector_iterator() {};
+        //const_vector_iterator() {};
         
         /** @brief Constructor
         *   @param vec    The vector over which to iterate
@@ -124,7 +126,7 @@ namespace viennacl
         *   @param start     First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
         *   @param stride    Stride for the support of vector_slice
         */        
-        const_vector_iterator(viennacl::ocl::handle<cl_mem> const & elements,
+        const_vector_iterator(handle_type const & elements,
                               cl_uint index,
                               cl_uint start = 0,
                               vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {};
@@ -133,7 +135,7 @@ namespace viennacl
         value_type operator*(void) const 
         { 
            value_type result;
-           result = entry_proxy<SCALARTYPE>(start_ + index_ * stride_, elements_);
+           result = const_entry_proxy<SCALARTYPE>(start_ + index_ * stride_, elements_);
            return result;
         }
         self_type operator++(void) { index_ += stride_; return *this; }
@@ -158,11 +160,11 @@ namespace viennacl
         
         /** @brief Index increment in the underlying buffer when incrementing the iterator to the next element */
         std::size_t stride() const { return stride_; }
-        viennacl::ocl::handle<cl_mem> const & handle() const { return elements_; }
+        handle_type const & handle() const { return elements_; }
 
       protected:
         /** @brief  The index of the entry the iterator is currently pointing to */
-        viennacl::ocl::handle<cl_mem> elements_;
+        handle_type const & elements_;
         std::size_t index_;  //offset from the beginning of elements_
         std::size_t start_;
         vcl_ptrdiff_t stride_;
@@ -194,28 +196,40 @@ namespace viennacl
         typedef const_vector_iterator<SCALARTYPE, ALIGNMENT>  base_type;
         typedef vector_iterator<SCALARTYPE, ALIGNMENT>        self_type;
       public:
+        typedef typename base_type::handle_type               handle_type;
+        typedef typename base_type::difference_type           difference_type;
+        
         vector_iterator() : base_type(){};
-        vector_iterator(viennacl::ocl::handle<cl_mem> const & elements, std::size_t index)  : base_type(elements, index) {};
+        vector_iterator(handle_type & elements,
+                        std::size_t index,
+                        cl_uint start = 0,
+                        vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {};
         /** @brief Constructor
         *   @param vec    The vector over which to iterate
         *   @param index  The starting index of the iterator
         */        
-        vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec, cl_uint index) : base_type(vec, index) {};
-        vector_iterator(base_type const & b) : base_type(b) {};
+        vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec, cl_uint index) : base_type(vec, index), elements_(vec.handle()) {};
+        //vector_iterator(base_type const & b) : base_type(b) {};
 
         typename base_type::value_type operator*(void)  
         { 
            typename base_type::value_type result;
-           result = entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride_, base_type::elements_); 
+           result = entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride_, elements_); 
            return result;
         }
         
-        viennacl::ocl::handle<cl_mem> handle() { return base_type::elements_; }
+        difference_type operator-(self_type const & other) const { difference_type result = base_type::index_; return (result - static_cast<difference_type>(other.index_)); }
+        self_type operator+(difference_type diff) const { return self_type(elements_, base_type::index_ + diff * base_type::stride_, base_type::start_, base_type::stride_); }
+        
+        handle_type       & handle()       { return elements_; }
+        handle_type const & handle() const { return base_type::elements_; }
         
         operator base_type() const
         {
           return base_type(base_type::elements_, base_type::index_, base_type::start_, base_type::stride_);
         }
+      private:
+        handle_type & elements_;
     };
 
     // forward definition in forwards.h!
@@ -234,6 +248,7 @@ namespace viennacl
       
     public:
       typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      typedef backend::mem_handle                               handle_type;
       typedef vcl_size_t                                        size_type;
       typedef vcl_ptrdiff_t                                     difference_type;
       typedef const_vector_iterator<SCALARTYPE, ALIGNMENT>      const_iterator;
@@ -254,15 +269,16 @@ namespace viennacl
         viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::init(); 
         
         if (size_ > 0)
-          elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
+        {
+          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        }
         
         //force entries above size_ to zero:
         if (size_ < internal_size())
         {
           std::vector<SCALARTYPE> temp(internal_size() - size_);
-          cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), elements_.get(), CL_TRUE, sizeof(SCALARTYPE)*size_, sizeof(SCALARTYPE)*(internal_size() - size_), &(temp[0]), 0, NULL, NULL);
-          //assert(err == CL_SUCCESS);
-          VIENNACL_ERR_CHECK(err);
+          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE)*size_, sizeof(SCALARTYPE)*(internal_size() - size_), &(temp[0]));
         }
       }
 
@@ -274,15 +290,18 @@ namespace viennacl
       * @param existing_mem   An OpenCL handle representing the memory
       * @param vec_size       The size of the vector. 
       */
-      explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size),  elements_(existing_mem)
+      explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
       {
-        elements_.inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        elements_.opencl_handle() = existing_mem;
+        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
       }
       
       template <typename LHS, typename RHS, typename OP>
       vector(vector_expression<LHS, RHS, OP> const & other) : size_(other.size())
       {
-        elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*other.size());
+        elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*other.size());
         *this = other;
       }
       
@@ -296,11 +315,9 @@ namespace viennacl
         
         if (size() != 0)
         {
-          elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*internal_size());
-          cl_int err;
-          err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), vec.handle().get(), elements_.get(), 0, 0, sizeof(SCALARTYPE)*internal_size(), 0, NULL, NULL);
-          //assert(err == CL_SUCCESS);
-          VIENNACL_ERR_CHECK(err);
+          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
         }
       }
       
@@ -317,11 +334,14 @@ namespace viennacl
         assert(vec.size() == size() && "Incompatible vector sizes!");
         //resize(vec.size());
         if (size() != 0)
+          viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
+        else
         {
-          cl_int err;
-          err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), vec.handle().get(), elements_.get(), 0, 0, sizeof(SCALARTYPE)*internal_size(), 0, NULL, NULL);
-          VIENNACL_ERR_CHECK(err);
+          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
         }
+        
         return *this;
       }
 
@@ -331,7 +351,7 @@ namespace viennacl
       * @param proxy  An expression template proxy class.
       */
       template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
                                     self_type & >::type
       operator = (const vector_expression< const V1, const S1, OP> & proxy)
       {
@@ -350,8 +370,8 @@ namespace viennacl
       * @param proxy  An expression template proxy class.
       */
       template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator = (const vector_expression< const V1,
@@ -375,8 +395,8 @@ namespace viennacl
       template <typename V1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator = (const vector_expression< const V1,
@@ -403,8 +423,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator = (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -428,8 +448,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator = (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -464,103 +484,76 @@ namespace viennacl
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                const self_type,
-                                                op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type & 
+                                  >::type
+      operator=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
 
       /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a dense matrix.
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator+=(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                      const self_type,
-                                                      op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type & 
+                                  >::type
+      operator+=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
                                                 
       /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a dense matrix.
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator-=(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                          const self_type,
-                                                                          op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type & 
+                                  >::type
+      operator-=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
 
-      /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type operator+(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-
-      /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type operator-(const vector_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-
+      
       //transposed_matrix_proxy:
       /** @brief Operator overload for v1 = trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                              const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                              op_trans >,
-                                                     const self_type,
-                                                     op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type &
+                                  >::type
+      operator=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
+                                         const V1,
+                                         op_prod> & proxy);
 
       /** @brief Operator overload for v1 += trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator+=(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                               const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                               op_trans >,
-                                                      const self_type,
-                                                      op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type &
+                                  >::type
+      operator+=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
+                                          const V1,
+                                          op_prod> & proxy);
                                                 
       /** @brief Operator overload for v1 -= trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type & operator-=(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                               const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                               op_trans >,
-                                                      const self_type,
-                                                      op_prod> & proxy);
+      template <typename M1, typename V1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                    self_type &
+                                  >::type
+      operator-=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
+                                          const V1,
+                                          op_prod> & proxy);
 
-      /** @brief Operator overload for v1 + trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type operator+(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                            const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                            op_trans >,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-
-      /** @brief Operator overload for v1 - trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename F, unsigned int MAT_ALIGNMENT>
-      self_type operator-(const vector_expression< const matrix_expression< const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                            const matrix<SCALARTYPE, F, MAT_ALIGNMENT>,
-                                                                            op_trans >,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-                                                                       
                                                                        
       //                                                                 
       //////////// compressed_matrix<>
@@ -902,7 +895,8 @@ namespace viennacl
           
           if (new_internal_size != internal_size())
           {
-            elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE)*new_internal_size);
+            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size);
           }
           
           fast_copy(temp, *this);
@@ -933,10 +927,7 @@ namespace viennacl
       scalar<SCALARTYPE> operator()(size_type index) const
       {
         scalar<SCALARTYPE> tmp;
-        cl_int err;
-        err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), elements_, tmp.handle().get(), sizeof(SCALARTYPE)*index, 0, sizeof(SCALARTYPE), 0, NULL, NULL);
-        //assert(err == CL_SUCCESS);
-        VIENNACL_ERR_CHECK(err);
+        viennacl::backend::memory_copy(elements_, tmp.handle(), sizeof(SCALARTYPE)*index, 0, sizeof(SCALARTYPE));
         return tmp;
       }
       
@@ -951,7 +942,7 @@ namespace viennacl
       {
         //viennacl::linalg::inplace_sub(*this, vec);
         viennacl::linalg::avbv(*this, 
-                               *this, SCALARTYPE(1.0),  1, false, false,
+                               *this, SCALARTYPE(1.0), 1, false, false,
                                vec,   SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
@@ -959,7 +950,7 @@ namespace viennacl
       /** @brief Inplace addition of a vector
       */
       template <typename V1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value, 
                                     self_type &>::type
       operator += (const V1 & vec)
       {
@@ -972,7 +963,7 @@ namespace viennacl
       /** @brief Inplace addition of a scaled vector, i.e. v1 += v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
       */
       template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
                                     self_type &>::type
       operator += (const vector_expression< const V1,
                                             const S1,
@@ -991,8 +982,8 @@ namespace viennacl
       * @param proxy  An expression template proxy class.
       */
       template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator += (const vector_expression< const V1,
@@ -1016,8 +1007,8 @@ namespace viennacl
       template <typename V1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator += (const vector_expression< const V1,
@@ -1044,8 +1035,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator += (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -1069,8 +1060,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator += (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -1104,7 +1095,7 @@ namespace viennacl
       
       /** @brief Inplace subtraction of a vector */
       template <typename V1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value, 
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value, 
                                     self_type &>::type
       operator -= (const V1 & vec)
       {
@@ -1119,7 +1110,7 @@ namespace viennacl
       /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
       */
       template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
                                     self_type &>::type
       operator -= (const vector_expression< const V1,
                                             const S1,
@@ -1137,8 +1128,8 @@ namespace viennacl
       * @param proxy  An expression template proxy class.
       */
       template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator -= (const vector_expression< const V1,
@@ -1162,8 +1153,8 @@ namespace viennacl
       template <typename V1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator -= (const vector_expression< const V1,
@@ -1190,8 +1181,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator -= (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -1215,8 +1206,8 @@ namespace viennacl
       template <typename V1, typename S1, typename OP1,
                 typename V2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
       operator -= (const vector_expression< const vector_expression<const V1, const S1, OP1>,
@@ -1275,7 +1266,7 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Scales this vector by a CPU scalar value
+      /** @brief Scales this vector by a GPU scalar value
       */
       template <typename S1>
       typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
@@ -1296,7 +1287,7 @@ namespace viennacl
       /** @brief Returns an expression template object for adding up two vectors, i.e. v1 + v2
       */
       template <typename V1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
                                     vector_expression< const self_type, const V1, op_add>      
                                   >::type
       operator+(const V1 & vec) const
@@ -1309,7 +1300,7 @@ namespace viennacl
       /** @brief Returns an expression template object for adding up two vectors, one being scaled, i.e. v1 + v2 * alpha, where alpha is a CPU or a GPU scalar
       */
       template <typename V1, typename S1, typename OP1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
                                     vector_expression< const self_type,
                                                        const vector_expression< const V1, const S1, OP1>,
                                                        op_add>      
@@ -1331,7 +1322,7 @@ namespace viennacl
       /** @brief Returns an expression template object for subtracting two vectors, i.e. v1 - v2
       */
       template <typename V1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
                                     vector_expression< const self_type, const V1, op_sub>      
                                   >::type
       operator-(const V1 & vec) const
@@ -1345,7 +1336,7 @@ namespace viennacl
       /** @brief Returns an expression template object for subtracting two vectors, one being scaled, i.e. v1 - v2 * alpha, where alpha is a CPU or a GPU scalar
       */
       template <typename V1, typename S1, typename OP1>
-      typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
                                     vector_expression< const self_type,
                                                        const vector_expression< const V1, const S1, OP1>,
                                                        op_sub>      
@@ -1471,22 +1462,19 @@ namespace viennacl
       /** @brief Returns true is the size is zero */
       bool empty() { return size_ == 0; }
       
-      /** @brief Returns the OpenCL memory viennacl::ocl::handle. Typically used for launching compute viennacl::ocl::kernels */
-      const viennacl::ocl::handle<cl_mem> & handle() const { return elements_; }
+      /** @brief Returns the memory handle. */
+      const handle_type & handle() const { return elements_; }
 
+      /** @brief Returns the memory handle. */
+      handle_type & handle() { return elements_; }
+      
       /** @brief Resets all entries to zero. Does not change the size of the vector.
       */
       void clear()
       {
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::program_name(), "clear");
-        
-        viennacl::ocl::enqueue(k(elements_,
-                                 cl_uint(0),
-                                 cl_uint(1),  //increment
-                                 cl_uint(internal_size()))
-                              );
+        viennacl::linalg::vector_assign(*this, 0.0);
       }
-      //void swap(vector & other){}
+      int other();
       
 
       //TODO: Think about implementing the following public member functions
@@ -1494,8 +1482,8 @@ namespace viennacl
       //void erase_element(unsigned int i){}
       
     private:
-      cl_uint size_;
-      viennacl::ocl::handle<cl_mem> elements_;
+      size_type size_;
+      handle_type elements_;
     }; //vector
     
 
@@ -1518,12 +1506,7 @@ namespace viennacl
       if (gpu_end - gpu_begin != 0)
       {
         std::vector<SCALARTYPE> temp_buffer(gpu_end - gpu_begin);
-        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                         gpu_begin.handle().get(), CL_TRUE, 0, 
-                                         sizeof(SCALARTYPE)*(gpu_end - gpu_begin),
-                                         &(temp_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(gpu_end - gpu_begin), &(temp_buffer[0]));
         
         //now copy entries to cpu_vec:
         std::copy(temp_buffer.begin(), temp_buffer.end(), cpu_begin);
@@ -1542,9 +1525,9 @@ namespace viennacl
               CPU_ITERATOR cpu_begin )
 
     {
-      copy(const_vector_iterator<SCALARTYPE, ALIGNMENT>(gpu_begin),
-           const_vector_iterator<SCALARTYPE, ALIGNMENT>(gpu_end),
-           cpu_begin);
+      viennacl::copy(const_vector_iterator<SCALARTYPE, ALIGNMENT>(gpu_begin),
+                     const_vector_iterator<SCALARTYPE, ALIGNMENT>(gpu_end),
+                     cpu_begin);
     }
     
     /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
@@ -1577,14 +1560,7 @@ namespace viennacl
                    CPU_ITERATOR cpu_begin )
     {
       if (gpu_begin != gpu_end)
-      {
-        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                         gpu_begin.handle().get(), CL_TRUE, sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                         sizeof(SCALARTYPE)*(gpu_end - gpu_begin),
-                                         &(*cpu_begin), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        viennacl::ocl::get_queue().finish();
-      }
+        viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(gpu_end - gpu_begin), &(*cpu_begin));
     }
 
     /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
@@ -1640,22 +1616,11 @@ namespace viennacl
         //we require that the size of the gpu_vector is larger or equal to the cpu-size
         std::vector<SCALARTYPE> temp_buffer(cpu_end - cpu_begin);
         std::copy(cpu_begin, cpu_end, temp_buffer.begin());
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(),
-                                          gpu_begin.handle().get(), CL_TRUE, sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                          sizeof(SCALARTYPE)*(cpu_end - cpu_begin),
-                                          &(temp_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
+        viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(cpu_end - cpu_begin), &(temp_buffer[0]));
       }
     }
 
     // for things like copy(std_vec.begin(), std_vec.end(), vcl_vec.begin() + 1);
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
-    void copy(CPU_ITERATOR const & cpu_begin,
-              CPU_ITERATOR const & cpu_end,
-              const_vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
-    {
-      copy(cpu_begin, cpu_end, vector_iterator<SCALARTYPE, ALIGNMENT>(gpu_begin));
-    }
 
     /** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
     *
@@ -1685,13 +1650,7 @@ namespace viennacl
                    vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
     {
       if (cpu_begin != cpu_end)
-      {
-        //we require that the size of the gpu_vector is larger or equal to the cpu-size
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(), 
-                                          gpu_begin.handle().get(), CL_TRUE, sizeof(SCALARTYPE) * gpu_begin.offset(), 
-                                          sizeof(SCALARTYPE)*(cpu_end - cpu_begin), &(*cpu_begin), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-      }
+        viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(cpu_end - cpu_begin), &(*cpu_begin));
     }
 
 
@@ -1752,17 +1711,10 @@ namespace viennacl
         exit(EXIT_FAILURE);
       }      
       else if (gpu_src_begin != gpu_src_end)
-      {
-        cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
-                                          gpu_src_begin.handle().get(),  //src handle
-                                          gpu_dest_begin.handle().get(), //dest handle
-                                          sizeof(SCALARTYPE) * gpu_src_begin.offset(), //src offset
-                                          sizeof(SCALARTYPE) * gpu_dest_begin.offset(), //dest offset
-                                          sizeof(SCALARTYPE) * (gpu_src_end.offset() - gpu_src_begin.offset()), //data length
-                                          0, //no events
-                                          NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-      }
+        viennacl::backend::memory_copy(gpu_src_begin.handle(), gpu_dest_begin.handle(),
+                                       sizeof(SCALARTYPE) * gpu_src_begin.offset(),
+                                       sizeof(SCALARTYPE) * gpu_dest_begin.offset(),
+                                       sizeof(SCALARTYPE) * (gpu_src_end.offset() - gpu_src_begin.offset()));
     }
 
     /** @brief Copy (parts of a) GPU vector to another GPU vector
@@ -1772,11 +1724,13 @@ namespace viennacl
     * @param gpu_dest_begin  Output iterator for the gpu vector. The gpu vector must be at least as long as the cpu vector!
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
-    void copy(const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_begin,
-              const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
-              const_vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin)
+    void copy(vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_begin,
+              vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
+              vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin)
     {
-      copy(gpu_src_begin, gpu_src_end, vector_iterator<SCALARTYPE, ALIGNMENT_DEST>(gpu_dest_begin));
+      viennacl::copy(static_cast<const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> >(gpu_src_begin),
+                     static_cast<const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> >(gpu_src_end),
+                     gpu_dest_begin);
     }
 
     /** @brief Transfer from a ViennaCL vector to another ViennaCL vector. Convenience wrapper for viennacl::linalg::copy(gpu_src_vec.begin(), gpu_src_vec.end(), gpu_dest_vec.begin());
@@ -1806,7 +1760,7 @@ namespace viennacl
     {
       viennacl::ocl::get_queue().finish();
       std::vector<SCALARTYPE> tmp(val.size());
-      copy(val.begin(), val.end(), tmp.begin());
+      viennacl::copy(val.begin(), val.end(), tmp.begin());
       std::cout << "[" << val.size() << "](";
       for (typename std::vector<SCALARTYPE>::size_type i=0; i<val.size(); ++i)
       {
@@ -1823,24 +1777,13 @@ namespace viennacl
     * @param vec1   The first vector
     * @param vec2   The second vector
     */
-    template<class SCALARTYPE, unsigned int ALIGNMENT>
-    void swap(viennacl::vector<SCALARTYPE, ALIGNMENT> & vec1,
-              viennacl::vector<SCALARTYPE, ALIGNMENT> & vec2)
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                >::type
+    swap(V1 & vec1, V2 & vec2)
     {
-      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2)
-             && "Incompatible vector sizes in swap()");
-
-      viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::program_name(), "swap");
-
-      viennacl::ocl::enqueue(k(viennacl::traits::handle(vec1),
-                               cl_uint(viennacl::traits::start(vec1)),
-                               cl_uint(viennacl::traits::stride(vec1)),
-                               cl_uint(viennacl::traits::size(vec1)),
-                               viennacl::traits::handle(vec2),
-                               cl_uint(viennacl::traits::start(vec2)),
-                               cl_uint(viennacl::traits::stride(vec2)),
-                               cl_uint(viennacl::traits::size(vec2)))
-                            );
+      viennacl::linalg::vector_swap(vec1, vec2);
     }
     
     /** @brief Swaps the content of two vectors by swapping OpenCL handles only, NO data is copied
@@ -1926,7 +1869,7 @@ namespace viennacl
     * @param vec     Right hand side vector (also -range and -slice is allowed)
     */
     template <typename LHS, typename RHS, typename OP, typename V1>
-    typename viennacl::enable_if< viennacl::is_vector<V1>::value,
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
                                   viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> 
                                 >::type
     operator + (vector_expression<LHS, RHS, OP> const & proxy,
@@ -1946,8 +1889,8 @@ namespace viennacl
     */
     template <typename V1, typename S1, typename OP1,
               typename V2>
-    typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value
-                                  && viennacl::is_vector<V2>::value,
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
                                   vector_expression<const vector_expression<const V1, const S1, OP1>,
                                                     const V2,
                                                     op_add>
@@ -1967,8 +1910,8 @@ namespace viennacl
     */
     template <typename V1, typename S1, typename OP1,
               typename V2, typename S2, typename OP2>
-    typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value
-                                  && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
                                   vector_expression<const vector_expression<const V1, const S1, OP1>,
                                                     const vector_expression<const V2, const S2, OP2>,
                                                     op_add>
@@ -1991,7 +1934,7 @@ namespace viennacl
     * @param vec     Right hand side vector (also -range and -slice is allowed)
     */
     template <typename LHS, typename RHS, typename OP, typename V1>
-    typename viennacl::enable_if< viennacl::is_vector<V1>::value,
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
                                   viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> 
                                 >::type
     operator - (vector_expression< LHS, RHS, OP> const & proxy,
@@ -2011,8 +1954,8 @@ namespace viennacl
     */
     template <typename V1, typename S1, typename OP1,
               typename V2>
-    typename viennacl::enable_if< viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value
-                                  && viennacl::is_vector<V2>::value,
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
                                   vector_expression<const vector_expression<const V1, const S1, OP1>,
                                                     const V2,
                                                     op_sub>
@@ -2032,8 +1975,8 @@ namespace viennacl
     */
     template <typename V1, typename S1, typename OP1,
               typename V2, typename S2, typename OP2>
-    typename viennacl::enable_if<    viennacl::is_vector<V1>::value && viennacl::is_any_scalar<S1>::value
-                                  && viennacl::is_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
                                   vector_expression<const vector_expression<const V1, const S1, OP1>,
                                                     const vector_expression<const V2, const S2, OP2>,
                                                     op_sub>
@@ -2102,7 +2045,7 @@ namespace viennacl
     */
     template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
     viennacl::vector<SCALARTYPE> operator * (SCALARTYPE val,
-                                   viennacl::vector_expression< LHS, RHS, OP> const & proxy)
+                                             viennacl::vector_expression< LHS, RHS, OP> const & proxy)
     {
       viennacl::vector<SCALARTYPE> result(proxy.size());
       result = proxy;

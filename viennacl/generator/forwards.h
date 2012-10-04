@@ -31,6 +31,9 @@ namespace viennacl
   namespace generator
   {
 
+    template<class T>
+    class operation_repeater;
+
     template<class LHS, class OP_TYPE, class RHS>
     class compound_node;
 
