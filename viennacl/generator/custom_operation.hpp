@@ -32,7 +32,7 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/generator/result_of.hpp"
 #include "viennacl/generator/meta_tools/utils.hpp"
-
+#include "viennacl/generator/tweaking.hpp"
 
 namespace viennacl
 {
@@ -48,6 +48,9 @@ namespace viennacl
     struct is_double_type<NullType>{
         enum { value = 0 };
     };
+
+
+
 
     /** @brief A class for making a custom operation */
     class custom_operation
@@ -88,18 +91,20 @@ namespace viennacl
         {
 
             typedef typename typelist_utils::make_typelist<T0>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
         template<class T0,class T1>
         custom_operation ( T0 const & , T1 const & , std::string const & operation_name) : program_name_(operation_name){
             typedef typename typelist_utils::make_typelist<T0,T1>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
@@ -107,9 +112,10 @@ namespace viennacl
         custom_operation ( T0 const &, T1 const &, T2 const &, std::string const & operation_name) : program_name_(operation_name)
         {
             typedef typename typelist_utils::make_typelist<T0,T1,T2>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
@@ -117,9 +123,10 @@ namespace viennacl
         custom_operation ( T0 const &, T1 const &, T2 const &, T3 const &, std::string const & operation_name ) : program_name_(operation_name)
         {
             typedef typename typelist_utils::make_typelist<T0,T1,T2,T3>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
@@ -127,9 +134,10 @@ namespace viennacl
         custom_operation ( T0 const & , T1 const &, T2 const &, T3 const & , T4 const &, std::string const & operation_name ) : program_name_(operation_name)
         {
             typedef typename typelist_utils::make_typelist<T0,T1,T2,T3,T4>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
@@ -137,9 +145,10 @@ namespace viennacl
         custom_operation ( T0 const & expr0, T1 const & expr1, T2 const & expr2, T3 const & exp3, T4 const &, T5 const &, std::string const & operation_name ) : program_name_(operation_name)
         {
             typedef typename typelist_utils::make_typelist<T0,T1,T2,T3,T4,T5>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
             create_program (has_double);
         }
 
@@ -147,10 +156,12 @@ namespace viennacl
         custom_operation ( T0 const &, T1 const & , T2 const &, T3 const &, T4 const &, T5 const &, T6 const &, std::string const & operation_name ) : program_name_(operation_name)
         {
             typedef typename typelist_utils::make_typelist<T0,T1,T2,T3,T4,T5,T6>::Result Expressions;
-            typelist_utils::ForEach<Expressions,CHECK_OPERATIONS_STRUCTURE>::execute();
+            typedef typename get_operations_from_expressions<Expressions>::Result Operations;
+            typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
-            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Expressions,is_double_type>::value);
-            create_program (has_double);        }
+            bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,is_double_type>::value);
+            create_program (has_double);
+        }
 
         /** @brief DTor */
         ~custom_operation()

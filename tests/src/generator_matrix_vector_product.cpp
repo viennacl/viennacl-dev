@@ -1,4 +1,3 @@
-// #define VIENNACL_DEBUG_CUSTOM_OPERATION
 
 //
 
@@ -18,7 +17,7 @@
 // #define VIENNACL_DEBUG_ALL
 // #define VIENNACL_HAVE_UBLAS 1
 // #define VIENNACL_DEBUG_CUSTOM_OPERATION
-// #define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"

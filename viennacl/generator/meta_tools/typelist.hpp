@@ -26,6 +26,12 @@
 
 #include "viennacl/generator/meta_tools/utils.hpp"
 
+#define VIENNACL_TYPELIST1( type1 ) viennacl::generator::typelist<type1, NullType>
+#define VIENNACL_TYPELIST2( type1, type2) viennacl::generator::typelist<type1, VIENNACL_TYPELIST1(type2) >
+#define VIENNACL_TYPELIST3( type1, type2, type3) viennacl::generator::typelist<type1, VIENNACL_TYPELIST2(type2,type3) >
+#define VIENNACL_TYPELIST4( type1, type2, type3, type4) viennacl::generator::typelist<type1, VIENNACL_TYPELIST3(type2,type3,type4) >
+#define VIENNACL_TYPELIST5( type1, type2, type3, type4, type5) viennacl::generator::typelist<type1, VIENNACL_TYPELIST4(type2,type3,type4,type5) >
+
 namespace viennacl 
 {
   namespace generator

@@ -41,6 +41,8 @@ namespace viennacl
 namespace generator
 {
 
+
+
 typedef std::multimap<std::string, std::pair<unsigned int, boost::shared_ptr<result_of::runtime_wrapper> > > runtime_wrappers_t;
 
 template<class T>
@@ -119,9 +121,11 @@ struct program_infos
     template<class Operations>
     struct fill_args
     {
-        typedef typename tree_utils::extract_if<Operations,is_kernel_argument>::Result IntermediateType;
-        typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
+    private:
+            typedef typename tree_utils::extract_if<typename unroll_repeaters<Operations>::Result,is_kernel_argument>::Result IntermediateType;
+            typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
+    public:
         template<class U>
         struct functor{
         private:
@@ -157,7 +161,7 @@ struct program_infos
     struct fill_sources
     {
     private:
-            typedef typename tree_utils::extract_if<Operations,is_kernel_argument>::Result IntermediateType;
+            typedef typename tree_utils::extract_if<typename unroll_repeaters<Operations>::Result,is_kernel_argument>::Result IntermediateType;
             typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
     public:
