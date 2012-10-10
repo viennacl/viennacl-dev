@@ -48,35 +48,24 @@ namespace viennacl
     template<class Head, class Tail>
     struct get_operations_from_expressions<typelist<Head,Tail> >{
         typedef typelist<Head, typename get_operations_from_expressions<Tail>::Result> Result;
+        typedef typelist<Head, typename get_operations_from_expressions<Tail>::Unrolled> Unrolled;
     };
 
     template<class Bound, class Operations, class Tail>
     struct get_operations_from_expressions<typelist< repeater_impl<Bound,Operations>,Tail> >{
-        typedef typename typelist_utils::fuse<typename get_operations_from_expressions<Operations>::Result, typename get_operations_from_expressions<Tail>::Result>::Result Result;
+        typedef typename typelist_utils::fuse<
+                                            typename get_operations_from_expressions<Operations>::Result
+                                          , typename get_operations_from_expressions<Tail>::Result>::Result Result;
+        typedef typename typelist_utils::fuse<
+                                            typename typelist_utils::append<typename get_operations_from_expressions<Operations>::Unrolled
+                                                                            ,Bound>::Result
+                                          , typename get_operations_from_expressions<Tail>::Unrolled>::Result Unrolled;
     };
 
     template<>
     struct get_operations_from_expressions<NullType>{
         typedef NullType Result;
-    };
-
-    template<class T>
-    struct unroll_repeaters;
-
-    template<class Head, class Tail>
-    struct unroll_repeaters<typelist<Head,Tail> >{
-        typedef typelist<Head, typename unroll_repeaters<Tail>::Result> Result;
-    };
-
-    template<class Bound, class Operations, class Tail>
-    struct unroll_repeaters<typelist< repeater_impl<Bound,Operations>,Tail> >{
-        typedef typename typelist_utils::fuse<typename get_operations_from_expressions<Operations>::Result, typename unroll_repeaters<Tail>::Result>::Result ResultTmp;
-        typedef typename typelist_utils::append<ResultTmp,Bound>::Result Result;
-    };
-
-    template<>
-    struct unroll_repeaters<NullType>{
-        typedef NullType Result;
+        typedef NullType Unrolled;
     };
 
 

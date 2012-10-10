@@ -97,7 +97,7 @@ public:
 private:
     typedef typename tree_utils::extract_if<Head,is_inner_product_leaf>::Result InProds;
     typedef typename add_to_res<typename typelist_utils::ForEachType<InProds,transform_inner_prod>::Result,Res,CurrentIndex - 1>::Result TmpNewRes;
-    static const bool inc = tree_utils::count_if<typename get_head<Tail>::Result, is_inner_product_leaf>::value
+    static const bool inc = tree_utils::count_if<typename get_head<Tail>::Result, or_is<is_product_leaf,is_inner_product_leaf>::Pred >::value
                             + tree_utils::count_if<Head,is_product_leaf>::value;
 public:
     typedef typename add_to_res<typelist<Head,NullType>,TmpNewRes,CurrentIndex>::Result NewRes;
@@ -122,7 +122,7 @@ struct program_infos
     struct fill_args
     {
     private:
-            typedef typename tree_utils::extract_if<typename unroll_repeaters<Operations>::Result,is_kernel_argument>::Result IntermediateType;
+            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,is_kernel_argument>::Result IntermediateType;
             typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
     public:
@@ -138,6 +138,7 @@ struct program_infos
                                                                                       ExpressionType::runtime_descriptor())
                                                                        )
                                         );
+                runtime_wrappers.size();
                 arg_pos += ExpressionType::n_args();
             }
         };
@@ -145,7 +146,8 @@ struct program_infos
         static void execute(runtime_wrappers_t & runtime_wrappers,std::string const & operation_name)
         {
             unsigned int arg_pos = 0;
-            std::string current_kernel_name("__" + operation_name + "_k" + to_string(typelist_utils::index_of<KernelsList,Operations>::value));
+            unsigned int n = typelist_utils::index_of<KernelsList,Operations>::value;
+            std::string current_kernel_name("__" + operation_name + "_k" + to_string(n));
             typelist_utils::ForEach<Arguments,functor>::execute(arg_pos,runtime_wrappers,current_kernel_name);
             if(tree_utils::count_if<Operations,is_inner_product_leaf>::value || tree_utils::count_if<Operations,is_product_leaf>::value){
                 runtime_wrappers.insert(runtime_wrappers_t::value_type(current_kernel_name,
@@ -161,7 +163,7 @@ struct program_infos
     struct fill_sources
     {
     private:
-            typedef typename tree_utils::extract_if<typename unroll_repeaters<Operations>::Result,is_kernel_argument>::Result IntermediateType;
+            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,is_kernel_argument>::Result IntermediateType;
             typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
     public:
@@ -199,7 +201,8 @@ struct program_infos
 
         static void execute(std::map<std::string,std::string> & sources,std::string const & operation_name)
         {
-            std::string current_kernel_name("__" + operation_name + "_k" + to_string(typelist_utils::index_of<KernelsList,Operations>::value));
+            unsigned int n = typelist_utils::index_of<KernelsList,Operations>::value;
+            std::string current_kernel_name("__" + operation_name + "_k" + to_string(n));
             sources.insert(std::make_pair(current_kernel_name,
                                           header_code<Operations>::value(current_kernel_name)
                                           +body_code<Operations>::value()));
