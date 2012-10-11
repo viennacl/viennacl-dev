@@ -28,6 +28,8 @@
 #include "viennacl/generator/result_of.hpp"
 #include "viennacl/generator/meta_tools/utils.hpp"
 
+#include "viennacl/generator/tweaking.hpp"
+
 namespace viennacl
 {
   namespace generator
@@ -588,6 +590,12 @@ namespace viennacl
 
     template<class LHS, class RHS>
     struct is_kernel_argument<compound_node<LHS,inner_prod_type,RHS> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class Bound, class Expr>
+    struct is_kernel_argument< repeater_impl<Bound, Expr> >
     {
         enum { value = 1 };
     };

@@ -223,15 +223,15 @@ struct is_assignment{
         are_same_type<OP,inplace_scal_div_type>::value};
 };
 
-template<class T, template<class> class Pred>
+template<class T>
 struct is_assignment_compound{
     enum { value = 0 };
 };
 
-template<class LHS, class OP, class RHS,  template<class> class Pred>
-struct is_assignment_compound<compound_node<LHS,OP,RHS>,Pred >
+template<class LHS, class OP, class RHS>
+struct is_assignment_compound<compound_node<LHS,OP,RHS> >
 {
-    enum { value = Pred<LHS>::value && is_assignment<OP>::value };
+    enum { value = is_assignment<OP>::value };
 };
 
 template<class OP>

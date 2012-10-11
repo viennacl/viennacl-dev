@@ -108,7 +108,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
         retval = EXIT_FAILURE;
     }
 
-    std::cout << "testing scalar over inner product..." << std::endl;
+    std::cout << "testing scalar / inner product..." << std::endl;
     res = 4/ublas::inner_prod ( vec, vec );
     viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ),"scal_over_inner_prod" ) ( vcl_res, vcl_vec, 4.0f ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
@@ -117,7 +117,7 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
         retval = EXIT_FAILURE;
     }
 
-    std::cout << "testing inner_prod minus ( scal minus inner_prod ) " << std::endl;
+    std::cout << "testing inner_prod - ( scal - inner_prod ) " << std::endl;
     res = ublas::inner_prod ( vec, vec2 ) - ( 5.0f - inner_prod ( vec,vec2 ) );
     viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) - ( symscal - inner_prod ( symv,symv2 ) ), "inner_prod_minus_scal_minus_inprod" ) ( vcl_res, vcl_vec, vcl_vec2, 5.0f ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
@@ -125,15 +125,6 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
-
-//    std::cout << "testing nested inner product" << std::endl;
-//    res = ublas::inner_prod ( vec, ublas::inner_prod ( vec,vec2 ) * vec2 );
-//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, inner_prod ( symv,symv2 ) * symv2 ) ) ( vcl_res, vcl_vec, vcl_vec2 ) );
-//    if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
-//        std::cout << "# Error at operation: nested inner product"  << std::endl;
-//        std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
-//        retval = EXIT_FAILURE;
-//    }
 
     return retval;
 }
