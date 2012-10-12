@@ -108,7 +108,7 @@ namespace viennacl
       }
 
       template<typename RHS_TYPE>
-      typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+      typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                          compound_node<self_type, assign_type, RHS_TYPE > >::type
       operator= ( RHS_TYPE const & rhs ) const
       {
@@ -116,7 +116,7 @@ namespace viennacl
       }
 
       template<typename RHS_TYPE>
-      typename enable_if<is_scalar_expression<RHS_TYPE>,
+      typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
                          compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
       operator*= ( RHS_TYPE const & rhs ) const
       {
@@ -124,7 +124,7 @@ namespace viennacl
       }
 
       template<typename RHS_TYPE>
-      typename enable_if<is_scalar_expression<RHS_TYPE>,
+      typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
                          compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
       operator/= ( RHS_TYPE const & rhs ) const
       {
@@ -132,7 +132,7 @@ namespace viennacl
       }
 
       template<typename RHS_TYPE>
-      typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+      typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                          compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
       operator+= ( RHS_TYPE const & rhs ) const
       {
@@ -140,7 +140,7 @@ namespace viennacl
       }
 
       template<typename RHS_TYPE>
-      typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+      typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                          compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
       operator-= ( RHS_TYPE const & rhs ) const
       {
@@ -215,7 +215,7 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, assign_type, RHS_TYPE > >::type
         operator= ( RHS_TYPE const & rhs ) const
         {
@@ -223,7 +223,7 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<is_scalar_expression<RHS_TYPE>,
+        typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
                            compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
         operator*= ( RHS_TYPE const & rhs ) const
         {
@@ -231,7 +231,7 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<is_scalar_expression<RHS_TYPE>,
+        typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
                            compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
         operator/= ( RHS_TYPE const & rhs ) const
         {
@@ -239,7 +239,7 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
         operator+= ( RHS_TYPE const & rhs ) const
         {
@@ -247,7 +247,7 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
         operator-= ( RHS_TYPE const & rhs ) const
         {
@@ -349,35 +349,35 @@ namespace viennacl
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<generator::is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, assign_type, RHS_TYPE > >::type
         operator= ( RHS_TYPE const & rhs ) const {
           return compound_node<self_type,assign_type,RHS_TYPE >();
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<generator::is_scalar_expression<RHS_TYPE>,
+        typename enable_if<generator::result_of::is_scalar_expression<RHS_TYPE>,
                            compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
         operator*= ( RHS_TYPE const & rhs ) const {
           return compound_node<self_type,inplace_scal_mul_type,RHS_TYPE >();
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<generator::is_scalar_expression<RHS_TYPE>,
+        typename enable_if<generator::result_of::is_scalar_expression<RHS_TYPE>,
                            compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
         operator/= ( RHS_TYPE const & rhs ) const {
           return compound_node<self_type,inplace_scal_div_type,RHS_TYPE >();
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<generator::is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
         operator+= ( RHS_TYPE const & rhs ) const {
           return compound_node<self_type,inplace_add_type,RHS_TYPE >();
         }
 
         template<typename RHS_TYPE>
-        typename enable_if<generator::is_same_expression_type<self_type,RHS_TYPE>,
+        typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
                            compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
         operator-= ( RHS_TYPE const & rhs ) const {
           return compound_node<self_type,inplace_sub_type,RHS_TYPE >();
@@ -484,6 +484,10 @@ namespace viennacl
     /*
      * Traits
      */
+
+namespace result_of
+{
+
 
     template<class T>
     struct is_symbolic_vector
@@ -628,7 +632,7 @@ namespace viennacl
     template <class LHS,class RHS>
     struct is_product_leaf<compound_node<LHS,scal_mul_type,RHS> >
     {
-      enum { value = is_product_leaf<RHS>::value || is_product_leaf<LHS>::value };
+      enum { value = result_of::is_product_leaf<RHS>::value || result_of::is_product_leaf<LHS>::value };
     };
 
     template <class T>
@@ -665,6 +669,8 @@ namespace viennacl
     {
         enum { value = 1 };
     };
+
+}
 
   } // namespace generator
 } // namespace viennacl

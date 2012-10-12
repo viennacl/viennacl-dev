@@ -37,11 +37,16 @@ namespace viennacl
       * Count if
       */
 
+      /** @brief Functor for counting the number of elements satisfying a Pred
+          @tparam T Tree to scan
+          @tparam Pred Pred to be satisfied
+      */
       template <class T, template<class> class Pred>
       struct count_if 
       {
         enum { value = Pred<T>::value };
       };
+
 
       template<class Head, class Tail, template<class> class Pred>
       struct count_if<typelist<Head,Tail>,Pred>
@@ -80,6 +85,11 @@ namespace viennacl
       * Count if type
       */
 
+
+      /** @brief Functor for counting the number of elements equals to the type specified
+          @tparam T Tree to scan
+          @tparam Searched Type searched for
+      */
       template<class T, class Searched>
       struct count_if_type 
       {
@@ -135,6 +145,8 @@ namespace viennacl
       * Expand
       */
 
+
+      /** @brief Expand a node on the right */
       template <class LHS, class OP, class RHS_LHS, class RHS_OP, class RHS_RHS>
       struct expand_right 
       {
@@ -143,6 +155,7 @@ namespace viennacl
                                  compound_node<LHS, OP, RHS_RHS> >   Result;
       };
 
+      /** @brief Expand a node on the left */
       template <class LHS_LHS, class LHS_OP, class LHS_RHS, class OP, class RHS>
       struct expand_left 
       {
@@ -151,6 +164,9 @@ namespace viennacl
                                  compound_node<LHS_RHS, OP, RHS> >        Result;
       };
 
+      /** @brief Expands the particular tree
+          @tparam T Input tree
+      */
       template <class T>
       struct expand 
       {
@@ -218,81 +234,18 @@ namespace viennacl
       #undef make_left_expandable
       #undef make_right_expandable
 
-//      ////////////////////////////
-//      // REGISTER TEMPORARIES  //
-//      ///////////////////////////
-
-//      template <class T>
-//      struct make_temporary;
-      
-//      template <unsigned int ID, class SCALARTYPE, unsigned int ALIGNMENT>
-//      struct make_temporary<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> >
-//      {
-//        typedef tmp_symbolic_vector< symbolic_vector<ID,SCALARTYPE,ALIGNMENT> > Result;
-//      };
-
-//      template <unsigned int ID,typename SCALARTYPE, class F, unsigned int ALIGNMENT>
-//      struct make_temporary<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > {
-//        typedef tmp_symbolic_matrix< symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> > Result;
-//      };
-
-//      template <class T, bool only_first_order, class Assigned = void, bool is_nested = false>
-//      struct register_temporaries
-//      {
-//        typedef T Result;
-//      };
-
-//      template <class Head, class Tail,bool only_first_order, class Assigned, bool is_nested>
-//      struct register_temporaries<typelist<Head, Tail>,only_first_order,Assigned,is_nested>{
-//      private:
-//	typedef typename register_temporaries<Tail,only_first_order,Assigned,is_nested>::Result TailResult;
-//	typedef typename register_temporaries<Head,only_first_order,Assigned,is_nested>::Result HeadResult;
-//      public:
-//	typedef typelist<HeadResult,TailResult> Result;
-//      };
-      
-//      template<bool only_first_order, class Assigned, bool is_nested>
-//      struct register_temporaries<NullType,only_first_order,Assigned,is_nested>{
-//	typedef NullType Result;
-//      };
-      
-//      template <class T, bool only_first_order>
-//      struct register_temporaries<T, only_first_order, T, true>
-//      {
-//        typedef T     Result;
-//      };
-
-//      template <class T, std::string (*U)(), bool only_first_order, class Assigned, bool is_nested>
-//      struct register_temporaries<elementwise_modifier_impl<T,U>, only_first_order, Assigned, is_nested>
-//      {
-//        private:
-//          typedef typename register_temporaries<T, only_first_order, Assigned, is_nested>::Result   SUB_Result;
-//        public:
-//          typedef elementwise_modifier_impl<SUB_Result,U>     Result;
-//      };
-
-
-//      template <class LHS, class OP, class RHS, bool only_first_order, class Assigned, bool is_nested>
-//      struct register_temporaries<compound_node<LHS,OP,RHS>, only_first_order, Assigned, is_nested>
-//      {
-//        private:
-//          typedef compound_node<LHS,OP,RHS> T;
-//          static const bool is_non_trivial =  is_product_leaf<T>::value ||is_inner_product_leaf<T>::value;
-//          typedef typename register_temporaries<LHS, only_first_order,Assigned, is_nested || is_non_trivial>::Result LHS_Result;
-//          typedef typename register_temporaries<RHS, only_first_order,typename get_type_if<LHS,Assigned,is_assignment<OP>::value>::Result, is_nested || is_non_trivial>::Result RHS_Result;
-
-//          typedef compound_node<LHS_Result,OP,RHS_Result, is_non_trivial&& ( is_nested )  > RecursiveResult;
-//          typedef compound_node<LHS,OP,RHS,true> EarlyStoppingResult;
-//        public:
-//          typedef typename get_type_if<EarlyStoppingResult, RecursiveResult,is_non_trivial && only_first_order && is_nested>::Result Result;
-//      };
-
 
       ////////////////////////////////
       //////// EXTRACTIF ////////
       ///////////////////////////////
 
 
+      /** @brief Extracts the types in the tree satisfying a certain predicate.
+
+        @tparam T Tree to scan.
+        @tparam Pred Predicate to be satisfied
+        @tparam Comparison relation in which the output will be sorted
+      */
       template <class T, 
                 template<class> class Pred,
                 template<class, class> class Comp = typelist_utils::true_comp,
@@ -377,6 +330,13 @@ namespace viennacl
 
       ///////////////////////////////
 
+
+      /** @brief Like extract_if but ignores duplicates.
+
+        @tparam T Tree to scan.
+        @tparam Pred Predicate to be satisfied
+        @tparam Comparison relation in which the output will be sorted
+      */
       template <class T,
                 template<class> class Pred,
                 template<class, class> class Comp = typelist_utils::true_comp>
@@ -420,6 +380,7 @@ namespace viennacl
           typedef sub_type Result;
       };
 
+      /** @brief Removes parenthesis keeping flipping coherent with the - signs*/
       template <class T, bool flip = false>
       struct flip_tree 
       {
@@ -498,6 +459,12 @@ namespace viennacl
         typedef RHS_OP Result;
       };
 
+      /** @brief Removes the nodes satisfying a predicate from the tree.
+
+        @tparam T tree to scan.
+        @tparam Pred predicate to test.
+        @tparam inspect_nested inspect what is nested in products
+      */
       template <class T, template<class> class Pred, bool inspect_nested=true>
       struct remove_if 
       {
@@ -520,7 +487,7 @@ namespace viennacl
           typedef typename remove_if<LHS,Pred,inspect_nested>::TmpTree LHS_TmpTree;
           typedef typename remove_if<RHS,Pred,inspect_nested>::TmpTree RHS_TmpTree;
           typedef compound_node<LHS_TmpTree,OP,RHS_TmpTree> TmpTree0;
-      typedef typename get_type_if<TmpTree0,T,! (is_product_leaf<T>::value || is_inner_product_leaf<T>::value) || inspect_nested>::Result TmpTree1;
+      typedef typename get_type_if<TmpTree0,T,! (result_of::is_product_leaf<T>::value || result_of::is_inner_product_leaf<T>::value) || inspect_nested>::Result TmpTree1;
 
           typedef typename compound_to_simple<typename remove_if<LHS,Pred,inspect_nested>::Result>::Result LHS_Result;
           typedef typename compound_to_simple<typename remove_if<RHS,Pred,inspect_nested>::Result>::Result RHS_Result;
@@ -528,7 +495,7 @@ namespace viennacl
                                                             typename get_new_operator<OP,RHS_TmpTree>::Result,
                                                             RHS_Result
                                                             > >::Result    Result0;
-          typedef typename get_type_if<Result0,T,!(is_product_leaf<T>::value || is_inner_product_leaf<T>::value) || inspect_nested>::Result Result1;
+          typedef typename get_type_if<Result0,T,!(result_of::is_product_leaf<T>::value || result_of::is_inner_product_leaf<T>::value) || inspect_nested>::Result Result1;
 
         public:
           typedef typename get_type_if<NullType, TmpTree1,  Pred<T>::value>::Result    TmpTree;

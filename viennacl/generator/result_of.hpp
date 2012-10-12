@@ -303,6 +303,7 @@ namespace viennacl
                      std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
         {
           ScalarType* current_arg = any_cast<ScalarType * >(runtime_args[arg_id_]);
+          std::cout << *current_arg << std::endl;
           k.arg(arg_pos, static_cast<typename viennacl::tools::cl_type<ScalarType>::Result>(*current_arg));
         }
       };
@@ -316,7 +317,7 @@ namespace viennacl
 
         static runtime_wrapper * runtime_descriptor()
         {
-          return new scalar_runtime_wrapper<T>(T::name(),T::id,is_inner_product_leaf<T>::value || is_inner_product_impl<T>::value);
+          return new scalar_runtime_wrapper<T>(T::name(),T::id,result_of::is_inner_product_leaf<T>::value || result_of::is_inner_product_impl<T>::value);
         }
 
         static const int n_args()
@@ -579,6 +580,9 @@ namespace viennacl
      * Traits
      */
 
+namespace result_of{
+
+
     template <class T>
     struct is_scalar_expression_impl
     {
@@ -633,6 +637,8 @@ namespace viennacl
                                                   typename result_of::expression_type<EXPR2>::Result>::value
            };
     };
+
+}
 
   }//generator
 

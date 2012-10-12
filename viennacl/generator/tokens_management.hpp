@@ -37,11 +37,13 @@ namespace viennacl
 
     //Tokens
 
+    /** @brief Base structure for representing Token */
     template<class Expr_>
     struct Token{
       typedef Expr_ Expr;
     };
 
+    /** @brief Base structure for representing Matrix-Matrix Product token */
     template<class Expr, class OP_, class Assigned_>
     struct MatMatToken : public Token<Expr>
     {
@@ -49,6 +51,7 @@ namespace viennacl
         typedef Assigned_ Assigned;
     };
 
+    /** @brief Base structure for representing Matrix-Vector Product token */
     template<class Expr, class OP_, class Assigned_>
     struct MatVecToken : public Token<Expr>
     {
@@ -56,10 +59,13 @@ namespace viennacl
         typedef Assigned_ Assigned;
     };
 
-    template<class Expr, unsigned int NestedLevel_>
+    /** @brief Base structure for representing Inner Product token
+        @tparam Step The inner product is calculated in 2 steps with different code/token for each step
+    */
+    template<class Expr, unsigned int Step_>
     struct InProdToken : public Token<Expr>
     {
-        static const int NestedLevel = NestedLevel_;
+        static const int Step = Step_;
     };
 
     template<class Expr>
@@ -71,6 +77,8 @@ namespace viennacl
 
     // Traits
 
+namespace result_of{
+
     template<class T>
     struct is_vector_assignment{
         enum { value = 0 };
@@ -79,7 +87,7 @@ namespace viennacl
     template<class LHS, class OP, class RHS>
     struct is_vector_assignment<compound_node<LHS,OP,RHS> >
     {
-        enum { value = is_assignment<OP>::value && is_symbolic_vector<LHS>::value };
+        enum { value = result_of::is_assignment<OP>::value && result_of::is_symbolic_vector<LHS>::value };
     };
 
     template<class Bound, class Expr>
@@ -96,8 +104,10 @@ namespace viennacl
     template<class LHS, class OP, class RHS>
     struct is_scalar_assignment<compound_node<LHS,OP,RHS> >
     {
-        enum { value = is_assignment<OP>::value && is_symbolic_gpu_scalar<LHS>::value };
+        enum { value = result_of::is_assignment<OP>::value && result_of::is_symbolic_gpu_scalar<LHS>::value };
     };
+
+ }
 
     template<class T, class Enable = void>
     struct get_operations_lhs{
@@ -105,7 +115,7 @@ namespace viennacl
     };
 
     template<class T>
-    struct get_operations_lhs<T,typename viennacl::enable_if<is_assignment_compound<T>::value>::type>{
+    struct get_operations_lhs<T,typename viennacl::enable_if<result_of::is_assignment_compound<T>::value>::type>{
         typedef typename T::LHS Result;
     };
 
@@ -120,13 +130,16 @@ namespace viennacl
 
 
 
+    /** @brief Functor to generates the body code of a kernel from a typelist of expressions.
+        @tparam ExpressionsList Typelist of expressions.
+    */
     template<class ExpressionsList>
     struct body_code{
     private:
 
         template<class T>
         struct requires_vector_access{
-            enum{ value = is_vector_assignment<T>::value || is_inner_product_impl<T>::value };
+            enum{ value = result_of::is_vector_assignment<T>::value || result_of::is_inner_product_impl<T>::value };
         };
 
         typedef typename get_operations_from_expressions<ExpressionsList>::Result OperationsList;
@@ -171,6 +184,9 @@ namespace viennacl
             }
         };
 
+        /** @brief Functor to store the values in registers in case of multiple uses
+            @tparam Pred predicate to specify the type of the value to store ( result_of::is_symbolic_scalar, result_of::is_symbolic_vector ...)
+        */
         template<template<class> class Pred>
         struct declarations
         {
@@ -190,6 +206,10 @@ namespace viennacl
             }
         };
 
+
+        /** @brief Functor to store the values back in registers in case of multiple uses
+            @tparam Pred predicate to specify the type of the value to store ( result_of::is_symbolic_scalar, result_of::is_symbolic_vector ...)
+        */
         template<template<class> class Pred>
         struct assignements
         {
@@ -210,45 +230,52 @@ namespace viennacl
             }
         };
 
+        /** @brief Generates code for vector expressions, if any
+            @param cond Condition for the static_if
+            @param res Reference to the result
+        */
         template<class RequireGidLoop>
-        static void fill_vector_expression(Int2Type<false>, std::string & res)
+        static void fill_vector_expression(Int2Type<false> cond, std::string & res)
         {
             typedef typename get_operations_from_expressions<RequireGidLoop>::Result RequireGidOperations;
-            typedef typename tree_utils::extract_if<RequireGidOperations,is_symbolic_vector>::Result SymVecs;
+            typedef typename tree_utils::extract_if<RequireGidOperations,result_of::is_symbolic_vector>::Result SymVecs;
             typedef typename result_of::expression_type<typename SymVecs::Head>::Result VecExpr;
             std::string bound = VecExpr::internal_size_expression();
             res+="for(unsigned int gid=get_global_id(0) ; gid < " + bound + " ; gid+=get_global_size(0))\n";
             res+="{\n";
             //For each unique symbolic vector or symbolic matrix in the tree, store the gid value in a local register
-            declarations<or_is<is_symbolic_vector,is_symbolic_matrix>::Pred>::execute(res);
+            declarations<result_of::or_is<result_of::is_symbolic_vector,result_of::is_symbolic_matrix>::Pred>::execute(res);
             res+="\n";
 
-            fill_expression_updates<RequireGidLoop,is_vector_assignment>::execute(res);
+            fill_expression_updates<RequireGidLoop,result_of::is_vector_assignment>::execute(res);
 
             //Inner Product - Step 1 - Sum
-            typedef typename tree_utils::extract_if_unique<RequireGidLoop,is_inner_product_impl>::Result InProd;
-            typedef typename get_type_if<NullType,InProdToken<InProd,1>,is_null_type<InProd>::value>::Result InProdToken_;
+            typedef typename tree_utils::extract_if_unique<RequireGidLoop,result_of::is_inner_product_impl>::Result InProd;
+            typedef typename get_type_if<NullType,InProdToken<InProd,1>,result_of::is_null_type<InProd>::value>::Result InProdToken_;
             res+=make_code<InProdToken_>::sum();
 
-            assignements<is_symbolic_vector>::execute(res);
+            assignements<result_of::is_symbolic_vector>::execute(res);
             res+="}\n";
 
         }
 
+        /** @brief Does not generate anything */
         template<class RequireGidLoop>
-        static void fill_vector_expression(Int2Type<true>, std::string & res)
+        static void fill_vector_expression(Int2Type<true> cond, std::string & res)
         {
 
         }
 
+        /** @brief Generates code for simple vector expressions */
         static const std::string vector_code_impl(Int2Type<0> linear_expression){
             typedef typename tree_utils::extract_if<ExpressionsList,requires_vector_access>::Result RequireGidLoopTmp;
             typedef typename typelist_utils::no_duplicates<RequireGidLoopTmp>::Result RequireGidLoop;
             std::string res;
-            fill_vector_expression<RequireGidLoop>(Int2Type<is_null_type<RequireGidLoop>::value>(),res);
+            fill_vector_expression<RequireGidLoop>(Int2Type<result_of::is_null_type<RequireGidLoop>::value>(),res);
             return res;
         }
 
+        /** @brief Generates code for simple matrix-vector product */
         static const std::string vector_code_impl(Int2Type<1> matvec_prod){
             typedef typename OperationsList::Head Root;
             std::string res;
@@ -258,30 +285,31 @@ namespace viennacl
 
     public:
 
+        /** @brief generates the actual code */
         static const std::string value(){
             std::string res;
             res+="{\n";
 
 
-            declarations<is_symbolic_gpu_scalar>::execute(res);
-            declarations<is_inner_product_impl>::execute(res);
-            declarations<is_inner_product_leaf>::execute(res);
+            declarations<result_of::is_symbolic_gpu_scalar>::execute(res);
+            declarations<result_of::is_inner_product_impl>::execute(res);
+            declarations<result_of::is_inner_product_leaf>::execute(res);
 
             //Inner Product - Step 2 - Final Reduction
-            typedef typename tree_utils::extract_if_unique<OperationsList,is_inner_product_leaf>::Result InProd0;
-            typedef typename get_type_if<NullType,InProdToken<InProd0,0>,is_null_type<InProd0>::value>::Result InProd0Token_;
+            typedef typename tree_utils::extract_if_unique<OperationsList,result_of::is_inner_product_leaf>::Result InProd0;
+            typedef typename get_type_if<NullType,InProdToken<InProd0,0>,result_of::is_null_type<InProd0>::value>::Result InProd0Token_;
             res+=make_code<InProd0Token_>::value();
 
             if(tree_utils::count_if<OperationsList, requires_vector_access>::value)
-               res += vector_code_impl(Int2Type< (tree_utils::count_if<OperationsList, is_product_leaf>::value > 0) >());
+               res += vector_code_impl(Int2Type< (tree_utils::count_if<OperationsList, result_of::is_product_leaf>::value > 0) >());
 
             //Inner Product - Step 1 - Reduction
-            typedef typename tree_utils::extract_if_unique<OperationsList,is_inner_product_impl>::Result InProd1;
-            typedef typename get_type_if<NullType,InProdToken<InProd1,1>,is_null_type<InProd1>::value>::Result InProd1Token_;
+            typedef typename tree_utils::extract_if_unique<OperationsList,result_of::is_inner_product_impl>::Result InProd1;
+            typedef typename get_type_if<NullType,InProdToken<InProd1,1>,result_of::is_null_type<InProd1>::value>::Result InProd1Token_;
             res+=make_code<InProd1Token_>::reduction();
 
-            fill_expression_updates<ExpressionsList,is_scalar_assignment>::execute(res);
-            assignements<is_symbolic_gpu_scalar>::execute(res);
+            fill_expression_updates<ExpressionsList,result_of::is_scalar_assignment>::execute(res);
+            assignements<result_of::is_symbolic_gpu_scalar>::execute(res);
 
             res+="}\n";
             return res;

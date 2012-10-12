@@ -57,7 +57,7 @@ struct get_head<typelist<Head, Tail> >
 };
 
 
-
+/** @brief Helper for register_kernels. Transform inner_product into phase 1 of inner_product implementation */
 template<class T>
 struct transform_inner_prod
 {
@@ -70,6 +70,12 @@ struct transform_inner_prod<compound_node<LHS,inner_prod_type,RHS> >
     typedef inner_prod_impl_t<compound_node<LHS,inner_prod_type,RHS> > Result;
 };
 
+/** @brief Recursive functor to segment an operation into multiple kernels.
+           Creates a dedicated kernel for each matrix-vector product.
+           Splits inner product into two phases in two different kernels.
+    @tparam TreeList The list of operations to segment.
+    @tparam Res a typelist containing the list of the oprations
+*/
 template<class TreeList, class Res, int CurrentIndex=0>
 struct register_kernels;
 
@@ -91,14 +97,14 @@ public:
         //Replace the former typelist with the new typelist
         typedef typename typelist_utils::replace<List,Tmp,TmpRes>::Result ResultIfTmpNotNull;
         typedef typename typelist_utils::append<List,T>::Result ResultIfTmpNull;
-        typedef typename get_type_if<ResultIfTmpNull,ResultIfTmpNotNull,is_null_type<Tmp>::value>::Result Result;
+        typedef typename get_type_if<ResultIfTmpNull,ResultIfTmpNotNull,result_of::is_null_type<Tmp>::value>::Result Result;
     };
 
 private:
-    typedef typename tree_utils::extract_if<Head,is_inner_product_leaf>::Result InProds;
+    typedef typename tree_utils::extract_if<Head,result_of::is_inner_product_leaf>::Result InProds;
     typedef typename add_to_res<typename typelist_utils::ForEachType<InProds,transform_inner_prod>::Result,Res,CurrentIndex - 1>::Result TmpNewRes;
-    static const bool inc = tree_utils::count_if<typename get_head<Tail>::Result, or_is<is_product_leaf,is_inner_product_leaf>::Pred >::value
-                            + tree_utils::count_if<Head,is_product_leaf>::value;
+    static const bool inc = tree_utils::count_if<typename get_head<Tail>::Result, result_of::or_is<result_of::is_product_leaf,result_of::is_inner_product_leaf>::Pred >::value
+                            + tree_utils::count_if<Head,result_of::is_product_leaf>::value;
 public:
     typedef typename add_to_res<typelist<Head,NullType>,TmpNewRes,CurrentIndex>::Result NewRes;
     typedef typename register_kernels<Tail,NewRes,CurrentIndex+inc>::Result Result;
@@ -111,18 +117,22 @@ struct register_kernels<NullType,Res,CurrentIndex>
     typedef Res Result;
 };
 
+/**
+  * @brief functor to get the information necessary to create a program
+  * @tparam ARG A typelist containing all the operations.
+  */
 template<class ARG>
 struct program_infos
 {
 
-    static const bool first_has_ip = tree_utils::count_if<typename ARG::Head,is_inner_product_leaf>::value;
+    static const bool first_has_ip = tree_utils::count_if<typename ARG::Head,result_of::is_inner_product_leaf>::value;
     typedef typename register_kernels<ARG,NullType,first_has_ip>::Result          KernelsList;
 
     template<class Operations>
     struct fill_args
     {
     private:
-            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,is_kernel_argument>::Result IntermediateType;
+            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,result_of::is_kernel_argument>::Result IntermediateType;
             typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
     public:
@@ -149,7 +159,7 @@ struct program_infos
             unsigned int n = typelist_utils::index_of<KernelsList,Operations>::value;
             std::string current_kernel_name("__" + operation_name + "_k" + to_string(n));
             typelist_utils::ForEach<Arguments,functor>::execute(arg_pos,runtime_wrappers,current_kernel_name);
-            if(tree_utils::count_if<Operations,is_inner_product_leaf>::value || tree_utils::count_if<Operations,is_product_leaf>::value){
+            if(tree_utils::count_if<Operations,result_of::is_inner_product_leaf>::value || tree_utils::count_if<Operations,result_of::is_product_leaf>::value){
                 runtime_wrappers.insert(runtime_wrappers_t::value_type(current_kernel_name,
                                                                        std::make_pair(arg_pos,
                                                                                       new result_of::shared_memory_wrapper())));
@@ -163,7 +173,7 @@ struct program_infos
     struct fill_sources
     {
     private:
-            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,is_kernel_argument>::Result IntermediateType;
+            typedef typename tree_utils::extract_if<typename get_operations_from_expressions<Operations>::Unrolled,result_of::is_kernel_argument>::Result IntermediateType;
             typedef typename typelist_utils::no_duplicates<IntermediateType>::Result Arguments;
 
     public:
@@ -191,7 +201,7 @@ struct program_infos
                 res+="__kernel void " + name + "(\n";
                 bool state=true;
                 typelist_utils::ForEach<Arguments,functor>::execute(res,state);
-                if(tree_utils::count_if<TList,is_inner_product_leaf>::value || tree_utils::count_if<Operations,is_product_leaf>::value)
+                if(tree_utils::count_if<TList,result_of::is_inner_product_leaf>::value || tree_utils::count_if<Operations,result_of::is_product_leaf>::value)
                     res+=",__local float* shared_memory_ptr\n";
                 res+=")\n";
                 return res;
@@ -210,6 +220,9 @@ struct program_infos
     };
 
 
+    /**
+      * @brief Generates the source using the name operation_name. Fills the sources map and the runtime_wrappers map.
+      */
     static void fill(std::string const & operation_name, std::map<std::string,std::string> & sources, runtime_wrappers_t & runtime_wrappers)
     {
         //std::cout << KernelsList::name() << std::endl;

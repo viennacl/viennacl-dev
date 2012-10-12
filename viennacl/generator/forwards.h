@@ -66,17 +66,19 @@ namespace viennacl
     template<class Expr, class OP, class Assigned>
     struct MatMatToken;
 
-    template<class Expr,unsigned int NestedLevel>
+    template<class Expr,unsigned int Step>
     struct InProdToken;
 
     template<class Expr>
     struct ArithmeticToken;
 
+namespace result_of{
     template<class T>
     struct is_inner_product_leaf;
 
     template<class T>
     struct is_inner_product_impl;
+}
 
   }
 }

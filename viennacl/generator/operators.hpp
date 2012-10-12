@@ -141,7 +141,7 @@ struct CHECK_ALIGNMENT_COMPATIBILITY
 
 /** @brief Scalar multiplication operator */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if_c<is_scalar_expression<LHS_TYPE>::value || is_scalar_expression<RHS_TYPE>::value,
+typename enable_if_c<result_of::is_scalar_expression<LHS_TYPE>::value || result_of::is_scalar_expression<RHS_TYPE>::value,
                      compound_node<LHS_TYPE,scal_mul_type,RHS_TYPE> >::type
 operator* ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -150,7 +150,7 @@ operator* ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 
 /** @brief Scalar division operator */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if_c< is_scalar_expression<RHS_TYPE>::value,
+typename enable_if_c< result_of::is_scalar_expression<RHS_TYPE>::value,
                       compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> > ::type
 operator/ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -159,7 +159,7 @@ operator/ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 
 /** @brief Addition operator on 2 elements of the same type */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if< is_same_expression_type<LHS_TYPE, RHS_TYPE>,
+typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
                     compound_node<LHS_TYPE, add_type, RHS_TYPE> >::type
 operator+ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -169,7 +169,7 @@ operator+ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 
 /** @brief Substraction operator on 2 elements of the same type */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if< is_same_expression_type<LHS_TYPE, RHS_TYPE>,
+typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
                     compound_node<LHS_TYPE, sub_type, RHS_TYPE> >::type
 operator- ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -214,6 +214,8 @@ compound_node<LHS,prod_type,RHS> prod ( LHS vec_expr1,RHS vec_expr2 )
  * Traits
  */
 
+namespace result_of{
+
 template<class OP>
 struct is_assignment{
   enum{ value = are_same_type<OP,assign_type>::value ||
@@ -222,6 +224,7 @@ struct is_assignment{
         are_same_type<OP,inplace_scal_mul_type>::value ||
         are_same_type<OP,inplace_scal_div_type>::value};
 };
+
 
 template<class T>
 struct is_assignment_compound{
@@ -236,7 +239,7 @@ struct is_assignment_compound<compound_node<LHS,OP,RHS> >
 
 template<class OP>
 struct is_arithmetic_operator{
-  enum{ value = is_assignment<OP>::value ||
+  enum{ value = result_of::is_assignment<OP>::value ||
           are_same_type<OP,add_type>::value ||
           are_same_type<OP,sub_type>::value ||
           are_same_type<OP,scal_mul_type>::value ||
@@ -251,9 +254,10 @@ struct is_arithmetic_compound{
 template<class LHS, class OP, class RHS>
 struct is_arithmetic_compound<compound_node<LHS,OP,RHS> >
 {
-  enum { value = is_arithmetic_operator<OP>::value };
+  enum { value = result_of::is_arithmetic_operator<OP>::value };
 };
 
+}
 
 }
 
