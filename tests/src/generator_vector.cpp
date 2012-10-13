@@ -28,7 +28,9 @@
 using namespace boost::numeric;
 using namespace viennacl::generator;
 
-std::string my_modifier(){ return "1/exp(-X)" ; }
+
+std::string sigmoid_modifier(){ return "1/(1+exp(-X))" ; }
+
 
 template <class TYPE>
 bool readVectorFromFile ( const std::string & filename, boost::numeric::ublas::vector<TYPE> & vec ) {
@@ -107,9 +109,20 @@ int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile )
     viennacl::copy ( vec2.begin(), vec2.end(), vcl_vec2.begin() );
     viennacl::copy ( vec3.begin(), vec3.end(), vcl_vec3.begin() );
 
+    unsigned int SIZE = vec.size();
     // --------------------------------------------------------------------------
 
-    
+    std::cout << "testing elementwise operations : vec = 1/(1+exp(-vec.*vec2))..." << std::endl;
+    for(unsigned int i=0; i < SIZE; ++i){
+        vec[i] = 1/(1+exp(-vec[i]*vec2[i]));
+    }
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = elementwise_modifier<sigmoid_modifier>(elementwise_prod(symv,symv2)), "vec_elementwise_test") ( vcl_vec, vcl_vec2 ) );
+    if ( fabs ( diff ( vec, vcl_vec ) ) > epsilon ) {
+        std::cout << "# Error at operation: addition" << std::endl;
+        std::cout << "  diff: " << fabs ( diff ( vec, vcl_vec ) ) << std::endl;
+        retval = EXIT_FAILURE;
+    }
+
     std::cout << "testing addition..." << std::endl;
     vec     = ( vec - vec2 );
     viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv - symv2, "vec_add") ( vcl_vec, vcl_vec2 ) );

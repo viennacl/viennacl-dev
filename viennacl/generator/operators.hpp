@@ -100,6 +100,19 @@ struct prod_type
   static const std::string name() { return "p"; }
 };
 
+struct elementwise_prod_type
+{
+    static const std::string expression_string() { return "*"; }
+    static const std::string name() { return "ewp"; }
+};
+
+struct elementwise_div_type
+{
+    static const std::string expression_string() { return "/"; }
+    static const std::string name() { return "ewd"; }
+};
+
+
 template<class T>
 struct make_inplace
 {
@@ -209,6 +222,17 @@ compound_node<LHS,prod_type,RHS> prod ( LHS vec_expr1,RHS vec_expr2 )
   return compound_node<LHS,prod_type,RHS>();
 }
 
+template<class LHS, class RHS>
+compound_node<LHS,elementwise_prod_type,RHS> elementwise_prod(LHS expr1, RHS expr2){
+    CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
+    return compound_node<LHS,elementwise_prod_type,RHS>();
+}
+
+template<class LHS, class RHS>
+compound_node<LHS,elementwise_div_type,RHS> elementwise_div(LHS expr1, RHS expr2){
+    CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
+    return compound_node<LHS,elementwise_div_type,RHS>();
+}
 
 /*
  * Traits

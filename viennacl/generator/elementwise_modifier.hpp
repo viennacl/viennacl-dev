@@ -70,7 +70,7 @@ namespace viennacl
         static std::string modify(std::string const & replacer) 
         {
           std::string result(U());
-          int pos;
+          size_t pos = 0;
           while( (pos = result.find('X')) != std::string::npos )
           {
             result.replace(pos, 1, '(' + replacer + ')' );

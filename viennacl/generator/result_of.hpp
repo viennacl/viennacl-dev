@@ -303,7 +303,6 @@ namespace viennacl
                      std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
         {
           ScalarType* current_arg = any_cast<ScalarType * >(runtime_args[arg_id_]);
-          std::cout << *current_arg << std::endl;
           k.arg(arg_pos, static_cast<typename viennacl::tools::cl_type<ScalarType>::Result>(*current_arg));
         }
       };
