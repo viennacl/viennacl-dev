@@ -509,10 +509,10 @@ namespace viennacl
       /*
        * Elementwise Modifiers
        */
-      template <class T, std::string (*U)()>
-      struct expression_type< elementwise_modifier_impl<T,U> > 
+      template <class T>
+      struct expression_type< elementwise_modifier<T> >
       {
-        typedef typename expression_type<T>::Result Result;
+        typedef typename expression_type<typename T::PRIOR_TYPE>::Result Result;
       };
 
       template <class T, class SIZE_DESCRIPTOR>
@@ -581,6 +581,202 @@ namespace viennacl
 
 namespace result_of{
 
+    template<class T>
+    struct is_symbolic_vector
+    {
+        enum { value = 0 };
+    };
+
+    template<unsigned int Id, class ScalarType, unsigned int Alignment>
+    struct is_symbolic_vector<symbolic_vector<Id,ScalarType,Alignment> >
+    {
+        enum { value = 1 };
+    };
+
+
+    template<class T>
+    struct is_symbolic_matrix
+    {
+        enum { value = 0 };
+    };
+
+    template<unsigned int Id, class ScalarType, class Layout, unsigned int Alignment>
+    struct is_symbolic_matrix<symbolic_matrix<Id,ScalarType,Layout,Alignment> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class T>
+    struct is_symbolic_cpu_scalar
+    {
+        enum { value = 0 };
+    };
+
+    template<unsigned int Id, class ScalarType>
+    struct is_symbolic_cpu_scalar<cpu_symbolic_scalar<Id,ScalarType> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class T>
+    struct is_symbolic_gpu_scalar
+    {
+        enum { value = 0 };
+    };
+
+    template<unsigned int Id, class ScalarType>
+    struct is_symbolic_gpu_scalar<gpu_symbolic_scalar<Id,ScalarType> >
+    {
+        enum { value = 1 };
+    };
+
+    template <class T>
+    struct is_row_major
+    {
+      enum { value = 0 };
+    };
+
+    template <unsigned int ID, class ScalarType,  unsigned int Alignment>
+    struct is_row_major<symbolic_matrix<ID, ScalarType, viennacl::row_major, Alignment> >
+    {
+      enum { value = 1 };
+    };
+
+    template <class T>
+    struct is_transposed
+    {
+      enum { value = 0 };
+    };
+
+    template <class T>
+    struct is_kernel_argument
+    {
+      enum { value = 0 };
+    };
+
+    template <unsigned int ID,class SCALARTYPE, unsigned int ALIGNMENT>
+    struct is_kernel_argument<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> >
+    {
+      enum { value = 1 };
+    };
+
+    template <unsigned int ID,class SCALARTYPE, class F, unsigned int ALIGNMENT>
+    struct is_kernel_argument<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> >
+    {
+      enum { value = 1 };
+    };
+
+    template <unsigned int ID, class SCALARTYPE>
+    struct is_kernel_argument<cpu_symbolic_scalar<ID, SCALARTYPE> >
+    {
+      enum { value = 1 };
+    };
+
+    template <unsigned int ID, class SCALARTYPE>
+    struct is_kernel_argument<gpu_symbolic_scalar<ID, SCALARTYPE> >
+    {
+      enum { value = 1 };
+    };
+
+    template<class T>
+    struct is_kernel_argument<inner_prod_impl_t<T> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class LHS, class RHS>
+    struct is_kernel_argument<compound_node<LHS,inner_prod_type,RHS> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class Bound, class Expr>
+    struct is_kernel_argument< repeater_impl<Bound, Expr> >
+    {
+        enum { value = 1 };
+    };
+
+    template <class T>
+    struct is_inner_product_leaf
+    {
+      enum { value = 0};
+    };
+
+    template <class LHS,class RHS>
+    struct is_inner_product_leaf<compound_node<LHS,inner_prod_type,RHS> >
+    {
+      enum { value = 1};
+    };
+
+
+    template <class T>
+    struct is_product_leaf
+    {
+      enum { value = 0};
+    };
+
+    template <class LHS,class RHS>
+    struct is_product_leaf<compound_node<LHS,prod_type,RHS> >
+    {
+      enum { value = 1};
+    };
+
+    template <class LHS,class RHS>
+    struct is_product_leaf<compound_node<LHS,scal_mul_type,RHS> >
+    {
+      enum { value = result_of::is_product_leaf<RHS>::value || result_of::is_product_leaf<LHS>::value };
+    };
+
+    template <class T>
+    struct is_null_type
+    {
+      enum { value = 0 };
+    };
+
+    template <>
+    struct is_null_type<NullType>
+    {
+      enum { value = 1 };
+    };
+
+    template <class T>
+    struct is_compound
+    {
+      enum { value = 0 } ;
+    };
+
+    template <class LHS, class OP, class RHS>
+    struct is_compound<compound_node<LHS,OP,RHS> >
+    {
+      enum {value = 1};
+    };
+
+    template<class T>
+    struct is_inner_product_impl{
+        enum { value = 0 };
+    };
+
+    template<class T>
+    struct is_inner_product_impl<inner_prod_impl_t<T> >
+    {
+        enum { value = 1 };
+    };
+
+    template<class T>
+    struct is_symbolic_constant
+    {
+        enum { value = 0};
+    };
+
+    template<class T>
+    struct is_symbolic_expression
+    {
+        enum { value = is_symbolic_vector<T>::value
+               || is_symbolic_matrix<T>::value
+               || is_compound<T>::value
+               || is_symbolic_cpu_scalar<T>::value
+               || is_symbolic_gpu_scalar<T>::value };
+    };
 
     template <class T>
     struct is_scalar_expression_impl
@@ -635,6 +831,20 @@ namespace result_of{
       enum { value = is_same_expression_type_impl<typename result_of::expression_type<EXPR1>::Result,
                                                   typename result_of::expression_type<EXPR2>::Result>::value
            };
+    };
+
+    /** @brief Special case: symbolic constant for elementwise can be used as every type. */
+    template<class Expr, long VAL>
+    struct is_same_expression_type<Expr,symbolic_constant<VAL> >
+    {
+        enum { value = 1 };
+    };
+
+    /** @brief Special case: symbolic constant for elementwise can be used as every type. */
+    template<class Expr, long VAL>
+    struct is_same_expression_type<symbolic_constant<VAL>, Expr>
+    {
+        enum { value = 1 };
     };
 
 }

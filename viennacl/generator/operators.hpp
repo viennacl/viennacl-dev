@@ -151,6 +151,20 @@ struct CHECK_ALIGNMENT_COMPATIBILITY
     VIENNACL_STATIC_ASSERT(LHS_TYPE::Alignment == RHS_TYPE::Alignment,AlignmentIncompatible);
 };
 
+template<class LHS, long val>
+struct CHECK_ALIGNMENT_COMPATIBILITY<LHS, symbolic_constant<val> >{ };
+
+template<class RHS, long val>
+struct CHECK_ALIGNMENT_COMPATIBILITY< symbolic_constant<val>, RHS >{ };
+
+
+/** @brief Unary minus operator */
+template<class T>
+typename enable_if_c<result_of::is_symbolic_expression<T>::value,compound_node<NullType,sub_type,T> >::type
+operator -(T const & expr)
+{
+    return compound_node<NullType,sub_type,T>();
+}
 
 /** @brief Scalar multiplication operator */
 template<class LHS_TYPE, class RHS_TYPE>
@@ -161,6 +175,22 @@ operator* ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
   return compound_node<LHS_TYPE, scal_mul_type,RHS_TYPE> ();
 }
 
+
+/** @brief Elementwise Scalar multiplication operators with a constant */
+template<long VAL, class RHS_TYPE>
+compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>
+operator* ( symbolic_constant<VAL> const & lhs, RHS_TYPE const & rhs )
+{
+    return compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>();
+}
+
+template<class LHS_TYPE, long VAL>
+compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >
+operator* ( LHS_TYPE const & lhs, symbolic_constant<VAL> const & rhs )
+{
+    return compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >();
+}
+
 /** @brief Scalar division operator */
 template<class LHS_TYPE, class RHS_TYPE>
 typename enable_if_c< result_of::is_scalar_expression<RHS_TYPE>::value,
@@ -168,6 +198,21 @@ typename enable_if_c< result_of::is_scalar_expression<RHS_TYPE>::value,
 operator/ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
   return compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> ();
+}
+
+/** @brief Elementwise Scalar division operators with a constant */
+template<long VAL, class RHS_TYPE>
+compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>
+operator/ ( symbolic_constant<VAL> const & lhs, RHS_TYPE const & rhs )
+{
+    return compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>();
+}
+
+template<class LHS_TYPE, long VAL>
+compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >
+operator/ ( LHS_TYPE const & lhs, symbolic_constant<VAL> const & rhs )
+{
+    return compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >();
 }
 
 /** @brief Addition operator on 2 elements of the same type */
@@ -223,13 +268,13 @@ compound_node<LHS,prod_type,RHS> prod ( LHS vec_expr1,RHS vec_expr2 )
 }
 
 template<class LHS, class RHS>
-compound_node<LHS,elementwise_prod_type,RHS> elementwise_prod(LHS expr1, RHS expr2){
+compound_node<LHS,elementwise_prod_type,RHS> element_prod(LHS expr1, RHS expr2){
     CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
     return compound_node<LHS,elementwise_prod_type,RHS>();
 }
 
 template<class LHS, class RHS>
-compound_node<LHS,elementwise_div_type,RHS> elementwise_div(LHS expr1, RHS expr2){
+compound_node<LHS,elementwise_div_type,RHS> element_div(LHS expr1, RHS expr2){
     CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
     return compound_node<LHS,elementwise_div_type,RHS>();
 }

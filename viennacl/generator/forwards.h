@@ -44,6 +44,9 @@ namespace viennacl
 
     struct inner_prod_type;
 
+    template<long VAL>
+    class symbolic_constant;
+
     template< unsigned int ID, typename SCALARTYPE, unsigned int ALIGNMENT = 1>
     class symbolic_vector;
 
@@ -71,6 +74,30 @@ namespace viennacl
 
     template<class Expr>
     struct ArithmeticToken;
+
+    template<class Bound_, class Operations_>
+    struct repeater_impl;
+
+
+    struct assign_type;
+
+    struct add_type;
+    struct inplace_add_type;
+
+    struct sub_type;
+    struct inplace_sub_type;
+
+    struct scal_mul_type;
+    struct inplace_scal_mul_type;
+
+    struct scal_div_type;
+    struct inplace_scal_div_type;
+
+    struct inner_prod_type;
+    struct prod_type;
+
+    struct elementwise_prod_type;
+    struct elementwise_div_type;
 
 namespace result_of{
     template<class T>

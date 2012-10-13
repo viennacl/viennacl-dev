@@ -75,6 +75,15 @@ struct make_expression_code
     }
 };
 
+template <long VAL>
+struct make_expression_code<symbolic_constant<VAL> >
+{
+    static const std::string value(std::string const & loop_accessor)
+    {
+        return to_string(VAL);
+    }
+};
+
 template<class T>
 struct make_expression_code<inner_prod_impl_t<T> >
 {
@@ -125,13 +134,12 @@ struct make_expression_code< NullType >
     }
 };
 
-template<class T, std::string (*U)()>
-struct make_expression_code< elementwise_modifier_impl<T, U> >
+template<class T>
+struct make_expression_code< elementwise_modifier<T> >
 {
-    typedef elementwise_modifier_impl<T, U> EW_M;
     static const std::string value ( std::string const & loop_accessor)
     {
-        return EW_M::modify(make_expression_code<T>::value(loop_accessor));
+        return elementwise_modifier<T>::modify(make_expression_code<typename T::PRIOR_TYPE>::value(loop_accessor));
     }
 };
 

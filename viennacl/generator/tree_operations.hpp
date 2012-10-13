@@ -54,10 +54,10 @@ namespace viennacl
           enum { value = count_if<Head,Pred>::value + count_if<Tail,Pred>::value };
       };
 
-      template <class T, std::string (*U)(), template<class> class Pred>
-      struct count_if<elementwise_modifier_impl<T,U>, Pred>
+      template <class T, template<class> class Pred>
+      struct count_if<elementwise_modifier<T>, Pred>
       {
-        enum { value = Pred<T>::value + count_if<T, Pred>::value };
+        enum { value = Pred<typename T::PRIOR_TYPE>::value + count_if<typename T::PRIOR_TYPE, Pred>::value };
       };
 
       template<class T, template<class> class Pred>
@@ -108,16 +108,16 @@ namespace viennacl
         enum { value = 1 };
       };
 
-      template<class T, std::string (*U)(), class Searched>
-      struct count_if_type<elementwise_modifier_impl<T,U>, Searched> 
+      template<class T, class Searched>
+      struct count_if_type<elementwise_modifier<T>, Searched>
       {
-        enum { value = count_if_type<T, Searched>::value };
+        enum { value = count_if_type<typename T::PRIOR_TYPE, Searched>::value };
       };
 
-      template <class T, std::string (*U)()>
-      struct count_if_type<elementwise_modifier_impl<T,U>, elementwise_modifier_impl<T,U> > 
+      template <class T>
+      struct count_if_type<elementwise_modifier<T>, elementwise_modifier<T> >
       {
-        enum { value = 1 + count_if_type<T, elementwise_modifier_impl<T,U> >::value };
+        enum { value = 1 + count_if_type<typename T::PRIOR_TYPE, elementwise_modifier<T> >::value };
       };
 
       template <class LHS, class OP, class RHS>
@@ -173,13 +173,13 @@ namespace viennacl
         typedef T Result;
       };
 
-      template <class T, std::string (*U)()>
-      struct expand< elementwise_modifier_impl<T,U> > 
+      template <class T>
+      struct expand< elementwise_modifier<T> >
       {
         private:
-          typedef typename expand<T>::Result                 SUB_Result;
+          typedef typename expand<typename T::PRIOR_TYPE>::Result                 SUB_Result;
         public:
-          typedef elementwise_modifier_impl<SUB_Result,U>    Result;
+          typedef elementwise_modifier<SUB_Result>    Result;
       };
 
       template<class T>
@@ -275,14 +275,13 @@ namespace viennacl
 
       
       template <class T,
-                std::string (*U)(),
                 template<class> class Pred,
                 template<class,class> class Comp,
                 class TList>
-      struct extract_if<elementwise_modifier_impl<T,U>, Pred, Comp, TList> 
+      struct extract_if<elementwise_modifier<T>, Pred, Comp, TList>
       {
         private:
-          typedef typename extract_if<T, Pred, Comp, TList>::Result         SUB_Result;
+          typedef typename extract_if<typename T::PRIOR_TYPE, Pred, Comp, TList>::Result         SUB_Result;
         public:
           typedef typename typelist_utils::fuse<TList,SUB_Result>::Result   Result;
       };
@@ -387,13 +386,13 @@ namespace viennacl
           typedef T Result;
       };
 
-      template <class T, std::string (*U)(),  bool flip>
-      struct flip_tree <elementwise_modifier_impl<T,U>, flip> 
+      template <class T,  bool flip>
+      struct flip_tree <elementwise_modifier<T>, flip>
       {
         private:
-          typedef typename flip_tree<T, flip>::Result       SUB_Result;
+          typedef typename flip_tree<typename T::PRIOR_TYPE, flip>::Result       SUB_Result;
         public:
-          typedef elementwise_modifier_impl<SUB_Result,U>   Result;
+          typedef elementwise_modifier<SUB_Result>   Result;
       };
 
       template <class LHS, class OP, class RHS, bool flip>
@@ -472,10 +471,10 @@ namespace viennacl
         typedef typename get_type_if<NullType,T,Pred<T>::value>::Result    TmpTree;
       };
 
-      template <class T, std::string (*U)(), template<class> class Pred, bool inspect_nested>
-      struct remove_if<elementwise_modifier_impl<T,U>,Pred,inspect_nested > 
+      template <class T, template<class> class Pred, bool inspect_nested>
+      struct remove_if<elementwise_modifier<T>,Pred,inspect_nested >
       {
-        typedef elementwise_modifier_impl<typename remove_if<T,Pred>::Result, U> Result;
+        typedef elementwise_modifier<typename remove_if<typename T::PRIOR_TYPE,Pred>::Result> Result;
       };
 
       template <class LHS, class OP, class RHS, template<class> class Pred, bool inspect_nested>
