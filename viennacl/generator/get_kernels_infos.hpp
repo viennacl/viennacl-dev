@@ -34,7 +34,7 @@
 #include "viennacl/generator/make_code.hpp"
 #include "viennacl/generator/meta_tools/typelist.hpp"
 #include "viennacl/generator/result_of.hpp"
-#include "boost/shared_ptr.hpp"
+#include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl
 {
@@ -43,7 +43,7 @@ namespace generator
 
 
 
-typedef std::multimap<std::string, std::pair<unsigned int, boost::shared_ptr<result_of::runtime_wrapper> > > runtime_wrappers_t;
+typedef std::multimap<std::string, std::pair<unsigned int,viennacl::tools::shared_ptr<result_of::runtime_wrapper> > > runtime_wrappers_t;
 
 template<class T>
 struct get_head{
