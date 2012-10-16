@@ -2,11 +2,25 @@
 #define VIENNACL_GENERATOR_TWEAKING_HPP
 
 #include "viennacl/generator/meta_tools/typelist.hpp"
-
+#include "viennacl/generator/symbolic_types.hpp"
 namespace viennacl
 {
   namespace generator
   {
+
+  static const symbolic_constant<1>  _1_ = symbolic_constant<1>();
+    static const symbolic_constant<2>  _2_ = symbolic_constant<2>();
+    static const symbolic_constant<3>  _3_ = symbolic_constant<3>();
+    static const symbolic_constant<4>  _4_ = symbolic_constant<4>();
+    static const symbolic_constant<5>  _5_ = symbolic_constant<5>();
+    static const symbolic_constant<6>  _6_ = symbolic_constant<6>();
+    static const symbolic_constant<7>  _7_ = symbolic_constant<7>();
+    static const symbolic_constant<8>  _8_ = symbolic_constant<8>();
+    static const symbolic_constant<9>  _9_ = symbolic_constant<9>();
+
+
+
+
 
     template<class Bound_, class Operations_>
     struct repeater_impl{

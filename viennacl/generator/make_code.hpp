@@ -62,6 +62,9 @@ struct inner_prod_impl_t
     enum { id = T::id };
 };
 
+/** @brief Inline code for an expression from scalars
+    @tparam T Tree specifying the expression
+*/
 template <class T>
 struct make_expression_code
 {
@@ -69,6 +72,15 @@ struct make_expression_code
     {
         if(loop_accessor == "gid") return  T::gid_val_name();
         else return T::name() + '[' + loop_accessor + ']';
+    }
+};
+
+template <long VAL>
+struct make_expression_code<symbolic_constant<VAL> >
+{
+    static const std::string value(std::string const & loop_accessor)
+    {
+        return to_string(VAL);
     }
 };
 
@@ -122,13 +134,12 @@ struct make_expression_code< NullType >
     }
 };
 
-template<class T, std::string (*U)()>
-struct make_expression_code< elementwise_modifier_impl<T, U> >
+template<class T>
+struct make_expression_code< elementwise_modifier<T> >
 {
-    typedef elementwise_modifier_impl<T, U> EW_M;
     static const std::string value ( std::string const & loop_accessor)
     {
-        return EW_M::modify(make_expression_code<T>::value(loop_accessor));
+        return elementwise_modifier<T>::modify(make_expression_code<typename T::PRIOR_TYPE>::value(loop_accessor));
     }
 };
 
@@ -204,6 +215,10 @@ struct make_expression_code< compound_node<LHS,prod_type,RHS> >
 };
 
 
+
+/** @brief Functor to make code from a token
+    @tparam TOKEN The token to make the code for
+*/
 template <class TOKEN>
 struct make_code;
 
@@ -335,8 +350,8 @@ struct make_code<MatVecToken<T,OP,Assigned> >
 {
 private:
 
-      typedef typename tree_utils::remove_if<T,is_symbolic_vector,false >::Result Products;
-    typedef typename tree_utils::remove_if<T,is_product_leaf,false >::Result Vectors;
+      typedef typename tree_utils::remove_if<T,result_of::is_symbolic_vector,false >::Result Products;
+    typedef typename tree_utils::remove_if<T,result_of::is_product_leaf,false >::Result Vectors;
 
 //    template<class U>
 //    struct fill_dot_prod
@@ -438,8 +453,8 @@ public:
     {
         std::string res;
         VIENNACL_STATIC_ASSERT(Alignment==1,AlignmentNotSupported);
-        typedef typename tree_utils::extract_if<Products,is_symbolic_matrix>::Result::Head FirstMatrix;
-        if (is_row_major<FirstMatrix>::value){
+        typedef typename tree_utils::extract_if<Products,result_of::is_symbolic_matrix>::Result::Head FirstMatrix;
+        if (result_of::is_row_major<FirstMatrix>::value){
            res += "{\n";
            res += "   unsigned int row_gid = get_global_id(0)/get_local_size(0);\n";
            res += "   unsigned int col_gid = get_global_id(0)%get_local_size(0);\n";
@@ -455,7 +470,7 @@ public:
            res += "           if(lid < stride) shared_memory_ptr[lid]+=shared_memory_ptr[lid+stride];\n";
            res += "       }\n";
            res += "       if(lid==0) " + Assigned::name()+ "[row]" + OP::expression_string() + " shared_memory_ptr[0] ";
-           if(!is_null_type<Vectors>::value) res+= " + " + make_expression_code<Vectors>::value("row");
+           if(!result_of::is_null_type<Vectors>::value) res+= " + " + make_expression_code<Vectors>::value("row");
            res+=";\n";
            res += "   }\n";
            res += "}\n";
@@ -483,8 +498,8 @@ private:
     }
 
 
-    typedef typename tree_utils::remove_if<T, is_product_leaf>::Result                           SCALAR_EXPR;
-    typedef typename tree_utils::extract_if<T,is_product_leaf>::Result::Head                     ARG;
+    typedef typename tree_utils::remove_if<T, result_of::is_product_leaf>::Result                           SCALAR_EXPR;
+    typedef typename tree_utils::extract_if<T,result_of::is_product_leaf>::Result::Head                     ARG;
     typedef typename ARG::LHS                                   LHS;
     typedef typename ARG::RHS                                   RHS;
     typedef typename result_of::expression_type<LHS>::Result    MatExpr;
@@ -509,25 +524,25 @@ public:
             res += "0,";
         res += "0};\n" ;
 
-        if (is_row_major<LHS>::value && is_transposed<LHS>::value)
+        if (result_of::is_row_major<LHS>::value && result_of::is_transposed<LHS>::value)
         {
             res += "  size_t aBegin = (row_block_id * " + to_string(block_size) + " * " + LHS::col_inc_name() + " + " + LHS::col_start_name() + ") + " + LHS::row_start_name() + " * " + LHS::internal_size2_name()  + ";\n";
             res += "  size_t aStep = " + to_string(block_size) + " * " + LHS::internal_size2_name()  + " * " + LHS::row_inc_name() + ";\n";
             res += "  size_t aEnd = aBegin + " + LHS::internal_size2_name()  + " * " + LHS::row_inc_name() + " * " + LHS::size1_name() + ";\n";
         }
-        else if (is_row_major<LHS>::value && !is_transposed<LHS>::value)
+        else if (result_of::is_row_major<LHS>::value && !result_of::is_transposed<LHS>::value)
         {
             res += "  size_t aBegin = (row_block_id * " + to_string(block_size) + " * " + LHS::row_inc_name() + " + " + LHS::row_start_name() + ") * " + LHS::internal_size2_name()  + " + " + LHS::col_start_name() + ";\n";
             res += "  size_t aStep = " + to_string(block_size) + " * " + LHS::col_inc_name() + ";\n";
             res += "  size_t aEnd = aBegin + " + LHS::col_inc_name() + " * " + LHS::size2_name() + ";\n";
         }
-        else if (!is_row_major<LHS>::value && is_transposed<LHS>::value)
+        else if (!result_of::is_row_major<LHS>::value && result_of::is_transposed<LHS>::value)
         {
             res += "  size_t aBegin = (row_block_id * " + to_string(block_size) + " * " + LHS::col_inc_name() + " + " + LHS::col_start_name() + ") * " + LHS::internal_size1_name()  + " + " + LHS::row_start_name() + ";\n";
             res += "  size_t aStep = " + to_string(block_size) + " * " + LHS::row_inc_name() + ";\n";
             res += "  size_t aEnd = aBegin + " + LHS::row_inc_name() + " * " + LHS::size1_name() + ";\n";
         }
-        else if (!is_row_major<LHS>::value && !is_transposed<LHS>::value)
+        else if (!result_of::is_row_major<LHS>::value && !result_of::is_transposed<LHS>::value)
         {
             res += "  size_t aBegin = (row_block_id * " + to_string(block_size) + " * " + LHS::row_inc_name() + " + " + LHS::row_start_name() + ") + " + LHS::col_start_name() + " * " + LHS::internal_size1_name()  + ";\n";
             res += "  size_t aStep = " + to_string(block_size) + " * " + LHS::internal_size1_name()  + " * " + LHS::col_inc_name() + ";\n";
@@ -535,22 +550,22 @@ public:
         }
 
 
-        if (is_row_major<RHS>::value && is_transposed<RHS>::value)
+        if (result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
         {
             res += "  size_t bBegin = (col_block_id * " + to_string(block_size * vector_size) + " * " + RHS::row_inc_name() + " + " + RHS::row_start_name() + ") * " + RHS::internal_size2_name()  + " + " + RHS::col_start_name() + ";\n";
             res += "  size_t bStep = " + to_string(block_size) + " * " + RHS::col_inc_name() + ";\n";
         }
-        else if (is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
         {
             res += "  size_t bBegin = (col_block_id * " + to_string(block_size * vector_size) + " * " + RHS::col_inc_name() + " + " + RHS::col_start_name() + ") + " + RHS::row_start_name() + " * " + RHS::internal_size2_name()  + ";\n";
             res += "  size_t bStep = " + to_string(block_size) + " * " + RHS::row_inc_name() + " * " + RHS::internal_size2_name()  + ";\n";
         }
-        else if (!is_row_major<RHS>::value && is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
         {
             res += "  size_t bBegin = (col_block_id * " + to_string(block_size * vector_size) + " * " + RHS::row_inc_name() + " + " + RHS::row_start_name() + ") + " + RHS::col_start_name() + " * " + RHS::internal_size1_name()  + ";\n";
             res += "  size_t bStep = " + to_string(block_size) + " * " + RHS::col_inc_name() + " * " + RHS::internal_size1_name()  + ";\n";
         }
-        else if (!is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
         {
             res += "  size_t bBegin = (col_block_id * " + to_string(block_size * vector_size) + " * " + RHS::col_inc_name() + " + " + RHS::col_start_name() + ") * " + RHS::internal_size1_name()  + " + " + RHS::row_start_name() + ";\n";
             res += "  size_t bStep = " + to_string(block_size) + " * " + RHS::row_inc_name() + ";\n";
@@ -560,13 +575,13 @@ public:
 
         // copy blocks of op(A) to shared memory (op(A) is column-major in shared memory then)
         res += "    for(size_t i = 0; i < " + to_string(vector_size) + "; i++)  \n";
-        if (is_row_major<LHS>::value && is_transposed<LHS>::value)
+        if (result_of::is_row_major<LHS>::value && result_of::is_transposed<LHS>::value)
             res += "      As[ (i*" + to_string(vector_size) + " + row_thread_id) + " + to_string(block_size) + " * col_thread_id] = (" + make_expression_code<LHS>::value("a + " + LHS::col_inc_name() + " * (i * " + to_string(vector_size) + " + row_thread_id) + " + LHS::internal_size2_name()  + " * " + LHS::row_inc_name() + " * col_thread_id") + ");\n";
-        else if (is_row_major<LHS>::value && !is_transposed<LHS>::value)
+        else if (result_of::is_row_major<LHS>::value && !result_of::is_transposed<LHS>::value)
             res += "      As[ (i*" + to_string(vector_size) + " + row_thread_id) + " + to_string(block_size) + " * col_thread_id] = (" + make_expression_code<LHS>::value("a + " + LHS::internal_size2_name()  + " * " + LHS::row_inc_name() + " * (i * " + to_string(vector_size) + " + row_thread_id) + " + LHS::col_inc_name() + " * col_thread_id") + ");\n";
-        else if (!is_row_major<LHS>::value && is_transposed<LHS>::value)
+        else if (!result_of::is_row_major<LHS>::value && result_of::is_transposed<LHS>::value)
             res += "      As[ (i*" + to_string(vector_size) + " + row_thread_id) + " + to_string(block_size) + " * col_thread_id] = (" + make_expression_code<LHS>::value("a + " + LHS::internal_size1_name()  + " * " + LHS::col_inc_name() + " * (i * " + to_string(vector_size) + " + row_thread_id) + " + LHS::row_inc_name() + " * col_thread_id") + ");\n";
-        else if (!is_row_major<LHS>::value && !is_transposed<LHS>::value)
+        else if (!result_of::is_row_major<LHS>::value && !result_of::is_transposed<LHS>::value)
             res += "      As[ (i*" + to_string(vector_size) + " + row_thread_id) + " + to_string(block_size) + " * col_thread_id] = (" + make_expression_code<LHS>::value("a + " + LHS::row_inc_name() + " * (i * " + to_string(vector_size) + " + row_thread_id) + " + LHS::internal_size1_name()  + " * " + LHS::col_inc_name() + " * col_thread_id") + ");\n";
         res += "\n";
         res += "    barrier(CLK_LOCAL_MEM_FENCE); \n";
@@ -574,25 +589,25 @@ public:
         // initialize memory pointers
         res += "\n";
         res += "    __local  float *ap = As; \n";
-        if (is_row_major<RHS>::value && is_transposed<RHS>::value)
+        if (result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
             res += "    __global float *bp = " + RHS::name() + " + (b + (" + to_string(block_size) + " * row_thread_id + col_thread_id) * " + RHS::row_inc_name() + " * " + RHS::internal_size2_name()  + "); \n";
-        else if (is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
             res += "    __global float *bp = " + RHS::name() + " + (b + (" + to_string(block_size) + " * row_thread_id + col_thread_id) * " + RHS::col_inc_name() + "); \n";
-        else if (!is_row_major<RHS>::value && is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
             res += "    __global float *bp = " + RHS::name() + " + (b + (" + to_string(block_size) + " * row_thread_id + col_thread_id) * " + RHS::row_inc_name() + "); \n";
-        else if (!is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
             res += "    __global float *bp = " + RHS::name() + " + (b + (" + to_string(block_size) + " * row_thread_id + col_thread_id) * " + RHS::col_inc_name() + " * " + RHS::internal_size1_name()  + "); \n";
         res += "\n";
 
         std::string rhs_expr;
 
-        if (is_row_major<RHS>::value && is_transposed<RHS>::value)
+        if (result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
             rhs_expr = make_expression_code<RHS>::value("i");
-        else if (is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
             rhs_expr = make_expression_code<RHS>::value("i * " + RHS::internal_size2_name());
-        else if (!is_row_major<RHS>::value && is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && result_of::is_transposed<RHS>::value)
             rhs_expr = make_expression_code<RHS>::value("i * " + RHS::internal_size1_name());
-        else if (!is_row_major<RHS>::value && !is_transposed<RHS>::value)
+        else if (!result_of::is_row_major<RHS>::value && !result_of::is_transposed<RHS>::value)
             rhs_expr = make_expression_code<RHS>::value("i");
 
 
@@ -613,7 +628,7 @@ public:
         res += "  } \n";
 
         // write to C
-        if (is_row_major<Assigned>::value)
+        if (result_of::is_row_major<Assigned>::value)
         {
             res += "  int c = " + Assigned::internal_size2_name()  + " * (" + Assigned::row_inc_name() + " * " + to_string(block_size) + " * row_block_id + " + Assigned::row_start_name() + ") + "  //block row index
                     + to_string(vector_size * block_size) + " * " + Assigned::col_inc_name() + " * col_block_id + " + Assigned::col_start_name() + " \n";  //block column index
@@ -629,9 +644,9 @@ public:
         res += "  for(size_t i = 0; i < " + to_string(block_size) + "; i++) { \n";
 
 
-        if (is_row_major<Assigned>::value)
+        if (result_of::is_row_major<Assigned>::value)
         {
-            if(is_null_type<SCALAR_EXPR>::value){
+            if(result_of::is_null_type<SCALAR_EXPR>::value){
                 res += "    " + Assigned::name() + "[c]" + OP::expression_string() + "cv[i]; \n";
                 res += "      c += " + Assigned::internal_size2_name()  + " * " + Assigned::row_inc_name() + "; \n";
             }
@@ -642,7 +657,7 @@ public:
         }
         else
         {
-            if(is_null_type<SCALAR_EXPR>::value){
+            if(result_of::is_null_type<SCALAR_EXPR>::value){
                 res += "    " + Assigned::name() + "[c]" + OP::expression_string() + "cv[i]; \n";
                 res += "      c += " + Assigned::row_inc_name() + "; \n";
             }

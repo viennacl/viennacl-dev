@@ -100,6 +100,19 @@ struct prod_type
   static const std::string name() { return "p"; }
 };
 
+struct elementwise_prod_type
+{
+    static const std::string expression_string() { return "*"; }
+    static const std::string name() { return "ewp"; }
+};
+
+struct elementwise_div_type
+{
+    static const std::string expression_string() { return "/"; }
+    static const std::string name() { return "ewd"; }
+};
+
+
 template<class T>
 struct make_inplace
 {
@@ -138,28 +151,73 @@ struct CHECK_ALIGNMENT_COMPATIBILITY
     VIENNACL_STATIC_ASSERT(LHS_TYPE::Alignment == RHS_TYPE::Alignment,AlignmentIncompatible);
 };
 
+template<class LHS, long val>
+struct CHECK_ALIGNMENT_COMPATIBILITY<LHS, symbolic_constant<val> >{ };
+
+template<class RHS, long val>
+struct CHECK_ALIGNMENT_COMPATIBILITY< symbolic_constant<val>, RHS >{ };
+
+
+/** @brief Unary minus operator */
+template<class T>
+typename enable_if_c<result_of::is_symbolic_expression<T>::value,compound_node<NullType,sub_type,T> >::type
+operator -(T const & expr)
+{
+    return compound_node<NullType,sub_type,T>();
+}
 
 /** @brief Scalar multiplication operator */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if_c<is_scalar_expression<LHS_TYPE>::value || is_scalar_expression<RHS_TYPE>::value,
+typename enable_if_c<result_of::is_scalar_expression<LHS_TYPE>::value || result_of::is_scalar_expression<RHS_TYPE>::value,
                      compound_node<LHS_TYPE,scal_mul_type,RHS_TYPE> >::type
 operator* ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
   return compound_node<LHS_TYPE, scal_mul_type,RHS_TYPE> ();
 }
 
+
+/** @brief Elementwise Scalar multiplication operators with a constant */
+template<long VAL, class RHS_TYPE>
+compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>
+operator* ( symbolic_constant<VAL> const & lhs, RHS_TYPE const & rhs )
+{
+    return compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>();
+}
+
+template<class LHS_TYPE, long VAL>
+compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >
+operator* ( LHS_TYPE const & lhs, symbolic_constant<VAL> const & rhs )
+{
+    return compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >();
+}
+
 /** @brief Scalar division operator */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if_c< is_scalar_expression<RHS_TYPE>::value,
+typename enable_if_c< result_of::is_scalar_expression<RHS_TYPE>::value,
                       compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> > ::type
 operator/ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
   return compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> ();
 }
 
+/** @brief Elementwise Scalar division operators with a constant */
+template<long VAL, class RHS_TYPE>
+compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>
+operator/ ( symbolic_constant<VAL> const & lhs, RHS_TYPE const & rhs )
+{
+    return compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>();
+}
+
+template<class LHS_TYPE, long VAL>
+compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >
+operator/ ( LHS_TYPE const & lhs, symbolic_constant<VAL> const & rhs )
+{
+    return compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >();
+}
+
 /** @brief Addition operator on 2 elements of the same type */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if< is_same_expression_type<LHS_TYPE, RHS_TYPE>,
+typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
                     compound_node<LHS_TYPE, add_type, RHS_TYPE> >::type
 operator+ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -169,7 +227,7 @@ operator+ ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 
 /** @brief Substraction operator on 2 elements of the same type */
 template<class LHS_TYPE, class RHS_TYPE>
-typename enable_if< is_same_expression_type<LHS_TYPE, RHS_TYPE>,
+typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
                     compound_node<LHS_TYPE, sub_type, RHS_TYPE> >::type
 operator- ( LHS_TYPE const & lhs, RHS_TYPE const & rhs )
 {
@@ -209,10 +267,23 @@ compound_node<LHS,prod_type,RHS> prod ( LHS vec_expr1,RHS vec_expr2 )
   return compound_node<LHS,prod_type,RHS>();
 }
 
+template<class LHS, class RHS>
+compound_node<LHS,elementwise_prod_type,RHS> element_prod(LHS expr1, RHS expr2){
+    CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
+    return compound_node<LHS,elementwise_prod_type,RHS>();
+}
+
+template<class LHS, class RHS>
+compound_node<LHS,elementwise_div_type,RHS> element_div(LHS expr1, RHS expr2){
+    CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
+    return compound_node<LHS,elementwise_div_type,RHS>();
+}
 
 /*
  * Traits
  */
+
+namespace result_of{
 
 template<class OP>
 struct is_assignment{
@@ -222,6 +293,7 @@ struct is_assignment{
         are_same_type<OP,inplace_scal_mul_type>::value ||
         are_same_type<OP,inplace_scal_div_type>::value};
 };
+
 
 template<class T>
 struct is_assignment_compound{
@@ -236,7 +308,7 @@ struct is_assignment_compound<compound_node<LHS,OP,RHS> >
 
 template<class OP>
 struct is_arithmetic_operator{
-  enum{ value = is_assignment<OP>::value ||
+  enum{ value = result_of::is_assignment<OP>::value ||
           are_same_type<OP,add_type>::value ||
           are_same_type<OP,sub_type>::value ||
           are_same_type<OP,scal_mul_type>::value ||
@@ -251,9 +323,10 @@ struct is_arithmetic_compound{
 template<class LHS, class OP, class RHS>
 struct is_arithmetic_compound<compound_node<LHS,OP,RHS> >
 {
-  enum { value = is_arithmetic_operator<OP>::value };
+  enum { value = result_of::is_arithmetic_operator<OP>::value };
 };
 
+}
 
 }
 
