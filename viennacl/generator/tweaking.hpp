@@ -8,7 +8,7 @@ namespace viennacl
   namespace generator
   {
 
-  static const symbolic_constant<1>  _1_ = symbolic_constant<1>();
+    static const symbolic_constant<1>  _1_ = symbolic_constant<1>();
     static const symbolic_constant<2>  _2_ = symbolic_constant<2>();
     static const symbolic_constant<3>  _3_ = symbolic_constant<3>();
     static const symbolic_constant<4>  _4_ = symbolic_constant<4>();
@@ -20,6 +20,20 @@ namespace viennacl
 
 
 
+
+    template<class T>
+    typename viennacl::enable_if<result_of::is_matrix_expression<T>::value, compound_node<T,prod_type,symbolic_constant<1> > >::type
+    sum(T t, symbolic_constant<1>)
+    {
+        return compound_node<T,prod_type,symbolic_constant<1> >();
+    }
+
+    template<class T>
+    typename viennacl::enable_if<result_of::is_vector_expression<T>::value, compound_node<T,inner_prod_type,symbolic_constant<1> > >::type
+    sum(T t)
+    {
+        return compound_node<T,inner_prod_type,symbolic_constant<1> >();
+    }
 
 
     template<class Bound_, class Operations_>

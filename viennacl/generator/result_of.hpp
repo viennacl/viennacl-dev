@@ -325,14 +325,23 @@ namespace viennacl
         }
       };
 
-      /*
-       * Compound Nodes - General case
-       */
+      template<class T>
+      struct constant_expression
+      {
+          static const long value = T::value;
+      };
+
       template <class T>
-      struct expression_type 
+      struct expression_type
       {
         typedef NullType Result;
       };
+
+
+
+      /*
+       * Compound Nodes - General case
+       */
 
       template <class LHS, class OP, class RHS>
       struct expression_type<compound_node<LHS,OP,RHS> >
@@ -465,6 +474,17 @@ namespace viennacl
         typedef vector_expression<compound_node<LHS,prod_type,RHS>, LHS_SIZE1_DESCRIPTOR > Result;
       };
 
+      template <class LHS, class LHS_SIZE1_DESCRIPTOR, class LHS_SIZE2_DESCRIPTOR,
+                class RHS>
+      struct expression_type<compound_node<matrix_expression<LHS, LHS_SIZE1_DESCRIPTOR, LHS_SIZE2_DESCRIPTOR>,
+                                           prod_type,
+                                           constant_expression<RHS> >
+                            >
+      {
+        typedef vector_expression<compound_node<LHS,prod_type,RHS>, LHS_SIZE1_DESCRIPTOR > Result;
+      };
+
+
       template <class T>
       struct expression_type<inner_prod_impl_t<T> >
       {
@@ -492,6 +512,17 @@ namespace viennacl
       {
         typedef scalar_expression<compound_node<LHS,inner_prod_type,RHS> > Result;
       };
+
+      template <class LHS, class LHS_SIZE_DESCRIPTOR,
+                class RHS>
+      struct expression_type< compound_node<vector_expression<LHS,LHS_SIZE_DESCRIPTOR>,
+                                            inner_prod_type,
+                                             constant_expression<RHS> >
+                            >
+      {
+        typedef scalar_expression<compound_node<LHS,inner_prod_type,RHS> > Result;
+      };
+
 
       template<class OP, class RHS>
       struct expression_type<compound_node<NullType,OP,RHS> >
@@ -531,6 +562,15 @@ namespace viennacl
       struct expression_type< scalar_expression<T> > 
       {
         typedef typename expression_type<T>::Result Result;
+      };
+
+      /*
+        * Symbolic Constant
+        */
+      template <long VALUE>
+      struct expression_type<symbolic_constant<VALUE> >
+      {
+        typedef constant_expression<symbolic_constant<VALUE> > Result;
       };
 
       /*
@@ -797,41 +837,50 @@ namespace result_of{
     };
 
 
-    template <class EXPR1, class EXPR2>
-    struct is_same_expression_type_impl
+    template <class T>
+    struct is_vector_expression_impl
     {
       enum { value = 0 };
     };
 
-    template <class EXPR1, class DESCRIPTOR1, class EXPR2, class DESCRIPTOR2>
-    struct is_same_expression_type_impl<result_of::vector_expression<EXPR1,DESCRIPTOR1>,
-                                        result_of::vector_expression<EXPR2,DESCRIPTOR2> >
+    template <class T, class SIZE_D>
+    struct is_vector_expression_impl<result_of::vector_expression<T,SIZE_D> >
     {
-        enum { value = 1 };
+      enum { value = 1};
     };
 
-    template <class EXPR1, class LHS_DESCRIPTOR1, class RHS_DESCRIPTOR1,
-              class EXPR2, class LHS_DESCRIPTOR2, class RHS_DESCRIPTOR2>
-    struct is_same_expression_type_impl<result_of::matrix_expression<EXPR1,LHS_DESCRIPTOR1,RHS_DESCRIPTOR1>,
-                                        result_of::matrix_expression<EXPR2,LHS_DESCRIPTOR2,RHS_DESCRIPTOR2> >
+    template <class T>
+    struct is_vector_expression
     {
-        enum { value = 1 };
+      enum { value = is_vector_expression_impl<typename result_of::expression_type<T>::Result >::value };
+    };
+
+    template <class T>
+    struct is_matrix_expression_impl
+    {
+      enum { value = 0 };
+    };
+
+    template <class T, class SIZE1_D,class SIZE2_D>
+    struct is_matrix_expression_impl<result_of::matrix_expression<T,SIZE1_D, SIZE2_D> >
+    {
+      enum { value = 1};
+    };
+
+    template <class T>
+    struct is_matrix_expression
+    {
+      enum { value = is_matrix_expression_impl<typename result_of::expression_type<T>::Result >::value };
     };
 
     template <class EXPR1, class EXPR2>
-    struct is_same_expression_type_impl<result_of::scalar_expression<EXPR1>,
-                                        result_of::scalar_expression<EXPR2> >
-    {
-      enum { value = 1 };
-    };
-
-    template<class EXPR1, class EXPR2>
     struct is_same_expression_type
     {
-      enum { value = is_same_expression_type_impl<typename result_of::expression_type<EXPR1>::Result,
-                                                  typename result_of::expression_type<EXPR2>::Result>::value
-           };
+      enum { value = (is_vector_expression<EXPR1>::value && is_vector_expression<EXPR2>::value)
+                    || (is_matrix_expression<EXPR1>::value && is_matrix_expression<EXPR2>::value)
+                    || (is_scalar_expression<EXPR1>::value && is_scalar_expression<EXPR2>::value) };
     };
+
 
     /** @brief Special case: symbolic constant for elementwise can be used as every type. */
     template<class Expr, long VAL>

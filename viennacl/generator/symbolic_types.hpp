@@ -45,6 +45,9 @@ namespace viennacl
   public:
       static const long value = VAL;
       typedef long ScalarType;
+      static const std::string name(){
+          return "symcst"+to_string(value);
+      }
   };
 
   /**
@@ -273,6 +276,8 @@ namespace viennacl
     };
 
 
+
+
     /**
     * @brief Symbolic matrix type
     *
@@ -434,7 +439,7 @@ namespace viennacl
         typedef LHS_ LHS;
         typedef RHS_ RHS;
         typedef inner_prod_type OP;
-        typedef typename result_of::expression_type<RHS>::Result IntermediateType;  //Note: Visual Studio does not allow to combine this line with the next one directly.
+        typedef typename result_of::expression_type<LHS>::Result IntermediateType;  //Note: Visual Studio does not allow to combine this line with the next one directly.
         typedef typename IntermediateType::ScalarType ScalarType;
         static const unsigned int Alignment = IntermediateType::Alignment;
 
@@ -463,7 +468,7 @@ namespace viennacl
         static const std::string scalar_name()
         {
           return name() +"_s";
-        };
+        }
 
     };
 
@@ -483,9 +488,9 @@ namespace viennacl
         typedef prod_type OP;
         enum { id = LHS::id };
 
-        typedef typename result_of::expression_type<RHS>::Result IntermediateType;    //Note: Visual Studio does not allow to combine this line with the next one directly.
+        typedef typename result_of::expression_type<LHS>::Result IntermediateType;    //Note: Visual Studio does not allow to combine this line with the next one directly.
         typedef typename IntermediateType::ScalarType ScalarType;
-        static const unsigned int Alignment = result_of::expression_type<RHS>::Result::Alignment;
+        static const unsigned int Alignment = result_of::expression_type<LHS>::Result::Alignment;
 
         static const std::string name()
         {

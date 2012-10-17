@@ -206,6 +206,15 @@ struct dot_product
     }
 };
 
+template<class LHS>
+struct dot_product<LHS, symbolic_constant<1> >
+{
+    static const std::string value(std::string lhs_loop_id,std::string rhs_loop_id)
+    {
+        return make_expression_code<LHS>::value(lhs_loop_id);
+    }
+};
+
 template<class LHS, class RHS>
 struct make_expression_code< compound_node<LHS,prod_type,RHS> >
 {

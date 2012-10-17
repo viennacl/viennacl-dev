@@ -250,13 +250,10 @@ struct make_inner_prod<result_of::vector_expression<LHS, LHS_SIZE_DESCRIPTOR>,
 
 /** @brief Inner product operator */
 template<class LHS, class RHS>
-compound_node<LHS,inner_prod_type,RHS> inner_prod ( LHS vec_expr1,RHS vec_expr2 )
+typename enable_if<result_of::is_same_expression_type<LHS,RHS>,compound_node<LHS,inner_prod_type,RHS> >::type inner_prod ( LHS vec_expr1,RHS vec_expr2 )
 {
   CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
-  typedef typename result_of::expression_type<LHS>::Result LHS_TYPE;
-  typedef typename result_of::expression_type<RHS>::Result RHS_TYPE;
-  typename make_inner_prod<LHS_TYPE,RHS_TYPE>::Result result;
-  return result;
+  return compound_node<LHS,inner_prod_type,RHS>();
 }
 
 /** @brief Product operator */
