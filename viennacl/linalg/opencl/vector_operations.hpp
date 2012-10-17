@@ -311,7 +311,6 @@ namespace viennacl
                                 )
                               );        
 
-        std::cout << "Vector to sum: " << temp << std::endl;
         viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);

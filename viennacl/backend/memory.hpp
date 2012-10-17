@@ -41,6 +41,7 @@ namespace viennacl
 #endif
     };
     
+    inline memory_types default_memory_type() { return OPENCL_MEMORY; }
     
     class mem_handle
     {
@@ -53,8 +54,8 @@ namespace viennacl
         viennacl::ocl::handle<cl_mem>       & opencl_handle() { return opencl_handle_; }
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
         
-        int  get_active_handle_id() const { return active_handle_; }
-        void switch_active_handle_id(int new_id)
+        memory_types get_active_handle_id() const { return active_handle_; }
+        void switch_active_handle_id(memory_types new_id)
         {
           if (new_id != active_handle_)
           {
@@ -74,6 +75,8 @@ namespace viennacl
           {
             case OPENCL_MEMORY:
               return opencl_handle_.get() == other.opencl_handle_.get();
+            default:
+              return false;
           }
           
           return false;
@@ -84,7 +87,7 @@ namespace viennacl
         void swap(mem_handle & other)
         {
           // swap handle type:
-          int active_handle_tmp = other.active_handle_;
+          memory_types active_handle_tmp = other.active_handle_;
           other.active_handle_ = active_handle_;
           active_handle_ = active_handle_tmp;
           
@@ -98,7 +101,7 @@ namespace viennacl
         }
         
       private:
-        int active_handle_;
+        memory_types active_handle_;
         void * ram_handle_;
 //#ifdef VIENNACL_WITH_OPENCL
         viennacl::ocl::handle<cl_mem> opencl_handle_;
@@ -125,13 +128,16 @@ namespace viennacl
 
     inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, void * host_ptr = NULL)
     {
-      switch(handle.get_active_handle_id())
+      if (size_in_bytes > 0)
       {
-        case OPENCL_MEMORY:
-          handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
-          break;
-        default:
-          throw "unknown memory handle!";
+        switch(handle.get_active_handle_id())
+        {
+          case OPENCL_MEMORY:
+            handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
+            break;
+          default:
+            throw "unknown memory handle!";
+        }
       }
     }
     
@@ -143,43 +149,52 @@ namespace viennacl
     {
       assert( (src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id()) && "Different memory locations for source and destination! Not supported!");
       
-      switch(src_buffer.get_active_handle_id())
+      if (bytes_to_copy > 0)
       {
-        case OPENCL_MEMORY:
-          opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
-          break;
-        default:
-          throw "unknown memory handle!";
+        switch(src_buffer.get_active_handle_id())
+        {
+          case OPENCL_MEMORY:
+            opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
+            break;
+          default:
+            throw "unknown memory handle!";
+        }
       }
     }
     
     inline void memory_write(mem_handle & dst_buffer,
                              std::size_t dst_offset,
-                             std::size_t bytes_to_copy,
+                             std::size_t bytes_to_write,
                              const void * ptr)
     {
-      switch(dst_buffer.get_active_handle_id())
+      if (bytes_to_write > 0)
       {
-        case OPENCL_MEMORY:
-          opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_copy, ptr);
-          break;
-        default:
-          throw "unknown memory handle!";
+        switch(dst_buffer.get_active_handle_id())
+        {
+          case OPENCL_MEMORY:
+            opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
+            break;
+          default:
+            throw "unknown memory handle!";
+        }
       }
     }
     
     inline void memory_read(mem_handle const & src_buffer,
                             std::size_t src_offset,
-                            std::size_t bytes_to_copy,
+                            std::size_t bytes_to_read,
                             void * ptr)
     {
-      switch(src_buffer.get_active_handle_id())
+      if (bytes_to_read > 0)
       {
-        case OPENCL_MEMORY:
-          opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_copy, ptr);
-          break;
-        default:
-          throw "unknown memory handle!";
+        switch(src_buffer.get_active_handle_id())
+        {
+          case OPENCL_MEMORY:
+            opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
+            break;
+          default:
+            throw "unknown memory handle!";
+        }
       }
     }
     

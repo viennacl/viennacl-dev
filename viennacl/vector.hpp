@@ -258,7 +258,7 @@ namespace viennacl
 
       /** @brief Default constructor in order to be compatible with various containers.
       */
-      vector() : size_(0) { viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::init();  }
+      vector() : size_(0) { /* Note: One must not call ::init() here because the vector might have been created globally before the backend has become available */ }
 
       /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT')
       *
@@ -292,6 +292,8 @@ namespace viennacl
       */
       explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
       {
+        viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
+        
         elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         elements_.opencl_handle() = existing_mem;
         elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
@@ -300,6 +302,8 @@ namespace viennacl
       template <typename LHS, typename RHS, typename OP>
       vector(vector_expression<LHS, RHS, OP> const & other) : size_(other.size())
       {
+        viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
+        
         elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*other.size());
         *this = other;
@@ -331,15 +335,20 @@ namespace viennacl
       */
       self_type & operator=(const self_type & vec)
       {
-        assert(vec.size() == size() && "Incompatible vector sizes!");
-        //resize(vec.size());
+        assert( ( (vec.size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+
         if (size() != 0)
           viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
         else
         {
-          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-          viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
+          if (vec.size() > 0) //Note: Corner case of vec.size() == 0 leads to no effect of operator=()
+          {
+            size_ = vec.size();
+            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
+          }
         }
         
         return *this;
@@ -355,12 +364,18 @@ namespace viennacl
                                     self_type & >::type
       operator = (const vector_expression< const V1, const S1, OP> & proxy)
       {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::mult(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::av(*this,
-                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), false);
+        assert( ( (proxy.lhs().size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (size() == 0)
+        {
+          size_ = proxy.lhs().size();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        } 
+
+        if (size() > 0)
+          viennacl::linalg::av(*this,
+                              proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), false);
         return *this;
       }
 
@@ -378,13 +393,19 @@ namespace viennacl
                                            const V2,
                                            OP> & proxy)
       {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv(*this, 
-                               proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
-                               proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false));
+        assert( ( (proxy.lhs().size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (size() == 0)
+        {
+          size_ = proxy.lhs().size();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        } 
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
+                                proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false));
         return *this;
       }
       
@@ -403,16 +424,24 @@ namespace viennacl
                                            const vector_expression<const V2, const S2, OP2>,
                                            OP> & proxy)
       {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv(*this, 
-                               proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
-                               proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        assert( ( (proxy.lhs().size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (size() == 0)
+        {
+          size_ = proxy.lhs().size();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        } 
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv(*this, 
+                                proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
+                                proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        }
         return *this;
       }
 
@@ -431,13 +460,19 @@ namespace viennacl
                                            const V2,
                                            OP> & proxy)
       {
-        assert(proxy.size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv(*this, 
-                               proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                               proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false));
+        assert( ( (proxy.size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (size() == 0)
+        {
+          size_ = proxy.lhs().size();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        } 
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
+                                proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false));
         return *this;
       }
       
@@ -456,16 +491,24 @@ namespace viennacl
                                            const vector_expression<const V2, const S2, OP2>,
                                            OP> & proxy)
       {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv(*this, 
-                               proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                               proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        assert( ( (proxy.lhs().size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (size() == 0)
+        {
+          size_ = proxy.lhs().size();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        } 
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv(*this, 
+                                proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
+                                proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        }
         return *this;
       }
       
@@ -881,7 +924,10 @@ namespace viennacl
       */
       void resize(size_type new_size, bool preserve = true)
       {
-        assert(new_size > 0);
+        assert(new_size > 0 && "Positive size required when resizing vector!");
+        
+        if (size() == 0)  // Required for some corner cases when no vector with nonzero size has been created yet.
+          viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
         
         if (new_size != size_)
         {
@@ -911,6 +957,8 @@ namespace viennacl
       */
       entry_proxy<SCALARTYPE> operator()(size_type index)
       {
+        assert( (size() > 0)  && "Cannot apply operator() to vector of size zero!");
+        
         return entry_proxy<SCALARTYPE>(index, elements_);
       }
 
@@ -918,32 +966,38 @@ namespace viennacl
       */
       entry_proxy<SCALARTYPE> operator[](size_type index)
       {
+        assert( (size() > 0)  && "Cannot apply operator() to vector of size zero!");
+        
         return entry_proxy<SCALARTYPE>(index, elements_);
       }
 
 
       /** @brief Read access to a single element of the vector
       */
-      scalar<SCALARTYPE> operator()(size_type index) const
+      const entry_proxy<SCALARTYPE> operator()(size_type index) const
       {
-        scalar<SCALARTYPE> tmp;
-        viennacl::backend::memory_copy(elements_, tmp.handle(), sizeof(SCALARTYPE)*index, 0, sizeof(SCALARTYPE));
-        return tmp;
+        assert( (size() > 0)  && "Cannot apply operator() to vector of size zero!");
+        
+        return entry_proxy<SCALARTYPE>(index, elements_);
       }
       
       /** @brief Read access to a single element of the vector
       */
-      scalar<SCALARTYPE> operator[](size_type index) const
+      const entry_proxy<SCALARTYPE> operator[](size_type index) const
       {
-        return operator()(index);
+        assert( (size() > 0)  && "Cannot apply operator[] to vector of size zero!");
+        
+        return entry_proxy<SCALARTYPE>(index, elements_);
       }
       
       self_type & operator += (const self_type & vec)  //Note: this overload enables implicit conversions for operator+=
       {
-        //viennacl::linalg::inplace_sub(*this, vec);
-        viennacl::linalg::avbv(*this, 
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               vec,   SCALARTYPE(1.0), 1, false, false);
+        assert(vec.size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                 *this, SCALARTYPE(1.0), 1, false, false,
+                                 vec,   SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
       
@@ -954,9 +1008,12 @@ namespace viennacl
                                     self_type &>::type
       operator += (const V1 & vec)
       {
-        viennacl::linalg::avbv(*this, 
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               vec,   SCALARTYPE(1.0), 1, false, false);
+        assert(vec.size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                 *this, SCALARTYPE(1.0), 1, false, false,
+                                 vec,   SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
       
@@ -969,10 +1026,12 @@ namespace viennacl
                                             const S1,
                                             OP> & proxy)
       {
-        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
-        viennacl::linalg::avbv(*this, 
-                               *this,   SCALARTYPE(1.0), 1, false,                                             false,
-                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
+        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                 *this,   SCALARTYPE(1.0), 1, false,                                             false,
+                                 proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
 
@@ -991,12 +1050,11 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
-                                 proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false) );
+
+        if (size() > 0)
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
+                                   proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false) );
         return *this;
       }
       
@@ -1016,15 +1074,16 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
-                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
+        }
         return *this;
       }
 
@@ -1044,12 +1103,11 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                 proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false) );
+
+        if (size() > 0)
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
+                                   proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false) );
         return *this;
       }
       
@@ -1069,15 +1127,16 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
+        }
         return *this;
       }
       
@@ -1086,10 +1145,12 @@ namespace viennacl
 
       self_type & operator -= (const self_type & vec)  //Note: this overload enables implicit conversions for operator-=
       {
-        //viennacl::linalg::inplace_sub(*this, vec);
-        viennacl::linalg::avbv(*this, 
-                               *this, SCALARTYPE(1.0),  1, false, false,
-                               vec,   SCALARTYPE(-1.0), 1, false, false);
+        assert(vec.size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                 *this, SCALARTYPE(1.0),  1, false, false,
+                                 vec,   SCALARTYPE(-1.0), 1, false, false);
         return *this;
       }
       
@@ -1099,10 +1160,12 @@ namespace viennacl
                                     self_type &>::type
       operator -= (const V1 & vec)
       {
-        //viennacl::linalg::inplace_sub(*this, vec);
-        viennacl::linalg::avbv(*this, 
-                               *this, SCALARTYPE(1.0),  1, false, false,
-                               vec,   SCALARTYPE(-1.0), 1, false, false);
+        assert(vec.size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                *this, SCALARTYPE(1.0),  1, false, false,
+                                vec,   SCALARTYPE(-1.0), 1, false, false);
         return *this;
       }
 
@@ -1116,10 +1179,12 @@ namespace viennacl
                                             const S1,
                                             OP> & proxy)
       {
-        //viennacl::linalg::inplace_mul_add(*this, proxy.lhs(), proxy.rhs());
-        viennacl::linalg::avbv(*this, 
-                               *this,   SCALARTYPE(1.0), 1, false,                                             false,
-                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true));
+        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
+
+        if (size() > 0)
+          viennacl::linalg::avbv(*this, 
+                                *this,   SCALARTYPE(1.0), 1, false,                                             false,
+                                proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true));
         return *this;
       }
       
@@ -1137,12 +1202,11 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs(), SCALARTYPE(1.0), 1, false, true,
-                                 proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? false : true) );
+
+        if (size() > 0)
+          viennacl::linalg::avbv_v(*this, 
+                                  proxy.lhs(), SCALARTYPE(1.0), 1, false, true,
+                                  proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? false : true) );
         return *this;
       }
       
@@ -1162,15 +1226,16 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , true,
-                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        }
         return *this;
       }
 
@@ -1190,12 +1255,11 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                 proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? false : true) );
+
+        if (size() > 0)
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
+                                   proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? false : true) );
         return *this;
       }
       
@@ -1215,15 +1279,16 @@ namespace viennacl
                                            OP> & proxy)
       {
         assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-        //resize(proxy.lhs().size());
-        //std::cout << "vector::operator=(vec_times_scalar_proxy)" << std::endl; 
-        //viennacl::linalg::add(proxy.lhs(), proxy.rhs(), *this);
-        bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
-        if (viennacl::is_flip_sign_scalar<S2>::value)
-          flip_sign_2 = !flip_sign_2;
-        viennacl::linalg::avbv_v(*this, 
-                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+
+        if (size() > 0)
+        {
+          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
+          if (viennacl::is_flip_sign_scalar<S2>::value)
+            flip_sign_2 = !flip_sign_2;
+          viennacl::linalg::avbv_v(*this, 
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
+        }
         return *this;
       }
       
@@ -1236,9 +1301,9 @@ namespace viennacl
       */
       self_type & operator *= (SCALARTYPE val)
       {
-        //viennacl::linalg::inplace_mult(*this, val);
-        viennacl::linalg::av(*this,
-                             *this, val, 1, false, false);
+        if (size() > 0)
+          viennacl::linalg::av(*this,
+                              *this, val, 1, false, false);
         return *this;
       }
 
@@ -1250,9 +1315,9 @@ namespace viennacl
                                   >::type
       operator *= (S1 const & gpu_val)
       {
-        //viennacl::linalg::inplace_mult(*this, gpu_val);
-        viennacl::linalg::av(*this,
-                             *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+        if (size() > 0)
+          viennacl::linalg::av(*this,
+                              *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
 
@@ -1260,9 +1325,9 @@ namespace viennacl
       */
       self_type & operator /= (SCALARTYPE val)
       {
-        //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
-        viennacl::linalg::av(*this,
-                             *this, val, 1, true, false);
+        if (size() > 0)
+          viennacl::linalg::av(*this,
+                              *this, val, 1, true, false);
         return *this;
       }
       
@@ -1274,9 +1339,9 @@ namespace viennacl
                                   >::type
       operator /= (S1 const & gpu_val)
       {
-        //viennacl::linalg::inplace_divide(*this, gpu_val);
-        viennacl::linalg::av(*this,
-                             *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+        if (size() > 0)
+          viennacl::linalg::av(*this,
+                               *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
         return *this;
       }
       
@@ -1836,7 +1901,7 @@ namespace viennacl
     operator + (vector_expression< LHS1, RHS1, OP1> const & proxy1,
                 vector_expression< LHS2, RHS2, OP2> const & proxy2)
     {
-      assert(proxy1.size() == proxy2.size());
+      assert(proxy1.size() == proxy2.size() && "Incompatible vector sizes!");
       typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
       result = proxy1;
       result += proxy2;
@@ -1854,7 +1919,7 @@ namespace viennacl
     operator - (vector_expression< LHS1, RHS1, OP1> const & proxy1,
                 vector_expression< LHS2, RHS2, OP2> const & proxy2)
     {
-      assert(proxy1.size() == proxy2.size());
+      assert(proxy1.size() == proxy2.size() && "Incompatible vector sizes!");
       typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
       result = proxy1;
       result -= proxy2;
@@ -1875,7 +1940,7 @@ namespace viennacl
     operator + (vector_expression<LHS, RHS, OP> const & proxy,
                 V1 const & vec)
     {
-      assert(proxy.size() == vec.size());
+      assert(proxy.size() == vec.size() && "Incompatible vector sizes!");
       viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
       result = proxy;
       result += vec;
@@ -1940,7 +2005,7 @@ namespace viennacl
     operator - (vector_expression< LHS, RHS, OP> const & proxy,
                 V1 const & vec)
     {
-      assert(proxy.size() == vec.size());
+      assert(proxy.size() == vec.size() && "Incompatible vector sizes!");
       viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
       result = proxy;
       result -= vec;
@@ -2012,7 +2077,7 @@ namespace viennacl
     */
     template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
     vector<SCALARTYPE> operator / (vector_expression< LHS, RHS, OP> const & proxy,
-                                      scalar<SCALARTYPE> const & val)
+                                   scalar<SCALARTYPE> const & val)
     {
       vector<SCALARTYPE> result(proxy.size());
       result = proxy;

@@ -84,12 +84,8 @@ namespace viennacl
       typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType   value_type;
       
       /** @brief Allocates the memory for the scalar, but does not set it to zero. */
-      scalar()
-      {
-        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
-        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
-      }
+      scalar() {}  //No initialization yet in order to allow for global variables
+      
       /** @brief Allocates the memory for the scalar and sets it to the supplied value. */
       scalar(SCALARTYPE val)
       {
@@ -116,7 +112,7 @@ namespace viennacl
       scalar(scalar_expression<T1, T2, OP> const & proxy)
       {
         viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
-        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        val_.switch_active_handle_id(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
         viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
         *this = proxy;
       }
@@ -125,15 +121,21 @@ namespace viennacl
       /** @brief Copy constructor. Allocates new memory for the scalar and copies the value of the supplied scalar */
       scalar(const scalar & other)
       {
-        //copy value:
-        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
-        viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
+        if (other.handle().get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED)
+        {  
+          //copy value:
+          val_.switch_active_handle_id(other.handle().get_active_handle_id());
+          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+          viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
+        }
       }
 
       /** @brief Reads the value of the scalar from the GPU and returns the float or double value. */
       operator SCALARTYPE() const
       {
+        // make sure the scalar contains reasonable data:
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized, cannot read!");
+        
         SCALARTYPE tmp;
         viennacl::backend::memory_read(val_, 0, sizeof(SCALARTYPE), &tmp);
         return tmp;
@@ -142,6 +144,7 @@ namespace viennacl
       /** @brief Assigns a vector entry. */
       self_type & operator= (entry_proxy<SCALARTYPE> const & other)
       {
+        init_if_necessary(other.handle().get_active_handle_id());
         viennacl::backend::memory_copy(other.handle(), val_, other.index() * sizeof(SCALARTYPE), 0, sizeof(SCALARTYPE));
         return *this;
       }
@@ -149,12 +152,15 @@ namespace viennacl
       /** @brief Assigns the value from another scalar. */
       self_type & operator= (scalar<SCALARTYPE> const & other)
       {
+        init_if_necessary(other.handle().get_active_handle_id());
         viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
         return *this;
       }
 
       self_type & operator= (float cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+          
         //copy value:
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -163,6 +169,8 @@ namespace viennacl
 
       self_type & operator= (double cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+        
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
@@ -170,6 +178,8 @@ namespace viennacl
 
       self_type & operator= (long cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+        
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
@@ -177,6 +187,8 @@ namespace viennacl
 
       self_type & operator= (unsigned long cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+        
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
@@ -184,6 +196,8 @@ namespace viennacl
 
       self_type & operator= (int cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+        
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
@@ -191,6 +205,8 @@ namespace viennacl
 
       self_type & operator= (unsigned int cpu_other)
       {
+        init_if_necessary(backend::default_memory_type());
+        
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
         return *this;
@@ -200,6 +216,8 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
       {
+        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        
         viennacl::linalg::inner_prod_impl(proxy.lhs(), proxy.rhs(), *this);
         return *this;
       }
@@ -208,6 +226,8 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
       {
+        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        
         viennacl::linalg::norm_1_impl(proxy.lhs(), *this);
         return *this;
       }
@@ -216,6 +236,8 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
       {
+        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        
         viennacl::linalg::norm_2_impl(proxy.lhs(), *this);
         return *this;
       }
@@ -224,6 +246,8 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
       {
+        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        
         viennacl::linalg::norm_inf_impl(proxy.lhs(), *this);
         return *this;
       }
@@ -232,6 +256,8 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
       {
+        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        
         viennacl::linalg::as(*this, proxy.lhs(), SCALARTYPE(-1.0), 1, false, true);
         return *this;
       }
@@ -240,6 +266,8 @@ namespace viennacl
       /** @brief Inplace addition of a ViennaCL scalar */
       self_type & operator += (scalar<SCALARTYPE> const & other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::asbs(*this,                                       // s1 =
                                *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
                                other, SCALARTYPE(1.0), 1, false, false);    //     + s2 * 1.0
@@ -248,6 +276,8 @@ namespace viennacl
       /** @brief Inplace addition of a host scalar (float or double) */
       self_type & operator += (SCALARTYPE other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::asbs(*this,                                       // s1 =
                                *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
                                other, SCALARTYPE(1.0), 1, false, false);    //     + s2 * 1.0
@@ -258,6 +288,8 @@ namespace viennacl
       /** @brief Inplace subtraction of a ViennaCL scalar */
       self_type & operator -= (scalar<SCALARTYPE> const & other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::asbs(*this,                                       // s1 =
                                *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
                                other, SCALARTYPE(-1.0), 1, false, false);   //     + s2 * (-1.0)
@@ -266,6 +298,8 @@ namespace viennacl
       /** @brief Inplace subtraction of a host scalar (float or double) */
       self_type & operator -= (SCALARTYPE other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::asbs(*this,                                       // s1 =
                                *this, SCALARTYPE(1.0), 1, false, false,     //       s1 * 1.0
                                other, SCALARTYPE(-1.0), 1, false, false);   //     + s2 * (-1.0)
@@ -276,6 +310,8 @@ namespace viennacl
       /** @brief Inplace multiplication with a ViennaCL scalar */
       self_type & operator *= (scalar<SCALARTYPE> const & other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::as(*this,                                       // s1 =
                              *this, other, 1, false, false);              //      s1 * s2
         return *this;
@@ -283,6 +319,8 @@ namespace viennacl
       /** @brief Inplace  multiplication with a host scalar (float or double) */
       self_type & operator *= (SCALARTYPE other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::as(*this,                                       // s1 =
                              *this, other, 1, false, false);              //      s1 * s2
         return *this;
@@ -293,6 +331,8 @@ namespace viennacl
       /** @brief Inplace division with a ViennaCL scalar */
       self_type & operator /= (scalar<SCALARTYPE> const & other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::as(*this,                                       // s1 =
                              *this, other, 1, true, false);              //      s1 / s2
         return *this;
@@ -300,6 +340,8 @@ namespace viennacl
       /** @brief Inplace division with a host scalar (float or double) */
       self_type & operator /= (SCALARTYPE other)
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         viennacl::linalg::as(*this,                                       // s1 =
                              *this, other, 1, true, false);              //      s1 / s2
         return *this;
@@ -310,7 +352,9 @@ namespace viennacl
       /** @brief Addition of two ViennaCL scalars */
       self_type operator + (scalar<SCALARTYPE> const & other)
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
 
         viennacl::linalg::asbs(result,                                       // result =
                                *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
@@ -322,6 +366,8 @@ namespace viennacl
       template <typename T1, typename T2, typename OP>
       self_type operator + (scalar_expression<T1, T2, OP> const & proxy) const
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         self_type result = proxy;
 
         viennacl::linalg::asbs(result,                                       // result =
@@ -333,7 +379,9 @@ namespace viennacl
       /** @brief Addition of a ViennaCL scalar with a host scalar (float, double) */
       self_type operator + (SCALARTYPE other)
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
         
         viennacl::linalg::asbs(result,                                       // result =
                                *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
@@ -355,7 +403,9 @@ namespace viennacl
       /** @brief Subtraction of two ViennaCL scalars */
       self_type operator - (scalar<SCALARTYPE> const & other) const
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
 
         viennacl::linalg::asbs(result,                                       // result =
                                *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
@@ -367,6 +417,8 @@ namespace viennacl
       template <typename T1, typename T2, typename OP>
       self_type operator - (scalar_expression<T1, T2, OP> const & proxy) const
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         self_type result = *this;
 
         viennacl::linalg::asbs(result,                                       // result =
@@ -378,7 +430,9 @@ namespace viennacl
       /** @brief Subtraction of a host scalar (float, double) from a ViennaCL scalar */
       scalar<SCALARTYPE> operator - (SCALARTYPE other) const
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
 
         viennacl::linalg::asbs(result,                                       // result =
                                *this, SCALARTYPE(1.0), 1, false, false,      //            *this * 1.0
@@ -391,7 +445,9 @@ namespace viennacl
       /** @brief Multiplication of two ViennaCL scalars */
       self_type operator * (scalar<SCALARTYPE> const & other) const
       {
-        scalar<SCALARTYPE> result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        scalar<SCALARTYPE> result = 0;
 
         viennacl::linalg::as(result,                                     // result =
                              *this, other, 1, false, false);              //          *this * other
@@ -402,6 +458,8 @@ namespace viennacl
       template <typename T1, typename T2, typename OP>
       self_type operator * (scalar_expression<T1, T2, OP> const & proxy) const
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         self_type result = proxy;
 
         viennacl::linalg::as(result,                                       // result =
@@ -412,7 +470,9 @@ namespace viennacl
       /** @brief Multiplication of a host scalar (float, double) with a ViennaCL scalar */
       self_type operator * (SCALARTYPE other) const
       {
-        scalar<SCALARTYPE> result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        scalar<SCALARTYPE> result = 0;
 
         viennacl::linalg::as(result,                                     // result =
                              *this, other, 1, false, false);              //          *this * other
@@ -424,7 +484,9 @@ namespace viennacl
       /** @brief Division of two ViennaCL scalars */
       self_type operator / (scalar<SCALARTYPE> const & other) const
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
 
         viennacl::linalg::as(result,                                     // result =
                              *this, other, 1, true, false);              //           *this / other
@@ -435,6 +497,8 @@ namespace viennacl
       template <typename T1, typename T2, typename OP>
       self_type operator / (scalar_expression<T1, T2, OP> const & proxy) const
       {
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
         self_type result = proxy;
 
         viennacl::linalg::as(result,                                     // result =
@@ -445,7 +509,9 @@ namespace viennacl
       /** @brief Division of a ViennaCL scalar by a host scalar (float, double)*/
       self_type operator / (SCALARTYPE other) const
       {
-        self_type result;
+        assert( val_.get_active_handle_id() != viennacl::backend::MEMORY_NOT_INITIALIZED && "Scalar not initialized!");
+        
+        self_type result = 0;
 
         viennacl::linalg::as(result,                                     // result =
                              *this, other, 1, true, false);              //            *this / other
@@ -460,6 +526,17 @@ namespace viennacl
       const handle_type & handle() const { return val_; }
       
     private:
+      
+      void init_if_necessary(viennacl::backend::memory_types new_type_if_init)
+      {
+        if (val_.get_active_handle_id() == viennacl::backend::MEMORY_NOT_INITIALIZED)
+        {
+          viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
+          val_.switch_active_handle_id(new_type_if_init);
+          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+        }
+      }
+      
       handle_type val_;
     };
     
