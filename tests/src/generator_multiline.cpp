@@ -289,6 +289,58 @@ int test ( Epsilon const& epsilon ) {
     }
     viennacl::ocl::get_queue().finish();
 
+    std::cout << "Testing dX = sigma * (X - Y) ; " 
+              << "        dY = R * X - Y - X * Z;"
+              << "        dZ = X * Y - b * Z;" << std::endl;
+    ublas::vector<NumericT> dv0(v0);
+    ublas::vector<NumericT> dv1(v1);
+    ublas::vector<NumericT> dv2(v2);
+    NumericT sigma = 3.1415;
+    NumericT b = 2.7182;
+    dv0 = sigma * (v1 - v0);
+    dv1 = boost::numeric::ublas::element_prod(v3, v0) - v1 - boost::numeric::ublas::element_prod(v0, v2);
+    dv2 = boost::numeric::ublas::element_prod(v0, v1) - b * v2;
+    
+
+    symbolic_vector<0,NumericT> sym_X;
+    symbolic_vector<1,NumericT> sym_Y;
+    symbolic_vector<2,NumericT> sym_Z;
+    
+    symbolic_vector<3,NumericT> sym_dX;
+    symbolic_vector<4,NumericT> sym_dY;
+    symbolic_vector<5,NumericT> sym_dZ;
+    
+    symbolic_vector<6,NumericT> sym_R;
+
+    cpu_symbolic_scalar<7,NumericT> sym_sigma;
+    cpu_symbolic_scalar<8,NumericT> sym_b;
+    
+    viennacl::vector<NumericT,Alignment> vcl_dX (vcl_v0);
+    viennacl::vector<NumericT,Alignment> vcl_dY (vcl_v1);
+    viennacl::vector<NumericT,Alignment> vcl_dZ (vcl_v2);
+    viennacl::vector<NumericT,Alignment> vcl_X (vcl_v0);
+    viennacl::vector<NumericT,Alignment> vcl_Y (vcl_v1);
+    viennacl::vector<NumericT,Alignment> vcl_Z (vcl_v2);
+    
+    viennacl::vector<NumericT,Alignment> vcl_R (vcl_v3);
+    
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( sym_dX = sym_sigma * (sym_Y - sym_X)
+                                                                    ,sym_dY = element_prod(sym_R, sym_X) - sym_Y - element_prod(sym_X, sym_Z)
+                                                                    ,sym_dZ = element_prod(sym_X, sym_Y) - sym_b * sym_Z
+                                                                    ,"Lorenz") ( vcl_dX, vcl_dY, vcl_dZ, vcl_X, vcl_Y, vcl_Z, vcl_R, sigma, b) );
+
+
+    viennacl::ocl::get_queue().finish();
+    if ( diff(dv0, vcl_dX) > epsilon
+         || diff(dv1, vcl_dY) > epsilon
+         || diff(dv2, vcl_dZ) > epsilon){
+        std::cout << "# Error at operation: dX = sigma * (X - Y) ; ... " << std::endl;
+        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_vec2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        retval = EXIT_FAILURE;
+    }
+    viennacl::ocl::get_queue().finish();
+    
     return retval;
 
 }

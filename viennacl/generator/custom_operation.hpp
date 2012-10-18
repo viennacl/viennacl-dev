@@ -262,7 +262,7 @@ namespace viennacl
 
         /** @brief Convenience for enqueuing the custom operation */
         template<class T0, class T1, class T2, class T3, class T4>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4 )
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4 )
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -276,7 +276,7 @@ namespace viennacl
 
         /** @brief Convenience for enqueuing the custom operation */
         template<class T0, class T1, class T2, class T3, class T4, class T5>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5 )
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5 )
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -291,7 +291,7 @@ namespace viennacl
 
         /** @brief Convenience for enqueuing the custom operation */
         template<class T0, class T1, class T2, class T3, class T4, class T5, class T6>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5, T6 & t6)
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5, T6 const & t6)
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -307,7 +307,7 @@ namespace viennacl
 
         /** @brief Convenience for enqueuing the custom operation */
         template <class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4, T5 & t5, T6 & t6, T7 & t7 )
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5, T6 const & t6, T7 const & t7 )
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -325,8 +325,8 @@ namespace viennacl
         /** @brief Convenience for enqueuing the custom operation */
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8 )
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8 )
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -345,8 +345,8 @@ namespace viennacl
         /** @brief Convenience for enqueuing the custom operation */
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9 )
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9 )
         {
           user_args_.clear();
           user_args_.insert( std::make_pair(0, viennacl::any(const_cast<T0*>(&t0))) );
@@ -367,9 +367,9 @@ namespace viennacl
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9,
                   class T10 >
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10
                                       )
         {
           user_args_.clear();
@@ -392,9 +392,9 @@ namespace viennacl
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11 >
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11
                                       )
         {
           user_args_.clear();
@@ -418,9 +418,9 @@ namespace viennacl
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12 >
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12
                                       )
         {
           user_args_.clear();
@@ -445,9 +445,9 @@ namespace viennacl
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13 >
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13
                                       )
         {
           user_args_.clear();
@@ -473,9 +473,9 @@ namespace viennacl
         template <class T0, class T1, class T2, class T3, class T4,
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14 >
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14
                                       )
         {
           user_args_.clear();
@@ -503,10 +503,10 @@ namespace viennacl
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14,
                   class T15>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
-                                        T15 & t15
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14,
+                                        T15 const & t15
                                       )
         {
           user_args_.clear();
@@ -535,10 +535,10 @@ namespace viennacl
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14,
                   class T15, class T16>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
-                                        T15 & t15, T16 & t16
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14,
+                                        T15 const & t15, T16 const & t16
                                       )
         {
           user_args_.clear();
@@ -568,10 +568,10 @@ namespace viennacl
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14,
                   class T15, class T16, class T17>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
-                                        T15 & t15, T16 & t16, T17 & t17
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14,
+                                        T15 const & t15, T16 const & t16, T17 const & t17
                                       )
         {
           user_args_.clear();
@@ -602,10 +602,10 @@ namespace viennacl
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14,
                   class T15, class T16, class T17, class T18>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
-                                        T15 & t15, T16 & t16, T17 & t17, T18 & t18
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14,
+                                        T15 const & t15, T16 const & t16, T17 const & t17, T18 const & t18
                                       )
         {
           user_args_.clear();
@@ -637,10 +637,10 @@ namespace viennacl
                   class T5, class T6, class T7, class T8, class T9,
                   class T10, class T11, class T12, class T13, class T14,
                   class T15, class T16, class T17, class T18, class T19>
-        custom_operation & operator() ( T0 & t0, T1 & t1, T2 & t2, T3 & t3, T4 & t4,
-                                        T5 & t5, T6 & t6, T7 & t7, T8 & t8, T9 & t9,
-                                        T10 & t10, T11 & t11, T12 & t12, T13 & t13, T14 & t14,
-                                        T15 & t15, T16 & t16, T17 & t17, T18 & t18, T19 & t19
+        custom_operation & operator() ( T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
+                                        T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9,
+                                        T10 const & t10, T11 const & t11, T12 const & t12, T13 const & t13, T14 const & t14,
+                                        T15 const & t15, T16 const & t16, T17 const & t17, T18 const & t18, T19 const & t19
                                       )
         {
           user_args_.clear();
