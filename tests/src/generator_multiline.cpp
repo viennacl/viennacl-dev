@@ -45,8 +45,8 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
     for ( unsigned int i=0; i<v1.size(); ++i ) {
-        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
+        if ( std::max ( std::abs ( v2_cpu[i] ), std::abs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = std::abs ( v2_cpu[i] - v1[i] ) / std::max ( std::abs ( v2_cpu[i] ), std::abs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }
@@ -56,7 +56,7 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
 template< typename NumericT,  typename F,typename F2, unsigned int Alignment, typename Epsilon >
 int test ( Epsilon const& epsilon ) {
     int retval = EXIT_SUCCESS;
-    static const unsigned int SIZE = 5027;
+    static const unsigned int SIZE = 5;//027;
     // --------------------------------------------------------------------------
     NumericT scalar = 2;
     ublas::vector<NumericT> v0(SIZE);
@@ -128,9 +128,9 @@ int test ( Epsilon const& epsilon ) {
          || diff (v2,vcl_v2) > epsilon
          || diff (v3,vcl_v3) > epsilon){
         std::cout << "# Error at operation:repetition" << std::endl;
-        std::cout << "  diff0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
-        std::cout << "  diff3: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff2: " << std::abs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff3: " << std::abs ( diff ( v2, vcl_v2 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
 
@@ -157,10 +157,10 @@ int test ( Epsilon const& epsilon ) {
          || diff (v2,vcl_v2) > epsilon
          || diff (v3,vcl_v3) > epsilon ) {
         std::cout << "# Error at operation: Nested repetition" << std::endl;
-        std::cout << "  diff0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff1: " << fabs ( diff ( v1, vcl_v1 ) ) << std::endl;
-        std::cout << "  diff2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
-        std::cout << "  diff3: " << fabs ( diff ( v3, vcl_v3 ) ) << std::endl;
+        std::cout << "  diff0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff1: " << std::abs ( diff ( v1, vcl_v1 ) ) << std::endl;
+        std::cout << "  diff2: " << std::abs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff3: " << std::abs ( diff ( v3, vcl_v3 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -180,8 +180,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff (v0,vcl_v0 ) > epsilon
          || std::abs( scalar - static_cast<NumericT>(vcl_scalar) ) / std::max<NumericT>(scalar, vcl_scalar) > epsilon){
         std::cout << "# Error at operation: V0=V1+V2 ; s=inner_prod(V0,V1) " << std::endl;
-        std::cout << "  diff_vec: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_scal: " << fabs ( scalar - vcl_scalar ) << std::endl;
+        std::cout << "  diff_vec: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_scal: " << std::abs ( scalar - vcl_scalar ) << std::endl;
         std::cout << "  scalar: " << scalar << std::endl;
         std::cout << "  vcl_scalar: " << vcl_scalar << std::endl;
         retval = EXIT_FAILURE;
@@ -201,8 +201,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff(v0, vcl_v0) > epsilon
          || std::abs( scalar - static_cast<NumericT>(vcl_scalar) ) / std::max<NumericT>(scalar, vcl_scalar) > epsilon){
         std::cout << "# Error at operation: s=inner_prod(V0,V1) ; V0=V1+V2  ... " << std::endl;
-        std::cout << "  diff_vec: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_scal: " << fabs ( scalar - vcl_scalar ) << std::endl;
+        std::cout << "  diff_vec: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_scal: " << std::abs ( scalar - vcl_scalar ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -223,8 +223,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff(v0, vcl_v0) > epsilon
          || diff(v1, vcl_v1) > epsilon){
         std::cout << "# Error at operation: V0=V1+V2 ; V1=prod(M,V0) " << std::endl;
-        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_vec1: " << fabs ( diff ( v1, vcl_v1 ) ) << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_vec1: " << std::abs ( diff ( v1, vcl_v1 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -244,8 +244,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff(v0, vcl_v0) > epsilon
          || diff(v1, vcl_v1) > epsilon){
         std::cout << "# Error at operation:  V1=prod(M,V0) ; V0=V1+V2 " << std::endl;
-        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_vec1: " << fabs ( diff ( v1, vcl_v1 ) ) << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_vec1: " << std::abs ( diff ( v1, vcl_v1 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -263,8 +263,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff(v0, vcl_v0) > epsilon
          || diff(v2, vcl_v2) > epsilon){
         std::cout << "# Error at operation: V0 = M*V2 * ip(V2,V3) ; V2 = V0*s ... " << std::endl;
-        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_vec2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_vec2: " << std::abs ( diff ( v2, vcl_v2 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -283,8 +283,8 @@ int test ( Epsilon const& epsilon ) {
     if ( diff(v0, vcl_v0) > epsilon
          || diff(v2, vcl_v2) > epsilon){
         std::cout << "# Error at operation: V2 = V0*s ; V0 = M*V2 * ip(V2,V3) ... " << std::endl;
-        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_vec2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( v0, vcl_v0 ) ) << std::endl;
+        std::cout << "  diff_vec2: " << std::abs ( diff ( v2, vcl_v2 ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
@@ -292,6 +292,19 @@ int test ( Epsilon const& epsilon ) {
     std::cout << "Testing dX = sigma * (X - Y) ; " 
               << "        dY = R * X - Y - X * Z;"
               << "        dZ = X * Y - b * Z;" << std::endl;
+              
+    for ( unsigned int i = 0; i < SIZE; ++i ){
+        v0( i ) = i;
+        v1( i ) = i+1;
+        v2( i ) = i+2;
+        v3( i ) = i+3;
+    }
+
+    viennacl::copy(v0,vcl_v0);
+    viennacl::copy(v1,vcl_v1);
+    viennacl::copy(v2,vcl_v2);
+    viennacl::copy(v3,vcl_v3);
+              
     ublas::vector<NumericT> dv0(v0);
     ublas::vector<NumericT> dv1(v1);
     ublas::vector<NumericT> dv2(v2);
@@ -302,13 +315,13 @@ int test ( Epsilon const& epsilon ) {
     dv2 = boost::numeric::ublas::element_prod(v0, v1) - b * v2;
     
 
-    symbolic_vector<0,NumericT> sym_X;
-    symbolic_vector<1,NumericT> sym_Y;
-    symbolic_vector<2,NumericT> sym_Z;
+    symbolic_vector<0,NumericT> sym_dX;
+    symbolic_vector<1,NumericT> sym_dY;
+    symbolic_vector<2,NumericT> sym_dZ;
     
-    symbolic_vector<3,NumericT> sym_dX;
-    symbolic_vector<4,NumericT> sym_dY;
-    symbolic_vector<5,NumericT> sym_dZ;
+    symbolic_vector<3,NumericT> sym_X;
+    symbolic_vector<4,NumericT> sym_Y;
+    symbolic_vector<5,NumericT> sym_Z;
     
     symbolic_vector<6,NumericT> sym_R;
 
@@ -329,14 +342,34 @@ int test ( Epsilon const& epsilon ) {
                                                                     ,sym_dZ = element_prod(sym_X, sym_Y) - sym_b * sym_Z
                                                                     ,"Lorenz") ( vcl_dX, vcl_dY, vcl_dZ, vcl_X, vcl_Y, vcl_Z, vcl_R, sigma, b) );
 
-
     viennacl::ocl::get_queue().finish();
     if ( diff(dv0, vcl_dX) > epsilon
          || diff(dv1, vcl_dY) > epsilon
          || diff(dv2, vcl_dZ) > epsilon){
         std::cout << "# Error at operation: dX = sigma * (X - Y) ; ... " << std::endl;
-        std::cout << "  diff_vec0: " << fabs ( diff ( v0, vcl_v0 ) ) << std::endl;
-        std::cout << "  diff_vec2: " << fabs ( diff ( v2, vcl_v2 ) ) << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( dv0, vcl_dX ) ) << std::endl;
+        std::cout << "  diff_vec1: " << std::abs ( diff ( dv1, vcl_dY ) ) << std::endl;
+        std::cout << "  diff_vec2: " << std::abs ( diff ( dv2, vcl_dZ ) ) << std::endl;
+        retval = EXIT_FAILURE;
+    }
+    viennacl::ocl::get_queue().finish();
+
+    std::cout << "Testing dX -= beta * X * X * X;" << std::endl;
+    
+    NumericT beta = sigma;
+    viennacl::copy(v0,vcl_X);
+    viennacl::copy(dv0,vcl_dX);
+    dv0 -= beta * boost::numeric::ublas::element_prod(v0, boost::numeric::ublas::element_prod(v0, v0));
+    
+    cpu_symbolic_scalar<2,NumericT> sym_beta;
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv0 -= sym_beta * element_prod(symv1, element_prod(symv1, symv1))
+                                                                    ,"test_nested_element_prod") ( vcl_dX, vcl_X, beta) );
+
+
+    viennacl::ocl::get_queue().finish();
+    if ( diff(dv0, vcl_dX) > epsilon){
+        std::cout << "# Error at operation: dX -= beta * X * X * X ; ... " << std::endl;
+        std::cout << "  diff_vec0: " << std::abs ( diff ( dv0, vcl_dX ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
     viennacl::ocl::get_queue().finish();
