@@ -279,4 +279,4 @@ namespace viennacl {
 
 }
 
-#endif // _VIENNACL_TOEPLITZ_MATRIX_HPP
+#endif // VIENNACL_TOEPLITZ_MATRIX_HPP

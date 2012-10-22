@@ -101,7 +101,7 @@ namespace viennacl
         c_points = Pointvector[i].get_cpoints();
         f_points = Pointvector[i].get_fpoints();
 
-        #if defined (DEBUG) //or defined(DEBUGBENCH) 
+        #if defined (VIENNACL_AMG_DEBUG) //or defined(VIENNACL_AMG_DEBUGBENCH) 
         std::cout << "Level " << i << ": ";
         std::cout << "No of C points = " << c_points << ", ";
         std::cout << "No of F points = " << f_points << std::endl;
@@ -122,7 +122,7 @@ namespace viennacl
         
         Pointvector[i].delete_points();
         
-        #ifdef DEBUG
+        #ifdef VIENNACL_AMG_DEBUG
         std::cout << "Coarse Grid Operator Matrix:" << std::endl;
         printmatrix (A[i+1]);
         #endif  
@@ -334,7 +334,7 @@ namespace viennacl
       
       mutable bool done_init_apply;
           
-      amg_tag _tag;
+      amg_tag tag_;
     public:
     
       amg_precond(): Permutation(0) {}
@@ -345,9 +345,9 @@ namespace viennacl
       */
       amg_precond(MatrixType const & mat, amg_tag const & tag): Permutation(0)
       {
-        _tag = tag;
+        tag_ = tag;
         // Initialize data structures.
-        amg_init (mat,A_setup,P_setup,Pointvector,_tag);
+        amg_init (mat,A_setup,P_setup,Pointvector,tag_);
         
         done_init_apply = false;
       }
@@ -357,9 +357,9 @@ namespace viennacl
       void setup()
       {
         // Start setup phase.
-        amg_setup(A_setup,P_setup,Pointvector,_tag);
+        amg_setup(A_setup,P_setup,Pointvector,tag_);
         // Transform to CPU-Matrixtype for precondition phase.
-        amg_transform_cpu(A,P,R,A_setup,P_setup,_tag);
+        amg_transform_cpu(A,P,R,A_setup,P_setup,tag_);
         
         done_init_apply = false;
       }
@@ -371,9 +371,9 @@ namespace viennacl
       void init_apply() const
       {
         // Setup precondition phase (Data structures).
-        amg_setup_apply(result,rhs,residual,A_setup,_tag);
+        amg_setup_apply(result,rhs,residual,A_setup,tag_);
         // Do LU factorization for direct solve.
-        amg_lu(op,Permutation,A_setup[_tag.get_coarselevels()]);
+        amg_lu(op,Permutation,A_setup[tag_.get_coarselevels()]);
         
         done_init_apply = true;
       }
@@ -386,10 +386,10 @@ namespace viennacl
       template <typename VectorType>
       ScalarType calc_complexity(VectorType & avgstencil)
       {
-        avgstencil = VectorType (_tag.get_coarselevels()+1);
+        avgstencil = VectorType (tag_.get_coarselevels()+1);
         unsigned int nonzero=0, systemmat_nonzero=0, level_coefficients=0;
           
-        for (unsigned int level=0; level < _tag.get_coarselevels()+1; ++level)
+        for (unsigned int level=0; level < tag_.get_coarselevels()+1; ++level)
         {
           level_coefficients = 0;
           for (InternalRowIterator row_iter = A_setup[level].begin1(); row_iter != A_setup[level].end1(); ++row_iter)
@@ -422,14 +422,14 @@ namespace viennacl
         
         // Precondition operation (Yang, p.3)
         rhs[0] = vec;
-        for (level=0; level <(signed)_tag.get_coarselevels(); level++)
+        for (level=0; level <static_cast<int>(tag_.get_coarselevels()); level++)
         {    
           result[level].clear();
           
-          // Apply Smoother _presmooth times.
-          smooth_jacobi (level, _tag.get_presmooth(), result[level], rhs[level]);    
+          // Apply Smoother presmooth_ times.
+          smooth_jacobi (level, tag_.get_presmooth(), result[level], rhs[level]);    
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After presmooth:" << std::endl;
           printvector(result[level]);
           #endif
@@ -437,7 +437,7 @@ namespace viennacl
           // Compute residual.
           residual[level] = rhs[level] - boost::numeric::ublas::prod (A[level],result[level]);
           
-          #ifdef DEBUG          
+          #ifdef VIENNACL_AMG_DEBUG          
           std::cout << "Residual:" << std::endl;
           printvector(residual[level]);
           #endif
@@ -445,7 +445,7 @@ namespace viennacl
           // Restrict to coarse level. Restricted residual is RHS of coarse level.
           rhs[level+1] = boost::numeric::ublas::prod (R[level],residual[level]);
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Restricted Residual: " << std::endl;
           printvector(rhs[level+1]);
           #endif
@@ -455,14 +455,14 @@ namespace viennacl
         result[level] = rhs[level];
         boost::numeric::ublas::lu_substitute(op,Permutation,result[level]);
 
-        #ifdef DEBUG
+        #ifdef VIENNACL_AMG_DEBUG
         std::cout << "After direct solve: " << std::endl;
         printvector (result[level]);
         #endif
           
-        for (level=_tag.get_coarselevels()-1; level >= 0; level--)
+        for (level=tag_.get_coarselevels()-1; level >= 0; level--)
         {       
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Coarse Error: " << std::endl;
           printvector(result[level+1]);
           #endif
@@ -470,15 +470,15 @@ namespace viennacl
           // Interpolate error to fine level. Correct solution by adding error.
           result[level] += boost::numeric::ublas::prod (P[level], result[level+1]);
               
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Corrected Result: " << std::endl;
           printvector (result[level]);
           #endif
           
-          // Apply Smoother _postsmooth times.
-          smooth_jacobi (level, _tag.get_postsmooth(), result[level], rhs[level]);
+          // Apply Smoother postsmooth_ times.
+          smooth_jacobi (level, tag_.get_postsmooth(), result[level], rhs[level]);
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After postsmooth: " << std::endl;
           printvector (result[level]);
           #endif
@@ -519,12 +519,12 @@ namespace viennacl
               else
                 sum += *col_iter * old_result[col_iter.index2()];
             }
-            x[index]= _tag.get_jacobiweight() * (rhs[index] - sum) / diag + (1-_tag.get_jacobiweight()) * old_result[index];
+            x[index]= tag_.get_jacobiweight() * (rhs[index] - sum) / diag + (1-tag_.get_jacobiweight()) * old_result[index];
           }
         }
       }
       
-      amg_tag & tag() { return _tag; }
+      amg_tag & tag() { return tag_; }
     };
     
     /** @brief AMG preconditioner class, can be supplied to solve()-routines.
@@ -560,7 +560,7 @@ namespace viennacl
           
       mutable bool done_init_apply;
     
-      amg_tag _tag;
+      amg_tag tag_;
       
     public:
       
@@ -573,14 +573,14 @@ namespace viennacl
       */
       amg_precond(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat, amg_tag const & tag): Permutation(0)
       {
-        _tag = tag;
+        tag_ = tag;
         
         // Copy to CPU. Internal structure of sparse matrix is used for copy operation.
         std::vector<std::map<unsigned int, ScalarType> > mat2 = std::vector<std::map<unsigned int, ScalarType> >(mat.size1());
         viennacl::copy(mat, mat2);
         
         // Initialize data structures.
-        amg_init (mat2,A_setup,P_setup,Pointvector,_tag);
+        amg_init (mat2,A_setup,P_setup,Pointvector,tag_);
           
         done_init_apply = false;
       }
@@ -590,9 +590,9 @@ namespace viennacl
       void setup()
       {
         // Start setup phase.
-        amg_setup(A_setup,P_setup,Pointvector,_tag);  
+        amg_setup(A_setup,P_setup,Pointvector, tag_);  
         // Transform to GPU-Matrixtype for precondition phase.
-        amg_transform_gpu(A,P,R,A_setup,P_setup,_tag);  
+        amg_transform_gpu(A,P,R,A_setup,P_setup, tag_);
         
         done_init_apply = false;
       }
@@ -604,9 +604,9 @@ namespace viennacl
       void init_apply() const
       {
         // Setup precondition phase (Data structures).
-        amg_setup_apply(result,rhs,residual,A_setup,_tag);
+        amg_setup_apply(result,rhs,residual,A_setup,tag_);
         // Do LU factorization for direct solve.
-        amg_lu(op,Permutation,A_setup[_tag.get_coarselevels()]);
+        amg_lu(op,Permutation,A_setup[tag_.get_coarselevels()]);
         
         done_init_apply = true;
       }
@@ -619,10 +619,10 @@ namespace viennacl
       template <typename VectorType>
       ScalarType calc_complexity(VectorType & avgstencil)
       {
-        avgstencil = VectorType (_tag.get_coarselevels()+1);
+        avgstencil = VectorType (tag_.get_coarselevels()+1);
         unsigned int nonzero=0, systemmat_nonzero=0, level_coefficients=0;
         
-        for (unsigned int level=0; level < _tag.get_coarselevels()+1; ++level)
+        for (unsigned int level=0; level < tag_.get_coarselevels()+1; ++level)
         {
           level_coefficients = 0;
           for (InternalRowIterator row_iter = A_setup[level].begin1(); row_iter != A_setup[level].end1(); ++row_iter)
@@ -654,14 +654,14 @@ namespace viennacl
         
         // Precondition operation (Yang, p.3).
         rhs[0] = vec;
-        for (level=0; level <(signed)_tag.get_coarselevels(); level++)
+        for (level=0; level <static_cast<int>(tag_.get_coarselevels()); level++)
         {    
           result[level].clear();
           
-          // Apply Smoother _presmooth times.
-          smooth_jacobi (level, _tag.get_presmooth(), result[level], rhs[level]);
+          // Apply Smoother presmooth_ times.
+          smooth_jacobi (level, tag_.get_presmooth(), result[level], rhs[level]);
 
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After presmooth: " << std::endl;
           printvector(result[level]);
           #endif
@@ -669,7 +669,7 @@ namespace viennacl
           // Compute residual.
           residual[level] = rhs[level] - viennacl::linalg::prod (A[level],result[level]);
           
-          #ifdef DEBUG             
+          #ifdef VIENNACL_AMG_DEBUG             
           std::cout << "Residual: " << std::endl;
           printvector(residual[level]);
           #endif
@@ -678,7 +678,7 @@ namespace viennacl
           //residual_coarse[level] = viennacl::linalg::prod(R[level],residual[level]);
           rhs[level+1] = viennacl::linalg::prod(R[level],residual[level]);
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Restricted Residual: " << std::endl;
           printvector(rhs[level+1]);
           #endif
@@ -693,14 +693,14 @@ namespace viennacl
         boost::numeric::ublas::lu_substitute(op,Permutation,result_cpu);
         copy (result_cpu, result[level]);
         
-        #ifdef DEBUG
+        #ifdef VIENNACL_AMG_DEBUG
         std::cout << "After direct solve: " << std::endl;
         printvector (result[level]);
         #endif
           
-        for (level=_tag.get_coarselevels()-1; level >= 0; level--)
+        for (level=tag_.get_coarselevels()-1; level >= 0; level--)
         {   
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Coarse Error: " << std::endl;
           printvector(result[level+1]);
           #endif
@@ -708,15 +708,15 @@ namespace viennacl
           // Interpolate error to fine level and correct solution.
           result[level] += viennacl::linalg::prod(P[level],result[level+1]);
               
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Corrected Result: " << std::endl;
           printvector (result[level]);
           #endif
           
-          // Apply Smoother _postsmooth times.
-          smooth_jacobi (level, _tag.get_postsmooth(), result[level], rhs[level]);
+          // Apply Smoother postsmooth_ times.
+          smooth_jacobi (level, tag_.get_postsmooth(), result[level], rhs[level]);
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After postsmooth: " << std::endl;
           printvector (result[level]);
           #endif
@@ -747,7 +747,7 @@ namespace viennacl
           old_result = x;    
           x.clear();
           viennacl::ocl::enqueue(k(A[level].handle1().opencl_handle(), A[level].handle2().opencl_handle(), A[level].handle().opencl_handle(),
-                                  static_cast<ScalarType>(_tag.get_jacobiweight()), 
+                                  static_cast<ScalarType>(tag_.get_jacobiweight()), 
                                   viennacl::traits::opencl_handle(old_result),
                                   viennacl::traits::opencl_handle(x),
                                   viennacl::traits::opencl_handle(rhs),
@@ -756,7 +756,7 @@ namespace viennacl
         }
       }
       
-      amg_tag & tag() { return _tag; }
+      amg_tag & tag() { return tag_; }
     };
 
   }

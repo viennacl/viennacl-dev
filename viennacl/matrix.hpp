@@ -95,24 +95,24 @@ namespace viennacl
         //*/
         //typedef typename viennacl::tools::VECTOR_EXTRACTOR<LHS, RHS>::ResultType    VectorType;
       
-        matrix_expression(LHS & lhs, RHS & rhs) : _lhs(lhs), _rhs(rhs) {}
+        matrix_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
         
         /** @brief Get left hand side operand
         */
-        LHS & lhs() const { return _lhs; }
+        LHS & lhs() const { return lhs_; }
         /** @brief Get right hand side operand
         */
-        RHS & rhs() const { return _rhs; }
+        RHS & rhs() const { return rhs_; }
         
         /** @brief Returns the size of the result vector */
-        std::size_t size1() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size1(_lhs, _rhs); }
-        std::size_t size2() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size2(_lhs, _rhs); }
+        std::size_t size1() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size1(lhs_, rhs_); }
+        std::size_t size2() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size2(lhs_, rhs_); }
         
       private:
         /** @brief The left hand side operand */
-        typename result_of::matrix_expression_internal_storage<LHS>::type _lhs;
+        typename result_of::matrix_expression_internal_storage<LHS>::type lhs_;
         /** @brief The right hand side operand */
-        typename result_of::matrix_expression_internal_storage<RHS>::type _rhs;
+        typename result_of::matrix_expression_internal_storage<RHS>::type rhs_;
     };
     
     

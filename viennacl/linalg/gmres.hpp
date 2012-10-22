@@ -50,19 +50,19 @@ namespace viennacl
         * @param krylov_dim     The maximum dimension of the Krylov space before restart (number of restarts is found by max_iterations / krylov_dim)
         */
         gmres_tag(double tol = 1e-10, unsigned int max_iterations = 300, unsigned int krylov_dim = 20) 
-         : _tol(tol), _iterations(max_iterations), _krylov_dim(krylov_dim), iters_taken_(0) {};
+         : tol_(tol), iterations_(max_iterations), krylov_dim_(krylov_dim), iters_taken_(0) {};
         
         /** @brief Returns the relative tolerance */
-        double tolerance() const { return _tol; }
+        double tolerance() const { return tol_; }
         /** @brief Returns the maximum number of iterations */
-        unsigned int max_iterations() const { return _iterations; }
+        unsigned int max_iterations() const { return iterations_; }
         /** @brief Returns the maximum dimension of the Krylov space before restart */
-        unsigned int krylov_dim() const { return _krylov_dim; }
+        unsigned int krylov_dim() const { return krylov_dim_; }
         /** @brief Returns the maximum number of GMRES restarts */
         unsigned int max_restarts() const
         { 
-          unsigned int ret = _iterations / _krylov_dim;
-          if (ret > 0 && (ret * _krylov_dim == _iterations) )
+          unsigned int ret = iterations_ / krylov_dim_;
+          if (ret > 0 && (ret * krylov_dim_ == iterations_) )
             return ret - 1;
           return ret;
         }
@@ -78,9 +78,9 @@ namespace viennacl
         void error(double e) const { last_error_ = e; }
         
       private:
-        double _tol;
-        unsigned int _iterations;
-        unsigned int _krylov_dim;
+        double tol_;
+        unsigned int iterations_;
+        unsigned int krylov_dim_;
         
         //return values from solver
         mutable unsigned int iters_taken_;

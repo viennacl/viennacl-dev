@@ -33,6 +33,7 @@ License:         MIT (X11), see file LICENSE in the base directory
 
 #include <vector>
 #include <cmath>
+#include <iostream>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
@@ -55,11 +56,11 @@ namespace viennacl
           * @param row_end       The end column of the block to which we apply ILU
           */
         ilu0_tag(unsigned int row_start = 0, unsigned int row_end = -1)
-            : _row_start(row_start),  
-            _row_end(row_end) {}
+            : row_start_(row_start),  
+              row_end_(row_end) {}
               
       public: 
-        unsigned int _row_start, _row_end;
+        unsigned int row_start_, row_end_;
     };
 
 
@@ -97,9 +98,9 @@ namespace viennacl
         for (InputColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
         {
           // Only work on the block described by (row_start:row_end, row_start:row_end)
-          if ((static_cast<unsigned int>(row_iter.index1()) >= tag._row_start) && (static_cast<unsigned int>(row_iter.index1()) < tag._row_end))
+          if ((static_cast<unsigned int>(row_iter.index1()) >= tag.row_start_) && (static_cast<unsigned int>(row_iter.index1()) < tag.row_end_))
           {
-              if ((static_cast<unsigned int>(col_iter.index2()) >= tag._row_start) && (static_cast<unsigned int>(col_iter.index2()) < tag._row_end))
+              if ((static_cast<unsigned int>(col_iter.index2()) >= tag.row_start_) && (static_cast<unsigned int>(col_iter.index2()) < tag.row_end_))
               {
                   w[static_cast<unsigned int>(col_iter.index2())] = *col_iter;
               }
@@ -166,7 +167,7 @@ namespace viennacl
         typedef typename MatrixType::value_type      ScalarType;
 
       public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : _tag(tag), LU(mat.size1())
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1())
         {
             //initialize preconditioner:
             //std::cout << "Start CPU precond" << std::endl;
@@ -185,10 +186,10 @@ namespace viennacl
         void init(MatrixType const & mat)
         {
             viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU);
-            viennacl::linalg::precondition(mat, LU_adapter, _tag);
+            viennacl::linalg::precondition(mat, LU_adapter, tag_);
         }
 
-        ilu0_tag const & _tag;
+        ilu0_tag const & tag_;
         
         public: std::vector< std::map<unsigned int, ScalarType> > LU;
     };
@@ -204,7 +205,7 @@ namespace viennacl
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
         public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : _tag(tag), LU(mat.size1())
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1())
         {
             //initialize preconditioner:
             //std::cout << "Start GPU precond" << std::endl;
@@ -233,13 +234,13 @@ namespace viennacl
 
             viennacl::tools::const_sparse_matrix_adapter<ScalarType>       temp_adapter(temp);
             viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU);
-            viennacl::linalg::precondition(temp_adapter, LU_adapter, _tag);
+            viennacl::linalg::precondition(temp_adapter, LU_adapter, tag_);
 
             temp_vec.resize(mat.size1());
 
         }
 
-        ilu0_tag const & _tag;
+        ilu0_tag const & tag_;
         //MatrixType LU;
         public: std::vector< std::map<unsigned int, ScalarType> > LU;
         private: mutable std::vector<ScalarType> temp_vec;

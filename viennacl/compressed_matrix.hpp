@@ -477,8 +477,7 @@ namespace viennacl
         */
         void resize(std::size_t new_size1, std::size_t new_size2, bool preserve = true)
         {
-          assert(new_size1 > 0 && new_size2 > 0);
-          //std::cout << "Resizing from (" << _rows << ", " << _cols << ") to (" << new_size1 << ", " << new_size2 << ")" << std::endl;
+          assert(new_size1 > 0 && new_size2 > 0 && "Cannot resize to zero size!");
           
           if (new_size1 != rows_ || new_size2 != cols_)
           {

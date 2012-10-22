@@ -48,7 +48,7 @@ namespace viennacl
       public:
         context() : initialized_(false),
                     device_type_(CL_DEVICE_TYPE_DEFAULT),
-                    current_device_id(0),
+                    current_device_id_(0),
                     default_device_num_(1),
                     pf_index_(0) {}
         
@@ -86,15 +86,15 @@ namespace viennacl
         /** @brief Returns the current device */
         viennacl::ocl::device const & current_device() const
         {
-          //std::cout << "Current device id in context: " << current_device_id << std::endl;
-          return devices_[current_device_id];
+          //std::cout << "Current device id in context: " << current_device_id_ << std::endl;
+          return devices_[current_device_id_];
         }
         
         /** @brief Switches the current device to the i-th device in this context */
         void switch_device(size_t i)
         {
           assert(i >= 0 && i < devices_.size());
-          current_device_id = i;
+          current_device_id_ = i;
         }
 
         /** @brief If the supplied device is used within the context, it becomes the current active device. */
@@ -109,7 +109,7 @@ namespace viennacl
             if (devices_[i] == d)
             {
               found = true;
-              current_device_id = i;
+              current_device_id_ = i;
               break;
             }
           }
@@ -196,12 +196,12 @@ namespace viennacl
         /** @brief Creates a memory buffer within the context initialized from the supplied data
         *
         *  @param flags  OpenCL flags for the buffer creation
-        *  @param _buffer A vector (STL vector, ublas vector, etc.)
+        *  @param buffer A vector (STL vector, ublas vector, etc.)
         */
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
-        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & _buffer)
+        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer)
         {
-          return create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * _buffer.size()), (void*)&_buffer[0]);
+          return create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]);
         }
         
         //////////////////// create queues ////////////////////////////////
@@ -234,7 +234,7 @@ namespace viennacl
         //get queue for default device:
         viennacl::ocl::command_queue & get_queue()
         {
-          return queues_[devices_[current_device_id].id()][0];
+          return queues_[devices_[current_device_id_].id()][0];
         }
         
         //get a particular queue:
@@ -453,7 +453,7 @@ namespace viennacl
             for (size_t i=0; i<num_devices; ++i)
               devices_.push_back(viennacl::ocl::device(device_ids[i]));
           }
-          current_device_id = 0;
+          current_device_id_ = 0;
           
           initialized_ = true;
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -466,7 +466,7 @@ namespace viennacl
         cl_device_type device_type_;
         viennacl::ocl::handle<cl_context> h_;
         std::vector< viennacl::ocl::device > devices_;
-        unsigned int current_device_id;
+        unsigned int current_device_id_;
         std::size_t default_device_num_;
         ProgramContainer programs_;
         std::map< cl_device_id, std::vector< viennacl::ocl::command_queue> > queues_;

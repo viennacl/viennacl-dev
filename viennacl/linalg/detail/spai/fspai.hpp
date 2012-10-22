@@ -79,39 +79,39 @@ namespace viennacl
                       unsigned int iteration_limit = 5, 
                       bool is_static = false,
                       bool is_right = false) :
-              _residual_norm_threshold(residual_norm_threshold),
-              _iteration_limit(iteration_limit),
-              _is_static(is_static),
-              _is_right(is_right){};
+              residual_norm_threshold_(residual_norm_threshold),
+              iteration_limit_(iteration_limit),
+              is_static_(is_static),
+              is_right_(is_right){};
               
               inline const double getResidualNormThreshold() const
-              { return _residual_norm_threshold; }
+              { return residual_norm_threshold_; }
               inline const unsigned long getIterationLimit () const
-              { return _iteration_limit; }
+              { return iteration_limit_; }
               inline const bool getIsStatic() const
-              { return _is_static; }
+              { return is_static_; }
               inline const bool getIsRight() const
-              { return _is_right; }
+              { return is_right_; }
               inline void setResidualNormThreshold(double residual_norm_threshold){
                   if(residual_norm_threshold > 0)
-                      _residual_norm_threshold = residual_norm_threshold;
+                      residual_norm_threshold_ = residual_norm_threshold;
               }
               inline void setIterationLimit(unsigned long iteration_limit){
                   if(iteration_limit > 0)
-                      _iteration_limit = iteration_limit;
+                      iteration_limit_ = iteration_limit;
               }
               inline void setIsRight(bool is_right){
-                  _is_right = is_right;
+                  is_right_ = is_right;
               }
               inline void setIsStatic(bool is_static){
-                  _is_static = is_static;
+                  is_static_ = is_static;
               }
               
           private:
-              double _residual_norm_threshold;
-              unsigned long _iteration_limit;
-              bool _is_static;
-              bool _is_right;
+              double residual_norm_threshold_;
+              unsigned long iteration_limit_;
+              bool is_static_;
+              bool is_right_;
           };
           
           

@@ -146,7 +146,7 @@ namespace viennacl
         
 //        self_type & operator=(self_type const & other)
 //        {
-//           _index = other._index;
+//           index_ = other._index;
 //           elements_ = other._elements;
 //           return *this;
 //        }   

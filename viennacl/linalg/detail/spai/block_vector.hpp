@@ -45,31 +45,31 @@ namespace viennacl
           * @brief Represents a contigious vector on GPU
           */
           
-          class block_vector{
-          public:
-              block_vector(){
-              }
+          class block_vector
+          {
+            public:
+              block_vector() : elements_(NULL), start_block_inds_(NULL) {}
+              
               /**
               * @brief Return handle to the elements
               */
-              viennacl::ocl::handle<cl_mem>& handle(){ return _elements; }
+              viennacl::ocl::handle<cl_mem>& handle(){ return elements_; }
               /**
               * @brief Return handle to start indices
               */
-              viennacl::ocl::handle<cl_mem>& handle1() { return _start_block_inds; }
+              viennacl::ocl::handle<cl_mem>& handle1() { return start_block_inds_; }
               
               /**
               * @brief Return handle to the const elements
               */
-              const viennacl::ocl::handle<cl_mem>& handle() const { return _elements; }
+              const viennacl::ocl::handle<cl_mem>& handle() const { return elements_; }
               /**
               * @brief Return handle to const start indices
               */
-              const viennacl::ocl::handle<cl_mem>& handle1() const { return _start_block_inds; }
-          private:
-              //unsigned int _vectorIndex;
-              viennacl::ocl::handle<cl_mem> _elements;
-              viennacl::ocl::handle<cl_mem> _start_block_inds;
+              const viennacl::ocl::handle<cl_mem>& handle1() const { return start_block_inds_; }
+            private:
+              viennacl::ocl::handle<cl_mem> elements_;
+              viennacl::ocl::handle<cl_mem> start_block_inds_;
           };
         }
       }

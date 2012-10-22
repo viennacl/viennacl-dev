@@ -203,7 +203,7 @@ namespace viennacl
       typedef typename MatrixType::value_type      ScalarType;
       
       public:
-        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : _tag(tag), LU(mat.size1())
+        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1())
         {
           //initialize preconditioner:
           //std::cout << "Start CPU precond" << std::endl;
@@ -222,10 +222,10 @@ namespace viennacl
         void init(MatrixType const & mat)
         {
           viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::precondition(mat, LU_adapter, _tag);
+          viennacl::linalg::precondition(mat, LU_adapter, tag_);
         }
         
-        ilut_tag const & _tag;
+        ilut_tag const & tag_;
         std::vector< std::map<unsigned int, ScalarType> > LU;
     };
 
@@ -240,7 +240,7 @@ namespace viennacl
       typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
       
       public:
-        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : _tag(tag), LU(mat.size1())
+        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1())
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
@@ -269,7 +269,7 @@ namespace viennacl
           
           viennacl::tools::const_sparse_matrix_adapter<ScalarType>       temp_adapter(temp, temp.size(), temp.size());
           viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::precondition(temp_adapter, LU_adapter, _tag);
+          viennacl::linalg::precondition(temp_adapter, LU_adapter, tag_);
           
           temp_vec.resize(mat.size1());
           
@@ -277,7 +277,7 @@ namespace viennacl
           //copy(LU_cpu, LU);
         }
         
-        ilut_tag const & _tag;
+        ilut_tag const & tag_;
         //MatrixType LU;
         std::vector< std::map<unsigned int, ScalarType> > LU;
         mutable std::vector<ScalarType> temp_vec;

@@ -79,39 +79,39 @@ namespace viennacl
                     unsigned int presmooth = 1,
                     unsigned int postsmooth = 1,
                     unsigned int coarselevels = 0)
-            : _coarse(coarse), _interpol(interpol),
-              _threshold(threshold), _interpolweight(interpolweight), _jacobiweight(jacobiweight), 
-              _presmooth(presmooth), _postsmooth(postsmooth), _coarselevels(coarselevels) {}; 
+            : coarse_(coarse), interpol_(interpol),
+              threshold_(threshold), interpolweight_(interpolweight), jacobiweight_(jacobiweight), 
+              presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels) {}; 
 
             // Getter-/Setter-Functions
-            void set_coarse(unsigned int coarse) { if (coarse > 0) _coarse = coarse; }
-            unsigned int get_coarse() const { return _coarse; }
+            void set_coarse(unsigned int coarse) { if (coarse > 0) coarse_ = coarse; }
+            unsigned int get_coarse() const { return coarse_; }
             
-            void set_interpol(unsigned int interpol) { if (interpol > 0) _interpol = interpol; }
-            unsigned int get_interpol() const { return _interpol; }
+            void set_interpol(unsigned int interpol) { if (interpol > 0) interpol_ = interpol; }
+            unsigned int get_interpol() const { return interpol_; }
             
-            void set_threshold(double threshold) { if (threshold > 0 && threshold <= 1) _threshold = threshold; }
-            double get_threshold() const{ return _threshold; }
+            void set_threshold(double threshold) { if (threshold > 0 && threshold <= 1) threshold_ = threshold; }
+            double get_threshold() const{ return threshold_; }
             
-            void set_as(double jacobiweight) { if (jacobiweight > 0 && jacobiweight <= 2) _jacobiweight = jacobiweight; }
-            double get_interpolweight() const { return _interpolweight; }
+            void set_as(double jacobiweight) { if (jacobiweight > 0 && jacobiweight <= 2) jacobiweight_ = jacobiweight; }
+            double get_interpolweight() const { return interpolweight_; }
             
-            void set_interpolweight(double interpolweight) { if (interpolweight > 0 && interpolweight <= 2) _interpolweight = interpolweight; }
-            double get_jacobiweight() const { return _jacobiweight; }
+            void set_interpolweight(double interpolweight) { if (interpolweight > 0 && interpolweight <= 2) interpolweight_ = interpolweight; }
+            double get_jacobiweight() const { return jacobiweight_; }
             
-            void set_presmooth(int presmooth) { if (presmooth >= 0) _presmooth = presmooth; }
-            unsigned int get_presmooth() const { return _presmooth; }
+            void set_presmooth(int presmooth) { if (presmooth >= 0) presmooth_ = presmooth; }
+            unsigned int get_presmooth() const { return presmooth_; }
             
-            void set_postsmooth(int postsmooth) { if (postsmooth >= 0) _postsmooth = postsmooth; }
-            unsigned int get_postsmooth() const { return _postsmooth; }
+            void set_postsmooth(int postsmooth) { if (postsmooth >= 0) postsmooth_ = postsmooth; }
+            unsigned int get_postsmooth() const { return postsmooth_; }
             
-            void set_coarselevels(int coarselevels)  { if (coarselevels >= 0) _coarselevels = coarselevels; }
-            unsigned int get_coarselevels() const { return _coarselevels; }
+            void set_coarselevels(int coarselevels)  { if (coarselevels >= 0) coarselevels_ = coarselevels; }
+            unsigned int get_coarselevels() const { return coarselevels_; }
 
           private:
-            unsigned int _coarse, _interpol;
-            double _threshold, _interpolweight, _jacobiweight;
-            unsigned int _presmooth, _postsmooth, _coarselevels;
+            unsigned int coarse_, interpol_;
+            double threshold_, interpolweight_, jacobiweight_;
+            unsigned int presmooth_, postsmooth_, coarselevels_;
         };
         
         /** @brief A class for a scalar that can be written to the sparse matrix or sparse vector datatypes.
@@ -122,10 +122,10 @@ namespace viennacl
         class amg_nonzero_scalar
         {
           private:
-            InternalType *_m;
-            IteratorType _iter;
-            unsigned int _i,_j;
-            ScalarType _s;
+            InternalType *m_;
+            IteratorType iter_;
+            unsigned int i_,j_;
+            ScalarType s_;
 
           public:
             amg_nonzero_scalar();
@@ -141,19 +141,19 @@ namespace viennacl
                               IteratorType & iter,
                               unsigned int i,
                               unsigned int j,
-                              ScalarType s = 0): _m(m), _iter(iter), _i(i), _j(j), _s(s) {}
+                              ScalarType s = 0): m_(m), iter_(iter), i_(i), j_(j), s_(s) {}
             
             /** @brief Assignment operator. Writes value into matrix at the given position.
             *  @param value  Value that will be written
             */
             ScalarType operator = (const ScalarType value)
             {
-              _s = value;
+              s_ = value;
               // Only write if scalar is nonzero
-              if (_s == 0) return _s;
-              // Write to _m using iterator _iter or indices (_i,_j)
-              _m->addscalar (_iter,_i,_j,_s);
-              return _s;
+              if (s_ == 0) return s_;
+              // Write to m_ using iterator iter_ or indices (i_,j_)
+              m_->addscalar (iter_,i_,j_,s_);
+              return s_;
             }
             
             /** @brief Addition operator. Adds a constant.
@@ -163,36 +163,36 @@ namespace viennacl
             {
               // If zero is added, then no change necessary
               if (value == 0)
-                return _s;
+                return s_;
               
-              _s += value;
+              s_ += value;
               // Remove entry if resulting scalar is zero
-              if (_s == 0)
+              if (s_ == 0)
               {
-                _m->removescalar(_iter,_i);
-                return _s;
+                m_->removescalar(iter_,i_);
+                return s_;
               }
-              //Write to _m using iterator _iter or indices (_i,_j)
-              _m->addscalar (_iter,_i,_j,_s);
-              return _s;
+              //Write to m_ using iterator iter_ or indices (i_,j_)
+              m_->addscalar (iter_,i_,j_,s_);
+              return s_;
             }
             ScalarType operator ++ (int)
             {
-              _s++;
-              if (_s == 0)
-                _m->removescalar(_iter,_i);
-              _m->addscalar (_iter,_i,_j,_s);
-              return _s;
+              s_++;
+              if (s_ == 0)
+                m_->removescalar(iter_,i_);
+              m_->addscalar (iter_,i_,j_,s_);
+              return s_;
             }
             ScalarType operator ++ ()
             {
-              _s++;
-              if (_s == 0)
-                _m->removescalar(_iter,_i);
-              _m->addscalar (_iter,_i,_j,_s);
-              return _s;
+              s_++;
+              if (s_ == 0)
+                m_->removescalar(iter_,i_);
+              m_->addscalar (iter_,i_,j_,s_);
+              return s_;
             }
-            operator ScalarType (void) { return _s;  }
+            operator ScalarType (void) { return s_;  }
         };
     
         /** @brief Defines an iterator for the sparse vector type.
@@ -261,7 +261,7 @@ namespace viennacl
             typedef amg_nonzero_scalar<self_type,typename InternalType::iterator,ScalarType> NonzeroScalarType;
               
             // Size is only a dummy variable. Not needed for internal map structure but for compatible vector interface.
-            unsigned int _size;
+            unsigned int size_;
             InternalType internal_vector;
       
           public:
@@ -272,13 +272,13 @@ namespace viennacl
             /** @brief The constructor.
             *  @param size    Size of the vector
             */
-            amg_sparsevector(unsigned int size = 0): _size(size)
+            amg_sparsevector(unsigned int size = 0): size_(size)
             {
               internal_vector = InternalType();
             }
             
-            void resize(unsigned int size) { _size = size; }
-            unsigned int size() const { return _size;}
+            void resize(unsigned int size) { size_ = size; }
+            unsigned int size() const { return size_;}
             
             // Returns number of non-zero entries in vector equal to the size of the underlying map.
             unsigned int internal_size() const { return internal_vector.size(); }
@@ -358,7 +358,7 @@ namespace viennacl
             // Copies data into a ublas vector type.
             operator boost::numeric::ublas::vector<ScalarType> (void)
             {
-              boost::numeric::ublas::vector<ScalarType> vec (_size);    
+              boost::numeric::ublas::vector<ScalarType> vec (size_);    
               for (iterator iter = begin(); iter != end(); ++iter)
                 vec [iter.index()] = *iter;        
               return vec;
@@ -815,17 +815,17 @@ namespace viennacl
           private:
             typedef amg_sparsevector<amg_point*> ListType;
             
-            unsigned int _index;
-            unsigned int _influence;
+            unsigned int index_;
+            unsigned int influence_;
             // Determines whether point is undecided.
-            bool _undecided;
+            bool undecided_;
             // Determines wheter point is C point (true) or F point (false).
-            bool _cpoint;
-            unsigned int _coarse_index;
-            // Index offset of parallel coarsening. In that case a point acts as if it had an index of _index-_offset and treats other points as if they had an index of index+_offset
-            unsigned int _offset;
+            bool cpoint_;
+            unsigned int coarse_index_;
+            // Index offset of parallel coarsening. In that case a point acts as if it had an index of index_-offset_ and treats other points as if they had an index of index+offset_
+            unsigned int offset_;
             // Aggregate the point belongs to.
-            unsigned int _aggregate;
+            unsigned int aggregate_;
             
             // Holds all points influencing this point.
             ListType influencing_points;
@@ -838,32 +838,32 @@ namespace viennacl
             
             /** @brief The constructor.
             */
-            amg_point (unsigned int index, unsigned int size): _index(index), _influence(0), _undecided(true), _cpoint(false), _coarse_index(0), _offset(0), _aggregate(0)
+            amg_point (unsigned int index, unsigned int size): index_(index), influence_(0), undecided_(true), cpoint_(false), coarse_index_(0), offset_(0), aggregate_(0)
             {
               influencing_points = ListType(size);
               influenced_points = ListType(size);
             }
             
-            void set_offset(unsigned int offset) { _offset = offset; }
-            unsigned int get_offset() { return _offset; }
-            void set_index(unsigned int index) { _index = index+_offset; }
-            unsigned int get_index() const { return _index-_offset;  }
-            unsigned int get_influence() const { return _influence;  }
-            void set_aggregate(unsigned int aggregate) { _aggregate = aggregate; }
-            unsigned int get_aggregate () { return _aggregate; }
+            void set_offset(unsigned int offset) { offset_ = offset; }
+            unsigned int get_offset() { return offset_; }
+            void set_index(unsigned int index) { index_ = index+offset_; }
+            unsigned int get_index() const { return index_-offset_;  }
+            unsigned int get_influence() const { return influence_;  }
+            void set_aggregate(unsigned int aggregate) { aggregate_ = aggregate; }
+            unsigned int get_aggregate () { return aggregate_; }
             
-            bool is_cpoint() const { return _cpoint && !_undecided;  }
-            bool is_fpoint() const { return !_cpoint && !_undecided; }
-            bool is_undecided() const { return _undecided; }
+            bool is_cpoint() const { return cpoint_ && !undecided_;  }
+            bool is_fpoint() const { return !cpoint_ && !undecided_; }
+            bool is_undecided() const { return undecided_; }
             
             // Returns number of influencing points
             unsigned int number_influencing() const  { return influencing_points.internal_size(); }
             // Returns true if *point is influencing this point
-            bool is_influencing(amg_point* point) const { return influencing_points.isnonzero(point->get_index()+_offset); }
+            bool is_influencing(amg_point* point) const { return influencing_points.isnonzero(point->get_index()+offset_); }
             // Add *point to influencing points
-            void add_influencing_point(amg_point* point) { influencing_points[point->get_index()+_offset] = point;  }
+            void add_influencing_point(amg_point* point) { influencing_points[point->get_index()+offset_] = point;  }
             // Add *point to influenced points
-            void add_influenced_point(amg_point* point) { influenced_points[point->get_index()+_offset] = point; }
+            void add_influenced_point(amg_point* point) { influenced_points[point->get_index()+offset_] = point; }
             
             // Clear influencing points
             void clear_influencing() { influencing_points.clear(); }
@@ -871,34 +871,34 @@ namespace viennacl
             void clear_influenced() {influenced_points.clear(); }
             
             
-            unsigned int get_coarse_index() const { return _coarse_index; }
-            void set_coarse_index(unsigned int index) { _coarse_index = index; }
+            unsigned int get_coarse_index() const { return coarse_index_; }
+            void set_coarse_index(unsigned int index) { coarse_index_ = index; }
             
             // Calculates the initial influence measure equal to the number of influenced points.
-            void calc_influence() { _influence = influenced_points.internal_size();  }
+            void calc_influence() { influence_ = influenced_points.internal_size();  }
             
             // Add to influence measure.
             unsigned int add_influence(int add)
             {
-              _influence += add;
-              return _influence;
+              influence_ += add;
+              return influence_;
             }
             // Make this point C point. Only call via amg_pointvector.
             void make_cpoint() 
             { 
-              _undecided = false;
-              _cpoint = true; 
-              _influence = 0;
+              undecided_ = false;
+              cpoint_ = true; 
+              influence_ = 0;
             }
             // Make this point F point. Only call via amg_pointvector.
             void make_fpoint()
             {
-              _undecided = false;
-              _cpoint = false;
-              _influence = 0;
+              undecided_ = false;
+              cpoint_ = false;
+              influence_ = 0;
             }
             // Switch point from F to C point. Only call via amg_pointvector.
-            void switch_ftoc() { _cpoint = true; }  
+            void switch_ftoc() { cpoint_ = true; }  
             
             // Iterator handling for influencing and influenced points.
             iterator begin_influencing() { return influencing_points.begin(); }
@@ -938,7 +938,7 @@ namespace viennacl
             typedef std::vector<amg_point*> VectorType;
             VectorType pointvector;
             ListType pointlist;
-            unsigned int _size;
+            unsigned int size_;
             unsigned int c_points, f_points;
       
           public:
@@ -948,7 +948,7 @@ namespace viennacl
             /** @brief The constructor.
             *  @param size    Number of points
             */
-            amg_pointvector(unsigned int size = 0): _size(size)
+            amg_pointvector(unsigned int size = 0): size_(size)
             {
               pointvector = VectorType(size);
               c_points = f_points = 0;
@@ -1002,10 +1002,10 @@ namespace viennacl
             
             void resize(unsigned int size)
             {
-              _size = size;
+              size_ = size;
               pointvector = VectorType(size);
             }
-            unsigned int size() const { return _size; }
+            unsigned int size() const { return size_; }
             
             // Returns number of C points
             unsigned int get_cpoints() const { return c_points; }
@@ -1101,7 +1101,7 @@ namespace viennacl
             template <typename VectorType>
             void get_influence(VectorType & vec) const
             {
-              vec = VectorType(_size);
+              vec = VectorType(size_);
               vec.clear();
               
               for (const_iterator iter = begin(); iter != end(); ++iter)
@@ -1123,7 +1123,7 @@ namespace viennacl
             template <typename VectorType>
             void get_C(VectorType & vec) const
             {
-              vec = VectorType(_size);
+              vec = VectorType(size_);
               vec.clear();
               
               for (const_iterator iter = begin(); iter != end(); ++iter)
@@ -1135,7 +1135,7 @@ namespace viennacl
             template <typename VectorType>
             void get_F(VectorType & vec) const
             {
-              vec = VectorType(_size);
+              vec = VectorType(size_);
               vec.clear();
               
               for (const_iterator iter = begin(); iter != end(); ++iter)
@@ -1147,7 +1147,7 @@ namespace viennacl
             template <typename MatrixType>
             void get_Aggregates(MatrixType & mat) const
             {
-              mat = MatrixType(_size,_size);
+              mat = MatrixType(size_,size_);
               mat.clear();
               
               for (const_iterator iter = begin(); iter != end(); ++iter)
@@ -1174,36 +1174,36 @@ namespace viennacl
             // Holds the offsets showing the indices for which a new slice begins.
             boost::numeric::ublas::vector<boost::numeric::ublas::vector<unsigned int> > Offset;
             
-            unsigned int _threads;
-            unsigned int _levels;
+            unsigned int threads_;
+            unsigned int levels_;
             
             void init(unsigned int levels, unsigned int threads = 0)
             {
               // Either use the number of threads chosen by the user or the maximum number of threads available on the processor.
               if (threads == 0)
             #ifdef _OPENMP
-                _threads = omp_get_num_procs();
+                threads_ = omp_get_num_procs();
             #else
-              _threads = 1;
+              threads_ = 1;
             #endif   
               else 
-                _threads = threads;
+                threads_ = threads;
               
-              _levels = levels;
+              levels_ = levels;
               
-              A_slice.resize(_threads);
-              Pointvector_slice.resize(_threads);
-              // Offset has _threads+1 entries to also hold the total size
-              Offset.resize(_threads+1);
+              A_slice.resize(threads_);
+              Pointvector_slice.resize(threads_);
+              // Offset has threads_+1 entries to also hold the total size
+              Offset.resize(threads_+1);
               
-              for (unsigned int i=0; i<_threads; ++i)
+              for (unsigned int i=0; i<threads_; ++i)
               {
-                A_slice[i].resize(_levels);
-                Pointvector_slice[i].resize(_levels);
+                A_slice[i].resize(levels_);
+                Pointvector_slice[i].resize(levels_);
                 // Offset needs one more level for the build-up of the next offset
-                Offset[i].resize(_levels+1);
+                Offset[i].resize(levels_+1);
               }
-              Offset[_threads].resize(_levels+1);
+              Offset[threads_].resize(levels_+1);
             } //init()
             
             // Slice matrix A into as many parts as threads are used.
@@ -1247,12 +1247,12 @@ namespace viennacl
             #ifdef _OPENMP
               #pragma omp parallel for 
             #endif
-              for (unsigned int i=0; i<=_threads; ++i)
+              for (unsigned int i=0; i<=threads_; ++i)
               {
                 // Offset of first piece is zero. Pieces 1,...,threads-1 have equal size while the last one might be greater.
                 if (i == 0) Offset[i][level] = 0;
-                else if (i == _threads) Offset[i][level] = A[level].size1();
-                else Offset[i][level] = i*(A[level].size1()/_threads);
+                else if (i == threads_) Offset[i][level] = A[level].size1();
+                else Offset[i][level] = i*(A[level].size1()/threads_);
               }
             }   
             
@@ -1272,7 +1272,7 @@ namespace viennacl
             #ifdef _OPENMP
               #pragma omp parallel for private (x,y,point)
             #endif
-              for (unsigned int i=0; i<_threads; ++i)
+              for (unsigned int i=0; i<threads_; ++i)
               {
                 // Allocate space for the matrix slice and the pointvector.
                 A_slice[i][level] = SparseMatrixType(Offset[i+1][level]-Offset[i][level],Offset[i+1][level]-Offset[i][level]);
@@ -1402,7 +1402,7 @@ namespace viennacl
             }
           }
           
-          #ifdef DEBUG
+          #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Galerkin Operator: " << std::endl;
           printmatrix (RES);
           #endif

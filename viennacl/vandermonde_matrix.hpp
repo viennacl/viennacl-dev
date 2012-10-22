@@ -241,4 +241,4 @@ namespace viennacl {
 
 }
 
-#endif // _VIENNACL_VANDERMONDE_MATRIX_HPP
+#endif // VIENNACL_VANDERMONDE_MATRIX_HPP

@@ -241,4 +241,4 @@ namespace viennacl {
         return s;
     }
 }
-#endif // _VIENNACL_HANKEL_MATRIX_HPP
+#endif // VIENNACL_HANKEL_MATRIX_HPP

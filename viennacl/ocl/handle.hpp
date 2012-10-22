@@ -147,7 +147,7 @@ namespace viennacl
     {
     public:
       handle() : h_(0) {}
-      handle(const OCL_TYPE & _something) : h_(_something) {}
+      handle(const OCL_TYPE & something) : h_(something) {}
       handle(const handle & other) : h_(other.h_) { if (h_ != 0) inc(); }
       ~handle() { if (h_ != 0) dec(); }
       handle & operator=(const handle & other)
@@ -158,10 +158,10 @@ namespace viennacl
         inc();
         return *this;
       }
-      handle & operator=(const OCL_TYPE & _something)
+      handle & operator=(const OCL_TYPE & something)
       {
         if (h_ != 0) dec();
-        h_ = _something;
+        h_ = something;
         return *this;
       }
       

@@ -1,5 +1,5 @@
-#ifndef _VIENNACL_CIRCULANT_MATRIX_HPP
-#define _VIENNACL_CIRCULANT_MATRIX_HPP
+#ifndef VIENNACL_CIRCULANT_MATRIX_HPP
+#define VIENNACL_CIRCULANT_MATRIX_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -258,4 +258,4 @@ namespace viennacl
     }
 }
 
-#endif // _VIENNACL_CIRCULANT_MATRIX_HPP
+#endif // VIENNACL_CIRCULANT_MATRIX_HPP

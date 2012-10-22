@@ -155,7 +155,7 @@ namespace viennacl
       // P test
       //test_interpolation(A[level], P[level], Pointvector[level]);
       
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
       #endif  
@@ -279,7 +279,7 @@ namespace viennacl
   }
       }
       
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
       #endif  
@@ -388,7 +388,7 @@ namespace viennacl
   P[level](x,pointy->get_coarse_index()) = 1;
       }
       
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Aggregation based Prolongation:" << std::endl;
       printmatrix(P[level]);
       #endif
@@ -454,7 +454,7 @@ namespace viennacl
   Jacobi (x,x) = 1 - tag.get_interpolweight();
       }
           
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Jacobi Matrix:" << std::endl;
       printmatrix(Jacobi);
       #endif
@@ -462,7 +462,7 @@ namespace viennacl
       // Use AG interpolation as tentative prolongation
       amg_interpol_ag(level, A, P_tentative, Pointvector, tag);
       
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Tentative Prolongation:" << std::endl;
       printmatrix(P_tentative[level]);
       #endif
@@ -470,7 +470,7 @@ namespace viennacl
       // Multiply Jacobi matrix with tentative prolongation to get actual prolongation
       amg_mat_prod(Jacobi,P_tentative[level],P[level]);
       
-      #ifdef DEBUG
+      #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
       #endif    
