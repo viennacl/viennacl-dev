@@ -23,7 +23,7 @@
 *   Contributed by Guenther Mader and Astrid Rupp.
 */
 
-#include <math.h>    //for sqrt()
+#include <cmath>
 #include <vector>
 #include "viennacl/vector.hpp"
 #include "viennacl/compressed_matrix.hpp"
@@ -161,9 +161,9 @@ namespace viennacl
 
         second_step = false;
         eps = std::numeric_limits<double>::epsilon();
-        squ_eps = sqrt(eps);
+        squ_eps = std::sqrt(eps);
         retry_th = 1e-2;
-        eta =  exp(log(eps) * tag.factor());
+        eta = std::exp(std::log(eps) * tag.factor());
         reorths = 0;
         retry = 0;
         
@@ -225,7 +225,7 @@ namespace viennacl
 
           for(j = 0;j < i;j++)
           { 
-            if(fabs(w[index][j]) >= squ_eps)
+            if(std::fabs(w[index][j]) >= squ_eps)
             {
               detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, j), t);
               inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -233,7 +233,7 @@ namespace viennacl
               w[index][j] = 1.5 * eps * get_N();
               k = j - 1;
               reorths++;
-              while(k >= 0 && fabs(w[index][k]) > eta)
+              while(k >= 0 && std::fabs(w[index][k]) > eta)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -245,7 +245,7 @@ namespace viennacl
               l_bound[batches] = k + 1;
               k = j + 1;
               
-              while(k < i && fabs(w[index][k]) > eta)
+              while(k < i && std::fabs(w[index][k]) > eta)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);

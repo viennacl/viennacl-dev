@@ -44,12 +44,10 @@ namespace viennacl
     // mtl4
     //
     template< typename MatrixT, typename VectorT >
-    VectorT 
-    prod(MatrixT const& matrix, VectorT const& vector, 
-         typename viennacl::enable_if< viennacl::is_mtl4< typename viennacl::traits::tag_of< MatrixT >::type >::value
-                                     >::type* dummy = 0)
+    typename viennacl::enable_if< viennacl::is_mtl4< typename viennacl::traits::tag_of< MatrixT >::type >::value,
+                                  VectorT>::type
+    prod(MatrixT const& matrix, VectorT const& vector)
     {
-      // std::cout << "mtl4 .. " << std::endl;
       return VectorT(matrix * vector);
     }
     #endif
@@ -59,12 +57,10 @@ namespace viennacl
     // Eigen
     //
     template< typename MatrixT, typename VectorT >
-    VectorT 
-    prod(MatrixT const& matrix, VectorT const& vector, 
-         typename viennacl::enable_if< viennacl::is_eigen< typename viennacl::traits::tag_of< MatrixT >::type >::value
-                                     >::type* dummy = 0)
+    typename viennacl::enable_if< viennacl::is_eigen< typename viennacl::traits::tag_of< MatrixT >::type >::value,
+                                  VectorT>::type
+    prod(MatrixT const& matrix, VectorT const& vector)
     {
-      // std::cout << "ublas .. " << std::endl;
       return matrix * vector;
     }
     #endif
@@ -74,10 +70,9 @@ namespace viennacl
     // UBLAS
     //
     template< typename MatrixT, typename VectorT >
-    VectorT 
-    prod(MatrixT const& matrix, VectorT const& vector, 
-         typename viennacl::enable_if< viennacl::is_ublas< typename viennacl::traits::tag_of< MatrixT >::type >::value
-                                     >::type* dummy = 0)
+    typename viennacl::enable_if< viennacl::is_ublas< typename viennacl::traits::tag_of< MatrixT >::type >::value,
+                                  VectorT>::type
+    prod(MatrixT const& matrix, VectorT const& vector)
     {
       // std::cout << "ublas .. " << std::endl;
       return boost::numeric::ublas::prod(matrix, vector);
@@ -92,7 +87,7 @@ namespace viennacl
     // dense matrix-vector product:
     template< typename T, typename A1, typename A2, typename VectorT >
     VectorT 
-    prod_impl(std::vector< std::vector<T, A1>, A2 > const& matrix, VectorT const& vector)
+    prod(std::vector< std::vector<T, A1>, A2 > const & matrix, VectorT const& vector)
     {
       VectorT result(matrix.size());
       for (typename std::vector<T, A1>::size_type i=0; i<matrix.size(); ++i)
@@ -107,7 +102,7 @@ namespace viennacl
     // sparse matrix-vector product:
     template< typename KEY, typename DATA, typename COMPARE, typename AMAP, typename AVEC, typename VectorT >
     VectorT 
-    prod_impl(std::vector< std::map<KEY, DATA, COMPARE, AMAP>, AVEC > const& matrix, VectorT const& vector)
+    prod(std::vector< std::map<KEY, DATA, COMPARE, AMAP>, AVEC > const& matrix, VectorT const& vector)
     {
       typedef std::vector< std::map<KEY, DATA, COMPARE, AMAP>, AVEC > MatrixType;
       
@@ -124,7 +119,7 @@ namespace viennacl
     }
     
     
-    template< typename MatrixT, typename VectorT >
+    /*template< typename MatrixT, typename VectorT >
     VectorT 
     prod(MatrixT const& matrix, VectorT const& vector, 
          typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< MatrixT >::type >::value
@@ -132,7 +127,7 @@ namespace viennacl
     {
       // std::cout << "std .. " << std::endl;
       return prod_impl(matrix, vector);
-    }
+    }*/
 
     // ----------------------------------------------------
     // VIENNACL

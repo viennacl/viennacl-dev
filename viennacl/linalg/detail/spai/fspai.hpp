@@ -288,7 +288,7 @@ namespace viennacl
               for (size_t i=0; i<Jk.size(); ++i)
                 Lkk -= A(Jk[i],k) * yk[i];
               
-              Lkk = 1.0 / sqrt(Lkk);
+              Lkk = 1.0 / std::sqrt(Lkk);
               L_temp[k][k] = Lkk;
               L_trans(k,k) = Lkk;
               

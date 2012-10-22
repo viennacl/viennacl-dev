@@ -72,11 +72,11 @@ namespace viennacl
             for (int l = 0; l < n; l++)
             {
                 // Find small subdiagonal element.
-                tst1 = std::max<SCALARTYPE>(tst1, fabs(d(l)) + fabs(e(l)));
+                tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d(l)) + std::fabs(e(l)));
                 int m = l;
                 while (m < n)
                 {
-                    if (fabs(e(m)) <= eps * tst1)
+                    if (std::fabs(e(m)) <= eps * tst1)
                         break;
                     m++;
                 }
@@ -148,7 +148,7 @@ namespace viennacl
                         
                         // Check for convergence.
                     }
-                    while (fabs(e(l)) > eps * tst1);
+                    while (std::fabs(e(l)) > eps * tst1);
                 }
                 d(l) = d(l) + f;
                 e(l) = 0;
@@ -345,7 +345,7 @@ namespace viennacl
             for (int i = 0; i < nn; i++)
             {
                 for (int j = std::max(i - 1, 0); j < nn; j++)
-                    norm = norm + std::abs(H(i, j));
+                    norm = norm + std::fabs(H(i, j));
             }
 
             // Outer loop over eigenvalue index
@@ -356,9 +356,9 @@ namespace viennacl
                 int l = n;
                 while (l > 0)
                 {
-                    s = std::abs(H(l - 1, l - 1)) + std::abs(H(l, l));
+                    s = std::fabs(H(l - 1, l - 1)) + std::fabs(H(l, l));
                     if (s == 0) s = norm;
-                    if (std::abs(H(l, l - 1)) < eps * s)
+                    if (std::fabs(H(l, l - 1)) < eps * s)
                         break;
 
                     l--;
@@ -380,7 +380,7 @@ namespace viennacl
                     w = H(n, n - 1) * H(n - 1, n);
                     p = (H(n - 1, n - 1) - H(n, n)) / 2;
                     q = p * p + w;
-                    z = (SCALARTYPE)sqrt(std::abs(q));
+                    z = static_cast<SCALARTYPE>(std::sqrt(std::fabs(q)));
                     H(n, n) = H(n, n) + exshift;
                     H(n - 1, n - 1) = H(n - 1, n - 1) + exshift;
                     x = H(n, n);
@@ -396,10 +396,10 @@ namespace viennacl
                         e(n - 1) = 0;
                         e(n) = 0;
                         x = H(n, n - 1);
-                        s = std::abs(x) + std::abs(z);
+                        s = std::fabs(x) + std::fabs(z);
                         p = x / s;
                         q = z / s;
-                        r = (SCALARTYPE)sqrt(p * p + q * q);
+                        r = static_cast<SCALARTYPE>(std::sqrt(p * p + q * q));
                         p = p / r;
                         q = q / r;
 
@@ -448,7 +448,7 @@ namespace viennacl
                         for (int i = 0; i <= n; i++)
                             H(i, i) -= x;
 
-                        s = std::abs(H(n, n - 1)) + std::abs(H(n - 1, n - 2));
+                        s = std::fabs(H(n, n - 1)) + std::fabs(H(n - 1, n - 2));
                         x = y = 0.75 * s;
                         w = (-0.4375) * s * s;
                     }
@@ -460,7 +460,7 @@ namespace viennacl
                         s = s * s + w;
                         if (s > 0)
                         {
-                            s = (SCALARTYPE)sqrt(s);
+                            s = static_cast<SCALARTYPE>(std::sqrt(s));
                             if (y < x) s = -s;
                             s = x - w / ((y - x) / 2 + s);
                             for (int i = 0; i <= n; i++)
@@ -483,13 +483,13 @@ namespace viennacl
                         p = (r * s - w) / H(m + 1, m) + H(m, m + 1);
                         q = h_m1_m1 - z - r - s;
                         r = H(m + 2, m + 1);
-                        s = std::abs(p) + std::abs(q) + std::abs(r);
+                        s = std::fabs(p) + std::fabs(q) + std::fabs(r);
                         p = p / s;
                         q = q / s;
                         r = r / s;
                         if (m == l)
                             break;
-                        if (std::abs(H(m, m - 1)) * (std::abs(q) + std::abs(r)) < eps * (std::abs(p) * (std::abs(H(m - 1, m - 1)) + std::abs(z) + std::abs(h_m1_m1))))
+                        if (std::fabs(H(m, m - 1)) * (std::fabs(q) + std::fabs(r)) < eps * (std::fabs(p) * (std::fabs(H(m - 1, m - 1)) + std::fabs(z) + std::fabs(h_m1_m1))))
                             break;
                         m--;
                     }
@@ -510,7 +510,7 @@ namespace viennacl
                             p = H(k, k - 1);
                             q = H(k + 1, k - 1);
                             r = (notlast ? H(k + 2, k - 1) : 0);
-                            x = std::abs(p) + std::abs(q) + std::abs(r);
+                            x = std::fabs(p) + std::fabs(q) + std::fabs(r);
                             if (x != 0)
                             {
                                 p = p / x;
@@ -521,7 +521,7 @@ namespace viennacl
 
                         if (x == 0) break;
 
-                        s = (SCALARTYPE)sqrt(p * p + q * q + r * r);
+                        s = static_cast<SCALARTYPE>(std::sqrt(p * p + q * q + r * r));
                         if (p < 0) s = -s;
 
                         if (s != 0)
@@ -647,11 +647,11 @@ namespace viennacl
                                 q = (d(i) - p) * (d(i) - p) + e(i) * e(i);
                                 t = (x * s - z * r) / q;
                                 H(i, n) = t;
-                                H(i + 1, n) = (std::abs(x) > std::abs(z)) ? ((-r - w * t) / x) : ((-s - y * t) / z);
+                                H(i + 1, n) = (std::fabs(x) > std::fabs(z)) ? ((-r - w * t) / x) : ((-s - y * t) / z);
                             }
 
                             // Overflow control
-                            t = std::abs(H(i, n));
+                            t = std::fabs(H(i, n));
                             if ((eps * t) * t > 1)
                                 for (int j = i; j <= n; j++)
                                     H(j, n) /= t;
@@ -664,7 +664,7 @@ namespace viennacl
                     int l = n - 1;
 
                     // Last vector component imaginary so matrix is triangular
-                    if (std::abs(H(n, n - 1)) > std::abs(H(n - 1, n)))
+                    if (std::fabs(H(n, n - 1)) > std::fabs(H(n - 1, n)))
                     {
                         H(n - 1, n - 1) = q / H(n, n - 1);
                         H(n - 1, n) = -(H(n, n) - p) / H(n, n - 1);
@@ -716,7 +716,7 @@ namespace viennacl
                                 vr = (d(i) - p) * (d(i) - p) + e(i) * e(i) - q * q;
                                 vi = (d(i) - p) * 2 * q;
                                 if ( (vr == 0) && (vi == 0) )
-                                    vr = eps * norm * (std::abs(w) + std::abs(q) + std::abs(x) + std::abs(y) + std::abs(z));
+                                    vr = eps * norm * (std::fabs(w) + std::fabs(q) + std::fabs(x) + std::fabs(y) + std::fabs(z));
                                 
                                 cdiv<SCALARTYPE>(x * r - z * ra + q * sa, x * s - z * sa - q * ra, vr, vi, out1, out2);
                                 
@@ -724,7 +724,7 @@ namespace viennacl
                                 H(i, n) = out2;
 
                                 
-                                if (std::abs(x) > (std::abs(z) + std::abs(q)))
+                                if (std::fabs(x) > (std::fabs(z) + std::fabs(q)))
                                 {
                                     H(i + 1, n - 1) = (-ra - w * H(i, n - 1) + q * H(i, n)) / x;
                                     H(i + 1, n) = (-sa - w * H(i, n) - q * H(i, n - 1)) / x;
@@ -739,7 +739,7 @@ namespace viennacl
                             }
 
                             // Overflow control
-                            t = std::max(std::abs(H(i, n - 1)), std::abs(H(i, n)));
+                            t = std::max(std::fabs(H(i, n - 1)), std::fabs(H(i, n)));
                             if ((eps * t) * t > 1)
                             {
                                 for (int j = i; j <= n; j++)
@@ -877,7 +877,7 @@ namespace viennacl
 
             for (std::size_t i = 0; i < A.size1(); i++)
             {
-                if(std::abs(E(i) < EPS))
+                if(std::fabs(E(i) < EPS))
                 {
                     eigen_values(i, i) = D(i);
                 }

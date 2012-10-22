@@ -104,7 +104,7 @@ namespace viennacl
           // Complex scalar division.
           T r;
           T d;
-          if (std::abs(yr) > std::abs(yi))
+          if (std::fabs(yr) > std::fabs(yi))
           {
               r = yi / yr;
               d = yr + r * yi;

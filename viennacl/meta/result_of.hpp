@@ -81,6 +81,13 @@ namespace viennacl
       {
         enum { value = alignment<T>::value };
       };
+
+      // support for a*x with scalar a and vector x
+      template <typename LHS, typename RHS>
+      struct alignment< vector_expression<LHS, RHS, op_prod> >
+      {
+        enum { value = alignment<LHS>::value };
+      };
       
       
       //

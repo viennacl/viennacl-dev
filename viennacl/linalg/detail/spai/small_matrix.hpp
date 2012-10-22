@@ -62,7 +62,7 @@ namespace viennacl
             mat.resize(new_size, new_size, false);
             mat.clear();
 
-            double val = 1 / sqrt(2.0);
+            double val = 1.0 / std::sqrt(2.0);
 
             for (size_t i=0; i<new_size; ++i)
               mat(i,i) = val;

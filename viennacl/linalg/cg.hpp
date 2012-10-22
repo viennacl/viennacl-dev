@@ -131,13 +131,11 @@ namespace viennacl
         beta = new_ip_rr / ip_rr;
         ip_rr = new_ip_rr;
 
-        //p = residual + beta*p;
-        p *= beta;
-        p += residual;
+        p = residual + beta*p;
       } 
       
       //store last error estimate:
-      tag.error(sqrt(new_ip_rr / norm_rhs_squared));
+      tag.error(std::sqrt(new_ip_rr / norm_rhs_squared));
       
       return result;
     }
@@ -209,13 +207,11 @@ namespace viennacl
         beta = new_ip_rr / ip_rr;
         ip_rr = new_ip_rr;
         
-        //p = z + beta*p;
-        p *= beta;
-        p += z;
+        p = z + beta*p;
       } 
 
       //store last error estimate:
-      tag.error(sqrt(std::fabs(new_ip_rr / norm_rhs_squared)));
+      tag.error(std::sqrt(std::fabs(new_ip_rr / norm_rhs_squared)));
 
       return result;
     }

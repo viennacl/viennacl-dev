@@ -1436,7 +1436,7 @@ namespace viennacl
           {
             for (unsigned int y=0; y<RAP.size2(); ++y)
             {
-              if (abs((ScalarType)RAP(x,y) - (ScalarType)A_i1(x,y)) > 0.0001)
+              if (std::fabs(static_cast<ScalarType>(RAP(x,y)) - static_cast<ScalarType>(A_i1(x,y))) > 0.0001)
                 std::cout << x << " " << y << " " << RAP(x,y) << " " << A_i1(x,y) << std::endl;
             } 
           }

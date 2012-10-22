@@ -174,7 +174,7 @@ namespace viennacl
             break;
 
           // Stagnation check
-          if (fabs(diff_val - last_diff) / (diff_val * conf.check_after_steps()) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
+          if (std::fabs(diff_val - last_diff) / (diff_val * conf.check_after_steps()) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
           {
             if (stagnation_flag)       // iteration stagnates (two iterates with no notable progress)
               break;

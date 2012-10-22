@@ -49,7 +49,7 @@ namespace viennacl
     {
       
       // orthogonalises j-th column of A
-      template <typename MatrixType, typename VectorType>
+      /*template <typename MatrixType, typename VectorType>
       typename MatrixType::value_type setup_householder_vector(MatrixType const & A, VectorType & v, std::size_t j)
       {
         typedef typename MatrixType::value_type   ScalarType;
@@ -62,15 +62,13 @@ namespace viennacl
 
         //get v from A:
         v[j] = 1;
-        //ScalarType scaling = sqrt(sigma + A(j,j)*A(j,j));
-        //ScalarType scaling = sqrt(sigma);
         ScalarType scaling = 1.0;
         for (std::size_t k = j+1; k<A.size1(); ++k)
           v[k] = A(k, j) / scaling;
         sigma = sigma / (scaling * scaling);
         ScalarType A_jj = A(j,j) / scaling;
         
-        std::cout << "sigma: " << sigma << std::endl;
+        //std::cout << "sigma: " << sigma << std::endl;
         assert( sigma >= 0.0  && "sigma must be non-negative!");
 
         
@@ -78,7 +76,7 @@ namespace viennacl
           return 0;
         else
         {
-          ScalarType mu = sqrt(sigma + A_jj*A_jj);
+          ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
           std::cout << "mu: " << mu << std::endl;
           std::cout << "sigma: " << sigma << std::endl;
           
@@ -98,7 +96,7 @@ namespace viennacl
         }
           
         return beta;
-      }
+      }*/
       
 
       template <typename MatrixType, typename VectorType>
@@ -132,7 +130,7 @@ namespace viennacl
           return 0;
         else
         {
-          ScalarType mu = sqrt(sigma + A_jj*A_jj);
+          ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
           //std::cout << "mu: " << mu << std::endl;
           //std::cout << "sigma: " << sigma << std::endl;
           
@@ -191,7 +189,7 @@ namespace viennacl
           return 0;
         else
         {
-          ScalarType mu = sqrt(sigma + A_jj*A_jj);
+          ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
           //std::cout << "mu: " << mu << std::endl;
           //std::cout << "sigma: " << sigma << std::endl;
           

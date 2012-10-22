@@ -128,14 +128,14 @@ namespace viennacl
             for (l = k; l >= 0; l--) 
             {
               goto_test_conv = false;
-              if (fabs(e[l]) <= detail::EPS) 
+              if (std::fabs(e[l]) <= detail::EPS) 
               {
                 // set it
                 goto_test_conv = true;
                 break;
               }
 
-              if (fabs(q[l - 1]) <= detail::EPS) 
+              if (std::fabs(q[l - 1]) <= detail::EPS) 
               {
                 // goto
                 break;
@@ -155,7 +155,7 @@ namespace viennacl
                 CPU_ScalarType f = s * e[i];
                 e[i] = c * e[i];
 
-                if (fabs(f) <= detail::EPS)
+                if (std::fabs(f) <= detail::EPS)
                 {
                   //l2 = i - 1;
                   break;

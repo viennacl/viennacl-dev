@@ -116,9 +116,7 @@ namespace viennacl
         inner_prod_temp = viennacl::linalg::inner_prod(tmp0, r0star);
         alpha = ip_rr0star / static_cast<CPU_ScalarType>(inner_prod_temp);
 
-        //s = residual - alpha*tmp0;
-        s = residual;
-        s -= alpha*tmp0;
+        s = residual - alpha*tmp0;
         
         tmp1 = viennacl::linalg::prod(matrix, s);
         //omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
@@ -127,16 +125,12 @@ namespace viennacl
         inner_prod_temp = viennacl::linalg::inner_prod(tmp1, tmp1);
         omega /= inner_prod_temp;
         
-        //result += alpha * p + omega * s;
-        result += alpha * p;
-        result += omega * s;
+        result += alpha * p + omega * s;
         
-        //residual = s - omega * tmp1;
-        residual = s;
-        residual -= omega*tmp1;
+        residual = s - omega * tmp1;
         
         new_ip_rr0star = viennacl::linalg::inner_prod(residual,r0star);
-        if (fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host) < tag.tolerance() * tag.tolerance())
+        if (std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host) < tag.tolerance() * tag.tolerance())
           break;
         
         //beta = new_ip_rr0star / ip_rr0star * alpha/omega;
@@ -148,12 +142,11 @@ namespace viennacl
         //  p = residual + beta * (p - omega*tmp0);
         // without introducing temporary vectors:
         p -= omega * tmp0;
-        p *= beta;
-        p += residual;
+        p = residual + beta * p;
       }
       
       //store last error estimate:
-      tag.error(std::sqrt(fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host)));
+      tag.error(std::sqrt(std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host)));
       
       return result;
     }
@@ -212,9 +205,7 @@ namespace viennacl
         inner_prod_temp = viennacl::linalg::inner_prod(tmp0, r0star);
         alpha = ip_rr0star / static_cast<CPU_ScalarType>(inner_prod_temp);
 
-        //s = residual - alpha*tmp0;
-        s = residual;
-        s -= alpha*tmp0;
+        s = residual - alpha*tmp0;
 
         tmp1 = viennacl::linalg::prod(matrix, s);
         precond.apply(tmp1);
@@ -224,15 +215,11 @@ namespace viennacl
         inner_prod_temp = viennacl::linalg::inner_prod(tmp1, tmp1);
         omega /= inner_prod_temp;
         
-        //result += alpha * p + omega * s;
-        result += alpha * p;
-        result += omega * s;
-        //residual = s - omega * tmp1;
-        residual = s;
-        residual -= omega*tmp1;
+        result += alpha * p + omega * s;
+        residual = s - omega * tmp1;
         
         new_ip_rr0star = viennacl::linalg::inner_prod(residual,r0star);
-        if (fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) < tag.tolerance() * tag.tolerance() )
+        if (std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) < tag.tolerance() * tag.tolerance() )
           break;
         
         //beta = new_ip_rr0star / ip_rr0star * alpha/omega;
@@ -244,14 +231,13 @@ namespace viennacl
         //  p = residual + beta * (p - omega*tmp0);
         // without introducing temporary vectors:
         p -= omega * tmp0;
-        p *= beta;
-        p += residual;
+        p = residual + beta * p;
         
         //std::cout << "Rel. Residual in current step: " << std::sqrt(std::fabs(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) << std::endl;
       }
       
       //store last error estimate:
-      tag.error(std::sqrt(fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host)));
+      tag.error(std::sqrt(std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host)));
       
       return result;
     }

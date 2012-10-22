@@ -197,7 +197,7 @@ namespace viennacl
               ScalarType inprod, norm2;
               //print_sparse_vector(res);
               for(typename SparseVectorType::const_iterator res_it = res.begin(); res_it != res.end(); ++res_it){
-                  if(!isInIndexSet(J, res_it->first) && (std::abs(res_it->second) > tag.getResidualThreshold())){
+                  if(!isInIndexSet(J, res_it->first) && (std::fabs(res_it->second) > tag.getResidualThreshold())){
                       inprod = norm2 = 0;
                       sparse_inner_prod(res, A_v_c[res_it->first], inprod);
                       sparse_norm_2(A_v_c[res_it->first], norm2);

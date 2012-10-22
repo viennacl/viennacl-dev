@@ -21,7 +21,7 @@
     @brief Generic interface for the l^2-norm. See viennacl/linalg/vector_operations.hpp for implementations.
 */
 
-#include <math.h>    //for sqrt()
+#include <cmath>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/meta/enable_if.hpp"
@@ -40,25 +40,13 @@ namespace viennacl
     // ----------------------------------------------------
     // MTL4
     //
-      #if defined(_MSC_VER) && _MSC_VER < 1500        //Visual Studio 2005 needs special treatment
-      template <typename ScalarType>
-      ScalarType norm_2(mtl::dense_vector<ScalarType> const & v)
-      {
-        // std::cout << "mtl4 .. " << std::endl;
-        return mtl::two_norm(v);
-      }
-      
-      #else
-      template< typename VectorT >
-      typename VectorT::value_type
-      norm_2(VectorT const& v, 
-          typename viennacl::enable_if< viennacl::is_mtl4< typename viennacl::traits::tag_of< VectorT >::type >::value
-                                      >::type* dummy = 0)
-      {
-        // std::cout << "mtl4 .. " << std::endl;
-        return mtl::two_norm(v);
-      }
-      #endif
+    template< typename VectorT >
+    typename viennacl::enable_if< viennacl::is_mtl4< typename viennacl::traits::tag_of< VectorT >::type >::value,
+                                  typename VectorT::value_type>::type
+    norm_2(VectorT const & v)
+    {
+      return mtl::two_norm(v);
+    }
     #endif
     
     
@@ -66,30 +54,13 @@ namespace viennacl
     // ----------------------------------------------------
     // EIGEN
     //
-      #if defined(_MSC_VER) && _MSC_VER < 1500        //Visual Studio 2005 needs special treatment
-      float norm_2(Eigen::VectorXf const & v)
-      {
-        // std::cout << "eigen .. " << std::endl;
-        return v.norm();
-      }
-      
-      double norm_2(Eigen::VectorXd const & v)
-      {
-        // std::cout << "eigen .. " << std::endl;
-        return v.norm();
-      }
-      
-      #else
-      template< typename VectorT >
-      typename VectorT::RealScalar
-      norm_2(VectorT const& v, 
-          typename viennacl::enable_if< viennacl::is_eigen< typename viennacl::traits::tag_of< VectorT >::type >::value
-                                      >::type* dummy = 0)
-      {
-        // std::cout << "ublas .. " << std::endl;
-        return v.norm();
-      }
-      #endif
+    template< typename VectorT >
+    typename viennacl::enable_if< viennacl::is_eigen< typename viennacl::traits::tag_of< VectorT >::type >::value,
+                                  typename VectorT::RealScalar>::type
+    norm_2(VectorT const & v)
+    {
+      return v.norm();
+    }
     #endif
     
     
@@ -97,25 +68,13 @@ namespace viennacl
     // ----------------------------------------------------
     // UBLAS
     //
-      #if defined(_MSC_VER) && _MSC_VER < 1500        //Visual Studio 2005 needs special treatment
-      template< typename ScalarType >
-      ScalarType
-      norm_2(boost::numeric::ublas::vector<ScalarType> const & v)
-      {
-        // std::cout << "ublas .. " << std::endl;
-        return boost::numeric::ublas::norm_2(v);
-      }
-      #else
-      template< typename VectorT >
-      typename VectorT::value_type
-      norm_2(VectorT const& v, 
-          typename viennacl::enable_if< viennacl::is_ublas< typename viennacl::traits::tag_of< VectorT >::type >::value
-                                      >::type* dummy = 0)
-      {
-        // std::cout << "ublas .. " << std::endl;
-        return boost::numeric::ublas::norm_2(v);
-      }
-      #endif
+    template< typename VectorT >
+    typename viennacl::enable_if< viennacl::is_ublas< typename viennacl::traits::tag_of< VectorT >::type >::value,
+                                  typename VectorT::value_type>::type
+    norm_2(VectorT const & v)
+    {
+      return boost::numeric::ublas::norm_2(v);
+    }
     #endif
     
     
@@ -123,17 +82,15 @@ namespace viennacl
     // STL
     //
     template< typename VectorT>
-    typename VectorT::value_type
-    norm_2(VectorT const& v1,
-         typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value
-                                     >::type* dummy = 0)
+    typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value,
+                                  typename VectorT::value_type>::type
+    norm_2(VectorT const& v1)
     {
-      //std::cout << "stl .. " << std::endl;
       typename VectorT::value_type result = 0;
       for (typename VectorT::size_type i=0; i<v1.size(); ++i)
         result += v1[i] * v1[i];
       
-      return sqrt(result);
+      return std::sqrt(result);
     }
     
     // ----------------------------------------------------
@@ -143,9 +100,7 @@ namespace viennacl
     viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>, 
                                  const viennacl::vector<ScalarType, alignment>,
                                  viennacl::op_norm_2 >
-    norm_2(viennacl::vector<ScalarType, alignment> const & v, 
-         typename viennacl::enable_if< viennacl::is_viennacl< typename viennacl::traits::tag_of< viennacl::vector<ScalarType, alignment> >::type >::value
-                                     >::type* dummy = 0)
+    norm_2(viennacl::vector<ScalarType, alignment> const & v)
     {
        //std::cout << "viennacl .. " << std::endl;
       return viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>, 

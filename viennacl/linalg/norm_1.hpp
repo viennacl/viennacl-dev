@@ -21,7 +21,7 @@
     @brief Generic interface for the l^1-norm. See viennacl/linalg/vector_operations.hpp for implementations.
 */
 
-#include <math.h>    //for sqrt()
+#include <cmath>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/meta/enable_if.hpp"
@@ -57,15 +57,14 @@ namespace viennacl
     // STL
     //
     template< typename VectorT>
-    typename VectorT::value_type
-    norm_1(VectorT const& v1,
-         typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value
-                                     >::type* dummy = 0)
+    typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value,
+                                  typename VectorT::value_type>::type
+    norm_1(VectorT const& v1)
     {
       //std::cout << "stl .. " << std::endl;
       typename VectorT::value_type result = 0;
       for (typename VectorT::size_type i=0; i<v1.size(); ++i)
-        result += fabs(v1[i]);
+        result += std::fabs(v1[i]);
       
       return result;
     }
@@ -77,9 +76,7 @@ namespace viennacl
     viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>, 
                                  const viennacl::vector<ScalarType, alignment>,
                                  viennacl::op_norm_1 >
-    norm_1(viennacl::vector<ScalarType, alignment> const & vector, 
-         typename viennacl::enable_if< viennacl::is_viennacl< typename viennacl::traits::tag_of< viennacl::vector<ScalarType, alignment> >::type >::value
-                                     >::type* dummy = 0)
+    norm_1(viennacl::vector<ScalarType, alignment> const & vector)
     {
       return viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>, 
                                           const viennacl::vector<ScalarType, alignment>,
