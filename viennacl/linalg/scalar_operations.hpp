@@ -35,6 +35,7 @@
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
 #include "viennacl/linalg/opencl/scalar_operations.hpp"
+#include "viennacl/linalg/single_threaded/scalar_operations.hpp"
 
 namespace viennacl
 {
@@ -60,6 +61,9 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
@@ -96,6 +100,11 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::asbs(vec1,
+                                                  vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                                  vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::asbs(vec1,
                                          vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -134,6 +143,11 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::asbs_s(vec1,
+                                                    vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                                    vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::asbs_s(vec1,
                                            vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -159,6 +173,9 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::swap(s1, s2);
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::swap(s1, s2);
           break;

@@ -53,7 +53,7 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
       av(V1 & vec1, 
-                V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+         V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
@@ -550,8 +550,7 @@ namespace viennacl
         
         //read value:
         cl_uint result;
-        cl_int err;
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), h.get(), CL_TRUE, 0, sizeof(cl_uint), &result, 0, NULL, NULL);
+        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), h.get(), CL_TRUE, 0, sizeof(cl_uint), &result, 0, NULL, NULL);
         VIENNACL_ERR_CHECK(err);
         return result;
       }

@@ -63,7 +63,7 @@ namespace viennacl
         std::size_t ell_nnz() const { return ellnnz_; }
         std::size_t csr_nnz() const { return csrnnz_; }
 
-        const handle_type & handle1() const { return ell_elements_; } 
+        const handle_type & handle() const { return ell_elements_; } 
         const handle_type & handle2() const { return ell_coords_; }
         const handle_type & handle3() const { return csr_rows_; } 
         const handle_type & handle4() const { return csr_cols_; } 
@@ -178,14 +178,9 @@ namespace viennacl
 
         gpu_matrix.csrnnz_ = csr_cols.size();
 
-        gpu_matrix.ell_coords_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        gpu_matrix.ell_elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         viennacl::backend::memory_create(gpu_matrix.ell_coords_,   sizeof(cl_uint) *   ell_coords.size(), &(ell_coords[0]));
         viennacl::backend::memory_create(gpu_matrix.ell_elements_, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
         
-        gpu_matrix.csr_rows_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        gpu_matrix.csr_cols_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        gpu_matrix.csr_elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         viennacl::backend::memory_create(gpu_matrix.csr_rows_,     sizeof(cl_uint) * csr_rows.size(),     &(csr_rows[0]));
         viennacl::backend::memory_create(gpu_matrix.csr_cols_,     sizeof(cl_uint) * csr_cols.size(),     &(csr_cols[0]));
         viennacl::backend::memory_create(gpu_matrix.csr_elements_, sizeof(SCALARTYPE) * csr_elements.size(), &(csr_elements[0]));
@@ -206,7 +201,7 @@ namespace viennacl
         std::vector<cl_uint> csr_rows(gpu_matrix.size1() + 1);
         std::vector<cl_uint> csr_cols(gpu_matrix.csr_nnz());
 
-        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
         viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)    * ell_coords.size(),   &(ell_coords[0]));
         viennacl::backend::memory_read(gpu_matrix.handle3(), 0, sizeof(cl_uint)    * csr_rows.size(),     &(csr_rows[0]));
         viennacl::backend::memory_read(gpu_matrix.handle4(), 0, sizeof(cl_uint)    * csr_cols.size(),     &(csr_cols[0]));
@@ -293,7 +288,7 @@ namespace viennacl
         k.global_work_size(0, thread_num * group_num);
 
         viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(), 
-                                 mat.handle1().opencl_handle(),
+                                 mat.handle().opencl_handle(),
                                  mat.handle3().opencl_handle(),
                                  mat.handle4().opencl_handle(),
                                  mat.handle5().opencl_handle(),

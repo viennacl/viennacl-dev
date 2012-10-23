@@ -64,7 +64,10 @@ namespace viennacl
         std::size_t nnz() const { return rows_ * maxnnz_; }
         std::size_t internal_nnz() const { return internal_size1() * internal_maxnnz(); }
 
-        const handle_type & handle1() const { return elements_; } 
+              handle_type & handle()       { return elements_; } 
+        const handle_type & handle() const { return elements_; } 
+        
+              handle_type & handle2()       { return coords_; }
         const handle_type & handle2() const { return coords_; }
 
       #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
@@ -128,10 +131,8 @@ namespace viennacl
           }
         }
 
-        gpu_matrix.coords_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        gpu_matrix.elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        viennacl::backend::memory_create(gpu_matrix.coords_,   sizeof(SCALARTYPE) * coords.size(), &(coords[0]));
-        viennacl::backend::memory_create(gpu_matrix.elements_, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
+        viennacl::backend::memory_create(gpu_matrix.handle2(),   sizeof(SCALARTYPE) * coords.size(), &(coords[0]));
+        viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
       }
     }
 
@@ -145,7 +146,7 @@ namespace viennacl
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
         std::vector<cl_uint> coords(gpu_matrix.internal_nnz());
 
-        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
         viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)    * coords.size(),   &(coords[0]));
 
         for(std::size_t row = 0; row < gpu_matrix.size1(); row++)
@@ -210,7 +211,7 @@ namespace viennacl
         k.global_work_size(0, thread_num * group_num);
 
         viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(), 
-                                 mat.handle1().opencl_handle(),
+                                 mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
                                  viennacl::traits::opencl_handle(result),
                                  cl_uint(mat.size1()),

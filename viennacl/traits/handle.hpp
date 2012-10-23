@@ -54,7 +54,7 @@ namespace viennacl
     {
       return obj.lhs().handle();
     }
-    
+
     // proxy objects require extra care (at the moment)
     template <typename T>
     viennacl::backend::mem_handle       & handle(viennacl::vector_range<T>       & obj)
@@ -114,14 +114,57 @@ namespace viennacl
     //
     
     template <typename T>
-    viennacl::ocl::handle<cl_mem> opencl_handle(T & obj)
+    viennacl::ocl::handle<cl_mem> & opencl_handle(T & obj)
     {
       return viennacl::traits::handle(obj).opencl_handle();
     }
 
+    template <typename T>
+    viennacl::ocl::handle<cl_mem> const & opencl_handle(T const & obj)
+    {
+      return viennacl::traits::handle(obj).opencl_handle();
+    }
+    
     inline float  opencl_handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
     inline double opencl_handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
+    //
+    // RAM handle extraction
+    //
+    
+    template <typename T>
+    typename viennacl::backend::mem_handle::ram_handle_type & ram_handle(T & obj)
+    {
+      return viennacl::traits::handle(obj).ram_handle();
+    }
+
+    template <typename T>
+    typename viennacl::backend::mem_handle::ram_handle_type const & ram_handle(T const & obj)
+    {
+      return viennacl::traits::handle(obj).ram_handle();
+    }
+
+    
+    //
+    // Active handle ID
+    //
+    template <typename T>
+    viennacl::backend::memory_types active_handle_id(T const & obj)
+    {
+      return handle(obj).get_active_handle_id();
+    }
+
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::backend::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj)
+    {
+      return active_handle_id(obj.lhs());
+    }
+
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::backend::memory_types active_handle_id(viennacl::matrix_expression<LHS, RHS, OP> const & obj)
+    {
+      return active_handle_id(obj.lhs());
+    }
     
   } //namespace traits
 } //namespace viennacl

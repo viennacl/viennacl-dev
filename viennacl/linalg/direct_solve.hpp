@@ -24,6 +24,8 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/opencl/direct_solve.hpp"
+#include "viennacl/linalg/single_threaded/direct_solve.hpp"
+
 
 namespace viennacl
 {
@@ -45,6 +47,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(mat, B, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, B, SOLVERTAG());
           break;
@@ -60,9 +65,9 @@ namespace viennacl
     */
     template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
     void inplace_solve(const matrix<SCALARTYPE, F1, A1> & mat,
-                       const matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                                const matrix<SCALARTYPE, F2, A2>,
-                                                op_trans> & B,
+                       matrix_expression< const matrix<SCALARTYPE, F2, A2>,
+                                          const matrix<SCALARTYPE, F2, A2>,
+                                          op_trans> B,
                        SOLVERTAG)
     {
       assert( (mat.size1() == mat.size2())     && "Size check failed in inplace_solve(): size1(A) != size2(A)");
@@ -70,6 +75,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(mat, B, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, B, SOLVERTAG());
           break;
@@ -96,6 +104,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(proxy, B, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, B, SOLVERTAG());
           break;
@@ -113,9 +124,9 @@ namespace viennacl
     void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F1, A1>,
                                                 const matrix<SCALARTYPE, F1, A1>,
                                                 op_trans> & proxy,
-                       const matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                                const matrix<SCALARTYPE, F2, A2>,
-                                                op_trans> & B,
+                       matrix_expression< const matrix<SCALARTYPE, F2, A2>,
+                                          const matrix<SCALARTYPE, F2, A2>,
+                                          op_trans> B,
                        SOLVERTAG)
     {
       assert( (proxy.lhs().size1() == proxy.lhs().size2()) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
@@ -123,6 +134,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(proxy, B, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, B, SOLVERTAG());
           break;
@@ -141,6 +155,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(mat, vec, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
           break;
@@ -166,6 +183,9 @@ namespace viennacl
 
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(proxy, vec, SOLVERTAG());
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
           break;
@@ -184,8 +204,8 @@ namespace viennacl
     */
     template<typename SCALARTYPE, typename F1, typename F2, unsigned int ALIGNMENT_A, unsigned int ALIGNMENT_B, typename TAG>
     matrix<SCALARTYPE, F2, ALIGNMENT_B> solve(const matrix<SCALARTYPE, F1, ALIGNMENT_A> & A,
-                                        const matrix<SCALARTYPE, F2, ALIGNMENT_B> & B,
-                                        TAG const & tag)
+                                              const matrix<SCALARTYPE, F2, ALIGNMENT_B> & B,
+                                              TAG const & tag)
     {
       // do an inplace solve on the result vector:
       matrix<SCALARTYPE, F2, ALIGNMENT_A> result(B.size1(), B.size2());
@@ -204,9 +224,9 @@ namespace viennacl
     */
     template<typename SCALARTYPE, typename F1, typename F2, unsigned int ALIGNMENT_A, unsigned int ALIGNMENT_B, typename TAG>
     matrix<SCALARTYPE, F2, ALIGNMENT_B> solve(const matrix<SCALARTYPE, F1, ALIGNMENT_A> & A,
-                                        const matrix_expression< const matrix<SCALARTYPE, F2, ALIGNMENT_B>,
-                                                                     const matrix<SCALARTYPE, F2, ALIGNMENT_B>,
-                                                                     op_trans> & proxy,
+                                              const matrix_expression< const matrix<SCALARTYPE, F2, ALIGNMENT_B>,
+                                                                       const matrix<SCALARTYPE, F2, ALIGNMENT_B>,
+                                                                       op_trans> & proxy,
                                         TAG const & tag)
     {
       // do an inplace solve on the result vector:
@@ -324,6 +344,9 @@ namespace viennacl
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::lu_factorize(mat);
+          break;
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::lu_factorize(mat);
           break;

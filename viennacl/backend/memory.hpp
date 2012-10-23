@@ -22,7 +22,9 @@
 */
 
 #include <vector>
+#include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/backend/opencl.hpp"
+#include "viennacl/backend/cpu_ram.hpp"
 
 namespace viennacl
 {
@@ -41,17 +43,20 @@ namespace viennacl
 #endif
     };
     
+    //inline memory_types default_memory_type() { return MAIN_MEMORY; }
     inline memory_types default_memory_type() { return OPENCL_MEMORY; }
     
     class mem_handle
     {
       public:
+        typedef viennacl::tools::shared_ptr<char>      ram_handle_type;
+        
         mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED) {}
         
-        void *       & ram_handle() { return ram_handle_; }
-        void * const & ram_handle() const { return ram_handle_; }
+        ram_handle_type       & ram_handle()       { return ram_handle_; }
+        ram_handle_type const & ram_handle() const { return ram_handle_; }
         
-        viennacl::ocl::handle<cl_mem>       & opencl_handle() { return opencl_handle_; }
+        viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
         
         memory_types get_active_handle_id() const { return active_handle_; }
@@ -92,7 +97,7 @@ namespace viennacl
           active_handle_ = active_handle_tmp;
           
           // swap ram handle:
-          void * ram_handle_tmp = other.ram_handle_;
+          ram_handle_type ram_handle_tmp = other.ram_handle_;
           other.ram_handle_ = ram_handle_;
           ram_handle_ = ram_handle_tmp;
           
@@ -102,7 +107,7 @@ namespace viennacl
         
       private:
         memory_types active_handle_;
-        void * ram_handle_;
+        ram_handle_type ram_handle_;
 //#ifdef VIENNACL_WITH_OPENCL
         viennacl::ocl::handle<cl_mem> opencl_handle_;
 //#endif
@@ -130,8 +135,14 @@ namespace viennacl
     {
       if (size_in_bytes > 0)
       {
+        if (handle.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
+          handle.switch_active_handle_id(default_memory_type());
+        
         switch(handle.get_active_handle_id())
         {
+          case MAIN_MEMORY:
+            handle.ram_handle() = cpu_ram::memory_create(size_in_bytes, host_ptr);
+            break;
           case OPENCL_MEMORY:
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
             break;
@@ -153,12 +164,36 @@ namespace viennacl
       {
         switch(src_buffer.get_active_handle_id())
         {
+          case MAIN_MEMORY:
+            cpu_ram::memory_copy(src_buffer.ram_handle(), dst_buffer.ram_handle(), src_offset, dst_offset, bytes_to_copy);
+            break;
           case OPENCL_MEMORY:
             opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
           default:
             throw "unknown memory handle!";
         }
+      }
+    }
+
+    // TODO: Refine this concept. Maybe move to constructor?
+    inline void memory_shallow_copy(mem_handle const & src_buffer,
+                                    mem_handle & dst_buffer)
+    {
+      assert( (dst_buffer.get_active_handle_id() == MEMORY_NOT_INITIALIZED) && "Shallow copy on already initialized memory not supported!");
+
+      switch(src_buffer.get_active_handle_id())
+      {
+        case MAIN_MEMORY:
+          dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
+          dst_buffer.ram_handle() = src_buffer.ram_handle();
+          break;
+        case OPENCL_MEMORY:
+          dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
+          dst_buffer.opencl_handle() = src_buffer.opencl_handle();
+          break;
+        default:
+          throw "unknown memory handle!";
       }
     }
     
@@ -171,6 +206,9 @@ namespace viennacl
       {
         switch(dst_buffer.get_active_handle_id())
         {
+          case MAIN_MEMORY:
+            cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr);
+            break;
           case OPENCL_MEMORY:
             opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
             break;
@@ -189,6 +227,9 @@ namespace viennacl
       {
         switch(src_buffer.get_active_handle_id())
         {
+          case MAIN_MEMORY:
+            cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr);
+            break;
           case OPENCL_MEMORY:
             opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
             break;

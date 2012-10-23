@@ -73,8 +73,8 @@ bool check_for_equality(VectorType const & ublas_v, VCLVectorType const & vcl_v)
     std::cout << "PASSED!" << std::endl;
   else
   {
-    std::cout << std::endl << "TEST failed!";
-    return EXIT_FAILURE;
+    std::cout << std::endl << "TEST failed!" << std::endl;
+    exit(EXIT_FAILURE);
   }
   
   return true;
@@ -196,14 +196,9 @@ int run_test()
 
     {
       std::cout << "Testing vector created from slice... ";
-      ublas_v2 = ublas_v1_sub1;
-      VCLVectorType vcl_ctor_1 = vcl_v1_sub1;
-      check_for_equality(ublas_v1, vcl_v1);
-      
-      std::cout << "Testing slice created from slice... ";
-      ublas_v1_sub1 = ublas_v1_sub3;
-      VCLVectorType vcl_ctor_sub1 = vcl_v1_sub3;
-      check_for_equality(ublas_v1, vcl_v1);
+      ublas_v2 = ublas_v1_sub2;
+      VCLVectorType vcl_ctor_1 = vcl_v1_sub2;
+      check_for_equality(ublas_v2, vcl_ctor_1);
     }
     
     

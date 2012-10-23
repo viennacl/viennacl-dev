@@ -35,6 +35,8 @@ namespace viennacl
       typedef matrix_range<MatrixType>            self_type;
     
     public:
+      typedef typename MatrixType::orientation_category       orientation_category;
+      
       typedef typename MatrixType::value_type     value_type;
       typedef typename viennacl::result_of::cpu_value_type<value_type>::type    cpu_value_type;
       typedef range::size_type                    size_type;
@@ -509,6 +511,8 @@ namespace viennacl
       typedef matrix_slice<MatrixType>            self_type;
     
     public:
+      typedef typename MatrixType::orientation_category       orientation_category;
+      
       typedef typename MatrixType::value_type     value_type;
       typedef typename viennacl::result_of::cpu_value_type<value_type>::type    cpu_value_type;
       typedef slice::size_type                    size_type;

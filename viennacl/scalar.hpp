@@ -90,7 +90,6 @@ namespace viennacl
       scalar(SCALARTYPE val)
       {
         viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
-        val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), &val);
       }
       

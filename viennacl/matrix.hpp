@@ -34,56 +34,6 @@
 
 namespace viennacl
 {
-    /** @brief A tag for row-major storage of a dense matrix. */
-    struct row_major
-    {
-      /** @brief Returns the memory offset for entry (i,j) of a dense matrix.
-      *
-      * @param i   row index
-      * @param j   column index
-      * @param num_rows  number of entries per row (including alignment)
-      * @param num_cols  number of entries per column (including alignment)
-      */
-      static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
-      {
-        return i * num_cols + j;
-      }
-      
-      static vcl_size_t internal_size1(vcl_size_t rows, vcl_size_t alignment)
-      {
-        return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows, alignment);;
-      }
-      
-      static vcl_size_t internal_size2(vcl_size_t cols, vcl_size_t alignment)
-      {
-        return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(cols, alignment);
-      }
-    };
-
-    struct column_major
-    {
-      /** @brief Returns the memory offset for entry (i,j) of a dense matrix.
-      *
-      * @param i   row index
-      * @param j   column index
-      * @param num_rows  number of entries per row (including alignment)
-      * @param num_cols  number of entries per column (including alignment)
-      */
-      static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
-      {
-        return i + j * num_rows;
-      }
-      
-      static vcl_size_t internal_size1(vcl_size_t rows, vcl_size_t alignment)
-      {
-        return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows, alignment);
-      }
-      
-      static vcl_size_t internal_size2(vcl_size_t cols, vcl_size_t alignment)
-      {
-        return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(cols, alignment);
-      }
-    };
     
     template <typename LHS, typename RHS, typename OP>
     class matrix_expression
@@ -169,6 +119,7 @@ namespace viennacl
       typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
       typedef vcl_size_t                                                          size_type;
       typedef backend::mem_handle                                                 handle_type;
+      typedef typename F::orientation_category                                    orientation_category;
       
       /** @brief The default constructor. Does not allocate any memory. */
       matrix() : rows_(0), columns_(0)
@@ -190,7 +141,6 @@ namespace viennacl
         
         if (rows > 0 && columns > 0)
         {
-          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         }
       }
@@ -211,7 +161,7 @@ namespace viennacl
       {
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
         KernelClass::init();
-        elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         
         *this = proxy;
@@ -300,7 +250,8 @@ namespace viennacl
           viennacl::backend::memory_read(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(old_entries[0]));
           
           //set up entries of new matrix:
-          std::vector< SCALARTYPE > new_entries(F::internal_size1(rows, ALIGNMENT) * F::internal_size2(columns, ALIGNMENT));
+          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    ALIGNMENT)
+                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, ALIGNMENT));
           for (size_type i=0; i<rows; ++i)
           {
             if (i >= rows_)
@@ -310,7 +261,7 @@ namespace viennacl
             {
               if (j >= columns_)
                 continue;
-              new_entries[F::mem_index(i, j, F::internal_size1(rows, ALIGNMENT), F::internal_size2(columns, ALIGNMENT))] 
+              new_entries[F::mem_index(i, j, viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows, ALIGNMENT), viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, ALIGNMENT))] 
                  = old_entries[F::mem_index(i, j, internal_size1(), internal_size2())];
             }
           }
@@ -325,7 +276,8 @@ namespace viennacl
           rows_ = rows;
           columns_ = columns;
           
-          std::vector< SCALARTYPE > new_entries(F::internal_size1(rows, ALIGNMENT) * F::internal_size2(columns, ALIGNMENT));
+          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    ALIGNMENT) 
+                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, ALIGNMENT));
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(new_entries[0]));
         }
       }
@@ -597,9 +549,9 @@ namespace viennacl
       
       //const unsigned int row_stride() const { return roundUpToNextMultiple<unsigned int>(columns(), ALIGNMENT); }
       /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
-      const size_type internal_size1() const { return F::internal_size1(size1(), ALIGNMENT); }
+      const size_type internal_size1() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows_, ALIGNMENT); }
       /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
-      const size_type internal_size2() const { return F::internal_size2(size2(), ALIGNMENT); }
+      const size_type internal_size2() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns_, ALIGNMENT); }
       /** @brief Returns the total amount of allocated memory in multiples of sizeof(SCALARTYPE) */
       const size_type internal_size() const { return internal_size1() * internal_size2(); }
       

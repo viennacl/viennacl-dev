@@ -108,8 +108,43 @@ namespace viennacl
             const_vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin);
   
   
-  struct row_major;    
-  struct column_major;    
+  struct row_major_tag {};    
+  struct column_major_tag {};    
+  
+  /** @brief A tag for row-major storage of a dense matrix. */
+  struct row_major
+  {
+    typedef row_major_tag         orientation_category;
+    
+    /** @brief Returns the memory offset for entry (i,j) of a dense matrix.
+    *
+    * @param i   row index
+    * @param j   column index
+    * @param num_rows  number of entries per row (including alignment)
+    * @param num_cols  number of entries per column (including alignment)
+    */
+    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
+    {
+      return i * num_cols + j;
+    }
+  };
+
+  struct column_major
+  {
+    typedef column_major_tag         orientation_category;
+    
+    /** @brief Returns the memory offset for entry (i,j) of a dense matrix.
+    *
+    * @param i   row index
+    * @param j   column index
+    * @param num_rows  number of entries per row (including alignment)
+    * @param num_cols  number of entries per column (including alignment)
+    */
+    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
+    {
+      return i + j * num_rows;
+    }
+  };
   
   struct row_iteration;
   struct col_iteration;

@@ -135,7 +135,6 @@ int test(Epsilon const& epsilon)
    viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
    viennacl::copy(result, vcl_result);
    viennacl::copy(matrix, vcl_matrix);
-   std::cout << "eating mem" << std::endl;
    
    std::cout << "Matrix resizing (to larger)" << std::endl;
    matrix.resize(2*num_rows, 2*num_cols, true);
@@ -174,17 +173,27 @@ int test(Epsilon const& epsilon)
    std::cout << "Matrix addition and subtraction" << std::endl;
    viennacl::matrix<NumericT, F> vcl_matrix2 = vcl_matrix;
    vcl_matrix2 += vcl_matrix;
-   vcl_matrix2 -= vcl_matrix;
    vcl_matrix2 = vcl_matrix2 + vcl_matrix;
-   vcl_matrix2 = vcl_matrix2 - vcl_matrix;
+   matrix *= 3.0;
 
    if( fabs(diff(matrix, vcl_matrix2)) > epsilon )
    {
-      std::cout << "# Error at operation: matrix addition and subtraction" << std::endl;
+      std::cout << "# Error at operation: matrix addition and subtraction (part 1b)" << std::endl;
       std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix2)) << std::endl;
       return EXIT_FAILURE;
    }
 
+   vcl_matrix2 -= vcl_matrix;
+   vcl_matrix2 = vcl_matrix2 - vcl_matrix;
+   matrix /= 3.0;
+
+   if( fabs(diff(matrix, vcl_matrix2)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix addition and subtraction (part 2)" << std::endl;
+      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix2)) << std::endl;
+      return EXIT_FAILURE;
+   }
+   
    // --------------------------------------------------------------------------            
    std::cout << "Rank 1 update" << std::endl;
    ublas::matrix<NumericT> matrix2 = matrix;

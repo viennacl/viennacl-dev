@@ -270,15 +270,8 @@ namespace viennacl
         
         if (size_ > 0)
         {
-          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        }
-        
-        //force entries above size_ to zero:
-        if (size_ < internal_size())
-        {
-          std::vector<SCALARTYPE> temp(internal_size() - size_);
-          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE)*size_, sizeof(SCALARTYPE)*(internal_size() - size_), &(temp[0]));
+          std::vector<SCALARTYPE> temp(internal_size());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
         }
       }
 
@@ -300,13 +293,13 @@ namespace viennacl
       }
       
       template <typename LHS, typename RHS, typename OP>
-      vector(vector_expression<LHS, RHS, OP> const & other) : size_(other.size())
+      vector(vector_expression<LHS, RHS, OP> const & proxy) : size_(proxy.size())
       {
         viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
         
-        elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*other.size());
-        *this = other;
+        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*proxy.size());
+        *this = proxy;
       }
       
       /** @brief The copy constructor
@@ -319,7 +312,7 @@ namespace viennacl
         
         if (size() != 0)
         {
-          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
           viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
         }
@@ -345,7 +338,7 @@ namespace viennacl
           if (vec.size() > 0) //Note: Corner case of vec.size() == 0 leads to no effect of operator=()
           {
             size_ = vec.size();
-            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
             viennacl::backend::memory_copy(vec.handle(), elements_, 0, 0, sizeof(SCALARTYPE)*internal_size());
           }
@@ -941,7 +934,6 @@ namespace viennacl
           
           if (new_internal_size != internal_size())
           {
-            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size);
           }
           

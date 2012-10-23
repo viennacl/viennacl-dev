@@ -271,17 +271,9 @@ namespace viennacl
         std::vector<cl_uint> col_buffer(gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
-        cl_int err;
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle1().get(),
-                                  CL_TRUE, 0, sizeof(cl_uint)*(gpu_matrix.size1() + 1), &(row_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle2().get(),
-                                  CL_TRUE, 0, sizeof(cl_uint)*gpu_matrix.nnz(), &(col_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle().get(),
-                                  CL_TRUE, 0, sizeof(SCALARTYPE)*gpu_matrix.nnz(), &(elements[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(cl_uint)   *(gpu_matrix.size1() + 1), &(row_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)   * gpu_matrix.nnz(),        &(col_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(),        &(elements[0]));
         
         eigen_matrix.setZero();
         eigen_matrix.startFill();
@@ -319,17 +311,9 @@ namespace viennacl
         std::vector<cl_uint> col_buffer(gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
-        cl_int err;
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle1().get(),
-                                  CL_TRUE, 0, sizeof(cl_uint)*(gpu_matrix.size1() + 1), &(row_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle2().get(),
-                                  CL_TRUE, 0, sizeof(cl_uint)*gpu_matrix.nnz(), &(col_buffer[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), gpu_matrix.handle().get(),
-                                  CL_TRUE, 0, sizeof(SCALARTYPE)*gpu_matrix.nnz(), &(elements[0]), 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(cl_uint)   *(gpu_matrix.size1() + 1), &(row_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)   * gpu_matrix.nnz(),        &(col_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(),        &(elements[0]));
         
         //set_to_zero(mtl4_matrix);  
         //mtl4_matrix.change_dim(gpu_matrix.size1(), gpu_matrix.size2());
@@ -382,14 +366,11 @@ namespace viennacl
           
           if (rows > 0)
           {
-            row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
             viennacl::backend::memory_create(row_buffer_, sizeof(cl_uint) * (rows + 1));
           }
           if (nonzeros > 0)
           {
-            col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
             viennacl::backend::memory_create(col_buffer_, sizeof(cl_uint) * nonzeros);
-            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros);
           }
         }
@@ -452,18 +433,16 @@ namespace viennacl
         {
           if (new_nonzeros > nonzeros_)
           {
-            // TODO: Remove OpenCL code here
+            handle_type col_buffer_old;
+            handle_type elements_old;
+            viennacl::backend::memory_shallow_copy(col_buffer_, col_buffer_old);
+            viennacl::backend::memory_shallow_copy(elements_, elements_old);
             
-            viennacl::ocl::handle<cl_mem> col_buffer_old = col_buffer_.opencl_handle();
-            viennacl::ocl::handle<cl_mem> elements_old   = elements_.opencl_handle();
-            col_buffer_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint) * new_nonzeros);
-            elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(SCALARTYPE) * new_nonzeros);
+            viennacl::backend::memory_create(col_buffer_, sizeof(cl_uint)    * new_nonzeros);
+            viennacl::backend::memory_create(elements_,   sizeof(SCALARTYPE) * new_nonzeros);
             
-            cl_int err;
-            err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), col_buffer_old.get(), col_buffer_.opencl_handle().get(), 0, 0, sizeof(cl_uint)*nonzeros_, 0, NULL, NULL);
-            VIENNACL_ERR_CHECK(err);
-            err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(), elements_old.get(), elements_.opencl_handle().get(), 0, 0, sizeof(SCALARTYPE)*nonzeros_, 0, NULL, NULL);
-            VIENNACL_ERR_CHECK(err);
+            viennacl::backend::memory_copy(col_buffer_old, col_buffer_, 0, 0, sizeof(cl_uint)   * nonzeros_);
+            viennacl::backend::memory_copy(elements_old,   elements_,   0, 0, sizeof(SCALARTYPE)* nonzeros_);
 
             nonzeros_ = new_nonzeros;
           }

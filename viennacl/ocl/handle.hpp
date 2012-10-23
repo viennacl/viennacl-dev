@@ -145,48 +145,52 @@ namespace viennacl
     template<class OCL_TYPE>
     class handle
     {
-    public:
-      handle() : h_(0) {}
-      handle(const OCL_TYPE & something) : h_(something) {}
-      handle(const handle & other) : h_(other.h_) { if (h_ != 0) inc(); }
-      ~handle() { if (h_ != 0) dec(); }
-      handle & operator=(const handle & other)
-      {
-        if (h_ != 0) 
-          dec();
-        h_ = other.h_;
-        inc();
-        return *this;
-      }
-      handle & operator=(const OCL_TYPE & something)
-      {
-        if (h_ != 0) dec();
-        h_ = something;
-        return *this;
-      }
-      
-      /** @brief Implicit conversion to the plain OpenCL handle. DEPRECATED and will be removed some time in the future. */
-      operator OCL_TYPE() const { return h_; }
-      
-      const OCL_TYPE & get() const { return h_; }
-      
-      
-      
-      /** @brief Swaps the OpenCL handle of two handle objects */
-      handle & swap(handle & other)
-      {
-        OCL_TYPE tmp = other.h_;
-        other.h_ = this->h_;
-        this->h_ = tmp;
-        return *this;
-      }
-      
-      /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
-      void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); };
-      /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
-      void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); };
-    private:
-      OCL_TYPE h_;
+      public:
+        handle() : h_(0) {}
+        handle(const OCL_TYPE & something) : h_(something) {}
+        handle(const handle & other) : h_(other.h_) { if (h_ != 0) inc(); }
+        ~handle() { if (h_ != 0) dec(); }
+        
+        /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
+        handle & operator=(const handle & other)
+        {
+          if (h_ != 0) 
+            dec();
+          h_ = other.h_;
+          inc();
+          return *this;
+        }
+        
+        /** @brief Wraps an OpenCL handle. Decreases the reference count if the handle object is destroyed or another OpenCL handle is assigned. */
+        handle & operator=(const OCL_TYPE & something)
+        {
+          if (h_ != 0) dec();
+          h_ = something;
+          return *this;
+        }
+        
+        /** @brief Implicit conversion to the plain OpenCL handle. DEPRECATED and will be removed some time in the future. */
+        operator OCL_TYPE() const { return h_; }
+        
+        const OCL_TYPE & get() const { return h_; }
+        
+        
+        
+        /** @brief Swaps the OpenCL handle of two handle objects */
+        handle & swap(handle & other)
+        {
+          OCL_TYPE tmp = other.h_;
+          other.h_ = this->h_;
+          this->h_ = tmp;
+          return *this;
+        }
+        
+        /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
+        void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); };
+        /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
+        void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); };
+      private:
+        OCL_TYPE h_;
     };
 
     

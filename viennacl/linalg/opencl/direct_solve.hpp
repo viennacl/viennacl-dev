@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/direct_solve.hpp
+/** @file viennacl/linalg/opencl/direct_solve.hpp
     @brief Implementations of dense direct solvers are found here.
 */
 
@@ -90,9 +90,9 @@ namespace viennacl
       */
       template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
       void inplace_solve(const matrix<SCALARTYPE, F1, A1> & mat,
-                        const matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                                  const matrix<SCALARTYPE, F2, A2>,
-                                                  op_trans> & B,
+                         matrix_expression< const matrix<SCALARTYPE, F2, A2>,
+                                            const matrix<SCALARTYPE, F2, A2>,
+                                            op_trans> & B,
                         SOLVERTAG)
       {
         assert(mat.size1() == mat.size2());
@@ -169,9 +169,9 @@ namespace viennacl
       void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F1, A1>,
                                                   const matrix<SCALARTYPE, F1, A1>,
                                                   op_trans> & proxy,
-                        const matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                                  const matrix<SCALARTYPE, F2, A2>,
-                                                  op_trans> & B,
+                         matrix_expression< const matrix<SCALARTYPE, F2, A2>,
+                                            const matrix<SCALARTYPE, F2, A2>,
+                                            op_trans> & B,
                         SOLVERTAG)
       {
         assert(proxy.lhs().size1() == proxy.lhs().size2());
@@ -206,8 +206,8 @@ namespace viennacl
 
       template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
       void inplace_solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                        SOLVERTAG)
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         SOLVERTAG)
       {
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
 
