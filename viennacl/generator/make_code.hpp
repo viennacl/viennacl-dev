@@ -219,7 +219,10 @@ template<class LHS, class RHS>
 struct make_expression_code< compound_node<LHS,prod_type,RHS> >
 {
     static const std::string value(std::string const & loop_accessor){
-        return dot_product<LHS,RHS>::value("row *" +result_of::expression_type<LHS>::Result::internal_size2_expression() + " + col","col");
+        if(result_of::is_row_major<LHS>::value)
+            return dot_product<LHS,RHS>::value("row *" +result_of::expression_type<LHS>::Result::internal_size2_expression() + " + col","col");
+        else
+            return dot_product<LHS,RHS>::value("col *" +result_of::expression_type<LHS>::Result::internal_size2_expression() + " + row","col");
     }
 };
 
@@ -359,99 +362,8 @@ struct make_code<MatVecToken<T,OP,Assigned> >
 {
 private:
 
-      typedef typename tree_utils::remove_if<T,result_of::is_symbolic_vector,false >::Result Products;
+    typedef typename tree_utils::remove_if<T,result_of::is_symbolic_vector,false >::Result Products;
     typedef typename tree_utils::remove_if<T,result_of::is_product_leaf,false >::Result Vectors;
-
-//    template<class U>
-//    struct fill_dot_prod
-//    {
-//        typedef typename U::LHS                                   LHS;
-//        typedef typename U::RHS                                   RHS;
-//        typedef typename result_of::expression_type<LHS>::Result    MatExpr;
-//        typedef typename MatExpr::ScalarType                        ScalarType;
-//        typedef typename MatExpr::Layout                            Layout;
-
-//        static const unsigned int Alignment = result_of::expression_type<LHS>::Result::Alignment;
-
-//    private:
-
-//        static const std::string evaluate(std::string dot_prod_name, viennacl::row_major)
-//        {
-//            std::string internal_size_2_expression = MatExpr::internal_size2_expression();
-//            VIENNACL_STATIC_ASSERT(Alignment==1, AlignmentNotSupported);
-////            if(Alignment==1)
-//                return  dot_prod_name + " +=  " + dot_product<LHS,RHS>::value("row *" + internal_size_2_expression + " + col","col") + ";\n";
-////                return make_expression_code<LHS>::value("(row * " + LHS::row_inc_name() + "+ " + LHS ::row_start_name() + ") * " + LHS::internal_size2_name() + " col * " + LHS::col_inc_name() + "+" + LHS::col_start_name())
-////                        + "*"
-////                        + make_expression_code<RHS>::value(RHS::start_name() + " + " + RHS::inc_name() + " * col")
-////                        +";\n";
-////            else{
-////                return dot_prod_name + ".s0 +=  " + dot_product<LHS,RHS>::value("scaled_row *" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s1 +=  " + dot_product<LHS,RHS>::value("(scaled_row+1)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s2 +=  " + dot_product<LHS,RHS>::value("(scaled_row+2)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s3 +=  " + dot_product<LHS,RHS>::value("(scaled_row+3)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s4 +=  " + dot_product<LHS,RHS>::value("(scaled_row+4)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s5 +=  " + dot_product<LHS,RHS>::value("(scaled_row+5)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s6 +=  " + dot_product<LHS,RHS>::value("(scaled_row+6)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s7 +=  " + dot_product<LHS,RHS>::value("(scaled_row+7)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s8 +=  " + dot_product<LHS,RHS>::value("(scaled_row+8)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".s9 +=  " + dot_product<LHS,RHS>::value("(scaled_row+9)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".sa +=  " + dot_product<LHS,RHS>::value("(scaled_row+10)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".sb +=  " + dot_product<LHS,RHS>::value("(scaled_row+11)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".sc +=  " + dot_product<LHS,RHS>::value("(scaled_row+12)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".sd +=  " + dot_product<LHS,RHS>::value("(scaled_row+13)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".se +=  " + dot_product<LHS,RHS>::value("(scaled_row+14)*" + internal_size_2_expression + " + col","col") + ";\n"
-////                        + dot_prod_name + ".sf +=  " + dot_product<LHS,RHS>::value("(scaled_row+15)*" + internal_size_2_expression + " + col","col") + ";\n";
-////            }
-//        }
-
-//        static const std::string evaluate(std::string dot_prod_name, viennacl::column_major)
-//        {
-//            std::string internal_size_1_expression = MatExpr::internal_size1_expression();
-//            VIENNACL_STATIC_ASSERT(Alignment==1,AlignmentNotSupported);
-//            return   dot_prod_name + "+=  " + dot_product<LHS,RHS>::value("gid  + col * " +  internal_size_1_expression, "col") + ";\n";
-//        }
-//    public:
-//        static void execute(std::string & res)
-//        {
-////            std::string dot_prod_name = "dp"+U::name();
-
-
-
-
-
-
-
-// //ROW MAJOR
-
-////            "  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n"
-////            "  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n"
-////            "  unsigned int lid = get_local_id(0);\n"
-////            "  \n"
-////            "  for (unsigned int row = row_gid; row < A_row_size; row += get_num_groups(0))\n"
-////            "  {\n"
-////            "    float dot_prod = 0;\n"
-////            "    for (unsigned int col = col_gid; col < A_col_size; col+=get_local_size(0))\n"
-////            "      dot_prod += A[(row * A_row_inc + A_row_start) * A_internal_cols + col * A_col_inc + A_col_start] * v[v_start + v_inc * col];\n"
-////            "    work[lid] = dot_prod;\n"
-////            "    \n"
-////            "    for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){\n"
-////            "      barrier(CLK_LOCAL_MEM_FENCE);\n"
-////            "      if(lid < stride)\n"
-////            "        work[lid] += work[lid+stride];\n"
-////            "    }\n"
-////            "    \n"
-////            "    if(lid == 0)\n"
-////            "      result[row * result_inc + result_start] = work[0];\n"
-////            "  }\n"
-
-// //COL MAJOR
-////            "    float dot_prod = 0;\n"
-////            "    for (unsigned int col = 0; col < A_col_size; ++col)\n"
-////            "      dot_prod += A[(row * A_row_inc + A_row_start) + (col * A_col_inc + A_col_start) * A_internal_rows] * v[v_start + v_inc * col];\n"
-////            "    result[row * result_inc + result_start] = dot_prod;\n"
-//        }
-//    };
 
     typedef typename result_of::expression_type<T>::Result    IntermediateType;
     static const unsigned int Alignment = IntermediateType::Alignment;
@@ -483,6 +395,14 @@ public:
            res+=";\n";
            res += "   }\n";
            res += "}\n";
+        }
+        else{
+            res += "   for(unsigned int row = get_global_id(0) ; row < " + FirstMatrix::internal_size1_name() + " ; row+=get_global_size(0)){\n";
+           res += "       " + print_type<typename FirstMatrix::ScalarType,1>::value() + " sum = 0;\n";
+           res += "       for(unsigned int col = 0 ; col < " + FirstMatrix::internal_size2_name() + " ; col++){\n";
+           res += "            sum +=  " + make_expression_code<Products>::value("") + ";\n";
+           res += "       }\n";
+           res += "  }\n";
         }
 
         return res;
