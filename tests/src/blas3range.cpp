@@ -211,7 +211,7 @@ int test_prod(Epsilon const& epsilon)
 }
 
 
-/*
+
 template <typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
 void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, Epsilon const & epsilon)
 {
@@ -231,6 +231,7 @@ void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, 
 template< typename NumericT, typename MatrixTypeA, typename MatrixTypeB, typename Epsilon >
 int test_solve(Epsilon const& epsilon)
 {
+  
    int retval = EXIT_SUCCESS;
    long matrix_size = 83;  //some odd number, not too large
    long rhs_num = 61;
@@ -247,32 +248,45 @@ int test_solve(Epsilon const& epsilon)
          A(i,j) = static_cast<NumericT>(-0.5) * random<NumericT>();
       A(i,i) = 1.0 + 2.0 * random<NumericT>(); //some extra weight on diagonal for stability
    }
-   
    for (unsigned int i = 0; i < B_start.size1(); ++i)
       for (unsigned int j = 0; j < B_start.size2(); ++j)
          B_start(i,j) = random<NumericT>();
-
    for (unsigned int i = 0; i < C_start.size1(); ++i)
       for (unsigned int j = 0; j < C_start.size2(); ++j)
          C_start(i,j) = random<NumericT>();
-      
+
    ublas::matrix<NumericT> B = B_start;
    ublas::matrix<NumericT> result = B_start;
    ublas::matrix<NumericT> C = C_start;
    ublas::matrix<NumericT> A_trans = trans(A);
+   ublas::matrix<NumericT> B_trans = trans(B);
    ublas::matrix<NumericT> C_trans = trans(C);
-
    
-   MatrixTypeA vcl_A(matrix_size, matrix_size);
-   MatrixTypeB vcl_B(matrix_size, rhs_num);
-   MatrixTypeB vcl_result(matrix_size, rhs_num);
-   MatrixTypeB vcl_C(rhs_num, matrix_size);
-   MatrixTypeB vcl_C_result(rhs_num, matrix_size);
+   MatrixTypeA vcl_A_full(3*matrix_size, 3*matrix_size);  vcl_A_full.clear();
+   MatrixTypeB vcl_B_full(3*matrix_size, 3*rhs_num);  vcl_B_full.clear();
+   MatrixTypeB vcl_C_full(3*matrix_size, 3*rhs_num);  vcl_C_full.clear();
+   MatrixTypeA vcl_A_trans_full(3*matrix_size, 3*matrix_size);  vcl_A_trans_full.clear();
+   MatrixTypeB vcl_B_trans_full(3*matrix_size, 3*rhs_num); vcl_B_trans_full.clear();
+   MatrixTypeB vcl_C_trans_full(3*matrix_size, 3*rhs_num); vcl_C_trans_full.clear();
+
+   viennacl::range r1(matrix_size, 2*matrix_size);
+   viennacl::range r2(rhs_num, rhs_num + matrix_size);
+   viennacl::range r3(rhs_num, 2 * rhs_num);
+   viennacl::matrix_range<MatrixTypeA> vcl_A(vcl_A_full, r2, r2);
+   viennacl::matrix_range<MatrixTypeB> vcl_B(vcl_B_full, r2, r3);
+   viennacl::matrix_range<MatrixTypeA> vcl_A_trans(vcl_A_trans_full, r1, r1);
+   viennacl::matrix_range<MatrixTypeB> vcl_B_trans(vcl_B_trans_full, r3, r2);
+   viennacl::matrix_range<MatrixTypeB> vcl_C(vcl_C_trans_full, r3, r2);
+   viennacl::matrix_range<MatrixTypeB> vcl_C_result(vcl_C_trans_full, r3, r2);
 
    
    viennacl::copy(A, vcl_A);
    viennacl::copy(B, vcl_B);
+   viennacl::copy(A_trans, vcl_A_trans);
+   viennacl::copy(B_trans, vcl_B_trans);
    viennacl::copy(C, vcl_C);
+
+   MatrixTypeB vcl_result(matrix_size, rhs_num);
    
    // Test: A \ B with various tags --------------------------------------------------------------------------       
    std::cout << "Testing A \\ B: " << std::endl;
@@ -408,7 +422,8 @@ int test_solve(Epsilon const& epsilon)
      std::cout << "Test A^T \\ B^T passed!" << std::endl;
    
    return retval;  
-} */
+}
+
 
 template< typename NumericT, typename Epsilon >
 int test(Epsilon const& epsilon)
@@ -499,7 +514,6 @@ int test(Epsilon const& epsilon)
   if (ret != EXIT_SUCCESS)
     return ret;
   
-  /*
   std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
   
   std::cout << "Now using A=row, B=row" << std::endl;
@@ -528,7 +542,7 @@ int test(Epsilon const& epsilon)
              viennacl::matrix<NumericT, viennacl::column_major>,
              viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
   if (ret != EXIT_SUCCESS)
-    return ret; */
+    return ret;
   
   return ret;
 }

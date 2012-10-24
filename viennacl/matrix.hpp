@@ -222,6 +222,14 @@ namespace viennacl
           
         return *this;
       }
+      
+      template <typename M1>
+      self_type & operator=(const matrix_expression< const M1, const M1, op_trans> & proxy)
+      {
+        self_type temp(proxy.lhs());
+        *this = trans(temp);
+        return *this;
+      }
 
       // matrix_range (implemented in matrix_proxy.hpp)
       self_type & operator=(const matrix_range<self_type> & mat);

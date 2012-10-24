@@ -69,6 +69,61 @@ namespace viennacl
     {
       typedef viennacl::linalg::kernels::matrix_solve_col_col<SCALARTYPE, ALIGNMENT>     ResultType;
     };
+
+    // handle matrix_range and matrix_slice:
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>, M2>
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M2, M1>::ResultType     ResultType;
+    };
+
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>, M2>
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M2, M1>::ResultType     ResultType;
+    };
+
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, viennacl::matrix_range<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, viennacl::matrix_slice<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+
+    // resolve ambiguities;
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>,
+                                              viennacl::matrix_slice<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>,
+                                              viennacl::matrix_range<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+    
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>,
+                                              viennacl::matrix_range<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+
+    template <typename M1, typename M2>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>,
+                                              viennacl::matrix_slice<M2> >
+    {
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
+    };
+    
     
   }
 

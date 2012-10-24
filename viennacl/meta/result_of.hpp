@@ -54,7 +54,7 @@ namespace viennacl
       template <typename T>
       struct alignment
       {
-        typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_VECTOR   error_type;
+        typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_VECTOR_OR_A_MATRIX   error_type;
         enum { value = 1 };
       };
       
@@ -87,6 +87,71 @@ namespace viennacl
       struct alignment< vector_expression<LHS, RHS, op_prod> >
       {
         enum { value = alignment<LHS>::value };
+      };
+
+
+      // Matrices
+      template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+      struct alignment< matrix<SCALARTYPE, F, ALIGNMENT> >
+      {
+        enum { value = ALIGNMENT };
+      };
+
+      template <typename T>
+      struct alignment< matrix_range<T> >
+      {
+        enum { value = alignment<T>::value };
+      };
+
+      template <typename T>
+      struct alignment< matrix_slice<T> >
+      {
+        enum { value = alignment<T>::value };
+      };
+      
+      template <typename LHS, typename RHS>
+      struct alignment< matrix_expression<LHS, RHS, op_trans> >
+      {
+        enum { value = alignment<LHS>::value };
+      };
+      
+      //
+      // Majority specifier for matrices (row_major, column_major)
+      //
+      template <typename T>
+      struct orientation_functor
+      {
+        typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_MATRIX     type;
+      };
+
+      template <typename T>
+      struct orientation_functor<const T>
+      {
+        typedef typename orientation_functor<T>::type  type;
+      };
+      
+      template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+      struct orientation_functor< matrix<SCALARTYPE, F, ALIGNMENT> >
+      {
+        typedef F     type;
+      };
+
+      template <typename T>
+      struct orientation_functor< matrix_range<T> >
+      {
+        typedef typename orientation_functor<T>::type  type;
+      };
+
+      template <typename T>
+      struct orientation_functor< matrix_slice<T> >
+      {
+        typedef typename orientation_functor<T>::type  type;
+      };
+
+      template <typename LHS, typename RHS>
+      struct orientation_functor< matrix_expression<LHS, RHS, op_trans> >
+      {
+        typedef typename orientation_functor<LHS>::type  type;
       };
       
       
@@ -143,6 +208,12 @@ namespace viennacl
         typedef typename T::ERROR_CANNOT_DEDUCE_CPU_SCALAR_TYPE_FOR_T    type; 
       };
 
+      template <typename T>
+      struct cpu_value_type<const T>
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+      
       template <>
       struct cpu_value_type<float>
       {

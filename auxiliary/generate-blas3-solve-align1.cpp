@@ -79,13 +79,18 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
     std::cout << "    if (get_local_id(0) == 0) " << std::endl;
     //Note: A is square, thus A_internal_rows == A_internal_cols and no dispatch for transposedness needed
     if (row_major_B && transpose_B)
-      std::cout << "      B[(row * B_inc2 + B_start2) + (get_group_id(0) * B_inc1 + B_start1) * B_internal_size2] /= A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size2]; " << std::endl;
+      std::cout << "      B[(row * B_inc2 + B_start2) + (get_group_id(0) * B_inc1 + B_start1) * B_internal_size2] /= ";
     else if (row_major_B && !transpose_B)
-      std::cout << "      B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] /= A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size2]; " << std::endl;
+      std::cout << "      B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] /= ";
     else if (!row_major_B && transpose_B)
-      std::cout << "      B[(row * B_inc2 + B_start2) * B_internal_size1 + (get_group_id(0) * B_inc1 + B_start1)] /= A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size2]; " << std::endl;
+      std::cout << "      B[(row * B_inc2 + B_start2) * B_internal_size1 + (get_group_id(0) * B_inc1 + B_start1)] /= ";
     else if (!row_major_B && !transpose_B)
-      std::cout << "      B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] /= A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size2]; " << std::endl;
+      std::cout << "      B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] /= ";
+    
+    if (row_major_A)
+      std::cout << "A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)];" << std::endl;
+    else
+      std::cout << "A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];" << std::endl;
   }
   
   std::cout << "    barrier(CLK_GLOBAL_MEM_FENCE); " << std::endl;

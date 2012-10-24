@@ -42,6 +42,23 @@ namespace viennacl
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::unit_upper_tag) { return (1 << 0); }
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::lower_tag)      { return (1 << 2); }
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::unit_lower_tag) { return (1 << 2) | (1 << 0); }
+        
+        template <typename M1, typename M2, typename KernelType>
+        void inplace_solve_impl(M1 const & A, M2 & B, KernelType & k)
+        {
+          viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                                   cl_uint(viennacl::traits::start1(A)),         cl_uint(viennacl::traits::start2(A)),
+                                   cl_uint(viennacl::traits::stride1(A)),        cl_uint(viennacl::traits::stride2(A)),
+                                   cl_uint(viennacl::traits::size1(A)),          cl_uint(viennacl::traits::size2(A)),
+                                   cl_uint(viennacl::traits::internal_size1(A)), cl_uint(viennacl::traits::internal_size2(A)),
+                                   viennacl::traits::opencl_handle(B),
+                                   cl_uint(viennacl::traits::start1(B)),         cl_uint(viennacl::traits::start2(B)),
+                                   cl_uint(viennacl::traits::stride1(B)),        cl_uint(viennacl::traits::stride2(B)),
+                                   cl_uint(viennacl::traits::size1(B)),          cl_uint(viennacl::traits::size2(B)),
+                                   cl_uint(viennacl::traits::internal_size1(B)), cl_uint(viennacl::traits::internal_size2(B))
+                                  )
+                                );        
+        }
       }
       
       
@@ -55,13 +72,14 @@ namespace viennacl
       * @param mat    The system matrix
       * @param B      The matrix of row vectors, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
-      void inplace_solve(const matrix<SCALARTYPE, F1, A1> & mat,
-                        matrix<SCALARTYPE, F2, A2> & B,
-                        SOLVERTAG)
+      template <typename M1,
+                typename M2, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  >::type
+      inplace_solve(const M1 & A, M2 & B, SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                             matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
         KernelClass::init();
         
         std::stringstream ss;
@@ -69,76 +87,50 @@ namespace viennacl
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, B.size2() * k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
-                                 cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                                 cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-                                 viennacl::traits::opencl_handle(B),
-                                 cl_uint(viennacl::traits::start1(B)),         cl_uint(viennacl::traits::start2(B)),
-                                 cl_uint(viennacl::traits::stride1(B)),        cl_uint(viennacl::traits::stride2(B)),
-                                 cl_uint(viennacl::traits::size1(B)),          cl_uint(viennacl::traits::size2(B)),
-                                 cl_uint(viennacl::traits::internal_size1(B)), cl_uint(viennacl::traits::internal_size2(B))
-                                )
-                              );        
+        detail::inplace_solve_impl(A, B, k);
       }
       
       /** @brief Direct inplace solver for dense upper triangular systems
       *
-      * @param mat    The system matrix
-      * @param B      The (transposed) matrix of row vectors, where the solution is directly written to
+      * @param A    The system matrix
+      * @param B    The (transposed) matrix of row vectors, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
-      void inplace_solve(const matrix<SCALARTYPE, F1, A1> & mat,
-                         matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                            const matrix<SCALARTYPE, F2, A2>,
-                                            op_trans> & B,
-                        SOLVERTAG)
+      template <typename M1,
+                typename M2, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  >::type
+      inplace_solve(const M1 & A,
+                    matrix_expression< const M2, const M2, op_trans> proxy_B,
+                    SOLVERTAG)
       {
-        assert(mat.size1() == mat.size2());
-        assert(mat.size2() == B.lhs().size2());
-        
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                            matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
         ss << SOLVERTAG::name() << "_trans_solve";
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
 
-        k.global_work_size(0, B.lhs().size1() * k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
-                                 cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                                 cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-                                 viennacl::traits::opencl_handle(B.lhs()),
-                                 cl_uint(viennacl::traits::start1(B.lhs())),         cl_uint(viennacl::traits::start2(B.lhs())),
-                                 cl_uint(viennacl::traits::stride1(B.lhs())),        cl_uint(viennacl::traits::stride2(B.lhs())),
-                                 cl_uint(viennacl::traits::size1(B.lhs())),          cl_uint(viennacl::traits::size2(B.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(B.lhs())), cl_uint(viennacl::traits::internal_size2(B.lhs()))
-                                )
-                              );        
+        k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
+        detail::inplace_solve_impl(A, proxy_B.lhs(), k);
       }
       
       //upper triangular solver for transposed lower triangular matrices
       /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
       *
-      * @param proxy    The system matrix proxy
+      * @param A        The transposed system matrix proxy
       * @param B        The matrix holding the load vectors, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F1, A1>,
-                                                  const matrix<SCALARTYPE, F1, A1>,
-                                                  op_trans> & proxy,
-                        matrix<SCALARTYPE, F2, A2> & B,
-                        SOLVERTAG)
+      template <typename M1,
+                typename M2, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  >::type
+      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
+                    M2 & B,
+                    SOLVERTAG)
       {
-        assert(proxy.lhs().size1() == proxy.lhs().size2());
-        assert(proxy.lhs().size2() == B.size1());
-        
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                            matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
@@ -146,59 +138,35 @@ namespace viennacl
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, B.size2() * k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(proxy.lhs()),
-                                 cl_uint(viennacl::traits::start1(proxy.lhs())),         cl_uint(viennacl::traits::start2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::stride1(proxy.lhs())),        cl_uint(viennacl::traits::stride2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::size1(proxy.lhs())),          cl_uint(viennacl::traits::size2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(proxy.lhs())), cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
-                                 viennacl::traits::opencl_handle(B),
-                                 cl_uint(viennacl::traits::start1(B)),         cl_uint(viennacl::traits::start2(B)),
-                                 cl_uint(viennacl::traits::stride1(B)),        cl_uint(viennacl::traits::stride2(B)),
-                                 cl_uint(viennacl::traits::size1(B)),          cl_uint(viennacl::traits::size2(B)),
-                                 cl_uint(viennacl::traits::internal_size1(B)), cl_uint(viennacl::traits::internal_size2(B))
-                                )
-                              );        
+        detail::inplace_solve_impl(proxy_A.lhs(), B, k);
       }
 
       /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
       *
-      * @param proxy    The system matrix proxy
-      * @param B        The matrix holding the load vectors, where the solution is directly written to
+      * @param proxy_A    The transposed system matrix proxy
+      * @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F1, typename F2, unsigned int A1, unsigned int A2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F1, A1>,
-                                                  const matrix<SCALARTYPE, F1, A1>,
-                                                  op_trans> & proxy,
-                         matrix_expression< const matrix<SCALARTYPE, F2, A2>,
-                                            const matrix<SCALARTYPE, F2, A2>,
-                                            op_trans> & B,
-                        SOLVERTAG)
+      template <typename M1,
+                typename M2, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                  >::type
+      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
+                          matrix_expression< const M2, const M2, op_trans>   proxy_B,
+                          SOLVERTAG)
       {
-        assert(proxy.lhs().size1() == proxy.lhs().size2());
-        assert(proxy.lhs().size2() == B.lhs().size2());
-        
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F1, A1>,
-                                                                            matrix<SCALARTYPE, F2, A2> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
         ss << "trans_" << SOLVERTAG::name() << "_trans_solve";
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
 
-        k.global_work_size(0, B.lhs().size1() * k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(proxy.lhs()),
-                                 cl_uint(viennacl::traits::start1(proxy.lhs())),         cl_uint(viennacl::traits::start2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::stride1(proxy.lhs())),        cl_uint(viennacl::traits::stride2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::size1(proxy.lhs())),          cl_uint(viennacl::traits::size2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(proxy.lhs())), cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
-                                 viennacl::traits::opencl_handle(B.lhs()),
-                                 cl_uint(viennacl::traits::start1(B.lhs())),         cl_uint(viennacl::traits::start2(B.lhs())),
-                                 cl_uint(viennacl::traits::stride1(B.lhs())),        cl_uint(viennacl::traits::stride2(B.lhs())),
-                                 cl_uint(viennacl::traits::size1(B.lhs())),          cl_uint(viennacl::traits::size2(B.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(B.lhs())), cl_uint(viennacl::traits::internal_size2(B.lhs()))
-                                )
-                              );        
+        k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
+        detail::inplace_solve_impl(proxy_A.lhs(), proxy_B.lhs(), k);
       }
+      
+      
       
       //
       //  Solve on vector
