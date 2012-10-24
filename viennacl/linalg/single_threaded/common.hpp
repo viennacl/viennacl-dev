@@ -138,7 +138,7 @@ namespace viennacl
           
             value_type & operator()(std::size_t i, std::size_t j)
             {
-              return A_[F::mem_index(j * inc2_ + start2_, i * inc1_ + start1_, internal_size1_, internal_size2_)];  //swapping row and column indices here
+              return A_[F::mem_index(j * inc1_ + start1_, i * inc2_ + start2_, internal_size1_, internal_size2_)];  //swapping row and column indices here
             }
             
           private:
