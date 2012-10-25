@@ -215,7 +215,7 @@ std::vector< std::map<int, double> > gen_3d_mesh_matrix(int l, int m, int n, boo
 
 
 
-int main(int argc, char *argv[])
+int main(int, char **)
 {
   srand(42);
   std::cout << "-- Generating matrix --" << std::endl;

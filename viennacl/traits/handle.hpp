@@ -144,12 +144,12 @@ namespace viennacl
       return viennacl::traits::handle(obj).ram_handle();
     }
 
-    inline typename viennacl::backend::mem_handle::ram_handle_type & ram_handle(viennacl::backend::mem_handle & h)
+    inline viennacl::backend::mem_handle::ram_handle_type & ram_handle(viennacl::backend::mem_handle & h)
     {
       return h.ram_handle();
     }
     
-    inline typename viennacl::backend::mem_handle::ram_handle_type const & ram_handle(viennacl::backend::mem_handle const & h)
+    inline viennacl::backend::mem_handle::ram_handle_type const & ram_handle(viennacl::backend::mem_handle const & h)
     {
       return h.ram_handle();
     }
