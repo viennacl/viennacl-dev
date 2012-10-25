@@ -84,7 +84,7 @@ namespace viennacl
         \
         \
         template<class T>\
-        elementwise_modifier<FUNC_NAME ## _modifier<T> > FUNC_NAME(T expr){\
+        elementwise_modifier<FUNC_NAME ## _modifier<T> > FUNC_NAME(T){\
             return elementwise_modifier<FUNC_NAME ## _modifier<T> >();\
         }\
 

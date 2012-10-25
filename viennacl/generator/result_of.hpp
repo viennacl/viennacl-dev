@@ -44,41 +44,41 @@ namespace viennacl
       class runtime_wrapper
       {
         protected:
-	        std::string name_;
-	        int arg_id_;
-	        
+          std::string name_;
+          int arg_id_;
+          
         public:
             runtime_wrapper(std::string const & _name, int _arg_id)
              : name_(_name), arg_id_(_arg_id) {}
              
             virtual ~runtime_wrapper() {}
-	         
-	        int arg_id() const { return arg_id_; }
-	        std::string name() const { return name_; }
-	        
-	        virtual void enqueue(unsigned int arg_pos, 
-	                             viennacl::ocl::kernel & k,
-	                             std::map<unsigned int, viennacl::any> & runtime_args,
-	                             std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries) = 0;
+           
+          int arg_id() const { return arg_id_; }
+          std::string name() const { return name_; }
+          
+          virtual void enqueue(unsigned int arg_pos, 
+                               viennacl::ocl::kernel & k,
+                               std::map<unsigned int, viennacl::any> & runtime_args,
+                               std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries) = 0;
       };
 
       class shared_memory_wrapper : public runtime_wrapper
       {
         public:
             shared_memory_wrapper() : runtime_wrapper( "shared_memory_ptr", -1 ){ }
-	
-	        void enqueue(unsigned int arg_pos,
-	                     viennacl::ocl::kernel & k,
-	                     std::map<unsigned int, viennacl::any> & runtime_args,
-	                     std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
-	        {
-		        unsigned int lmem_size = k.local_work_size();
-			#ifdef VIENNACL_DEBUG_CUSTOM_OPERATION
-			std::cout << "Enqueuing Local memory of size " << lmem_size << " at pos " << arg_pos << std::endl;
-			#endif
-		        k.arg(arg_pos, viennacl::ocl::local_mem(lmem_size*sizeof(float)));
-	        }
-	
+  
+          void enqueue(unsigned int arg_pos,
+                       viennacl::ocl::kernel & k,
+                       std::map<unsigned int, viennacl::any> & /* runtime_args */,
+                       std::map<std::string, viennacl::ocl::handle<cl_mem> > & /* temporaries */)
+          {
+            unsigned int lmem_size = k.local_work_size();
+            #ifdef VIENNACL_DEBUG_CUSTOM_OPERATION
+            std::cout << "Enqueuing Local memory of size " << lmem_size << " at pos " << arg_pos << std::endl;
+            #endif
+            k.arg(arg_pos, viennacl::ocl::local_mem(lmem_size*sizeof(float)));
+          }
+  
       };
 
       template <class T, class SIZE_T>
@@ -99,7 +99,7 @@ namespace viennacl
           template<typename ScalarType, class F, unsigned int Alignment>
           typename SIZE_T::size_type internal_size(viennacl::matrix<ScalarType,F,Alignment> * size_arg) { return size_arg->internal_size2(); }
           
-    public:
+        public:
           vector_runtime_wrapper(std::string const & _name, int _arg_id, unsigned int _size_id)
             : runtime_wrapper(_name,_arg_id),size_id_(_size_id) {}
             
@@ -107,7 +107,7 @@ namespace viennacl
                        viennacl::ocl::kernel & k,
                        std::map<unsigned int, viennacl::any> & runtime_args,
                        std::map<std::string, 
-                       viennacl::ocl::handle<cl_mem> > & temporaries)
+                       viennacl::ocl::handle<cl_mem> > & /*temporaries*/)
           { 
             SIZE_T * size_arg = viennacl::any_cast<SIZE_T * >(runtime_args[size_id_]);
             viennacl::ocl::handle<cl_mem> handle = NULL;
@@ -134,19 +134,19 @@ namespace viennacl
                                                                                     T::id,SIZE_DESCRIPTOR::id);
         }
         
-        static const std::string size_expression() 
+        static std::string size_expression() 
         {
           return SIZE_DESCRIPTOR::size2_name();
         }
         
-        static const std::string internal_size_expression() 
+        static std::string internal_size_expression() 
         {
           return SIZE_DESCRIPTOR::internal_size2_name() + "/" + to_string(Alignment);
         }
 
-        static const int n_args()
+        static int n_args()
         {
-            return 3;
+          return 3;
         }
       };
 
@@ -154,8 +154,8 @@ namespace viennacl
       struct matrix_runtime_wrapper : public runtime_wrapper
       {
         private:
-	        unsigned int size1_id_;
-	        unsigned int size2_id_;
+          unsigned int size1_id_;
+          unsigned int size2_id_;
         public:
           matrix_runtime_wrapper(std::string const & _name,
                                  int _arg_id,
@@ -169,20 +169,20 @@ namespace viennacl
                        viennacl::ocl::kernel & k,
                        std::map<unsigned int, viennacl::any> & runtime_args,
                        std::map<std::string,
-                       viennacl::ocl::handle<cl_mem> > & temporaries)
+                       viennacl::ocl::handle<cl_mem> > & /*temporaries*/)
           { 
-	          T * current_arg = any_cast<T * >(runtime_args[arg_id_]);
-	          SIZE1_T * size1_arg = any_cast<SIZE1_T * >(runtime_args[size1_id_]);
-	          SIZE2_T * size2_arg = any_cast<SIZE2_T * >(runtime_args[size2_id_]);
-	          k.arg(arg_pos, current_arg->handle().opencl_handle());
-              k.arg(arg_pos+1,cl_uint(0));
-              k.arg(arg_pos+2,cl_uint(0));
-              k.arg(arg_pos+3,cl_uint(size1_arg->size1()));
-              k.arg(arg_pos+4,cl_uint(size2_arg->size2()));
-	          k.arg(arg_pos+5,cl_uint(size1_arg->size1()));
-	          k.arg(arg_pos+6,cl_uint(size2_arg->size2()));
-	          k.arg(arg_pos+7,cl_uint(size1_arg->internal_size1()));
-	          k.arg(arg_pos+8,cl_uint(size2_arg->internal_size2()));
+            T * current_arg = any_cast<T * >(runtime_args[arg_id_]);
+            SIZE1_T * size1_arg = any_cast<SIZE1_T * >(runtime_args[size1_id_]);
+            SIZE2_T * size2_arg = any_cast<SIZE2_T * >(runtime_args[size2_id_]);
+            k.arg(arg_pos, current_arg->handle().opencl_handle());
+            k.arg(arg_pos+1,cl_uint(0));
+            k.arg(arg_pos+2,cl_uint(0));
+            k.arg(arg_pos+3,cl_uint(size1_arg->size1()));
+            k.arg(arg_pos+4,cl_uint(size2_arg->size2()));
+            k.arg(arg_pos+5,cl_uint(size1_arg->size1()));
+            k.arg(arg_pos+6,cl_uint(size2_arg->size2()));
+            k.arg(arg_pos+7,cl_uint(size1_arg->internal_size1()));
+            k.arg(arg_pos+8,cl_uint(size2_arg->internal_size2()));
           }
       };
           
@@ -202,50 +202,50 @@ namespace viennacl
                                                                                      SIZE2_DESCRIPTOR::id);
         }
         
-        static const std::string size_expression()
+        static std::string size_expression()
         {
-            return size1_expression()*size2_expression();
+          return size1_expression()*size2_expression();
         }
 
-        static const std::string size1_expression() 
+        static std::string size1_expression() 
         {
           return SIZE1_DESCRIPTOR::size1_name();
         }
 
-        static const std::string size2_expression() 
+        static std::string size2_expression() 
         {
           return SIZE2_DESCRIPTOR::size2_name();
         }
 
-        static const std::string internal_size1_expression() 
+        static std::string internal_size1_expression() 
         {
           return SIZE1_DESCRIPTOR::internal_size1_name() + "/" + to_string(Alignment);
         }
 
-        static const std::string internal_size2_expression() 
+        static std::string internal_size2_expression() 
         {
           return SIZE2_DESCRIPTOR::internal_size2_name() + "/" + to_string(Alignment);
         }
 
-        static const int n_args()
+        static int n_args()
         {
-            return 9;
+          return 9;
         }
       };
 
 //      template <class T>
 //      struct scalar_size_descriptor
 //      {
-//	      static unsigned int size(viennacl::ocl::kernel & k) { return 1; }
+//        static unsigned int size(viennacl::ocl::kernel & k) { return 1; }
 //      };
 
 //      template <class LHS, class RHS>
 //      struct scalar_size_descriptor<compound_node<LHS,inner_prod_type,RHS> >
 //      {
-//	      static unsigned int size(viennacl::ocl::kernel & k)
-//	      {
-//		      return k.global_work_size(0)/k.local_work_size(0);
-//	      }
+//        static unsigned int size(viennacl::ocl::kernel & k)
+//        {
+//          return k.global_work_size(0)/k.local_work_size(0);
+//        }
 //      };
 
       template <class T>
@@ -265,42 +265,42 @@ namespace viennacl
                      std::map<std::string, 
                      viennacl::ocl::handle<cl_mem> > & temporaries)
         {
-              if(is_inner_product_)
-              {
-                  if(temporaries.find(name_)==temporaries.end())
-                  {
-                      temporaries.insert(
-                         std::make_pair(name_,
-                                  viennacl::ocl::handle<cl_mem>(
-                                  viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                 k.global_work_size(0)/k.local_work_size(0)*sizeof(ScalarType))
-                                                               )
-                                 )
-                               );
-                  }
-                  k.arg(arg_pos, temporaries[name_]);
-              }
-		      
-              if(arg_id_==-2)
-                  k.arg(arg_pos, temporaries[name_]);
-              else
-              {
-			      viennacl::scalar<ScalarType>* current_arg = any_cast<viennacl::scalar<ScalarType> * >(runtime_args[arg_id_]);
-			      k.arg(arg_pos, current_arg->handle().opencl_handle());
-              }
-		
+          if(is_inner_product_)
+          {
+            if(temporaries.find(name_)==temporaries.end())
+            {
+              temporaries.insert(
+                std::make_pair(name_,
+                          viennacl::ocl::handle<cl_mem>(
+                          viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                        k.global_work_size(0)/k.local_work_size(0)*sizeof(ScalarType))
+                                                      )
+                        )
+                      );
+            }
+            k.arg(arg_pos, temporaries[name_]);
+          }
+      
+          if(arg_id_==-2)
+              k.arg(arg_pos, temporaries[name_]);
+          else
+          {
+            viennacl::scalar<ScalarType>* current_arg = any_cast<viennacl::scalar<ScalarType> * >(runtime_args[arg_id_]);
+            k.arg(arg_pos, current_arg->handle().opencl_handle());
+          }
+
         }
       };
 
       template <unsigned int ID, class ScalarType>
       struct scalar_runtime_wrapper<viennacl::generator::cpu_symbolic_scalar<ID, ScalarType> >: public runtime_wrapper
       {
-        scalar_runtime_wrapper(std::string const & _name, int _arg_id, bool is_inner_product) : runtime_wrapper(_name,_arg_id){ }
+        scalar_runtime_wrapper(std::string const & _name, int _arg_id, bool /*is_inner_product*/) : runtime_wrapper(_name,_arg_id){ }
         
         void enqueue(unsigned int arg_pos,
                      viennacl::ocl::kernel & k,
                      std::map<unsigned int, viennacl::any> & runtime_args,
-                     std::map<std::string, viennacl::ocl::handle<cl_mem> > & temporaries)
+                     std::map<std::string, viennacl::ocl::handle<cl_mem> > & /*temporaries*/)
         {
           ScalarType* current_arg = any_cast<ScalarType * >(runtime_args[arg_id_]);
           k.arg(arg_pos, static_cast<typename viennacl::tools::cl_type<ScalarType>::Result>(*current_arg));
@@ -319,16 +319,16 @@ namespace viennacl
           return new scalar_runtime_wrapper<T>(T::name(),T::id,result_of::is_inner_product_leaf<T>::value || result_of::is_inner_product_impl<T>::value);
         }
 
-        static const int n_args()
+        static int n_args()
         {
-            return 1;
+          return 1;
         }
       };
 
       template<class T>
       struct constant_expression
       {
-          static const long value = T::value;
+        static const long value = T::value;
       };
 
       template <class T>
@@ -488,7 +488,7 @@ namespace viennacl
       template <class T>
       struct expression_type<inner_prod_impl_t<T> >
       {
-	      typedef scalar_expression<T> Result;
+        typedef scalar_expression<T> Result;
       };
 
       //Matrix-Matrix product
@@ -527,13 +527,13 @@ namespace viennacl
       template<class OP, class RHS>
       struct expression_type<compound_node<NullType,OP,RHS> >
       {
-          typedef typename expression_type<RHS>::Result Result;
+        typedef typename expression_type<RHS>::Result Result;
       };
 
       template<class LHS, class OP>
       struct expression_type<compound_node<LHS,OP,NullType> >
       {
-          typedef typename expression_type<LHS>::Result Result;
+        typedef typename expression_type<LHS>::Result Result;
       };
 
 
@@ -619,284 +619,286 @@ namespace viennacl
      * Traits
      */
 
-namespace result_of{
-
-    template<class T>
-    struct is_symbolic_vector
+    namespace result_of
     {
+
+      template<class T>
+      struct is_symbolic_vector
+      {
         enum { value = 0 };
-    };
+      };
 
-    template<unsigned int Id, class ScalarType, unsigned int Alignment>
-    struct is_symbolic_vector<symbolic_vector<Id,ScalarType,Alignment> >
-    {
+      template<unsigned int Id, class ScalarType, unsigned int Alignment>
+      struct is_symbolic_vector<symbolic_vector<Id,ScalarType,Alignment> >
+      {
         enum { value = 1 };
-    };
+      };
 
 
-    template<class T>
-    struct is_symbolic_matrix
-    {
+      template<class T>
+      struct is_symbolic_matrix
+      {
         enum { value = 0 };
-    };
+      };
 
-    template<unsigned int Id, class ScalarType, class Layout, unsigned int Alignment>
-    struct is_symbolic_matrix<symbolic_matrix<Id,ScalarType,Layout,Alignment> >
-    {
+      template<unsigned int Id, class ScalarType, class Layout, unsigned int Alignment>
+      struct is_symbolic_matrix<symbolic_matrix<Id,ScalarType,Layout,Alignment> >
+      {
         enum { value = 1 };
-    };
+      };
 
-    template<class T>
-    struct is_symbolic_cpu_scalar
-    {
+      template<class T>
+      struct is_symbolic_cpu_scalar
+      {
         enum { value = 0 };
-    };
+      };
 
-    template<unsigned int Id, class ScalarType>
-    struct is_symbolic_cpu_scalar<cpu_symbolic_scalar<Id,ScalarType> >
-    {
+      template<unsigned int Id, class ScalarType>
+      struct is_symbolic_cpu_scalar<cpu_symbolic_scalar<Id,ScalarType> >
+      {
         enum { value = 1 };
-    };
+      };
 
-    template<class T>
-    struct is_symbolic_gpu_scalar
-    {
+      template<class T>
+      struct is_symbolic_gpu_scalar
+      {
         enum { value = 0 };
-    };
+      };
 
-    template<unsigned int Id, class ScalarType>
-    struct is_symbolic_gpu_scalar<gpu_symbolic_scalar<Id,ScalarType> >
-    {
+      template<unsigned int Id, class ScalarType>
+      struct is_symbolic_gpu_scalar<gpu_symbolic_scalar<Id,ScalarType> >
+      {
         enum { value = 1 };
-    };
+      };
 
-    template <class T>
-    struct is_row_major
-    {
-      enum { value = 0 };
-    };
-
-    template <unsigned int ID, class ScalarType,  unsigned int Alignment>
-    struct is_row_major<symbolic_matrix<ID, ScalarType, viennacl::row_major, Alignment> >
-    {
-      enum { value = 1 };
-    };
-
-    template <class T>
-    struct is_transposed
-    {
-      enum { value = 0 };
-    };
-
-    template <class T>
-    struct is_kernel_argument
-    {
-      enum { value = 0 };
-    };
-
-    template <unsigned int ID,class SCALARTYPE, unsigned int ALIGNMENT>
-    struct is_kernel_argument<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> >
-    {
-      enum { value = 1 };
-    };
-
-    template <unsigned int ID,class SCALARTYPE, class F, unsigned int ALIGNMENT>
-    struct is_kernel_argument<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> >
-    {
-      enum { value = 1 };
-    };
-
-    template <unsigned int ID, class SCALARTYPE>
-    struct is_kernel_argument<cpu_symbolic_scalar<ID, SCALARTYPE> >
-    {
-      enum { value = 1 };
-    };
-
-    template <unsigned int ID, class SCALARTYPE>
-    struct is_kernel_argument<gpu_symbolic_scalar<ID, SCALARTYPE> >
-    {
-      enum { value = 1 };
-    };
-
-    template<class T>
-    struct is_kernel_argument<inner_prod_impl_t<T> >
-    {
-        enum { value = 1 };
-    };
-
-    template<class LHS, class RHS>
-    struct is_kernel_argument<compound_node<LHS,inner_prod_type,RHS> >
-    {
-        enum { value = 1 };
-    };
-
-    template<class Bound, class Expr>
-    struct is_kernel_argument< repeater_impl<Bound, Expr> >
-    {
-        enum { value = 1 };
-    };
-
-    template <class T>
-    struct is_inner_product_leaf
-    {
-      enum { value = 0};
-    };
-
-    template <class LHS,class RHS>
-    struct is_inner_product_leaf<compound_node<LHS,inner_prod_type,RHS> >
-    {
-      enum { value = 1};
-    };
-
-
-    template <class T>
-    struct is_product_leaf
-    {
-      enum { value = 0};
-    };
-
-    template <class LHS,class RHS>
-    struct is_product_leaf<compound_node<LHS,prod_type,RHS> >
-    {
-      enum { value = 1};
-    };
-
-    template <class LHS,class RHS>
-    struct is_product_leaf<compound_node<LHS,scal_mul_type,RHS> >
-    {
-      enum { value = result_of::is_product_leaf<RHS>::value || result_of::is_product_leaf<LHS>::value };
-    };
-
-    template <class T>
-    struct is_null_type
-    {
-      enum { value = 0 };
-    };
-
-    template <>
-    struct is_null_type<NullType>
-    {
-      enum { value = 1 };
-    };
-
-    template <class T>
-    struct is_compound
-    {
-      enum { value = 0 } ;
-    };
-
-    template <class LHS, class OP, class RHS>
-    struct is_compound<compound_node<LHS,OP,RHS> >
-    {
-      enum {value = 1};
-    };
-
-    template<class T>
-    struct is_inner_product_impl{
+      template <class T>
+      struct is_row_major
+      {
         enum { value = 0 };
-    };
+      };
 
-    template<class T>
-    struct is_inner_product_impl<inner_prod_impl_t<T> >
-    {
+      template <unsigned int ID, class ScalarType,  unsigned int Alignment>
+      struct is_row_major<symbolic_matrix<ID, ScalarType, viennacl::row_major, Alignment> >
+      {
         enum { value = 1 };
-    };
+      };
 
-    template<class T>
-    struct is_symbolic_constant
-    {
+      template <class T>
+      struct is_transposed
+      {
+        enum { value = 0 };
+      };
+
+      template <class T>
+      struct is_kernel_argument
+      {
+        enum { value = 0 };
+      };
+
+      template <unsigned int ID,class SCALARTYPE, unsigned int ALIGNMENT>
+      struct is_kernel_argument<symbolic_vector<ID,SCALARTYPE,ALIGNMENT> >
+      {
+        enum { value = 1 };
+      };
+
+      template <unsigned int ID,class SCALARTYPE, class F, unsigned int ALIGNMENT>
+      struct is_kernel_argument<symbolic_matrix<ID,SCALARTYPE,F,ALIGNMENT> >
+      {
+        enum { value = 1 };
+      };
+
+      template <unsigned int ID, class SCALARTYPE>
+      struct is_kernel_argument<cpu_symbolic_scalar<ID, SCALARTYPE> >
+      {
+        enum { value = 1 };
+      };
+
+      template <unsigned int ID, class SCALARTYPE>
+      struct is_kernel_argument<gpu_symbolic_scalar<ID, SCALARTYPE> >
+      {
+        enum { value = 1 };
+      };
+
+      template<class T>
+      struct is_kernel_argument<inner_prod_impl_t<T> >
+      {
+        enum { value = 1 };
+      };
+
+      template<class LHS, class RHS>
+      struct is_kernel_argument<compound_node<LHS,inner_prod_type,RHS> >
+      {
+        enum { value = 1 };
+      };
+
+      template<class Bound, class Expr>
+      struct is_kernel_argument< repeater_impl<Bound, Expr> >
+      {
+        enum { value = 1 };
+      };
+
+      template <class T>
+      struct is_inner_product_leaf
+      {
         enum { value = 0};
-    };
+      };
 
-    template<class T>
-    struct is_symbolic_expression
-    {
-        enum { value = is_symbolic_vector<T>::value
-               || is_symbolic_matrix<T>::value
-               || is_compound<T>::value
-               || is_symbolic_cpu_scalar<T>::value
-               || is_symbolic_gpu_scalar<T>::value };
-    };
-
-    template <class T>
-    struct is_scalar_expression_impl
-    {
-      enum { value = 0 };
-    };
-
-    template <class T>
-    struct is_scalar_expression_impl<result_of::scalar_expression<T> >
-    {
-      enum { value = 1};
-    };
-
-    template <class T>
-    struct is_scalar_expression
-    {
-      enum { value = is_scalar_expression_impl<typename result_of::expression_type<T>::Result >::value };
-    };
+      template <class LHS,class RHS>
+      struct is_inner_product_leaf<compound_node<LHS,inner_prod_type,RHS> >
+      {
+        enum { value = 1};
+      };
 
 
-    template <class T>
-    struct is_vector_expression_impl
-    {
-      enum { value = 0 };
-    };
+      template <class T>
+      struct is_product_leaf
+      {
+        enum { value = 0};
+      };
 
-    template <class T, class SIZE_D>
-    struct is_vector_expression_impl<result_of::vector_expression<T,SIZE_D> >
-    {
-      enum { value = 1};
-    };
+      template <class LHS,class RHS>
+      struct is_product_leaf<compound_node<LHS,prod_type,RHS> >
+      {
+        enum { value = 1};
+      };
 
-    template <class T>
-    struct is_vector_expression
-    {
-      enum { value = is_vector_expression_impl<typename result_of::expression_type<T>::Result >::value };
-    };
+      template <class LHS,class RHS>
+      struct is_product_leaf<compound_node<LHS,scal_mul_type,RHS> >
+      {
+        enum { value = result_of::is_product_leaf<RHS>::value || result_of::is_product_leaf<LHS>::value };
+      };
 
-    template <class T>
-    struct is_matrix_expression_impl
-    {
-      enum { value = 0 };
-    };
+      template <class T>
+      struct is_null_type
+      {
+        enum { value = 0 };
+      };
 
-    template <class T, class SIZE1_D,class SIZE2_D>
-    struct is_matrix_expression_impl<result_of::matrix_expression<T,SIZE1_D, SIZE2_D> >
-    {
-      enum { value = 1};
-    };
-
-    template <class T>
-    struct is_matrix_expression
-    {
-      enum { value = is_matrix_expression_impl<typename result_of::expression_type<T>::Result >::value };
-    };
-
-    template <class EXPR1, class EXPR2>
-    struct is_same_expression_type
-    {
-      enum { value = (is_vector_expression<EXPR1>::value && is_vector_expression<EXPR2>::value)
-                    || (is_matrix_expression<EXPR1>::value && is_matrix_expression<EXPR2>::value)
-                    || (is_scalar_expression<EXPR1>::value && is_scalar_expression<EXPR2>::value) };
-    };
-
-
-    /** @brief Special case: symbolic constant for elementwise can be used as every type. */
-    template<class Expr, long VAL>
-    struct is_same_expression_type<Expr,symbolic_constant<VAL> >
-    {
+      template <>
+      struct is_null_type<NullType>
+      {
         enum { value = 1 };
-    };
+      };
 
-    /** @brief Special case: symbolic constant for elementwise can be used as every type. */
-    template<class Expr, long VAL>
-    struct is_same_expression_type<symbolic_constant<VAL>, Expr>
-    {
+      template <class T>
+      struct is_compound
+      {
+        enum { value = 0 } ;
+      };
+
+      template <class LHS, class OP, class RHS>
+      struct is_compound<compound_node<LHS,OP,RHS> >
+      {
+        enum {value = 1};
+      };
+
+      template<class T>
+      struct is_inner_product_impl
+      {
+        enum { value = 0 };
+      };
+
+      template<class T>
+      struct is_inner_product_impl<inner_prod_impl_t<T> >
+      {
         enum { value = 1 };
-    };
+      };
 
-}
+      template<class T>
+      struct is_symbolic_constant
+      {
+        enum { value = 0};
+      };
+
+      template<class T>
+      struct is_symbolic_expression
+      {
+        enum { value =   is_symbolic_vector<T>::value
+                      || is_symbolic_matrix<T>::value
+                      || is_compound<T>::value
+                      || is_symbolic_cpu_scalar<T>::value
+                      || is_symbolic_gpu_scalar<T>::value };
+      };
+
+      template <class T>
+      struct is_scalar_expression_impl
+      {
+        enum { value = 0 };
+      };
+
+      template <class T>
+      struct is_scalar_expression_impl<result_of::scalar_expression<T> >
+      {
+        enum { value = 1};
+      };
+
+      template <class T>
+      struct is_scalar_expression
+      {
+        enum { value = is_scalar_expression_impl<typename result_of::expression_type<T>::Result >::value };
+      };
+
+
+      template <class T>
+      struct is_vector_expression_impl
+      {
+        enum { value = 0 };
+      };
+
+      template <class T, class SIZE_D>
+      struct is_vector_expression_impl<result_of::vector_expression<T,SIZE_D> >
+      {
+        enum { value = 1};
+      };
+
+      template <class T>
+      struct is_vector_expression
+      {
+        enum { value = is_vector_expression_impl<typename result_of::expression_type<T>::Result >::value };
+      };
+
+      template <class T>
+      struct is_matrix_expression_impl
+      {
+        enum { value = 0 };
+      };
+
+      template <class T, class SIZE1_D,class SIZE2_D>
+      struct is_matrix_expression_impl<result_of::matrix_expression<T,SIZE1_D, SIZE2_D> >
+      {
+        enum { value = 1};
+      };
+
+      template <class T>
+      struct is_matrix_expression
+      {
+        enum { value = is_matrix_expression_impl<typename result_of::expression_type<T>::Result >::value };
+      };
+
+      template <class EXPR1, class EXPR2>
+      struct is_same_expression_type
+      {
+        enum { value = (is_vector_expression<EXPR1>::value && is_vector_expression<EXPR2>::value)
+                      || (is_matrix_expression<EXPR1>::value && is_matrix_expression<EXPR2>::value)
+                      || (is_scalar_expression<EXPR1>::value && is_scalar_expression<EXPR2>::value) };
+      };
+
+
+      /** @brief Special case: symbolic constant for elementwise can be used as every type. */
+      template<class Expr, long VAL>
+      struct is_same_expression_type<Expr,symbolic_constant<VAL> >
+      {
+        enum { value = 1 };
+      };
+
+      /** @brief Special case: symbolic constant for elementwise can be used as every type. */
+      template<class Expr, long VAL>
+      struct is_same_expression_type<symbolic_constant<VAL>, Expr>
+      {
+        enum { value = 1 };
+      };
+
+    }
 
   }//generator
 

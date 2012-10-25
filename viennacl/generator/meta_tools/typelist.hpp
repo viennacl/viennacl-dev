@@ -42,7 +42,7 @@ namespace viennacl
       typedef T Head;
       typedef U Tail;
 
-      static const std::string name()
+      static std::string name()
       {
         return Head::name() + "   ||   " + Tail::name();
       }
@@ -144,19 +144,19 @@ namespace viennacl
         static void execute() {}
         
         template <class T1>
-        static void execute(T1  & t1) {}
+        static void execute(T1 &) {}
         
         template <class T1, class T2>
-        static void execute(T1  & t1, T2  & t2) {}
+        static void execute(T1 &, T2 & ) {}
         
         template <class T1, class T2, class T3>
-        static void execute(T1  & t1, T2  & t2, T3 & t3) {}
+        static void execute(T1 &, T2 &, T3 &) {}
         
         template <class T1, class T2, class T3, class T4>
-        static void execute(T1  & t1, T2  & t2, T3 & t3, T4 & t4) {}
+        static void execute(T1 &, T2 &, T3 &, T4 &) {}
         
         template <class T1, class T2, class T3, class T4, class T5>
-        static void execute(T1  & t1, T2  & t2, T3 & t3, T4 & t4, T5 & t5) {}
+        static void execute(T1 &, T2 &, T3 &, T4 &, T5 &) {}
           
       };
 
@@ -170,7 +170,7 @@ namespace viennacl
         }
         
         template <class T1>
-        static void execute(T1  & t1)
+        static void execute(T1 & t1)
         {
           Functor<T>::execute(t1);
           ForEach<U,Functor>::execute(t1);

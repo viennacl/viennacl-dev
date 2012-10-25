@@ -42,19 +42,19 @@ namespace viennacl
     /**
      @brief Class to check if a particular symbolic type holds double or not.
      */
-    namespace result_of{
+    namespace result_of
+    {
+      template<class T>
+      struct is_double_type
+      {
+        enum { value = are_same_type<double, typename T::ScalarType>::value };
+      };
 
-
-        template<class T>
-        struct is_double_type{
-            enum { value = are_same_type<double, typename T::ScalarType>::value };
-        };
-
-        template<>
-        struct is_double_type<NullType>{
-            enum { value = 0 };
-        };
-
+      template<>
+      struct is_double_type<NullType>
+      {
+        enum { value = 0 };
+      };
     }
 
 
@@ -66,19 +66,22 @@ namespace viennacl
 
       private:
         template<class T>
-        struct CHECK_OPERATIONS_STRUCTURE{
-        private:
+        struct CHECK_OPERATIONS_STRUCTURE
+        {
+          private:
             template<class U>
-            struct is_pure_product_leaf{
+            struct is_pure_product_leaf
+            {
                 enum { value = result_of::is_product_leaf<U>::value && !result_of::is_arithmetic_compound<U>::value};
             };
 
-        public:
+          public:
             typedef typename tree_utils::extract_if<T,is_pure_product_leaf>::Result Products;
             static const bool is_inplace_product = tree_utils::count_if_type<Products,typename T::LHS>::value;
             static const int n_nested_products = tree_utils::count_if<Products,is_pure_product_leaf>::value - typelist_utils::length<Products>::value;
 
-            static void execute(){
+            static void execute()
+            {
                 VIENNACL_STATIC_ASSERT(is_inplace_product == false,InplaceProductsForbidden);
                 VIENNACL_STATIC_ASSERT(n_nested_products==0,NestedProductsForbidden);
             }
@@ -91,11 +94,10 @@ namespace viennacl
 
         /** @brief CTor for 1 expression
         *
-        * @param expression the expression to build the interface for
         * @param operation_name the code for this expression will be stored in the program provided by this name
         */
         template<class T0>
-        custom_operation ( T0 const & expression, std::string const & operation_name) : program_name_(operation_name)
+        custom_operation ( T0 const & , std::string const & operation_name) : program_name_(operation_name)
         {
 
             typedef typename typelist_utils::make_typelist<T0>::Result Expressions;
@@ -108,12 +110,11 @@ namespace viennacl
 
         /** @brief CTor for 2 expressions
         *
-        * @param expression0 the first expression of the operation
-        * @param expression1 the second expression of the operation
         * @param operation_name the code for this expression will be stored in the program provided by this name
         */
         template<class T0,class T1>
-        custom_operation ( T0 const & expression0 , T1 const & expression1 , std::string const & operation_name) : program_name_(operation_name){
+        custom_operation ( T0 const & , T1 const & , std::string const & operation_name) : program_name_(operation_name)
+        {
             typedef typename typelist_utils::make_typelist<T0,T1>::Result Expressions;
             typedef typename get_operations_from_expressions<Expressions>::Result Operations;
             typelist_utils::ForEach<Operations,CHECK_OPERATIONS_STRUCTURE>::execute();
@@ -175,11 +176,6 @@ namespace viennacl
             viennacl::generator::program_infos<Expressions>::fill(operation_name, sources_,runtime_wrappers_);
             bool has_double = static_cast<bool>(viennacl::generator::tree_utils::count_if<Operations,result_of::is_double_type>::value);
             create_program (has_double);
-        }
-
-        /** @brief DTor */
-        ~custom_operation()
-        {
         }
 
         /** @brief Returns the list of the kernels involved in the operation
@@ -669,7 +665,7 @@ namespace viennacl
         }
 
 
-      private:
+        private:
 
 
         void create_program(bool has_double)
@@ -681,6 +677,7 @@ namespace viennacl
           {
             kernels_string += it->second + "\n";
           }
+          
           if(has_double)
             kernels_string = viennacl::tools::make_double_kernel(kernels_string,viennacl::ocl::current_device().double_support_extension());
 
@@ -688,7 +685,7 @@ namespace viennacl
           std::cout << kernels_string << std::endl;
 #endif
 
-          viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(kernels_string, program_name_);
+          viennacl::ocl::program & program = viennacl::ocl::current_context().add_program(kernels_string, program_name_);
 
           for (std::map<std::string,std::string>::iterator it  = sources_.begin();
                                                              it != sources_.end();
@@ -718,7 +715,7 @@ namespace viennacl
           }
         }
 
-    private :
+      private :
         std::map<unsigned int, viennacl::any> user_args_;
         std::string program_name_;
         std::vector<viennacl::ocl::local_mem> lmem_;
@@ -728,7 +725,7 @@ namespace viennacl
     };
 
 
-    inline void enqueue_custom_op(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue)
+    inline void enqueue_custom_op(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & /*queue*/)
     {
       for(std::map<std::string,std::string>::const_iterator it = op.kernels_sources().begin(); it != op.kernels_sources().end() ; ++it)
       {

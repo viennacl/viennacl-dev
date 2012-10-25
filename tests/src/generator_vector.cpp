@@ -65,7 +65,7 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
 }
 
 template< typename NumericT, unsigned int Alignment, typename Epsilon >
-int test ( Epsilon const& epsilon, std::string vecfile, std::string resultfile ) {
+int test ( Epsilon const& epsilon, std::string vecfile) {
     int retval = EXIT_SUCCESS;
 
 	
@@ -266,7 +266,6 @@ int main() {
     int retval = EXIT_SUCCESS;
 
     std::string vecfile ( "../examples/testdata/rhs65025.txt" );
-    std::string resultfile ( "../examples/testdata/result65025.txt" );
 
     std::cout << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
@@ -277,11 +276,9 @@ int main() {
         std::cout << "# Testing setup:" << std::endl;
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: float" << std::endl;
-        retval = test<NumericT,1> ( epsilon, vecfile, resultfile );
-// 		retval &= test<NumericT,2> ( epsilon, vecfile, resultfile );
-        retval &= test<NumericT,4> ( epsilon, vecfile, resultfile );
-// 		retval &= test<NumericT,8> ( epsilon, vecfile, resultfile );
-        retval &= test<NumericT,16> ( epsilon, vecfile, resultfile );
+        retval = test<NumericT,1> ( epsilon, vecfile );
+        retval &= test<NumericT,4> ( epsilon, vecfile );
+        retval &= test<NumericT,16> ( epsilon, vecfile );
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
