@@ -15,6 +15,7 @@
 ============================================================================= */
 
 //#define NDEBUG
+//#define VIENNACL_DEBUG_BUILD
 
 //
 // *** System
@@ -35,13 +36,13 @@
 //
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_INFO_ALL
+//#define VIENNACL_DEBUG_ALL
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_HAVE_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/vector.hpp"
 #include "viennacl/matrix_proxy.hpp"
+#include "viennacl/vector.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
@@ -65,9 +66,9 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
-   copy(v2.begin(), v2.end(), v2_cpu.begin());
+   viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
-   for (unsigned int i=0;i<v1.size(); ++i)
+   for (std::size_t i=0;i<v1.size(); ++i)
    {
       if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
          v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
@@ -77,6 +78,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 
    return norm_inf(v2_cpu);
 }
+
 
 template <typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
@@ -99,116 +101,11 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    return ret;
 }
 
+
+
 //
-// -------------------------------------------------------------
+// Triangular solvers
 //
-template< typename NumericT, typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC, typename Epsilon >
-int test_prod(Epsilon const& epsilon)
-{
-   int retval = EXIT_SUCCESS;
-   long matrix_size1 = 157;  //some odd number, not too large
-   long matrix_size2 = 91;  //some odd number, not too large
-   long matrix_size3 = 73;  //some odd number, not too large
-   NumericT act_diff = 0;
-   
-   // --------------------------------------------------------------------------            
-   ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-   ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
-
-   //fill A and B:
-   for (unsigned int i = 0; i < A.size1(); ++i)
-      for (unsigned int j = 0; j < A.size2(); ++j)
-         A(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
-   for (unsigned int i = 0; i < B.size1(); ++i)
-      for (unsigned int j = 0; j < B.size2(); ++j)
-         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
-
-   ublas::matrix<NumericT> A_trans = trans(A);
-   ublas::matrix<NumericT> B_trans = trans(B);
-   
-   MatrixTypeA vcl_A_full(3*matrix_size1, 3*matrix_size2); vcl_A_full.clear();
-   MatrixTypeB vcl_B_full(3*matrix_size2, 3*matrix_size3); vcl_B_full.clear();
-   MatrixTypeA vcl_A_trans_full(3*matrix_size2, 3*matrix_size1); vcl_A_trans_full.clear();
-   MatrixTypeB vcl_B_trans_full(3*matrix_size3, 3*matrix_size2); vcl_B_trans_full.clear();
-   MatrixTypeC vcl_C_full(3*matrix_size1, 3*matrix_size3); vcl_C_full.clear();
-
-   viennacl::range r1(matrix_size1, 2*matrix_size1);
-   viennacl::range r2(matrix_size2, 2*matrix_size2);
-   viennacl::range r3(matrix_size3, 2*matrix_size3);
-   viennacl::matrix_range<MatrixTypeA> vcl_A(vcl_A_full, r1, r2);
-   viennacl::matrix_range<MatrixTypeB> vcl_B(vcl_B_full, r2, r3);
-   viennacl::matrix_range<MatrixTypeA> vcl_A_trans(vcl_A_trans_full, r2, r1);
-   viennacl::matrix_range<MatrixTypeB> vcl_B_trans(vcl_B_trans_full, r3, r2);
-   viennacl::matrix_range<MatrixTypeC> vcl_C(vcl_C_full, r1, r3);
-
-   
-   viennacl::copy(A, vcl_A);
-   viennacl::copy(B, vcl_B);
-   viennacl::copy(A_trans, vcl_A_trans);
-   viennacl::copy(B_trans, vcl_B_trans);
-
-   // Test: C = A * B --------------------------------------------------------------------------       
-   C     = viennacl::linalg::prod(A, B);
-   vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-   act_diff = fabs(diff(C, vcl_C));
-   
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = A * B passed!" << std::endl;
-   
-   // Test: C = A * trans(B) --------------------------------------------------------------------------       
-   C     = boost::numeric::ublas::prod(A, trans(B_trans));
-   vcl_C = viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
-   act_diff = fabs(diff(C, vcl_C));
-   
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = A * trans(B) passed!" << std::endl;
-   
-   // Test: C = trans(A) * B --------------------------------------------------------------------------       
-   C     = boost::numeric::ublas::prod(trans(A_trans), B);
-   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
-   act_diff = fabs(diff(C, vcl_C));
-   
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = trans(A) * B passed!" << std::endl;
-   
-   
-   // Test: C = trans(A) * trans(B) --------------------------------------------------------------------------       
-   C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
-   act_diff = fabs(diff(C, vcl_C));
-   
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
-   
-   
-   
-   return retval;
-}
 
 
 
@@ -228,65 +125,33 @@ void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, 
    
 }
 
-template< typename NumericT, typename MatrixTypeA, typename MatrixTypeB, typename Epsilon >
-int test_solve(Epsilon const& epsilon)
+
+template< typename NumericT, typename Epsilon,
+          typename ReferenceMatrixTypeA, typename ReferenceMatrixTypeB, typename ReferenceMatrixTypeC,
+          typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC, typename MatrixTypeResult>
+int test_solve(Epsilon const& epsilon,
+              
+              ReferenceMatrixTypeA const & A,
+              ReferenceMatrixTypeB const & B_start,
+              ReferenceMatrixTypeC const & C_start,
+              
+              MatrixTypeA const & vcl_A,
+              MatrixTypeB & vcl_B,
+              MatrixTypeC & vcl_C,
+              MatrixTypeResult const &
+             )
 {
-  
    int retval = EXIT_SUCCESS;
-   long matrix_size = 83;  //some odd number, not too large
-   long rhs_num = 61;
    
    // --------------------------------------------------------------------------            
-   ublas::matrix<NumericT> A(matrix_size, matrix_size);
-   ublas::matrix<NumericT> B_start(matrix_size, rhs_num);
-   ublas::matrix<NumericT> C_start(rhs_num, matrix_size);
-
-   //fill A and B:
-   for (unsigned int i = 0; i < A.size1(); ++i)
-   {
-      for (unsigned int j = 0; j < A.size2(); ++j)
-         A(i,j) = static_cast<NumericT>(-0.5) * random<NumericT>();
-      A(i,i) = 1.0 + 2.0 * random<NumericT>(); //some extra weight on diagonal for stability
-   }
-   for (unsigned int i = 0; i < B_start.size1(); ++i)
-      for (unsigned int j = 0; j < B_start.size2(); ++j)
-         B_start(i,j) = random<NumericT>();
-   for (unsigned int i = 0; i < C_start.size1(); ++i)
-      for (unsigned int j = 0; j < C_start.size2(); ++j)
-         C_start(i,j) = random<NumericT>();
-
-   ublas::matrix<NumericT> B = B_start;
-   ublas::matrix<NumericT> result = B_start;
-   ublas::matrix<NumericT> C = C_start;
-   ublas::matrix<NumericT> A_trans = trans(A);
-   ublas::matrix<NumericT> B_trans = trans(B);
-   ublas::matrix<NumericT> C_trans = trans(C);
    
-   MatrixTypeA vcl_A_full(3*matrix_size, 3*matrix_size);  vcl_A_full.clear();
-   MatrixTypeB vcl_B_full(3*matrix_size, 3*rhs_num);  vcl_B_full.clear();
-   MatrixTypeB vcl_C_full(3*matrix_size, 3*rhs_num);  vcl_C_full.clear();
-   MatrixTypeA vcl_A_trans_full(3*matrix_size, 3*matrix_size);  vcl_A_trans_full.clear();
-   MatrixTypeB vcl_B_trans_full(3*matrix_size, 3*rhs_num); vcl_B_trans_full.clear();
-   MatrixTypeB vcl_C_trans_full(3*matrix_size, 3*rhs_num); vcl_C_trans_full.clear();
-
-   viennacl::range r1(matrix_size, 2*matrix_size);
-   viennacl::range r2(rhs_num, rhs_num + matrix_size);
-   viennacl::range r3(rhs_num, 2 * rhs_num);
-   viennacl::matrix_range<MatrixTypeA> vcl_A(vcl_A_full, r2, r2);
-   viennacl::matrix_range<MatrixTypeB> vcl_B(vcl_B_full, r2, r3);
-   viennacl::matrix_range<MatrixTypeA> vcl_A_trans(vcl_A_trans_full, r1, r1);
-   viennacl::matrix_range<MatrixTypeB> vcl_B_trans(vcl_B_trans_full, r3, r2);
-   viennacl::matrix_range<MatrixTypeB> vcl_C(vcl_C_trans_full, r3, r2);
-   viennacl::matrix_range<MatrixTypeB> vcl_C_result(vcl_C_trans_full, r3, r2);
-
+   ReferenceMatrixTypeA result;
+   ReferenceMatrixTypeC C_trans;
    
-   viennacl::copy(A, vcl_A);
-   viennacl::copy(B, vcl_B);
-   viennacl::copy(A_trans, vcl_A_trans);
-   viennacl::copy(B_trans, vcl_B_trans);
-   viennacl::copy(C, vcl_C);
-
-   MatrixTypeB vcl_result(matrix_size, rhs_num);
+   ReferenceMatrixTypeB B = B_start;
+   ReferenceMatrixTypeC C = C_start;
+   
+   MatrixTypeResult vcl_result;
    
    // Test: A \ B with various tags --------------------------------------------------------------------------       
    std::cout << "Testing A \\ B: " << std::endl;
@@ -425,128 +290,219 @@ int test_solve(Epsilon const& epsilon)
 }
 
 
+template< typename NumericT, typename F_A, typename F_B, typename Epsilon >
+int test_solve(Epsilon const& epsilon)
+{
+  int ret = EXIT_SUCCESS;
+  long matrix_size = 135;  //some odd number, not too large
+  long rhs_num = 67;
+
+  std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
+
+  
+  ublas::matrix<NumericT> A(matrix_size, matrix_size);
+  ublas::matrix<NumericT> B_start(matrix_size, rhs_num);
+  ublas::matrix<NumericT> C_start(rhs_num, matrix_size);
+
+  for (std::size_t i = 0; i < A.size1(); ++i)
+  {
+    for (std::size_t j = 0; j < A.size2(); ++j)
+        A(i,j) = static_cast<NumericT>(-0.5) * random<NumericT>();
+    A(i,i) = NumericT(1.0) + NumericT(2.0) * random<NumericT>(); //some extra weight on diagonal for stability
+  }
+  
+  for (std::size_t i = 0; i < B_start.size1(); ++i)
+    for (std::size_t j = 0; j < B_start.size2(); ++j)
+        B_start(i,j) = random<NumericT>();
+
+  for (std::size_t i = 0; i < C_start.size1(); ++i)
+    for (std::size_t j = 0; j < C_start.size2(); ++j)
+        C_start(i,j) = random<NumericT>();
+  
+
+  // A
+  viennacl::range range1_A(matrix_size, 2*matrix_size);
+  viennacl::range range2_A(2*matrix_size, 3*matrix_size);
+  viennacl::slice slice1_A(matrix_size, 2, matrix_size);
+  viennacl::slice slice2_A(0, 3, matrix_size);
+  
+  viennacl::matrix<NumericT, F_A>    vcl_A(matrix_size, matrix_size);
+  viennacl::copy(A, vcl_A);
+  
+  viennacl::matrix<NumericT, F_A>    vcl_big_range_A(4*matrix_size, 4*matrix_size);
+  viennacl::matrix_range<viennacl::matrix<NumericT, F_A> > vcl_range_A(vcl_big_range_A, range1_A, range2_A);
+  viennacl::copy(A, vcl_range_A);
+  
+  viennacl::matrix<NumericT, F_A>    vcl_big_slice_A(4*matrix_size, 4*matrix_size);
+  viennacl::matrix_slice<viennacl::matrix<NumericT, F_A> > vcl_slice_A(vcl_big_slice_A, slice1_A, slice2_A);
+  viennacl::copy(A, vcl_slice_A);
+    
+
+  // B
+  viennacl::range range1_B(matrix_size, 2*matrix_size);
+  viennacl::range range2_B(2*rhs_num, 3*rhs_num);
+  viennacl::slice slice1_B(matrix_size, 2, matrix_size);
+  viennacl::slice slice2_B(0, 3, rhs_num);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_B(matrix_size, rhs_num);
+  viennacl::copy(B_start, vcl_B);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_big_range_B(4*matrix_size, 4*rhs_num);
+  viennacl::matrix_range<viennacl::matrix<NumericT, F_B> > vcl_range_B(vcl_big_range_B, range1_B, range2_B);
+  viennacl::copy(B_start, vcl_range_B);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_big_slice_B(4*matrix_size, 4*rhs_num);
+  viennacl::matrix_slice<viennacl::matrix<NumericT, F_B> > vcl_slice_B(vcl_big_slice_B, slice1_B, slice2_B);
+  viennacl::copy(B_start, vcl_slice_B);
+    
+
+  // C
+  viennacl::range range1_C(rhs_num, 2*rhs_num);
+  viennacl::range range2_C(2*matrix_size, 3*matrix_size);
+  viennacl::slice slice1_C(rhs_num, 2, rhs_num);
+  viennacl::slice slice2_C(0, 3, matrix_size);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_C(rhs_num, matrix_size);
+  viennacl::copy(C_start, vcl_C);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_big_range_C(4*rhs_num, 4*matrix_size);
+  viennacl::matrix_range<viennacl::matrix<NumericT, F_B> > vcl_range_C(vcl_big_range_C, range1_C, range2_C);
+  viennacl::copy(C_start, vcl_range_C);
+  
+  viennacl::matrix<NumericT, F_B>    vcl_big_slice_C(4*rhs_num, 4*matrix_size);
+  viennacl::matrix_slice<viennacl::matrix<NumericT, F_B> > vcl_slice_C(vcl_big_slice_C, slice1_C, slice2_C);
+  viennacl::copy(C_start, vcl_slice_C);
+  
+  
+  std::cout << "Now using A=matrix, B=matrix" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_A, vcl_B, vcl_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=matrix, B=range" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_A, vcl_range_B, vcl_range_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=matrix, B=slice" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_A, vcl_slice_B, vcl_slice_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+
+  
+  std::cout << "Now using A=range, B=matrix" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_range_A, vcl_B, vcl_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=range, B=range" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_range_A, vcl_range_B, vcl_range_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=range, B=slice" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_range_A, vcl_slice_B, vcl_slice_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+
+
+  
+  std::cout << "Now using A=slice, B=matrix" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_slice_A, vcl_B, vcl_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=slice, B=range" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_slice_A, vcl_range_B, vcl_range_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "Now using A=slice, B=slice" << std::endl;
+  ret = test_solve<NumericT>(epsilon, 
+                             A, B_start, C_start,
+                             vcl_slice_A, vcl_slice_B, vcl_slice_C, vcl_B
+                            );
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+
+  
+  
+  return ret;
+  
+}
+
+
+
+//
+// Control functions
+//
+
+
 template< typename NumericT, typename Epsilon >
 int test(Epsilon const& epsilon)
 {
   int ret;
 
-  std::cout << "--- Part 1: Testing matrix-matrix products ---" << std::endl;
-  
-  //
-  //
-  std::cout << "Now using A=row, B=row, C=row" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=row, B=row, C=column" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=row, B=column, C=row" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
+  std::cout << "////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=row, B=row ///" << std::endl;
+  std::cout << "////////////////////////////////" << std::endl;
+  ret = test_solve<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
   
-  //
-  //
-  std::cout << "Now using A=row, B=column, C=column" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
+
+  std::cout << "////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=row, B=col ///" << std::endl;
+  std::cout << "////////////////////////////////" << std::endl;
+  ret = test_solve<NumericT, viennacl::row_major, viennacl::column_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
+
+  std::cout << "////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=row ///" << std::endl;
+  std::cout << "////////////////////////////////" << std::endl;
+  ret = test_solve<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
+  
+  std::cout << "////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=col ///" << std::endl;
+  std::cout << "////////////////////////////////" << std::endl;
+  ret = test_solve<NumericT, viennacl::column_major, viennacl::column_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
 
   
-  
-  //
-  //
-  std::cout << "Now using A=column, B=row, C=row" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=column, B=row, C=column" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=column, B=column, C=row" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-  
-  //
-  //
-  std::cout << "Now using A=column, B=column, C=column" << std::endl;
-  ret = test_prod<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-  
-  std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
-  
-  std::cout << "Now using A=row, B=row" << std::endl;
-  ret = test_solve<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  std::cout << "Now using A=row, B=col" << std::endl;
-  ret = test_solve<NumericT,
-             viennacl::matrix<NumericT, viennacl::row_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  std::cout << "Now using A=col, B=row" << std::endl;
-  ret = test_solve<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::row_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  std::cout << "Now using A=col, B=col" << std::endl;
-  ret = test_solve<NumericT,
-             viennacl::matrix<NumericT, viennacl::column_major>,
-             viennacl::matrix<NumericT, viennacl::column_major>  >(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
   
   return ret;
 }
-
 
 //
 // -------------------------------------------------------------
@@ -568,7 +524,7 @@ int main()
    std::cout << std::endl;
    {
       typedef float NumericT;
-      NumericT epsilon = 1.0E-3;
+      NumericT epsilon = NumericT(1.0E-3);
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: float" << std::endl;

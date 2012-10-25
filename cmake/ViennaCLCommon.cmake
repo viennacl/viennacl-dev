@@ -109,7 +109,7 @@ include_directories(
 
 # Set high warning level on GCC
 if(ENABLE_PEDANTIC_FLAGS)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
 endif()
 
 # Export

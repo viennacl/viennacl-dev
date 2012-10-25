@@ -146,12 +146,12 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   
   //offset of the the memory access by the thread relative to the beginning of the block:
   if (row_major_A)
-    std::cout << "  size_t aOffset = row_thread_id * A_row_inc + col_thread_id * A_col_inc * A_internal_cols;" << std::endl;
+    std::cout << "  size_t aOffset = row_thread_id * A_col_inc + col_thread_id * A_row_inc * A_internal_cols;" << std::endl;
   else
     std::cout << "  size_t aOffset = row_thread_id * A_row_inc + col_thread_id * A_col_inc * A_internal_rows;" << std::endl;
 
   if (row_major_B)
-    std::cout << "  size_t bOffset = row_thread_id * B_row_inc + col_thread_id * B_col_inc * B_internal_cols;" << std::endl;
+    std::cout << "  size_t bOffset = row_thread_id * B_col_inc + col_thread_id * B_row_inc * B_internal_cols;" << std::endl;
   else
     std::cout << "  size_t bOffset = row_thread_id * B_row_inc + col_thread_id * B_col_inc *  B_internal_rows;" << std::endl;
 
