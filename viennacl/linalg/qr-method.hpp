@@ -182,7 +182,7 @@ namespace viennacl
                                 int m,
                                 int n,
                                 int last_n,
-                                bool is_triangular
+                                bool //is_triangular
                                 )
         {
             viennacl::fast_copy(buf, buf_vcl);

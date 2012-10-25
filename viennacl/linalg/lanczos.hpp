@@ -312,7 +312,7 @@ namespace viennacl
       std::vector<
               typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
               >
-      lanczos (MatrixT const& A, VectorT & r, int size, lanczos_tag const & tag)
+      lanczos (MatrixT const& A, VectorT & r, int size, lanczos_tag)
       {
       
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
@@ -370,7 +370,7 @@ namespace viennacl
       std::vector<
               typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
               >
-      lanczosFRO (MatrixT const& A, VectorT & r, int size, lanczos_tag const & tag)
+      lanczosFRO (MatrixT const& A, VectorT & r, int size, lanczos_tag)
       {
         
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;

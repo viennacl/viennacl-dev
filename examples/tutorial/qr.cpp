@@ -85,7 +85,7 @@ double check(MatrixType const & qr, MatrixType const & ref)
 *   Tutorial: QR factorization of matrices from ViennaCL or Boost.uBLAS
 */
 
-int main (int argc, const char * argv[])
+int main (int, const char **)
 {
   typedef float               ScalarType;     //feel free to change this to 'double' if supported by your hardware
   typedef boost::numeric::ublas::matrix<ScalarType>        MatrixType;

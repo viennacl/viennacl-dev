@@ -335,7 +335,7 @@ namespace viennacl
                                       block_vector& g_bv_vcl, 
                                       block_matrix& g_A_I_J_u_vcl, 
                                       std::vector<cl_uint>& g_is_update,
-                                      const unsigned int cur_iter){
+                                      const unsigned int){
               unsigned int local_r_n, local_c_n, sz_blocks;
               get_max_block_size(g_I, local_r_n);
               get_max_block_size(g_J_u, local_c_n);
@@ -416,7 +416,7 @@ namespace viennacl
                                 block_matrix& g_A_I_u_J_u_vcl, 
                                 std::vector<cl_uint>& g_is_update,
                                 const bool is_empty_block,
-                                const unsigned int cur_iter){
+                                const unsigned int){
               //std::vector<std::vector<unsigned int> > g_I_q(g_I.size());
               assemble_qr_row_inds(g_I, g_J, g_I_u, g_I_q);
               unsigned int sz_blocks;
@@ -511,7 +511,7 @@ namespace viennacl
                           block_vector& g_bv_vcl, 
                           block_vector& g_bv_vcl_u,
                           std::vector<cl_uint>& g_is_update,
-                          const unsigned int cur_iter){
+                          const unsigned int){
               std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));
               std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
               std::vector<cl_uint> start_bv_r_inds(g_I.size() + 1, 0);

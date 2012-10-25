@@ -577,7 +577,16 @@ namespace viennacl
       * 
       *  Do not use this function directly, use the macro CL_ERROR_CHECK instead.
       */
-      static void checkError(cl_int err, const std::string & file, const std::string & func, int line)
+      static void checkError(cl_int err,
+          #ifdef VIENNACL_DEBUG_ALL
+                             const std::string & file,
+                             const std::string & func,
+                             int line)
+          #else
+                             const std::string &,
+                             const std::string &,
+                             int)
+          #endif
       {
         if (err != CL_SUCCESS)
         {

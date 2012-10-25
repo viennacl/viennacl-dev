@@ -152,8 +152,8 @@ int run_benchmark()
   
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec1.size(), ublas_vec1.size());
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix(ublas_vec1.size(), ublas_vec1.size());
-  viennacl::ell_matrix<ScalarType> vcl_ell_matrix(ublas_vec1.size(), ublas_vec1.size());
-  viennacl::hyb_matrix<ScalarType> vcl_hyb_matrix(ublas_vec1.size(), ublas_vec1.size());
+  viennacl::ell_matrix<ScalarType> vcl_ell_matrix;
+  viennacl::hyb_matrix<ScalarType> vcl_hyb_matrix;
 
   viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size());
   viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size()); 

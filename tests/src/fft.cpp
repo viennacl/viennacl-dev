@@ -146,7 +146,7 @@ void convolve_ref(std::vector<ScalarType>& in1,
 
 ScalarType opencl_fft(std::vector<ScalarType>& in,
                       std::vector<ScalarType>& out,
-                      unsigned int row, unsigned int col, unsigned int batch_size)
+                      unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size)
 {
     viennacl::vector<ScalarType> input(in.size());
     viennacl::vector<ScalarType> output(in.size());
@@ -164,7 +164,7 @@ ScalarType opencl_fft(std::vector<ScalarType>& in,
 
 ScalarType opencl_2d_fft_1arg(std::vector<ScalarType>& in,
                               std::vector<ScalarType>& out,
-                              unsigned int row, unsigned int col, unsigned int batch_size)
+                              unsigned int row, unsigned int col, unsigned int /*batch_size*/)
 {
     viennacl::matrix<ScalarType> input(row, 2 * col);
 
@@ -181,7 +181,7 @@ ScalarType opencl_2d_fft_1arg(std::vector<ScalarType>& in,
 
 ScalarType opencl_2d_fft_2arg(std::vector<ScalarType>& in,
                               std::vector<ScalarType>& out,
-                              unsigned int row, unsigned int col, unsigned int batch_size)
+                              unsigned int row, unsigned int col, unsigned int /*batch_size*/)
 {
     viennacl::matrix<ScalarType> input(row, 2 * col);
     viennacl::matrix<ScalarType> output(row, 2 * col);
@@ -199,7 +199,7 @@ ScalarType opencl_2d_fft_2arg(std::vector<ScalarType>& in,
 
 ScalarType opencl_direct(std::vector<ScalarType>& in,
                          std::vector<ScalarType>& out,
-                         unsigned int row, unsigned int col, unsigned int batch_num)
+                         unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num)
 {
     viennacl::vector<ScalarType> input(in.size());
     viennacl::vector<ScalarType> output(in.size());
@@ -219,7 +219,7 @@ ScalarType opencl_direct(std::vector<ScalarType>& in,
 
 ScalarType opencl_bluestein(std::vector<ScalarType>& in,
                             std::vector<ScalarType>& out,
-                            unsigned int row, unsigned int col, unsigned int batch_size)
+                            unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size)
 {
     viennacl::vector<ScalarType> input(in.size());
     viennacl::vector<ScalarType> output(in.size());
@@ -237,7 +237,7 @@ ScalarType opencl_bluestein(std::vector<ScalarType>& in,
 
 ScalarType opencl_radix2(std::vector<ScalarType>& in,
                          std::vector<ScalarType>& out,
-                         unsigned int row, unsigned int col, unsigned int batch_num)
+                         unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num)
 {
     viennacl::vector<ScalarType> input(in.size());
     viennacl::vector<ScalarType> output(in.size());
@@ -257,7 +257,7 @@ ScalarType opencl_radix2(std::vector<ScalarType>& in,
 
 ScalarType opencl_convolve(std::vector<ScalarType>& in1,
                            std::vector<ScalarType>& in2,
-                           unsigned int row, unsigned int col, unsigned int batch_size)
+                           unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size)
 {
     //if(in1.size() > 2048) return -1;
     viennacl::vector<ScalarType> input1(in1.size());

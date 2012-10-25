@@ -119,7 +119,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 // -------------------------------------------------------------
 //
 template< typename NumericT, typename Epsilon >
-int test(Epsilon const& epsilon, std::string rhsfile, std::string resultfile)
+int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/)
 {
    int retval = EXIT_SUCCESS;
 

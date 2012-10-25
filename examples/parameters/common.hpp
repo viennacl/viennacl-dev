@@ -136,7 +136,7 @@ void print_best(TimingType const & timings, std::string kernel_name)
 }
 
 template <typename TimingType>
-void print_default(TimingType const & timings, std::string kernel_name)
+void print_default(TimingType const & timings, std::string /*kernel_name*/)
 {
   bool found = false;
   std::cout << "Default parameter set: [16384 global workers, 128 local workers] ";
@@ -153,7 +153,7 @@ void print_default(TimingType const & timings, std::string kernel_name)
 }
 
 template <typename TimingType>
-void print_default_restricted(TimingType const & timings, std::string kernel_name)
+void print_default_restricted(TimingType const & timings, std::string /*kernel_name*/)
 {
   bool found = false;
   std::cout << "Default parameter set: [128 global workers, 128 local workers] ";

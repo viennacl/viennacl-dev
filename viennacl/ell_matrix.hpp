@@ -46,10 +46,10 @@ namespace viennacl
           viennacl::linalg::kernels::ell_matrix<SCALARTYPE, ALIGNMENT>::init();
         }
         
-        ell_matrix(std::size_t row_num, std::size_t col_num) 
-        {
-          viennacl::linalg::kernels::ell_matrix<SCALARTYPE, ALIGNMENT>::init();
-        }
+        //ell_matrix(std::size_t row_num, std::size_t col_num) 
+        //{
+        //  viennacl::linalg::kernels::ell_matrix<SCALARTYPE, ALIGNMENT>::init();
+        //}
     
       public:
         std::size_t internal_size1() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(rows_, ALIGNMENT); }

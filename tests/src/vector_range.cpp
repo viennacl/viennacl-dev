@@ -381,7 +381,7 @@ int run_test()
     return EXIT_SUCCESS;
 }    
 
-int main (int argc, const char * argv[])
+int main (int, const char **)
 {
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;

@@ -91,9 +91,9 @@ namespace viennacl
         }
         
         /** @brief Switches the current device to the i-th device in this context */
-        void switch_device(size_t i)
+        void switch_device(std::size_t i)
         {
-          assert(i >= 0 && i < devices_.size());
+          assert(i < devices_.size() && "Provided device index out of range!");
           current_device_id_ = i;
         }
 
@@ -104,7 +104,7 @@ namespace viennacl
           std::cout << "ViennaCL: Setting new current device for context " << h_ << std::endl;
           #endif
           bool found = false;
-          for (size_t i=0; i<devices_.size(); ++i)
+          for (std::size_t i=0; i<devices_.size(); ++i)
           {
             if (devices_[i] == d)
             {
@@ -212,7 +212,7 @@ namespace viennacl
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Adding existing queue " << q << " for device " << dev << " to context " << h_ << std::endl;
           #endif
-          queues_[dev].push_back(viennacl::ocl::command_queue(q, dev));
+          queues_[dev].push_back(viennacl::ocl::command_queue(q));
         }
         
         /** @brief Adds a queue for the given device to the context */
@@ -225,7 +225,7 @@ namespace viennacl
           viennacl::ocl::handle<cl_command_queue> temp = clCreateCommandQueue(h_.get(), dev, 0, &err);
           VIENNACL_ERR_CHECK(err);
           
-          queues_[dev].push_back(viennacl::ocl::command_queue(temp, dev));
+          queues_[dev].push_back(viennacl::ocl::command_queue(temp));
         }
 
         /** @brief Adds a queue for the given device to the context */
@@ -239,9 +239,9 @@ namespace viennacl
         
         //get a particular queue:
         /** @brief Returns the queue with the provided index for the given device */
-        viennacl::ocl::command_queue & get_queue(cl_device_id dev, size_t i = 0)
+        viennacl::ocl::command_queue & get_queue(cl_device_id dev, std::size_t i = 0)
         {
-          assert(i >= 0 && i < queues_.size() && "In class 'context': id invalid in get_queue()");
+          assert(i < queues_.size() && "In class 'context': id invalid in get_queue()");
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting queue " << i << " for device " << dev << " in context " << h_ << std::endl;
           #endif
@@ -271,7 +271,7 @@ namespace viennacl
         viennacl::ocl::program & add_program(std::string const & source, std::string const & prog_name)
         {
           const char * source_text = source.c_str();
-          size_t source_size = source.size();
+          std::size_t source_size = source.size();
           cl_int err;
           
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -318,17 +318,17 @@ namespace viennacl
         }
         
         /** @brief Returns the program with the provided id */
-        viennacl::ocl::program & get_program(size_t id)
+        viennacl::ocl::program & get_program(std::size_t id)
         {
-          assert(id >= 0 && id < programs_.size() && "In class 'context': id invalid in get_program()");
+          assert(id < programs_.size() && "In class 'context': id invalid in get_program()");
           return programs_[id];
         }
         
         /** @brief Returns the number of programs within this context */
-        size_t program_num() { return programs_.size(); }
+        std::size_t program_num() { return programs_.size(); }
 
         /** @brief Returns the number of devices within this context */
-        size_t device_num() { return devices_.size(); }
+        std::size_t device_num() { return devices_.size(); }
         
         /** @brief Returns the context handle */
         const viennacl::ocl::handle<cl_context> & handle() const { return h_; }
@@ -379,7 +379,7 @@ namespace viennacl
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
             std::cout << "ViennaCL: Number of devices for context: " << devices.size() << std::endl;
             #endif
-            for (size_t i=0; i<devices.size(); ++i)
+            for (std::size_t i=0; i<devices.size(); ++i)
               devices_.push_back(devices[i]);
             
             if (devices.size() == 0)
@@ -433,7 +433,7 @@ namespace viennacl
             //get devices for context:
             cl_int err;
             cl_uint num_devices;
-            size_t temp;
+            std::size_t temp;
             //Note: The obvious
             //  err = clGetContextInfo(h_, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &num_devices, NULL);
             //does not work with NVIDIA OpenCL stack!
@@ -450,7 +450,7 @@ namespace viennacl
             err = clGetContextInfo(h_.get(), CL_CONTEXT_DEVICES, num_devices * sizeof(cl_device_id), &(device_ids[0]), NULL);
             VIENNACL_ERR_CHECK(err);
             
-            for (size_t i=0; i<num_devices; ++i)
+            for (std::size_t i=0; i<num_devices; ++i)
               devices_.push_back(viennacl::ocl::device(device_ids[i]));
           }
           current_device_id_ = 0;

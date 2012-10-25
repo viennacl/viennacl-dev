@@ -45,7 +45,7 @@ namespace viennacl
     //ViennaCL vector leads to start index 0:
     template <typename ScalarType, unsigned int ALIGNMENT>
     typename result_of::size_type<viennacl::vector<ScalarType, ALIGNMENT> >::type
-    start(viennacl::vector<ScalarType, ALIGNMENT> const & v)
+    start(viennacl::vector<ScalarType, ALIGNMENT> const &)
     {
       return 0; 
     }
@@ -66,7 +66,7 @@ namespace viennacl
     //ViennaCL matrix leads to start index 0:
     template <typename ScalarType, typename F, unsigned int ALIGNMENT>
     typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-    start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const & v)
+    start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
     {
       return 0; 
     }
@@ -85,7 +85,7 @@ namespace viennacl
     //ViennaCL matrix leads to start index 0:
     template <typename ScalarType, typename F, unsigned int ALIGNMENT>
     typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-    start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const & v)
+    start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
     {
       return 0; 
     }

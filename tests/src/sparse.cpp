@@ -79,6 +79,13 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
          v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
+      
+      if (v2_cpu[i] > 1)
+      {
+        //std::cout << "Neighbor: "      << i-1 << ": " << v1[i-1] << " vs. " << v2_cpu[i-1] << std::endl;
+        std::cout << "Error at entry " << i   << ": " << v1[i]   << " vs. " << v2_cpu[i]   << std::endl;
+        //std::cout << "Neighbor: "      << i+1 << ": " << v1[i+1] << " vs. " << v2_cpu[i+1] << std::endl;
+      }
    }
 
    return norm_inf(v2_cpu);
@@ -271,8 +278,8 @@ int test(Epsilon const& epsilon)
    viennacl::vector<NumericT> vcl_result2(result.size()); 
    viennacl::compressed_matrix<NumericT> vcl_compressed_matrix(rhs.size(), rhs.size());
    viennacl::coordinate_matrix<NumericT> vcl_coordinate_matrix(rhs.size(), rhs.size());
-   viennacl::ell_matrix<NumericT> vcl_ell_matrix(rhs.size(), rhs.size());
-   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix(rhs.size(), rhs.size());
+   viennacl::ell_matrix<NumericT> vcl_ell_matrix;
+   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix;
 
    copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
    copy(ublas_matrix, vcl_compressed_matrix);

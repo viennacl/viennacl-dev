@@ -48,7 +48,7 @@ namespace viennacl
       typedef typename MatrixType::value_type      ScalarType;
       
       public:
-        jacobi_precond(MatrixType const & mat, jacobi_tag const & tag) : system_matrix(mat)
+        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : system_matrix(mat)
         {
           assert(mat.size1() == mat.size2());
           diag_A_inv.resize(mat.size1());  //resize without preserving values
@@ -101,7 +101,7 @@ namespace viennacl
       typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
       
       public:
-        jacobi_precond(MatrixType const & mat, jacobi_tag const & tag) : system_matrix(mat), diag_A_inv(mat.size1())
+        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : system_matrix(mat), diag_A_inv(mat.size1())
         {
           assert(system_matrix.size1() == system_matrix.size2());
 

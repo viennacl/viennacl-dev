@@ -557,11 +557,11 @@ namespace viennacl
       
       //const unsigned int row_stride() const { return roundUpToNextMultiple<unsigned int>(columns(), ALIGNMENT); }
       /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
-      const size_type internal_size1() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows_, ALIGNMENT); }
+      size_type internal_size1() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows_, ALIGNMENT); }
       /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
-      const size_type internal_size2() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns_, ALIGNMENT); }
+      size_type internal_size2() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns_, ALIGNMENT); }
       /** @brief Returns the total amount of allocated memory in multiples of sizeof(SCALARTYPE) */
-      const size_type internal_size() const { return internal_size1() * internal_size2(); }
+      size_type internal_size() const { return internal_size1() * internal_size2(); }
       
       /** @brief Returns the OpenCL handle, non-const-version */
             handle_type & handle()       { return elements_; }

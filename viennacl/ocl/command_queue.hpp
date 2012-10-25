@@ -46,7 +46,7 @@ namespace viennacl
     {
       public:
         command_queue() {};
-        command_queue(viennacl::ocl::handle<cl_command_queue> h, cl_device_id dev) : handle_(h) {}
+        command_queue(viennacl::ocl::handle<cl_command_queue> h) : handle_(h) {}
         
         //Copy constructor:
         command_queue(command_queue const & other)

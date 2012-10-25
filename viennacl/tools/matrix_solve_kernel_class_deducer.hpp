@@ -74,13 +74,13 @@ namespace viennacl
     template <typename M1, typename M2>
     struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>, M2>
     {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M2, M1>::ResultType     ResultType;
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
     };
 
     template <typename M1, typename M2>
     struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>, M2>
     {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M2, M1>::ResultType     ResultType;
+      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
     };
 
     template <typename M1, typename M2>

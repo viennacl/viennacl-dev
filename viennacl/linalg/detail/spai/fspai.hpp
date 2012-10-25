@@ -84,13 +84,13 @@ namespace viennacl
               is_static_(is_static),
               is_right_(is_right){};
               
-              inline const double getResidualNormThreshold() const
+              inline double getResidualNormThreshold() const
               { return residual_norm_threshold_; }
-              inline const unsigned long getIterationLimit () const
+              inline unsigned long getIterationLimit () const
               { return iteration_limit_; }
-              inline const bool getIsStatic() const
+              inline bool getIsStatic() const
               { return is_static_; }
-              inline const bool getIsRight() const
+              inline bool getIsRight() const
               { return is_right_; }
               inline void setResidualNormThreshold(double residual_norm_threshold){
                   if(residual_norm_threshold > 0)
@@ -318,7 +318,7 @@ namespace viennacl
                             MatrixType const & PatternA,
                             MatrixType & L, 
                             MatrixType & L_trans, 
-                            fspai_tag const & tag)
+                            fspai_tag)
           {
             typedef typename MatrixType::value_type              ScalarType;
             typedef boost::numeric::ublas::matrix<ScalarType>    DenseMatrixType;

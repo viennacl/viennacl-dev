@@ -358,7 +358,7 @@ namespace viennacl
      * @param tag    AMG preconditioner tag
     */
     template <typename InternalType1, typename InternalType2>
-    void amg_interpol_ag(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
+    void amg_interpol_ag(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;

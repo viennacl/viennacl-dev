@@ -353,7 +353,7 @@ void createHeaders(const char * dirname)
     createSourceFile(dirname);
 }
 
-int main(int args, char * argsv[])
+int main(int , char **)
 {
     createHeaders("compressed_matrix");
     createHeaders("coordinate_matrix");

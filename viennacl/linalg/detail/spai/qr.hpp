@@ -367,7 +367,7 @@ namespace viennacl
                         block_matrix& g_A_I_J_vcl,
                         block_vector& g_bv_vcl,
                         std::vector<cl_uint>& g_is_update,
-                        const unsigned int cur_iter){
+                        const unsigned int ){
               //typedef typename MatrixType::value_type ScalarType;
               unsigned int bv_size;
               unsigned int v_size;

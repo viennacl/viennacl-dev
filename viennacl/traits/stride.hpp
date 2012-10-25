@@ -42,7 +42,7 @@ namespace viennacl
     //
     template <typename VectorType>
     typename result_of::size_type<VectorType>::type
-    stride(VectorType const & vec) { return 1; }
+    stride(VectorType const &) { return 1; }
 
     template <typename VectorType>
     typename result_of::size_type<VectorType>::type
@@ -53,7 +53,7 @@ namespace viennacl
     //
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    stride1(MatrixType const & mat) { return 1; }
+    stride1(MatrixType const &) { return 1; }
 
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
@@ -64,7 +64,7 @@ namespace viennacl
     //
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
-    stride2(MatrixType const & mat) { return 1; }
+    stride2(MatrixType const &) { return 1; }
  
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type

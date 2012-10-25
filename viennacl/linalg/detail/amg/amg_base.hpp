@@ -307,7 +307,7 @@ namespace viennacl
             
             // Write to the map. Is called from non-zero scalar type.
             template <typename IteratorType>
-            void addscalar(IteratorType & iter, unsigned int i, unsigned int j, ScalarType s)
+            void addscalar(IteratorType & iter, unsigned int i, unsigned int /* j */, ScalarType s)
             {
               // Don't write if value is zero
               if (s == 0)
@@ -322,7 +322,7 @@ namespace viennacl
             
             // Remove value from the map. Is called from non-zero scalar type.
             template <typename IteratorType>
-            void removescalar(IteratorType & iter, unsigned int i) { internal_vector.erase(iter); }   
+            void removescalar(IteratorType & iter, unsigned int /* i */) { internal_vector.erase(iter); }   
             
             // Bracket operator. Returns non-zero scalar type with actual values of the respective entry which calls addscalar/removescalar after value is altered.
             NonzeroScalarType operator [] (unsigned int i)

@@ -56,7 +56,7 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
       am(M1 & mat1, 
-         M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+         M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
         
@@ -119,8 +119,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       ambm(M1 & mat1, 
-           M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           M3 const & mat3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
+           M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+           M3 const & mat3, ScalarType2 const & beta, std::size_t /*len_beta*/, bool reciprocal_beta, bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
        
@@ -200,8 +200,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       ambm_m(M1 & mat1,
-             M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             M3 const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+             M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+             M3 const & mat3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
        
@@ -693,7 +693,7 @@ namespace viennacl
                                     && viennacl::is_any_dense_nonstructured_vector<V2>::value
                                   >::type
       scaled_rank_1_update(M1 & mat1,
-                    S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                    S1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
                     const V1 & vec1, 
                     const V2 & vec2)
       {

@@ -261,7 +261,7 @@ namespace viennacl
                                 std::vector<SparseVectorType> & g_res,
                                 std::vector<cl_uint> & g_is_update,
                                 const spai_tag & tag,
-                                const unsigned int cur_iter){
+                                const unsigned int){
             unsigned int y_sz, m_sz;
             std::vector<cl_uint> y_inds(M_v.size() + 1, static_cast<cl_uint>(0));
             std::vector<cl_uint> m_inds(M_v.size() + 1, static_cast<cl_uint>(0));
@@ -457,7 +457,7 @@ namespace viennacl
                             block_matrix& g_A_I_J_vcl, 
                             std::vector<cl_uint>& g_is_update,
                             bool& is_empty_block,
-                            const unsigned int cur_iter){
+                            const unsigned int){
             //computing start indices for index sets and start indices for block matrices
             unsigned int sz_I, sz_J, sz_blocks;
             std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));

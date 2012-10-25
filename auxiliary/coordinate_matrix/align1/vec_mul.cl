@@ -69,10 +69,10 @@ __kernel void vec_mul(
 { 
   uint2 tmp; 
   float val;
-  uint last_index = get_local_size(0) - 1;
+  uint last_index  = get_local_size(0) - 1;
   uint group_start = group_boundaries[get_group_id(0)];
-  uint group_end = group_boundaries[get_group_id(0) + 1];
-  uint k_end = 1 + (group_end - group_start - 1) / get_local_size(0);   // -1 in order to have correct behavior if group_end - group_start == j * get_local_size(0)
+  uint group_end   = group_boundaries[get_group_id(0) + 1];
+  uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / get_local_size(0) : 0;   // -1 in order to have correct behavior if group_end - group_start == j * get_local_size(0)
 
   uint local_index = 0;
 

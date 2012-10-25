@@ -65,7 +65,7 @@ void run_solver(MatrixType const & A, VectorType const & b, SolverTag const & so
 }
 
 
-int main (int argc, const char * argv[])
+int main (int, const char **)
 {
     typedef float               ScalarType;
     typedef boost::numeric::ublas::compressed_matrix<ScalarType>        MatrixType;

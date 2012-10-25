@@ -52,7 +52,7 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
       av(V1 & vec1, 
-         V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+         V2 const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
@@ -87,8 +87,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       avbv(V1 & vec1, 
-          V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-          V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+          V2 const & vec2, ScalarType1 const & alpha, std::size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
+          V3 const & vec3, ScalarType2 const & beta,  std::size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
 
@@ -133,8 +133,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       avbv_v(V1 & vec1,
-             V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+             V2 const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+             V3 const & vec3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
 

@@ -45,10 +45,10 @@ namespace viennacl
           viennacl::linalg::kernels::hyb_matrix<SCALARTYPE, ALIGNMENT>::init();
         }
         
-        hyb_matrix(std::size_t row_num, std::size_t col_num) : csr_threshold_(0.8), rows_(row_num), cols_(col_num)
-        {
-          viennacl::linalg::kernels::hyb_matrix<SCALARTYPE, ALIGNMENT>::init();
-        }
+        //hyb_matrix(std::size_t row_num, std::size_t col_num) : csr_threshold_(0.8), rows_(row_num), cols_(col_num)
+        //{
+        //  viennacl::linalg::kernels::hyb_matrix<SCALARTYPE, ALIGNMENT>::init();
+        //}
 
         SCALARTYPE  csr_threshold()  const { return csr_threshold_; }
         void csr_threshold(SCALARTYPE thr) { csr_threshold_ = thr; }

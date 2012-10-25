@@ -123,7 +123,7 @@ namespace viennacl
     * @param num_rows  number of entries per row (including alignment)
     * @param num_cols  number of entries per column (including alignment)
     */
-    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
+    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t /* num_rows */, vcl_size_t num_cols)
     {
       return i * num_cols + j;
     }
@@ -140,7 +140,7 @@ namespace viennacl
     * @param num_rows  number of entries per row (including alignment)
     * @param num_cols  number of entries per column (including alignment)
     */
-    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t num_cols)
+    static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t /* num_cols */)
     {
       return i + j * num_rows;
     }
@@ -339,22 +339,22 @@ namespace viennacl
     /** @brief A tag class representing a lower triangular matrix */
     struct lower_tag 
     {
-      static const char * const name() { return "lower"; }
+      static const char * name() { return "lower"; }
     };      //lower triangular matrix
     /** @brief A tag class representing an upper triangular matrix */
     struct upper_tag 
     {
-      static const char * const name() { return "upper"; }
+      static const char * name() { return "upper"; }
     };      //upper triangular matrix
     /** @brief A tag class representing a lower triangular matrix with unit diagonal*/
     struct unit_lower_tag
     {
-      static const char * const name() { return "unit_lower"; }
+      static const char * name() { return "unit_lower"; }
     }; //unit lower triangular matrix
     /** @brief A tag class representing an upper triangular matrix with unit diagonal*/
     struct unit_upper_tag
     {
-      static const char * const name() { return "unit_upper"; }
+      static const char * name() { return "unit_upper"; }
     }; //unit upper triangular matrix
     
     //preconditioner tags
@@ -365,7 +365,7 @@ namespace viennacl
     {
       public:
         template <typename VectorType>
-        void apply(VectorType & vec) const {}
+        void apply(VectorType &) const {}
     };
     
     
