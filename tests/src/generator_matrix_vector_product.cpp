@@ -183,7 +183,7 @@ int main() {
 //        retval = test<NumericT, viennacl::row_major,ublas::row_major,16> ( epsilon );
 
         std::cout << "---- Layout : Column Major" << std::endl;
-//        retval = test<NumericT, viennacl::column_major,ublas::column_major,1> ( epsilon );
+        retval = test<NumericT, viennacl::column_major,ublas::column_major,1> ( epsilon );
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;

@@ -47,6 +47,9 @@ namespace viennacl
     template<long VAL>
     class symbolic_constant;
 
+    template<long VAL>
+    class symbolic_constant_vector;
+
     template< unsigned int ID, typename SCALARTYPE, unsigned int ALIGNMENT = 1>
     class symbolic_vector;
 
