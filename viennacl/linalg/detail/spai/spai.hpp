@@ -54,7 +54,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
-#include "viennacl/linalg/compressed_matrix_operations.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/linalg/inner_prod.hpp"

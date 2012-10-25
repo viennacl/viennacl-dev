@@ -590,126 +590,15 @@ namespace viennacl
                                           const V1,
                                           op_prod> & proxy);
 
-                                                                       
-      //                                                                 
-      //////////// compressed_matrix<>
       //
-      /** @brief Operator overload for v1 = A * v2, where v1, v2 are vectors and A is a sparse matrix of type compressed_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                     const self_type,
-                                                     op_prod> & proxy);
-
-      /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type compressed_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator+=(const vector_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                      const self_type,
-                                                      op_prod> & proxy);
-                                                
-      /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type compressed_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator-=(const vector_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                      const self_type,
-                                                      op_prod> & proxy);
-
-      /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type compressed_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type operator+(const vector_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                       const self_type,
-                                                                       op_prod> & proxy);
-
-      /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type compressed_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type operator-(const vector_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                       const self_type,
-                                                                       op_prod> & proxy);
-
+      // Sparse matrices
       //
-      // coordinate_matrix<>
-      //
-      /** @brief Operator overload for v1 = A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                            const self_type,
-                            op_prod> & proxy);
-
-      /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator+=(const vector_expression< const coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                      const self_type,
-                                                      op_prod> & proxy);
-                                                
-      /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator-=(const vector_expression< const coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                      const self_type,
-                                                      op_prod> & proxy);
-
-      /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type operator+(const vector_expression< const coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-
-      /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type operator-(const vector_expression< const coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                   const self_type,
-                                                   op_prod> & proxy);
-
-      //
-      // ell_matrix<>
-      //
-      /** @brief Operator overload for v1 = A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const ell_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                            const self_type,
-                            op_prod> & proxy);
-      
-      //
-      // hyb_matrix<>
-      //
-      /** @brief Operator overload for v1 = A * v2, where v1, v2 are vectors and A is a sparse matrix of type coordinate_matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <unsigned int MAT_ALIGNMENT>
-      self_type & operator=(const vector_expression< const hyb_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                            const self_type,
-                            op_prod> & proxy);
+      template <typename SparseMatrixType>
+      typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value,
+                                    self_type & >::type
+      operator=(const viennacl::vector_expression< const SparseMatrixType,
+                                                   const viennacl::vector<SCALARTYPE, ALIGNMENT>,
+                                                   viennacl::op_prod> & proxy) ;
       
       //
       // circulant_matrix<>

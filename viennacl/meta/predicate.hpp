@@ -303,6 +303,39 @@ namespace viennacl
     };
 
     
+    //
+    // is_sparse_matrix
+    //
+    template <typename T>
+    struct is_sparse_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_sparse_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_sparse_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_sparse_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_sparse_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
     
     
     

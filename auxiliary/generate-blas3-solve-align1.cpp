@@ -66,24 +66,27 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
   if (upper_solve)
   {
     //Note: A is square, thus A_rows == A_cols and no dispatch for transposedness needed
-    std::cout << "  for (int row = A_size1-1; row > -1; --row) " << std::endl;
+    std::cout << "  for (unsigned int row_cnt = 0; row_cnt < A_size1; ++row_cnt) " << std::endl;
+    std::cout << "  { " << std::endl;
+    std::cout << "    unsigned int row = A_size1 - 1 - row_cnt;" << std::endl;
   }
   else //lower triangular solve
   {
-    std::cout << "  for (int row = 0; row < A_size1; ++row) " << std::endl;
+    std::cout << "  for (unsigned int row = 0; row < A_size1; ++row) " << std::endl;
+    std::cout << "  { " << std::endl;
   }
-  std::cout << "  { " << std::endl;
+
   if (!unit_diagonal)
   {
     std::cout << "    barrier(CLK_GLOBAL_MEM_FENCE); " << std::endl;
     std::cout << "    if (get_local_id(0) == 0) " << std::endl;
     //Note: A is square, thus A_internal_rows == A_internal_cols and no dispatch for transposedness needed
     if (row_major_B && transpose_B)
-      std::cout << "      B[(row * B_inc2 + B_start2) + (get_group_id(0) * B_inc1 + B_start1) * B_internal_size2] /= ";
+      std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)] /= ";
     else if (row_major_B && !transpose_B)
       std::cout << "      B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] /= ";
     else if (!row_major_B && transpose_B)
-      std::cout << "      B[(row * B_inc2 + B_start2) * B_internal_size1 + (get_group_id(0) * B_inc1 + B_start1)] /= ";
+      std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1] /= ";
     else if (!row_major_B && !transpose_B)
       std::cout << "      B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] /= ";
     
@@ -96,35 +99,35 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
   std::cout << "    barrier(CLK_GLOBAL_MEM_FENCE); " << std::endl;
   
   if (row_major_B && transpose_B)
-    std::cout << "      temp = B[(row * B_inc2 + B_start2) + (get_group_id(0) * B_inc1 + B_start1) * B_internal_size2]; " << std::endl;
+    std::cout << "    temp = B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)]; " << std::endl;
   else if (row_major_B && !transpose_B)
-    std::cout << "      temp = B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)]; " << std::endl;
+    std::cout << "    temp = B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)]; " << std::endl;
   else if (!row_major_B && transpose_B)
-    std::cout << "      temp = B[(row * B_inc2 + B_start2) * B_internal_size1 + (get_group_id(0) * B_inc1 + B_start1)]; " << std::endl;
+    std::cout << "    temp = B[(get_group_id(0) * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1]; " << std::endl;
   else if (!row_major_B && !transpose_B)
-    std::cout << "      temp = B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1]; " << std::endl;
+    std::cout << "    temp = B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1]; " << std::endl;
 
   std::cout << "    //eliminate column of op(A) with index 'row' in parallel: " << std::endl;
   if (upper_solve)
-    std::cout << "    for  (int elim = get_local_id(0); elim < row; elim += get_local_size(0)) " << std::endl;
+    std::cout << "    for  (unsigned int elim = get_local_id(0); elim < row; elim += get_local_size(0)) " << std::endl;
   else
-    std::cout << "    for  (int elim = row + get_local_id(0) + 1; elim < A_size1; elim += get_local_size(0)) " << std::endl;
+    std::cout << "    for  (unsigned int elim = row + get_local_id(0) + 1; elim < A_size1; elim += get_local_size(0)) " << std::endl;
   
   if (row_major_B && transpose_B)
-    std::cout << "      B[(elim * B_inc2 + B_start2) + (get_group_id(0) * B_inc1 + B_start1) * B_internal_size2] -= temp * ";
+    std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (elim * B_inc2 + B_start2)] -= temp * ";
   else if (row_major_B && !transpose_B)
     std::cout << "      B[(elim * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] -= temp * ";
   else if (!row_major_B && transpose_B)
-    std::cout << "      B[(elim * B_inc2 + B_start2) * B_internal_size1 + (get_group_id(0) * B_inc1 + B_start1)] -= temp * ";
+    std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) + (elim * B_inc2 + B_start2) * B_internal_size1] -= temp * ";
   else if (!row_major_B && !transpose_B)
     std::cout << "      B[(elim * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] -= temp * ";
   
   if (row_major_A && transpose_A)
-    std::cout << "A[(elim * A_inc2 + A_start2) + (row * A_inc1 + A_start1) * A_internal_size2];" << std::endl;
+    std::cout << "A[(row * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2)];" << std::endl;
   else if (row_major_A && !transpose_A)
     std::cout << "A[(elim * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)];" << std::endl;
   else if (!row_major_A && transpose_A)
-    std::cout << "A[(elim * A_inc2 + A_start2) * A_internal_size1 + (row * A_inc1 + A_start1)];" << std::endl;
+    std::cout << "A[(row * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1];" << std::endl;
   else if (!row_major_A && !transpose_A)
     std::cout << "A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1];" << std::endl;
   

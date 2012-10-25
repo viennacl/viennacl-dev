@@ -29,7 +29,7 @@
 #include "viennacl/ocl/backend.hpp"
 #include "viennacl/vector.hpp"
 
-#include "viennacl/linalg/coordinate_matrix_operations.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 
 namespace viennacl
 {

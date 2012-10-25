@@ -28,7 +28,7 @@
 #include "viennacl/ocl/backend.hpp"
 #include "viennacl/vector.hpp"
 
-#include "viennacl/linalg/compressed_matrix_operations.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/entry_proxy.hpp"
@@ -414,13 +414,13 @@ namespace viennacl
           assert( (nonzeros > 0) && "Error in compressed_matrix::set(): Number of nonzeros must be larger than zero!");
           //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
           
-          row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          //row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
           viennacl::backend::memory_create(row_buffer_, sizeof(cl_uint) * (rows + 1), row_jumper);
 
-          col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          //col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
           viennacl::backend::memory_create(col_buffer_, sizeof(cl_uint) * nonzeros, col_buffer);
 
-          elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+          //elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, elements);
           
           nonzeros_ = nonzeros;

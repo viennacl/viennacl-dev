@@ -33,9 +33,10 @@
 #include <math.h>
 #include <map>
 
-//local includes
+// ViennaCL includes
 #include "viennacl/linalg/detail/spai/spai_tag.hpp"
 #include "viennacl/linalg/qr.hpp"
+#include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/detail/spai/spai-dynamic.hpp"
 #include "viennacl/linalg/detail/spai/spai-static.hpp"
 #include "viennacl/linalg/detail/spai/sparse_vector.hpp"
@@ -54,19 +55,6 @@
 #include "boost/numeric/ublas/lu.hpp"
 #include "boost/numeric/ublas/triangular.hpp"
 #include "boost/numeric/ublas/matrix_expression.hpp"
-
-// ViennaCL includes
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/compressed_matrix.hpp"
-#include "viennacl/linalg/compressed_matrix_operations.hpp"
-#include "viennacl/linalg/matrix_operations.hpp"
-#include "viennacl/scalar.hpp"
-#include "viennacl/linalg/inner_prod.hpp"
-#include "viennacl/linalg/ilu.hpp"
-#include "viennacl/ocl/backend.hpp"
-#include "viennacl/linalg/kernels/spai_source.h"
-#include "viennacl/linalg/kernels/spai_kernels.h"
 
 
 namespace viennacl

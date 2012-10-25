@@ -30,7 +30,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/ocl/backend.hpp"
 
-#include "viennacl/linalg/kernels/ell_matrix_kernels.h"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 
 namespace viennacl
 {
@@ -170,89 +170,6 @@ namespace viennacl
       }
     }
 
-    namespace linalg
-    {
-      /** @brief Returns a proxy class that represents matrix-vector multiplication with a hyb_matrix
-      *
-      * This is used for the convenience expression result = prod(mat, vec);
-      *
-      * @param mat    The matrix
-      * @param vec    The vector
-      */
-      template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      vector_expression<const ell_matrix<SCALARTYPE, ALIGNMENT>,
-                        const vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                        op_prod > prod_impl(const ell_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                                            const vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec)
-      {
-        return vector_expression<const ell_matrix<SCALARTYPE, ALIGNMENT>,
-                                 const vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                 op_prod >(mat, vec);
-      }
-      
-      template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      void prod_impl( const viennacl::ell_matrix<TYPE, ALIGNMENT>& mat, 
-                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT>& vec,
-                      viennacl::vector<TYPE, VECTOR_ALIGNMENT>& result)
-      {
-        assert(mat.size1() == result.size());
-        assert(mat.size2() == vec.size());
-
-        result.clear();
-
-        std::stringstream ss;
-        ss << "vec_mul_" << 1;//(ALIGNMENT != 1?4:1);
-        viennacl::ocl::kernel& k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
-
-        unsigned int thread_num = 128;
-        unsigned int group_num = 256;
-
-        k.local_work_size(0, thread_num);
-        k.global_work_size(0, thread_num * group_num);
-
-        viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(), 
-                                 mat.handle().opencl_handle(),
-                                 viennacl::traits::opencl_handle(vec),
-                                 viennacl::traits::opencl_handle(result),
-                                 cl_uint(mat.size1()),
-                                 cl_uint(mat.size2()),
-                                 cl_uint(mat.internal_size1()),
-                                 cl_uint(mat.maxnnz()),
-                                 cl_uint(mat.internal_maxnnz())
-                                ) 
-        );
-
-
-      }
-    }
-    
-    
-    /** @brief Implementation of the operation v1 = A * v2, where A is a matrix
-    *
-    * @param proxy  An expression template proxy class.
-    */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    template <unsigned int MAT_ALIGNMENT>
-    viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-    viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const ell_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                          const viennacl::vector<SCALARTYPE, ALIGNMENT>,
-                                                                                          viennacl::op_prod> & proxy) 
-    {
-      // check for the special case x = A * x
-      if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-      {
-        viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-        *this = result;
-        return *this;
-      }
-      else
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        return *this;
-      }
-      return *this;
-    }
     
 }
 

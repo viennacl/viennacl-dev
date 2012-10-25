@@ -227,6 +227,9 @@ namespace viennacl
   struct is_any_dense_nonstructured_matrix;
   
   template <typename T>
+  struct is_sparse_matrix;
+  
+  template <typename T>
   struct is_any_matrix;
   
   namespace tools
@@ -297,6 +300,16 @@ namespace viennacl
               const VectorType1 & vec, 
                     VectorType2 & result);
 
+    template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
+    typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value,
+                                  vector_expression<const SparseMatrixType,
+                                                    const vector<SCALARTYPE, ALIGNMENT>, 
+                                                    op_prod >
+                                 >::type
+    prod_impl(const SparseMatrixType & mat, 
+              const vector<SCALARTYPE, ALIGNMENT> & vec);
+    
+    /*
     template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     viennacl::vector_expression<const viennacl::compressed_matrix<SCALARTYPE, ALIGNMENT>,
                                 const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
@@ -319,7 +332,7 @@ namespace viennacl
     viennacl::vector_expression<const viennacl::hyb_matrix<SCALARTYPE, ALIGNMENT>,
                                 const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
                                 op_prod > prod_impl(const viennacl::hyb_matrix<SCALARTYPE, ALIGNMENT> & , 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
+                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &); */
                                 
                     
       

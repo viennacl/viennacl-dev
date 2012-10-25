@@ -97,7 +97,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F
          {
            std::cout << "Offending index: " << i << ", " << j << std::endl;
            std::cout << "Ublas: " << mat1(i,j) << " / ViennaCL: " << mat2_cpu(i,j) << std::endl;
-           //exit(EXIT_FAILURE);
+           exit(EXIT_FAILURE);
          }
       }
     }
