@@ -319,8 +319,19 @@ namespace viennacl
       }
       
       // copy-create vector range or vector slice (implemented in vector_proxy.hpp)
-      vector(const vector_range<self_type> &);
-      vector(const vector_slice<self_type> &);
+      template <typename V1>
+      vector(const V1 & v1, 
+             typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_vector<V1>::value>::type * dummy = NULL) : size_(v1.size())
+      {
+        if (v1.size() > 0)
+        {
+          elements_.switch_active_handle_id(viennacl::traits::handle(v1).get_active_handle_id());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          
+          viennacl::linalg::av(*this, 
+                               v1, SCALARTYPE(1.0), 1, false, false);
+        }
+      }
       
       
 
@@ -506,9 +517,21 @@ namespace viennacl
       }
       
       
-      // assign vector range or vector slice (implemented in vector_proxy.hpp)
-      self_type & operator = (const vector_range<self_type> &);
-      self_type & operator = (const vector_slice<self_type> &);
+      // assign vector range or vector slice
+      template <typename V1>
+      typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                   self_type & >::type
+      operator = (const V1 & v1)
+      {
+        assert( ( (v1.size() == size()) || (size() == 0) )
+                && "Incompatible vector sizes!");
+        
+        if (this->size() > 0)
+          viennacl::linalg::av(*this, 
+                               v1, SCALARTYPE(1.0), 1, false, false);
+        
+        return *this;
+      }
       
       ///////////////////////////// Matrix Vector interaction start ///////////////////////////////////
 
@@ -527,28 +550,6 @@ namespace viennacl
                                   >::type
       operator=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
 
-      /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type & 
-                                  >::type
-      operator+=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
-                                                
-      /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type & 
-                                  >::type
-      operator-=(const viennacl::vector_expression< const M1, const V1, viennacl::op_prod> & proxy);
-
       
       //transposed_matrix_proxy:
       /** @brief Operator overload for v1 = trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
@@ -564,31 +565,6 @@ namespace viennacl
                                          const V1,
                                          op_prod> & proxy);
 
-      /** @brief Operator overload for v1 += trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type &
-                                  >::type
-      operator+=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
-                                          const V1,
-                                          op_prod> & proxy);
-                                                
-      /** @brief Operator overload for v1 -= trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type &
-                                  >::type
-      operator-=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
-                                          const V1,
-                                          op_prod> & proxy);
 
       //
       // Sparse matrices
@@ -871,7 +847,11 @@ namespace viennacl
         return entry_proxy<SCALARTYPE>(index, elements_);
       }
       
-      self_type & operator += (const self_type & vec)  //Note: this overload enables implicit conversions for operator+=
+      //
+      // Operator overloads with implicit conversion (thus cannot be made global without introducing additional headache)
+      //
+      
+      self_type & operator += (const self_type & vec)
       {
         assert(vec.size() == size() && "Incompatible vector sizes!");
 
@@ -882,149 +862,7 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Inplace addition of a vector
-      */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value, 
-                                    self_type &>::type
-      operator += (const V1 & vec)
-      {
-        assert(vec.size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this, 
-                                 *this, SCALARTYPE(1.0), 1, false, false,
-                                 vec,   SCALARTYPE(1.0), 1, false, false);
-        return *this;
-      }
-      
-      /** @brief Inplace addition of a scaled vector, i.e. v1 += v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-      */
-      template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type &>::type
-      operator += (const vector_expression< const V1,
-                                            const S1,
-                                            OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this, 
-                                 *this,   SCALARTYPE(1.0), 1, false,                                             false,
-                                 proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
-        return *this;
-      }
-
-      
-      /** @brief Implementation of the operation v1 += v2 +- v3
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator += (const vector_expression< const V1,
-                                           const V2,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
-                                   proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false) );
-        return *this;
-      }
-      
-      /** @brief Implementation of the operation v1 += v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1,
-                typename V2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator += (const vector_expression< const V1,
-                                           const vector_expression<const V2, const S2, OP2>,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
-                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
-        }
-        return *this;
-      }
-
-      /** @brief Implementation of the operation v1 += v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename S1, typename OP1,
-                typename V2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator += (const vector_expression< const vector_expression<const V1, const S1, OP1>,
-                                           const V2,
-                                           OP> & proxy)
-      {
-        assert(proxy.size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                   proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false) );
-        return *this;
-      }
-      
-      /** @brief Implementation of the operation v1 += v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename S1, typename OP1,
-                typename V2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator += (const vector_expression< const vector_expression<const V1, const S1, OP1>,
-                                           const vector_expression<const V2, const S2, OP2>,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2 );
-        }
-        return *this;
-      }
-      
-      
-      
-
-      self_type & operator -= (const self_type & vec)  //Note: this overload enables implicit conversions for operator-=
+      self_type & operator -= (const self_type & vec)
       {
         assert(vec.size() == size() && "Incompatible vector sizes!");
 
@@ -1035,269 +873,27 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Inplace subtraction of a vector */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value, 
-                                    self_type &>::type
-      operator -= (const V1 & vec)
-      {
-        assert(vec.size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this, 
-                                *this, SCALARTYPE(1.0),  1, false, false,
-                                vec,   SCALARTYPE(-1.0), 1, false, false);
-        return *this;
-      }
-
-      
-      /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-      */
-      template <typename V1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type &>::type
-      operator -= (const vector_expression< const V1,
-                                            const S1,
-                                            OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this, 
-                                *this,   SCALARTYPE(1.0), 1, false,                                             false,
-                                proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true));
-        return *this;
-      }
-      
-      /** @brief Implementation of the operation v1 -= v2 +- v3
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator -= (const vector_expression< const V1,
-                                           const V2,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv_v(*this, 
-                                  proxy.lhs(), SCALARTYPE(1.0), 1, false, true,
-                                  proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? false : true) );
-        return *this;
-      }
-      
-      /** @brief Implementation of the operation v1 = v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1,
-                typename V2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator -= (const vector_expression< const V1,
-                                           const vector_expression<const V2, const S2, OP2>,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , true,
-                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
-        }
-        return *this;
-      }
-
-      /** @brief Implementation of the operation v1 = v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename S1, typename OP1,
-                typename V2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator -= (const vector_expression< const vector_expression<const V1, const S1, OP1>,
-                                           const V2,
-                                           OP> & proxy)
-      {
-        assert(proxy.size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                   proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? false : true) );
-        return *this;
-      }
-      
-      /** @brief Implementation of the operation v1 = v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename V1, typename S1, typename OP1,
-                typename V2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator -= (const vector_expression< const vector_expression<const V1, const S1, OP1>,
-                                           const vector_expression<const V2, const S2, OP2>,
-                                           OP> & proxy)
-      {
-        assert(proxy.lhs().size() == size() && "Incompatible vector sizes!");
-
-        if (size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? false : true);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::avbv_v(*this, 
-                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
-        }
-        return *this;
-      }
-      
-      
-      
-      
-      
-
-      /** @brief Scales this vector by a CPU scalar value
+      /** @brief Scales a vector (or proxy) by a CPU scalar value
       */
       self_type & operator *= (SCALARTYPE val)
       {
         if (size() > 0)
           viennacl::linalg::av(*this,
-                              *this, val, 1, false, false);
+                               *this, val, 1, false, false);
         return *this;
       }
-
-      /** @brief Scales this vector by a GPU scalar value
-      */
-      template <typename S1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator *= (S1 const & gpu_val)
-      {
-        if (size() > 0)
-          viennacl::linalg::av(*this,
-                              *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
-        return *this;
-      }
-
+      
       /** @brief Scales this vector by a CPU scalar value
       */
       self_type & operator /= (SCALARTYPE val)
       {
         if (size() > 0)
           viennacl::linalg::av(*this,
-                              *this, val, 1, true, false);
-        return *this;
-      }
-      
-      /** @brief Scales this vector by a GPU scalar value
-      */
-      template <typename S1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator /= (S1 const & gpu_val)
-      {
-        if (size() > 0)
-          viennacl::linalg::av(*this,
-                               *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+                               *this, val, 1, true, false);
         return *this;
       }
       
       
-      
-      // free addition
-      
-      /** @brief Returns an expression template object for adding up two vectors, i.e. v1 + v2
-      */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    vector_expression< const self_type, const V1, op_add>      
-                                  >::type
-      operator+(const V1 & vec) const
-      {
-        return vector_expression< const self_type, 
-                                  const V1,
-                                  op_add>(*this, vec);
-      }
-      
-      /** @brief Returns an expression template object for adding up two vectors, one being scaled, i.e. v1 + v2 * alpha, where alpha is a CPU or a GPU scalar
-      */
-      template <typename V1, typename S1, typename OP1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    vector_expression< const self_type,
-                                                       const vector_expression< const V1, const S1, OP1>,
-                                                       op_add>      
-                                  >::type
-      operator+(const vector_expression< const V1,
-                                         const S1,
-                                         OP1> & proxy) const
-      {
-        return vector_expression< const self_type,
-                                  const vector_expression< const V1, const S1, OP1>,
-                                  op_add>(*this, proxy);
-      }
-
-
-
-      //
-      // free subtraction:
-      //
-      /** @brief Returns an expression template object for subtracting two vectors, i.e. v1 - v2
-      */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    vector_expression< const self_type, const V1, op_sub>      
-                                  >::type
-      operator-(const V1 & vec) const
-      {
-        return vector_expression< const self_type, 
-                                  const V1,
-                                  op_sub>(*this, vec);
-      }
-
-
-      /** @brief Returns an expression template object for subtracting two vectors, one being scaled, i.e. v1 - v2 * alpha, where alpha is a CPU or a GPU scalar
-      */
-      template <typename V1, typename S1, typename OP1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,
-                                    vector_expression< const self_type,
-                                                       const vector_expression< const V1, const S1, OP1>,
-                                                       op_sub>      
-                                  >::type
-      operator-(const vector_expression< const V1,
-                                         const S1,
-                                         OP1> & proxy) const
-      {
-        return vector_expression< const self_type,
-                                  const vector_expression< const V1, const S1, OP1>,
-                                  op_sub>(*this, proxy);
-      }
-
-      
-      //free multiplication
       /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
       */
       vector_expression< const self_type, const SCALARTYPE, op_prod> 
@@ -1306,15 +902,7 @@ namespace viennacl
         return vector_expression< const vector<SCALARTYPE, ALIGNMENT>, const SCALARTYPE, op_prod>(*this, value);
       }
 
-      /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
-      */
-      vector_expression< const self_type, const scalar<SCALARTYPE>, op_prod> 
-      operator * (scalar<SCALARTYPE> const & value) const
-      {
-        return vector_expression< const vector<SCALARTYPE, ALIGNMENT>, const scalar<SCALARTYPE>, op_prod>(*this, value);
-      }
 
-      //free division
       /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
       */
       vector_expression< const self_type, const SCALARTYPE, op_prod> 
@@ -1322,34 +910,12 @@ namespace viennacl
       {
         return vector_expression< const self_type, const SCALARTYPE, op_prod>(*this, SCALARTYPE(1.0) / value);
       }
-
-      /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
-      */
-      vector_expression< const self_type, const scalar<SCALARTYPE>, op_div> 
-      operator / (scalar<SCALARTYPE> const & value) const
-      {
-        return vector_expression< const self_type, const scalar<SCALARTYPE>, op_div>(*this, value);
-      }
       
-      /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
-      */
-      vector_expression< const self_type, 
-                         const scalar_expression<const scalar<SCALARTYPE>,
-                                                 const scalar<SCALARTYPE>,
-                                                 op_flip_sign>,
-                         op_div> 
-      operator / ( scalar_expression<const scalar<SCALARTYPE>,
-                                     const scalar<SCALARTYPE>,
-                                     op_flip_sign> const & value) const
-      {
-        return vector_expression< const self_type,
-                                  const scalar_expression<const scalar<SCALARTYPE>,
-                                                          const scalar<SCALARTYPE>,
-                                                          op_flip_sign>,
-                                  op_div>(*this, value);
-      }
       
+      //
       //// iterators:
+      //
+      
       /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
       iterator begin()
       {
@@ -1746,30 +1312,387 @@ namespace viennacl
     
     
     
-    ////////// operations /////////////
-    /** @brief Operator overload for the expression alpha * v1, where alpha is a host scalar (float or double) and v1 is a ViennaCL vector.
-    *
-    * @param value   The host scalar (float or double)
-    * @param vec     A ViennaCL vector
+    
+    
+    //
+    //
+    ////////// operations /////////////////////////////////////////////////////////////////////////////////
+    //
+    //
+    
+    //
+    // operator +=
+    //
+    
+                                                
+    /** @brief Inplace addition of a vector
     */
-    template <typename SCALARTYPE, unsigned int A>
-    vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod> operator * (SCALARTYPE const & value, vector<SCALARTYPE, A> const & vec)
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  V1 &>::type
+    operator += (V1 & v1, const V2 & v2)
     {
-      return vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod>(vec, value);
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(v1.size() == v2.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv(v1, 
+                               v1, cpu_value_type(1.0), 1, false, false,
+                               v2, cpu_value_type(1.0), 1, false, false);
+      return v1;
+    }
+    
+    /** @brief Inplace addition of a scaled vector, i.e. v1 += v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+    */
+    template <typename V1, typename V2, typename S2, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value 
+                                  && viennacl::is_any_scalar<S2>::value,
+                                  V1 &>::type
+    operator += (V1 & v1, 
+                 const vector_expression< const V2, const S2, OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv(v1, 
+                               v1,  cpu_value_type(1.0), 1, false,                                             false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false) );
+      return v1;
     }
 
-    /** @brief Operator overload for the expression alpha * v1, where alpha is a ViennaCL scalar (float or double) and v1 is a ViennaCL vector.
+    
+    /** @brief Implementation of the operation v1 += v2 +- v3
     *
-    * @param value   The ViennaCL scalar
-    * @param vec     A ViennaCL vector
+    * @param proxy  An expression template proxy class.
     */
-    template <typename SCALARTYPE, unsigned int A>
-    vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod> operator * (scalar<SCALARTYPE> const & value, vector<SCALARTYPE, A> const & vec)
+    template <typename V1, typename V2, typename V3, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator += (V1 & v1, 
+                 const vector_expression< const V2, const V3, OP> & proxy)
     {
-        return vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod>(vec, value);
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv_v(v1, 
+                                  proxy.lhs(), cpu_value_type(1.0), 1, false, false,
+                                  proxy.rhs(), cpu_value_type(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false) );
+      return v1;
+    }
+    
+    /** @brief Implementation of the operation v1 += v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2,
+              typename V3, typename S3, typename OP3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator += (V1 & v1,
+                 const vector_expression< const V2,
+                                          const vector_expression<const V3, const S3, OP3>,
+                                          OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+      {
+        bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? true : false);
+        if (viennacl::is_flip_sign_scalar<S3>::value)
+          flip_sign_3 = !flip_sign_3;
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs(),       cpu_value_type(1.0), 1, false                                             , false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(),   1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
+      }
+      return v1;
     }
 
+    /** @brief Implementation of the operation v1 += v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2, typename S2, typename OP2,
+              typename V3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator += (V1 & v1,
+                 const vector_expression< const vector_expression<const V2, const S2, OP2>,
+                                          const V3,
+                                          OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.size() == v1.size() && "Incompatible vector sizes!");
 
+      if (v1.size() > 0)
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs().lhs(),   proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false),
+                                 proxy.rhs(),       cpu_value_type(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false) );
+      return v1;
+    }
+    
+    /** @brief Implementation of the operation v1 += v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2, typename S2, typename OP2,
+              typename V3, typename S3, typename OP3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator += (V1 & v1,
+                 const vector_expression< const vector_expression<const V2, const S2, OP2>,
+                                          const vector_expression<const V3, const S3, OP3>,
+                                          OP> & proxy)
+    {
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+      {
+        bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? true : false);
+        if (viennacl::is_flip_sign_scalar<S3>::value)
+          flip_sign_3 = !flip_sign_3;
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false),
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
+      }
+      return v1;
+    }
+    
+    
+    //
+    // operator -=
+    //
+    
+    /** @brief Inplace subtraction of a vector */
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value 
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value, 
+                                  V1 &>::type
+    operator -= (V1 & v1, const V2 & vec)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(vec.size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv(v1, 
+                               v1, cpu_value_type(1.0),  1, false, false,
+                               vec,   cpu_value_type(-1.0), 1, false, false);
+      return v1;
+    }
+
+    
+    /** @brief Inplace subtraction of a scaled vector, i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+    */
+    template <typename V1, typename V2, typename S2, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
+                                  V1 &>::type
+    operator -= (V1 & v1, 
+                 const vector_expression< const V2, const S2, OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv(v1, 
+                               v1,  cpu_value_type(1.0), 1, false,                                             false,
+                               proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true));
+      return v1;
+    }
+    
+    /** @brief Implementation of the operation v1 -= v2 +- v3
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1, typename V2, typename V3, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator -= (V1 & v1, 
+                 const vector_expression< const V2, const V3, OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs(), cpu_value_type(1.0), 1, false, true,
+                                 proxy.rhs(), cpu_value_type(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? false : true) );
+      return v1;
+    }
+    
+    /** @brief Implementation of the operation v1 = v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2,
+              typename V3, typename S3, typename OP3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator -= (V1 & v1, 
+                 const vector_expression< const V2,
+                                          const vector_expression<const V3, const S3, OP3>,
+                                          OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+      {
+        bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? false : true);
+        if (viennacl::is_flip_sign_scalar<S3>::value)
+          flip_sign_3 = !flip_sign_3;
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs(),     cpu_value_type(1.0), 1, false                                             , true,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3);
+      }
+      return v1;
+    }
+
+    /** @brief Implementation of the operation v1 = v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2, typename S2, typename OP2,
+              typename V3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator -= (V1 & v1, 
+                 const vector_expression< const vector_expression<const V2, const S2, OP2>,
+                                          const V3,
+                                          OP> & proxy)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
+      
+      assert(proxy.size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true),
+                                 proxy.rhs(),     cpu_value_type(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? false : true) );
+      return v1;
+    }
+    
+    /** @brief Implementation of the operation v1 = v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1,
+              typename V2, typename S2, typename OP2,
+              typename V3, typename S3, typename OP3,
+              typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
+                                  && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                  V1 &>::type
+    operator -= (V1 & v1, 
+                 const vector_expression< const vector_expression<const V2, const S2, OP2>,
+                                          const vector_expression<const V3, const S3, OP3>,
+                                          OP> & proxy)
+    {
+      assert(proxy.lhs().size() == v1.size() && "Incompatible vector sizes!");
+
+      if (v1.size() > 0)
+      {
+        bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? false : true);
+        if (viennacl::is_flip_sign_scalar<S3>::value)
+          flip_sign_3 = !flip_sign_3;
+        viennacl::linalg::avbv_v(v1, 
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true),
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3);
+      }
+      return v1;
+    }
+    
+    
+    //
+    // operator *=
+    //
+
+    /** @brief Scales this vector by a GPU scalar value
+    */
+    template <typename V1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  V1 & 
+                                >::type
+    operator *= (V1 & v1, S1 const & gpu_val)
+    {
+      if (v1.size() > 0)
+        viennacl::linalg::av(v1,
+                             v1, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+      return v1;
+    }
+
+    
+    //
+    // operator /=
+    //
+      
+
+    /** @brief Scales this vector by a GPU scalar value
+    */
+    template <typename V1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  V1 & 
+                                >::type
+    operator /= (V1 & v1, S1 const & gpu_val)
+    {
+      if (v1.size() > 0)
+        viennacl::linalg::av(v1,
+                             v1, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+      return v1;
+    }
+    
+    
+    //
+    // operator +
+    //
+    
     //addition and subtraction of two vector_expressions:
     /** @brief Operator overload for the addition of two vector expressions.
     *
@@ -1788,26 +1711,7 @@ namespace viennacl
       result += proxy2;
       return result;
     }
-
-    /** @brief Operator overload for the subtraction of two vector expressions.
-    *
-    * @param proxy1  Left hand side vector expression
-    * @param proxy2  Right hand side vector expression
-    */
-    template <typename LHS1, typename RHS1, typename OP1,
-              typename LHS2, typename RHS2, typename OP2>
-    typename vector_expression< LHS1, RHS1, OP1>::VectorType
-    operator - (vector_expression< LHS1, RHS1, OP1> const & proxy1,
-                vector_expression< LHS2, RHS2, OP2> const & proxy2)
-    {
-      assert(proxy1.size() == proxy2.size() && "Incompatible vector sizes!");
-      typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
-      result = proxy1;
-      result -= proxy2;
-      return result;
-    }
     
-    //////////// one vector expression from left /////////////////////////////////////////
     
     /** @brief Operator overload for the addition of a vector expression with a vector or another vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
     *
@@ -1870,8 +1774,62 @@ namespace viennacl
                                op_add>(lhs, rhs);
     }
     
+    
+    /** @brief Returns an expression template object for adding up two vectors, i.e. v1 + v2
+    */
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  vector_expression< const V1, const V2, op_add>      
+                                >::type
+    operator+(const V1 & v1, const V2 & v2)
+    {
+      return vector_expression< const V1, const V2, op_add>(v1, v2);
+    }
+    
+    /** @brief Returns an expression template object for adding up two vectors, one being scaled, i.e. v1 + v2 * alpha, where alpha is a CPU or a GPU scalar
+    */
+    template <typename V1, typename V2, typename S2, typename OP2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
+                                  vector_expression< const V1,
+                                                     const vector_expression< const V2, const S2, OP2>,
+                                                     op_add>      
+                                >::type
+    operator+(const V1 & v1, 
+              const vector_expression< const V2,
+                                       const S2,
+                                       OP2> & proxy)
+    {
+      return vector_expression< const V1,
+                                const vector_expression< const V2, const S2, OP2>,
+                                op_add>(v1, proxy);
+    }
+
 
     
+    
+    //
+    // operator -
+    //
+    
+    /** @brief Operator overload for the subtraction of two vector expressions.
+    *
+    * @param proxy1  Left hand side vector expression
+    * @param proxy2  Right hand side vector expression
+    */
+    template <typename LHS1, typename RHS1, typename OP1,
+              typename LHS2, typename RHS2, typename OP2>
+    typename vector_expression< LHS1, RHS1, OP1>::VectorType
+    operator - (vector_expression< LHS1, RHS1, OP1> const & proxy1,
+                vector_expression< LHS2, RHS2, OP2> const & proxy2)
+    {
+      assert(proxy1.size() == proxy2.size() && "Incompatible vector sizes!");
+      typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
+      result = proxy1;
+      result -= proxy2;
+      return result;
+    }
     
     
     /** @brief Operator overload for the addition of a vector expression with a vector or another vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
@@ -1935,6 +1893,68 @@ namespace viennacl
                                op_sub>(lhs, rhs);
     }
 
+    /** @brief Returns an expression template object for subtracting two vectors, i.e. v1 - v2
+    */
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  vector_expression< const V1, const V2, op_sub>      
+                                >::type
+    operator-(const V1 & v1, const V2 & v2)
+    {
+      return vector_expression< const V1, const V2, op_sub>(v1, v2);
+    }
+
+
+    /** @brief Returns an expression template object for subtracting two vectors, one being scaled, i.e. v1 - v2 * alpha, where alpha is a CPU or a GPU scalar
+    */
+    template <typename V1, typename V2, typename S2, typename OP2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value && viennacl::is_any_scalar<S2>::value,
+                                  vector_expression< const V1,
+                                                     const vector_expression< const V2, const S2, OP2>,
+                                                     op_sub>      
+                                >::type
+    operator-(const V1 & v1, 
+              const vector_expression< const V2,
+                                       const S2,
+                                       OP2> & proxy)
+    {
+      return vector_expression< const V1,
+                                const vector_expression< const V2, const S2, OP2>,
+                                op_sub>(v1, proxy);
+    }
+
+    
+    //
+    // operator *
+    //
+    
+    
+    /** @brief Operator overload for the expression alpha * v1, where alpha is a host scalar (float or double) and v1 is a ViennaCL vector.
+    *
+    * @param value   The host scalar (float or double)
+    * @param vec     A ViennaCL vector
+    */
+    template <typename SCALARTYPE, unsigned int A>
+    vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod> 
+    operator * (SCALARTYPE const & value, vector<SCALARTYPE, A> const & vec)
+    {
+      return vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod>(vec, value);
+    }
+
+    /** @brief Operator overload for the expression alpha * v1, where alpha is a ViennaCL scalar (float or double) and v1 is a ViennaCL vector.
+    *
+    * @param value   The ViennaCL scalar
+    * @param vec     A ViennaCL vector
+    */
+    template <typename SCALARTYPE, unsigned int A>
+    vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod> 
+    operator * (scalar<SCALARTYPE> const & value, vector<SCALARTYPE, A> const & vec)
+    {
+        return vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod>(vec, value);
+    }
+
 
     /** @brief Operator overload for the multiplication of a vector expression with a scalar from the right, e.g. (beta * vec1) * alpha. Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the right.
     *
@@ -1942,8 +1962,9 @@ namespace viennacl
     * @param val     Right hand side scalar
     */
     template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    vector<SCALARTYPE> operator * (vector_expression< LHS, RHS, OP> const & proxy,
-                                   scalar<SCALARTYPE> const & val)
+    vector<SCALARTYPE> 
+    operator * (vector_expression< LHS, RHS, OP> const & proxy,
+                scalar<SCALARTYPE> const & val)
     {
       vector<SCALARTYPE> result(proxy.size());
       result = proxy;
@@ -1951,6 +1972,56 @@ namespace viennacl
       return result;
     }
 
+
+    /** @brief Operator overload for the multiplication of a vector expression with a ViennaCL scalar from the left, e.g. alpha * (beta * vec1). Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the left.
+    *
+    * @param val     Right hand side scalar
+    * @param proxy   Left hand side vector expression
+    */
+    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
+    vector<SCALARTYPE> 
+    operator * (scalar<SCALARTYPE> const & val,
+                vector_expression< LHS, RHS, OP> const & proxy)
+    {
+      vector<SCALARTYPE> result(proxy.size());
+      result = proxy;
+      result *= val;
+      return result;
+    }
+    
+    /** @brief Operator overload for the multiplication of a vector expression with a host scalar (float or double) from the left, e.g. alpha * (beta * vec1). Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the left.
+    *
+    * @param val     Right hand side scalar
+    * @param proxy   Left hand side vector expression
+    */
+    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
+    viennacl::vector<SCALARTYPE> 
+    operator * (SCALARTYPE val,
+                viennacl::vector_expression< LHS, RHS, OP> const & proxy)
+    {
+      viennacl::vector<SCALARTYPE> result(proxy.size());
+      result = proxy;
+      result *= val;
+      return result;
+    }
+
+
+    /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
+    */
+    template <typename V1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  vector_expression< const V1, const S1, op_prod> >::type
+    operator * (V1 const & v1, S1 const & s1)
+    {
+      return vector_expression< const V1, const S1, op_prod>(v1, s1);
+    }
+    
+    //
+    // operator /
+    //
+    
+    
     /** @brief Operator overload for the division of a vector expression by a scalar from the right, e.g. (beta * vec1) / alpha. Here, beta * vec1 is wrapped into a vector_expression and then divided by alpha.
     *
     * @param proxy   Left hand side vector expression
@@ -1967,38 +2038,18 @@ namespace viennacl
     }
 
 
-    //////////// one vector expression from right (on scalar) ///////////////////////
-    
-    /** @brief Operator overload for the multiplication of a vector expression with a ViennaCL scalar from the left, e.g. alpha * (beta * vec1). Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the left.
-    *
-    * @param val     Right hand side scalar
-    * @param proxy   Left hand side vector expression
+    /** @brief Returns an expression template for scaling the vector by a GPU scalar 'alpha'
     */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    vector<SCALARTYPE> operator * (scalar<SCALARTYPE> const & val,
-                                   vector_expression< LHS, RHS, OP> const & proxy)
+    template <typename V1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  vector_expression< const V1, const S1, op_div> >::type
+    operator / (V1 const & v1, S1 const & s1)
     {
-      vector<SCALARTYPE> result(proxy.size());
-      result = proxy;
-      result *= val;
-      return result;
+      return vector_expression< const V1, const S1, op_div>(v1, s1);
     }
     
-    /** @brief Operator overload for the multiplication of a vector expression with a host scalar (float or double) from the left, e.g. alpha * (beta * vec1). Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the left.
-    *
-    * @param val     Right hand side scalar
-    * @param proxy   Left hand side vector expression
-    */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    viennacl::vector<SCALARTYPE> operator * (SCALARTYPE val,
-                                             viennacl::vector_expression< LHS, RHS, OP> const & proxy)
-    {
-      viennacl::vector<SCALARTYPE> result(proxy.size());
-      result = proxy;
-      result *= val;
-      return result;
-    }
-
+    
 }
 
 #endif

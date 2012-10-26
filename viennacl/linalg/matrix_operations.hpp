@@ -505,44 +505,46 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+  template <typename V1, typename M2, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                V1 &
                                >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const viennacl::vector_expression< const M1,
-                                                                                         const V1,
-                                                                                         viennacl::op_prod> & proxy) 
+  operator+=(V1 & v1,
+             const viennacl::vector_expression< const M2, const V2, viennacl::op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 += A * v2: size1(A) != size(v1)");
+    typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
+    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && "Size check failed for v1 += A * v2: size1(A) != size(v1)");
+    
+    vector<cpu_value_type> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this += result;
-    return *this;
+    v1 += result;
+    return v1;
   }
 
   /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+  template <typename V1, typename M2, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                V1 &
                                >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const viennacl::vector_expression< const M1,
-                                                                                         const V1,
-                                                                                         viennacl::op_prod> & proxy) 
+  operator-=(V1 & v1,
+             const viennacl::vector_expression< const M2, const V2, viennacl::op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 -= A * v2: size1(A) != size(v1)");
+    typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
+    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && "Size check failed for v1 -= A * v2: size1(A) != size(v1)");
+    
+    vector<cpu_value_type> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this -= result;
-    return *this;
+    v1 -= result;
+    return v1;
   }
   
   
@@ -638,44 +640,48 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
+  template <typename V1, typename M2, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                V1 &
                               >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
-                                                                               const V1,
-                                                                               op_prod> & proxy) 
+  operator+=(V1 & v1, 
+             const vector_expression< const matrix_expression<const M2, const M2, op_trans>,
+                                                              const V2,
+                                                              op_prod> & proxy) 
   {
-    assert(viennacl::traits::size2(proxy.lhs()) == size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size2(proxy.lhs()));
+    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<cpu_value_type> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this += result;
-    return *this;
+    v1 += result;
+    return v1;
   }
 
   /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
   *
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
+  template <typename V1, typename M2, typename V2>
+  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                V1 &
                               >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const vector_expression< const matrix_expression<const M1, const M1, op_trans>,
-                                                                               const V1,
-                                                                               op_prod> & proxy) 
+  operator-=(V1 & v1, 
+             const vector_expression< const matrix_expression<const M2, const M2, op_trans>,
+                                                              const V2,
+                                                              op_prod> & proxy) 
   {
-    assert(viennacl::traits::size2(proxy.lhs()) == size() && "Size check failed in v1 -= trans(A) * v2: size2(A) != size(v1)");
+    typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size2(proxy.lhs()));
+    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    
+    vector<cpu_value_type> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this -= result;
-    return *this;
+    v1 -= result;
+    return v1;
   }
   
   

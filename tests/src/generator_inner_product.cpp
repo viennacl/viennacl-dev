@@ -14,7 +14,7 @@
 // *** ViennaCL
 //
 // #define VIENNACL_DEBUG_ALL
- #define VIENNACL_DEBUG_BUILD
+// #define VIENNACL_DEBUG_BUILD
 // #define VIENNACL_HAVE_UBLAS 1
 // #define VIENNACL_DEBUG_CUSTOM_OPERATION
 #include "viennacl/vector.hpp"
@@ -92,7 +92,7 @@ int test ( Epsilon const& epsilon, std::string vecfile ) {
 	
     res = ublas::inner_prod ( vec, vec2 );
     viennacl::ocl::enqueue ( viennacl::generator::custom_operation(symres = inner_prod ( symv, symv2 ), "inner_prod") ( vcl_res, vcl_vec, vcl_vec2 ) );
-    std::cout << viennacl::generator::custom_operation(symres = inner_prod ( symv, symv2 ), "inner_prod") .kernels_source_code() << std::endl;
+    //std::cout << viennacl::generator::custom_operation(symres = inner_prod ( symv, symv2 ), "inner_prod") .kernels_source_code() << std::endl;
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: inner product" << std::endl;
         std::cout << "  Diff " << fabs ( diff ( res, vcl_res ) ) << std::endl;
@@ -103,14 +103,15 @@ int test ( Epsilon const& epsilon, std::string vecfile ) {
     res = ublas::inner_prod ( vec, vec2 ) /ublas::inner_prod ( vec, vec );
     viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = inner_prod ( symv, symv2 ) /inner_prod ( symv,symv ), "inner_prod_division" ) ( vcl_res, vcl_vec, vcl_vec2 ) );
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
-        std::cout << "# Error at operation: inner product" << std::endl;
+        std::cout << "# Error at operation: inner_prod_division" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;
         retval = EXIT_FAILURE;
     }
 
     std::cout << "testing scalar / inner product..." << std::endl;
     res = 4/ublas::inner_prod ( vec, vec );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ),"scal_over_inner_prod" ) ( vcl_res, vcl_vec, 4.0f ) );
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ),"scalar_division" ) ( vcl_res, vcl_vec, 4.0f ) );
+    //std::cout << viennacl::generator::custom_operation ( symres = symscal2/inner_prod ( symv,symv ), "scalar_division" ).kernels_source_code() << std::endl;
     if ( fabs ( diff ( res, vcl_res ) ) > epsilon ) {
         std::cout << "# Error at operation: scalar over inner product" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( res, vcl_res ) ) << std::endl;

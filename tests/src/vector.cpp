@@ -18,6 +18,7 @@
 // *** System
 //
 #include <iostream>
+#include <iomanip>
 
 //
 // *** Boost
@@ -73,7 +74,7 @@ template <typename ScalarType>
 ScalarType diff(ScalarType & s1, ScalarType & s2) 
 {
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 //
@@ -83,7 +84,7 @@ template <typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2) 
 {
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 //
@@ -93,7 +94,7 @@ template <typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::entry_proxy<ScalarType> const& s2) 
 {
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 //
@@ -103,12 +104,13 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
+   viennacl::ocl::get_queue().finish();
    viennacl::fast_copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
-      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -153,10 +155,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    cpu_result = viennacl::linalg::inner_prod(rhs, rhs);
    gpu_result = viennacl::linalg::inner_prod(vcl_rhs, vcl_rhs);
 
-   if( fabs(diff(cpu_result, gpu_result)) > epsilon )
+   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
    {
       std::cout << "# Error at operation: inner product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
    
@@ -165,10 +167,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    cpu_result = norm_1(rhs);
    gpu_result = viennacl::linalg::norm_1(vcl_rhs);
 
-   if( fabs(diff(cpu_result, gpu_result)) > epsilon )
+   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
    {
       std::cout << "# Error at operation: norm-1" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -176,10 +178,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    cpu_result = norm_2(rhs);
    gpu_result = viennacl::linalg::norm_2(vcl_rhs);
 
-   if( fabs(diff(cpu_result, gpu_result)) > epsilon )
+   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
    {
       std::cout << "# Error at operation: norm-2" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -187,10 +189,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    cpu_result = norm_inf(rhs);
    gpu_result = viennacl::linalg::norm_inf(vcl_rhs);
 
-   if( fabs(diff(cpu_result, gpu_result)) > epsilon )
+   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
    {
       std::cout << "# Error at operation: norm-inf" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -208,10 +210,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    cpu_result = rhs[index_norm_inf(rhs)];
    gpu_result = vcl_rhs[viennacl::linalg::index_norm_inf(vcl_rhs)];
 
-   if( fabs(diff(cpu_result, gpu_result)) > epsilon )
+   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
    {
       std::cout << "# Error at operation: value norm-inf" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -229,10 +231,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    viennacl::linalg::plane_rotation(vcl_rhs, vcl_rhs2, NumericT(1.1), NumericT(2.3));
    //gpu_result = viennacl::linalg::norm_inf(vcl_rhs);
 
-   if( fabs(diff(x, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(x, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: plane rotation" << std::endl;
-      std::cout << "  diff: " << fabs(diff(x, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(x, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -243,10 +245,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    for (size_t i=0; i < rhs.size(); ++i)
      rhs(i) = val;
 
-   if( fabs(diff(val, rhs(0))) > epsilon )
+   if( std::fabs(diff(val, rhs(0))) > epsilon )
    {
       std::cout << "# Error at operation: cpu assignment" << std::endl;
-      std::cout << "  diff: " << fabs(diff(val, rhs(0))) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(val, rhs(0))) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -254,10 +256,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    for (size_t i=0; i < vcl_rhs.size(); ++i)
      vcl_rhs(i) = val;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: gpu assignment" << std::endl;
-      std::cout << "  diff: " << fabs(diff(val, vcl_rhs(0))) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(val, vcl_rhs(0))) << std::endl;
       retval = EXIT_FAILURE;
    }
    
@@ -275,10 +277,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     *= alpha;
    vcl_rhs *= alpha;
   
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: stretching with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(cpu_result, gpu_result)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
       retval = EXIT_FAILURE;
    }  
 
@@ -286,10 +288,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
    vcl_rhs *= gpu_alpha;
   
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: stretching with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }  
 
@@ -301,10 +303,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     /= beta;
    vcl_rhs /= beta;  
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: shrinking with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }    
    
@@ -312,10 +314,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
    vcl_rhs /= gpu_beta;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: shrinking with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }    
    
@@ -332,10 +334,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs + rhs2;
    vcl_rhs = vcl_rhs + vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: add on vector" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -347,10 +349,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     += rhs2;
    vcl_rhs += vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace-add on vector" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -365,10 +367,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs - rhs2;
    vcl_rhs = vcl_rhs - vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: sub on vector" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -380,10 +382,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     += rhs2;
    vcl_rhs += vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace-sub on vector" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -400,10 +402,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs + alpha * rhs2;
    vcl_rhs = vcl_rhs + alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: multiply add with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -416,10 +418,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     += alpha * rhs2;
    vcl_rhs += alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace multiply add with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -431,10 +433,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs = rhs + alpha * rhs2;
    vcl_rhs = vcl_rhs + gpu_alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: multiply add with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
    
@@ -446,10 +448,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs += alpha * rhs2;
    vcl_rhs += gpu_alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace multiply add with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
    
@@ -466,10 +468,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs - alpha * rhs2;
    vcl_rhs = vcl_rhs - alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: multiply-subtract with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -482,10 +484,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     -= alpha * rhs2;
    vcl_rhs -= alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace multiply subtract with CPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
 
@@ -497,10 +499,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs - alpha * rhs2;
    vcl_rhs = vcl_rhs - gpu_alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: multiply subtract with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
    
@@ -512,10 +514,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs -= alpha * rhs2;
    vcl_rhs -= gpu_alpha * vcl_rhs2;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: inplace multiply subtract with GPU scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }       
    
@@ -532,10 +534,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs2 + rhs + rhs2;
    vcl_rhs = vcl_rhs2 + vcl_rhs + vcl_rhs2;
    
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: several additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }          
    
@@ -553,10 +555,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = beta * (rhs - alpha*rhs2);
    vcl_rhs = beta * (vcl_rhs - alpha*vcl_rhs2);
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: advanced mul diff with CPU scalars" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }          
    
@@ -564,10 +566,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
    vcl_rhs = gpu_beta * (vcl_rhs - gpu_alpha*vcl_rhs2);
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: advanced mul diff with GPU scalars" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }          
    
@@ -582,10 +584,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    swap(rhs, rhs2);
    swap(vcl_rhs, vcl_rhs2);
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: swap" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }          
    // --------------------------------------------------------------------------         
@@ -597,10 +599,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
    vcl_rhs = vcl_rhs2 / alpha + beta * (vcl_rhs - alpha*vcl_rhs2);
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: complex vector operations with CPU scalars" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }             
    
@@ -610,10 +612,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
    vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * (vcl_rhs - gpu_alpha*vcl_rhs2);
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: complex vector operations with GPU scalars" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }             
 
@@ -624,10 +626,10 @@ int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/
    rhs     = rhs2 / alpha + beta * rhs - alpha*rhs2 + beta * rhs - alpha * rhs;
    vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * vcl_rhs - alpha*vcl_rhs2 + beta * vcl_rhs - alpha * vcl_rhs;
 
-   if( fabs(diff(rhs, vcl_rhs)) > epsilon )
+   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: complex vector operations with GPU scalars" << std::endl;
-      std::cout << "  diff: " << fabs(diff(rhs, vcl_rhs)) << std::endl;
+      std::cout << "  diff: " << std::setprecision(8) << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }             
    
@@ -672,36 +674,6 @@ int main()
    std::cout << std::endl;
    if( viennacl::ocl::current_device().double_support() )
    {
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-10;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon, rhsfile, resultfile);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-      {
-         typedef double NumericT;
-         NumericT epsilon = 1.0E-11;
-         std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
-         std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon, rhsfile, resultfile);
-         if( retval == EXIT_SUCCESS )
-           std::cout << "# Test passed" << std::endl;
-         else
-           return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
       {
          typedef double NumericT;
          NumericT epsilon = 1.0E-12;
