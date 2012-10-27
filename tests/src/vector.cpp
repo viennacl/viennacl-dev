@@ -25,6 +25,7 @@
 //
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 
 //
 // *** ViennaCL
@@ -32,46 +33,22 @@
 //#define VIENNACL_DEBUG_ALL
 #define VIENNACL_HAVE_UBLAS 1
 #include "viennacl/vector.hpp"
+#include "viennacl/vector_proxy.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 
+#include "Random.hpp"
 
 using namespace boost::numeric;
 
-//
-// -------------------------------------------------------------
-//
-template <class TYPE>
-bool readVectorFromFile(const std::string & filename, boost::numeric::ublas::vector<TYPE> & vec)
-{
-  std::ifstream file(filename.c_str());
-
-  if (!file) return false;
-
-  unsigned int size;
-  file >> size;
-  
-  if (size > 30000)  //keep execution times short
-    size = 30000;
-  vec.resize(size);
-
-  for (unsigned int i = 0; i < size; ++i)
-  {
-    TYPE element;
-    file >> element;
-    vec[i] = element;
-  }
-
-  return true;
-}
 
 //
 // -------------------------------------------------------------
 //
 template <typename ScalarType>
-ScalarType diff(ScalarType & s1, ScalarType & s2) 
+ScalarType diff(ScalarType const & s1, ScalarType const & s2) 
 {
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
@@ -81,7 +58,7 @@ ScalarType diff(ScalarType & s1, ScalarType & s2)
 // -------------------------------------------------------------
 //
 template <typename ScalarType>
-ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2) 
+ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2) 
 {
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
@@ -91,7 +68,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 // -------------------------------------------------------------
 //
 template <typename ScalarType>
-ScalarType diff(ScalarType & s1, viennacl::entry_proxy<ScalarType> const& s2) 
+ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const & s2) 
 {
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
@@ -100,12 +77,12 @@ ScalarType diff(ScalarType & s1, viennacl::entry_proxy<ScalarType> const& s2)
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
-ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
+template <typename ScalarType, typename ViennaCLVectorType>
+ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
-   ublas::vector<ScalarType> v2_cpu(v2.size());
+   ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
    viennacl::ocl::get_queue().finish();
-   viennacl::fast_copy(v2.begin(), v2.end(), v2_cpu.begin());
+   viennacl::copy(vcl_vec, v2_cpu);
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
@@ -114,528 +91,703 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
       else
          v2_cpu[i] = 0.0;
    }
-
+   
    return ublas::norm_inf(v2_cpu);
 }
+
+
+template <typename T1, typename T2>
+int check(T1 const & t1, T2 const & t2, double epsilon)
+{
+  int retval = EXIT_SUCCESS;
+  
+  double temp = std::fabs(diff(t1, t2));
+  if (temp > epsilon)
+  {
+    std::cout << "# Error! Relative difference: " << temp << std::endl;
+    retval = EXIT_FAILURE;
+  }
+  return retval;
+}
+  
+
 //
 // -------------------------------------------------------------
 //
-template< typename NumericT, typename Epsilon >
-int test(Epsilon const& epsilon, std::string rhsfile, std::string /*resultfile*/)
+template< typename NumericT, typename Epsilon, typename UblasVectorType, typename ViennaCLVectorType1, typename ViennaCLVectorType2 >
+int test(Epsilon const& epsilon, 
+         UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
+         ViennaCLVectorType1 &   vcl_v1, ViennaCLVectorType2 &   vcl_v2)
 {
-   int retval = EXIT_SUCCESS;
-
-   ublas::vector<NumericT> rhs;
-   ublas::vector<NumericT> rhs2;
-
-   if (!readVectorFromFile<NumericT>(rhsfile, rhs)) 
-   {
-      std::cout << "Error reading RHS file" << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   
-   std::cout << "Running tests for vector of size " << rhs.size() << std::endl;
-
-//    ublas::vector<NumericT> result;
-//    if (!readVectorFromFile<NumericT>(resultfile, result))  
-//    {
-//       std::cout << "Error reading Result file" << std::endl;
-//       retval = EXIT_FAILURE;
-//    }
-
-   viennacl::vector<NumericT> vcl_rhs(rhs.size());
-   viennacl::fast_copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   viennacl::vector<NumericT> vcl_rhs2(rhs.size()); 
-   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs2.begin());
-   
-   NumericT                    cpu_result;
-   viennacl::scalar<NumericT>  gpu_result;
-   // --------------------------------------------------------------------------
-   std::cout << "Testing inner_prod..." << std::endl;
-   cpu_result = viennacl::linalg::inner_prod(rhs, rhs);
-   gpu_result = viennacl::linalg::inner_prod(vcl_rhs, vcl_rhs);
-
-   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: inner product" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   
-   // --------------------------------------------------------------------------
-   std::cout << "Testing norm_1..." << std::endl;
-   cpu_result = norm_1(rhs);
-   gpu_result = viennacl::linalg::norm_1(vcl_rhs);
-
-   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: norm-1" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   std::cout << "Testing norm_2..." << std::endl;
-   cpu_result = norm_2(rhs);
-   gpu_result = viennacl::linalg::norm_2(vcl_rhs);
-
-   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: norm-2" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   std::cout << "Testing norm_inf..." << std::endl;
-   cpu_result = norm_inf(rhs);
-   gpu_result = viennacl::linalg::norm_inf(vcl_rhs);
-
-   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: norm-inf" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   std::cout << "Testing index_norm_inf..." << std::endl;
-   size_t cpu_index = index_norm_inf(rhs);
-   size_t gpu_index = viennacl::linalg::index_norm_inf(vcl_rhs);
-
-   if( cpu_index != gpu_index )
-   {
-      std::cout << "# Error at operation: index norm-inf" << std::endl;
-      std::cout << "  cpu-index: " << cpu_index << " vs. gpu-index: " << gpu_index << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   cpu_result = rhs[index_norm_inf(rhs)];
-   gpu_result = vcl_rhs[viennacl::linalg::index_norm_inf(vcl_rhs)];
-
-   if( std::fabs(diff(cpu_result, gpu_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: value norm-inf" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   ublas::vector<NumericT> x = rhs;
-   ublas::vector<NumericT> y = rhs;
-   ublas::vector<NumericT> t = rhs;
-   t.assign (NumericT(1.1) * x + NumericT(2.3) * y),
-   y.assign (- NumericT(2.3) * x + NumericT(1.1) * y),
-   x.assign (t);
-//   cpu_result = norm_inf(x); 
-
-   copy(rhs, vcl_rhs);
-   copy(rhs, vcl_rhs2);
-   std::cout << "Testing plane_rotation..." << std::endl;
-   viennacl::linalg::plane_rotation(vcl_rhs, vcl_rhs2, NumericT(1.1), NumericT(2.3));
-   //gpu_result = viennacl::linalg::norm_inf(vcl_rhs);
-
-   if( std::fabs(diff(x, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: plane rotation" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(x, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------
-   viennacl::copy(rhs, vcl_rhs);
-   
-   std::cout << "Testing cpu_assignments..." << std::endl;
-   NumericT val = static_cast<NumericT>(1e-3);
-   for (size_t i=0; i < rhs.size(); ++i)
-     rhs(i) = val;
-
-   if( std::fabs(diff(val, rhs(0))) > epsilon )
-   {
-      std::cout << "# Error at operation: cpu assignment" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(val, rhs(0))) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   std::cout << "Testing gpu_assignments..." << std::endl;
-   for (size_t i=0; i < vcl_rhs.size(); ++i)
-     vcl_rhs(i) = val;
-
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: gpu assignment" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(val, vcl_rhs(0))) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   
-   
-   //
-   // multiplication and division of vectors by scalars
-   //
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   rhs2 = rhs;
-
-   std::cout << "Testing scaling with CPU scalar..." << std::endl;
-   NumericT alpha = static_cast<NumericT>(3.1415);
-   viennacl::scalar<NumericT> gpu_alpha = alpha;
-
-   rhs     *= alpha;
-   vcl_rhs *= alpha;
+  int retval = EXIT_SUCCESS;
   
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: stretching with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(cpu_result, gpu_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }  
-
-   std::cout << "Testing scaling with GPU scalar..." << std::endl;
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
-   vcl_rhs *= gpu_alpha;
+  NumericT                    cpu_result;
+  viennacl::scalar<NumericT>  gpu_result;
   
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: stretching with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }  
-
-   NumericT beta  = static_cast<NumericT>(1.4153);
-   viennacl::scalar<NumericT> gpu_beta = beta;
-   rhs2 = rhs;
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
   
-   std::cout << "Testing shrinking with CPU scalar..." << std::endl;
-   rhs     /= beta;
-   vcl_rhs /= beta;  
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  std::cout << "Checking for successful copy..." << std::endl;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(ublas_v2, vcl_v2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  //
+  // Part 1: Norms and inner product
+  //
+  
+  // --------------------------------------------------------------------------
+  std::cout << "Testing inner_prod..." << std::endl;
+  cpu_result = viennacl::linalg::inner_prod(ublas_v1, ublas_v1);
+  gpu_result = viennacl::linalg::inner_prod(vcl_v1, vcl_v1);
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: shrinking with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }    
-   
-   std::cout << "Testing shrinking with GPU scalar..." << std::endl;
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
-   vcl_rhs /= gpu_beta;
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  std::cout << "Testing norm_1..." << std::endl;
+  cpu_result = norm_1(ublas_v1);
+  gpu_result = viennacl::linalg::norm_1(vcl_v1);
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: shrinking with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }    
-   
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  std::cout << "Testing norm_2..." << std::endl;
+  cpu_result = norm_2(ublas_v1);
+  gpu_result = viennacl::linalg::norm_2(vcl_v1);
 
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  std::cout << "Testing norm_inf..." << std::endl;
+  cpu_result = norm_inf(ublas_v1);
+  gpu_result = viennacl::linalg::norm_inf(vcl_v1);
 
-   //
-   // add and inplace_add of vectors
-   //
-   std::cout << "Testing add on vector..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  std::cout << "Testing index_norm_inf..." << std::endl;
+  size_t cpu_index = index_norm_inf(ublas_v1);
+  size_t gpu_index = viennacl::linalg::index_norm_inf(vcl_v1);
 
-   rhs     = rhs + rhs2;
-   vcl_rhs = vcl_rhs + vcl_rhs2;
+  if (check(cpu_index, gpu_index, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  cpu_result = ublas_v1[index_norm_inf(ublas_v1)];
+  gpu_result = vcl_v1[viennacl::linalg::index_norm_inf(vcl_v1)];
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: add on vector" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  //
+  // Plane rotation and assignments
+  //
+  
+  // --------------------------------------------------------------------------
+    
+  ublas::vector<NumericT> x = ublas_v1;
+  ublas::vector<NumericT> y = ublas_v2;
+  ublas::vector<NumericT> t = ublas_v1;
+  t.assign (NumericT(1.1) * x + NumericT(2.3) * y),
+  y.assign (- NumericT(2.3) * x + NumericT(1.1) * y),
+  x.assign (t);
 
-   std::cout << "Testing inplace-add on vector..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  viennacl::linalg::plane_rotation(vcl_v1, vcl_v2, NumericT(1.1), NumericT(2.3));
 
-   rhs     += rhs2;
-   vcl_rhs += vcl_rhs2;
+  if (check(x, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(y, vcl_v2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  // --------------------------------------------------------------------------
+  
+  std::cout << "Testing assignments..." << std::endl;
+  NumericT val = static_cast<NumericT>(1e-3);
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = val;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace-add on vector" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  for (size_t i=0; i < vcl_v1.size(); ++i)
+    vcl_v1(i) = val;
 
-   //
-   // subtract and inplace_subtract of vectors
-   //
-   std::cout << "Testing sub on vector..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  //
+  // multiplication and division of vectors by scalars
+  //
+  std::cout << "Testing scaling with CPU scalar..." << std::endl;
+  NumericT alpha = static_cast<NumericT>(2.7182);
+  viennacl::scalar<NumericT> gpu_alpha = alpha;
 
-   rhs     = rhs - rhs2;
-   vcl_rhs = vcl_rhs - vcl_rhs2;
+  ublas_v1  *= alpha;
+  vcl_v1    *= alpha;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: sub on vector" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   std::cout << "Testing inplace-sub on vector..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  std::cout << "Testing scaling with GPU scalar..." << std::endl;
+  ublas_v1  *= alpha;
+  vcl_v1    *= gpu_alpha;
 
-   rhs     += rhs2;
-   vcl_rhs += vcl_rhs2;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace-sub on vector" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  NumericT beta  = static_cast<NumericT>(1.4153);
+  viennacl::scalar<NumericT> gpu_beta = beta;
 
+  std::cout << "Testing shrinking with CPU scalar..." << std::endl;
+  ublas_v1 /= beta;
+  vcl_v1   /= beta;  
 
-   
-   //
-   // multiply-add and multiply-subtract
-   //
-   std::cout << "Testing multiply-add on vector with CPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing shrinking with GPU scalar..." << std::endl;
+  ublas_v1 /= beta;
+  vcl_v1   /= gpu_beta;
 
-   rhs     = rhs + alpha * rhs2;
-   vcl_rhs = vcl_rhs + alpha * vcl_rhs2;
-
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: multiply add with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-
-
-   std::cout << "Testing inplace multiply-add on vector with CPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-
-   rhs     += alpha * rhs2;
-   vcl_rhs += alpha * vcl_rhs2;
-
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace multiply add with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-
-   std::cout << "Testing multiply-add on vector with GPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   
-   rhs = rhs + alpha * rhs2;
-   vcl_rhs = vcl_rhs + gpu_alpha * vcl_rhs2;
-
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: multiply add with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-   
-   std::cout << "Testing inplace multiply-add on vector with GPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   
-   rhs += alpha * rhs2;
-   vcl_rhs += gpu_alpha * vcl_rhs2;
-
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace multiply add with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-   
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
 
 
-   //
-   // multiply-subtract
-   //
-   std::cout << "Testing multiply-subtract on vector with CPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  //
+  // add and inplace_add of vectors
+  //
+    
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+    
+  std::cout << "Testing add on vector..." << std::endl;
+  
+  std::cout << "Checking for successful copy..." << std::endl;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(ublas_v2, vcl_v2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  ublas_v1     = ublas_v1 + ublas_v2;
+  vcl_v1       =   vcl_v1 +   vcl_v2;
 
-   rhs     = rhs - alpha * rhs2;
-   vcl_rhs = vcl_rhs - alpha * vcl_rhs2;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: multiply-subtract with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  std::cout << "Testing inplace-add on vector..." << std::endl;
+  ublas_v1 += ublas_v2;
+  vcl_v1   +=   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  //
+  // subtract and inplace_subtract of vectors
+  //
+  std::cout << "Testing sub on vector..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1     = ublas_v1 - ublas_v2;
+  vcl_v1       =   vcl_v1 -   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << "Testing inplace-sub on vector..." << std::endl;
+  ublas_v1 -= ublas_v2;
+  vcl_v1   -= vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
 
-   std::cout << "Testing inplace multiply-subtract on vector with CPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  
+  //
+  // multiply-add
+  //
+  std::cout << "Testing multiply-add on vector with CPU scalar (right)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-   rhs     -= alpha * rhs2;
-   vcl_rhs -= alpha * vcl_rhs2;
+  ublas_v1 = ublas_v1 + alpha * ublas_v2;
+  vcl_v1   = vcl_v1   + alpha *   vcl_v2;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace multiply subtract with CPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   std::cout << "Testing multiply-subtract on vector with GPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   
-   rhs     = rhs - alpha * rhs2;
-   vcl_rhs = vcl_rhs - gpu_alpha * vcl_rhs2;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: multiply subtract with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-   
-   std::cout << "Testing inplace multiply-subtract on vector with GPU scalar..." << std::endl;
-   rhs2 = 42.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   
-   rhs -= alpha * rhs2;
-   vcl_rhs -= gpu_alpha * vcl_rhs2;
+  std::cout << "Testing multiply-add on vector with CPU scalar (left)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: inplace multiply subtract with GPU scalar" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }       
-   
-   
-   
-   //
-   // Misc stuff
-   //
-   rhs2 = rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  ublas_v1 = alpha * ublas_v1 + ublas_v2;
+  vcl_v1   = alpha *   vcl_v1 +   vcl_v2;
 
-   std::cout << "Testing several vector additions..." << std::endl;
-   rhs     = rhs2 + rhs + rhs2;
-   vcl_rhs = vcl_rhs2 + vcl_rhs + vcl_rhs2;
-   
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: several additions" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }          
-   
-   
-   
-   //
-   // Complicated expressions (for ensuring the operator overloads work correctly)
-   //
-   copy(vcl_rhs.begin(), vcl_rhs.end(), rhs2.begin());
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   rhs2 = rhs;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   std::cout << "Testing complicated vector expression with CPU scalar..." << std::endl;
-   rhs     = beta * (rhs - alpha*rhs2);
-   vcl_rhs = beta * (vcl_rhs - alpha*vcl_rhs2);
+  std::cout << "Testing multiply-add on vector with CPU scalar (both)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: advanced mul diff with CPU scalars" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }          
-   
-   std::cout << "Testing complicated vector expression with GPU scalar..." << std::endl;
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs.begin());
-   vcl_rhs = gpu_beta * (vcl_rhs - gpu_alpha*vcl_rhs2);
+  ublas_v1 = alpha * ublas_v1 + beta * ublas_v2;
+  vcl_v1   = alpha *   vcl_v1 + beta *   vcl_v2;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: advanced mul diff with GPU scalars" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }          
-   
-   // --------------------------------------------------------------------------      
-   copy(vcl_rhs.begin(), vcl_rhs.end(), rhs2.begin());
-   rhs2 = rhs;
-   rhs2 *= 3.0;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Testing inplace multiply-add on vector with CPU scalar..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-   std::cout << "Testing swap..." << std::endl;
-   swap(rhs, rhs2);
-   swap(vcl_rhs, vcl_rhs2);
+  ublas_v1 += alpha * ublas_v2;
+  vcl_v1   += alpha *   vcl_v2;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: swap" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }          
-   // --------------------------------------------------------------------------         
-   rhs2 = 5.0 * rhs;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   std::cout << "Testing another complicated vector expression with CPU scalars..." << std::endl;
-   rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
-   vcl_rhs = vcl_rhs2 / alpha + beta * (vcl_rhs - alpha*vcl_rhs2);
+  
+  std::cout << "Testing multiply-add on vector with GPU scalar (right)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v1 +     alpha * ublas_v2;
+  vcl_v1   = vcl_v1   + gpu_alpha *   vcl_v2;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: complex vector operations with CPU scalars" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }             
-   
-   std::cout << "Testing another complicated vector expression with GPU scalars..." << std::endl;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   rhs     = rhs2 / alpha + beta * (rhs - alpha*rhs2);
-   vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * (vcl_rhs - gpu_alpha*vcl_rhs2);
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: complex vector operations with GPU scalars" << std::endl;
-      std::cout << "  diff: " << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }             
+  std::cout << "Testing multiply-add on vector with GPU scalar (left)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v1 +     alpha * ublas_v2;
+  vcl_v1   = vcl_v1   + gpu_alpha *   vcl_v2;
 
-   
-   std::cout << "Testing lenghty sum of scaled vectors..." << std::endl;
-   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   copy(rhs2.begin(), rhs2.end(), vcl_rhs2.begin());
-   rhs     = rhs2 / alpha + beta * rhs - alpha*rhs2 + beta * rhs - alpha * rhs;
-   vcl_rhs = vcl_rhs2 / gpu_alpha + gpu_beta * vcl_rhs - alpha*vcl_rhs2 + beta * vcl_rhs - alpha * vcl_rhs;
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing multiply-add on vector with GPU scalar (both)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-   if( std::fabs(diff(rhs, vcl_rhs)) > epsilon )
-   {
-      std::cout << "# Error at operation: complex vector operations with GPU scalars" << std::endl;
-      std::cout << "  diff: " << std::setprecision(8) << std::fabs(diff(rhs, vcl_rhs)) << std::endl;
-      retval = EXIT_FAILURE;
-   }             
-   
-   // --------------------------------------------------------------------------            
-   return retval;
+  ublas_v1 =     alpha * ublas_v1 +     beta * ublas_v2;
+  vcl_v1   = gpu_alpha *   vcl_v1 + gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  
+  std::cout << "Testing inplace multiply-add on vector with GPU scalar (both, adding)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 +=     alpha * ublas_v1 +     beta * ublas_v2;
+  vcl_v1   += gpu_alpha *   vcl_v1 + gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing inplace multiply-add on vector with GPU scalar (both, subtracting)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 +=     alpha * ublas_v1 -     beta * ublas_v2;
+  vcl_v1   += gpu_alpha *   vcl_v1 - gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  
+  std::cout << "Testing inplace multiply-add on vector with GPU scalar..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 +=     alpha * ublas_v2;
+  vcl_v1   += gpu_alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+
+
+  //
+  // multiply-subtract
+  //
+  std::cout << "Testing multiply-subtract on vector with CPU scalar (right)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 = ublas_v1 - alpha * ublas_v2;
+  vcl_v1   = vcl_v1   - alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+
+  std::cout << "Testing multiply-subtract on vector with CPU scalar (left)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 = alpha * ublas_v1 - ublas_v2;
+  vcl_v1   = alpha * vcl_v1   -   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << "Testing multiply-subtract on vector with CPU scalar (both)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 = alpha * ublas_v1 - beta * ublas_v2;
+  vcl_v1   = alpha * vcl_v1   - beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Testing inplace multiply-subtract on vector with CPU scalar..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 -= alpha * ublas_v2;
+  vcl_v1   -= alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  
+  std::cout << "Testing multiply-subtract on vector with GPU scalar (right)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v1 -     alpha * ublas_v2;
+  vcl_v1   = vcl_v1   - gpu_alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << "Testing multiply-subtract on vector with GPU scalar (left)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v1 -     alpha * ublas_v2;
+  vcl_v1   = vcl_v1   - gpu_alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing multiply-subtract on vector with GPU scalar (both)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 =     alpha * ublas_v1 -     beta * ublas_v2;
+  vcl_v1   = gpu_alpha * vcl_v1   - gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing inplace multiply-subtract on vector with GPU scalar (both, adding)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 -=     alpha * ublas_v1 +     beta * ublas_v2;
+  vcl_v1   -= gpu_alpha * vcl_v1   + gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing inplace multiply-subtract on vector with GPU scalar (both, subtracting)..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 -=     alpha * ublas_v1 -     beta * ublas_v2;
+  vcl_v1   -= gpu_alpha * vcl_v1   - gpu_beta *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Testing inplace multiply-subtract on vector with GPU scalar..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 -=     alpha * ublas_v2;
+  vcl_v1   -= gpu_alpha *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  
+  //
+  // More complicated expressions (for ensuring the operator overloads work correctly)
+  //
+  
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  std::cout << "Testing three vector additions..." << std::endl;
+  ublas_v1 = ublas_v2 + ublas_v1 + ublas_v2;
+  vcl_v1   =   vcl_v2 +   vcl_v1 +   vcl_v2;
+  
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  std::cout << "Testing complicated vector expression with CPU scalar..." << std::endl;
+  ublas_v1 = beta * (ublas_v1 - alpha * ublas_v2);
+  vcl_v1   = beta * (vcl_v1   - alpha * vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing complicated vector expression with GPU scalar..." << std::endl;
+  ublas_v1 =     beta * (ublas_v1 -     alpha * ublas_v2);
+  vcl_v1   = gpu_beta * (vcl_v1   - gpu_alpha * vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  // --------------------------------------------------------------------------      
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  std::cout << "Testing swap..." << std::endl;
+  swap(ublas_v1, ublas_v2);
+  swap(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  // --------------------------------------------------------------------------         
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  std::cout << "Testing another complicated vector expression with CPU scalars..." << std::endl;
+  ublas_v1 = ublas_v2 / alpha + beta * (ublas_v1 - alpha*ublas_v2);
+  vcl_v1   = vcl_v2 / alpha   + beta * (vcl_v1   - alpha*vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Testing another complicated vector expression with GPU scalars..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v2 / alpha   +     beta * (ublas_v1 - alpha*ublas_v2);
+  vcl_v1   = vcl_v2 / gpu_alpha + gpu_beta * (vcl_v1   - gpu_alpha*vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  
+  std::cout << "Testing lenghty sum of scaled vectors..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  ublas_v1 = ublas_v2 / alpha   +     beta * ublas_v1 - alpha * ublas_v2 + beta * ublas_v1 - alpha * ublas_v1;
+  vcl_v1   = vcl_v2 / gpu_alpha + gpu_beta *   vcl_v1 - alpha *   vcl_v2 + beta *   vcl_v1 - alpha *   vcl_v1;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  // --------------------------------------------------------------------------            
+  return retval;
 }
+
+
+template< typename NumericT, typename Epsilon >
+int test(Epsilon const& epsilon)
+{
+  int retval = EXIT_SUCCESS;
+  std::size_t size = 24656;
+  
+  std::cout << "Running tests for vector of size " << size << std::endl;
+
+  //
+  // Set up UBLAS objects
+  //
+  ublas::vector<NumericT> ublas_full_vec(size);
+  ublas::vector<NumericT> ublas_full_vec2(ublas_full_vec.size());
+
+  for (std::size_t i=0; i<ublas_full_vec.size(); ++i)
+  {
+    ublas_full_vec[i]  = NumericT(1.0) + random<NumericT>();
+    ublas_full_vec2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  
+  ublas::range r1(    ublas_full_vec.size() / 4, 2 * ublas_full_vec.size() / 4);
+  ublas::range r2(2 * ublas_full_vec2.size() / 4, 3 * ublas_full_vec2.size() / 4);
+  ublas::vector_range< ublas::vector<NumericT> > ublas_range_vec(ublas_full_vec, r1);
+  ublas::vector_range< ublas::vector<NumericT> > ublas_range_vec2(ublas_full_vec2, r2);
+
+  ublas::slice s1(    ublas_full_vec.size() / 4, 3, ublas_full_vec.size() / 4);
+  ublas::slice s2(2 * ublas_full_vec2.size() / 4, 2, ublas_full_vec2.size() / 4);
+  ublas::vector_slice< ublas::vector<NumericT> > ublas_slice_vec(ublas_full_vec, s1);
+  ublas::vector_slice< ublas::vector<NumericT> > ublas_slice_vec2(ublas_full_vec2, s2);
+  
+  //
+  // Set up ViennaCL objects
+  //
+  viennacl::vector<NumericT> vcl_full_vec(ublas_full_vec.size());
+  viennacl::vector<NumericT> vcl_full_vec2(ublas_full_vec2.size()); 
+  
+  viennacl::fast_copy(ublas_full_vec.begin(), ublas_full_vec.end(), vcl_full_vec.begin());
+  viennacl::copy(ublas_full_vec2.begin(), ublas_full_vec2.end(), vcl_full_vec2.begin());
+
+  viennacl::range vcl_r1(    vcl_full_vec.size() / 4, 2 * vcl_full_vec.size() / 4);
+  viennacl::range vcl_r2(2 * vcl_full_vec2.size() / 4, 3 * vcl_full_vec2.size() / 4);
+  viennacl::vector_range< viennacl::vector<NumericT> > vcl_range_vec(vcl_full_vec, vcl_r1);
+  viennacl::vector_range< viennacl::vector<NumericT> > vcl_range_vec2(vcl_full_vec2, vcl_r2);
+
+  {
+    viennacl::vector<NumericT> vcl_short_vec(vcl_range_vec);
+    viennacl::vector<NumericT> vcl_short_vec2 = vcl_range_vec2;
+  
+    ublas::vector<NumericT> ublas_short_vec(ublas_range_vec);
+    ublas::vector<NumericT> ublas_short_vec2(ublas_range_vec2);
+    
+    std::cout << "Testing creation of vectors from range..." << std::endl;
+    if (check(ublas_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    if (check(ublas_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+  }
+  
+  viennacl::slice vcl_s1(    vcl_full_vec.size() / 4, 3, vcl_full_vec.size() / 4);
+  viennacl::slice vcl_s2(2 * vcl_full_vec2.size() / 4, 2, vcl_full_vec2.size() / 4);
+  viennacl::vector_slice< viennacl::vector<NumericT> > vcl_slice_vec(vcl_full_vec, vcl_s1);
+  viennacl::vector_slice< viennacl::vector<NumericT> > vcl_slice_vec2(vcl_full_vec2, vcl_s2);
+  
+  viennacl::vector<NumericT> vcl_short_vec(vcl_slice_vec);
+  viennacl::vector<NumericT> vcl_short_vec2 = vcl_slice_vec2;
+
+  ublas::vector<NumericT> ublas_short_vec(ublas_slice_vec);
+  ublas::vector<NumericT> ublas_short_vec2(ublas_slice_vec2);
+  
+  std::cout << "Testing creation of vectors from slice..." << std::endl;
+  if (check(ublas_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(ublas_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  
+  //
+  // Now start running tests for vectors, ranges and slices:
+  //
+  
+  std::cout << " ** vcl_v1 = vector, vcl_v2 = vector **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_short_vec, vcl_short_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+    
+  std::cout << " ** vcl_v1 = vector, vcl_v2 = range **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_short_vec, vcl_range_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << " ** vcl_v1 = vector, vcl_v2 = slice **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_short_vec, vcl_slice_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  ///////
+  
+  std::cout << " ** vcl_v1 = range, vcl_v2 = vector **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_range_vec, vcl_short_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+    
+  std::cout << " ** vcl_v1 = range, vcl_v2 = range **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_range_vec, vcl_range_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << " ** vcl_v1 = range, vcl_v2 = slice **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_range_vec, vcl_slice_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
+    
+  std::cout << " ** vcl_v1 = slice, vcl_v2 = vector **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_slice_vec, vcl_short_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+    
+  std::cout << " ** vcl_v1 = slice, vcl_v2 = range **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_slice_vec, vcl_range_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << " ** vcl_v1 = slice, vcl_v2 = slice **" << std::endl;
+  retval = test<NumericT>(epsilon, 
+                          ublas_short_vec, ublas_short_vec2,
+                          vcl_slice_vec, vcl_slice_vec2);
+  if (retval != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  return EXIT_SUCCESS;
+}
+
+
+
 //
 // -------------------------------------------------------------
 //
@@ -651,9 +803,6 @@ int main()
 
    int retval = EXIT_SUCCESS;
 
-   std::string rhsfile("../../examples/testdata/rhs65025.txt");
-   std::string resultfile("../../examples/testdata/result65025.txt");
-
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
@@ -663,7 +812,7 @@ int main()
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: float" << std::endl;
-      retval = test<NumericT>(epsilon, rhsfile, resultfile);
+      retval = test<NumericT>(epsilon);
       if( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
@@ -680,7 +829,7 @@ int main()
          std::cout << "# Testing setup:" << std::endl;
          std::cout << "  eps:     " << epsilon << std::endl;
          std::cout << "  numeric: double" << std::endl;
-         retval = test<NumericT>(epsilon, rhsfile, resultfile);
+         retval = test<NumericT>(epsilon);
          if( retval == EXIT_SUCCESS )
            std::cout << "# Test passed" << std::endl;
          else

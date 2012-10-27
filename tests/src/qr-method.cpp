@@ -8,7 +8,7 @@ M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, 
   #define NDEBUG
 #endif
   
-#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_ALL
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -162,7 +162,7 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     A_ref = A_input;
 
-    std::cout << "Caclulation..." << "\n";
+    std::cout << "Calculation..." << "\n";
     
     Timer timer;
     timer.start();

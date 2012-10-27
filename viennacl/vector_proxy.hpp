@@ -148,14 +148,14 @@ namespace viennacl
       */
       entry_proxy<cpu_value_type> operator()(size_type index)
       {
-        return entry_proxy<cpu_value_type>(index + start(), v_.get());
+        return entry_proxy<cpu_value_type>(index + start(), v_.handle());
       }
 
       /** @brief Read-write access to a single element of the vector
       */
       entry_proxy<cpu_value_type> operator[](size_type index)
       {
-        return entry_proxy<cpu_value_type>(index + start(), v_.get());
+        return entry_proxy<cpu_value_type>(index + start(), v_.handle());
       }
 
 
@@ -193,7 +193,7 @@ namespace viennacl
       /** @brief Returns a const-iterator pointing to the beginning of the vector (STL like)*/
       const_iterator begin() const
       {
-        return const_iterator(v_, start());
+        return const_iterator(v_, 0, start());
       }
 
       /** @brief Returns a const-iterator pointing to the end of the vector (STL like)*/
@@ -306,7 +306,13 @@ namespace viennacl
     return vector_range<VectorType>(vec, r1);
   }
 
-
+  template <typename VectorType>
+  vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::range const & r1)
+  {
+    assert(r1.size() <= vec.size() && "Size of range invalid!");
+    return vector_range<VectorType>(vec.get(), viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
+  }
+  
 //
 //
 //
@@ -434,14 +440,14 @@ namespace viennacl
       */
       entry_proxy<cpu_value_type> operator()(size_type index)
       {
-        return entry_proxy<cpu_value_type>(index * stride() + start(), v_.get());
+        return entry_proxy<cpu_value_type>(index * stride() + start(), v_.handle());
       }
 
       /** @brief Read-write access to a single element of the vector
       */
       entry_proxy<cpu_value_type> operator[](size_type index)
       {
-        return entry_proxy<cpu_value_type>(index * stride() + start(), v_.get());
+        return entry_proxy<cpu_value_type>(index * stride() + start(), v_.handle());
       }
 
 
@@ -449,10 +455,11 @@ namespace viennacl
       */
       scalar<cpu_value_type> operator()(size_type index) const
       {
-        scalar<cpu_value_type> tmp;
+        scalar<cpu_value_type> tmp = 1.0;
         viennacl::backend::memory_copy(viennacl::traits::handle(v_), viennacl::traits::handle(tmp),
                                        sizeof(cpu_value_type)*(index * stride() + start()), 0,
                                        sizeof(cpu_value_type));
+        std::cout << tmp << std::endl;
         return tmp;
       }
       
@@ -525,11 +532,8 @@ namespace viennacl
   void copy(const VectorType & cpu_vector,
             vector_slice<vector<SCALARTYPE> > & gpu_vector_slice )
   {
-    assert(cpu_vector.end() - cpu_vector.begin() >= 0);
-    
-    if (cpu_vector.end() - cpu_vector.begin() > 0)
+    if (cpu_vector.size() > 0)
     {
-      // OpenCL 1.0 version: (no use of clEnqueueWriteBufferRect())
       std::vector<SCALARTYPE> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
       
       viennacl::backend::memory_read(gpu_vector_slice.get().handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
@@ -552,11 +556,10 @@ namespace viennacl
   void copy(vector_slice<vector<SCALARTYPE> > const & gpu_vector_slice,
             VectorType & cpu_vector)
   {
-    assert(cpu_vector.end() - cpu_vector.begin() >= 0);
+    assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0);
     
-    if (cpu_vector.end() > cpu_vector.begin())
+    if (gpu_vector_slice.end() - gpu_vector_slice.begin() > 0)
     {
-      // OpenCL 1.0 version: (no use of clEnqueueWriteBufferRect())
       std::vector<SCALARTYPE> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
       viennacl::backend::memory_read(gpu_vector_slice.get().handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
@@ -570,14 +573,39 @@ namespace viennacl
 
 
   //
-  // Convenience function
+  // Convenience functions
   //
   template <typename VectorType>
   vector_slice<VectorType> project(VectorType & vec, viennacl::slice const & s1)
   {
+    assert(s1.size() <= vec.size() && "Size of slice larger than vector size!");
     return vector_slice<VectorType>(vec, s1);
   }
 
+  template <typename VectorType>
+  vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::slice const & s1)
+  {
+    assert(s1.size() <= vec.size() && "Size of slice larger than vector proxy!");
+    return vector_slice<VectorType>(vec.get(), viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
+  }
+
+  // interaction with range and vector_range:
+  
+  template <typename VectorType>
+  vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
+  {
+    assert(r1.size() <= vec.size() && "Size of slice larger than vector proxy!");
+    return vector_slice<VectorType>(vec.get(), viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
+  }
+  
+  template <typename VectorType>
+  vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
+  {
+    assert(s1.size() <= vec.size() && "Size of slice larger than vector proxy!");
+    return vector_slice<VectorType>(vec.get(), viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
+  }
+  
+  
 }
 
 #endif

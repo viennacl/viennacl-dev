@@ -3,7 +3,7 @@ foreach(PROG blas3_prod blas3_solve fft iterators
         global_variables
         matrix matrix_range matrix_slice nmf qr-method
         scalar sparse structured-matrices svd
-        vector vector_range vector_slice)
+        vector)
    add_executable(${PROG}-test src/${PROG}.cpp)
    target_link_libraries(${PROG}-test ${OPENCL_LIBRARIES})
    add_test(${PROG} ${PROG}-test)

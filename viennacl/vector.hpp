@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file vector.hpp
+/** @file  viennacl/vector.hpp
     @brief The vector type with operator-overloads and proxy classes is defined here. 
            Linear algebra operations such as norms and inner products are located in linalg/vector_operations.hpp
 */
@@ -151,7 +151,11 @@ namespace viennacl
 //           return *this;
 //        }   
 
-        difference_type operator-(self_type const & other) const { difference_type result = index_; return (result - static_cast<difference_type>(other.index_)); }
+        difference_type operator-(self_type const & other) const 
+        {
+          assert( (other.start_ == start_) && (other.stride_ == stride_) && "Iterators are not from the same vector (proxy)!");
+          return static_cast<difference_type>(index_) - static_cast<difference_type>(other.index_); 
+        }
         self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff * stride_, start_, stride_); }
         
         //std::size_t index() const { return index_; }
@@ -208,7 +212,10 @@ namespace viennacl
         *   @param vec    The vector over which to iterate
         *   @param index  The starting index of the iterator
         */        
-        vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec, cl_uint index) : base_type(vec, index), elements_(vec.handle()) {};
+        vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec,
+                        std::size_t index,
+                        cl_uint start = 0,
+                        vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {};
         //vector_iterator(base_type const & b) : base_type(b) {};
 
         typename base_type::value_type operator*(void)  
@@ -840,11 +847,15 @@ namespace viennacl
       
       /** @brief Read access to a single element of the vector
       */
-      const entry_proxy<SCALARTYPE> operator[](size_type index) const
+      scalar<SCALARTYPE> operator[](size_type index) const
       {
         assert( (size() > 0)  && "Cannot apply operator[] to vector of size zero!");
         
-        return entry_proxy<SCALARTYPE>(index, elements_);
+        scalar<SCALARTYPE> tmp = 1.0;
+        viennacl::backend::memory_copy(viennacl::traits::handle(*this), viennacl::traits::handle(tmp),
+                                       sizeof(SCALARTYPE)*index, 0, sizeof(SCALARTYPE));
+        
+        return tmp;
       }
       
       //
@@ -1003,6 +1014,59 @@ namespace viennacl
     //////////////////// Copy from GPU to CPU //////////////////////////////////
     //
     
+    //from gpu to cpu. Type assumption: cpu_vec lies in a linear memory chunk
+    /** @brief STL-like transfer of a GPU vector to the CPU. The cpu type is assumed to reside in a linear piece of memory, such as e.g. for std::vector.
+    *
+    * This method is faster than the plain copy() function, because entries are
+    * directly written to the cpu vector, starting with &(*cpu.begin()) However,
+    * keep in mind that the cpu type MUST represent a linear piece of
+    * memory, otherwise you will run into undefined behavior.
+    *
+    * @param gpu_begin  GPU iterator pointing to the beginning of the gpu vector (STL-like)
+    * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
+    * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
+    */
+    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+    void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
+                   const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+                   CPU_ITERATOR cpu_begin )
+    {
+      if (gpu_begin != gpu_end)
+      {
+        if (gpu_begin.stride() == 1)
+        {
+          viennacl::backend::memory_read(gpu_begin.handle(), 
+                                        sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                        sizeof(SCALARTYPE)*gpu_begin.stride() * (gpu_end - gpu_begin),
+                                        &(*cpu_begin));
+        }
+        else
+        {
+          std::size_t gpu_size = (gpu_end - gpu_begin);
+          std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * gpu_size);
+          viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
+
+          for (std::size_t i=0; i<gpu_size; ++i)
+          {
+            (&(*cpu_begin))[i] = temp_buffer[i * gpu_begin.stride()];
+          }
+        }
+      }
+    }
+
+    /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+    *
+    * @param gpu_vec    A gpu vector.
+    * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
+    */
+    template <typename V1, typename CPUVECTOR>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
+    fast_copy(V1 const & gpu_vec, CPUVECTOR & cpu_vec )
+    {
+      viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+    }
+
+    
     /** @brief STL-like transfer for the entries of a GPU vector to the CPU. The cpu type does not need to lie in a linear piece of memory.
     *
     * @param gpu_begin  GPU constant iterator pointing to the beginning of the gpu vector (STL-like)
@@ -1018,7 +1082,7 @@ namespace viennacl
       if (gpu_end - gpu_begin != 0)
       {
         std::vector<SCALARTYPE> temp_buffer(gpu_end - gpu_begin);
-        viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(gpu_end - gpu_begin), &(temp_buffer[0]));
+        fast_copy(gpu_begin, gpu_end, temp_buffer.begin());
         
         //now copy entries to cpu_vec:
         std::copy(temp_buffer.begin(), temp_buffer.end(), cpu_begin);
@@ -1047,44 +1111,11 @@ namespace viennacl
     * @param gpu_vec    A gpu vector
     * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPUVECTOR>
-    void copy(vector<SCALARTYPE, ALIGNMENT> const & gpu_vec,
-              CPUVECTOR & cpu_vec )
+    template <typename V1, typename CPUVECTOR>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
+    copy(V1 const & gpu_vec, CPUVECTOR & cpu_vec )
     {
       viennacl::copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
-    }
-
-    //from gpu to cpu. Type assumption: cpu_vec lies in a linear memory chunk
-    /** @brief STL-like transfer of a GPU vector to the CPU. The cpu type is assumed to reside in a linear piece of memory, such as e.g. for std::vector.
-    *
-    * This method is faster than the plain copy() function, because entries are
-    * directly written to the cpu vector, starting with &(*cpu.begin()) However,
-    * keep in mind that the cpu type MUST represent a linear piece of
-    * memory, otherwise you will run into undefined behavior.
-    *
-    * @param gpu_begin  GPU iterator pointing to the beginning of the gpu vector (STL-like)
-    * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
-    * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
-    */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
-    void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
-                   const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
-                   CPU_ITERATOR cpu_begin )
-    {
-      if (gpu_begin != gpu_end)
-        viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(gpu_end - gpu_begin), &(*cpu_begin));
-    }
-
-    /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
-    *
-    * @param gpu_vec    A gpu vector.
-    * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
-    */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPUVECTOR>
-    void fast_copy(vector<SCALARTYPE, ALIGNMENT> const & gpu_vec,
-                   CPUVECTOR & cpu_vec )
-    {
-      viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
     }
 
 
@@ -1110,6 +1141,58 @@ namespace viennacl
     //////////////////// Copy from CPU to GPU //////////////////////////////////
     //
 
+    /** @brief STL-like transfer of a CPU vector to the GPU. The cpu type is assumed to reside in a linear piece of memory, such as e.g. for std::vector.
+    *
+    * This method is faster than the plain copy() function, because entries are
+    * directly read from the cpu vector, starting with &(*cpu.begin()). However,
+    * keep in mind that the cpu type MUST represent a linear piece of
+    * memory, otherwise you will run into undefined behavior.
+    *
+    * @param cpu_begin  CPU iterator pointing to the beginning of the cpu vector (STL-like)
+    * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
+    * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
+    */
+    template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+    void fast_copy(CPU_ITERATOR const & cpu_begin,
+                   CPU_ITERATOR const & cpu_end,
+                   vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
+    {
+      if (cpu_end - cpu_begin > 0)
+      {
+        if (gpu_begin.stride() == 1)
+        {
+          viennacl::backend::memory_write(gpu_begin.handle(),
+                                          sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                          sizeof(SCALARTYPE)*gpu_begin.stride() * (cpu_end - cpu_begin), &(*cpu_begin));
+        }
+        else //writing to slice:
+        {
+          std::size_t cpu_size = (cpu_end - cpu_begin);
+          std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * cpu_size);
+          
+          viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
+
+          for (std::size_t i=0; i<cpu_size; ++i)
+            temp_buffer[i * gpu_begin.stride()] = (&(*cpu_begin))[i];
+          
+          viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
+        }
+      }
+    }
+
+
+    /** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+    *
+    * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
+    * @param gpu_vec    The gpu vector.
+    */
+    template <typename CPUVECTOR, typename V1>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
+    fast_copy(const CPUVECTOR & cpu_vec, V1 & gpu_vec)
+    {
+      viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+    }
+    
     //from cpu to gpu. Safe assumption: cpu_vector does not necessarily occupy a linear memory segment, but is not larger than the allocated memory on the GPU
     /** @brief STL-like transfer for the entries of a GPU vector to the CPU. The cpu type does not need to lie in a linear piece of memory.
     *
@@ -1128,7 +1211,7 @@ namespace viennacl
         //we require that the size of the gpu_vector is larger or equal to the cpu-size
         std::vector<SCALARTYPE> temp_buffer(cpu_end - cpu_begin);
         std::copy(cpu_begin, cpu_end, temp_buffer.begin());
-        viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(cpu_end - cpu_begin), &(temp_buffer[0]));
+        viennacl::fast_copy(temp_buffer.begin(), temp_buffer.end(), gpu_begin);
       }
     }
 
@@ -1139,43 +1222,13 @@ namespace viennacl
     * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
     * @param gpu_vec    The gpu vector.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPUVECTOR>
-    void copy(const CPUVECTOR & cpu_vec, vector<SCALARTYPE, ALIGNMENT> & gpu_vec)
+    template <typename CPUVECTOR, typename V1>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
+    copy(const CPUVECTOR & cpu_vec, V1 & gpu_vec)
     {
       viennacl::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
     }
 
-    /** @brief STL-like transfer of a CPU vector to the GPU. The cpu type is assumed to reside in a linear piece of memory, such as e.g. for std::vector.
-    *
-    * This method is faster than the plain copy() function, because entries are
-    * directly read from the cpu vector, starting with &(*cpu.begin()). However,
-    * keep in mind that the cpu type MUST represent a linear piece of
-    * memory, otherwise you will run into undefined behavior.
-    *
-    * @param cpu_begin  CPU iterator pointing to the beginning of the cpu vector (STL-like)
-    * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
-    * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
-    */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
-    void fast_copy(CPU_ITERATOR const & cpu_begin,
-                   CPU_ITERATOR const & cpu_end,
-                   vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
-    {
-      if (cpu_begin != cpu_end)
-        viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*(cpu_end - cpu_begin), &(*cpu_begin));
-    }
-
-
-    /** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
-    *
-    * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
-    * @param gpu_vec    The gpu vector.
-    */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPUVECTOR>
-    void fast_copy(const CPUVECTOR & cpu_vec, vector<SCALARTYPE, ALIGNMENT> & gpu_vec)
-    {
-      viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
-    }
 
     #ifdef VIENNACL_HAVE_EIGEN
     template <unsigned int ALIGNMENT>
@@ -1936,23 +1989,13 @@ namespace viennacl
     * @param value   The host scalar (float or double)
     * @param vec     A ViennaCL vector
     */
-    template <typename SCALARTYPE, unsigned int A>
-    vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod> 
-    operator * (SCALARTYPE const & value, vector<SCALARTYPE, A> const & vec)
+    template <typename S1, typename V1>
+    typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  vector_expression< const V1, const S1, op_prod> >::type 
+    operator * (S1 const & value, V1 const & vec)
     {
-      return vector_expression< const vector<SCALARTYPE, A>, const SCALARTYPE, op_prod>(vec, value);
-    }
-
-    /** @brief Operator overload for the expression alpha * v1, where alpha is a ViennaCL scalar (float or double) and v1 is a ViennaCL vector.
-    *
-    * @param value   The ViennaCL scalar
-    * @param vec     A ViennaCL vector
-    */
-    template <typename SCALARTYPE, unsigned int A>
-    vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod> 
-    operator * (scalar<SCALARTYPE> const & value, vector<SCALARTYPE, A> const & vec)
-    {
-        return vector_expression< const vector<SCALARTYPE, A>, const scalar<SCALARTYPE>, op_prod>(vec, value);
+      return vector_expression< const V1, const S1, op_prod>(vec, value);
     }
 
 
@@ -1961,12 +2004,13 @@ namespace viennacl
     * @param proxy   Left hand side vector expression
     * @param val     Right hand side scalar
     */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    vector<SCALARTYPE> 
+    template <typename LHS, typename RHS, typename OP, typename S1>
+    typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                  viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> >::type
     operator * (vector_expression< LHS, RHS, OP> const & proxy,
-                scalar<SCALARTYPE> const & val)
+                S1 const & val)
     {
-      vector<SCALARTYPE> result(proxy.size());
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
       result = proxy;
       result *= val;
       return result;
@@ -1978,34 +2022,18 @@ namespace viennacl
     * @param val     Right hand side scalar
     * @param proxy   Left hand side vector expression
     */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    vector<SCALARTYPE> 
-    operator * (scalar<SCALARTYPE> const & val,
+    template <typename S1, typename LHS, typename RHS, typename OP>
+    typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                  viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> >::type
+    operator * (S1 const & val,
                 vector_expression< LHS, RHS, OP> const & proxy)
     {
-      vector<SCALARTYPE> result(proxy.size());
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
       result = proxy;
       result *= val;
       return result;
     }
     
-    /** @brief Operator overload for the multiplication of a vector expression with a host scalar (float or double) from the left, e.g. alpha * (beta * vec1). Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the left.
-    *
-    * @param val     Right hand side scalar
-    * @param proxy   Left hand side vector expression
-    */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    viennacl::vector<SCALARTYPE> 
-    operator * (SCALARTYPE val,
-                viennacl::vector_expression< LHS, RHS, OP> const & proxy)
-    {
-      viennacl::vector<SCALARTYPE> result(proxy.size());
-      result = proxy;
-      result *= val;
-      return result;
-    }
-
-
     /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
     */
     template <typename V1, typename S1>
@@ -2027,11 +2055,13 @@ namespace viennacl
     * @param proxy   Left hand side vector expression
     * @param val     Right hand side scalar
     */
-    template <typename SCALARTYPE, typename LHS, typename RHS, typename OP>
-    vector<SCALARTYPE> operator / (vector_expression< LHS, RHS, OP> const & proxy,
-                                   scalar<SCALARTYPE> const & val)
+    template <typename S1, typename LHS, typename RHS, typename OP>
+    typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
+                                  viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> >::type
+    operator / (vector_expression< LHS, RHS, OP> const & proxy,
+                S1 const & val)
     {
-      vector<SCALARTYPE> result(proxy.size());
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
       result = proxy;
       result /= val;
       return result;
