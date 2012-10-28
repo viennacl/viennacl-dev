@@ -65,6 +65,43 @@ namespace viennacl
         RHS & rhs_;
     };
     
+    
+    /** @brief A proxy for scalar expressions (e.g. from inner vector products)
+    * 
+    * assumption: dim(LHS) >= dim(RHS), where dim(scalar) = 0, dim(vector) = 1 and dim(matrix = 2)
+    * @tparam LHS   The left hand side operand
+    * @tparam RHS   The right hand side operand
+    * @tparam OP    The operation tag
+    */
+    template <typename LHS, typename RHS>
+    class scalar_expression<LHS, RHS, op_inner_prod>
+    {
+        //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
+      public:
+        typedef typename viennacl::result_of::cpu_value_type<LHS>::type    ScalarType;
+        
+        scalar_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
+        
+        /** @brief Returns the left hand side operand */
+        LHS & lhs() const { return lhs_; }
+        /** @brief Returns the left hand side operand */
+        RHS & rhs() const { return rhs_; }
+
+        /** @brief Conversion operator to a ViennaCL scalar */
+        operator ScalarType () const
+        {
+          ScalarType result;
+          viennacl::linalg::inner_prod_cpu(lhs_, rhs_, result);
+          return result;
+        }
+
+      private:
+        LHS & lhs_;
+        RHS & rhs_;
+    };
+    
+    
+    
     /** @brief This class represents a single scalar value on the GPU and behaves mostly like a built-in scalar type like float or double.
     *
     * Since every read and write operation requires a CPU->GPU or GPU->CPU transfer, this type should be used with care.

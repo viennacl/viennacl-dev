@@ -218,6 +218,36 @@ namespace viennacl
           throw "not implemented";
       }
     }
+    
+
+    /** @brief Computes the inner product of two vectors with the final reduction step on the CPU - dispatcher interface
+     *
+     * @param vec1 The first vector
+     * @param vec2 The second vector
+     * @param result The result scalar (on the gpu)
+     */
+    template <typename V1, typename V2, typename S3>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_cpu_scalar<S3>::value
+                                >::type
+    inner_prod_cpu(V1 const & vec1,
+                   V2 const & vec2,
+                   S3 & result)
+    {
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inner_prod_impl(vec1, vec2, result);
+          break;
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inner_prod_cpu(vec1, vec2, result);
+          break;
+        default:
+          throw "not implemented";
+      }
+    }
+    
 
     //public interface of inner product
     /** @brief Computes the inner product of two vectors - returns an expression template for lazy evaluation.

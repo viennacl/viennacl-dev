@@ -102,8 +102,8 @@ namespace viennacl
       CPU_ScalarType beta;
       CPU_ScalarType alpha;
       CPU_ScalarType omega;
-      ScalarType inner_prod_temp; //temporary variable for inner product computation
-      ScalarType new_ip_rr0star = 0;
+      //ScalarType inner_prod_temp; //temporary variable for inner product computation
+      CPU_ScalarType new_ip_rr0star = 0;
       
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
@@ -112,18 +112,12 @@ namespace viennacl
       {
         tag.iters(i+1);
         tmp0 = viennacl::linalg::prod(matrix, p);
-        //alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp0, r0star);
-        alpha = ip_rr0star / static_cast<CPU_ScalarType>(inner_prod_temp);
+        alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
 
         s = residual - alpha*tmp0;
         
         tmp1 = viennacl::linalg::prod(matrix, s);
-        //omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp1, s);
-        omega = inner_prod_temp;
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp1, tmp1);
-        omega /= inner_prod_temp;
+        omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
         
         result += alpha * p + omega * s;
         
@@ -133,10 +127,8 @@ namespace viennacl
         if (std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host) < tag.tolerance() * tag.tolerance())
           break;
         
-        //beta = new_ip_rr0star / ip_rr0star * alpha/omega;
-        CPU_ScalarType cpu_temp = new_ip_rr0star; //read from device only once
-        beta = cpu_temp / ip_rr0star * alpha/omega;
-        ip_rr0star = cpu_temp;
+        beta = new_ip_rr0star / ip_rr0star * alpha/omega;
+        ip_rr0star = new_ip_rr0star;
 
         // Execution of
         //  p = residual + beta * (p - omega*tmp0);
@@ -190,8 +182,7 @@ namespace viennacl
       CPU_ScalarType beta;
       CPU_ScalarType alpha;
       CPU_ScalarType omega;
-      ScalarType new_ip_rr0star = 0;
-      ScalarType inner_prod_temp; //temporary variable for inner product
+      CPU_ScalarType new_ip_rr0star = 0;
       
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
@@ -201,19 +192,13 @@ namespace viennacl
         tag.iters(i+1);
         tmp0 = viennacl::linalg::prod(matrix, p);
         precond.apply(tmp0);
-        //alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp0, r0star);
-        alpha = ip_rr0star / static_cast<CPU_ScalarType>(inner_prod_temp);
+        alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
 
         s = residual - alpha*tmp0;
 
         tmp1 = viennacl::linalg::prod(matrix, s);
         precond.apply(tmp1);
-        //omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp1, s);
-        omega = inner_prod_temp;
-        inner_prod_temp = viennacl::linalg::inner_prod(tmp1, tmp1);
-        omega /= inner_prod_temp;
+        omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
         
         result += alpha * p + omega * s;
         residual = s - omega * tmp1;
@@ -222,10 +207,8 @@ namespace viennacl
         if (std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) < tag.tolerance() * tag.tolerance() )
           break;
         
-        //beta = new_ip_rr0star / ip_rr0star * alpha/omega;
-        CPU_ScalarType cpu_temp = new_ip_rr0star; //read from device only once
-        beta = cpu_temp / ip_rr0star * alpha/omega;
-        ip_rr0star = cpu_temp;
+        beta = new_ip_rr0star / ip_rr0star * alpha/omega;
+        ip_rr0star = new_ip_rr0star;
 
         // Execution of
         //  p = residual + beta * (p - omega*tmp0);

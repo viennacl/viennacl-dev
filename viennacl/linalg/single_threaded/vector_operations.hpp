@@ -245,7 +245,7 @@ namespace viennacl
       template <typename V1, typename V2, typename S3>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
                                     && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_scalar<S3>::value
+                                    && viennacl::is_any_scalar<S3>::value
                                   >::type
       inner_prod_impl(V1 const & vec1,
                       V2 const & vec2,

@@ -107,6 +107,16 @@ namespace viennacl
             const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
             const_vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin);
   
+  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
+                 const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+                 CPU_ITERATOR cpu_begin );
+  
+  template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  void fast_copy(CPU_ITERATOR const & cpu_begin,
+                  CPU_ITERATOR const & cpu_end,
+                  vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin);
+  
   
   struct row_major_tag {};    
   struct column_major_tag {};    
@@ -209,6 +219,9 @@ namespace viennacl
   
   
   template <typename T>
+  struct is_cpu_scalar;
+  
+  template <typename T>
   struct is_scalar;
 
   template <typename T>
@@ -262,6 +275,15 @@ namespace viennacl
     inner_prod_impl(V1 const & vec1,
                     V2 const & vec2,
                     S3 & result);
+    
+    template <typename V1, typename V2, typename S3>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_cpu_scalar<S3>::value
+                                >::type
+    inner_prod_cpu(V1 const & vec1,
+                   V2 const & vec2,
+                   S3 & result);
     
     //forward definition of norm_1_impl function
     template <typename V1, typename S2>
