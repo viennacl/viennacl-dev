@@ -34,6 +34,7 @@
 #include "viennacl/linalg/jacobi_precond.hpp"
 #include "viennacl/linalg/row_scaling.hpp"
 #include "viennacl/linalg/cg.hpp"
+#include "viennacl/linalg/mixed_precision_cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/linalg/gmres.hpp"
 #include "viennacl/io/matrix_market.hpp"
@@ -124,7 +125,7 @@ int run_benchmark()
   ublas::vector<ScalarType> ublas_vec1;
   ublas::vector<ScalarType> ublas_vec2;
   ublas::vector<ScalarType> ublas_result;
-  unsigned int solver_iters = 20;
+  unsigned int solver_iters = 100;
   unsigned int solver_krylov_dim = 20;
   double solver_tolerance = 1e-6;
 
@@ -332,13 +333,19 @@ int run_benchmark()
   long cg_ops = static_cast<long>(solver_iters * (ublas_matrix.nnz() + 6 * ublas_vec2.size()));
   
   viennacl::linalg::cg_tag cg_solver(solver_tolerance, solver_iters);
+  viennacl::linalg::mixed_precision_cg_tag mixed_precision_cg_solver(solver_tolerance, solver_iters);
   
   std::cout << "------- CG solver (no preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
   
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
+
+  std::cout << "------- CG solver, mixed precision (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, mixed_precision_cg_solver, viennacl::linalg::no_precond(), cg_ops);
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, mixed_precision_cg_solver, viennacl::linalg::no_precond(), cg_ops);
  
+  
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
   run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
 
@@ -529,7 +536,7 @@ int main()
   std::cout << "   -------------------------------" << std::endl;
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
-  run_benchmark<float>();
+  //run_benchmark<float>();
   if( viennacl::ocl::current_device().double_support() )
   {
     std::cout << std::endl;
