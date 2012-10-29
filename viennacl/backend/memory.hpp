@@ -43,8 +43,8 @@ namespace viennacl
 #endif
     };
     
-    //inline memory_types default_memory_type() { return MAIN_MEMORY; }
-    inline memory_types default_memory_type() { return OPENCL_MEMORY; }
+    inline memory_types default_memory_type() { return MAIN_MEMORY; }
+    //inline memory_types default_memory_type() { return OPENCL_MEMORY; }
     
     class mem_handle
     {

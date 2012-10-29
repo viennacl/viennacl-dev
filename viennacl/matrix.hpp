@@ -311,186 +311,50 @@ namespace viennacl
         return tmp;
       }
       
-
-      // operator +
-      matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                         const matrix<SCALARTYPE, F, ALIGNMENT>,
-                         op_add >
-      operator + (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
-      {
-        return matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                  const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                  op_add > (*this, other);
-      }
-
-      // operator +=
-      self_type & operator += (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
+      //
+      // Operator overloads for enabling implicit conversions:
+      //
+      self_type & operator += (const self_type & other) 
       {
         viennacl::linalg::ambm(*this,
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               other, SCALARTYPE(1.0), 1, false, false);
+                                *this, SCALARTYPE(1.0), 1, false, false,
+                                other, SCALARTYPE(1.0), 1, false, false);
         return *this;
       }
 
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type & 
-                                  >::type
-      operator += (const M1 & other) 
+      self_type & operator -= (const self_type & other) 
       {
         viennacl::linalg::ambm(*this,
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               other, SCALARTYPE(1.0), 1, false, false);
-        return *this;
-      }
-
-      template <typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                    self_type & 
-                                  >::type
-      operator += (const matrix_expression< const V1, const V2, op_prod > & proxy) 
-      {
-        viennacl::linalg::scaled_rank_1_update(*this,
-                                               SCALARTYPE(1.0), 1, false, false,
-                                               proxy.lhs(),
-                                               proxy.rhs());
-        return *this;
-      }
-
-      template <typename V1, typename V2, typename S1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator += (const matrix_expression< const matrix_expression< const V1, const V2, op_prod >,
-                                            const S1,
-                                            op_prod > & proxy) 
-      {
-        viennacl::linalg::scaled_rank_1_update(*this,
-                                               proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                               proxy.lhs().lhs(),
-                                               proxy.lhs().rhs());
+                                *this, SCALARTYPE(1.0), 1, false, false,
+                                other, SCALARTYPE(1.0), 1, false, true);
         return *this;
       }
       
-      // operator -
-      matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                         const matrix<SCALARTYPE, F, ALIGNMENT>,
-                         op_sub >
-      operator - (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
-      {
-        return matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                  const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                  op_sub > (*this, other);
-      }
-      
-      // operator -=
-      self_type & operator -= (const matrix< SCALARTYPE, F, ALIGNMENT> & other) 
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               other, SCALARTYPE(1.0), 1, false, true);
-        return *this;
-      }
-
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type & 
-                                  >::type
-      operator -= (const M1 & other) 
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, SCALARTYPE(1.0), 1, false, false,
-                               other, SCALARTYPE(1.0), 1, false, true);
-        return *this;
-      }
-
-      template <typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                    self_type & 
-                                  >::type
-      operator -= (const matrix_expression< const V1, const V2, op_prod > & proxy) 
-      {
-        viennacl::linalg::scaled_rank_1_update(*this,
-                                               SCALARTYPE(1.0), 1, false, true,
-                                               proxy.lhs(),
-                                               proxy.rhs());
-        return *this;
-      }
-
-      template <typename V1, typename V2, typename S1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator -= (const matrix_expression< const matrix_expression< const V1, const V2, op_prod >,
-                                            const S1,
-                                            op_prod > & proxy) 
-      {
-        viennacl::linalg::scaled_rank_1_update(*this,
-                                               proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                               proxy.lhs(),
-                                               proxy.rhs());
-        return *this;
-      }
-
-      
-      
-      
-      /** @brief Scales this vector by a CPU scalar value
+      /** @brief Scales a matrix by a CPU scalar value
       */
       self_type & operator *= (SCALARTYPE val)
       {
         //viennacl::linalg::inplace_mult(*this, val);
         viennacl::linalg::am(*this,
-                             *this, val, 1, false, false);
+                              *this, val, 1, false, false);
         return *this;
       }
-
-      /** @brief Scales this vector by a GPU scalar value
-      */
-      template <typename S1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator *= (S1 const & gpu_val)
-      {
-        //viennacl::linalg::inplace_mult(*this, gpu_val);
-        viennacl::linalg::am(*this,
-                             *this, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
-        return *this;
-      }
-
-      /** @brief Scales this vector by a CPU scalar value
+      
+      /** @brief Scales this matrix by a CPU scalar value
       */
       self_type & operator /= (SCALARTYPE val)
       {
         //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
         viennacl::linalg::am(*this,
-                             *this, val, 1, true, false);
+                              *this, val, 1, true, false);
         return *this;
       }
       
-      /** @brief Scales this vector by a GPU scalar value
-      */
-      template <typename S1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                    self_type & 
-                                  >::type
-      operator /= (S1 const & gpu_val)
-      {
-        //viennacl::linalg::inplace_divide(*this, gpu_val);
-        viennacl::linalg::am(*this,
-                             *this, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
-        return *this;
-      }
-
       
-
+      //
+      // Matrix-Matrix products:
+      //
+      
       //this = A * B and related (with trans())
       template <typename MatrixType1, typename MatrixType2>
       self_type & operator = (const matrix_expression< MatrixType1,
@@ -914,7 +778,167 @@ namespace viennacl
 
 
 
+    /////////////////////// matrix operator overloads to follow ////////////////////////////////////////////
 
+
+    // operator +
+    template <typename M1, typename M2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value,
+                                  matrix_expression< const M1, const M2, op_add > 
+                                >::type
+    operator + (const M1 & m1, const M2 & m2) 
+    {
+      return matrix_expression< const M1, const M2, op_add > (m1, m2);
+    }
+
+    // operator +=
+    template <typename M1, typename M2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value,
+                                  M1 & 
+                                >::type
+    operator += (M1 & m1, const M2 & other) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<typename M1::value_type>::type   ScalarType;
+      viennacl::linalg::ambm(m1,
+                             m1,    ScalarType(1.0), 1, false, false,
+                             other, ScalarType(1.0), 1, false, false);
+      return m1;
+    }
+
+    template <typename M1, typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  M1 & 
+                                >::type
+    operator += (M1 & m1,
+                 const matrix_expression< const V1, const V2, op_prod > & proxy) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<typename M1::value_type>::type   ScalarType;
+      viennacl::linalg::scaled_rank_1_update(m1,
+                                              ScalarType(1.0), 1, false, false,
+                                              proxy.lhs(),
+                                              proxy.rhs());
+      return m1;
+    }
+
+    template <typename M1, typename V1, typename V2, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  M1 & 
+                                >::type
+    operator += (M1 & m1,
+                 const matrix_expression< const matrix_expression< const V1, const V2, op_prod >,
+                                          const S1,
+                                          op_prod > & proxy) 
+    {
+      viennacl::linalg::scaled_rank_1_update(m1,
+                                             proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
+                                             proxy.lhs().lhs(),
+                                             proxy.lhs().rhs());
+      return m1;
+    }
+    
+    
+    // operator -
+    template <typename M1, typename M2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value,
+                                  matrix_expression< const M1, const M2, op_sub > 
+                                >::type
+    operator - (const M1 & m1, const M2 & m2) 
+    {
+      return matrix_expression< const M1, const M2, op_sub > (m1, m2);
+    }
+    
+    // operator -=
+    template <typename M1, typename M2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_matrix<M2>::value,
+                                  M1 & 
+                                >::type
+    operator -= (M1 & m1, const M2 & other) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<typename M1::value_type>::type   ScalarType;
+      viennacl::linalg::ambm(m1,
+                             m1,    ScalarType(1.0), 1, false, false,
+                             other, ScalarType(1.0), 1, false, true);
+      return m1;
+    }
+
+    template <typename M1, typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  M1 & 
+                                >::type
+    operator -= (M1 & m1,
+                 const matrix_expression< const V1, const V2, op_prod > & proxy) 
+    {
+      typedef typename viennacl::result_of::cpu_value_type<typename M1::value_type>::type   ScalarType;
+      viennacl::linalg::scaled_rank_1_update(m1,
+                                              ScalarType(1.0), 1, false, true,
+                                              proxy.lhs(),
+                                              proxy.rhs());
+      return m1;
+    }
+
+    template <typename M1, typename V1, typename V2, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  M1 & 
+                                >::type
+    operator -= (M1 & m1,
+                 const matrix_expression< const matrix_expression< const V1, const V2, op_prod >,
+                                          const S1,
+                                          op_prod > & proxy) 
+    {
+      viennacl::linalg::scaled_rank_1_update(m1,
+                                              proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
+                                              proxy.lhs(),
+                                              proxy.rhs());
+      return m1;
+    }
+
+    
+    
+    
+
+    /** @brief Scales a matrix by a GPU scalar value
+    */
+    template <typename M1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  M1 & 
+                                >::type
+    operator *= (M1 const & m1, S1 const & gpu_val)
+    {
+      //viennacl::linalg::inplace_mult(*this, gpu_val);
+      viennacl::linalg::am(m1,
+                           m1, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+      return m1;
+    }
+
+    /** @brief Scales a matrix by a GPU scalar value
+    */
+    template <typename M1, typename S1>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_scalar<S1>::value,
+                                  M1 & 
+                                >::type
+    operator /= (M1 const & m1, S1 const & gpu_val)
+    {
+      //viennacl::linalg::inplace_divide(*this, gpu_val);
+      viennacl::linalg::am(m1,
+                           m1, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+      return m1;
+    }
 
 
 

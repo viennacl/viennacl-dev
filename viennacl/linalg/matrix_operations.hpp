@@ -1,5 +1,5 @@
-#ifndef VIENNACL_MATRIX_OPERATIONS_HPP_
-#define VIENNACL_MATRIX_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_MATRIX_OPERATIONS_HPP_
+#define VIENNACL_LINALG_MATRIX_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file matrix_operations.hpp
+/** @file viennacl/linalg/matrix_operations.hpp
     @brief Implementations of dense matrix related operations. also matrix-vector products.
 */
 
