@@ -63,8 +63,21 @@ namespace viennacl
         return *this;
       }
       
-      template <typename MatrixType2>
-      self_type & operator = (const MatrixType2 & other) 
+      /** @brief Generic 'catch-all' overload for all operations which are not covered by the other specializations below */
+      template <typename LHS, typename RHS, typename OP>
+      self_type & operator=(const matrix_expression< LHS,
+                                                     RHS,
+                                                     OP > & proxy) 
+      {
+        MatrixType temp = proxy;
+        *this = temp;
+        return *this;
+      }      
+      
+      template <typename M1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
+                                    self_type &>::type
+      operator = (const M1 & other) 
       {
         viennacl::linalg::am(*this,
                              other, cpu_value_type(1.0), 1, false, false);
@@ -72,97 +85,48 @@ namespace viennacl
       }
 
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_prod > & proxy) 
+      template <typename M1, typename M2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
+                                    self_type &>::type
+      operator = (const matrix_expression< M1, M2, op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_add > & proxy) 
+      
+      template <typename M1, typename M2, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                    self_type &>::type
+      operator = (const matrix_expression< const M1, const M2, OP > & proxy) 
       {
         viennacl::linalg::ambm(*this,
                                proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, false);
+                               proxy.rhs(), cpu_value_type(1.0), 1, false, viennacl::is_subtraction<OP>::value ? true : false);
         return *this;
       }
 
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_sub > & proxy) 
-      {
-        viennacl::linalg::ambm(*this,
-                               proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, true);
-        return *this;
-      }
-
-
-      ////////// operator+= //////////////////////////
-
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &
-                                  >::type
-      operator += (M1 const & other)
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, cpu_value_type(1.0), 1, false, false,
-                               other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator += (const matrix_expression< MatrixType1,
-                                                        MatrixType2,
-                                                        op_prod > & proxy)
+      /** @brief Assignment of a scaled matrix (or -range or -slice), i.e. m1 = m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename M1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator = (const matrix_expression< const M1, const S1, OP> & proxy)
       {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 1.0);
+        viennacl::linalg::am(*this, 
+                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
-      
-      
-      ////////// operator-= //////////////////////////
 
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &
-                                  >::type
-      operator -= (M1 const & other)
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, cpu_value_type(1.0), 1, false, false,
-                               other, cpu_value_type(1.0), 1, false, true);
-        return *this;
-      }
-      
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator -= (const matrix_expression< MatrixType1,
-                                                        MatrixType2,
-                                                        op_prod > & proxy)
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, -1.0, 1.0);
-        return *this;
-      }
 
 
       ////////// operator*= //////////////////////////
 
-      template <typename T>
-      self_type & operator *= (T const & val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, false, false);
-        return *this;
-      }
-      
-      self_type & operator *= (cpu_value_type val)
+      self_type & operator *= (cpu_value_type val) // Enabling implicit conversions
       {
         viennacl::linalg::am(*this,
                              *this, val, 1, false, false);
@@ -171,15 +135,7 @@ namespace viennacl
       
       ////////// operator/= //////////////////////////
 
-      template <typename T>
-      self_type & operator /= (T const & val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, true, false);
-        return *this;
-      }
-
-      self_type & operator /= (cpu_value_type val)
+      self_type & operator /= (cpu_value_type val) // Enabling implicit conversions
       {
         viennacl::linalg::am(*this,
                              *this, val, 1, true, false);
@@ -187,35 +143,6 @@ namespace viennacl
       }
 
 
-      ////////// operator+ //////////////////////////
-      
-      template <typename MatrixType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<MatrixType2>::value,
-                                    matrix_expression< const matrix_range<MatrixType>,
-                                                       const MatrixType2,
-                                                       op_add > >::type
-      operator + (const MatrixType2 & other) 
-      {
-        return matrix_expression< const matrix_range<MatrixType>,
-                                  const MatrixType2,
-                                  op_add > (*this, other);
-      }
-      
-      ////////// operator- //////////////////////////
-      
-      template <typename MatrixType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<MatrixType2>::value,
-                                    matrix_expression< const matrix_range<MatrixType>,
-                                                       const MatrixType2,
-                                                       op_sub > >::type
-      operator - (const MatrixType2 & other) 
-      {
-        return matrix_expression< const matrix_range<MatrixType>,
-                                  const MatrixType2,
-                                  op_sub > (*this, other);
-      }
-      
-      
       
 
       //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
@@ -248,22 +175,6 @@ namespace viennacl
     *this = proxy;
   }
   
-  
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::operator=(const matrix_range< viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > & mat)
-  {
-    viennacl::linalg::am(*this,
-                         mat, SCALARTYPE(1.0), 1, false, false);
-    return *this;
-  }
-
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::operator=(const matrix_range<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > & mat)
-  {
-    viennacl::linalg::am(*this,
-                         mat, SCALARTYPE(1.0), 1, false, false);
-    return *this;
-  }
   
   
   /** @brief Returns an expression template class representing a transposed matrix */
@@ -540,9 +451,22 @@ namespace viennacl
                              other, cpu_value_type(1.0), 1, false, false);
         return *this;
       }
+
+      /** @brief Generic 'catch-all' overload for all operations which are not covered by the other specializations below */
+      template <typename LHS, typename RHS, typename OP>
+      self_type & operator=(const matrix_expression< LHS,
+                                                     RHS,
+                                                     OP > & proxy) 
+      {
+        MatrixType temp = proxy;
+        *this = temp;
+        return *this;
+      }      
       
-      template <typename MatrixType2>
-      self_type & operator = (const MatrixType2 & other) 
+      template <typename M1>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
+                                    self_type &>::type
+      operator = (const M1 & other) 
       {
         viennacl::linalg::am(*this,
                              other, cpu_value_type(1.0), 1, false, false);
@@ -550,95 +474,46 @@ namespace viennacl
       }
 
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_prod > & proxy) 
+      template <typename M1, typename M2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
+                                    self_type &>::type
+      operator = (const matrix_expression< M1, M2, op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_add > & proxy) 
+      
+      template <typename M1, typename M2, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
+                                    self_type &>::type
+      operator = (const matrix_expression< const M1, const M2, OP > & proxy) 
       {
         viennacl::linalg::ambm(*this,
                                proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, false);
+                               proxy.rhs(), cpu_value_type(1.0), 1, false, viennacl::is_subtraction<OP>::value ? true : false);
         return *this;
       }
 
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator = (const matrix_expression< MatrixType1,
-                                                       MatrixType2,
-                                                       op_sub > & proxy) 
-      {
-        viennacl::linalg::ambm(*this,
-                               proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, true);
-        return *this;
-      }
-
-
-      ////////// operator+= //////////////////////////
-
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &
-                                  >::type
-      operator += (M1 const & other)
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, cpu_value_type(1.0), 1, false, false,
-                               other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
       
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator += (const matrix_expression< MatrixType1,
-                                                        MatrixType2,
-                                                        op_prod > & proxy)
+      /** @brief Assignment of a scaled matrix (or -range or -slice), i.e. m1 = m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      */
+      template <typename M1, typename S1, typename OP>
+      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value && viennacl::is_any_scalar<S1>::value,
+                                    self_type &>::type
+      operator = (const matrix_expression< const M1, const S1, OP> & proxy)
       {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 1.0);
+        viennacl::linalg::am(*this, 
+                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
+
       
       
-      ////////// operator-= //////////////////////////
-
-      template <typename M1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &
-                                  >::type
-      operator -= (M1 const & other)
-      {
-        viennacl::linalg::ambm(*this,
-                               *this, cpu_value_type(1.0), 1, false, false,
-                               other, cpu_value_type(1.0), 1, false, true);
-        return *this;
-      }
-      
-      template <typename MatrixType1, typename MatrixType2>
-      self_type & operator -= (const matrix_expression< MatrixType1,
-                                                        MatrixType2,
-                                                        op_prod > & proxy)
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, -1.0, 1.0);
-        return *this;
-      }
-
-
       ////////// operator*= //////////////////////////
-
-      template <typename T>
-      self_type & operator *= (T const & val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, false, false);
-        return *this;
-      }
       
       self_type & operator *= (cpu_value_type val)
       {
@@ -649,14 +524,6 @@ namespace viennacl
       
       ////////// operator/= //////////////////////////
 
-      template <typename T>
-      self_type & operator /= (T const & val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, true, false);
-        return *this;
-      }
-
       self_type & operator /= (cpu_value_type val)
       {
         viennacl::linalg::am(*this,
@@ -665,37 +532,6 @@ namespace viennacl
       }
 
 
-
-      ////////// operator+ //////////////////////////
-      
-      template <typename MatrixType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<MatrixType2>::value,
-                                    matrix_expression< const matrix_slice<MatrixType>,
-                                                       const MatrixType2,
-                                                       op_add > >::type
-      operator + (const MatrixType2 & other) 
-      {
-        return matrix_expression< const matrix_slice<MatrixType>,
-                                  const MatrixType2,
-                                  op_add > (*this, other);
-      }
-      
-      ////////// operator- //////////////////////////
-      
-      template <typename MatrixType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<MatrixType2>::value,
-                                    matrix_expression< const matrix_slice<MatrixType>,
-                                                       const MatrixType2,
-                                                       op_sub > >::type
-      operator - (const MatrixType2 & other) 
-      {
-        return matrix_expression< const matrix_slice<MatrixType>,
-                                  const MatrixType2,
-                                  op_sub > (*this, other);
-      }
-      
-      
-      
 
       //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
       //reference operator()(size_type i, size_type j) { return A_(start1() + i, start2() + i); }
@@ -723,22 +559,6 @@ namespace viennacl
     this->elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
     viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
     *this = proxy;
-  }
-  
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::operator=(const matrix_slice< viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > & mat)
-  {
-    viennacl::linalg::am(*this,
-                         mat, SCALARTYPE(1.0), 1, false, false);
-    return *this;
-  }
-
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::operator=(const matrix_slice<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > & mat)
-  {
-    viennacl::linalg::am(*this,
-                         mat, SCALARTYPE(1.0), 1, false, false);
-    return *this;
   }
   
   

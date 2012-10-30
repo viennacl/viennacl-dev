@@ -105,7 +105,7 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Assignment of a scaled vector (or -range or -slice), i.e. v1 -= v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
+      /** @brief Assignment of a scaled vector (or -range or -slice), i.e. v1 = v2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
       */
       template <typename V1, typename S1, typename OP>
       typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value && viennacl::is_any_scalar<S1>::value,

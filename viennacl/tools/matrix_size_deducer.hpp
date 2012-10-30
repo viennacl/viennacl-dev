@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file matrix_size_deducer.hpp
+/** @file viennacl/tools/matrix_size_deducer.hpp
     @brief Helper implementations that deduce the dimensions of the supplied matrix-valued expressions.
 */
 
@@ -48,6 +48,7 @@ namespace viennacl
       static std::size_t size1(LHS & lhs, RHS & /*rhs*/) { return lhs.size1(); }
       static std::size_t size2(LHS & /*lhs*/, RHS & rhs) { return rhs.size2(); }
     };
+
     
     //special case: outer vector product:
     template <typename ScalarType, unsigned int A1, unsigned int A2>
@@ -62,6 +63,100 @@ namespace viennacl
                                viennacl::vector<ScalarType, A2> const & rhs) { return rhs.size(); }
     };
 
+    //special case: multiplication with a GPU scalar
+    template <typename ScalarType, typename F, unsigned int A>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix<ScalarType, F, A>,
+                               const viennacl::scalar<ScalarType>,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix<ScalarType, F, A> const & lhs,
+                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix<ScalarType, F, A> const & lhs,
+                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    //special case: multiplication with a CPU scalar
+    template <typename ScalarType, typename F, unsigned int A>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix<ScalarType, F, A>,
+                               const ScalarType,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix<ScalarType, F, A> const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix<ScalarType, F, A> const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    
+    //special case: multiplication with a GPU scalar for a matrix_range
+    template <typename MatrixType, typename T>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_range<MatrixType>,
+                               const viennacl::scalar<T>,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix_range<MatrixType> const & lhs,
+                               viennacl::scalar<T> const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix_range<MatrixType> const & lhs,
+                               viennacl::scalar<T> const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    //special case: multiplication with a CPU scalar for a matrix_range
+    template <typename ScalarType, typename F, unsigned int A>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_range<viennacl::matrix<ScalarType, F, A> >,
+                               const ScalarType,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix_range<viennacl::matrix<ScalarType, F, A> > const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix_range<viennacl::matrix<ScalarType, F, A> > const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    
+
+    //special case: multiplication with a GPU scalar for a matrix_slice
+    template <typename MatrixType, typename T>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_slice<MatrixType>,
+                               const viennacl::scalar<T>,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix_slice<MatrixType> const & lhs,
+                               viennacl::scalar<T> const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix_slice<MatrixType> const & lhs,
+                               viennacl::scalar<T> const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    //special case: multiplication with a CPU scalar for a matrix_slice
+    template <typename ScalarType, typename F, unsigned int A>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_slice<viennacl::matrix<ScalarType, F, A> >,
+                               const ScalarType,
+                               viennacl::op_prod>
+    {
+      static std::size_t size1(viennacl::matrix_slice<viennacl::matrix<ScalarType, F, A> > const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix_slice<viennacl::matrix<ScalarType, F, A> > const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size2(); }
+    };
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     //special case: transposed matrix-vector product: Return the number of rows of the matrix
     template <typename MatrixType>
     struct MATRIX_SIZE_DEDUCER<MatrixType,

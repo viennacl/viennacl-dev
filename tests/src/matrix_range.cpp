@@ -420,8 +420,6 @@ int run_test(double epsilon)
       std::cerr << "Test failed!" << std::endl;
     }
 
-    
-
     std::cout << "Testing A=matrix, B=range, C=matrix ..." << std::endl;
     if (run_test(epsilon,
                  ublas_A, ublas_B, ublas_C,
@@ -471,6 +469,7 @@ int run_test(double epsilon)
       std::cerr << "Test failed!" << std::endl;
     }
     
+
 
     /////// A=range:
     std::cout << "Testing A=range, B=matrix, C=matrix ..." << std::endl;
@@ -627,8 +626,8 @@ int run_test(double epsilon)
       std::cerr << "Test failed!" << std::endl;
     }
     
-    
-    
+
+    return EXIT_SUCCESS;
 }
 
 int main (int, const char **)

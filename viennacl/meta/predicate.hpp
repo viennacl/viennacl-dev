@@ -177,8 +177,22 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
 
+    //
+    // is_any_dense_nonstructured_transposed_matrix
+    //
+    template <typename T>
+    struct is_any_dense_nonstructured_transposed_matrix
+    {
+      enum { value = false };
+    };
+
+    template <typename T>
+    struct is_any_dense_nonstructured_transposed_matrix< viennacl::matrix_expression<const T, const T, op_trans> >
+    {
+      enum { value = is_any_dense_nonstructured_matrix<T>::value };
+    };
+    
     
     //
     // is_circulant_matrix
