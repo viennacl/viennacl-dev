@@ -145,8 +145,8 @@ int test(Epsilon const& epsilon,
   
   // --------------------------------------------------------------------------
   std::cout << "Testing inner_prod..." << std::endl;
-  cpu_result = viennacl::linalg::inner_prod(ublas_v1, ublas_v1);
-  gpu_result = viennacl::linalg::inner_prod(vcl_v1, vcl_v1);
+  cpu_result = viennacl::linalg::inner_prod(ublas_v1, ublas_v2);
+  gpu_result = viennacl::linalg::inner_prod(vcl_v1, vcl_v2);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;

@@ -194,14 +194,10 @@ set(VECTOR_SRCS
    vector/align1/diag_precond.cl
    vector/align1/index_norm_inf.cl
    vector/align1/inner_prod.cl
-   vector/align1/norm_1.cl
-   vector/align1/norm_2.cl
-   vector/align1/norm_inf.cl
+   vector/align1/norm.cl
    vector/align1/plane_rotation.cl
-   vector/align1/sqrt_sum.cl
    vector/align1/sum.cl
    vector/align1/swap.cl
-   vector/align1/vmax.cl
    vector/align4/dummy
    vector/align16/dummy)
 

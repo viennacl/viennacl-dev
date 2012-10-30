@@ -98,42 +98,20 @@ namespace viennacl
     // ----------------------------------------------------
     // VIENNACL
     //
-    template< typename ScalarType, unsigned int alignment1, unsigned int alignment2 >
-    viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment1>, 
-                                 const viennacl::vector<ScalarType, alignment2>,
-                                 viennacl::op_inner_prod >
-    inner_prod(viennacl::vector<ScalarType, alignment1> const & vector1,
-               viennacl::vector<ScalarType, alignment2> const & vector2)
+    template< typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::scalar_expression< const V1, const V2, viennacl::op_inner_prod >
+                                >::type
+    inner_prod(V1 const & vector1,
+               V2 const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment1>, 
-                                          const viennacl::vector<ScalarType, alignment2>,
+      return viennacl::scalar_expression< const V1, 
+                                          const V2,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
     
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_range<VectorType>, 
-                                 const viennacl::vector_range<VectorType>,
-                                 viennacl::op_inner_prod >
-    inner_prod(viennacl::vector_range<VectorType> const & vector1,
-               viennacl::vector_range<VectorType> const & vector2)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_range<VectorType>, 
-                                          const viennacl::vector_range<VectorType>,
-                                          viennacl::op_inner_prod >(vector1, vector2);
-    }
-
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_slice<VectorType>, 
-                                 const viennacl::vector_slice<VectorType>,
-                                 viennacl::op_inner_prod >
-    inner_prod(viennacl::vector_slice<VectorType> const & vector1,
-               viennacl::vector_slice<VectorType> const & vector2)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_slice<VectorType>, 
-                                          const viennacl::vector_slice<VectorType>,
-                                          viennacl::op_inner_prod >(vector1, vector2);
-    }
 
   } // end namespace linalg
 } // end namespace viennacl
