@@ -177,7 +177,7 @@ namespace viennacl
 
 
       //copy constructor:
-      matrix(const matrix<SCALARTYPE, F, ALIGNMENT> & other) : rows_(other.size1()), columns_(other.size2())
+      matrix(const self_type & other) : rows_(other.size1()), columns_(other.size2())
       {
         elements_.switch_active_handle_id(viennacl::traits::handle(other).get_active_handle_id());
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
@@ -233,7 +233,7 @@ namespace viennacl
       
       
 
-      /** @brief Implementation of the operation v1 = v2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
+      /** @brief Implementation of the operation m1 = m2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
       *
       * @param proxy  An expression template proxy class.
       */
@@ -259,18 +259,18 @@ namespace viennacl
         return *this;
       }
 
-      //v1 = v2 +- v3; 
-      /** @brief Implementation of the operation v1 = v2 +- v3
+      //m1 = m2 +- m3; 
+      /** @brief Implementation of the operation m1 = m2 +- m3
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename V1, typename V2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<V2>::value
+      template <typename M1, typename M2, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
-      operator = (const matrix_expression< const V1,
-                                           const V2,
+      operator = (const matrix_expression< const M1,
+                                           const M2,
                                            OP> & proxy)
       {
         assert(  (proxy.lhs().size1() == size1())
@@ -291,19 +291,19 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Implementation of the operation v1 = v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+      /** @brief Implementation of the operation m1 = m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename V1,
-                typename V2, typename S2, typename OP2,
+      template <typename M1,
+                typename M2, typename S2, typename OP2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<V2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
-      operator = (const matrix_expression< const V1,
-                                           const matrix_expression<const V2, const S2, OP2>,
+      operator = (const matrix_expression< const M1,
+                                           const matrix_expression<const M2, const S2, OP2>,
                                            OP> & proxy)
       {
         assert(  (proxy.lhs().size1() == size1())
@@ -329,19 +329,19 @@ namespace viennacl
         return *this;
       }
 
-      /** @brief Implementation of the operation v1 = v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+      /** @brief Implementation of the operation m1 = m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename V1, typename S1, typename OP1,
-                typename V2,
+      template <typename M1, typename S1, typename OP1,
+                typename M2,
                 typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<V1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_dense_nonstructured_matrix<V2>::value
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value && viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
+                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
                                     && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                     self_type &>::type
-      operator = (const matrix_expression< const matrix_expression<const V1, const S1, OP1>,
-                                           const V2,
+      operator = (const matrix_expression< const matrix_expression<const M1, const S1, OP1>,
+                                           const M2,
                                            OP> & proxy)
       {
         assert(  (proxy.lhs().size1() == size1())
@@ -362,7 +362,7 @@ namespace viennacl
         return *this;
       }
       
-      /** @brief Implementation of the operation v1 = v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+      /** @brief Implementation of the operation m1 = m2 @ alpha +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
       *
       * @param proxy  An expression template proxy class.
       */
@@ -538,10 +538,10 @@ namespace viennacl
       
       //this = A * B and related (with trans())
       template <typename M1, typename M2>
-      typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                   && viennacl::is_any_dense_nonstructured_matrix<M2>::value,
+      typename viennacl::enable_if<   (viennacl::is_any_dense_nonstructured_matrix<M1>::value || viennacl::is_any_dense_nonstructured_transposed_matrix<M1>::value)
+                                   && (viennacl::is_any_dense_nonstructured_matrix<M2>::value || viennacl::is_any_dense_nonstructured_transposed_matrix<M2>::value),
                                    self_type & >::type
-      operator = (const matrix_expression< M1, M2, op_prod > & proxy) 
+      operator = (const matrix_expression< const M1, const M2, op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;

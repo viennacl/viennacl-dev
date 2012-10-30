@@ -201,39 +201,40 @@ namespace viennacl
             matrix_range<matrix<SCALARTYPE, row_major, 1> > & gpu_matrix_range )
   {
     assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-           && (cpu_matrix.size2() == gpu_matrix_range.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_range.size2())
+           && "Matrix size mismatch!");
     
-     if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() != gpu_matrix_range.get().size2())
-     {
-       std::vector<SCALARTYPE> entries(gpu_matrix_range.size2());
-       
-       //copy each stride separately:
-       for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
-       {
-         for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-           entries[j] = cpu_matrix(i,j);
-         
-         std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.get().internal_size2() + gpu_matrix_range.start2();
-         std::size_t num_entries = gpu_matrix_range.size2();
-         viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
-        //std::cout << "Strided copy worked!" << std::endl;
-       }
-     }
-     else
-     {
-       //full block can be copied: 
-       std::vector<SCALARTYPE> entries(gpu_matrix_range.size1()*gpu_matrix_range.size2());
-       
-       //copy each stride separately:
-       for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
-         for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-           entries[i*gpu_matrix_range.get().internal_size2() + j] = cpu_matrix(i,j);
-       
-       std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.get().internal_size2();
-       std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-       viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
-       //std::cout << "Block copy worked!" << std::endl;
-     }
+    if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() != gpu_matrix_range.get().size2())
+    {
+      std::vector<SCALARTYPE> entries(gpu_matrix_range.size2());
+      
+      //copy each stride separately:
+      for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
+      {
+        for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
+          entries[j] = cpu_matrix(i,j);
+        
+        std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.get().internal_size2() + gpu_matrix_range.start2();
+        std::size_t num_entries = gpu_matrix_range.size2();
+        viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+      //std::cout << "Strided copy worked!" << std::endl;
+      }
+    }
+    else
+    {
+      //full block can be copied: 
+      std::vector<SCALARTYPE> entries(gpu_matrix_range.size1()*gpu_matrix_range.size2());
+      
+      //copy each stride separately:
+      for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
+        for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
+          entries[i*gpu_matrix_range.get().internal_size2() + j] = cpu_matrix(i,j);
+      
+      std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.get().internal_size2();
+      std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
+      viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+      //std::cout << "Block copy worked!" << std::endl;
+    }
   }
   
   //column_major:
