@@ -391,7 +391,7 @@ namespace viennacl
           data = std::fabs(data_vec1[i*inc1+start1]);
           if (data > temp)
           {
-            index = i*inc1+start1;
+            index = i;
             temp = data;
           }
         }

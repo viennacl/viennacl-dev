@@ -14,10 +14,6 @@ M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, 
 #include <stdexcept>
 #include <vector>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr-method.hpp"
 

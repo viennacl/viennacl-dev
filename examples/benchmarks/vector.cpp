@@ -19,10 +19,6 @@
  #define NDEBUG
 #endif
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -98,7 +94,7 @@ int run_benchmark()
   
   
   // inner product
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   std::cout << "------- Vector inner products ----------" << std::endl;
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -115,13 +111,13 @@ int run_benchmark()
   
   std_result = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2); //startup calculation
   std_result = 0.0;
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_factor2 = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -142,14 +138,14 @@ int run_benchmark()
   
   
   vcl_vec3 = vcl_vec1 + vcl_vec2; //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   std_result = 0.0;
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec3 = vcl_vec1 + vcl_vec2;
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -171,13 +167,13 @@ int run_benchmark()
   
   
   vcl_vec1 += vcl_factor1 * vcl_vec2; //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 += vcl_factor1 * vcl_vec2;
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -198,13 +194,13 @@ int run_benchmark()
   std::cout << "CPU "; printOps(3 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   vcl_vec3 = vcl_vec2 / vcl_factor1 + vcl_factor2 * (vcl_vec1 - vcl_factor1*vcl_vec2); //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec3 = vcl_vec2 / vcl_factor1 + vcl_factor2 * (vcl_vec1 - vcl_factor1*vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(3 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -219,8 +215,9 @@ int main()
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   
+#ifdef VIENNACL_HAVE_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
-  
+#endif  
   
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
@@ -232,7 +229,9 @@ int main()
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
   run_benchmark<float>();
+#ifdef VIENNACL_HAVE_OPENCL
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     std::cout << std::endl;
     std::cout << "   -------------------------------" << std::endl;

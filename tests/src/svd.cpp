@@ -4,10 +4,6 @@
 #include <vector>
 #include <cmath>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 

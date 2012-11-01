@@ -52,6 +52,7 @@ else(ENV_OPENCLROOT)
   find_path(
     OPENCL_INCLUDE_DIR
     NAMES CL/cl.h OpenCL/cl.h
+    PATHS ${PROJECT_SOURCE_DIR}      #use the CL/ include folder provided with ViennaCL
     )
 
   find_library(

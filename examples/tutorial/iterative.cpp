@@ -25,10 +25,6 @@
  #define NDEBUG
 #endif
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 //
 // ublas includes
 //

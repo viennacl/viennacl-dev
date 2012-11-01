@@ -1,17 +1,37 @@
-foreach(PROG blas3_prod blas3_solve fft iterators
-        generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
-        global_variables
-        matrix-vector matrix nmf qr-method
-        scalar sparse structured-matrices svd
+
+# tests with CPU backend
+foreach(PROG blas3_prod blas3_solve iterators
+        matrix-vector matrix
+        scalar sparse
         vector)
-   add_executable(${PROG}-test src/${PROG}.cpp)
-   target_link_libraries(${PROG}-test ${OPENCL_LIBRARIES})
-   add_test(${PROG} ${PROG}-test)
+   add_executable(${PROG}-test-cpu src/${PROG}.cpp)
+   add_test(${PROG}-cpu ${PROG}-test-cpu)
 endforeach(PROG)
 
-include_directories(${PROJECT_SOURCE_DIR}/external)
-add_executable(external_linkage 
-                src/external_1.cpp
-                src/external_2.cpp 
-                ${PROJECT_SOURCE_DIR}/external/pugixml/src/pugixml.cpp)
-target_link_libraries(external_linkage ${OPENCL_LIBRARIES})
+
+# tests with OpenCL backend
+if (ENABLE_OPENCL)
+  foreach(PROG blas3_prod blas3_solve fft iterators
+          generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
+          global_variables
+          matrix-vector matrix nmf qr-method
+          scalar sparse structured-matrices svd
+          vector)
+     add_executable(${PROG}-test-opencl src/${PROG}.cpp)
+     target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
+     add_test(${PROG}-opencl ${PROG}-test-opencl)
+     set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_HAVE_OPENCL")
+  endforeach(PROG)
+
+  include_directories(${PROJECT_SOURCE_DIR}/external)
+  add_executable(external_linkage 
+                 src/external_1.cpp
+                 src/external_2.cpp 
+                 ${PROJECT_SOURCE_DIR}/external/pugixml/src/pugixml.cpp)
+  target_link_libraries(external_linkage ${OPENCL_LIBRARIES})
+  set_target_properties(external_linkage PROPERTIES COMPILE_FLAGS "-DVIENNACL_HAVE_OPENCL")
+endif (ENABLE_OPENCL)
+
+# tests with CUDA backend
+#  ... to come ...
+

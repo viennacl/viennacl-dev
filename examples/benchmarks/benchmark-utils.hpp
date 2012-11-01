@@ -83,13 +83,13 @@ public:
 	{
 		struct timeval tval;
 		gettimeofday(&tval, NULL);
-		int64_t end_time = tval.tv_sec * 1000000 + tval.tv_usec;
+		double end_time = tval.tv_sec * 1000000 + tval.tv_usec;
 
 		return static_cast<double>(end_time-ts) / 1000000.0;
 	}
 
 private:
-	int64_t ts;
+	double ts;
 };
 
 

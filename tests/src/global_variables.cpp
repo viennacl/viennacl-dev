@@ -21,10 +21,6 @@
 #include <algorithm>
 #include <cmath>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 //
 // *** ViennaCL
 //

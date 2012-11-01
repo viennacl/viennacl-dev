@@ -23,10 +23,6 @@
 
 #define VIENNACL_HAVE_UBLAS
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"

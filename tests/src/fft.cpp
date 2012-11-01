@@ -22,10 +22,6 @@
 #include <fstream>
 #include <algorithm>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 //#define VIENNACL_BUILD_INFO
 
 #include "viennacl/fft.hpp"

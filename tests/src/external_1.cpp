@@ -27,10 +27,6 @@
 //
 #include <iostream>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
 //
 // *** ViennaCL
 //

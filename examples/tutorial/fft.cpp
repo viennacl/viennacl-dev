@@ -22,11 +22,6 @@
 #include <complex>
 #include <fstream>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
-#endif
-
-
 // include basic scalar and vector types of ViennaCL
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
