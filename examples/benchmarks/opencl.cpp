@@ -18,6 +18,10 @@
  #define NDEBUG
 #endif
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"

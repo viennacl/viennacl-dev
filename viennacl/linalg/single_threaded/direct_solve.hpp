@@ -23,8 +23,6 @@
 
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/tools/matrix_kernel_class_deducer.hpp"
-#include "viennacl/tools/matrix_solve_kernel_class_deducer.hpp"
 
 #include "viennacl/linalg/single_threaded/common.hpp"
 

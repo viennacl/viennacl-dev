@@ -732,7 +732,9 @@ int main (int, const char **)
     return EXIT_FAILURE;
   
   
-  if( viennacl::ocl::current_device().double_support() )
+#ifdef VIENNACL_HAVE_OPENCL   
+   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     double epsilon = 1e-12;
     std::cout << "# Testing setup:" << std::endl;

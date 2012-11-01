@@ -23,6 +23,10 @@
 
 #define VIENNACL_HAVE_UBLAS 1
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #define SOLVER_ITERS 2500
 //#define SCALAR float
 #define SCALAR double

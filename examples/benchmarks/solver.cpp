@@ -23,6 +23,10 @@
 
 #define VIENNACL_HAVE_UBLAS 1
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/coordinate_matrix.hpp"

@@ -116,8 +116,8 @@ namespace viennacl
         *   @param stride Stride for the support of vector_slice
         */        
         const_vector_iterator(vector<SCALARTYPE, ALIGNMENT> const & vec,
-                              cl_uint index,
-                              cl_uint start = 0,
+                              std::size_t index,
+                              std::size_t start = 0,
                               vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {};
                               
         /** @brief Constructor for vector-like treatment of arbitrary buffers
@@ -127,8 +127,8 @@ namespace viennacl
         *   @param stride    Stride for the support of vector_slice
         */        
         const_vector_iterator(handle_type const & elements,
-                              cl_uint index,
-                              cl_uint start = 0,
+                              std::size_t index,
+                              std::size_t start = 0,
                               vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {};
 
         /** @brief Dereferences the iterator and returns the value of the element. For convenience only, performance is poor due to OpenCL overhead! */
@@ -206,7 +206,7 @@ namespace viennacl
         vector_iterator() : base_type(){};
         vector_iterator(handle_type & elements,
                         std::size_t index,
-                        cl_uint start = 0,
+                        std::size_t start = 0,
                         vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {};
         /** @brief Constructor
         *   @param vec    The vector over which to iterate
@@ -214,7 +214,7 @@ namespace viennacl
         */        
         vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec,
                         std::size_t index,
-                        cl_uint start = 0,
+                        std::size_t start = 0,
                         vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {};
         //vector_iterator(base_type const & b) : base_type(b) {};
 
@@ -273,8 +273,6 @@ namespace viennacl
       */
       explicit vector(size_type vec_size) : size_(vec_size)
       {
-        viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::init(); 
-        
         if (size_ > 0)
         {
           std::vector<SCALARTYPE> temp(internal_size());
@@ -290,20 +288,18 @@ namespace viennacl
       * @param existing_mem   An OpenCL handle representing the memory
       * @param vec_size       The size of the vector. 
       */
+#ifdef VIENNACL_HAVE_OPENCL
       explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
       {
-        viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
-        
         elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         elements_.opencl_handle() = existing_mem;
         elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
       }
+#endif
       
       template <typename LHS, typename RHS, typename OP>
       vector(vector_expression<LHS, RHS, OP> const & proxy) : size_(proxy.size())
       {
-        viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
-        
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*proxy.size());
         *this = proxy;
@@ -315,8 +311,6 @@ namespace viennacl
       */
       vector(const self_type & vec) : size_(vec.size())
       {
-        viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
-        
         if (size() != 0)
         {
           elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
@@ -790,9 +784,6 @@ namespace viennacl
       void resize(size_type new_size, bool preserve = true)
       {
         assert(new_size > 0 && "Positive size required when resizing vector!");
-        
-        if (size() == 0)  // Required for some corner cases when no vector with nonzero size has been created yet.
-          viennacl::linalg::kernels::vector<SCALARTYPE, 1>::init(); 
         
         if (new_size != size_)
         {
@@ -1269,13 +1260,9 @@ namespace viennacl
               vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin)
     {
       assert(gpu_src_end - gpu_src_begin >= 0);
-      
-      if (gpu_src_begin.stride() != 1)
-      {
-        std::cout << "ViennaCL ERROR: copy() for GPU->GPU not implemented for slices! Use operator= instead for the moment." << std::endl;
-        exit(EXIT_FAILURE);
-      }      
-      else if (gpu_src_begin != gpu_src_end)
+      assert(gpu_src_begin.stride() == 1 && "ViennaCL ERROR: copy() for GPU->GPU not implemented for slices! Use operator= instead for the moment.");
+
+      if (gpu_src_begin != gpu_src_end)
         viennacl::backend::memory_copy(gpu_src_begin.handle(), gpu_dest_begin.handle(),
                                        sizeof(SCALARTYPE) * gpu_src_begin.offset(),
                                        sizeof(SCALARTYPE) * gpu_dest_begin.offset(),
@@ -1323,7 +1310,6 @@ namespace viennacl
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     std::ostream & operator<<(std::ostream & s, vector<SCALARTYPE,ALIGNMENT> const & val)
     {
-      viennacl::ocl::get_queue().finish();
       std::vector<SCALARTYPE> tmp(val.size());
       viennacl::copy(val.begin(), val.end(), tmp.begin());
       std::cout << "[" << val.size() << "](";

@@ -24,6 +24,10 @@
 
 //#define VIENNACL_DEBUG_ALL
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #include "viennacl/toeplitz_matrix.hpp"
 #include "viennacl/circulant_matrix.hpp"
 #include "viennacl/vandermonde_matrix.hpp"

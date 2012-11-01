@@ -38,6 +38,10 @@ file(RELATIVE_PATH CONF_REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
 
 option(BUILD_EXAMPLES "Build example programs" ON)
 
+option(ENABLE_OPENCL "Use the OpenCL backend" ON)
+
+option(ENABLE_OPENMP "Use OpenMP acceleration" ON)
+
 # If you are interested in the impact of different kernel parameters on
 # performance, you may want to give ViennaProfiler a try (see
 # http://sourceforge.net/projects/viennaprofiler/) Set your connection
@@ -81,8 +85,14 @@ if(ENABLE_UBLAS OR BUILD_TESTING OR VIENNACL_SRC_DIST)
    find_package(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
-find_package(OpenCL REQUIRED)
-find_package(OpenMP)
+if (ENABLE_OPENCL)
+   find_package(OpenCL REQUIRED)
+   
+endif(ENABLE_OPENCL)
+
+if (ENABLE_OPENMP)
+   find_package(OpenMP)
+endif(ENABLE_OPENMP)
 
 if(ENABLE_VIENNAPROFILER)
    find_package(ViennaProfiler REQUIRED)

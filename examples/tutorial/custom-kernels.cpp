@@ -20,6 +20,11 @@
 #include <iostream>
 #include <string>
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
+
 //
 // ViennaCL includes
 //

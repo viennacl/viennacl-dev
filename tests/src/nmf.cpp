@@ -1,6 +1,10 @@
 #include <ctime>
 #include <cmath>
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/nmf.hpp"
 

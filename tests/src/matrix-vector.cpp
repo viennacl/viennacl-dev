@@ -80,7 +80,9 @@ template <typename ScalarType, typename F, unsigned int ALIGNMENT>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F, ALIGNMENT> & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
-   viennacl::ocl::get_queue().finish();
+#ifdef VIENNACL_HAVE_OPENCL   
+   viennacl::ocl::get_queue().finish();   //workaround for a bug in AMD APP SDK 2.7
+#endif
    copy(mat2, mat2_cpu);
    ScalarType ret = 0;
    ScalarType act = 0;
@@ -500,7 +502,9 @@ int main()
    std::cout << std::endl;
    
    
+#ifdef VIENNACL_HAVE_OPENCL   
    if( viennacl::ocl::current_device().double_support() )
+#endif
    {
       {
          typedef double NumericT;

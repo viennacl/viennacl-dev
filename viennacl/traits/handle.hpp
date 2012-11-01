@@ -112,7 +112,7 @@ namespace viennacl
     //
     // OpenCL handle extraction
     //
-    
+#ifdef VIENNACL_HAVE_OPENCL    
     template <typename T>
     viennacl::ocl::handle<cl_mem> & opencl_handle(T & obj)
     {
@@ -127,6 +127,7 @@ namespace viennacl
     
     inline float  opencl_handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
     inline double opencl_handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+#endif
 
     //
     // RAM handle extraction

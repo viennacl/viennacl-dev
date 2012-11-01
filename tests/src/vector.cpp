@@ -81,7 +81,9 @@ template <typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
    ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
+#ifdef VIENNACL_HAVE_OPENCL   
    viennacl::ocl::get_queue().finish();
+#endif
    viennacl::copy(vcl_vec, v2_cpu);
 
    for (unsigned int i=0;i<v1.size(); ++i)
@@ -821,7 +823,9 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
+#ifdef VIENNACL_HAVE_OPENCL   
    if( viennacl::ocl::current_device().double_support() )
+#endif
    {
       {
          typedef double NumericT;

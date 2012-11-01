@@ -25,8 +25,11 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/opencl/sparse_matrix_operations.hpp"
 #include "viennacl/linalg/single_threaded/sparse_matrix_operations.hpp"
+
+#ifdef VIENNACL_HAVE_OPENCL
+  #include "viennacl/linalg/opencl/sparse_matrix_operations.hpp"
+#endif
 
 namespace viennacl
 {
@@ -57,7 +60,7 @@ namespace viennacl
     }
     
     
-    /** @brief Carries out matrix-vector multiplication with a coordinate_matrix
+    /** @brief Carries out matrix-vector multiplication involving a sparse matrix type
     *
     * Implementation of the convenience expression result = prod(mat, vec);
     *
@@ -79,9 +82,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::prod_impl(mat, vec, result);
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::prod_impl(mat, vec, result);
           break;
+#endif
         default:
           throw "not implemented";
       }

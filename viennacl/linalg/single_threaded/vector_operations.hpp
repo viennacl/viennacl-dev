@@ -25,7 +25,6 @@
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"

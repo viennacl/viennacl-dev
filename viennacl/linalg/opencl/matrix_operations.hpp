@@ -72,12 +72,13 @@ namespace viennacl
         M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
         
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
-                                
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
                                 
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(),
                                                               (viennacl::is_cpu_scalar<ScalarType1>::value ? "am_cpu" : "am_gpu"));
@@ -112,6 +113,9 @@ namespace viennacl
           M3 const & mat3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        
         
         std::string kernel_name;
         if      ( viennacl::is_cpu_scalar<ScalarType1>::value &&  viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -130,8 +134,6 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
-                                
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                 cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
@@ -171,6 +173,9 @@ namespace viennacl
              M3 const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        
         
         std::string kernel_name;
         if      ( viennacl::is_cpu_scalar<ScalarType1>::value &&  viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -189,8 +194,6 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
-                                
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                 cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
@@ -240,14 +243,15 @@ namespace viennacl
                       VectorType2 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<MatrixType>::ResultType    KernelClass;
+        KernelClass::init();
+        
         
         assert(mat.size2() == vec.size());
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && "No direct inplace matrix-vector product possible. Introduce a temporary!");
         //result.resize(mat.size1());
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< MatrixType >::ResultType    KernelClass;
-        
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "vec_mul");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)), 
@@ -295,13 +299,14 @@ namespace viennacl
         assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && "Size check failed for transposed matrix-vector product: size2(A^T) == size(x)");  //remember: mat is transposed!
         
         typedef typename viennacl::result_of::cpu_value_type<V1>::type    value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        
         
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(vec.handle() != result.handle() && "No direct inplace transposed matrix-vector product possible. Introduce a temporary!");
         result.resize(viennacl::traits::size1(mat_trans));
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
-        
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "trans_vec_mul");
         
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat_trans.lhs()),
@@ -616,12 +621,13 @@ namespace viennacl
         assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && "Size mismatch in scaled_rank_1_update: size2(A) != size(v2)");
 
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        
         
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
-        
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 

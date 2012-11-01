@@ -22,9 +22,13 @@
 */
 
 #include <vector>
+#include <cassert>
 #include "viennacl/tools/shared_ptr.hpp"
-#include "viennacl/backend/opencl.hpp"
 #include "viennacl/backend/cpu_ram.hpp"
+
+#ifdef VIENNACL_HAVE_OPENCL
+  #include "viennacl/backend/opencl.hpp"
+#endif
 
 namespace viennacl
 {
@@ -35,16 +39,18 @@ namespace viennacl
     {
       MEMORY_NOT_INITIALIZED
       , MAIN_MEMORY
-//#ifdef VIENNACL_WITH_OPENCL
       , OPENCL_MEMORY
-//#endif
-#ifdef VIENNACL_WITH_CUDA
       , CUDA_MEMORY
-#endif
     };
     
     //inline memory_types default_memory_type() { return MAIN_MEMORY; }
+#ifdef VIENNACL_HAVE_OPENCL
     inline memory_types default_memory_type() { return OPENCL_MEMORY; }
+    inline void finish() { viennacl::ocl::get_queue().finish(); }
+#else
+    inline memory_types default_memory_type() { return MAIN_MEMORY; }
+    inline void finish() {}
+#endif    
     
     class mem_handle
     {
@@ -56,9 +62,10 @@ namespace viennacl
         ram_handle_type       & ram_handle()       { return ram_handle_; }
         ram_handle_type const & ram_handle() const { return ram_handle_; }
         
+#ifdef VIENNACL_HAVE_OPENCL
         viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
-        
+#endif        
         memory_types get_active_handle_id() const { return active_handle_; }
         void switch_active_handle_id(memory_types new_id)
         {
@@ -78,8 +85,12 @@ namespace viennacl
           
           switch (active_handle_)
           {
+            case MAIN_MEMORY:
+              return ram_handle_.get() == other.ram_handle_.get();
+#ifdef VIENNACL_HAVE_OPENCL
             case OPENCL_MEMORY:
               return opencl_handle_.get() == other.opencl_handle_.get();
+#endif
             default:
               return false;
           }
@@ -102,20 +113,96 @@ namespace viennacl
           ram_handle_ = ram_handle_tmp;
           
           // swap OpenCL handle:
+#ifdef VIENNACL_HAVE_OPENCL
           opencl_handle_.swap(other.opencl_handle_);
+#endif          
         }
         
       private:
         memory_types active_handle_;
         ram_handle_type ram_handle_;
-//#ifdef VIENNACL_WITH_OPENCL
+#ifdef VIENNACL_HAVE_OPENCL
         viennacl::ocl::handle<cl_mem> opencl_handle_;
-//#endif
-#ifdef VIENNACL_WITH_CUDA
+#endif
+#ifdef VIENNACL_HAVE_CUDA
         viennacl::cuda::handle        cuda_handle_;
 #endif
     };
 
+
+    template <typename T>
+    struct integral_type_host_array;
+    
+    template <>
+    struct integral_type_host_array<unsigned int>
+    {
+      public:
+        explicit integral_type_host_array() : convert_to_opencl_( (default_memory_type() == OPENCL_MEMORY) ? true : false), bytes_buffer_(NULL), buffer_size_(0) {}
+        
+        explicit integral_type_host_array(mem_handle const & handle, std::size_t num = 0) : convert_to_opencl_(false), bytes_buffer_(NULL), buffer_size_(sizeof(unsigned int) * num)
+        {
+          
+#ifdef VIENNACL_HAVE_OPENCL
+          memory_types mem_type = handle.get_active_handle_id();
+          if (mem_type == MEMORY_NOT_INITIALIZED)
+            mem_type = default_memory_type();
+          
+          if (mem_type == OPENCL_MEMORY)
+          {
+            convert_to_opencl_ = true;
+            buffer_size_ = sizeof(cl_uint) * num;
+          }
+#endif
+
+          if (num > 0)
+          {
+            bytes_buffer_ = new char[buffer_size_];
+            
+            for (std::size_t i=0; i<buffer_size_; ++i)
+              bytes_buffer_[i] = 0;
+          }
+        }
+        
+        ~integral_type_host_array() { delete[] bytes_buffer_; }
+        
+        template <typename U>
+        void set(std::size_t index, U value)
+        {
+#ifdef VIENNACL_HAVE_OPENCL
+          if (convert_to_opencl_)
+            reinterpret_cast<cl_uint *>(bytes_buffer_)[index] = static_cast<cl_uint>(value);
+          else
+#endif
+            reinterpret_cast<unsigned int *>(bytes_buffer_)[index] = static_cast<unsigned int>(value);
+        }
+
+        void * get() { return reinterpret_cast<void *>(bytes_buffer_); }
+        unsigned int operator[](std::size_t index) const 
+        {
+          assert(index < size() && "index out of bounds");
+#ifdef VIENNACL_HAVE_OPENCL
+          if (convert_to_opencl_)
+            return static_cast<unsigned int>(reinterpret_cast<cl_uint *>(bytes_buffer_)[index]);
+#endif
+          return reinterpret_cast<unsigned int *>(bytes_buffer_)[index];
+        }
+        
+        std::size_t raw_size() const { return buffer_size_; }
+        std::size_t element_size() const
+        {
+#ifdef VIENNACL_HAVE_OPENCL
+          if (convert_to_opencl_)
+            return sizeof(cl_uint);
+#endif
+          return sizeof(unsigned int); 
+        }
+        std::size_t size() const { return buffer_size_ / element_size(); }
+        
+      private:
+        bool convert_to_opencl_;
+        char * bytes_buffer_;
+        std::size_t buffer_size_;
+    };
     
     
     // Requirements for backend:
@@ -143,9 +230,11 @@ namespace viennacl
           case MAIN_MEMORY:
             handle.ram_handle() = cpu_ram::memory_create(size_in_bytes, host_ptr);
             break;
+#ifdef VIENNACL_HAVE_OPENCL
           case OPENCL_MEMORY:
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
             break;
+#endif
           default:
             throw "unknown memory handle!";
         }
@@ -167,9 +256,11 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_copy(src_buffer.ram_handle(), dst_buffer.ram_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
+#ifdef VIENNACL_HAVE_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
+#endif
           default:
             throw "unknown memory handle!";
         }
@@ -188,10 +279,12 @@ namespace viennacl
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.ram_handle() = src_buffer.ram_handle();
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case OPENCL_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.opencl_handle() = src_buffer.opencl_handle();
           break;
+#endif
         default:
           throw "unknown memory handle!";
       }
@@ -209,9 +302,11 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr);
             break;
+#ifdef VIENNACL_HAVE_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
             break;
+#endif
           default:
             throw "unknown memory handle!";
         }
@@ -230,9 +325,11 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr);
             break;
+#ifdef VIENNACL_HAVE_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
             break;
+#endif            
           default:
             throw "unknown memory handle!";
         }

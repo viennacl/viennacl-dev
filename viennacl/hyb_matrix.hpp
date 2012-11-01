@@ -27,7 +27,6 @@
 #include "viennacl/vector.hpp"
 
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/ocl/backend.hpp"
 
 #include "viennacl/linalg/sparse_matrix_operations.hpp"
 
@@ -40,10 +39,7 @@ namespace viennacl
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
         
-        hyb_matrix() : csr_threshold_(0.8), rows_(0), cols_(0) 
-        {
-          viennacl::linalg::kernels::hyb_matrix<SCALARTYPE, ALIGNMENT>::init();
-        }
+        hyb_matrix() : csr_threshold_(0.8), rows_(0), cols_(0) {}
         
         //hyb_matrix(std::size_t row_num, std::size_t col_num) : csr_threshold_(0.8), rows_(row_num), cols_(col_num)
         //{
@@ -133,9 +129,9 @@ namespace viennacl
 
         std::size_t nnz = gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz();
 
-        std::vector<cl_uint> ell_coords(nnz, 0);
-        std::vector<cl_uint> csr_rows(cpu_matrix.size1() + 1, 0);
-        std::vector<cl_uint> csr_cols;
+        viennacl::backend::integral_type_host_array<unsigned int>  ell_coords(gpu_matrix.ell_coords_, nnz);
+        viennacl::backend::integral_type_host_array<unsigned int>  csr_rows(gpu_matrix.csr_rows_, cpu_matrix.size1() + 1);
+        std::vector<unsigned int> csr_cols;
 
         std::vector<SCALARTYPE> ell_elements(nnz);
         std::vector<SCALARTYPE> csr_elements;
@@ -146,14 +142,14 @@ namespace viennacl
         {
           std::size_t data_index = 0;
   
-          csr_rows[row_it.index1()] = csr_index;
+          csr_rows.set(row_it.index1(), csr_index);
           
           for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
           {
             if(data_index < max_entries_per_row)
             {
-                ell_coords[gpu_matrix.internal_size1() * data_index + col_it.index1()]   = col_it.index2();
-                ell_elements[gpu_matrix.internal_size1() * data_index + col_it.index1()] = *col_it;                        
+                ell_coords.set(gpu_matrix.internal_size1() * data_index + col_it.index1(), col_it.index2());
+                ell_elements[gpu_matrix.internal_size1() * data_index + col_it.index1()] = *col_it;
             }
             else
             {
@@ -174,15 +170,19 @@ namespace viennacl
           csr_elements.push_back(0);
         }
 
-        csr_rows[csr_rows.size() - 1] = csr_index;
+        csr_rows.set(csr_rows.size() - 1, csr_index);
 
         gpu_matrix.csrnnz_ = csr_cols.size();
 
-        viennacl::backend::memory_create(gpu_matrix.ell_coords_,   sizeof(cl_uint) *   ell_coords.size(), &(ell_coords[0]));
+        viennacl::backend::integral_type_host_array<unsigned int> csr_cols_for_gpu(gpu_matrix.csr_cols_, csr_cols.size());
+        for (std::size_t i=0; i<csr_cols.size(); ++i)
+          csr_cols_for_gpu.set(i, csr_cols[i]);
+        
+        viennacl::backend::memory_create(gpu_matrix.ell_coords_,   ell_coords.raw_size(), ell_coords.get());
         viennacl::backend::memory_create(gpu_matrix.ell_elements_, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
         
-        viennacl::backend::memory_create(gpu_matrix.csr_rows_,     sizeof(cl_uint) * csr_rows.size(),     &(csr_rows[0]));
-        viennacl::backend::memory_create(gpu_matrix.csr_cols_,     sizeof(cl_uint) * csr_cols.size(),     &(csr_cols[0]));
+        viennacl::backend::memory_create(gpu_matrix.csr_rows_,     csr_rows.raw_size(),         csr_rows.get());
+        viennacl::backend::memory_create(gpu_matrix.csr_cols_,     csr_cols_for_gpu.raw_size(), csr_cols_for_gpu.get());
         viennacl::backend::memory_create(gpu_matrix.csr_elements_, sizeof(SCALARTYPE) * csr_elements.size(), &(csr_elements[0]));
       }
     }
@@ -195,16 +195,16 @@ namespace viennacl
         cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2());
 
         std::vector<SCALARTYPE> ell_elements(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
-        std::vector<cl_uint> ell_coords(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
+        viennacl::backend::integral_type_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
 
         std::vector<SCALARTYPE> csr_elements(gpu_matrix.csr_nnz());
-        std::vector<cl_uint> csr_rows(gpu_matrix.size1() + 1);
-        std::vector<cl_uint> csr_cols(gpu_matrix.csr_nnz());
+        viennacl::backend::integral_type_host_array<unsigned int> csr_rows(gpu_matrix.handle3(), gpu_matrix.size1() + 1);
+        viennacl::backend::integral_type_host_array<unsigned int> csr_cols(gpu_matrix.handle4(), gpu_matrix.csr_nnz());
 
         viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)    * ell_coords.size(),   &(ell_coords[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle3(), 0, sizeof(cl_uint)    * csr_rows.size(),     &(csr_rows[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle4(), 0, sizeof(cl_uint)    * csr_cols.size(),     &(csr_cols[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, ell_coords.raw_size(), ell_coords.get());
+        viennacl::backend::memory_read(gpu_matrix.handle3(), 0, csr_rows.raw_size(),   csr_rows.get());
+        viennacl::backend::memory_read(gpu_matrix.handle4(), 0, csr_cols.raw_size(),   csr_cols.get());
         viennacl::backend::memory_read(gpu_matrix.handle5(), 0, sizeof(SCALARTYPE) * csr_elements.size(), &(csr_elements[0]));
 
         

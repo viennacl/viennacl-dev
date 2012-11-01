@@ -13,6 +13,11 @@
 //
 // *** ViennaCL
 //
+
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 // #define VIENNACL_DEBUG_ALL
 // #define VIENNACL_DEBUG_BUILD
 // #define VIENNACL_HAVE_UBLAS 1

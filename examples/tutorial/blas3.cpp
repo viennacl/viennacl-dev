@@ -63,6 +63,15 @@
 
 using namespace boost::numeric;
 
+
+#ifndef VIENNACL_HAVE_OPENCL
+  struct dummy
+  {
+    std::size_t size() const { return 1; }
+  };
+#endif
+    
+
 int main()
 {
   typedef float     ScalarType;
@@ -128,11 +137,18 @@ int main()
   // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
   //
   std::cout << std::endl << "--- Computing matrix-matrix product on each available compute device using ViennaCL ---" << std::endl;
+#ifdef VIENNACL_HAVE_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
-  for (size_t i=0; i<devices.size(); ++i)
+#else
+  dummy devices;
+#endif
+  
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
+#endif
 
     //viennacl::copy(ublas_A, vcl_A);
     //viennacl::copy(ublas_B, vcl_B);
@@ -143,10 +159,14 @@ int main()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::get_queue().finish();
+#endif
     timer.start();
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::get_queue().finish();
+#endif
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
     
@@ -155,15 +175,15 @@ int main()
     //
     //viennacl::copy(vcl_C, ublas_C1);
     viennacl::fast_copy(vcl_C, &(stl_C[0]));
-    for (unsigned int i = 0; i < ublas_C1.size1(); ++i)
-      for (unsigned int j = 0; j < ublas_C1.size2(); ++j)
+    for (std::size_t i = 0; i < ublas_C1.size1(); ++i)
+      for (std::size_t j = 0; j < ublas_C1.size2(); ++j)
         ublas_C1(i,j) = stl_C[i * ublas_C1.size2() + j];
 
     std::cout << " - Checking result... ";
     bool check_ok = true;
-    for (unsigned int i = 0; i < ublas_A.size1(); ++i)
+    for (std::size_t i = 0; i < ublas_A.size1(); ++i)
     {
-      for (unsigned int j = 0; j < ublas_A.size2(); ++j)
+      for (std::size_t j = 0; j < ublas_A.size2(); ++j)
       {
         if ( fabs(ublas_C1(i,j) - ublas_C(i,j)) / ublas_C(i,j) > 1e-4 )
         {

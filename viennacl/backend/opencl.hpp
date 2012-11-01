@@ -23,10 +23,8 @@
 
 
 #include <vector>
-//#ifdef VIENNACL_WITH_OPENCL
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/backend.hpp"
-//#endif
 
 namespace viennacl
 {

@@ -23,6 +23,10 @@
 #endif
 //#define VIENNACL_BUILD_INFO
 
+#ifndef VIENNACL_HAVE_OPENCL
+  #define VIENNACL_HAVE_OPENCL
+#endif
+
 #include <utility>
 #include <iostream>
 #include <fstream>

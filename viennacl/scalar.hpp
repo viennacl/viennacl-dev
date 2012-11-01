@@ -25,7 +25,6 @@
 #include "viennacl/backend/memory.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/linalg/scalar_operations.hpp"
-#include "viennacl/linalg/kernels/scalar_kernels.h"
 
 #include <iostream>
 
@@ -126,7 +125,6 @@ namespace viennacl
       /** @brief Allocates the memory for the scalar and sets it to the supplied value. */
       scalar(SCALARTYPE val)
       {
-        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
         viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), &val);
       }
       
@@ -135,6 +133,7 @@ namespace viennacl
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
+#ifdef VIENNACL_HAVE_OPENCL          
       explicit scalar(cl_mem mem, size_t size) : val_(mem) 
       {
         viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
@@ -142,12 +141,12 @@ namespace viennacl
         val_.opencl_handle() = mem;
         val_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
       }
+#endif
 
       /** @brief Allocates memory for the scalar and sets it to the result of supplied expression. */
       template <typename T1, typename T2, typename OP>
       scalar(scalar_expression<T1, T2, OP> const & proxy)
       {
-        viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
         val_.switch_active_handle_id(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
         viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
         *this = proxy;
@@ -567,7 +566,6 @@ namespace viennacl
       {
         if (val_.get_active_handle_id() == viennacl::backend::MEMORY_NOT_INITIALIZED)
         {
-          viennacl::linalg::kernels::scalar<SCALARTYPE, 1>::init(); 
           val_.switch_active_handle_id(new_type_if_init);
           viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
         }

@@ -58,6 +58,7 @@ namespace viennacl
                     const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
                           viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
       {
+        viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
         
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
@@ -72,6 +73,7 @@ namespace viennacl
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::unit_lower_tag)
       {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
         unsigned int threads = k.local_work_size();
 
@@ -91,6 +93,7 @@ namespace viennacl
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::upper_tag)
       {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
         unsigned int threads = k.local_work_size();
         
@@ -119,6 +122,8 @@ namespace viennacl
                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
                            viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
       {
+        viennacl::linalg::kernels::coordinate_matrix<TYPE, ALIGNMENT>::init();
+        
         result.clear();
         
         //std::cout << "prod(coordinate_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
@@ -144,13 +149,14 @@ namespace viennacl
       //
       
       template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      void prod_impl( const viennacl::ell_matrix<TYPE, ALIGNMENT>& mat, 
-                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT>& vec,
-                      viennacl::vector<TYPE, VECTOR_ALIGNMENT>& result)
+      void prod_impl( const viennacl::ell_matrix<TYPE, ALIGNMENT> & mat, 
+                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
+                      viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
       {
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
 
+        viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::init();
         result.clear();
 
         std::stringstream ss;
@@ -190,6 +196,8 @@ namespace viennacl
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
 
+        viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::init();
+        
         result.clear();
 
         viennacl::ocl::kernel& k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");

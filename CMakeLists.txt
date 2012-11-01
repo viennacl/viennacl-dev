@@ -16,11 +16,6 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosity
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  INCLUDE_DIRECTORIES("/opt/local/include") 
-  set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
 #SET(BOOSTPATH "C:/Program\ Files\ (x86)/boost/boost_1_42")    #Boost path for other systems - customize as needed
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -64,6 +59,12 @@ endif()
 #################
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  INCLUDE_DIRECTORIES("/opt/local/include") 
+  set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
 
 # Subdirectories
 ################

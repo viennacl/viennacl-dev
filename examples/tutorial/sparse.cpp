@@ -43,14 +43,6 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/compressed_matrix.hpp"
-#include "viennacl/coordinate_matrix.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/linalg/ilu.hpp"
-#include "viennacl/linalg/jacobi_precond.hpp"
-#include "viennacl/linalg/cg.hpp"
-#include "viennacl/linalg/bicgstab.hpp"
-#include "viennacl/linalg/gmres.hpp"
-#include "viennacl/io/matrix_market.hpp"
 
 
 // Some helper functions for this tutorial:
@@ -84,6 +76,8 @@ int main()
   ublas_matrix(3,2) = -1.0; ublas_matrix(3,3) =  2.0; ublas_matrix(3,4) = -1.0;
   ublas_matrix(4,3) = -1.0; ublas_matrix(4,4) =  2.0;
 
+  std::cout << "ublas: " << ublas_matrix << std::endl;
+  
   //
   // Set up some ViennaCL objects
   //
@@ -91,16 +85,20 @@ int main()
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(size, size);
 
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
-  
-  std::cout << "ublas: " << ublas_matrix << std::endl;
 
+  // just get the data directly from the GPU and print it:
+  ublas::compressed_matrix<ScalarType> temp(size, size);
+  viennacl::copy(vcl_compressed_matrix, temp);
+  std::cout << "ViennaCL: " << temp << std::endl;
+
+  // now modify GPU data directly:
   std::cout << "Modifying vcl_compressed_matrix a bit: " << std::endl;
   vcl_compressed_matrix(0, 0) = 3.0;
   vcl_compressed_matrix(2, 3) = -3.0;
   vcl_compressed_matrix(4, 2) = -3.0;  //this is a new nonzero entry
   vcl_compressed_matrix(4, 3) = -3.0;
   
-  ublas::compressed_matrix<ScalarType> temp(size, size);
+  // and print it again:
   viennacl::copy(vcl_compressed_matrix, temp);
   std::cout << "ViennaCL: " << temp << std::endl;
   

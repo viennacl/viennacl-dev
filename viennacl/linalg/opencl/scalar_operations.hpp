@@ -30,6 +30,7 @@
 #include "viennacl/linalg/kernels/scalar_kernels.h"
 #include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/meta/predicate.hpp"
+#include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
@@ -52,6 +53,7 @@ namespace viennacl
          S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
           
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
@@ -83,6 +85,7 @@ namespace viennacl
            S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -129,6 +132,7 @@ namespace viennacl
              S3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -172,6 +176,7 @@ namespace viennacl
       swap(S1 & s1, S2 & s2)
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), "swap");
         k.local_work_size(0, 1);

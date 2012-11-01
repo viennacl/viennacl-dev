@@ -23,7 +23,7 @@
 */
 
 /**
- @mainpage Source Code Documentation for ViennaCL 1.3.1
+ @mainpage Source Code Documentation for ViennaCL 1.4.0
 
  This is the source code documentation of ViennaCL. Detailed information about the functions in ViennaCL can be found here.
  
@@ -32,7 +32,7 @@
 */
 
 #include <cstddef>
-#include "viennacl/ocl/forwards.h"
+#include <cassert>
 #include "viennacl/meta/enable_if.hpp"
 
 namespace viennacl

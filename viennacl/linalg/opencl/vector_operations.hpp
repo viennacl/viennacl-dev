@@ -56,8 +56,8 @@ namespace viennacl
          V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
@@ -95,8 +95,8 @@ namespace viennacl
           V3 const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -152,8 +152,8 @@ namespace viennacl
             V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -207,8 +207,8 @@ namespace viennacl
       vector_assign(V1 & vec1, const S1 & alpha)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
@@ -234,8 +234,8 @@ namespace viennacl
       vector_swap(V1 & vec1, V2 & vec2)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "swap");
 
@@ -272,8 +272,8 @@ namespace viennacl
                       S3 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
       
         assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
               && "Incompatible vector sizes in inner_prod_impl()!");
@@ -344,8 +344,8 @@ namespace viennacl
                      S3 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
       
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
         static const unsigned int work_groups = k.global_work_size() / k.local_work_size();
@@ -402,8 +402,8 @@ namespace viennacl
                   S2 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
@@ -462,8 +462,8 @@ namespace viennacl
                   S2 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
@@ -521,8 +521,8 @@ namespace viennacl
                     S2 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
@@ -583,8 +583,8 @@ namespace viennacl
       index_norm_inf(V1 const & vec)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         viennacl::ocl::handle<cl_mem> h = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
         
@@ -629,9 +629,8 @@ namespace viennacl
                     SCALARTYPE beta)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
-        //TODO: Ensure that correct alignment is chosen for the kernels.
         const unsigned int ALIGNMENT = V1::alignment;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
         assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::program_name(), "plane_rotation");

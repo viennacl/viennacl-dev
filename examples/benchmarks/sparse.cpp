@@ -140,37 +140,37 @@ int run_benchmark()
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_8, vcl_vec2); //startup calculation
   //std_result = 0.0;
   
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_1, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align1: " << exec_time << std::endl;
   std::cout << "GPU align1 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_4, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align4: " << exec_time << std::endl;
   std::cout << "GPU align4 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_8, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align8: " << exec_time << std::endl;
   std::cout << "GPU align8 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -179,7 +179,7 @@ int run_benchmark()
   
   std::cout << "------- Matrix-Vector product with coordinate_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_coordinate_matrix_128, vcl_vec2); //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   long err_cnt = 0;
@@ -194,13 +194,13 @@ int run_benchmark()
     }
   }
   
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_coordinate_matrix_128, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -209,7 +209,7 @@ int run_benchmark()
   
   std::cout << "------- Matrix-Vector product with ell_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_ell_matrix_1, vcl_vec2); //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   err_cnt = 0;
@@ -224,13 +224,13 @@ int run_benchmark()
     }
   }
   
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_ell_matrix_1, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -239,7 +239,7 @@ int run_benchmark()
   
   std::cout << "------- Matrix-Vector product with hyb_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_hyb_matrix_1, vcl_vec2); //startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   err_cnt = 0;
@@ -254,13 +254,13 @@ int run_benchmark()
     }
   }
   
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 = viennacl::linalg::prod(vcl_hyb_matrix_1, vcl_vec2);
   }
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
@@ -278,8 +278,9 @@ int main()
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   
+#ifdef VIENNACL_HAVE_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
-  
+#endif
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
@@ -290,7 +291,9 @@ int main()
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
   run_benchmark<float>();
+#ifdef VIENNACL_HAVE_OPENCL
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     std::cout << std::endl;
     std::cout << "   -------------------------------" << std::endl;

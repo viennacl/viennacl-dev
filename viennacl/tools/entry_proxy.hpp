@@ -17,13 +17,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file entry_proxy.hpp
+/** @file tools/entry_proxy.hpp
     @brief A proxy class for entries in a vector
 */
 
 
 #include "viennacl/forwards.h"
-#include "viennacl/ocl/backend.hpp"
 #include "viennacl/scalar.hpp"
 
 namespace viennacl

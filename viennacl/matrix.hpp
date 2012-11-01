@@ -22,13 +22,11 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/ocl/backend.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/matrix_size_deducer.hpp"
-#include "viennacl/tools/matrix_kernel_class_deducer.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
 
@@ -122,11 +120,7 @@ namespace viennacl
       typedef typename F::orientation_category                                    orientation_category;
       
       /** @brief The default constructor. Does not allocate any memory. */
-      matrix() : rows_(0), columns_(0)
-      {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-        KernelClass::init();
-      };
+      matrix() : rows_(0), columns_(0) {};
       
       /** @brief Creates the matrix with the given dimensions
       *
@@ -136,31 +130,23 @@ namespace viennacl
       explicit matrix(size_type rows, size_type columns) :
         rows_(rows), columns_(columns)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-        KernelClass::init();
-        
         if (rows > 0 && columns > 0)
-        {
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        }
       }
 
+#ifdef VIENNACL_HAVE_OPENCL
       explicit matrix(cl_mem mem, size_type rows, size_type columns) :
         rows_(rows), columns_(columns)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-        KernelClass::init();
-
         elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
         elements_.opencl_handle() = mem;
         elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
       }
+#endif
 
       template <typename LHS, typename RHS, typename OP>
       matrix(matrix_expression< LHS, RHS, OP> const & proxy) : rows_(proxy.size1()), columns_(proxy.size2())
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-        KernelClass::init();
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         

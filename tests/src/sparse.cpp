@@ -47,7 +47,6 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
-#include "viennacl/linalg/jacobi_precond.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "examples/tutorial/Random.hpp"
 #include "examples/tutorial/vector-io.hpp"
@@ -71,7 +70,7 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
-   copy(v2.begin(), v2.end(), v2_cpu.begin());
+   viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
@@ -103,7 +102,7 @@ ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & 
   typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;
   CPU_MATRIX from_gpu;
    
-  copy(gpu_matrix, from_gpu);
+  viennacl::copy(gpu_matrix, from_gpu);
 
   ScalarType error = 0;
    
@@ -173,9 +172,9 @@ int resize_test(Epsilon const& epsilon)
    ublas_matrix(3,0) = 3.0; ublas_matrix(3, 1) = 3.1; ublas_matrix(3, 2) = 3.2; ublas_matrix(3, 3) = 3.3; ublas_matrix(3, 4) = 3.4;
    ublas_matrix(4,0) = 4.0; ublas_matrix(4, 1) = 4.1; ublas_matrix(4, 2) = 4.2; ublas_matrix(4, 3) = 4.3; ublas_matrix(4, 4) = 4.4;
    
-   copy(ublas_matrix, vcl_matrix);
+   viennacl::copy(ublas_matrix, vcl_matrix);
    ublas::compressed_matrix<NumericT> other_matrix(ublas_matrix.size1(), ublas_matrix.size2());
-   copy(vcl_matrix, other_matrix);
+   viennacl::copy(vcl_matrix, other_matrix);
    
    std::cout << "Checking for equality after copy..." << std::endl;   
     if( std::fabs(diff(ublas_matrix, vcl_matrix)) > epsilon )
@@ -208,7 +207,7 @@ int resize_test(Epsilon const& epsilon)
    ublas_matrix(7,5) = 7.5; ublas_matrix(7, 6) = 7.6; ublas_matrix(7, 7) = 7.7; ublas_matrix(7, 8) = 7.8; ublas_matrix(7, 9) = 7.9;
    ublas_matrix(8,5) = 8.5; ublas_matrix(8, 6) = 8.6; ublas_matrix(8, 7) = 8.7; ublas_matrix(8, 8) = 8.8; ublas_matrix(8, 9) = 8.9;
    ublas_matrix(9,5) = 9.5; ublas_matrix(9, 6) = 9.6; ublas_matrix(9, 7) = 9.7; ublas_matrix(9, 8) = 9.8; ublas_matrix(9, 9) = 9.9;
-   copy(ublas_matrix, vcl_matrix);
+   viennacl::copy(ublas_matrix, vcl_matrix);
     
    std::cout << "Testing resize to smaller..." << std::endl;
    ublas_matrix.resize(7, 7, false); //ublas does not allow preserve = true here
@@ -282,9 +281,9 @@ int test(Epsilon const& epsilon)
   viennacl::ell_matrix<NumericT> vcl_ell_matrix;
   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix;
 
-  copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-  copy(ublas_matrix, vcl_compressed_matrix);
-  copy(ublas_matrix, vcl_coordinate_matrix);
+  viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
+  viennacl::copy(ublas_matrix, vcl_compressed_matrix);
+  viennacl::copy(ublas_matrix, vcl_coordinate_matrix);
 
   // --------------------------------------------------------------------------          
   std::cout << "Testing products: ublas" << std::endl;
@@ -311,9 +310,9 @@ int test(Epsilon const& epsilon)
   }
   
   //std::cout << "Copying ell_matrix" << std::endl;
-  copy(ublas_matrix, vcl_ell_matrix);
+  viennacl::copy(ublas_matrix, vcl_ell_matrix);
   ublas_matrix.clear();
-  copy(vcl_ell_matrix, ublas_matrix);// just to check that it's works
+  viennacl::copy(vcl_ell_matrix, ublas_matrix);// just to check that it's works
 
 
   std::cout << "Testing products: ell_matrix" << std::endl;
@@ -333,10 +332,10 @@ int test(Epsilon const& epsilon)
   
   
   //std::cout << "Copying hyb_matrix" << std::endl;
-  copy(ublas_matrix, vcl_hyb_matrix);
+  viennacl::copy(ublas_matrix, vcl_hyb_matrix);
   ublas_matrix.clear();
-  copy(vcl_hyb_matrix, ublas_matrix);// just to check that it's works
-  copy(ublas_matrix, vcl_hyb_matrix);
+  viennacl::copy(vcl_hyb_matrix, ublas_matrix);// just to check that it's works
+  viennacl::copy(ublas_matrix, vcl_hyb_matrix);
 
   std::cout << "Testing products: hyb_matrix" << std::endl;
   vcl_result.clear();
@@ -442,7 +441,9 @@ int main()
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
   
+#ifdef VIENNACL_HAVE_OPENCL
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     {
       typedef double NumericT;
@@ -460,8 +461,10 @@ int main()
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << std::endl;
   }
+#ifdef VIENNACL_HAVE_OPENCL
   else
     std::cout << "No double precision support, skipping test..." << std::endl;
+#endif
   
   
   std::cout << std::endl;

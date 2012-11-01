@@ -23,9 +23,11 @@
 
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/linalg/opencl/direct_solve.hpp"
 #include "viennacl/linalg/single_threaded/direct_solve.hpp"
 
+#ifdef VIENNACL_HAVE_OPENCL
+  #include "viennacl/linalg/opencl/direct_solve.hpp"
+#endif
 
 namespace viennacl
 {
@@ -56,9 +58,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(A, B, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(A, B, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -86,9 +90,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -117,9 +123,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -147,9 +155,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -172,9 +182,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(mat, vec, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -200,9 +212,11 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy, vec, SOLVERTAG());
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
           break;
+#endif
         default:
           throw "not implemented";
       }
@@ -412,16 +426,16 @@ namespace viennacl
     {
       assert( (mat.size1() == mat.size2()) && "Size check failed for LU factorization: size1(A) != size2(A)");
 
-      typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-      
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::lu_factorize(mat);
           break;
+#ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::lu_factorize(mat);
           break;
+#endif
         default:
           throw "not implemented";
       }
