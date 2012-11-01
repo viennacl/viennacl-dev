@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file inner_prod.hpp
+/** @file viennacl/linalg/inner_prod.hpp
     @brief Generic interface for the computation of inner products. See viennacl/linalg/vector_operations.hpp for implementations.
 */
 
@@ -86,7 +86,7 @@ namespace viennacl
                                   typename VectorT1::value_type>::type
     inner_prod(VectorT1 const& v1, VectorT2 const& v2)
     {
-      assert(v1.size() == v2.size() && "Vector sizes mismatch");
+      assert(v1.size() == v2.size() && bool("Vector sizes mismatch"));
       //std::cout << "stl .. " << std::endl;
       typename VectorT1::value_type result = 0;
       for (typename VectorT1::size_type i=0; i<v1.size(); ++i)

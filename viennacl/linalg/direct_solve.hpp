@@ -50,8 +50,8 @@ namespace viennacl
                                 >::type
     inplace_solve(const M1 & A, M2 & B, SOLVERTAG)
     {
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A)) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(B)) && "Size check failed in inplace_solve(): size1(A) != size1(B)");
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B)"));
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
@@ -82,8 +82,8 @@ namespace viennacl
                   matrix_expression< const M2, const M2, op_trans> proxy_B,
                   SOLVERTAG)
     {
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A))       && "Size check failed in inplace_solve(): size1(A) != size2(A)");
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy_B)) && "Size check failed in inplace_solve(): size1(A) != size1(B^T)");
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A))       && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B^T)"));
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
@@ -115,8 +115,8 @@ namespace viennacl
                   M2 & B,
                   SOLVERTAG)
     {
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(B))       && "Size check failed in inplace_solve(): size1(A^T) != size1(B)");
+      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(B))       && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B)"));
       
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
@@ -147,8 +147,8 @@ namespace viennacl
                         matrix_expression< const M2, const M2, op_trans>   proxy_B,
                         SOLVERTAG)
     {
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && "Size check failed in inplace_solve(): size1(A) != size2(A)");
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(proxy_B)) && "Size check failed in inplace_solve(): size1(A^T) != size1(B^T)");
+      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B^T)"));
       
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
@@ -174,8 +174,8 @@ namespace viennacl
                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                        SOLVERTAG)
     {
-      assert( (mat.size1() == vec.size()) && "Size check failed in inplace_solve(): size1(A) != size(b)");
-      assert( (mat.size2() == vec.size()) && "Size check failed in inplace_solve(): size2(A) != size(b)");
+      assert( (mat.size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
+      assert( (mat.size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -204,8 +204,8 @@ namespace viennacl
                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                        SOLVERTAG)
     {
-      assert( (proxy.lhs().size1() == vec.size()) && "Size check failed in inplace_solve(): size1(A) != size(b)");
-      assert( (proxy.lhs().size2() == vec.size()) && "Size check failed in inplace_solve(): size2(A) != size(b)");
+      assert( (proxy.lhs().size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
+      assert( (proxy.lhs().size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
 
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
@@ -424,7 +424,7 @@ namespace viennacl
     template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
     void lu_factorize(matrix<SCALARTYPE, F, ALIGNMENT> & mat)
     {
-      assert( (mat.size1() == mat.size2()) && "Size check failed for LU factorization: size1(A) != size2(A)");
+      assert( (mat.size1() == mat.size2()) && bool("Size check failed for LU factorization: size1(A) != size2(A)"));
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -451,24 +451,24 @@ namespace viennacl
     void lu_substitute(matrix<SCALARTYPE, F1, ALIGNMENT_A> const & A,
                        matrix<SCALARTYPE, F2, ALIGNMENT_B> & B)
     {
-      assert(A.size1() == A.size2());
-      assert(A.size1() == A.size2());
+      assert(A.size1() == A.size2() && bool("Matrix must be square"));
+      assert(A.size1() == B.size1() && bool("Matrix must be square"));
       inplace_solve(A, B, unit_lower_tag());
       inplace_solve(A, B, upper_tag());
     }
 
     /** @brief LU substitution for the system LU = rhs.
     *
-    * @param mat    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
+    * @param A      The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
     * @param vec    The load vector, where the solution is directly written to
     */
     template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT>
-    void lu_substitute(matrix<SCALARTYPE, F, ALIGNMENT> const & mat,
+    void lu_substitute(matrix<SCALARTYPE, F, ALIGNMENT> const & A,
                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec)
     {
-      assert(mat.size1() == mat.size2());
-      inplace_solve(mat, vec, unit_lower_tag());
-      inplace_solve(mat, vec, upper_tag());
+      assert(A.size1() == A.size2() && bool("Matrix must be square"));
+      inplace_solve(A, vec, unit_lower_tag());
+      inplace_solve(A, vec, upper_tag());
     }
 
   }

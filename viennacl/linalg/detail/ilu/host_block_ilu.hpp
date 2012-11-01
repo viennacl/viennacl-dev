@@ -51,7 +51,7 @@ namespace viennacl
           
           value_type & operator()(size_type index)
           {
-            assert(index < size_ && "Index out of bounds!");
+            assert(index < size_ && bool("Index out of bounds!"));
             
             return vec_[start_ + index];  
           }

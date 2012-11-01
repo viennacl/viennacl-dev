@@ -74,8 +74,8 @@ namespace viennacl
               const viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::vector<ScalarType, ALIGNMENT> & result)
     {
-      assert( (mat.size1() == result.size()) && "Size check failed for compressed matrix-vector product: size1(mat) != size(result)");
-      assert( (mat.size2() == vec.size())    && "Size check failed for compressed matrix-vector product: size2(mat) != size(x)");
+      assert( (mat.size1() == result.size()) && bool("Size check failed for compressed matrix-vector product: size1(mat) != size(result)"));
+      assert( (mat.size2() == vec.size())    && bool("Size check failed for compressed matrix-vector product: size2(mat) != size(x)"));
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -166,7 +166,7 @@ namespace viennacl
     operator+(viennacl::vector<SCALARTYPE, ALIGNMENT> & result,
               const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector<SCALARTYPE, ALIGNMENT>, viennacl::op_prod> & proxy) 
     {
-      assert(proxy.lhs().size1() == result.size() && "Dimensions for addition of sparse matrix-vector product to vector don't match!");
+      assert(proxy.lhs().size1() == result.size() && bool("Dimensions for addition of sparse matrix-vector product to vector don't match!"));
       vector<SCALARTYPE, ALIGNMENT> temp(proxy.lhs().size1());
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), temp);
       result += temp;
@@ -183,7 +183,7 @@ namespace viennacl
     operator-(viennacl::vector<SCALARTYPE, ALIGNMENT> & result,
               const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector<SCALARTYPE, ALIGNMENT>, viennacl::op_prod> & proxy) 
     {
-      assert(proxy.lhs().size1() == result.size() && "Dimensions for addition of sparse matrix-vector product to vector don't match!");
+      assert(proxy.lhs().size1() == result.size() && bool("Dimensions for addition of sparse matrix-vector product to vector don't match!"));
       vector<SCALARTYPE, ALIGNMENT> temp(proxy.lhs().size1());
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), temp);
       result += temp;

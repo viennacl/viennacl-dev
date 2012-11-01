@@ -50,7 +50,7 @@ namespace viennacl
     av(V1 & vec1, 
        V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
     {
-      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && "Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)");
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)"));
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -81,8 +81,8 @@ namespace viennacl
          V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
          V3 const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
     {
-      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && "Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)");
-      assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && "Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)");
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
+      assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -117,8 +117,8 @@ namespace viennacl
            V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
            V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
-      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && "Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)");
-      assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && "Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)");
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
+      assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -178,7 +178,7 @@ namespace viennacl
                                 >::type
     vector_swap(V1 & vec1, V2 & vec2)
     {
-      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && "Incompatible vector sizes in vector_swap()");
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in vector_swap()"));
 
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {

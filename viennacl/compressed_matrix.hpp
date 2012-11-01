@@ -266,7 +266,7 @@ namespace viennacl
       {
         assert(static_cast<unsigned int>(eigen_matrix.rows()) >= gpu_matrix.size1()
                && static_cast<unsigned int>(eigen_matrix.cols()) >= gpu_matrix.size2()
-               && "Provided Eigen compressed matrix is too small!");
+               && bool("Provided Eigen compressed matrix is too small!"));
         
         //get raw data from memory:
         std::vector<cl_uint> row_buffer(gpu_matrix.size1() + 1);
@@ -284,7 +284,7 @@ namespace viennacl
         {
           while (data_index < row_buffer[row])
           {
-            assert(col_buffer[data_index] < gpu_matrix.size2() && "ViennaCL encountered invalid data at col_buffer");
+            assert(col_buffer[data_index] < gpu_matrix.size2() && bool("ViennaCL encountered invalid data at col_buffer"));
             if (elements[data_index] != static_cast<SCALARTYPE>(0.0))
               eigen_matrix.fill(row-1, col_buffer[data_index]) = elements[data_index];
             ++data_index;
@@ -306,7 +306,7 @@ namespace viennacl
       {
         assert(mtl4_matrix.num_rows() >= gpu_matrix.size1()
                && mtl4_matrix.num_cols() >= gpu_matrix.size2()
-               && "Provided MTL4 compressed matrix is too small!");
+               && bool("Provided MTL4 compressed matrix is too small!"));
         
         //get raw data from memory:
         std::vector<cl_uint> row_buffer(gpu_matrix.size1() + 1);
@@ -326,7 +326,7 @@ namespace viennacl
         {
           while (data_index < row_buffer[row])
           {
-            assert(col_buffer[data_index] < gpu_matrix.size2() && "ViennaCL encountered invalid data at col_buffer");
+            assert(col_buffer[data_index] < gpu_matrix.size2() && bool("ViennaCL encountered invalid data at col_buffer"));
             if (elements[data_index] != static_cast<SCALARTYPE>(0.0))
               ins(row-1, col_buffer[data_index]) << typename mtl::Collection< mtl::compressed2D<SCALARTYPE> >::value_type(elements[data_index]);
             ++data_index;
@@ -389,7 +389,7 @@ namespace viennacl
             col_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
             
             elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-            elements_ = mem_elements;
+            elements_.opencl_handle() = mem_elements;
             elements_.opencl_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
         }
 #endif        
@@ -410,9 +410,9 @@ namespace viennacl
                  std::size_t cols,
                  std::size_t nonzeros)
         {
-          assert( (rows > 0)     && "Error in compressed_matrix::set(): Number of rows must be larger than zero!");
-          assert( (cols > 0)     && "Error in compressed_matrix::set(): Number of columns must be larger than zero!");
-          assert( (nonzeros > 0) && "Error in compressed_matrix::set(): Number of nonzeros must be larger than zero!");
+          assert( (rows > 0)     && bool("Error in compressed_matrix::set(): Number of rows must be larger than zero!"));
+          assert( (cols > 0)     && bool("Error in compressed_matrix::set(): Number of columns must be larger than zero!"));
+          assert( (nonzeros > 0) && bool("Error in compressed_matrix::set(): Number of nonzeros must be larger than zero!"));
           //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
           
           //row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
@@ -458,7 +458,7 @@ namespace viennacl
         */
         void resize(std::size_t new_size1, std::size_t new_size2, bool preserve = true)
         {
-          assert(new_size1 > 0 && new_size2 > 0 && "Cannot resize to zero size!");
+          assert(new_size1 > 0 && new_size2 > 0 && bool("Cannot resize to zero size!"));
           
           if (new_size1 != rows_ || new_size2 != cols_)
           {
@@ -500,7 +500,7 @@ namespace viennacl
         /** @brief Returns a reference to the (i,j)-th entry of the sparse matrix. If (i,j) does not exist (zero), it is inserted (slow!) */
         entry_proxy<SCALARTYPE> operator()(std::size_t i, std::size_t j)
         {
-          assert( (i < rows_) && (j < cols_) && "compressed_matrix access out of bounds!");
+          assert( (i < rows_) && (j < cols_) && bool("compressed_matrix access out of bounds!"));
           
           std::size_t index = element_index(i, j);
           

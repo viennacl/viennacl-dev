@@ -204,7 +204,7 @@ namespace viennacl
         
         static std::string size_expression()
         {
-          return size1_expression()*size2_expression();
+          return size1_expression() + "*" + size2_expression();
         }
 
         static std::string size1_expression() 

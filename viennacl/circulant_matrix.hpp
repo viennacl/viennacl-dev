@@ -60,7 +60,7 @@ namespace viennacl
          */
         explicit circulant_matrix(std::size_t rows, std::size_t cols) : elements_(rows)
         {
-          assert(rows == cols && "Circulant matrix must be square!");
+          assert(rows == cols && bool("Circulant matrix must be square!"));
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
         }
 
@@ -116,7 +116,7 @@ namespace viennacl
         {
             int index = static_cast<int>(row_index) - static_cast<int>(col_index);
 
-            assert(row_index < size1() && col_index < size2() && "Invalid access");
+            assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
             
             while (index < 0)
               index += size1();
@@ -137,7 +137,7 @@ namespace viennacl
 
     private:
         circulant_matrix(circulant_matrix const & t) {}
-        circulant_matrix & operator=(circulant_matrix const & t) {}
+        circulant_matrix & operator=(circulant_matrix const & t);
       
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;
     };
@@ -151,7 +151,7 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE>& cpu_vec, circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
-        assert(cpu_vec.size() == gpu_mat.size1() && "Size mismatch");
+        assert(cpu_vec.size() == gpu_mat.size1() && bool("Size mismatch"));
         copy(cpu_vec, gpu_mat.elements());
     }
 
@@ -164,7 +164,7 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat, std::vector<SCALARTYPE>& cpu_vec)
     {
-        assert(cpu_vec.size() == gpu_mat.size1() && "Size mismatch");
+        assert(cpu_vec.size() == gpu_mat.size1() && bool("Size mismatch"));
         copy(gpu_mat.elements(), cpu_vec);
     }
 
@@ -177,8 +177,8 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_src, MATRIXTYPE& com_dst) {
         std::size_t size = circ_src.size1();
-        assert(size == com_dst.size1() && "Size mismatch");
-        assert(size == com_dst.size2() && "Size mismatch");
+        assert(size == com_dst.size1() && bool("Size mismatch"));
+        assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
         copy(circ_src, tmp);
 
@@ -201,8 +201,8 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_dst) {
         std::size_t size = circ_dst.size1();
-        assert(size == com_src.size1() && "Size mismatch");
-        assert(size == com_src.size2() && "Size mismatch");
+        assert(size == com_src.size1() && bool("Size mismatch"));
+        assert(size == com_src.size2() && bool("Size mismatch"));
 
         std::vector<SCALARTYPE> tmp(size);
 

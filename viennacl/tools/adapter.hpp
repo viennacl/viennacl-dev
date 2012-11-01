@@ -134,9 +134,7 @@ namespace viennacl
         
         bool operator==(self_type const & other) const
         {
-          if (is_iterator1)
-            return (i_ == other.i_);
-          return (iter2 == other.iter2);
+          return is_iterator1 ? (i_ == other.i_) : (iter2 == other.iter2);
         }
         
         bool operator!=(self_type const & other) const { return !(*this == other); }

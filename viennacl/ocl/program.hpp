@@ -79,8 +79,8 @@ namespace viennacl
         }
         std::cerr << "ViennaCL: FATAL ERROR: Could not find kernel '" << name << "'" << std::endl;
         std::cout << "Number of kernels in program: " << kernels_.size() << std::endl;
-        assert(!"Kernel not found");
-        return kernels_[0];  //return a defined object
+        throw "Kernel not found";
+        //return kernels_[0];  //return a defined object
       }
 
     private:

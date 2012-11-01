@@ -69,7 +69,7 @@ namespace viennacl
         ScalarType A_jj = A(j,j) / scaling;
         
         //std::cout << "sigma: " << sigma << std::endl;
-        assert( sigma >= 0.0  && "sigma must be non-negative!");
+        assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
 
         
         if (sigma == 0)
@@ -118,7 +118,7 @@ namespace viennacl
         ScalarType beta = 0;
         ScalarType A_jj = A(j,j);
         
-        assert( sigma >= 0.0  && "sigma must be non-negative!");
+        assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
 
         //get v from A:
         //for (std::size_t k = j+1; k<A.size1(); ++k)
@@ -176,7 +176,7 @@ namespace viennacl
         ScalarType A_jj = A(j,j);
 
         //std::cout << "sigma: " << sigma << std::endl;
-        assert( sigma >= 0.0  && "sigma must be non-negative!");
+        assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
 
 
         //get v from A:

@@ -202,7 +202,7 @@ namespace viennacl
   {
     assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
            && (cpu_matrix.size2() == gpu_matrix_range.size2())
-           && "Matrix size mismatch!");
+           && bool("Matrix size mismatch!"));
     
     if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() != gpu_matrix_range.get().size2())
     {
@@ -243,7 +243,8 @@ namespace viennacl
             matrix_range<matrix<SCALARTYPE, column_major, 1> > & gpu_matrix_range )
   {
     assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-           && (cpu_matrix.size2() == gpu_matrix_range.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_range.size2())
+           && bool("Matrix size mismatch!"));
     
      if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() != gpu_matrix_range.get().size1())
      {
@@ -291,7 +292,8 @@ namespace viennacl
             CPU_MATRIX & cpu_matrix)
   {
     assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-           && (cpu_matrix.size2() == gpu_matrix_range.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_range.size2())
+           && bool("Matrix size mismatch!"));
     
      if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() !=  gpu_matrix_range.get().size2())
      {
@@ -333,7 +335,8 @@ namespace viennacl
             CPU_MATRIX & cpu_matrix)
   {
     assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-           && (cpu_matrix.size2() == gpu_matrix_range.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_range.size2())
+           && bool("Matrix size mismatch!"));
     
      if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() !=  gpu_matrix_range.get().size1())
      {
@@ -587,7 +590,8 @@ namespace viennacl
             matrix_slice<matrix<SCALARTYPE, row_major, 1> > & gpu_matrix_slice )
   {
     assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-           && (cpu_matrix.size2() == gpu_matrix_slice.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+           && bool("Matrix size mismatch!"));
     
      if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
      {
@@ -615,7 +619,9 @@ namespace viennacl
             matrix_slice<matrix<SCALARTYPE, column_major, 1> > & gpu_matrix_slice )
   {
     assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-           && (cpu_matrix.size2() == gpu_matrix_slice.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+           && bool("Matrix size mismatch!"));
+           
     
     if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
     {
@@ -651,7 +657,8 @@ namespace viennacl
             CPU_MATRIX & cpu_matrix)
   {
     assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-           && (cpu_matrix.size2() == gpu_matrix_slice.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+           && bool("Matrix size mismatch!"));
     
      if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
      {
@@ -680,7 +687,8 @@ namespace viennacl
             CPU_MATRIX & cpu_matrix)
   {
     assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-           && (cpu_matrix.size2() == gpu_matrix_slice.size2()) );
+           && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+           && bool("Matrix size mismatch!"));
     
     if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
     {

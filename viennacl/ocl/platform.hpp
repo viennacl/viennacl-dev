@@ -49,9 +49,9 @@ namespace viennacl
           #endif
           err = clGetPlatformIDs(42, ids, &num_platforms);
           VIENNACL_ERR_CHECK(err);
-          assert(num_platforms > pf_index && "ViennaCL: ERROR: Not enough platforms found!");          
+          assert(num_platforms > pf_index && bool("ViennaCL: ERROR: Not enough platforms found!"));
           id_ = ids[pf_index];
-          assert(num_platforms > 0 && "ViennaCL: ERROR: No platform found!");          
+          assert(num_platforms > 0 && bool("ViennaCL: ERROR: No platform found!"));
         }
         
         cl_platform_id id() const
@@ -100,7 +100,7 @@ namespace viennacl
           std::cout << "ViennaCL: Found " << num_devices << " devices." << std::endl;
           #endif
           
-          assert(num_devices > 0 && "Error in viennacl::ocl::platform::devices(): No OpenCL devices available!");
+          assert(num_devices > 0 && bool("Error in viennacl::ocl::platform::devices(): No OpenCL devices available!"));
           std::vector<device> devices;
           
           for (cl_uint i=0; i<num_devices; ++i)

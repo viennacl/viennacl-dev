@@ -743,28 +743,28 @@ namespace viennacl
             const_iterator1 begin1() const
             {
               // Const_iterator of transposed can only be used if transposed matrix is already built and up to date.
-              assert((!transposed_mode || (transposed_mode && transposed)) && "Error: Cannot build const_iterator when transposed has not been built yet!");
+              assert((!transposed_mode || (transposed_mode && transposed)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
                     ConstAdapterType a_const (internal_mat, s1, s2);
               return a_const.begin1();
             }
             
             const_iterator1 end1(bool trans = false) const
             {
-              assert((!transposed_mode || (transposed_mode && transposed)) && "Error: Cannot build const_iterator when transposed has not been built yet!");
+              assert((!transposed_mode || (transposed_mode && transposed)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
               ConstAdapterType a_const (internal_mat, trans ? s2 : s1, trans ? s1 : s2);
               return a_const.end1();
             }
             
             const_iterator2 begin2(bool trans = false) const
             {
-              assert((!transposed_mode || (transposed_mode && transposed)) && "Error: Cannot build const_iterator when transposed has not been built yet!");
+              assert((!transposed_mode || (transposed_mode && transposed)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
               ConstAdapterType a_const (internal_mat, trans ? s2 : s1, trans ? s1 : s2);
               return a_const.begin2();
             }
             
             const_iterator2 end2(bool trans = false) const
             {
-              assert((!transposed_mode || (transposed_mode && transposed)) && "Error: Cannot build const_iterator when transposed has not been built yet!");
+              assert((!transposed_mode || (transposed_mode && transposed)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
               ConstAdapterType a_const (internal_mat, trans ? s2 : s1, trans ? s1 : s2);
               return a_const.end2();
             }

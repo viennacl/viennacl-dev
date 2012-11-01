@@ -109,8 +109,8 @@ namespace viennacl
       
       viennacl::linalg::kernels::nmf<ScalarType, 1>::init();
       
-      assert(V.size1() == W.size1() && V.size2() == H.size2() && "Dimensions of W and H don't allow for V = W * H");
-      assert(W.size2() == H.size1() && "Dimensions of W and H don't match, prod(W, H) impossible");
+      assert(V.size1() == W.size1() && V.size2() == H.size2() && bool("Dimensions of W and H don't allow for V = W * H"));
+      assert(W.size2() == H.size1() && bool("Dimensions of W and H don't match, prod(W, H) impossible"));
 
       std::size_t k = W.size2();
       conf.iters_ = 0;

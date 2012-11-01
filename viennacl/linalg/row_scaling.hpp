@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file row_scaling.hpp
+/** @file viennacl/linalg/row_scaling.hpp
     @brief A row normalization preconditioner is implemented here
 */
 

@@ -177,8 +177,8 @@ namespace viennacl
               const VectorType1 & vec, 
                     VectorType2 & result)
     {
-      assert( (viennacl::traits::size1(mat) == viennacl::traits::size(result)) && "Size check failed at v1 = prod(A, v2): size1(A) != size(v1)");
-      assert( (viennacl::traits::size2(mat) == viennacl::traits::size(vec))    && "Size check failed at v1 = prod(A, v2): size2(A) != size(v2)");
+      assert( (viennacl::traits::size1(mat) == viennacl::traits::size(result)) && bool("Size check failed at v1 = prod(A, v2): size1(A) != size(v1)"));
+      assert( (viennacl::traits::size2(mat) == viennacl::traits::size(vec))    && bool("Size check failed at v1 = prod(A, v2): size2(A) != size(v2)"));
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -239,8 +239,8 @@ namespace viennacl
               const V1 & vec, 
                     V2 & result)
     {
-      assert( (viennacl::traits::size1(mat_trans.lhs()) == viennacl::traits::size(vec))    && "Size check failed at v1 = trans(A) * v2: size1(A) != size(v2)");
-      assert( (viennacl::traits::size2(mat_trans.lhs()) == viennacl::traits::size(result)) && "Size check failed at v1 = trans(A) * v2: size2(A) != size(v1)");
+      assert( (viennacl::traits::size1(mat_trans.lhs()) == viennacl::traits::size(vec))    && bool("Size check failed at v1 = trans(A) * v2: size1(A) != size(v2)"));
+      assert( (viennacl::traits::size2(mat_trans.lhs()) == viennacl::traits::size(result)) && bool("Size check failed at v1 = trans(A) * v2: size2(A) != size(v1)"));
       
       switch (viennacl::traits::handle(mat_trans.lhs()).get_active_handle_id())
       {
@@ -278,9 +278,9 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && "Size check failed at C = prod(A, B): size1(A) != size1(C)");
-      assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && "Size check failed at C = prod(A, B): size2(A) != size1(B)");
-      assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && "Size check failed at C = prod(A, B): size2(B) != size2(C)");
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && bool("Size check failed at C = prod(A, B): size1(A) != size1(C)"));
+      assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && bool("Size check failed at C = prod(A, B): size2(A) != size1(B)"));
+      assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && bool("Size check failed at C = prod(A, B): size2(B) != size2(C)"));
 
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
@@ -318,9 +318,9 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C) && "Size check failed at C = prod(trans(A), B): size2(A) != size1(C)");
-      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B) && "Size check failed at C = prod(trans(A), B): size1(A) != size1(B)");
-      assert(viennacl::traits::size2(B)       == viennacl::traits::size2(C) && "Size check failed at C = prod(trans(A), B): size2(B) != size2(C)");
+      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C) && bool("Size check failed at C = prod(trans(A), B): size2(A) != size1(C)"));
+      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B) && bool("Size check failed at C = prod(trans(A), B): size1(A) != size1(B)"));
+      assert(viennacl::traits::size2(B)       == viennacl::traits::size2(C) && bool("Size check failed at C = prod(trans(A), B): size2(B) != size2(C)"));
       
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
@@ -356,9 +356,9 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size1(A)       == viennacl::traits::size1(C)       && "Size check failed at C = prod(A, trans(B)): size1(A) != size1(C)");
-      assert(viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs()) && "Size check failed at C = prod(A, trans(B)): size2(A) != size2(B)");
-      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && "Size check failed at C = prod(A, trans(B)): size1(B) != size2(C)");
+      assert(viennacl::traits::size1(A)       == viennacl::traits::size1(C)       && bool("Size check failed at C = prod(A, trans(B)): size1(A) != size1(C)"));
+      assert(viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs()) && bool("Size check failed at C = prod(A, trans(B)): size2(A) != size2(B)"));
+      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size check failed at C = prod(A, trans(B)): size1(B) != size2(C)"));
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
@@ -393,9 +393,9 @@ namespace viennacl
               ScalarType alpha,
               ScalarType beta)
     {
-      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && "Size check failed at C = prod(trans(A), trans(B)): size2(A) != size1(C)");
-      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && "Size check failed at C = prod(trans(A), trans(B)): size1(A) != size2(B)");
-      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && "Size check failed at C = prod(trans(A), trans(B)): size1(B) != size2(C)");
+      assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && bool("Size check failed at C = prod(trans(A), trans(B)): size2(A) != size1(C)"));
+      assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && bool("Size check failed at C = prod(trans(A), trans(B)): size1(A) != size2(B)"));
+      assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size check failed at C = prod(trans(A), trans(B)): size1(B) != size2(C)"));
       
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
@@ -503,7 +503,7 @@ namespace viennacl
                                                                                         const V1,
                                                                                         viennacl::op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed for v1 = A * v2: size1(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
     
     // check for the special case x = A * x
     if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
@@ -535,7 +535,7 @@ namespace viennacl
   {
     typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && "Size check failed for v1 += A * v2: size1(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && bool("Size check failed for v1 += A * v2: size1(A) != size(v1)"));
     
     vector<cpu_value_type> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
@@ -558,7 +558,7 @@ namespace viennacl
   {
     typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && "Size check failed for v1 -= A * v2: size1(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == v1.size() && bool("Size check failed for v1 -= A * v2: size1(A) != size(v1)"));
     
     vector<cpu_value_type> result(viennacl::traits::size1(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
@@ -585,7 +585,7 @@ namespace viennacl
   operator+(const V1 & v1,
             const vector_expression< const M1, const V2, op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed for v1 + A * v2: size1(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && bool("Size check failed for v1 + A * v2: size1(A) != size(v1)"));
     
     vector<typename viennacl::result_of::cpu_value_type<V1>::type,
            viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
@@ -608,7 +608,7 @@ namespace viennacl
   operator-(const V1 & v1,
             const vector_expression< const M1, const V2, op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed for v1 - A * v2: size1(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == viennacl::traits::size(v1) && bool("Size check failed for v1 - A * v2: size1(A) != size(v1)"));
     
     vector<typename viennacl::result_of::cpu_value_type<V1>::type,
            viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
@@ -636,7 +636,7 @@ namespace viennacl
                                                                                         const V1,
                                                                                         viennacl::op_prod> & proxy) 
   {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && "Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)");
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
 
     // check for the special case x = trans(A) * x
     if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
@@ -644,12 +644,10 @@ namespace viennacl
       viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
       *this = result;
-      return *this;
     }
     else
     {
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-      return *this;
     }
     return *this;
   }
@@ -671,7 +669,7 @@ namespace viennacl
   {
     typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && bool("Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)"));
     
     vector<cpu_value_type> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
@@ -695,7 +693,7 @@ namespace viennacl
   {
     typedef typename viennacl::result_of::cpu_value_type<V1>::type   cpu_value_type;
     
-    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && "Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)");
+    assert(viennacl::traits::size2(proxy.lhs()) == v1.size() && bool("Size check failed in v1 += trans(A) * v2: size2(A) != size(v1)"));
     
     vector<cpu_value_type> result(viennacl::traits::size2(proxy.lhs()));
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
@@ -721,7 +719,7 @@ namespace viennacl
                                     const V2,
                                     op_prod> & proxy) 
   {
-    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed in v1 + trans(A) * v2: size2(A) != size(v1)");
+    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && bool("Size check failed in v1 + trans(A) * v2: size2(A) != size(v1)"));
     
     vector<typename viennacl::result_of::cpu_value_type<V1>::type,
            viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));
@@ -746,7 +744,7 @@ namespace viennacl
                                      const V2,
                                      op_prod> & proxy) 
   {
-    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && "Size check failed in v1 - trans(A) * v2: size2(A) != size(v1)");
+    assert(viennacl::traits::size2(proxy.lhs()) == viennacl::traits::size(v1) && bool("Size check failed in v1 - trans(A) * v2: size2(A) != size(v1)"));
     
     vector<typename viennacl::result_of::cpu_value_type<V1>::type,
            viennacl::result_of::alignment<V1>::value> result(viennacl::traits::size(v1));

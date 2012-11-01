@@ -61,7 +61,7 @@ namespace viennacl {
          */
         explicit hankel_matrix(std::size_t rows, std::size_t cols) : elements_(rows, cols)
         {
-          assert(rows == cols && "Hankel matrix must be square!");
+          assert(rows == cols && bool("Hankel matrix must be square!"));
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
         }
 
@@ -115,7 +115,7 @@ namespace viennacl {
          */
         entry_proxy<SCALARTYPE> operator()(unsigned int row_index, unsigned int col_index)
         {
-            assert(row_index < size1() && col_index < size2() && "Invalid access");
+            assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
             
             return elements_(size1() - row_index - 1, col_index);
         }
@@ -134,7 +134,7 @@ namespace viennacl {
 
     private:
         hankel_matrix(hankel_matrix const & t) {}
-        hankel_matrix & operator=(hankel_matrix const & t) {}
+        hankel_matrix & operator=(hankel_matrix const & t);
       
         toeplitz_matrix<SCALARTYPE, ALIGNMENT> elements_;
     };
@@ -148,7 +148,7 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE> const & cpu_vec, hankel_matrix<SCALARTYPE, ALIGNMENT> & gpu_mat)
     {
-        assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && "Size mismatch");
+        assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
 
         copy(cpu_vec, gpu_mat.elements());
     }
@@ -162,7 +162,7 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(hankel_matrix<SCALARTYPE, ALIGNMENT> const & gpu_mat, std::vector<SCALARTYPE> & cpu_vec)
     {
-        assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && "Size mismatch");
+        assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
 
         copy(gpu_mat.elements(), cpu_vec);
     }
@@ -177,8 +177,8 @@ namespace viennacl {
     void copy(hankel_matrix<SCALARTYPE, ALIGNMENT> const & han_src, MATRIXTYPE& com_dst)
     {
         std::size_t size = han_src.size1();
-        assert(size == com_dst.size1() && "Size mismatch");
-        assert(size == com_dst.size2() && "Size mismatch");
+        assert(size == com_dst.size1() && bool("Size mismatch"));
+        assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size * 2 - 1);
         copy(han_src, tmp);
 
@@ -197,8 +197,8 @@ namespace viennacl {
     void copy(MATRIXTYPE const & com_src, hankel_matrix<SCALARTYPE, ALIGNMENT>& han_dst)
     {
         std::size_t size = han_dst.size1();
-        assert(size == com_src.size1() && "Size mismatch");
-        assert(size == com_src.size2() && "Size mismatch");
+        assert(size == com_src.size1() && bool("Size mismatch"));
+        assert(size == com_src.size2() && bool("Size mismatch"));
 
         std::vector<SCALARTYPE> tmp(2*size - 1);
 

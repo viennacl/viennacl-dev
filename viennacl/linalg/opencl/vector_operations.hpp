@@ -276,7 +276,7 @@ namespace viennacl
         viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
       
         assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
-              && "Incompatible vector sizes in inner_prod_impl()!");
+              && bool("Incompatible vector sizes in inner_prod_impl()!"));
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
         //cl_uint size = static_cast<cl_uint>(std::min(vec1.internal_size(), vec2.internal_size()));

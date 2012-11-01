@@ -75,8 +75,8 @@ namespace viennacl
                               std::size_t dst_offset,
                               std::size_t bytes_to_copy)
       {
-        assert( (dst_buffer.get() != NULL) && "Memory not initialized!");
-        assert( (src_buffer.get() != NULL) && "Memory not initialized!");
+        assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
+        assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
         
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = src_buffer.get()[i + src_offset];
@@ -87,7 +87,7 @@ namespace viennacl
                                std::size_t bytes_to_copy,
                                const void * ptr)
       {
-        assert( (dst_buffer.get() != NULL) && "Memory not initialized!");
+        assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
         
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = static_cast<const char *>(ptr)[i];
@@ -99,7 +99,7 @@ namespace viennacl
                               std::size_t bytes_to_copy,
                               void * ptr)
       {
-        assert( (src_buffer.get() != NULL) && "Memory not initialized!");
+        assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
         
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           static_cast<char *>(ptr)[i] = src_buffer.get()[i+src_offset];

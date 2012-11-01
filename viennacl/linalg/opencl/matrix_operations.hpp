@@ -249,7 +249,7 @@ namespace viennacl
         
         assert(mat.size2() == vec.size());
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-        assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && "No direct inplace matrix-vector product possible. Introduce a temporary!");
+        assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         //result.resize(mat.size1());
 
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "vec_mul");
@@ -295,8 +295,8 @@ namespace viennacl
                 const V1 & vec, 
                       V2 & result)
       {
-        assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && "Size check failed for transposed matrix-vector product: size1(A^T) == size(result)");
-        assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && "Size check failed for transposed matrix-vector product: size2(A^T) == size(x)");  //remember: mat is transposed!
+        assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && bool("Size check failed for transposed matrix-vector product: size1(A^T) == size(result)"));
+        assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && bool("Size check failed for transposed matrix-vector product: size2(A^T) == size(x)"));  //remember: mat is transposed!
         
         typedef typename viennacl::result_of::cpu_value_type<V1>::type    value_type;
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
@@ -304,7 +304,7 @@ namespace viennacl
         
         
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-        assert(vec.handle() != result.handle() && "No direct inplace transposed matrix-vector product possible. Introduce a temporary!");
+        assert(vec.handle() != result.handle() && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
         result.resize(viennacl::traits::size1(mat_trans));
 
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "trans_vec_mul");
@@ -479,14 +479,14 @@ namespace viennacl
                 ScalarType alpha,
                 ScalarType beta)
       {
-        assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && "Size mismatch in C = prod(A, B): size1(A) != size1(C)");
-        assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && "Size mismatch in C = prod(A, B): size2(A) != size1(B)");
-        assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && "Size mismatch in C = prod(A, B): size2(B) != size2(C)");
+        assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(A, B): size1(A) != size1(C)"));
+        assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(A, B): size2(A) != size1(B)"));
+        assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(A, B): size2(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
 
         
         detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
@@ -514,14 +514,14 @@ namespace viennacl
       {
         //std::cout << "size2(A): " << viennacl::traits::size2(A.lhs()) << std::endl;
         //std::cout << "size1(C): " << viennacl::traits::size1(C) << std::endl;
-        assert( (viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)) && "Size mismatch in C = prod(trans(A), B): size2(A) != size1(C)");
-        assert( (viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B)) && "Size mismatch in C = prod(trans(A), B): size1(A) != size1(B)");
-        assert( (viennacl::traits::size2(B)       == viennacl::traits::size2(C)) && "Size mismatch in C = prod(trans(A), B): size2(B) != size2(C)");
+        assert( (viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(A) != size1(C)"));
+        assert( (viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(trans(A), B): size1(A) != size1(B)"));
+        assert( (viennacl::traits::size2(B)       == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
         
         detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
       }
@@ -547,14 +547,14 @@ namespace viennacl
                 ScalarType alpha,
                 ScalarType beta)
       {
-        assert( (viennacl::traits::size1(A)       == viennacl::traits::size1(C))       && "Size mismatch in C = prod(A, trans(B)): size1(A) != size1(C)");
-        assert( (viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs())) && "Size mismatch in C = prod(A, trans(B)): size2(A) != size2(B)");
-        assert( (viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C))       && "Size mismatch in C = prod(A, trans(B)): size1(B) != size2(C)");
+        assert( (viennacl::traits::size1(A)       == viennacl::traits::size1(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(A) != size1(C)"));
+        assert( (viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs())) && bool("Size mismatch in C = prod(A, trans(B)): size2(A) != size2(B)"));
+        assert( (viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
         
         detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
       }
@@ -577,14 +577,14 @@ namespace viennacl
                 ScalarType alpha,
                 ScalarType beta)
       {
-        assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && "Size mismatch in C = prod(trans(A), trans(B)): size2(A) != size1(C)");
-        assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && "Size mismatch in C = prod(trans(A), trans(B)): size1(A) != size2(B)");
-        assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && "Size mismatch in C = prod(trans(A), trans(B)): size1(B) != size2(C)");
+        assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size2(A) != size1(C)"));
+        assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(A) != size2(B)"));
+        assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && "No direct inplace matrix-matrix product possible. Introduce a temporary!");
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
         
         detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
       }
@@ -617,8 +617,8 @@ namespace viennacl
                     const V1 & vec1, 
                     const V2 & vec2)
       {
-        assert( (viennacl::traits::size1(mat1) == viennacl::traits::size(vec1)) && "Size mismatch in scaled_rank_1_update: size1(A) != size(v1)");
-        assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && "Size mismatch in scaled_rank_1_update: size2(A) != size(v2)");
+        assert( (viennacl::traits::size1(mat1) == viennacl::traits::size(vec1)) && bool("Size mismatch in scaled_rank_1_update: size1(A) != size(v1)"));
+        assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;

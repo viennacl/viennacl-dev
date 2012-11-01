@@ -93,7 +93,7 @@ namespace viennacl
         /** @brief Switches the current device to the i-th device in this context */
         void switch_device(std::size_t i)
         {
-          assert(i < devices_.size() && "Provided device index out of range!");
+          assert(i < devices_.size() && bool("Provided device index out of range!"));
           current_device_id_ = i;
         }
 
@@ -120,7 +120,7 @@ namespace viennacl
         /** @brief Add a device to the context. Must be done before the context is initialized */
         void add_device(viennacl::ocl::device const & d)
         {
-          assert(!initialized_ && "Device must be added to context before it is initialized!");
+          assert(!initialized_ && bool("Device must be added to context before it is initialized!"));
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Adding new device to context " << h_ << std::endl;
           #endif
@@ -131,7 +131,7 @@ namespace viennacl
         /** @brief Add a device to the context. Must be done before the context is initialized */
         void add_device(cl_device_id d)
         {
-          assert(!initialized_ && "Device must be added to context before it is initialized!");
+          assert(!initialized_ && bool("Device must be added to context before it is initialized!"));
           add_device(viennacl::ocl::device(d));
         }
 
@@ -152,7 +152,7 @@ namespace viennacl
 
 /*        void existing_context(cl_context context_id)
         {
-          assert(!initialized_ && "ViennaCL: FATAL error: Provided a new context for an already initialized context.");
+          assert(!initialized_ && bool("ViennaCL: FATAL error: Provided a new context for an already initialized context."));
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Reusing existing context " << h_ << std::endl;
           #endif
@@ -241,7 +241,7 @@ namespace viennacl
         /** @brief Returns the queue with the provided index for the given device */
         viennacl::ocl::command_queue & get_queue(cl_device_id dev, std::size_t i = 0)
         {
-          assert(i < queues_.size() && "In class 'context': id invalid in get_queue()");
+          assert(i < queues_.size() && bool("In class 'context': id invalid in get_queue()"));
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting queue " << i << " for device " << dev << " in context " << h_ << std::endl;
           #endif
@@ -252,7 +252,7 @@ namespace viennacl
               break;
           }
           
-          assert(device_index < devices_.size() && "Device not within context");
+          assert(device_index < devices_.size() && bool("Device not within context"));
           
           return queues_[devices_[device_index].id()][i];
         }
@@ -313,14 +313,14 @@ namespace viennacl
               return *it;
           }
           std::cerr << "Could not find program '" << name << "'" << std::endl;
-          assert(!"In class 'context': name invalid in get_program()");
-          return programs_[0];  //return a defined object
+          throw "In class 'context': name invalid in get_program()";
+          //return programs_[0];  //return a defined object
         }
         
         /** @brief Returns the program with the provided id */
         viennacl::ocl::program & get_program(std::size_t id)
         {
-          assert(id < programs_.size() && "In class 'context': id invalid in get_program()");
+          assert(id < programs_.size() && bool("In class 'context': id invalid in get_program()"));
           return programs_[id];
         }
         
@@ -345,7 +345,7 @@ namespace viennacl
         /** @brief Sets the platform ID of the platform to be used for the context */
         void platform_index(std::size_t new_index)
         {
-          assert(!initialized_ && "Platform ID must be set before context is initialized!");
+          assert(!initialized_ && bool("Platform ID must be set before context is initialized!"));
           pf_index_ = new_index; 
         }
         
@@ -359,7 +359,7 @@ namespace viennacl
         /** @brief Initialize a new context. Reuse any previously supplied information (devices, queues) */
         void init_new()
         {
-          assert(!initialized_ && "ViennaCL FATAL error: Context already created!");
+          assert(!initialized_ && bool("ViennaCL FATAL error: Context already created!"));
 
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Initializing new ViennaCL context." << std::endl;
@@ -420,7 +420,7 @@ namespace viennacl
         /** @brief Reuses a supplied context. */
         void init_existing(cl_context c)
         {
-          assert(!initialized_ && "ViennaCL FATAL error: Context already created!");
+          assert(!initialized_ && bool("ViennaCL FATAL error: Context already created!"));
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Initialization of ViennaCL context from existing context." << std::endl;
           #endif
@@ -439,7 +439,7 @@ namespace viennacl
             //does not work with NVIDIA OpenCL stack!
             err = clGetContextInfo(h_.get(), CL_CONTEXT_DEVICES, VIENNACL_OCL_MAX_DEVICE_NUM * sizeof(cl_device_id), NULL, &temp);
             VIENNACL_ERR_CHECK(err);
-            assert(temp > 0 && "ViennaCL: FATAL error: Provided context does not contain any devices!");
+            assert(temp > 0 && bool("ViennaCL: FATAL error: Provided context does not contain any devices!"));
             num_devices = temp / sizeof(cl_device_id);
             
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)

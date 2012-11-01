@@ -91,8 +91,7 @@ namespace viennacl
             case OPENCL_MEMORY:
               return opencl_handle_.get() == other.opencl_handle_.get();
 #endif
-            default:
-              return false;
+            default: break;
           }
           
           return false;
@@ -179,7 +178,7 @@ namespace viennacl
         void * get() { return reinterpret_cast<void *>(bytes_buffer_); }
         unsigned int operator[](std::size_t index) const 
         {
-          assert(index < size() && "index out of bounds");
+          assert(index < size() && bool("index out of bounds"));
 #ifdef VIENNACL_HAVE_OPENCL
           if (convert_to_opencl_)
             return static_cast<unsigned int>(reinterpret_cast<cl_uint *>(bytes_buffer_)[index]);
@@ -247,7 +246,7 @@ namespace viennacl
                             std::size_t dst_offset,
                             std::size_t bytes_to_copy)
     {
-      assert( (src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id()) && "Different memory locations for source and destination! Not supported!");
+      assert( (src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id()) && bool("Different memory locations for source and destination! Not supported!"));
       
       if (bytes_to_copy > 0)
       {
@@ -271,7 +270,7 @@ namespace viennacl
     inline void memory_shallow_copy(mem_handle const & src_buffer,
                                     mem_handle & dst_buffer)
     {
-      assert( (dst_buffer.get_active_handle_id() == MEMORY_NOT_INITIALIZED) && "Shallow copy on already initialized memory not supported!");
+      assert( (dst_buffer.get_active_handle_id() == MEMORY_NOT_INITIALIZED) && bool("Shallow copy on already initialized memory not supported!"));
 
       switch(src_buffer.get_active_handle_id())
       {

@@ -55,7 +55,7 @@ namespace viennacl
           * @param row_start     The starting row for the block to which we apply ILU
           * @param row_end       The end column of the block to which we apply ILU
           */
-        ilu0_tag(unsigned int row_start = 0, unsigned int row_end = -1)
+        ilu0_tag(unsigned int row_start = 0, unsigned int row_end = static_cast<unsigned int>(-1))
             : row_start_(row_start),  
               row_end_(row_end) {}
               

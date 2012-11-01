@@ -100,7 +100,7 @@ namespace viennacl
                                   std::vector<cl_device_id> const & devices,
                                   std::map< cl_device_id, std::vector< cl_command_queue > > const & queues)
         {
-          assert(devices.size() == queues.size() && "ViennaCL expects one queue per device!");
+          assert(devices.size() == queues.size() && bool("ViennaCL expects one queue per device!"));
           
           if (initialized_[i])
             std::cerr << "ViennaCL: Warning in init_context(): Providing a list of devices has no effect, because context for ViennaCL is already created!" << std::endl;
@@ -137,7 +137,7 @@ namespace viennacl
         */
         static void setup_context(long i, cl_context c, std::vector<cl_device_id> const & devices, std::vector<cl_command_queue> const & queue)
         {
-          assert(devices.size() == queue.size() && "ViennaCL expects one queue per device!");
+          assert(devices.size() == queue.size() && bool("ViennaCL expects one queue per device!"));
           
           //wrap queue vector into map
           std::map< cl_device_id, std::vector<cl_command_queue> > queues_map;

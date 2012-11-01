@@ -128,12 +128,10 @@ namespace viennacl
         viennacl::vector<SCALARTYPE, ALIGNMENT> result(proxy.rhs().size());
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
         *this = result;
-        return *this;
       }
       else
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        return *this;
       }
       return *this;
     }

@@ -184,9 +184,9 @@ namespace viennacl
                                                      const self_type,
                                                      op_trans> & proxy)
       {
-        assert( (elements_ != proxy.lhs().handle()) && "Self-assignment of matrix transpose not implemented");
-        assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && "Matrix dimensions do not match!");
-        assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && "Matrix dimensions do not match!");
+        assert( (elements_ != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
+        assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
+        assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
 
         if (internal_size() == 0)
           resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
@@ -230,7 +230,7 @@ namespace viennacl
       {
         assert(  (proxy.lhs().size1() == size1())
               && (proxy.lhs().size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() == 0)
         {
@@ -261,7 +261,7 @@ namespace viennacl
       {
         assert(  (proxy.lhs().size1() == size1())
               && (proxy.lhs().size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() == 0)
         {
@@ -294,7 +294,7 @@ namespace viennacl
       {
         assert(  (proxy.lhs().size1() == size1())
               && (proxy.lhs().size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() == 0)
         {
@@ -332,7 +332,7 @@ namespace viennacl
       {
         assert(  (proxy.lhs().size1() == size1())
               && (proxy.lhs().size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() == 0)
         {
@@ -365,7 +365,7 @@ namespace viennacl
       {
         assert(  (proxy.lhs().size1() == size1())
               && (proxy.lhs().size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() == 0)
         {
@@ -397,7 +397,7 @@ namespace viennacl
       {
         assert(  (m1.size1() == size1())
               && (m1.size2() == size2())
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
         
         if (internal_size() > 0)
           viennacl::linalg::am(*this, 
@@ -416,7 +416,7 @@ namespace viennacl
       */
       void resize(size_type rows, size_type columns, bool preserve = true)
       {
-        assert( (rows > 0 && columns > 0) && "Check failed in matrix::resize(): Number of rows and columns must be positive!");
+        assert( (rows > 0 && columns > 0) && bool("Check failed in matrix::resize(): Number of rows and columns must be positive!"));
 
         if (preserve && internal_size() > 0)
         {
@@ -653,6 +653,7 @@ namespace viennacl
       {
         assert( (gpu_matrix.size1() == cpu_matrix.size1()) 
                && (gpu_matrix.size2() == cpu_matrix.size2())
+               && bool("matrix size mismatch")
               );
       }
 
@@ -692,6 +693,7 @@ namespace viennacl
       {
         assert( (gpu_matrix.size1() == cpu_matrix.size()) 
                && (gpu_matrix.size2() == cpu_matrix[0].size())
+               && bool("matrix size mismatch")
               );
       }
 
@@ -750,6 +752,7 @@ namespace viennacl
       {
         assert( (gpu_matrix.size1() == static_cast<std::size_t>(cpu_matrix.rows())) 
                && (gpu_matrix.size2() == static_cast<std::size_t>(cpu_matrix.cols()))
+               && bool("matrix size mismatch")
               );
       }
 
@@ -785,6 +788,7 @@ namespace viennacl
       {
         assert( (gpu_matrix.size1() == static_cast<std::size_t>(cpu_matrix.rows())) 
                && (gpu_matrix.size2() == static_cast<std::size_t>(cpu_matrix.cols()))
+               && bool("matrix size mismatch")
               );
       }
 
@@ -822,6 +826,7 @@ namespace viennacl
       {
         assert( (gpu_matrix.size1() == cpu_matrix.num_rows()) 
                && (gpu_matrix.size2() == cpu_matrix.num_cols())
+               && bool("matrix size mismatch")
               );
       }
 
@@ -919,7 +924,7 @@ namespace viennacl
     {
       assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
               && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy1))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
       typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result(proxy1.size());
       result = proxy1;
       result += proxy2;
@@ -1025,7 +1030,7 @@ namespace viennacl
       
       assert(   (proxy.lhs().size1() == m1.size1())
              && (proxy.lhs().size2() == m1.size2())
-             && "Incompatible matrix sizes!");
+             && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm(m1, 
@@ -1051,7 +1056,7 @@ namespace viennacl
       
       assert(   (proxy.lhs().size1() == m1.size1())
              && (proxy.lhs().size2() == m1.size2())
-             && "Incompatible matrix sizes!");
+             && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm_m(m1, 
@@ -1082,7 +1087,7 @@ namespace viennacl
       
       assert(   (proxy.lhs().size1() == m1.size1())
              && (proxy.lhs().size2() == m1.size2())
-             && "Incompatible matrix sizes!");
+             && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
       {
@@ -1118,7 +1123,7 @@ namespace viennacl
       
       assert(   (proxy.size1() == m1.size1())
              && (proxy.size2() == m1.size2())
-             && "Incompatible matrix sizes!");
+             && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm_m(m1, 
@@ -1147,7 +1152,7 @@ namespace viennacl
     {
       assert(   (proxy.size1() == m1.size1())
              && (proxy.size2() == m1.size2())
-             && "Incompatible matrix sizes!");
+             && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
       {
@@ -1224,7 +1229,7 @@ namespace viennacl
     {
       assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
               && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy1))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
       typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result(proxy1.size());
       result = proxy1;
       result -= proxy2;
@@ -1331,7 +1336,7 @@ namespace viennacl
       
       assert(    (viennacl::traits::size1(m1) == viennacl::traits::size1(proxy))
               && (viennacl::traits::size2(m1) == viennacl::traits::size2(proxy))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm(m1, 
@@ -1356,7 +1361,7 @@ namespace viennacl
       
       assert(    (viennacl::traits::size1(m1) == viennacl::traits::size1(proxy))
               && (viennacl::traits::size2(m1) == viennacl::traits::size2(proxy))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm_m(m1, 
@@ -1387,7 +1392,7 @@ namespace viennacl
       
       assert(    (viennacl::traits::size1(m1) == viennacl::traits::size1(proxy))
               && (viennacl::traits::size2(m1) == viennacl::traits::size2(proxy))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
       {
@@ -1423,7 +1428,7 @@ namespace viennacl
       
       assert(    (viennacl::traits::size1(m1) == viennacl::traits::size1(proxy))
               && (viennacl::traits::size2(m1) == viennacl::traits::size2(proxy))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
         viennacl::linalg::ambm_m(m1, 
@@ -1452,7 +1457,7 @@ namespace viennacl
     {
       assert(    (viennacl::traits::size1(m1) == viennacl::traits::size1(proxy))
               && (viennacl::traits::size2(m1) == viennacl::traits::size2(proxy))
-              && "Incompatible matrix sizes!");
+              && bool("Incompatible matrix sizes!"));
 
       if (m1.size1() > 0 && m1.size2() > 0)
       {
