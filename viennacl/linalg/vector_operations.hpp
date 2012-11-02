@@ -36,6 +36,9 @@
   #include "viennacl/linalg/opencl/vector_operations.hpp"
 #endif
 
+#ifdef VIENNACL_WITH_CUDA
+  #include "viennacl/linalg/cuda/vector_operations.hpp"
+#endif
 
 namespace viennacl
 {
@@ -60,6 +63,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
         default:
@@ -98,6 +106,13 @@ namespace viennacl
                                          vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::avbv(vec1,
+                                       vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                       vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -134,6 +149,13 @@ namespace viennacl
                                            vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::avbv_v(vec1,
+                                         vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                         vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -159,6 +181,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_assign(vec1, alpha);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::vector_assign(vec1, alpha);
           break;
 #endif
         default:
@@ -188,6 +215,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_swap(vec1, vec2);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::vector_swap(vec1, vec2);
           break;
 #endif
         default:
@@ -226,6 +258,11 @@ namespace viennacl
           viennacl::linalg::opencl::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA          
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inner_prod_impl(vec1, vec2, result);
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -256,6 +293,11 @@ namespace viennacl
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inner_prod_cpu(vec1, vec2, result);
           break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          throw "todo";
+          //break;
 #endif
         default:
           throw "not implemented";
@@ -307,6 +349,11 @@ namespace viennacl
           viennacl::linalg::opencl::norm_1_impl(vec, result);
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_1_impl(vec, result);
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -332,6 +379,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_2_impl(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_2_impl(vec, result);
           break;
 #endif
         default:
@@ -361,6 +413,11 @@ namespace viennacl
           viennacl::linalg::opencl::norm_inf_impl(vec, result);
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_inf_impl(vec, result);
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -387,6 +444,10 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           return viennacl::linalg::opencl::index_norm_inf(vec);
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          return viennacl::linalg::cuda::index_norm_inf(vec);
 #endif
         default:
           throw "not implemented";
@@ -421,6 +482,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::plane_rotation(vec1, vec2, alpha, beta);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #endif
         default:

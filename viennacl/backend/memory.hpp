@@ -30,6 +30,11 @@
   #include "viennacl/backend/opencl.hpp"
 #endif
 
+#ifdef VIENNACL_WITH_CUDA
+  #include "viennacl/backend/cuda.hpp"
+#endif
+
+
 namespace viennacl
 {
   namespace backend
@@ -42,20 +47,26 @@ namespace viennacl
       , OPENCL_MEMORY
       , CUDA_MEMORY
     };
-    
-    //inline memory_types default_memory_type() { return MAIN_MEMORY; }
-#ifdef VIENNACL_HAVE_OPENCL
+
+
+// if a user compiles with CUDA, it is reasonable to expect that CUDA should be the default
+#ifdef VIENNACL_WITH_CUDA
+    inline memory_types default_memory_type() { return CUDA_MEMORY; }
+    inline void finish() { cudaDeviceSynchronize(); }
+#elif defined(VIENNACL_HAVE_OPENCL)
     inline memory_types default_memory_type() { return OPENCL_MEMORY; }
     inline void finish() { viennacl::ocl::get_queue().finish(); }
 #else
     inline memory_types default_memory_type() { return MAIN_MEMORY; }
     inline void finish() {}
 #endif    
-    
+
+
     class mem_handle
     {
       public:
         typedef viennacl::tools::shared_ptr<char>      ram_handle_type;
+        typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
         
         mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED) {}
         
@@ -66,6 +77,12 @@ namespace viennacl
         viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
 #endif        
+
+#ifdef VIENNACL_WITH_CUDA
+        cuda_handle_type       & cuda_handle()       { return cuda_handle_; }
+        cuda_handle_type const & cuda_handle() const { return cuda_handle_; }
+#endif        
+
         memory_types get_active_handle_id() const { return active_handle_; }
         void switch_active_handle_id(memory_types new_id)
         {
@@ -91,6 +108,10 @@ namespace viennacl
             case OPENCL_MEMORY:
               return opencl_handle_.get() == other.opencl_handle_.get();
 #endif
+#ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              return cuda_handle_.get() == other.cuda_handle_.get();
+#endif
             default: break;
           }
           
@@ -115,6 +136,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
           opencl_handle_.swap(other.opencl_handle_);
 #endif          
+#ifdef VIENNACL_WITH_CUDA
+          cuda_handle_type cuda_handle_tmp = other.cuda_handle_;
+          other.cuda_handle_ = cuda_handle_;
+          cuda_handle_ = cuda_handle_tmp;
+#endif          
         }
         
       private:
@@ -123,8 +149,8 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         viennacl::ocl::handle<cl_mem> opencl_handle_;
 #endif
-#ifdef VIENNACL_HAVE_CUDA
-        viennacl::cuda::handle        cuda_handle_;
+#ifdef VIENNACL_WITH_CUDA
+        cuda_handle_type        cuda_handle_;
 #endif
     };
 
@@ -234,6 +260,11 @@ namespace viennacl
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
             break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            handle.cuda_handle() = cuda::memory_create(size_in_bytes, host_ptr);
+            break;
+#endif
           default:
             throw "unknown memory handle!";
         }
@@ -260,6 +291,11 @@ namespace viennacl
             opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            cuda::memory_copy(src_buffer.cuda_handle(), dst_buffer.cuda_handle(), src_offset, dst_offset, bytes_to_copy);
+            break;
+#endif
           default:
             throw "unknown memory handle!";
         }
@@ -284,6 +320,12 @@ namespace viennacl
           dst_buffer.opencl_handle() = src_buffer.opencl_handle();
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
+            dst_buffer.cuda_handle() = src_buffer.cuda_handle();
+            break;
+#endif
         default:
           throw "unknown memory handle!";
       }
@@ -304,6 +346,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
+            break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            cuda::memory_write(dst_buffer.cuda_handle(), dst_offset, bytes_to_write, ptr);
             break;
 #endif
           default:
@@ -329,6 +376,11 @@ namespace viennacl
             opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
             break;
 #endif            
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            cuda::memory_read(src_buffer.cuda_handle(), src_offset, bytes_to_read, ptr);
+            break;
+#endif
           default:
             throw "unknown memory handle!";
         }

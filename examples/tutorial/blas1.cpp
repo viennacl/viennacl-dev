@@ -74,21 +74,27 @@ int main()
   //
   
   std::cout << "Manipulating a few scalars..." << std::endl;
+  std::cout << "operator +=" << std::endl;
   s1 += s2;
   vcl_s1 += vcl_s2;
   
+  /*std::cout << "operator *=" << std::endl;
   s1 *= s2;
   vcl_s1 *= vcl_s2;
   
+  std::cout << "operator -=" << std::endl;
   s1 -= s2;
   vcl_s1 -= vcl_s2;
 
+  std::cout << "operator /=" << std::endl;
   s1 /= s2;
-  vcl_s1 /= vcl_s2;
+  vcl_s1 /= vcl_s2;*/
 
+  std::cout << "operator +" << std::endl;
   s1 = s2 + s3;
   vcl_s1 = vcl_s2 + vcl_s3;
   
+  std::cout << "multiple operators" << std::endl;
   s1 = s2 + s3 * s2 - s3 / s1;
   vcl_s1 = vcl_s2 + vcl_s3 * vcl_s2 - vcl_s3 / vcl_s1;
   
@@ -97,6 +103,7 @@ int main()
   // Operations can also be mixed:
   //
 
+  std::cout << "mixed operations" << std::endl;
   vcl_s1 = s1 * vcl_s2 + s3 - vcl_s3;
   
   
