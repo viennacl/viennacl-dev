@@ -101,6 +101,7 @@ namespace viennacl
       
       //////////////////// asbs ////////////////////////////
       
+      // alpha and beta on GPU
       template <typename T>
       __global__ void asbs_kernel(T * s1,
                                   const T * fac2, unsigned int options2, const T * s2,
@@ -121,6 +122,7 @@ namespace viennacl
           *s1 = *s2 * alpha + *s3 * beta;
       }
 
+      // alpha on CPU, beta on GPU
       template <typename T>
       __global__ void asbs_kernel(T * s1,
                                   T fac2, unsigned int options2, const T * s2,
@@ -141,6 +143,7 @@ namespace viennacl
           *s1 = *s2 * alpha + *s3 * beta;
       }
 
+      // alpha on GPU, beta on CPU
       template <typename T>
       __global__ void asbs_kernel(T * s1,
                                   const T * fac2, unsigned int options2, const T * s2,
@@ -161,6 +164,7 @@ namespace viennacl
           *s1 = *s2 * alpha + *s3 * beta;
       }
 
+      // alpha and beta on CPU
       template <typename T>
       __global__ void asbs_kernel(T * s1,
                                   T fac2, unsigned int options2, const T * s2,
@@ -224,6 +228,7 @@ namespace viennacl
       
       //////////////////// asbs_s ////////////////////
       
+      // alpha and beta on GPU
       template <typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     const T * fac2, unsigned int options2, const T * s2,
@@ -244,6 +249,7 @@ namespace viennacl
           *s1 += *s2 * alpha + *s3 * beta;
       }
       
+      // alpha on CPU, beta on GPU
       template <typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     T fac2, unsigned int options2, const T * s2,
@@ -264,6 +270,7 @@ namespace viennacl
           *s1 += *s2 * alpha + *s3 * beta;
       }
       
+      // alpha on GPU, beta on CPU
       template <typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     const T * fac2, unsigned int options2, const T * s2,
@@ -284,6 +291,7 @@ namespace viennacl
           *s1 += *s2 * alpha + *s3 * beta;
       }
       
+      // alpha and beta on CPU
       template <typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     T fac2, unsigned int options2, const T * s2,

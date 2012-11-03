@@ -46,6 +46,7 @@ namespace viennacl
       
       //////////////////////// as /////////////////////////////
       
+      // gpu scalar
       template <typename T>
       __global__ void av_kernel(T * vec1,
                                 unsigned int start1,
@@ -70,6 +71,7 @@ namespace viennacl
           vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha;
       }
 
+      // cpu scalar
       template <typename T>
       __global__ void av_kernel(T * vec1,
                                 unsigned int start1,
@@ -136,6 +138,157 @@ namespace viennacl
       
       ///////////////////// avbv //////////////////////////////////
       
+      // alpha and beta on GPU
+      template <typename T>
+      __global__ void avbv_kernel(T * vec1,
+                                  unsigned int start1,
+                                  unsigned int inc1,          
+                                  unsigned int size1,
+                                  
+                                  const T * fac2,
+                                  unsigned int options2,
+                                  const T * vec2,
+                                  unsigned int start2,
+                                  unsigned int inc2
+                                  
+                                  const T * fac3,
+                                  unsigned int options3,
+                                  const T * vec3,
+                                  unsigned int start3,
+                                  unsigned int inc3)
+      { 
+        T alpha = *fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = *fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha on CPU, beta on GPU
+      template <typename T>
+      __global__ void avbv_kernel(T * vec1,
+                                  unsigned int start1,
+                                  unsigned int inc1,          
+                                  unsigned int size1,
+                                  
+                                  T fac2,
+                                  unsigned int options2,
+                                  const T * vec2,
+                                  unsigned int start2,
+                                  unsigned int inc2
+                                  
+                                  const T * fac3,
+                                  unsigned int options3,
+                                  const T * vec3,
+                                  unsigned int start3,
+                                  unsigned int inc3)
+      { 
+        T alpha = fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = *fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha on GPU, beta on CPU
+      template <typename T>
+      __global__ void avbv_kernel(T * vec1,
+                                  unsigned int start1,
+                                  unsigned int inc1,          
+                                  unsigned int size1,
+                                  
+                                  const T * fac2,
+                                  unsigned int options2,
+                                  const T * vec2,
+                                  unsigned int start2,
+                                  unsigned int inc2
+                                  
+                                  T fac3,
+                                  unsigned int options3,
+                                  const T * vec3,
+                                  unsigned int start3,
+                                  unsigned int inc3)
+      { 
+        T alpha = *fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha and beta on CPU
+      template <typename T>
+      __global__ void avbv_kernel(T * vec1,
+                                  unsigned int start1,
+                                  unsigned int inc1,          
+                                  unsigned int size1,
+                                  
+                                  T fac2,
+                                  unsigned int options2,
+                                  const T * vec2,
+                                  unsigned int start2,
+                                  unsigned int inc2
+                                  
+                                  T fac3,
+                                  unsigned int options3,
+                                  const T * vec3,
+                                  unsigned int start3,
+                                  unsigned int inc3)
+      { 
+        T alpha = fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      
+      
+      
       template <typename V1,
                 typename V2, typename ScalarType1,
                 typename V3, typename ScalarType2>
@@ -146,16 +299,205 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       avbv(V1 & vec1, 
-          V2 const & vec2, ScalarType1 const & alpha, std::size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
-          V3 const & vec3, ScalarType2 const & beta,  std::size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta) 
+           V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
 
-        throw "todo";
+        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
+                                    + (reciprocal_alpha ?                2 : 0)
+                                    + (flip_sign_alpha  ?                1 : 0);
+        
+        value_type data_alpha = alpha;
+        if (flip_sign_alpha)
+          data_alpha = -data_alpha;
+        if (reciprocal_alpha)
+          data_alpha = static_cast<value_type>(1) / data_alpha;
+
+        value_type temporary_alpha;                             
+        if (viennacl::is_cpu_scalar<ScalarType1>::value)
+          temporary_alpha = alpha;
+        
+        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
+                                    + (reciprocal_beta ?               2 : 0)
+                                    +  (flip_sign_beta ?               1 : 0);
+        
+        value_type temporary_beta;                             
+        if (viennacl::is_cpu_scalar<ScalarType2>::value)
+          temporary_beta = beta;
+                                    
+        
+        avbv_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                      
+                                  detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                                  options_alpha,
+                                  detail::cuda_arg<value_type>(vec2),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec2))
+                                  
+                                  detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
+                                  options_beta,
+                                  detail::cuda_arg<value_type>(vec3),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec3)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec3)) );
+                                
       }
       
       
       ////////////////////////// avbv_v //////////////////////////////////////
+      
+      
+      // alpha and beta on GPU
+      template <typename T>
+      __global__ void avbv_v_kernel(T * vec1,
+                                    unsigned int start1,
+                                    unsigned int inc1,          
+                                    unsigned int size1,
+                                    
+                                    const T * fac2,
+                                    unsigned int options2,
+                                    const T * vec2,
+                                    unsigned int start2,
+                                    unsigned int inc2
+                                    
+                                    const T * fac3,
+                                    unsigned int options3,
+                                    const T * vec3,
+                                    unsigned int start3,
+                                    unsigned int inc3)
+      { 
+        T alpha = *fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = *fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] += vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha on CPU, beta on GPU
+      template <typename T>
+      __global__ void avbv_v_kernel(T * vec1,
+                                    unsigned int start1,
+                                    unsigned int inc1,          
+                                    unsigned int size1,
+                                    
+                                    T fac2,
+                                    unsigned int options2,
+                                    const T * vec2,
+                                    unsigned int start2,
+                                    unsigned int inc2
+                                    
+                                    const T * fac3,
+                                    unsigned int options3,
+                                    const T * vec3,
+                                    unsigned int start3,
+                                    unsigned int inc3)
+      { 
+        T alpha = fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = *fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] += vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha on GPU, beta on CPU
+      template <typename T>
+      __global__ void avbv_v_kernel(T * vec1,
+                                    unsigned int start1,
+                                    unsigned int inc1,          
+                                    unsigned int size1,
+                                    
+                                    const T * fac2,
+                                    unsigned int options2,
+                                    const T * vec2,
+                                    unsigned int start2,
+                                    unsigned int inc2
+                                    
+                                    T fac3,
+                                    unsigned int options3,
+                                    const T * vec3,
+                                    unsigned int start3,
+                                    unsigned int inc3)
+      { 
+        T alpha = *fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
+      // alpha and beta on CPU
+      template <typename T>
+      __global__ void avbv_v_kernel(T * vec1,
+                                    unsigned int start1,
+                                    unsigned int inc1,          
+                                    unsigned int size1,
+                                    
+                                    T fac2,
+                                    unsigned int options2,
+                                    const T * vec2,
+                                    unsigned int start2,
+                                    unsigned int inc2
+                                    
+                                    T fac3,
+                                    unsigned int options3,
+                                    const T * vec3,
+                                    unsigned int start3,
+                                    unsigned int inc3)
+      { 
+        T alpha = fac2;
+        if (options2 & (1 << 0))
+          alpha = -alpha;
+        if (options2 & (1 << 1))
+          alpha = ((T)(1)) / alpha;
+
+        T beta = fac3;
+        if (options3 & (1 << 0))
+          beta = -beta;
+        if (options3 & (1 << 1))
+          beta = ((T)(1)) / beta;
+        
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] += vec2[i*inc2+start2] * alpha + vec3[i*inc3+start3] * beta;
+      }
+      
       
       template <typename V1,
                 typename V2, typename ScalarType1,
@@ -167,16 +509,68 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       avbv_v(V1 & vec1,
-             V2 const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-             V3 const & vec3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
+             V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+             V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
 
-        throw "todo";
+        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
+                                    + (reciprocal_alpha ?                2 : 0)
+                                    + (flip_sign_alpha  ?                1 : 0);
+        
+        value_type data_alpha = alpha;
+        if (flip_sign_alpha)
+          data_alpha = -data_alpha;
+        if (reciprocal_alpha)
+          data_alpha = static_cast<value_type>(1) / data_alpha;
+
+        value_type temporary_alpha;                             
+        if (viennacl::is_cpu_scalar<ScalarType1>::value)
+          temporary_alpha = alpha;
+        
+        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
+                                    + (reciprocal_beta ?               2 : 0)
+                                    +  (flip_sign_beta ?               1 : 0);
+        
+        value_type temporary_beta;                             
+        if (viennacl::is_cpu_scalar<ScalarType2>::value)
+          temporary_beta = beta;
+                                    
+        
+        avbv_v_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                    static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                        
+                                    detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                                    options_alpha,
+                                    detail::cuda_arg<value_type>(vec2),
+                                    static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(vec2))
+                                    
+                                    detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
+                                    options_beta,
+                                    detail::cuda_arg<value_type>(vec3),
+                                    static_cast<unsigned int>(viennacl::traits::start(vec3)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(vec3)) );
       }
       
       
       //////////////////////////
+      
+      template <typename T>
+      __global__ void vector_assign_kernel(T * vec1,
+                                           unsigned int start1,
+                                           unsigned int inc1,          
+                                           unsigned int size1,
+                                            
+                                           T alpha)
+      { 
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = alpha;
+      }
       
       /** @brief Assign a constant value to a vector (-range/-slice)
       *
@@ -191,9 +585,41 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        value_type temporary_alpha;                             
+        if (viennacl::is_cpu_scalar<S1>::value)
+          temporary_alpha = alpha;
+        
+        vector_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                           static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                           static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              
+                                           detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
       }
 
+      //////////////////////////
+      
+      template <typename T>
+      __global__ void vector_swap_kernel(T * vec1,
+                                         unsigned int start1,
+                                         unsigned int inc1,
+                                         unsigned int size1,
+                                          
+                                         T * vec2,
+                                         unsigned int start2,
+                                         unsigned int inc2)
+      { 
+        T tmp;
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                          i < size1;
+                          i += gridDim.x * blockDim.x)
+        {
+          tmp = vec2[i*inc2+start2];
+          vec2[i*inc2+start2] = vec1[i*inc1+start1];
+          vec1[i*inc1+start1] = tmp;
+        }
+      }
+ 
       
       /** @brief Swaps the contents of two vectors, data is copied
       *
@@ -208,11 +634,123 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        vector_swap_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                          
+                                         detail::cuda_arg<value_type>(vec2),
+                                         static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                         static_cast<unsigned int>(viennacl::traits::stride(vec2)) );                                          
       }
 
 
       ///////////////////////// Norms and inner product ///////////////////
+
+
+      template <typename T>
+      __global__ T impl_inner_prod(     //worker for each thread block
+                const T * vec1,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                const T * vec2,
+                unsigned int start2,
+                unsigned int inc2,
+                unsigned int size2,
+                __shared__ T * tmp_buffer)
+      {
+        T tmp = 0;
+        for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
+          tmp += vec1[i*inc1+start1] * vec2[i*inc2+start2];
+        tmp_buffer[threadIdx.x] = tmp;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          barrier(CLK_LOCAL_MEM_FENCE);
+          if (threadIdx.x < stride)
+            tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+        }
+        
+        return tmp_buffer[0];
+      }
+
+
+      template <typename T>
+      __global__ void inner_prod_kernel(const T * vec1,
+                                        unsigned int start1,
+                                        unsigned int inc1,
+                                        unsigned int size1,
+                                        const T * vec2,
+                                        unsigned int start2,
+                                        unsigned int inc2,
+                                        unsigned int size2,
+                                        T * group_buffer)
+      {
+        __shared__ tmp_buffer[blockDim.x]; 
+        float tmp = impl_inner_prod(vec1,
+                                    (      blockIdx.x * size1) / (gridDim.x * blockDim.x) * inc1 + start1,
+                                    inc1,
+                                    ((blockIdx.x + 1) * size1) / (gridDim.x * blockDim.x)
+                                      - (  blockIdx.x * size1) / (gridDim.x * blockDim.x),
+                                    vec2,
+                                    (      blockIdx.x * size2) / (gridDim.x * blockDim.x) * inc2 + start2,
+                                    inc2,
+                                    ((blockIdx.x + 1) * size2) / (gridDim.x * blockDim.x)
+                                      - (  blockIdx.x * size2) / (gridDim.x * blockDim.x),
+                                    tmp_buffer);
+        
+        if (threadIdx.x == 0)
+          group_buffer[blockIdx.x] = tmp;
+        
+      }
+
+      
+      
+      // sums the array 'vec1' and writes to result. Makes use of a single work-group only. 
+      template <typename T>
+      __global__ void sum(
+                T * vec1,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                unsigned int option, //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
+                T * result) 
+      { 
+        __shared__ tmp_buffer[blockDim.x]; 
+        T thread_sum = 0;
+        for (unsigned int i = blockIdx.x; i<size1; i += blockDim.x)
+        {
+          if (option > 0)
+            thread_sum += vec1[blockIdx.x*inc1+start1];
+          else
+            thread_sum = fmax(thread_sum, fabs(vec1[blockIdx.x*inc1+start1]));
+        }
+        
+        tmp_buffer[blockIdx.x] = thread_sum;
+
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          if (blockIdx.x < stride)
+          {
+            if (option > 0)
+              tmp_buffer[blockIdx.x] += tmp_buffer[blockIdx.x + stride];
+            else
+              tmp_buffer[blockIdx.x] = fmax(tmp_buffer[blockIdx.x], tmp_buffer[blockIdx.x + stride]);
+          }
+          barrier(CLK_LOCAL_MEM_FENCE);
+        }
+        
+        if (threadIdx.x == 0)
+        {
+          if (option == 2)
+            *result = sqrt(tmp_buffer[0]);
+          else
+            *result = tmp_buffer[0];
+        }
+      }
+
 
 
       //implementation of inner product:
@@ -234,7 +772,146 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        static const unsigned int work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                        detail::cuda_arg<value_type>(vec2),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec2)),
+                                        detail::cuda_arg<value_type>(temp)
+                                       );
+        
+        vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                      cl_uint(viennacl::traits::start(temp)),
+                                      cl_uint(viennacl::traits::stride(temp)),
+                                      cl_uint(viennacl::traits::size(temp)),
+                                      cl_uint(1),
+                                      viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                      detail::cuda_arg<value_type>(result) )
+                                     );
+      }
+
+      
+      /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
+      *
+      * @param vec1 The first vector
+      * @param vec2 The second vector
+      * @param result The result scalar (on the gpu)
+      */
+      template <typename V1, typename V2, typename S3>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                    && viennacl::is_cpu_scalar<S3>::value
+                                  >::type
+      inner_prod_cpu(V1 const & vec1,
+                     V2 const & vec2,
+                     S3 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static viennacl::vector<value_type> temp(work_groups);
+                
+        inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                        detail::cuda_arg<value_type>(vec2),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec2)),
+                                        detail::cuda_arg<value_type>(temp)
+                                       );        
+
+        // Now copy partial results from GPU back to CPU and run reduction there:
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result += *it;
+      }
+      
+      ///////////////////////////////////
+      
+      
+      template <typename T>
+      __device__ T impl_norm_kernel( const T * vec,
+                                     unsigned int start1,
+                                     unsigned int inc1,
+                                     unsigned int size1,
+                                     unsigned int norm_selector,
+                                     __shared__ T * tmp_buffer)
+      {
+        T tmp = 0;
+        if (norm_selector == 1) //norm_1
+        {
+          for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
+            tmp += fabs(vec[i*inc1 + start1]);
+        }
+        else if (norm_selector == 2) //norm_2
+        {
+          T vec_entry = 0;
+          for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
+          {
+            vec_entry = vec[i*inc1 + start1];
+            tmp += vec_entry * vec_entry;
+          }
+        }
+        else if (norm_selector == 0) //norm_inf
+        {
+          for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
+            tmp = fmax(fabs(vec[i*inc1 + start1]), tmp);
+        }
+        
+        tmp_buffer[threadIdx.x] = tmp;
+
+        if (norm_selector > 0) //parallel reduction for norm_1 or norm_2:
+        {
+          for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+          {
+            barrier(CLK_LOCAL_MEM_FENCE);
+            if (threadIdx.x < stride)
+              tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+          }
+          return tmp_buffer[0];
+        }
+        
+        //norm_inf:
+        for (unsigned int stride = threadIdx.x/2; stride > 0; stride /= 2)
+        {
+          barrier(CLK_LOCAL_MEM_FENCE);
+          if (threadIdx.x < stride)
+            tmp_buffer[threadIdx.x] = fmax(tmp_buffer[threadIdx.x], tmp_buffer[threadIdx.x+stride]);
+        }
+        
+        return tmp_buffer[0];
+      };
+
+      template <typename T>
+      __global__ void norm_kernel(
+                 const T * vec,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                unsigned int norm_selector,
+                T * group_buffer)
+      {
+        __shared__ T * tmp_buffer[blockDim.x];
+        T tmp = impl_norm(vec,
+                          (        blockIdx.x  * size1) / gridDim.x * inc1 + start1,
+                          inc1,
+                          (   (1 + blockIdx.x) * size1) / gridDim.x
+                          - (      blockIdx.x  * size1) / gridDim.x,
+                          norm_selector,
+                          tmp_buffer);
+        
+        if (threadIdx.x == 0)
+          group_buffer[blockIdx.x] = tmp;  
       }
 
       
@@ -252,7 +929,23 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(1),
+                                  viennacl::traits::opencl_handle(temp)
+                                 );
+      
+        vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                      static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                      detail::cuda_arg<value_type>(result) )
+                                     );
       }
 
       /** @brief Computes the l^2-norm of a vector - implementation
@@ -270,7 +963,23 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(2),
+                                  viennacl::traits::opencl_handle(temp)
+                                 );
+      
+        vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                      static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                      detail::cuda_arg<value_type>(result) )
+                                     );
       }
 
       /** @brief Computes the supremum-norm of a vector
@@ -287,9 +996,86 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
-        throw "todo";
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(0),
+                                  viennacl::traits::opencl_handle(temp)
+                                 );
+      
+        vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                      static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                      detail::cuda_arg<value_type>(result) )
+                                     );
+      }
+      
+      //////////////////////////////////////
+      
+      
+
+      //index_norm_inf:
+      template <typename T>
+      __global__ unsigned int index_norm_inf_impl_kernel( const T * vec,
+                                                          unsigned int start1,
+                                                          unsigned int inc1,
+                                                          unsigned int size1,
+                                                          __shared__ T * float_buffer,
+                                                          __shared__ unsigned int * index_buffer)
+      {
+        //step 1: fill buffer:
+        float cur_max = 0.0f;
+        float tmp;
+        for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
+        {
+          tmp = fabs(vec[i*inc1+start1]);
+          if (cur_max < tmp)
+          {
+            float_buffer[threadIdx.x] = tmp;
+            index_buffer[threadIdx.x] = i;
+            cur_max = tmp;
+          }
+        }
+        
+        //step 2: parallel reduction:
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          barrier(CLK_LOCAL_MEM_FENCE);
+          if (threadIdx.x < stride)
+          {
+            //find the first occurring index
+            if (float_buffer[threadIdx.x] < float_buffer[threadIdx.x+stride])
+            {
+              index_buffer[threadIdx.x] = index_buffer[threadIdx.x+stride];
+              float_buffer[threadIdx.x] = float_buffer[threadIdx.x+stride];
+            }
+          }
+        }
+        
+        return index_buffer[0];
       }
 
+      template <typename T>
+      __global__ void index_norm_inf_kernel(T * vec,
+                                            unsigned int start1,
+                                            unsigned int inc1,
+                                            unsigned int size1,
+                                            unsigned int * result) 
+      { 
+        __shared__ T * float_buffer[blockDim.x];
+        __shared__ unsigned int * index_buffer[blockDim.x];
+        
+        unsigned int tmp = index_norm_inf_impl_kernel(vec, start1, inc1, size1, float_buffer, index_buffer);
+        
+        if (threadIdx.x == 0) 
+          *result = tmp;
+      }
+      
       //This function should return a CPU scalar, otherwise statements like 
       // vcl_rhs[index_norm_inf(vcl_rhs)] 
       // are ambiguous
@@ -305,10 +1091,50 @@ namespace viennacl
       index_norm_inf(V1 const & vec1)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+
+        viennacl::backend::mem_handle h;
+        viennacl::backend::memory_create(h, sizeof(unsigned int));
         
-        throw "todo";
+        index_norm_inf_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                          static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                          static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                          static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                          detail::cuda_arg<value_type>(h)
+                                        );
+        
+        unsigned int ret = 0;
+        viennacl::backend::memory_read(h, 0, sizeof(unsigned int), &ret);
+        return static_cast<std::size_t>(ret);
       }
 
+      ///////////////////////////////////////////
+      
+      template <typename T>
+      __global__ void plane_rotation_kernel(
+                T * vec1,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                T * vec2, 
+                unsigned int start2,
+                unsigned int inc2,
+                unsigned int size2,
+                T alpha,
+                T beta) 
+      { 
+        T tmp1 = 0;
+        T tmp2 = 0;
+
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += blockDim.x * gridDim.x)
+        {
+          tmp1 = vec1[i*inc1+start1];
+          tmp2 = vec2[i*inc2+start2];
+          
+          vec1[i*inc1+start1] = alpha * tmp1 + beta * tmp2;
+          vec2[i*inc2+start2] = alpha * tmp2 - beta * tmp1;
+        }
+
+      }
       
       /** @brief Computes a plane rotation of two vectors.
       *
@@ -330,8 +1156,25 @@ namespace viennacl
                      SCALARTYPE beta)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+
+        value_type temporary_alpha;                             
+        if (viennacl::is_cpu_scalar<SCALARTYPE>::value)
+          temporary_alpha = alpha;
         
-        throw "todo";
+        value_type temporary_beta;                             
+        if (viennacl::is_cpu_scalar<SCALARTYPE>::value)
+          temporary_beta = beta;
+        
+        plane_rotation_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                            static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                            static_cast<unsigned int>(viennacl::traits::stride(vec1)),                                 
+                                            static_cast<unsigned int>(viennacl::traits::size(vec1)),                                 
+                                            detail::cuda_arg<value_type>(vec2),
+                                            static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                            static_cast<unsigned int>(viennacl::traits::stride(vec2)),                                 
+                                            static_cast<unsigned int>(viennacl::traits::size(vec2)),                                 
+                                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                                            detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)))
       }
 
     } //namespace opencl
