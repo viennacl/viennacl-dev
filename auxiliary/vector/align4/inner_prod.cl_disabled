@@ -32,7 +32,7 @@ __kernel void inner_prod(
           __global const float4 * vec2,
           unsigned int size,
           __local float * tmp_buffer,
-          global float * result)
+          __global float * result)
 {
   float tmp = float_vector4_inner_prod_impl(vec1, vec2, size, tmp_buffer);
   if (get_global_id(0) == 0) *result = tmp;

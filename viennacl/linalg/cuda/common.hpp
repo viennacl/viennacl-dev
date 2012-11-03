@@ -45,7 +45,9 @@ namespace viennacl
         }
         
         template <typename ScalarType, typename T>
-        typename viennacl::enable_if< viennacl::is_scalar<T>::value || viennacl::is_any_dense_nonstructured_vector<T>::value,
+        typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
+                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
+                                      || viennacl::is_any_dense_nonstructured_matrix<T>::value,
                                       ScalarType *>::type
         cuda_arg(T & obj)
         {
@@ -53,7 +55,9 @@ namespace viennacl
         }
 
         template <typename ScalarType, typename T>
-        typename viennacl::enable_if< viennacl::is_scalar<T>::value || viennacl::is_any_dense_nonstructured_vector<T>::value,
+        typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
+                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
+                                      || viennacl::is_any_dense_nonstructured_matrix<T>::value,
                                       const ScalarType *>::type
         cuda_arg(T const & obj)
         {
@@ -61,7 +65,13 @@ namespace viennacl
         }
 
         template <typename ScalarType>
-        inline ScalarType const *  cuda_arg(viennacl::backend::mem_handle::cuda_handle_type const & h)
+        ScalarType *  cuda_arg(viennacl::backend::mem_handle::cuda_handle_type & h)
+        { 
+          return reinterpret_cast<ScalarType *>(h.get());
+        }
+        
+        template <typename ScalarType>
+        ScalarType const *  cuda_arg(viennacl::backend::mem_handle::cuda_handle_type const & h)
         { 
           return reinterpret_cast<const ScalarType *>(h.get());
         }

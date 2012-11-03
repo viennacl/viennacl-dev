@@ -13,9 +13,9 @@ __kernel void sum(
   for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0))
   {
     if (option > 0)
-      thread_sum += vec1[get_local_id(0)*inc1+start1];
+      thread_sum += vec1[i*inc1+start1];
     else
-      thread_sum = fmax(thread_sum, fabs(vec1[get_local_id(0)*inc1+start1]));
+      thread_sum = fmax(thread_sum, fabs(vec1[i*inc1+start1]));
   }
   
   tmp_buffer[get_local_id(0)] = thread_sum;

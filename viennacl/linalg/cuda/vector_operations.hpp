@@ -149,7 +149,7 @@ namespace viennacl
                                   unsigned int options2,
                                   const T * vec2,
                                   unsigned int start2,
-                                  unsigned int inc2
+                                  unsigned int inc2,
                                   
                                   const T * fac3,
                                   unsigned int options3,
@@ -186,7 +186,7 @@ namespace viennacl
                                   unsigned int options2,
                                   const T * vec2,
                                   unsigned int start2,
-                                  unsigned int inc2
+                                  unsigned int inc2,
                                   
                                   const T * fac3,
                                   unsigned int options3,
@@ -223,7 +223,7 @@ namespace viennacl
                                   unsigned int options2,
                                   const T * vec2,
                                   unsigned int start2,
-                                  unsigned int inc2
+                                  unsigned int inc2,
                                   
                                   T fac3,
                                   unsigned int options3,
@@ -260,7 +260,7 @@ namespace viennacl
                                   unsigned int options2,
                                   const T * vec2,
                                   unsigned int start2,
-                                  unsigned int inc2
+                                  unsigned int inc2,
                                   
                                   T fac3,
                                   unsigned int options3,
@@ -336,7 +336,7 @@ namespace viennacl
                                   options_alpha,
                                   detail::cuda_arg<value_type>(vec2),
                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                  static_cast<unsigned int>(viennacl::traits::stride(vec2))
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                   
                                   detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
                                   options_beta,
@@ -361,7 +361,7 @@ namespace viennacl
                                     unsigned int options2,
                                     const T * vec2,
                                     unsigned int start2,
-                                    unsigned int inc2
+                                    unsigned int inc2,
                                     
                                     const T * fac3,
                                     unsigned int options3,
@@ -398,7 +398,7 @@ namespace viennacl
                                     unsigned int options2,
                                     const T * vec2,
                                     unsigned int start2,
-                                    unsigned int inc2
+                                    unsigned int inc2,
                                     
                                     const T * fac3,
                                     unsigned int options3,
@@ -435,7 +435,7 @@ namespace viennacl
                                     unsigned int options2,
                                     const T * vec2,
                                     unsigned int start2,
-                                    unsigned int inc2
+                                    unsigned int inc2,
                                     
                                     T fac3,
                                     unsigned int options3,
@@ -472,7 +472,7 @@ namespace viennacl
                                     unsigned int options2,
                                     const T * vec2,
                                     unsigned int start2,
-                                    unsigned int inc2
+                                    unsigned int inc2,
                                     
                                     T fac3,
                                     unsigned int options3,
@@ -546,7 +546,7 @@ namespace viennacl
                                     options_alpha,
                                     detail::cuda_arg<value_type>(vec2),
                                     static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(vec2))
+                                    static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                     
                                     detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
                                     options_beta,
@@ -649,7 +649,7 @@ namespace viennacl
 
 
       template <typename T>
-      __global__ T impl_inner_prod(     //worker for each thread block
+      __device__ T impl_inner_prod(     //worker for each thread block
                 const T * vec1,
                 unsigned int start1,
                 unsigned int inc1,
@@ -658,7 +658,7 @@ namespace viennacl
                 unsigned int start2,
                 unsigned int inc2,
                 unsigned int size2,
-                __shared__ T * tmp_buffer)
+                T * tmp_buffer)
       {
         T tmp = 0;
         for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
@@ -668,7 +668,7 @@ namespace viennacl
         // parallel reduction
         for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
         {
-          barrier(CLK_LOCAL_MEM_FENCE);
+          __syncthreads();
           if (threadIdx.x < stride)
             tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
         }
@@ -688,17 +688,17 @@ namespace viennacl
                                         unsigned int size2,
                                         T * group_buffer)
       {
-        __shared__ tmp_buffer[blockDim.x]; 
+        __shared__ T tmp_buffer[128]; 
         float tmp = impl_inner_prod(vec1,
-                                    (      blockIdx.x * size1) / (gridDim.x * blockDim.x) * inc1 + start1,
+                                    (blockIdx.x * blockDim.x * size1) / (gridDim.x * blockDim.x) * inc1 + start1,
                                     inc1,
-                                    ((blockIdx.x + 1) * size1) / (gridDim.x * blockDim.x)
-                                      - (  blockIdx.x * size1) / (gridDim.x * blockDim.x),
+                                    ((blockIdx.x + 1) * blockDim.x * size1) / (gridDim.x * blockDim.x)
+                                      - (  blockIdx.x * blockDim.x * size1) / (gridDim.x * blockDim.x),
                                     vec2,
-                                    (      blockIdx.x * size2) / (gridDim.x * blockDim.x) * inc2 + start2,
+                                    (      blockIdx.x * blockDim.x * size2) / (gridDim.x * blockDim.x) * inc2 + start2,
                                     inc2,
-                                    ((blockIdx.x + 1) * size2) / (gridDim.x * blockDim.x)
-                                      - (  blockIdx.x * size2) / (gridDim.x * blockDim.x),
+                                    ((blockIdx.x + 1) * blockDim.x * size2) / (gridDim.x * blockDim.x)
+                                      - (  blockIdx.x * blockDim.x * size2) / (gridDim.x * blockDim.x),
                                     tmp_buffer);
         
         if (threadIdx.x == 0)
@@ -710,7 +710,7 @@ namespace viennacl
       
       // sums the array 'vec1' and writes to result. Makes use of a single work-group only. 
       template <typename T>
-      __global__ void sum(
+      __global__ void vector_sum_kernel(
                 T * vec1,
                 unsigned int start1,
                 unsigned int inc1,
@@ -718,28 +718,28 @@ namespace viennacl
                 unsigned int option, //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
                 T * result) 
       { 
-        __shared__ tmp_buffer[blockDim.x]; 
+        __shared__ T tmp_buffer[128]; 
         T thread_sum = 0;
-        for (unsigned int i = blockIdx.x; i<size1; i += blockDim.x)
+        for (unsigned int i = threadIdx.x; i<size1; i += blockDim.x)
         {
           if (option > 0)
-            thread_sum += vec1[blockIdx.x*inc1+start1];
+            thread_sum += vec1[i*inc1+start1];
           else
-            thread_sum = fmax(thread_sum, fabs(vec1[blockIdx.x*inc1+start1]));
+            thread_sum = fmax(thread_sum, fabs(vec1[i*inc1+start1]));
         }
         
-        tmp_buffer[blockIdx.x] = thread_sum;
+        tmp_buffer[threadIdx.x] = thread_sum;
 
         for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
         {
-          if (blockIdx.x < stride)
+          if (threadIdx.x < stride)
           {
             if (option > 0)
-              tmp_buffer[blockIdx.x] += tmp_buffer[blockIdx.x + stride];
+              tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x + stride];
             else
-              tmp_buffer[blockIdx.x] = fmax(tmp_buffer[blockIdx.x], tmp_buffer[blockIdx.x + stride]);
+              tmp_buffer[threadIdx.x] = fmax(tmp_buffer[threadIdx.x], tmp_buffer[threadIdx.x + stride]);
           }
-          barrier(CLK_LOCAL_MEM_FENCE);
+          __syncthreads();
         }
         
         if (threadIdx.x == 0)
@@ -787,13 +787,11 @@ namespace viennacl
                                        );
         
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
-                                      cl_uint(viennacl::traits::start(temp)),
-                                      cl_uint(viennacl::traits::stride(temp)),
-                                      cl_uint(viennacl::traits::size(temp)),
-                                      cl_uint(1),
-                                      viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
-                                      detail::cuda_arg<value_type>(result) )
-                                     );
+                                      static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                      static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                      static_cast<unsigned int>(1),
+                                      detail::cuda_arg<value_type>(result) );
       }
 
       
@@ -814,6 +812,7 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
+        static const unsigned int work_groups = 128;
         static viennacl::vector<value_type> temp(work_groups);
                 
         inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
@@ -845,7 +844,7 @@ namespace viennacl
                                      unsigned int inc1,
                                      unsigned int size1,
                                      unsigned int norm_selector,
-                                     __shared__ T * tmp_buffer)
+                                     T * tmp_buffer)
       {
         T tmp = 0;
         if (norm_selector == 1) //norm_1
@@ -874,7 +873,7 @@ namespace viennacl
         {
           for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
           {
-            barrier(CLK_LOCAL_MEM_FENCE);
+            __syncthreads();
             if (threadIdx.x < stride)
               tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
           }
@@ -882,9 +881,9 @@ namespace viennacl
         }
         
         //norm_inf:
-        for (unsigned int stride = threadIdx.x/2; stride > 0; stride /= 2)
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
         {
-          barrier(CLK_LOCAL_MEM_FENCE);
+          __syncthreads();
           if (threadIdx.x < stride)
             tmp_buffer[threadIdx.x] = fmax(tmp_buffer[threadIdx.x], tmp_buffer[threadIdx.x+stride]);
         }
@@ -901,14 +900,14 @@ namespace viennacl
                 unsigned int norm_selector,
                 T * group_buffer)
       {
-        __shared__ T * tmp_buffer[blockDim.x];
-        T tmp = impl_norm(vec,
-                          (        blockIdx.x  * size1) / gridDim.x * inc1 + start1,
-                          inc1,
-                          (   (1 + blockIdx.x) * size1) / gridDim.x
-                          - (      blockIdx.x  * size1) / gridDim.x,
-                          norm_selector,
-                          tmp_buffer);
+        __shared__ T tmp_buffer[128];
+        T tmp = impl_norm_kernel(vec,
+                                 (        blockIdx.x  * size1) / gridDim.x * inc1 + start1,
+                                 inc1,
+                                 (   (1 + blockIdx.x) * size1) / gridDim.x
+                                 - (      blockIdx.x  * size1) / gridDim.x,
+                                 norm_selector,
+                                 tmp_buffer);
         
         if (threadIdx.x == 0)
           group_buffer[blockIdx.x] = tmp;  
@@ -937,15 +936,15 @@ namespace viennacl
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                   static_cast<unsigned int>(1),
-                                  viennacl::traits::opencl_handle(temp)
+                                  detail::cuda_arg<value_type>(temp)
                                  );
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
                                       static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
-                                      detail::cuda_arg<value_type>(result) )
-                                     );
+                                      static_cast<unsigned int>(1),
+                                      detail::cuda_arg<value_type>(result) );
       }
 
       /** @brief Computes the l^2-norm of a vector - implementation
@@ -971,15 +970,15 @@ namespace viennacl
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                   static_cast<unsigned int>(2),
-                                  viennacl::traits::opencl_handle(temp)
+                                  detail::cuda_arg<value_type>(temp)
                                  );
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
                                       static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
-                                      detail::cuda_arg<value_type>(result) )
-                                     );
+                                      static_cast<unsigned int>(2),
+                                      detail::cuda_arg<value_type>(result) );
       }
 
       /** @brief Computes the supremum-norm of a vector
@@ -1004,15 +1003,15 @@ namespace viennacl
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                   static_cast<unsigned int>(0),
-                                  viennacl::traits::opencl_handle(temp)
+                                  detail::cuda_arg<value_type>(temp)
                                  );
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
                                       static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
-                                      detail::cuda_arg<value_type>(result) )
-                                     );
+                                      static_cast<unsigned int>(0),
+                                      detail::cuda_arg<value_type>(result) );
       }
       
       //////////////////////////////////////
@@ -1021,12 +1020,12 @@ namespace viennacl
 
       //index_norm_inf:
       template <typename T>
-      __global__ unsigned int index_norm_inf_impl_kernel( const T * vec,
+      __device__ unsigned int index_norm_inf_impl_kernel( const T * vec,
                                                           unsigned int start1,
                                                           unsigned int inc1,
                                                           unsigned int size1,
-                                                          __shared__ T * float_buffer,
-                                                          __shared__ unsigned int * index_buffer)
+                                                          T * float_buffer,
+                                                          unsigned int * index_buffer)
       {
         //step 1: fill buffer:
         float cur_max = 0.0f;
@@ -1045,7 +1044,7 @@ namespace viennacl
         //step 2: parallel reduction:
         for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
         {
-          barrier(CLK_LOCAL_MEM_FENCE);
+          __syncthreads();
           if (threadIdx.x < stride)
           {
             //find the first occurring index
@@ -1061,14 +1060,14 @@ namespace viennacl
       }
 
       template <typename T>
-      __global__ void index_norm_inf_kernel(T * vec,
+      __global__ void index_norm_inf_kernel(const T * vec,
                                             unsigned int start1,
                                             unsigned int inc1,
                                             unsigned int size1,
                                             unsigned int * result) 
       { 
-        __shared__ T * float_buffer[blockDim.x];
-        __shared__ unsigned int * index_buffer[blockDim.x];
+        __shared__ T float_buffer[128];
+        __shared__ unsigned int index_buffer[128];
         
         unsigned int tmp = index_norm_inf_impl_kernel(vec, start1, inc1, size1, float_buffer, index_buffer);
         
@@ -1099,7 +1098,7 @@ namespace viennacl
                                           static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                           static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                          detail::cuda_arg<value_type>(h)
+                                          detail::cuda_arg<unsigned int>(h.cuda_handle())
                                         );
         
         unsigned int ret = 0;
@@ -1174,7 +1173,7 @@ namespace viennacl
                                             static_cast<unsigned int>(viennacl::traits::stride(vec2)),                                 
                                             static_cast<unsigned int>(viennacl::traits::size(vec2)),                                 
                                             detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
-                                            detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)))
+                                            detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)) );
       }
 
     } //namespace opencl

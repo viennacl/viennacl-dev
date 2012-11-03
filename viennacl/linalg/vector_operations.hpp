@@ -296,8 +296,8 @@ namespace viennacl
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::backend::CUDA_MEMORY:
-          viennacl::linalg::opencl::inner_prod_cpu(vec1, vec2, result);
-          //break;
+          viennacl::linalg::cuda::inner_prod_cpu(vec1, vec2, result);
+          break;
 #endif
         default:
           throw "not implemented";

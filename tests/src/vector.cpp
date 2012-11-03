@@ -148,8 +148,11 @@ int test(Epsilon const& epsilon,
   // --------------------------------------------------------------------------
   std::cout << "Testing inner_prod..." << std::endl;
   cpu_result = viennacl::linalg::inner_prod(ublas_v1, ublas_v2);
+  NumericT cpu_result2 = viennacl::linalg::inner_prod(vcl_v1, vcl_v2);
   gpu_result = viennacl::linalg::inner_prod(vcl_v1, vcl_v2);
 
+  if (check(cpu_result, cpu_result2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   // --------------------------------------------------------------------------
@@ -829,7 +832,11 @@ int main()
    {
       {
          typedef double NumericT;
+#ifdef VIENNACL_WITH_CUDA
+         NumericT epsilon = 1.0E-8;
+#else
          NumericT epsilon = 1.0E-12;
+#endif
          std::cout << "# Testing setup:" << std::endl;
          std::cout << "  eps:     " << epsilon << std::endl;
          std::cout << "  numeric: double" << std::endl;

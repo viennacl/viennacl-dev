@@ -43,7 +43,7 @@ __kernel void inner_prod(
           unsigned int inc2,
           unsigned int size2,
           __local float * tmp_buffer,
-          global float * group_buffer)
+          __global float * group_buffer)
 {
   float tmp = impl_inner_prod(vec1,
                               (      get_group_id(0) * size1) / get_num_groups(0) * inc1 + start1,

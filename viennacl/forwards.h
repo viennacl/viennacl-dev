@@ -243,6 +243,9 @@ namespace viennacl
   struct is_any_dense_nonstructured_transposed_matrix;
   
   template <typename T>
+  struct is_row_major;
+  
+  template <typename T>
   struct is_sparse_matrix;
   
   template <typename T>

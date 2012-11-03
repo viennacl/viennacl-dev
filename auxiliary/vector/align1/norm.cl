@@ -69,7 +69,7 @@ __kernel void norm(
           unsigned int size1,
           unsigned int norm_selector,
           __local float * tmp_buffer,
-          global float * group_buffer)
+          __global float * group_buffer)
 {
   float tmp = impl_norm(vec,
                         (        get_group_id(0)  * size1) / get_num_groups(0) * inc1 + start1,

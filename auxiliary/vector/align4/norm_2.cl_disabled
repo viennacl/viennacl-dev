@@ -38,7 +38,7 @@ __kernel void norm_2(
           __global float4 * vec,
           unsigned int size,
           __local float * tmp_buffer,
-          global float * result) 
+          __global float * result) 
 { 
   float tmp = float_vector4_norm_2_impl(vec, size, tmp_buffer);
   if (get_global_id(0) == 0) *result = sqrt(tmp);
