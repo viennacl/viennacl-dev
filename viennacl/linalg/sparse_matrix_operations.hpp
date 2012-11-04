@@ -31,6 +31,10 @@
   #include "viennacl/linalg/opencl/sparse_matrix_operations.hpp"
 #endif
 
+#ifdef VIENNACL_WITH_CUDA
+  #include "viennacl/linalg/cuda/sparse_matrix_operations.hpp"
+#endif
+
 namespace viennacl
 {
   namespace linalg
@@ -85,6 +89,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::prod_impl(mat, vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::prod_impl(mat, vec, result);
           break;
 #endif
         default:

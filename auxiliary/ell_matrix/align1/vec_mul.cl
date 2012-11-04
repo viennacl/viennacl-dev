@@ -1,15 +1,15 @@
 
 
 __kernel void vec_mul(
-    const __global int* coords,
-    const __global float* elements,
-    const __global const float * vector,
+    __global const unsigned int * coords,
+    __global const float * elements,
+    __global const float * vector,
     __global float * result,
-    const unsigned int row_num,
-    const unsigned int col_num,
-    const unsigned int internal_row_num,
-    const unsigned int items_per_row,
-    const unsigned int aligned_items_per_row
+    unsigned int row_num,
+    unsigned int col_num,
+    unsigned int internal_row_num,
+    unsigned int items_per_row,
+    unsigned int aligned_items_per_row
     )
 {
     uint glb_id = get_global_id(0);
