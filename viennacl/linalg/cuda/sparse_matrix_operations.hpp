@@ -82,6 +82,7 @@ namespace viennacl
                                                        detail::cuda_arg<ScalarType>(result),
                                                        static_cast<unsigned int>(mat.size1())
                                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
       }
 
       
@@ -235,6 +236,7 @@ namespace viennacl
                                                       detail::cuda_arg<ScalarType>(vec),
                                                       detail::cuda_arg<ScalarType>(result)
                                                      );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_vec_mul_kernel");
       }
       
 
@@ -304,6 +306,7 @@ namespace viennacl
                                                 static_cast<unsigned int>(mat.maxnnz()),
                                                 static_cast<unsigned int>(mat.internal_maxnnz())
                                                );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_vec_mul_kernel");
       }
 
       
@@ -386,6 +389,7 @@ namespace viennacl
                                                 static_cast<unsigned int>(mat.ell_nnz()),
                                                 static_cast<unsigned int>(mat.internal_ellnnz())
                                                );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
       }
       
       

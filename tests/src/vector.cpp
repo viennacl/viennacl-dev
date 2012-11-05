@@ -832,11 +832,7 @@ int main()
    {
       {
          typedef double NumericT;
-#ifdef VIENNACL_WITH_CUDA
-         NumericT epsilon = 1.0E-8;
-#else
          NumericT epsilon = 1.0E-12;
-#endif
          std::cout << "# Testing setup:" << std::endl;
          std::cout << "  eps:     " << epsilon << std::endl;
          std::cout << "  numeric: double" << std::endl;

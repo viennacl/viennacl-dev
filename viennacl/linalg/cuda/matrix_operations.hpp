@@ -83,6 +83,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::stride1(mat2)),          static_cast<unsigned int>(viennacl::traits::stride2(mat2)),
                                       static_cast<unsigned int>(viennacl::traits::internal_size1(mat2)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat2))
                                     );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("am_row_kernel");
         }
         else
         {
@@ -99,6 +100,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::stride1(mat2)),          static_cast<unsigned int>(viennacl::traits::stride2(mat2)),
                                       static_cast<unsigned int>(viennacl::traits::internal_size1(mat2)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat2))
                                     );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("am_col_kernel");
         }
       }
       
@@ -158,6 +160,7 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::stride1(mat3)),          static_cast<unsigned int>(viennacl::traits::stride2(mat3)),
                                         static_cast<unsigned int>(viennacl::traits::internal_size1(mat3)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat3))
                                       );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ambm_row_kernel");
         }
         else
         {
@@ -181,6 +184,7 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::stride1(mat3)),          static_cast<unsigned int>(viennacl::traits::stride2(mat3)),
                                         static_cast<unsigned int>(viennacl::traits::internal_size1(mat3)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat3))
                                       );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ambm_col_kernel");
         }
         
       }
@@ -241,6 +245,7 @@ namespace viennacl
                                           static_cast<unsigned int>(viennacl::traits::stride1(mat3)),          static_cast<unsigned int>(viennacl::traits::stride2(mat3)),
                                           static_cast<unsigned int>(viennacl::traits::internal_size1(mat3)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat3))
                                         );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ambm_m_row_kernel");
         }
         else
         {
@@ -264,6 +269,7 @@ namespace viennacl
                                           static_cast<unsigned int>(viennacl::traits::stride1(mat3)),          static_cast<unsigned int>(viennacl::traits::stride2(mat3)),
                                           static_cast<unsigned int>(viennacl::traits::internal_size1(mat3)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat3))
                                         );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ambm_m_col_kernel");
         }
         
       }
@@ -314,6 +320,7 @@ namespace viennacl
                                            static_cast<unsigned int>(viennacl::traits::stride(result)),
                                            static_cast<unsigned int>(viennacl::traits::size(result))
                                           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_row_kernel");
         }
         else
         {
@@ -333,6 +340,7 @@ namespace viennacl
                                            static_cast<unsigned int>(viennacl::traits::stride(result)),
                                            static_cast<unsigned int>(viennacl::traits::size(result))
                                           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_col_kernel");
         }
       }
 
@@ -385,6 +393,7 @@ namespace viennacl
                                                  static_cast<unsigned int>(viennacl::traits::stride(result)),
                                                  static_cast<unsigned int>(viennacl::traits::size(result))
                                                 );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_row_kernel");
         }
         else
         {
@@ -404,6 +413,7 @@ namespace viennacl
                                                  static_cast<unsigned int>(viennacl::traits::stride(result)),
                                                  static_cast<unsigned int>(viennacl::traits::size(result))
                                                 );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_col_kernel");
         }
       }
 
@@ -710,6 +720,7 @@ namespace viennacl
                                                        static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                                        static_cast<unsigned int>(viennacl::traits::size(vec2))
                                                      );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("scaled_rank1_update_row_kernel");
         }
         else
         {
@@ -732,6 +743,7 @@ namespace viennacl
                                                        static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                                        static_cast<unsigned int>(viennacl::traits::size(vec2))
                                                       );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("scaled_rank1_update_col_kernel");
         }
       }
 

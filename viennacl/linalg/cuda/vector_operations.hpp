@@ -133,6 +133,7 @@ namespace viennacl
                                 detail::cuda_arg<value_type>(vec2),
                                 static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                 static_cast<unsigned int>(viennacl::traits::stride(vec2)) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
       
       
@@ -343,7 +344,7 @@ namespace viennacl
                                   detail::cuda_arg<value_type>(vec3),
                                   static_cast<unsigned int>(viennacl::traits::start(vec3)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec3)) );
-                                
+        VIENNACL_CUDA_LAST_ERROR_CHECK("avbv_kernel");
       }
       
       
@@ -595,6 +596,7 @@ namespace viennacl
                                            static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                               
                                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("avbv_v_kernel");
       }
 
       //////////////////////////
@@ -642,6 +644,7 @@ namespace viennacl
                                          detail::cuda_arg<value_type>(vec2),
                                          static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                          static_cast<unsigned int>(viennacl::traits::stride(vec2)) );                                          
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vector_swap_kernel");
       }
 
 
@@ -689,17 +692,22 @@ namespace viennacl
                                         T * group_buffer)
       {
         __shared__ T tmp_buffer[128]; 
-        float tmp = impl_inner_prod(vec1,
-                                    (blockIdx.x * blockDim.x * size1) / (gridDim.x * blockDim.x) * inc1 + start1,
-                                    inc1,
-                                    ((blockIdx.x + 1) * blockDim.x * size1) / (gridDim.x * blockDim.x)
-                                      - (  blockIdx.x * blockDim.x * size1) / (gridDim.x * blockDim.x),
-                                    vec2,
-                                    (      blockIdx.x * blockDim.x * size2) / (gridDim.x * blockDim.x) * inc2 + start2,
-                                    inc2,
-                                    ((blockIdx.x + 1) * blockDim.x * size2) / (gridDim.x * blockDim.x)
-                                      - (  blockIdx.x * blockDim.x * size2) / (gridDim.x * blockDim.x),
-                                    tmp_buffer);
+        unsigned int group_start1 = (blockIdx.x * size1) / (gridDim.x) * inc1 + start1;
+        unsigned int group_size1 = ((blockIdx.x + 1) * size1) / (gridDim.x)
+                                     - (  blockIdx.x * size1) / (gridDim.x);
+                                     
+        unsigned int group_start2 = (blockIdx.x * size2) / (gridDim.x) * inc2 + start2;
+        unsigned int group_size2 = ((blockIdx.x + 1) * size2) / (gridDim.x)
+                                     - (  blockIdx.x * size2) / (gridDim.x);
+        T tmp = impl_inner_prod(vec1,
+                                group_start1,
+                                inc1,
+                                group_size1,
+                                vec2,
+                                group_start2,
+                                inc2,
+                                group_size2,
+                                tmp_buffer);
         
         if (threadIdx.x == 0)
           group_buffer[blockIdx.x] = tmp;
@@ -785,6 +793,7 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::size(vec2)),
                                         detail::cuda_arg<value_type>(temp)
                                        );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
         
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
@@ -792,6 +801,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
                                       static_cast<unsigned int>(1),
                                       detail::cuda_arg<value_type>(result) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
 
       
@@ -825,6 +835,7 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::size(vec2)),
                                         detail::cuda_arg<value_type>(temp)
                                        );        
+        VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
         // Now copy partial results from GPU back to CPU and run reduction there:
         static std::vector<value_type> temp_cpu(work_groups);
@@ -938,6 +949,7 @@ namespace viennacl
                                   static_cast<unsigned int>(1),
                                   detail::cuda_arg<value_type>(temp)
                                  );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
@@ -945,6 +957,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
                                       static_cast<unsigned int>(1),
                                       detail::cuda_arg<value_type>(result) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
 
       /** @brief Computes the l^2-norm of a vector - implementation
@@ -972,6 +985,7 @@ namespace viennacl
                                   static_cast<unsigned int>(2),
                                   detail::cuda_arg<value_type>(temp)
                                  );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
@@ -979,6 +993,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
                                       static_cast<unsigned int>(2),
                                       detail::cuda_arg<value_type>(result) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
 
       /** @brief Computes the supremum-norm of a vector
@@ -1005,6 +1020,7 @@ namespace viennacl
                                   static_cast<unsigned int>(0),
                                   detail::cuda_arg<value_type>(temp)
                                  );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
       
         vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
@@ -1012,6 +1028,7 @@ namespace viennacl
                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
                                       static_cast<unsigned int>(0),
                                       detail::cuda_arg<value_type>(result) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
       
       //////////////////////////////////////
@@ -1028,8 +1045,8 @@ namespace viennacl
                                                           unsigned int * index_buffer)
       {
         //step 1: fill buffer:
-        float cur_max = 0.0f;
-        float tmp;
+        T cur_max = (T)0;
+        T tmp;
         for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
         {
           tmp = fabs(vec[i*inc1+start1]);
@@ -1100,6 +1117,7 @@ namespace viennacl
                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                           detail::cuda_arg<unsigned int>(h.cuda_handle())
                                         );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("index_norm_inf_kernel");
         
         unsigned int ret = 0;
         viennacl::backend::memory_read(h, 0, sizeof(unsigned int), &ret);
@@ -1174,6 +1192,7 @@ namespace viennacl
                                             static_cast<unsigned int>(viennacl::traits::size(vec2)),                                 
                                             detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
                                             detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)) );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("plane_rotation_kernel");
       }
 
     } //namespace opencl

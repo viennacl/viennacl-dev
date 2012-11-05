@@ -248,6 +248,8 @@ namespace viennacl
                     V2 const & vec2,
                     S3 & result)
     {
+      assert( vec1.size() == vec2.size() && bool("Size mismatch") );
+      
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::backend::MAIN_MEMORY:
@@ -284,6 +286,8 @@ namespace viennacl
                    V2 const & vec2,
                    S3 & result)
     {
+      assert( vec1.size() == vec2.size() && bool("Size mismatch") );
+      
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::backend::MAIN_MEMORY:
