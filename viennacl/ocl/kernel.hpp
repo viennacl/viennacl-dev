@@ -38,6 +38,13 @@ namespace viennacl
 {
   namespace ocl
   {
+    struct packed_cl_uint
+    {
+      cl_uint start;
+      cl_uint stride;
+      cl_uint size;
+      cl_uint internal_size;
+    };
     
     /** @brief Represents an OpenCL kernel within ViennaCL */
     class kernel
@@ -107,6 +114,17 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
       }
 
+      /** @brief Sets four packed unsigned integers as argument at the provided position */
+      void arg(unsigned int pos, packed_cl_uint val)
+      {
+        init();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting unsigned long kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(packed_cl_uint), (void*)&val);
+        VIENNACL_ERR_CHECK(err);
+      }
+      
       /** @brief Sets a single precision floating point argument at the provided position */
       void arg(unsigned int pos, float val)
       {

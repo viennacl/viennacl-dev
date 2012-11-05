@@ -600,6 +600,14 @@ namespace viennacl
     viennacl::scalar<HostScalarType> const & promote_if_host_scalar(viennacl::scalar<HostScalarType> const & s) { return s; }
 
     template <typename HostScalarType>
+    viennacl::scalar_expression<const viennacl::scalar<HostScalarType>,
+                                const viennacl::scalar<HostScalarType>,
+                                viennacl::op_flip_sign> const & 
+    promote_if_host_scalar(viennacl::scalar_expression<const viennacl::scalar<HostScalarType>,
+                                                       const viennacl::scalar<HostScalarType>,
+                                                       viennacl::op_flip_sign> const & s) { return s; }
+    
+    template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(float s) { return s; }
 
     template <typename HostScalarType>

@@ -73,7 +73,10 @@ int run_benchmark()
   //
   // Set up some ViennaCL objects
   //
+#ifdef VIENNACL_HAVE_OPENCL
   viennacl::ocl::set_context_device_type(0, viennacl::ocl::gpu_tag());
+#endif
+
   //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
   //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
   viennacl::matrix<ScalarType> vcl_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
@@ -92,11 +95,17 @@ int run_benchmark()
   std::cout << " ------ Benchmark 1: Matrix-Matrix product ------ " << std::endl;
   
   
+#ifdef VIENNACL_HAVE_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
+#else
+  std::vector<long> devices(1);
+#endif
   for (size_t i=0; i<devices.size(); ++i)
   {
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
+#endif
 
     viennacl::fast_copy(&(stl_A[0]),
                         &(stl_A[0]) + stl_A.size(),
@@ -105,10 +114,10 @@ int run_benchmark()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     timer.start();
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
     std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_B.size2() / 1000.0) / exec_time << std::endl;
@@ -120,9 +129,11 @@ int run_benchmark()
   viennacl::range r(BLAS3_MATRIX_SIZE/4, 3 * BLAS3_MATRIX_SIZE/4);
   for (size_t i=0; i<devices.size(); ++i)
   {
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
-
+#endif
+    
     viennacl::fast_copy(&(stl_A[0]),
                         &(stl_A[0]) + stl_A.size(),
                         vcl_A);
@@ -130,10 +141,10 @@ int run_benchmark()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     viennacl::project(vcl_C, r, r) = viennacl::linalg::prod(viennacl::project(vcl_A, r, r), viennacl::project(vcl_B, r, r));
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     timer.start();
     viennacl::project(vcl_C, r, r) = viennacl::linalg::prod(viennacl::project(vcl_A, r, r), viennacl::project(vcl_B, r, r));
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
     std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
@@ -145,8 +156,10 @@ int run_benchmark()
   viennacl::slice s(0, 2, BLAS3_MATRIX_SIZE/2);
   for (size_t i=0; i<devices.size(); ++i)
   {
+#ifdef VIENNACL_HAVE_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
+#endif
 
     viennacl::fast_copy(&(stl_A[0]),
                         &(stl_A[0]) + stl_A.size(),
@@ -155,10 +168,10 @@ int run_benchmark()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     viennacl::project(vcl_C, s, s) = viennacl::linalg::prod(viennacl::project(vcl_A, s, s), viennacl::project(vcl_B, s, s));
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     timer.start();
     viennacl::project(vcl_C, s, s) = viennacl::linalg::prod(viennacl::project(vcl_A, s, s), viennacl::project(vcl_B, s, s));
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
     std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
@@ -175,7 +188,9 @@ int main()
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   
+#ifdef VIENNACL_HAVE_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
+#endif  
   
   
   std::cout << std::endl;
@@ -188,7 +203,9 @@ int main()
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
   run_benchmark<float>();
+#ifdef VIENNACL_HAVE_OPENCL
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     std::cout << std::endl;
     std::cout << "   -------------------------------" << std::endl;

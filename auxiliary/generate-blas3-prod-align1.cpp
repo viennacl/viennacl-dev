@@ -12,7 +12,7 @@
 
 //generate code for C = op1(A) * op2(B), where A, B, C can have different storage layouts and opX(D) = D or trans(D)
 void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major_C,
-                              bool transpose_A, bool transpose_B)
+                              bool transpose_A, bool transpose_B, bool write_cuda)
 {
   //write header:
   std::cout << "// file automatically generated - do not edit!" << std::endl;
@@ -39,8 +39,14 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   else
     std::cout << "B...col_major" << std::endl;
   
+  if (write_cuda)
+    std::cout << "template <typename T>" << std::endl;
+  
   //start OpenCL code:
-  std::cout << "__kernel void prod_";
+  if (write_cuda)
+    std::cout << "__global__ void prod_";
+  else
+    std::cout << "__kernel void prod_";
   if (transpose_A)
     std::cout << "T";
   else
@@ -51,8 +57,16 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "A";
   
   std::cout << "(" << std::endl;
-  std::cout << "          float alpha," << std::endl;
-  std::cout << "          __global const float * A," << std::endl;
+  if (write_cuda)
+  {
+    std::cout << "          T alpha," << std::endl;
+    std::cout << "          const T * A," << std::endl;
+  }
+  else
+  {
+    std::cout << "          float alpha," << std::endl;
+    std::cout << "          __global const float * A," << std::endl;
+  }
   std::cout << "          unsigned int A_row_start," << std::endl;
   std::cout << "          unsigned int A_col_start," << std::endl;
   std::cout << "          unsigned int A_row_inc," << std::endl;
@@ -61,7 +75,10 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "          unsigned int A_col_size," << std::endl;
   std::cout << "          unsigned int A_internal_rows," << std::endl;
   std::cout << "          unsigned int A_internal_cols," << std::endl;
-  std::cout << "          __global const float * B,  " << std::endl;
+  if (write_cuda)
+    std::cout << "          const T * B,  " << std::endl;
+  else
+    std::cout << "          __global const float * B,  " << std::endl;
   std::cout << "          unsigned int B_row_start," << std::endl;
   std::cout << "          unsigned int B_col_start," << std::endl;
   std::cout << "          unsigned int B_row_inc," << std::endl;
@@ -70,8 +87,14 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "          unsigned int B_col_size," << std::endl;
   std::cout << "          unsigned int B_internal_rows," << std::endl;
   std::cout << "          unsigned int B_internal_cols," << std::endl;
-  std::cout << "          float beta," << std::endl;
-  std::cout << "          __global float * C," << std::endl;
+  if (write_cuda)
+    std::cout << "          T beta," << std::endl;
+  else
+    std::cout << "          float beta," << std::endl;
+  if (write_cuda)
+    std::cout << "          T * C," << std::endl;
+  else
+    std::cout << "          __global float * C," << std::endl;
   std::cout << "          unsigned int C_row_start," << std::endl;
   std::cout << "          unsigned int C_col_start," << std::endl;
   std::cout << "          unsigned int C_row_inc," << std::endl;
@@ -82,15 +105,33 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "          unsigned int C_internal_cols) " << std::endl;
   std::cout << "{ " << std::endl;
   std::cout << std::endl;
-  std::cout << "  __local float bufA[" << 16 * 17 << "];" << std::endl;
-  std::cout << "  __local float bufB[" << 16 * 17 << "];" << std::endl;
+  if (write_cuda)
+  {
+    std::cout << "  __shared__ T bufA[" << 16 * 17 << "];" << std::endl;
+    std::cout << "  __shared__ T bufB[" << 16 * 17 << "];" << std::endl;
+  }
+  else
+  {
+    std::cout << "  __local float bufA[" << 16 * 17 << "];" << std::endl;
+    std::cout << "  __local float bufB[" << 16 * 17 << "];" << std::endl;
+  }
   std::cout << std::endl;
   //do not forgot to change block_size !!!
   std::cout << "  size_t block_size = 16;//get_local_size(0);" << std::endl;
-  std::cout << "  size_t row_block_id = get_group_id(0);" << std::endl;
-  std::cout << "  size_t col_block_id = get_group_id(1);" << std::endl;
-  std::cout << "  size_t row_thread_id = get_local_id(0);" << std::endl;
-  std::cout << "  size_t col_thread_id = get_local_id(1);" << std::endl;
+  if (write_cuda)
+  {
+    std::cout << "  size_t row_block_id = blockIdx.x;" << std::endl;
+    std::cout << "  size_t col_block_id = blockIdx.y;" << std::endl;
+    std::cout << "  size_t row_thread_id = threadIdx.x;" << std::endl;
+    std::cout << "  size_t col_thread_id = threadIdx.y;" << std::endl;
+  }
+  else
+  {
+    std::cout << "  size_t row_block_id = get_group_id(0);" << std::endl;
+    std::cout << "  size_t col_block_id = get_group_id(1);" << std::endl;
+    std::cout << "  size_t row_thread_id = get_local_id(0);" << std::endl;
+    std::cout << "  size_t col_thread_id = get_local_id(1);" << std::endl;
+  }
   
   //traverse block row of A (taking mem layout and transpose operation into account)
   if (row_major_A && transpose_A)
@@ -142,7 +183,10 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   else
     std::cout << "  size_t block_num = (A_col_size + block_size - 1) / block_size;" << std::endl;
     
-  std::cout << "  float Csub = 0;" << std::endl;
+  if (write_cuda)
+    std::cout << "  T Csub = 0;" << std::endl;
+  else
+    std::cout << "  float Csub = 0;" << std::endl;
   
   //offset of the the memory access by the thread relative to the beginning of the block:
   if (row_major_A)
@@ -166,14 +210,6 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "  {" << std::endl;
   
   //read block from A and check for access within matrix:
-/*  if (transpose_A)
-    std::cout << "    if (block * block_size + col_thread_id < A_rows && get_global_id(0) < A_cols)" << std::endl;
-  else 
-    std::cout << "    if (block * block_size + col_thread_id < A_cols && get_global_id(0) < A_rows)" << std::endl;
-  
-  std::cout << "      bufA[row_thread_id * block_size + col_thread_id] = A[aBegin + aOffset];" << std::endl;
-  std::cout << "    else" << std::endl;
-  std::cout << "      bufA[row_thread_id * block_size + col_thread_id] = 0;" << std::endl;*/
 
   if (transpose_A && row_major_A)
     std::cout << "    bufA[row_thread_id_times_block_size + col_thread_id] = ((block * block_size + col_thread_id < A_row_size) && (row_block_id * block_size + row_thread_id < A_col_size)) ? A[aBegin + aOffset] : 0;" << std::endl;
@@ -195,42 +231,86 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "    bufB[col_thread_id_times_block_size + row_thread_id] = ((block * block_size + row_thread_id < B_row_size) && (col_block_id * block_size + col_thread_id < B_col_size)) ? B[bBegin + bOffset] : 0;" << std::endl;
 
   //computation of block-matrix-matrix product is the same for all cases:
-  std::cout << "    barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+  if (write_cuda)
+    std::cout << "    __syncthreads();" << std::endl;
+  else
+    std::cout << "    barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
   //std::cout << "    for (size_t k = 0; k < block_size; ++k)" << std::endl;
   //std::cout << "      Csub += bufA[row_thread_id_times_block_size + k] * bufB[k * block_size + col_thread_id];" << std::endl;
   //loop unrolling:
-  std::cout << "    __local float * bufAptr = bufA + row_thread_id_times_block_size;" << std::endl;
-  std::cout << "    __local float * bufBptr = bufB + col_thread_id_times_block_size;" << std::endl;
+  if (write_cuda)
+  {
+    std::cout << "    __shared__ T * bufAptr = bufA + row_thread_id_times_block_size;" << std::endl;
+    std::cout << "    __shared__ T * bufBptr = bufB + col_thread_id_times_block_size;" << std::endl;
+  }
+  else
+  {
+    std::cout << "    __local float * bufAptr = bufA + row_thread_id_times_block_size;" << std::endl;
+    std::cout << "    __local float * bufBptr = bufB + col_thread_id_times_block_size;" << std::endl;
+  }
   //std::cout << "      Csub += bufA[row_thread_id_times_block_size] * bufB[col_thread_id * block_size];" << std::endl;
   // code in following line depends on block size and must be changed in case of block_size changes
-  std::cout << "      for(int i = 0; i < 4; i++) {" << std::endl;
-  for (size_t unroll = 0; unroll < 4; ++unroll) {
+  //std::cout << "      for(int i = 0; i < 4; i++) {" << std::endl;
+  for (size_t unroll = 0; unroll < 16; ++unroll) {
     std::cout << "      Csub += (*bufAptr) * (*bufBptr); ++bufAptr; ++bufBptr;" << std::endl;
   }
-  std::cout << "     }" << std::endl;
+  //std::cout << "     }" << std::endl;
     //std::cout << "      Csub += bufAptr[" << i << "] * bufB[" << i << "  + col_thread_id * block_size];" << std::endl;
     //std::cout << "      Csub += bufAptr[" << i << "] * bufB[" << i << " * block_size + col_thread_id];" << std::endl;
     //std::cout << "      Csub += bufAptr[" << i << "] * bufB[" << i << "];" << std::endl;
-  std::cout << "    barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+  if (write_cuda)
+    std::cout << "    __syncthreads();" << std::endl;
+  else
+    std::cout << "    barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
   std::cout << "    aBegin += aStep;" << std::endl;
   std::cout << "    bBegin += bStep;" << std::endl;
   std::cout << "  }" << std::endl;
   
   
   if (transpose_A)
-    std::cout << "  if (get_global_id(0) < A_col_size && ";
+  {
+    if (write_cuda)
+      std::cout << "  if ((blockIdx.x * blockDim.x + threadIdx.x) < A_col_size && ";
+    else
+      std::cout << "  if (get_global_id(0) < A_col_size && ";
+  }
   else
-    std::cout << "  if (get_global_id(0) < A_row_size && ";
+  {
+    if (write_cuda)
+      std::cout << "  if ((blockIdx.x * blockDim.x + threadIdx.x) < A_row_size && ";
+    else
+      std::cout << "  if (get_global_id(0) < A_row_size && ";
+  }
   
   if (transpose_B)
-    std::cout << "get_global_id(1) < B_row_size)" << std::endl;
+  {
+    if (write_cuda)
+      std::cout << "(blockIdx.y * blockDim.y + threadIdx.y) < B_row_size)" << std::endl;
+    else
+      std::cout << "get_global_id(1) < B_row_size)" << std::endl;
+  }
   else
-    std::cout << "get_global_id(1) < B_col_size)" << std::endl;
+  {
+    if (write_cuda)
+      std::cout << "(blockIdx.y * blockDim.y + threadIdx.y) < B_col_size)" << std::endl;
+    else
+      std::cout << "get_global_id(1) < B_col_size)" << std::endl;
+  }
   
   if (row_major_C)
-    std::cout << "    C[(get_global_id(0) * C_row_inc + C_row_start) * C_internal_cols + get_global_id(1) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(get_global_id(0) * C_row_inc + C_row_start) * C_internal_cols + get_global_id(1) * C_col_inc + C_col_start];" << std::endl;
+  {
+    if (write_cuda)
+      std::cout << "    C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start];" << std::endl;
+    else
+      std::cout << "    C[(get_global_id(0) * C_row_inc + C_row_start) * C_internal_cols + get_global_id(1) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(get_global_id(0) * C_row_inc + C_row_start) * C_internal_cols + get_global_id(1) * C_col_inc + C_col_start];" << std::endl;
+  }
   else
-    std::cout << "    C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows];" << std::endl;
+  {
+    if (write_cuda)
+      std::cout << "    C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows];" << std::endl;
+    else
+      std::cout << "    C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows];" << std::endl;
+  }
   std::cout << "}" << std::endl;
   
 }
@@ -243,6 +323,7 @@ void printUsage()
   std::cout << " 0/1 : storage layout for C (column_major/row_major)" << std::endl;
   std::cout << " 0/1 : transpose for A (no/yes)" << std::endl;
   std::cout << " 0/1 : transpose for B (no/yes)" << std::endl;
+  std::cout << " 0/1 : write CUDA output (no/yes)" << std::endl;
 }
 
 void readParameter(bool & param, char input)
@@ -260,7 +341,7 @@ void readParameter(bool & param, char input)
 
 int main(int args, char * argsv[])
 {
-  if (args != 6)
+  if (args != 7)
   {
     printUsage();
     exit(EXIT_FAILURE);
@@ -280,6 +361,9 @@ int main(int args, char * argsv[])
   readParameter(transpose_A, argsv[4][0]);
   readParameter(transpose_B, argsv[5][0]);
   
+  bool writeCuda;
+  readParameter(writeCuda, argsv[6][0]);
   
-  printMatrixMatrixProduct(layout_A, layout_B, layout_C, transpose_A, transpose_B);
+  
+  printMatrixMatrixProduct(layout_A, layout_B, layout_C, transpose_A, transpose_B, writeCuda);
 }

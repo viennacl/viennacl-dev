@@ -26,7 +26,7 @@ function(generate_blas3_prod_align1 outvar)
       file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
       add_custom_command(OUTPUT "${o}"
          COMMAND generate-blas3-prod-align1
-            ${ar} ${br} ${cr} ${at} ${bt} > "${o}"
+            ${ar} ${br} ${cr} ${at} ${bt} 0 > "${o}"
          COMMENT "Generating ${ro}"
          WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
          VERBATIM)

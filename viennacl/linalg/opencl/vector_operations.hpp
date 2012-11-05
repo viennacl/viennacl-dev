@@ -67,16 +67,25 @@ namespace viennacl
                                                               (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        
+        viennacl::ocl::packed_cl_uint size_vec1;
+        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
+        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
+        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+
+        viennacl::ocl::packed_cl_uint size_vec2;
+        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
+        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
+        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+        
+        
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
+                                 size_vec1,
                                 
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)) )
+                                 size_vec2 )
                               );
       }
       
@@ -118,22 +127,34 @@ namespace viennacl
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        
+        viennacl::ocl::packed_cl_uint size_vec1;
+        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
+        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
+        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+
+        viennacl::ocl::packed_cl_uint size_vec2;
+        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
+        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
+        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+
+        viennacl::ocl::packed_cl_uint size_vec3;
+        size_vec3.start  = cl_uint(viennacl::traits::start(vec3));
+        size_vec3.stride = cl_uint(viennacl::traits::stride(vec3));
+        size_vec3.size   = cl_uint(viennacl::traits::size(vec3));
+        
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
+                                 size_vec1,
                                 
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
+                                 size_vec2,
                                 
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(beta)),
                                  options_beta,
                                  viennacl::traits::opencl_handle(vec3),
-                                 cl_uint(viennacl::traits::start(vec3)),
-                                 cl_uint(viennacl::traits::stride(vec3)) )
+                                 size_vec3 )
                               );
       }
       
@@ -175,22 +196,34 @@ namespace viennacl
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        
+        viennacl::ocl::packed_cl_uint size_vec1;
+        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
+        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
+        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+
+        viennacl::ocl::packed_cl_uint size_vec2;
+        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
+        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
+        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+
+        viennacl::ocl::packed_cl_uint size_vec3;
+        size_vec3.start  = cl_uint(viennacl::traits::start(vec3));
+        size_vec3.stride = cl_uint(viennacl::traits::stride(vec3));
+        size_vec3.size   = cl_uint(viennacl::traits::size(vec3));
+        
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
+                                 size_vec1,
                                 
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
+                                 size_vec2,
                                 
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(beta)),
                                  options_beta,
                                  viennacl::traits::opencl_handle(vec3),
-                                 cl_uint(viennacl::traits::start(vec3)),
-                                 cl_uint(viennacl::traits::stride(vec3)) )
+                                 size_vec3 )
                               );
       }
       
