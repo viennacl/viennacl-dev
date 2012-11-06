@@ -495,7 +495,7 @@ namespace viennacl
         
         for (unsigned int row = blockIdx.x * blockDim.x + threadIdx.x; row < A_row_size; row += gridDim.x * blockDim.x)
         {
-          float dot_prod = 0;
+          T dot_prod = 0;
           for (unsigned int col = 0; col < A_col_size; ++col)
             dot_prod += A[(row * A_row_inc + A_row_start) + (col * A_col_inc + A_col_start) * A_internal_rows] * v[v_start + v_inc * col];
           result[row * result_inc + result_start] = dot_prod;
@@ -531,7 +531,7 @@ namespace viennacl
         
         for (unsigned int row = row_gid; row < A_col_size; row += gridDim.x)
         {
-          float dot_prod = 0;
+          T dot_prod = 0;
           for (unsigned int col = col_gid; col < A_row_size; col += blockDim.x)
             dot_prod += A[(row * A_col_inc + A_col_start) * A_internal_rows + col * A_row_inc + A_row_start] * v[v_start + v_inc * col];
           work[lid] = dot_prod;

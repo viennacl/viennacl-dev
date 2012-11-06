@@ -21,12 +21,18 @@
     @brief Implementations of dense direct solvers are found here.
 */
 
+#include "viennacl/forwards.h"
+#include "viennacl/meta/enable_if.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/single_threaded/direct_solve.hpp"
 
 #ifdef VIENNACL_HAVE_OPENCL
   #include "viennacl/linalg/opencl/direct_solve.hpp"
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+  #include "viennacl/linalg/cuda/direct_solve.hpp"
 #endif
 
 namespace viennacl
@@ -63,6 +69,11 @@ namespace viennacl
           viennacl::linalg::opencl::inplace_solve(A, B, SOLVERTAG());
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(A, B, SOLVERTAG());
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -93,6 +104,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(A, proxy_B, SOLVERTAG());
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #endif
         default:
@@ -128,6 +144,11 @@ namespace viennacl
           viennacl::linalg::opencl::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(proxy_A, B, SOLVERTAG());
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -160,6 +181,11 @@ namespace viennacl
           viennacl::linalg::opencl::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
+          break;
+#endif
         default:
           throw "not implemented";
       }
@@ -185,6 +211,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #endif
         default:
@@ -215,6 +246,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #endif
         default:
@@ -434,6 +470,11 @@ namespace viennacl
 #ifdef VIENNACL_HAVE_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::lu_factorize(mat);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::lu_factorize(mat);
           break;
 #endif
         default:

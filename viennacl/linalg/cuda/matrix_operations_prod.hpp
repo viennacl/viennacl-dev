@@ -72,32 +72,28 @@ namespace viennacl
         __shared__ T bufA[272];
         __shared__ T bufB[272];
 
-        size_t block_size = 16;
-        size_t row_block_id = blockIdx.x;
-        size_t col_block_id = blockIdx.y;
-        size_t row_thread_id = threadIdx.x;
-        size_t col_thread_id = threadIdx.y;
+        const size_t block_size = 16;
         
         size_t aBegin;
         size_t aStep;
         if (row_major_A && transpose_A)
         {
-          aBegin = (row_block_id * block_size * A_col_inc + A_col_start) + A_row_start * A_internal_cols;
+          aBegin = (blockIdx.x * block_size * A_col_inc + A_col_start) + A_row_start * A_internal_cols;
           aStep = block_size * A_row_inc * A_internal_cols;
         }
         else if (row_major_A && !transpose_A)
         {
-          aBegin = (row_block_id * block_size * A_row_inc + A_row_start) * A_internal_cols + A_col_start;
+          aBegin = (blockIdx.x * block_size * A_row_inc + A_row_start) * A_internal_cols + A_col_start;
           aStep = block_size * A_col_inc;
         }
         else if (!row_major_A && transpose_A)
         {
-          aBegin = (row_block_id * block_size * A_col_inc + A_col_start) * A_internal_rows + A_row_start;
+          aBegin = (blockIdx.x * block_size * A_col_inc + A_col_start) * A_internal_rows + A_row_start;
           aStep = block_size * A_row_inc;
         }
         else if (!row_major_A && !transpose_A)
         {
-          aBegin = (row_block_id * block_size * A_row_inc + A_row_start) + A_col_start * A_internal_rows;
+          aBegin = (blockIdx.x * block_size * A_row_inc + A_row_start) + A_col_start * A_internal_rows;
           aStep = block_size * A_col_inc * A_internal_rows;
         }
         
@@ -105,71 +101,60 @@ namespace viennacl
         size_t bStep;
         if (row_major_B && transpose_B)
         {
-          bBegin = (col_block_id * block_size * B_row_inc + B_row_start) * B_internal_cols + B_col_start;
+          bBegin = (blockIdx.y * block_size * B_row_inc + B_row_start) * B_internal_cols + B_col_start;
           bStep = block_size * B_col_inc;
         }
         else if (row_major_B && !transpose_B)
         {
-          bBegin = (col_block_id * block_size * B_col_inc + B_col_start) + B_row_start * B_internal_cols;
+          bBegin = (blockIdx.y * block_size * B_col_inc + B_col_start) + B_row_start * B_internal_cols;
           bStep = block_size * B_internal_cols * B_row_inc;
         }
         else if (!row_major_B && transpose_B)
         {
-          bBegin = (col_block_id * block_size * B_row_inc + B_row_start) + B_col_start * B_internal_rows;
+          bBegin = (blockIdx.y * block_size * B_row_inc + B_row_start) + B_col_start * B_internal_rows;
           bStep = block_size * B_internal_rows * B_col_inc;
         }
         else if (!row_major_B && !transpose_B)
         {
-          bBegin = (col_block_id * block_size * B_col_inc + B_col_start) * B_internal_rows + B_row_start;
+          bBegin = (blockIdx.y * block_size * B_col_inc + B_col_start) * B_internal_rows + B_row_start;
           bStep = block_size * B_row_inc;
         }
         
-        size_t block_num;
-        if (transpose_A)
-          block_num = (A_row_size + block_size - 1) / block_size;
-        else
-          block_num = (A_col_size + block_size - 1) / block_size;
+        size_t block_num = (transpose_A) ? (A_row_size + block_size - 1) / block_size
+                                         : (A_col_size + block_size - 1) / block_size;
         
         T Csub = 0;
         
-        size_t aOffset;
-        if (row_major_A)
-          aOffset = row_thread_id * A_col_inc + col_thread_id * A_row_inc * A_internal_cols;
-        else
-          aOffset = row_thread_id * A_row_inc + col_thread_id * A_col_inc * A_internal_rows;
+        size_t aOffset = (row_major_A) ? threadIdx.x * A_col_inc + threadIdx.y * A_row_inc * A_internal_cols
+                                       : threadIdx.x * A_row_inc + threadIdx.y * A_col_inc * A_internal_rows;
         
-        size_t bOffset;
-        if (row_major_B)
-          bOffset = row_thread_id * B_col_inc + col_thread_id * B_row_inc * B_internal_cols;
-        else
-          bOffset = row_thread_id * B_row_inc + col_thread_id * B_col_inc *  B_internal_rows;
+        size_t bOffset = (row_major_B) ? threadIdx.x * B_col_inc + threadIdx.y * B_row_inc * B_internal_cols
+                                       : threadIdx.x * B_row_inc + threadIdx.y * B_col_inc *  B_internal_rows;
 
-        size_t row_thread_id_times_block_size = row_thread_id * (block_size + 1);
-        size_t col_thread_id_times_block_size = col_thread_id * (block_size + 1);
+        size_t row_thread_id_times_block_size = threadIdx.x * (block_size + 1);
+        size_t col_thread_id_times_block_size = threadIdx.y * (block_size + 1);
         for (size_t block = 0;
                 block < block_num;
                 ++block)
         {
-          __syncthreads();
-          
           if (transpose_A && row_major_A)
-            bufA[row_thread_id_times_block_size + col_thread_id] = ((block * block_size + col_thread_id < A_row_size) && (row_block_id * block_size + row_thread_id < A_col_size)) ? A[aBegin + aOffset] : 0;
+            bufA[row_thread_id_times_block_size + threadIdx.y] = ((block * block_size + threadIdx.y < A_row_size) && (blockIdx.x * block_size + threadIdx.x < A_col_size)) ? A[aBegin + aOffset] : 0;
           else if (transpose_A && !row_major_A)
-            bufA[col_thread_id_times_block_size + row_thread_id] = ((block * block_size + row_thread_id < A_row_size) && (row_block_id * block_size + col_thread_id < A_col_size)) ? A[aBegin + aOffset] : 0;
+            bufA[col_thread_id_times_block_size + threadIdx.x] = ((block * block_size + threadIdx.x < A_row_size) && (blockIdx.x * block_size + threadIdx.y < A_col_size)) ? A[aBegin + aOffset] : 0;
           else if (!transpose_A && row_major_A)
-            bufA[col_thread_id_times_block_size + row_thread_id] = ((block * block_size + row_thread_id < A_col_size) && (row_block_id * block_size + col_thread_id < A_row_size)) ? A[aBegin + aOffset] : 0;
+            bufA[col_thread_id_times_block_size + threadIdx.x] = ((block * block_size + threadIdx.x < A_col_size) && (blockIdx.x * block_size + threadIdx.y < A_row_size)) ? A[aBegin + aOffset] : 0;
           else if (!transpose_A && !row_major_A)
-            bufA[row_thread_id_times_block_size + col_thread_id] = ((block * block_size + col_thread_id < A_col_size) && (row_block_id * block_size + row_thread_id < A_row_size)) ? A[aBegin + aOffset] : 0;
+            bufA[row_thread_id_times_block_size + threadIdx.y] = ((block * block_size + threadIdx.y < A_col_size) && (blockIdx.x * block_size + threadIdx.x < A_row_size)) ? A[aBegin + aOffset] : 0;
 
 
           if (transpose_B && row_major_B)
-            bufB[col_thread_id_times_block_size + row_thread_id] = ((block * block_size + row_thread_id < B_col_size) && (col_block_id * block_size + col_thread_id < B_row_size)) ? B[bBegin + bOffset] : 0;
+            bufB[col_thread_id_times_block_size + threadIdx.x] = ((block * block_size + threadIdx.x < B_col_size) && (blockIdx.y * block_size + threadIdx.y < B_row_size)) ? B[bBegin + bOffset] : 0;
           else if (transpose_B && !row_major_B)
-            bufB[row_thread_id_times_block_size + col_thread_id] = ((block * block_size + col_thread_id < B_col_size) && (col_block_id * block_size + row_thread_id < B_row_size)) ? B[bBegin + bOffset] : 0;
+            bufB[row_thread_id_times_block_size + threadIdx.y] = ((block * block_size + threadIdx.y < B_col_size) && (blockIdx.y * block_size + threadIdx.x < B_row_size)) ? B[bBegin + bOffset] : 0;
           else if (!transpose_B && row_major_B)
-            bufB[row_thread_id_times_block_size + col_thread_id] = ((block * block_size + col_thread_id < B_row_size) && (col_block_id * block_size + row_thread_id < B_col_size)) ? B[bBegin + bOffset] : 0;
+            bufB[row_thread_id_times_block_size + threadIdx.y] = ((block * block_size + threadIdx.y < B_row_size) && (blockIdx.y * block_size + threadIdx.x < B_col_size)) ? B[bBegin + bOffset] : 0;
           else if (!transpose_B && !row_major_B)
-            bufB[col_thread_id_times_block_size + row_thread_id] = ((block * block_size + row_thread_id < B_row_size) && (col_block_id * block_size + col_thread_id < B_col_size)) ? B[bBegin + bOffset] : 0;
+            bufB[col_thread_id_times_block_size + threadIdx.x] = ((block * block_size + threadIdx.x < B_row_size) && (blockIdx.y * block_size + threadIdx.y < B_col_size)) ? B[bBegin + bOffset] : 0;
           
           __syncthreads();
           T * bufAptr = bufA + row_thread_id_times_block_size;
@@ -190,7 +175,7 @@ namespace viennacl
           Csub += (*bufAptr) * (*bufBptr); ++bufAptr; ++bufBptr;
           Csub += (*bufAptr) * (*bufBptr); ++bufAptr; ++bufBptr;
           Csub += (*bufAptr) * (*bufBptr); ++bufAptr; ++bufBptr;
-          __syncthreads();
+
           aBegin += aStep;
           bBegin += bStep;
         }
