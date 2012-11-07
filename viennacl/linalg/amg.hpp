@@ -43,7 +43,7 @@
 
 #include <map>
 
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
  #include <omp.h>
 #endif
 
@@ -503,7 +503,7 @@ namespace viennacl
         {
           old_result = x;
           x.clear();
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (sum,diag) shared (rhs,x)
 #endif          
           for (index=0; index<A_setup[level].size1(); ++index)  
@@ -734,10 +734,6 @@ namespace viennacl
       void smooth_jacobi(int level, unsigned int iterations, VectorType & x, VectorType const & rhs) const
       {     
         VectorType old_result (x.size());
-  
-  //viennacl::ocl::program & p = viennacl::ocl::current_context().add_program
-  //          (viennacl::tools::make_double_kernel(jacobi_kernel,viennacl::ocl::current_device().info()), "jacobi_kernel");
-  //viennacl::ocl::kernel & k = p.add_kernel("jacobi");
   
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(),
                     "jacobi");

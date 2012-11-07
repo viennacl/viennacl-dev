@@ -30,7 +30,7 @@
 #include <algorithm>
 
 #include <map>
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
 
@@ -486,7 +486,7 @@ namespace viennacl
             void do_trans()
             {
               // Do it only once if called in a parallel section
-            #ifdef _OPENMP
+            #ifdef VIENNACL_WITH_OPENMP
               #pragma omp critical
             #endif
               { 
@@ -1181,7 +1181,7 @@ namespace viennacl
             {
               // Either use the number of threads chosen by the user or the maximum number of threads available on the processor.
               if (threads == 0)
-            #ifdef _OPENMP
+            #ifdef VIENNACL_WITH_OPENMP
                 threads_ = omp_get_num_procs();
             #else
               threads_ = 1;
@@ -1244,7 +1244,7 @@ namespace viennacl
               typedef typename SparseMatrixType::const_iterator2 ConstColIterator;
               
               // Determine index offset of all the slices (index of A[level] when the respective slice starts).
-            #ifdef _OPENMP
+            #ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for 
             #endif
               for (unsigned int i=0; i<=threads_; ++i)
@@ -1269,7 +1269,7 @@ namespace viennacl
               unsigned int x, y;
               amg_point *point;
               
-            #ifdef _OPENMP
+            #ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for private (x,y,point)
             #endif
               for (unsigned int i=0; i<threads_; ++i)
@@ -1327,7 +1327,7 @@ namespace viennacl
           RES = SparseMatrixType(A.size1(), B.size2());
           RES.clear();
           
-    #ifdef _OPENMP
+    #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y,z,prod) shared (A,B,RES)
     #endif
           for (x=0; x<A.size1(); ++x)
@@ -1367,7 +1367,7 @@ namespace viennacl
           RES = SparseMatrixType(P.size2(), P.size2());
           RES.clear();
           
-    #ifdef _OPENMP
+    #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y1,y2,z,row) shared (A,P,RES)
     #endif      
           for (x=0; x<P.size2(); ++x)

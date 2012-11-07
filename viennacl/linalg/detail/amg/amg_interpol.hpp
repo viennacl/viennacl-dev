@@ -26,7 +26,7 @@
 #include "viennacl/linalg/amg.hpp"
 
 #include <map>
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
 
@@ -90,7 +90,7 @@ namespace viennacl
       Pointvector[level].build_index();
       
       // Direct Interpolation (Yang, p.14)
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (pointx,pointy,row_sum,c_sum,temp_res,y,x,diag) shared (P,A,Pointvector,tag)
 #endif      
       for (x=0; x < Pointvector[level].size(); ++x)
@@ -193,7 +193,7 @@ namespace viennacl
       Pointvector[level].build_index();
       
       // Classical Interpolation (Yang, p.13-14)
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (pointx,pointy,pointk,pointm,weak_sum,strong_sum,c_sum_row,temp_res,x,y,k,m,diag_sign) shared (A,P,Pointvector)
 #endif      
       for (x=0; x < Pointvector[level].size(); ++x)
@@ -312,14 +312,14 @@ namespace viennacl
       // Determine max entry and sum of row (seperately for negative and positive entries)
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-  if (*col_iter > row_max)
-    row_max = *col_iter;
-  if (*col_iter < row_min)
-    row_min = *col_iter;
-  if (*col_iter > 0)
-    row_sum_pos += *col_iter;
-  if (*col_iter < 0)
-    row_sum_neg += *col_iter;
+        if (*col_iter > row_max)
+          row_max = *col_iter;
+        if (*col_iter < row_min)
+          row_min = *col_iter;
+        if (*col_iter > 0)
+          row_sum_pos += *col_iter;
+        if (*col_iter < 0)
+          row_sum_neg += *col_iter;
       }
       
       row_sum_pos_scale = row_sum_pos;
@@ -328,25 +328,25 @@ namespace viennacl
       // Make certain values to zero (seperately for negative and positive entries)
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-  if (*col_iter > 0 && *col_iter < tag.get_interpolweight() * row_max)
-  {
-    row_sum_pos_scale -= *col_iter;
-    *col_iter = 0;
-  }
-  if (*col_iter < 0 && *col_iter > tag.get_interpolweight() * row_min)
-  {
-    row_sum_pos_scale -= *col_iter;
-    *col_iter = 0;
-  }
+        if (*col_iter > 0 && *col_iter < tag.get_interpolweight() * row_max)
+        {
+          row_sum_pos_scale -= *col_iter;
+          *col_iter = 0;
+        }
+        if (*col_iter < 0 && *col_iter > tag.get_interpolweight() * row_min)
+        {
+          row_sum_pos_scale -= *col_iter;
+          *col_iter = 0;
+        }
       }
       
       // Scale remaining values such that row sum is unchanged
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-  if (*col_iter > 0)
-    *col_iter = *col_iter *(row_sum_pos/row_sum_pos_scale);
-  if (*col_iter < 0)
-    *col_iter = *col_iter *(row_sum_neg/row_sum_neg_scale);
+        if (*col_iter > 0)
+          *col_iter = *col_iter *(row_sum_pos/row_sum_pos_scale);
+        if (*col_iter < 0)
+          *col_iter = *col_iter *(row_sum_neg/row_sum_neg_scale);
       }
     }
     
@@ -377,15 +377,15 @@ namespace viennacl
       Pointvector[level].build_index();
       
       // Set prolongation such that F point is interpolated (weight=1) by the aggregate it belongs to (Vanek et al p.6)
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (x,pointx) shared (P)
 #endif      
       for (x=0; x<Pointvector[level].size(); ++x)
       {
-  pointx = Pointvector[level][x];
-  pointy = Pointvector[level][pointx->get_aggregate()];
-  // Point x belongs to aggregate y.
-  P[level](x,pointy->get_coarse_index()) = 1;
+        pointx = Pointvector[level][x];
+        pointy = Pointvector[level][pointx->get_aggregate()];
+        // Point x belongs to aggregate y.
+        P[level](x,pointy->get_coarse_index()) = 1;
       }
       
       #ifdef VIENNACL_AMG_DEBUG
@@ -421,37 +421,37 @@ namespace viennacl
       P[level].clear();      
            
       // Build Jacobi Matrix via filtered A matrix (Vanek et al. p.6)
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (x,y,diag) shared (A,Pointvector)
 #endif      
       for (x=0; x<A[level].size1(); ++x)
       {
-  diag = 0;
-  InternalRowIterator row_iter = A[level].begin1();
-  row_iter += x;
-  for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-  {
-    y = col_iter.index2();
-    // Determine the structure of the Jacobi matrix by using a filtered matrix of A:
-    // The diagonal consists of the diagonal coefficient minus all coefficients of points not in the neighborhood of x.
-    // All other coefficients are the same as in A.
-    // Already use Jacobi matrix to save filtered A matrix to speed up computation.
-    if (x == y)
-      diag += *col_iter;
-    else if (!Pointvector[level][x]->is_influencing(Pointvector[level][y]))
-      diag += -*col_iter;
-    else
-      Jacobi (x,y) = *col_iter;      
-  }
-  InternalRowIterator row_iter2 = Jacobi.begin1();
-  row_iter2 += x;
-  // Traverse through filtered A matrix and compute the Jacobi filtering
-  for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
-  {
-      *col_iter2 = - tag.get_interpolweight()/diag * *col_iter2;
-  }
-  // Diagonal can be computed seperately.
-  Jacobi (x,x) = 1 - tag.get_interpolweight();
+        diag = 0;
+        InternalRowIterator row_iter = A[level].begin1();
+        row_iter += x;
+        for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+        {
+          y = col_iter.index2();
+          // Determine the structure of the Jacobi matrix by using a filtered matrix of A:
+          // The diagonal consists of the diagonal coefficient minus all coefficients of points not in the neighborhood of x.
+          // All other coefficients are the same as in A.
+          // Already use Jacobi matrix to save filtered A matrix to speed up computation.
+          if (x == y)
+            diag += *col_iter;
+          else if (!Pointvector[level][x]->is_influencing(Pointvector[level][y]))
+            diag += -*col_iter;
+          else
+            Jacobi (x,y) = *col_iter;      
+        }
+        InternalRowIterator row_iter2 = Jacobi.begin1();
+        row_iter2 += x;
+        // Traverse through filtered A matrix and compute the Jacobi filtering
+        for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
+        {
+            *col_iter2 = - tag.get_interpolweight()/diag * *col_iter2;
+        }
+        // Diagonal can be computed seperately.
+        Jacobi (x,x) = 1 - tag.get_interpolweight();
       }
           
       #ifdef VIENNACL_AMG_DEBUG

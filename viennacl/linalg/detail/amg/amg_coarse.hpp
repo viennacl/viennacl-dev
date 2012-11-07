@@ -25,7 +25,7 @@
 #include "viennacl/linalg/amg.hpp"
 
 #include <map>
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
 
@@ -50,14 +50,14 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
-  switch (tag.get_coarse())
-  {
-    case VIENNACL_AMG_COARSE_RS: amg_coarse_classic (level, A, Pointvector, tag); break;
-    case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass (level, A, Pointvector, tag); break;
-    case VIENNACL_AMG_COARSE_RS0: amg_coarse_rs0 (level, A, Pointvector, Slicing, tag); break;
-    case VIENNACL_AMG_COARSE_RS3: amg_coarse_rs3 (level, A, Pointvector, Slicing, tag); break;
-    case VIENNACL_AMG_COARSE_AG:   amg_coarse_ag (level, A, Pointvector, tag); break;
-  }
+      switch (tag.get_coarse())
+      {
+        case VIENNACL_AMG_COARSE_RS: amg_coarse_classic (level, A, Pointvector, tag); break;
+        case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass (level, A, Pointvector, tag); break;
+        case VIENNACL_AMG_COARSE_RS0: amg_coarse_rs0 (level, A, Pointvector, Slicing, tag); break;
+        case VIENNACL_AMG_COARSE_RS3: amg_coarse_rs3 (level, A, Pointvector, Slicing, tag); break;
+        case VIENNACL_AMG_COARSE_AG:   amg_coarse_ag (level, A, Pointvector, tag); break;
+      }
     } 
     
     /** @brief Determines strong influences in system matrix, classical approach (RS). Multithreaded!
@@ -80,43 +80,43 @@ namespace viennacl
       int diag_sign;
       //unsigned int i;
         
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (max,diag_sign) shared (A,Pointvector)
 #endif      
       for (unsigned int i=0; i<A[level].size1(); ++i)
       {  
-  diag_sign = 1;
-  if (A[level](i,i) < 0)
-    diag_sign = -1;
-  
-  ConstRowIterator row_iter = A[level].begin1();
-  row_iter += i;
-  // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
-  max = 0;
-  for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-  {
-      if (i == (unsigned int) col_iter.index2()) continue;
-      if (diag_sign == 1)
-        if (max > *col_iter)  max = *col_iter;
-      if (diag_sign == -1)
-        if (max < *col_iter)  max = *col_iter;
-  }
-  
-  // If maximum is 0 then the row is independent of the others
-  if (max == 0)
-    continue;
-  
-  // Find all points that strongly influence current point (Yang, p.5)
-  for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-  {
-    unsigned int j = col_iter.index2();  
-    if (i == j) continue;
-    if (diag_sign * (-*col_iter) >= tag.get_threshold() * (diag_sign * (-max)))
-    {
-      // Strong influence from j to i found, save information
-      Pointvector[level][i]->add_influencing_point(Pointvector[level][j]);
-    }
-  }
+        diag_sign = 1;
+        if (A[level](i,i) < 0)
+          diag_sign = -1;
+        
+        ConstRowIterator row_iter = A[level].begin1();
+        row_iter += i;
+        // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
+        max = 0;
+        for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+        {
+            if (i == (unsigned int) col_iter.index2()) continue;
+            if (diag_sign == 1)
+              if (max > *col_iter)  max = *col_iter;
+            if (diag_sign == -1)
+              if (max < *col_iter)  max = *col_iter;
+        }
+        
+        // If maximum is 0 then the row is independent of the others
+        if (max == 0)
+          continue;
+        
+        // Find all points that strongly influence current point (Yang, p.5)
+        for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+        {
+          unsigned int j = col_iter.index2();  
+          if (i == j) continue;
+          if (diag_sign * (-*col_iter) >= tag.get_threshold() * (diag_sign * (-max)))
+          {
+            // Strong influence from j to i found, save information
+            Pointvector[level][i]->add_influencing_point(Pointvector[level][j]);
+          }
+        }
       }
       
       #ifdef VIENNACL_AMG_DEBUG
@@ -129,10 +129,10 @@ namespace viennacl
       // Save influenced points
       for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
       {
-  for (typename amg_point::iterator iter2 = (*iter)->begin_influencing(); iter2 != (*iter)->end_influencing(); ++iter2)
-  {
-    (*iter2)->add_influenced_point(*iter);
-  }
+        for (typename amg_point::iterator iter2 = (*iter)->begin_influencing(); iter2 != (*iter)->end_influencing(); ++iter2)
+        {
+          (*iter2)->add_influenced_point(*iter);
+        }
       }
         
       #ifdef VIENNACL_AMG_DEBUG
@@ -169,7 +169,7 @@ namespace viennacl
       amg_influence (level, A, Pointvector, tag);    
       
       // Traverse through points and calculate initial influence measure
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (i) shared (Pointvector)
 #endif      
       for (i=0; i<Pointvector[level].size(); ++i)
@@ -181,27 +181,27 @@ namespace viennacl
       // Get undecided point with highest influence measure
       while ((c_point = Pointvector[level].get_nextpoint()) != NULL)
       {    
-  // Make this point C point
-  Pointvector[level].make_cpoint(c_point);
-  
-  // All strongly influenced points become F points
-  for (typename amg_point::iterator iter = c_point->begin_influenced(); iter != c_point->end_influenced(); ++iter)
-  {
-    point1 = *iter;
-    // Found strong influence from C point (c_point influences point1), check whether point is still undecided, otherwise skip
-    if (!point1->is_undecided()) continue;
-    // Make this point F point if it is still undecided point
-    Pointvector[level].make_fpoint(point1);
-    
-    // Add +1 to influence measure for all undecided points that strongly influence new F point
-    for (typename amg_point::iterator iter2 = point1->begin_influencing(); iter2 != point1->end_influencing(); ++iter2)
-    {
-      point2 = *iter2;
-      // Found strong influence to F point (point2 influences point1)
-      if (point2->is_undecided())
-        Pointvector[level].add_influence(point2,1);
-    }
-  }
+        // Make this point C point
+        Pointvector[level].make_cpoint(c_point);
+        
+        // All strongly influenced points become F points
+        for (typename amg_point::iterator iter = c_point->begin_influenced(); iter != c_point->end_influenced(); ++iter)
+        {
+          point1 = *iter;
+          // Found strong influence from C point (c_point influences point1), check whether point is still undecided, otherwise skip
+          if (!point1->is_undecided()) continue;
+          // Make this point F point if it is still undecided point
+          Pointvector[level].make_fpoint(point1);
+          
+          // Add +1 to influence measure for all undecided points that strongly influence new F point
+          for (typename amg_point::iterator iter2 = point1->begin_influencing(); iter2 != point1->end_influencing(); ++iter2)
+          {
+            point2 = *iter2;
+            // Found strong influence to F point (point2 influences point1)
+            if (point2->is_undecided())
+              Pointvector[level].add_influence(point2,1);
+          }
+        }
       }
       
       // If a point is neither C nor F point but is nevertheless influenced by other points make it F point
@@ -209,16 +209,16 @@ namespace viennacl
       /*#pragma omp parallel for private (i,point1)
       for (i=0; i<Pointvector[level].size(); ++i)
       {
-  point1 = Pointvector[level][i];
-  if (point1->is_undecided())
-  {
-    // Undecided point found. Check whether it is influenced by other point and if so: Make it F point.
-    if (point1->number_influencing() > 0)
-    {
-      #pragma omp critical
-      Pointvector[level].make_fpoint(point1);
-    }
-  }
+        point1 = Pointvector[level][i];
+        if (point1->is_undecided())
+        {
+          // Undecided point found. Check whether it is influenced by other point and if so: Make it F point.
+          if (point1->number_influencing() > 0)
+          {
+            #pragma omp critical
+            Pointvector[level].make_fpoint(point1);
+          }
+        }
       }*/
 
       #if defined (VIENNACL_AMG_DEBUG)//  or defined (VIENNACL_AMG_DEBUGBENCH)
@@ -266,80 +266,80 @@ namespace viennacl
       // 2nd pass: Add more C points if F-F connection does not have a common C point.
       for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
       {
-  point1 = *iter;
-  // If point is F point, check for strong connections.
-  if (point1->is_fpoint())
-  {
-    // Check for strong connections from influencing and influenced points.
-    amg_point::iterator iter2 = point1->begin_influencing();
-    amg_point::iterator iter3 = point1->begin_influenced();
-    
-    // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
-    // Note: Only works because influencing and influenced lists are sorted by point-index.
-    while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
-    {     
-      if (iter2 == point1->end_influencing())
-      {
-        point2 = *iter3;
-        ++iter3;
-      }
-      else if (iter3 == point1->end_influenced())
-      {
-        point2 = *iter2;
-        ++iter2;
-      }
-      else
-      {      
-        if ((*iter2)->get_index() == (*iter3)->get_index())   
+        point1 = *iter;
+        // If point is F point, check for strong connections.
+        if (point1->is_fpoint())
         {
-    point2 = *iter2;
-    ++iter2;
-    ++iter3;
+          // Check for strong connections from influencing and influenced points.
+          amg_point::iterator iter2 = point1->begin_influencing();
+          amg_point::iterator iter3 = point1->begin_influenced();
+          
+          // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
+          // Note: Only works because influencing and influenced lists are sorted by point-index.
+          while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
+          {     
+            if (iter2 == point1->end_influencing())
+            {
+              point2 = *iter3;
+              ++iter3;
+            }
+            else if (iter3 == point1->end_influenced())
+            {
+              point2 = *iter2;
+              ++iter2;
+            }
+            else
+            {      
+              if ((*iter2)->get_index() == (*iter3)->get_index())   
+              {
+                point2 = *iter2;
+                ++iter2;
+                ++iter3;
+              }
+              else if ((*iter2)->get_index() < (*iter3)->get_index())
+              {
+                point2 = *iter2;
+                ++iter2;
+              }
+              else
+              {
+                point2 = *iter3;
+                ++iter3;
+              }
+            }
+            // Only check points with higher index as points with lower index have been checked already.
+            if (point2->get_index() < point1->get_index())
+              continue;
+            
+            // If there is a strong connection then it has to either be a C point or a F point with common C point.
+            // C point? Then skip as everything is ok.
+            if (point2->is_cpoint())
+              continue;
+            // F point? Then check whether F points point1 and point2 have a common C point.
+            if (point2->is_fpoint())
+            {
+              add_C = true;
+              // C point is common for two F points if they are both strongly influenced by that C point.
+              // Compare strong influences for point1 and point2.
+              for (amg_point::iterator iter3 = point1->begin_influencing(); iter3 != point1 -> end_influencing(); ++iter3)
+              {
+                c_point = *iter3;
+                // Stop search when strong common influence is found via c_point.
+                if (c_point->is_cpoint())
+                {
+                  if (point2->is_influencing(c_point))
+                  {
+                    add_C = false;
+                    break;            
+                  }
+                }
+              }
+              // No common C point found? Then make second F point to C point.
+              if (add_C == true)
+                Pointvector[level].switch_ftoc(point2);
+            }
+          }
         }
-        else if ((*iter2)->get_index() < (*iter3)->get_index())
-        {
-    point2 = *iter2;
-    ++iter2;
-        }
-        else
-        {
-    point2 = *iter3;
-    ++iter3;
-        }
-      }
-      // Only check points with higher index as points with lower index have been checked already.
-      if (point2->get_index() < point1->get_index())
-        continue;
-      
-      // If there is a strong connection then it has to either be a C point or a F point with common C point.
-      // C point? Then skip as everything is ok.
-      if (point2->is_cpoint())
-        continue;
-      // F point? Then check whether F points point1 and point2 have a common C point.
-      if (point2->is_fpoint())
-      {
-        add_C = true;
-        // C point is common for two F points if they are both strongly influenced by that C point.
-        // Compare strong influences for point1 and point2.
-        for (amg_point::iterator iter3 = point1->begin_influencing(); iter3 != point1 -> end_influencing(); ++iter3)
-        {
-    c_point = *iter3;
-    // Stop search when strong common influence is found via c_point.
-    if (c_point->is_cpoint())
-    {
-      if (point2->is_influencing(c_point))
-      {
-        add_C = false;
-        break;            
-      }
-    }
-        }
-        // No common C point found? Then make second F point to C point.
-        if (add_C == true)
-    Pointvector[level].switch_ftoc(point2);
-      }
-    }
-  }
       }
       
       #ifdef VIENNACL_AMG_DEBUG
@@ -355,7 +355,7 @@ namespace viennacl
       #endif
 
       #ifdef VIENNACL_AMG_DEBUG
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp critical
 #endif      
       {
@@ -392,7 +392,7 @@ namespace viennacl
       
       // Run classical coarsening in parallel
       total_points = 0;
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for shared (total_points,Slicing,level)
 #endif      
       for (unsigned int i=0; i<Slicing.threads_; ++i)
@@ -402,7 +402,7 @@ namespace viennacl
         // Save C points (using Slicing.Offset on the next level as temporary memory)
         // Note: Number of C points for point i is saved in i+1!! (makes it easier later to compute offset)
         Slicing.Offset[i+1][level+1] = Slicing.Pointvector_slice[i][level].get_cpoints();
-      #ifdef _OPENMP
+      #ifdef VIENNACL_WITH_OPENMP
         #pragma omp critical
       #endif  
         total_points += Slicing.Pointvector_slice[i][level].get_cpoints();
@@ -411,7 +411,7 @@ namespace viennacl
       // If no coarser level can be found on any level then resume and coarsening will stop in amg_coarse()
       if (total_points != 0)
       {    
-      #ifdef _OPENMP
+      #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for shared (Slicing)
       #endif  
         for (unsigned int i=0; i<Slicing.threads_; ++i)
@@ -476,7 +476,7 @@ namespace viennacl
       // Save slicing offset
       boost::numeric::ublas::vector<unsigned int> Offset = boost::numeric::ublas::vector<unsigned int> (Slicing.Offset.size());
       for (i=0; i<Slicing.Offset.size(); ++i)
-  Offset[i] = Slicing.Offset[i][level];
+        Offset[i] = Slicing.Offset[i][level];
       
       // Correct the coarsening with a third pass: Don't allow strong F-F connections without common C point
       for (i=0; i<Slicing.threads_; ++i)
@@ -586,7 +586,7 @@ namespace viennacl
 
           #ifdef VIENNACL_AMG_DEBUG
           unsigned int i;
-    #ifdef _OPENMP
+    #ifdef VIENNACL_WITH_OPENMP
           #pragma omp critical
     #endif      
           {
@@ -625,7 +625,7 @@ namespace viennacl
           
           // SA algorithm (Vanek et al. p.6)     
           // Build neighborhoods
-    #ifdef _OPENMP
+    #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y,diag) shared (A)
     #endif      
           for (x=0; x<A[level].size1(); ++x)

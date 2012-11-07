@@ -151,7 +151,7 @@ namespace viennacl
                           std::vector<std::vector<unsigned int> >& g_J,
                           std::vector<DenseMatrixType>& g_A_I_J,
                           std::vector<VectorType>& g_b_v){
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif            
             for(std::size_t i = 0; i < M_v.size(); ++i){
@@ -175,7 +175,7 @@ namespace viennacl
                           std::vector<std::vector<unsigned int> >& g_J, 
                           std::vector<std::vector<unsigned int> >& g_I)
         {
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif            
             for(std::size_t i = 0; i < M_v.size(); ++i){
@@ -363,7 +363,7 @@ namespace viennacl
                                 const spai_tag& tag){
             typedef typename DenseMatrixType::value_type ScalarType;
             //VectorType m_new, y;
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif            
             for(std::size_t i = 0; i < M_v.size(); ++i){

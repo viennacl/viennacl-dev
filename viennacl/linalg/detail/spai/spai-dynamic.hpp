@@ -286,7 +286,7 @@ namespace viennacl
               std::vector<DenseMatrixType> g_A_I_u_J_u(g_J.size());
               //new vector of beta coefficients from QR factorization
               std::vector<VectorType> g_b_v_u(g_J.size());
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for
 #endif              
               for(std::size_t i = 0; i < g_J.size(); ++i){
@@ -376,7 +376,7 @@ namespace viennacl
           void assemble_qr_row_inds(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> > g_J, 
                                     const std::vector<std::vector<unsigned int> >& g_I_u, 
                                     std::vector<std::vector<unsigned int> >& g_I_q){
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for
 #endif              
               for(std::size_t i = 0; i < g_I.size(); ++i){
@@ -616,7 +616,7 @@ namespace viennacl
               bool is_empty_block;
               //GPU memory for new b_v
               block_vector g_bv_u_vcl;
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for
 #endif              
               for(std::size_t i = 0; i < g_J.size(); ++i){
@@ -637,7 +637,7 @@ namespace viennacl
               
               block_qr<ScalarType>(g_I_q, g_J_u, g_A_I_u_J_u_vcl, g_bv_u_vcl, g_is_update, cur_iter);
               //concatanation of new and old indices
-#ifdef _OPENMP
+#ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for
 #endif              
               for(std::size_t i = 0; i < g_J.size(); ++i){
