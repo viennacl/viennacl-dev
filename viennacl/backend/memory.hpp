@@ -26,7 +26,7 @@
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/backend/cpu_ram.hpp"
 
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/backend/opencl.hpp"
 #endif
 
@@ -53,7 +53,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_CUDA
     inline memory_types default_memory_type() { return CUDA_MEMORY; }
     inline void finish() { cudaDeviceSynchronize(); }
-#elif defined(VIENNACL_HAVE_OPENCL)
+#elif defined(VIENNACL_WITH_OPENCL)
     inline memory_types default_memory_type() { return OPENCL_MEMORY; }
     inline void finish() { viennacl::ocl::get_queue().finish(); }
 #else
@@ -73,7 +73,7 @@ namespace viennacl
         ram_handle_type       & ram_handle()       { return ram_handle_; }
         ram_handle_type const & ram_handle() const { return ram_handle_; }
         
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
         viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
 #endif        
@@ -104,7 +104,7 @@ namespace viennacl
           {
             case MAIN_MEMORY:
               return ram_handle_.get() == other.ram_handle_.get();
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
             case OPENCL_MEMORY:
               return opencl_handle_.get() == other.opencl_handle_.get();
 #endif
@@ -133,7 +133,7 @@ namespace viennacl
           ram_handle_ = ram_handle_tmp;
           
           // swap OpenCL handle:
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           opencl_handle_.swap(other.opencl_handle_);
 #endif          
 #ifdef VIENNACL_WITH_CUDA
@@ -146,7 +146,7 @@ namespace viennacl
       private:
         memory_types active_handle_;
         ram_handle_type ram_handle_;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
         viennacl::ocl::handle<cl_mem> opencl_handle_;
 #endif
 #ifdef VIENNACL_WITH_CUDA
@@ -167,7 +167,7 @@ namespace viennacl
         explicit integral_type_host_array(mem_handle const & handle, std::size_t num = 0) : convert_to_opencl_(false), bytes_buffer_(NULL), buffer_size_(sizeof(unsigned int) * num)
         {
           
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           memory_types mem_type = handle.get_active_handle_id();
           if (mem_type == MEMORY_NOT_INITIALIZED)
             mem_type = default_memory_type();
@@ -193,7 +193,7 @@ namespace viennacl
         template <typename U>
         void set(std::size_t index, U value)
         {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           if (convert_to_opencl_)
             reinterpret_cast<cl_uint *>(bytes_buffer_)[index] = static_cast<cl_uint>(value);
           else
@@ -205,7 +205,7 @@ namespace viennacl
         unsigned int operator[](std::size_t index) const 
         {
           assert(index < size() && bool("index out of bounds"));
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           if (convert_to_opencl_)
             return static_cast<unsigned int>(reinterpret_cast<cl_uint *>(bytes_buffer_)[index]);
 #endif
@@ -215,7 +215,7 @@ namespace viennacl
         std::size_t raw_size() const { return buffer_size_; }
         std::size_t element_size() const
         {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           if (convert_to_opencl_)
             return sizeof(cl_uint);
 #endif
@@ -255,7 +255,7 @@ namespace viennacl
           case MAIN_MEMORY:
             handle.ram_handle() = cpu_ram::memory_create(size_in_bytes, host_ptr);
             break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
             break;
@@ -286,7 +286,7 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_copy(src_buffer.ram_handle(), dst_buffer.ram_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_copy(src_buffer.opencl_handle(), dst_buffer.opencl_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
@@ -314,7 +314,7 @@ namespace viennacl
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.ram_handle() = src_buffer.ram_handle();
           break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
         case OPENCL_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.opencl_handle() = src_buffer.opencl_handle();
@@ -343,7 +343,7 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr);
             break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
             break;
@@ -371,7 +371,7 @@ namespace viennacl
           case MAIN_MEMORY:
             cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr);
             break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
             break;

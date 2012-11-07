@@ -32,7 +32,7 @@
 #include "viennacl/traits/stride.hpp"
 #include "viennacl/linalg/single_threaded/scalar_operations.hpp"
 
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/scalar_operations.hpp"
 #endif
 
@@ -69,7 +69,7 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
@@ -117,7 +117,7 @@ namespace viennacl
                                                   vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                   vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::asbs(vec1,
                                          vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -169,7 +169,7 @@ namespace viennacl
                                                     vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                     vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::asbs_s(vec1,
                                            vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -206,7 +206,7 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::swap(s1, s2);
           break;
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::swap(s1, s2);
           break;

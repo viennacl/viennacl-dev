@@ -28,7 +28,7 @@
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/linalg/scalar_operations.hpp"
 
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
 #include "viennacl/ocl/backend.hpp"
 #endif
 
@@ -137,7 +137,7 @@ namespace viennacl
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
-#ifdef VIENNACL_HAVE_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL          
       explicit scalar(cl_mem mem, size_t size)
       {
         val_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);

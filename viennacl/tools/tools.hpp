@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file tools.hpp
+/** @file viennacl/tools/tools.hpp
     @brief Various little tools used here and there in ViennaCL.
 */
 
@@ -26,21 +26,6 @@
 #include <sstream>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/adapter.hpp"
-
-
-#ifdef VIENNACL_HAVE_UBLAS  
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#endif
-
-#ifdef VIENNACL_HAVE_EIGEN  
-#include <Eigen/Core>
-#include <Eigen/Sparse>
-#endif
-
-#ifdef VIENNACL_HAVE_MTL4
-#include <boost/numeric/mtl/mtl.hpp>
-#endif
 
 #include <vector>
 #include <map>

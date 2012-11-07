@@ -17,8 +17,8 @@
 //#define VIENNACL_DEBUG_ALL
 //#define NDEBUG
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
+#ifndef VIENNACL_WITH_OPENCL
+  #define VIENNACL_WITH_OPENCL
 #endif
 
 #include "viennacl/scalar.hpp"

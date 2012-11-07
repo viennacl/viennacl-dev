@@ -27,7 +27,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/meta/result_of.hpp"
 
-#ifdef VIENNACL_HAVE_EIGEN  
+#ifdef VIENNACL_WITH_EIGEN  
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 #endif
@@ -49,7 +49,7 @@ namespace viennacl
       matrix(row_index, col_index) = value; 
     }
     
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     template <typename T, int options, typename SCALARTYPE>
     inline void fill(Eigen::SparseMatrix<T, options> & m,
                      std::size_t row_index,

@@ -39,7 +39,7 @@ namespace viennacl
   //
   namespace linalg 
   {
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     // ----------------------------------------------------
     // mtl4
     //
@@ -52,7 +52,7 @@ namespace viennacl
     }
     #endif
     
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     // ----------------------------------------------------
     // Eigen
     //
@@ -65,7 +65,7 @@ namespace viennacl
     }
     #endif
     
-    #ifdef VIENNACL_HAVE_UBLAS
+    #ifdef VIENNACL_WITH_UBLAS
     // ----------------------------------------------------
     // UBLAS
     //

@@ -134,7 +134,7 @@ namespace viennacl
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
       }
 
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
       explicit matrix(cl_mem mem, size_type rows, size_type columns) :
         rows_(rows), columns_(columns)
       {
@@ -730,7 +730,7 @@ namespace viennacl
     }
     
    
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     /** @brief Copies a dense Eigen matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
     *
     * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
@@ -804,7 +804,7 @@ namespace viennacl
     }
     #endif
     
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     /** @brief Copies a dense MTL matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
     *
     * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)

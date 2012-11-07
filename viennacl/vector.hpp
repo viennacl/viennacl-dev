@@ -288,7 +288,7 @@ namespace viennacl
       * @param existing_mem   An OpenCL handle representing the memory
       * @param vec_size       The size of the vector. 
       */
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
       explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
       {
         elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
@@ -1111,7 +1111,7 @@ namespace viennacl
 
 
 
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     template <unsigned int ALIGNMENT>
     void copy(vector<float, ALIGNMENT> const & gpu_vec,
               Eigen::VectorXf & eigen_vec)
@@ -1221,7 +1221,7 @@ namespace viennacl
     }
 
 
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     template <unsigned int ALIGNMENT>
     void copy(Eigen::VectorXf const & eigen_vec,
               vector<float, ALIGNMENT> & gpu_vec)

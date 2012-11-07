@@ -133,7 +133,7 @@ namespace viennacl
       copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(cpu_matrix, cpu_matrix.size(), cpu_matrix.size()), gpu_matrix);
     }
     
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
     void copy(const Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
@@ -149,7 +149,7 @@ namespace viennacl
     #endif
     
     
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const mtl::compressed2D<SCALARTYPE> & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
@@ -257,7 +257,7 @@ namespace viennacl
     }
     
     
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix)
@@ -297,7 +297,7 @@ namespace viennacl
     
     
     
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               mtl::compressed2D<SCALARTYPE> & mtl4_matrix)
@@ -375,7 +375,7 @@ namespace viennacl
           }
         }
         
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
         explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements, 
                                   std::size_t rows, std::size_t cols, std::size_t nonzeros) : 
           rows_(rows), cols_(cols), nonzeros_(nonzeros)

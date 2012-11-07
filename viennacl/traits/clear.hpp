@@ -26,17 +26,17 @@
 #include <sstream>
 #include "viennacl/forwards.h"
 
-#ifdef VIENNACL_HAVE_UBLAS  
+#ifdef VIENNACL_WITH_UBLAS  
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #endif
 
-#ifdef VIENNACL_HAVE_EIGEN  
+#ifdef VIENNACL_WITH_EIGEN  
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 #endif
 
-#ifdef VIENNACL_HAVE_MTL4
+#ifdef VIENNACL_WITH_MTL4
 #include <boost/numeric/mtl/mtl.hpp>
 #endif
 

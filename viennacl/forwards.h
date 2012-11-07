@@ -31,6 +31,20 @@
 
 */
 
+
+//compatibility defines:
+#ifdef VIENNACL_HAVE_UBLAS
+  #define VIENNACL_WITH_UBLAS
+#endif
+
+#ifdef VIENNACL_HAVE_EIGEN
+  #define VIENNACL_WITH_EIGEN
+#endif
+
+#ifdef VIENNACL_HAVE_MTL4
+  #define VIENNACL_WITH_MTL4
+#endif
+
 #include <cstddef>
 #include <cassert>
 #include "viennacl/meta/enable_if.hpp"

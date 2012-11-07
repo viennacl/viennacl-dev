@@ -27,17 +27,17 @@
 #include "viennacl/forwards.h"
 
 
-#ifdef VIENNACL_HAVE_UBLAS  
+#ifdef VIENNACL_WITH_UBLAS  
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #endif
 
-#ifdef VIENNACL_HAVE_EIGEN  
+#ifdef VIENNACL_WITH_EIGEN  
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 #endif
 
-#ifdef VIENNACL_HAVE_MTL4
+#ifdef VIENNACL_WITH_MTL4
 #include <boost/numeric/mtl/mtl.hpp>
 #endif
 
@@ -164,7 +164,7 @@ namespace viennacl
         typedef typename T::size_type   type;
       };
 
-      #ifdef VIENNACL_HAVE_EIGEN
+      #ifdef VIENNACL_WITH_EIGEN
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >
       {
@@ -288,7 +288,7 @@ namespace viennacl
       };
       
       
-    #ifdef VIENNACL_HAVE_EIGEN  
+    #ifdef VIENNACL_WITH_EIGEN  
       template <>
       struct value_type<Eigen::MatrixXf>
       {
@@ -373,7 +373,7 @@ namespace viennacl
         typedef viennacl::vector<T,A>   type;
       };
 
-      #ifdef VIENNACL_HAVE_UBLAS
+      #ifdef VIENNACL_WITH_UBLAS
       //Boost:
       template <typename T, typename F, typename A>
       struct vector_for_matrix< boost::numeric::ublas::matrix<T, F, A> >

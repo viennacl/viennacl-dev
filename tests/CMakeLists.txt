@@ -20,7 +20,7 @@ if (ENABLE_OPENCL)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
      add_test(${PROG}-opencl ${PROG}-test-opencl)
-     set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_HAVE_OPENCL")
+     set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach(PROG)
 
   include_directories(${PROJECT_SOURCE_DIR}/external)
@@ -29,7 +29,7 @@ if (ENABLE_OPENCL)
                  src/external_2.cpp 
                  ${PROJECT_SOURCE_DIR}/external/pugixml/src/pugixml.cpp)
   target_link_libraries(external_linkage ${OPENCL_LIBRARIES})
-  set_target_properties(external_linkage PROPERTIES COMPILE_FLAGS "-DVIENNACL_HAVE_OPENCL")
+  set_target_properties(external_linkage PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
 endif (ENABLE_OPENCL)
 
 # tests with CUDA backend

@@ -37,7 +37,7 @@ namespace viennacl
   namespace linalg 
   {
     
-    #ifdef VIENNACL_HAVE_UBLAS
+    #ifdef VIENNACL_WITH_UBLAS
     // ----------------------------------------------------
     // UBLAS
     //

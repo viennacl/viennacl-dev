@@ -27,17 +27,17 @@
 #include "viennacl/forwards.h"
 #include "viennacl/meta/result_of.hpp"
 
-#ifdef VIENNACL_HAVE_UBLAS  
+#ifdef VIENNACL_WITH_UBLAS  
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #endif
 
-#ifdef VIENNACL_HAVE_EIGEN  
+#ifdef VIENNACL_WITH_EIGEN  
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 #endif
 
-#ifdef VIENNACL_HAVE_MTL4
+#ifdef VIENNACL_WITH_MTL4
 #include <boost/numeric/mtl/mtl.hpp>
 #endif
 
@@ -64,7 +64,7 @@ namespace viennacl
       vec.resize(new_size); 
     }
     
-    #ifdef VIENNACL_HAVE_UBLAS  
+    #ifdef VIENNACL_WITH_UBLAS  
     //ublas needs separate treatment:
     template <typename ScalarType>
     void resize(boost::numeric::ublas::compressed_matrix<ScalarType> & matrix,
@@ -76,7 +76,7 @@ namespace viennacl
     #endif  
     
     
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     template <typename ScalarType>
     void resize(mtl::compressed2D<ScalarType> & matrix,
                 size_t rows,
@@ -93,7 +93,7 @@ namespace viennacl
     }
     #endif      
 
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     inline void resize(Eigen::MatrixXf & m,
                        std::size_t new_rows,
                        std::size_t new_cols)
@@ -165,12 +165,12 @@ namespace viennacl
     
     
     
-    #ifdef VIENNACL_HAVE_MTL4
+    #ifdef VIENNACL_WITH_MTL4
     template <typename ScalarType>
     vcl_size_t size(mtl::dense_vector<ScalarType> const & vec) { return vec.used_memory(); }
     #endif
     
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size(Eigen::VectorXf const & v) { return v.rows(); }
     inline vcl_size_t size(Eigen::VectorXd const & v) { return v.rows(); }
     #endif
@@ -182,7 +182,7 @@ namespace viennacl
     vcl_size_t
     size1(MatrixType const & mat) { return mat.size1(); }
 
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size1(Eigen::MatrixXf const & m) { return m.rows(); }
     inline vcl_size_t size1(Eigen::MatrixXd const & m) { return m.rows(); }
     template <typename T, int options>
@@ -196,7 +196,7 @@ namespace viennacl
     typename result_of::size_type<MatrixType>::type
     size2(MatrixType const & mat) { return mat.size2(); }
  
-    #ifdef VIENNACL_HAVE_EIGEN
+    #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
     inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
     template <typename T, int options>

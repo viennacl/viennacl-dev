@@ -27,7 +27,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/single_threaded/sparse_matrix_operations.hpp"
 
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/sparse_matrix_operations.hpp"
 #endif
 
@@ -86,7 +86,7 @@ namespace viennacl
         case viennacl::backend::MAIN_MEMORY:
           viennacl::linalg::single_threaded::prod_impl(mat, vec, result);
           break;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::prod_impl(mat, vec, result);
           break;

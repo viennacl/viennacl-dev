@@ -144,7 +144,7 @@ namespace viennacl
     //
     // OpenCL handle extraction
     //
-#ifdef VIENNACL_HAVE_OPENCL    
+#ifdef VIENNACL_WITH_OPENCL    
     template <typename T>
     viennacl::ocl::handle<cl_mem> & opencl_handle(T & obj)
     {
