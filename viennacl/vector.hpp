@@ -411,7 +411,7 @@ namespace viennacl
       {
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         clear();
-        this->operator()[v.index()] = 1;
+        this->operator()(v.index()) = 1;
       }
     }
     

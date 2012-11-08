@@ -71,17 +71,30 @@ namespace viennacl
       * @param vec    The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
-      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::unit_lower_tag)
+      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
         unsigned int threads = k.local_work_size();
 
-        k.global_work_size(k.local_work_size());
+        k.global_work_size(0, k.local_work_size());
+        /*viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_int) * (threads+1)),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(L.size1())
+                                )
+                              );*/
         viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
-                                viennacl::ocl::local_mem(sizeof(int) * (threads+1)),
-                                viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
-                                vec, L.size1()));        
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(L.size1())
+                                )
+                              );
       }
       
       
@@ -91,17 +104,30 @@ namespace viennacl
       * @param vec    The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
-      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U, vector<SCALARTYPE, VEC_ALIGNMENT> & vec, viennacl::linalg::upper_tag)
+      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
         unsigned int threads = k.local_work_size();
         
         k.global_work_size(k.local_work_size());
-        viennacl::ocl::enqueue(k(U.handle1().opencl_handle().get(), U.handle2().opencl_handle().get(), U.handle().opencl_handle().get(),
-                                viennacl::ocl::local_mem(sizeof(int) * (threads+2)),
-                                viennacl::ocl::local_mem(sizeof(SCALARTYPE) * (threads+2)),
-                                vec, U.size1()));        
+        /*viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_int) * (threads+2)),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * (threads+2)),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(U.size1())
+                                )
+                              );*/
+        viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(U.size1())
+                                )
+                              );
       }
 
       

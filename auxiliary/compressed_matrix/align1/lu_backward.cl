@@ -5,111 +5,74 @@ __kernel void lu_backward(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,
-          __local  int * buffer,                              
-          __local  float * vec_entries,   //a memory block from vector
+          __local  unsigned int * col_index_buffer,                              
+          __local  float * element_buffer,                              
+          __local  float * vector_buffer,
           __global float * vector,
           unsigned int size) 
 {
-  int waiting_for; //block index that must be finished before the current thread can start
-  unsigned int waiting_for_index;
-  unsigned int block_offset;
-  unsigned int col;
-  unsigned int row;
-  unsigned int row_index_end;
-  float diagonal_entry = 42;
+  unsigned int nnz = row_indices[size];
+  unsigned int current_row = size-1;
+  unsigned int row_at_window_start = size-1;
+  float current_vector_entry = vector[size-1];
+  unsigned int loop_end = ( (nnz - 1) / get_local_size(0)) * get_local_size(0);
+  unsigned int next_row = row_indices[size-1];
   
-  //forward substitution: one thread per row in blocks of get_global_size(0)
-  for (int block_num = size / get_global_size(0); block_num > -1; --block_num)
+  unsigned int i = loop_end + get_local_id(0);
+  while (1)
   {
-    block_offset = block_num * get_global_size(0);
-    row = block_offset + get_global_id(0);
-    buffer[get_global_id(0)] = 0; //set flag to 'undone'
-    waiting_for = -1;
-    
-    if (row < size)
+    //load into shared memory (coalesced access):
+    if (i < nnz)
     {
-      vec_entries[get_global_id(0)] = vector[row];
-      waiting_for_index = row_indices[row];
-      row_index_end = row_indices[row+1];
-      diagonal_entry = column_indices[waiting_for_index];
+      element_buffer[get_local_id(0)] = elements[i];
+      unsigned int tmp = column_indices[i];
+      col_index_buffer[get_local_id(0)] = tmp;
+      vector_buffer[get_local_id(0)] = vector[tmp];
     }
     
-    if (get_global_id(0) == 0)
-       buffer[get_global_size(0)] = 1;
-
-
-    //try to eliminate all lines in the block. 
-    //in worst case scenarios, in each step only one line can be substituted, thus loop
-    for (unsigned int k = 0; k<get_global_size(0); ++k)
+    __syncthreads();
+    
+    //now a single thread does the remaining work in shared memory:
+    if (get_local_id(0) == 0)
     {
-      barrier(CLK_LOCAL_MEM_FENCE);
-      if (row < size) //valid index?
+      // traverse through all the loaded data from back to front:
+      for (unsigned int k2=0; k2<get_local_size(0); ++k2)
       {
-        if (waiting_for >= 0)
+        unsigned int k = (get_local_size(0) - k2) - 1;
+        
+        if (i+k >= nnz)
+          continue;
+        
+        if (col_index_buffer[k] > row_at_window_start) //use recently computed results
+          current_vector_entry -= element_buffer[k] * vector_buffer[k];
+        else if (col_index_buffer[k] > current_row) //use buffered data
+          current_vector_entry -= element_buffer[k] * vector[col_index_buffer[k]];
+        else if (col_index_buffer[k] == current_row)
+          current_vector_entry /= element_buffer[k];
+        
+        if (i+k == next_row) //current row is finished. Write back result
         {
-          if (buffer[waiting_for] == 1)
-            waiting_for = -1;
+          vector[current_row] = current_vector_entry;
+          if (current_row > 0) //load next row's data
+          {
+            --current_row;
+            next_row = row_indices[current_row];
+            current_vector_entry = vector[current_row];
+          }
         }
         
-        if (waiting_for == -1) //substitution not yet done, check whether possible
-        {
-          //check whether reduction is possible:
-          for (unsigned int j = waiting_for_index; j < row_index_end; ++j)
-          {
-            col = column_indices[j];
-            barrier(CLK_LOCAL_MEM_FENCE);
-            if (col >= block_offset + get_global_size(0))  //index valid, but not from current block
-              vec_entries[get_global_id(0)] -= elements[j] * vector[col];
-            else if (col > row)  //index is from current block
-            {
-              if (buffer[col - block_offset] == 0) //entry is not yet calculated
-              {
-                waiting_for = col - block_offset;
-                waiting_for_index = j;
-                break;
-              }
-              else  //updated entry is available in shared memory:
-                vec_entries[get_global_id(0)] -= elements[j] * vec_entries[col - block_offset];
-            }
-            else if (col == row)
-              diagonal_entry = elements[j];
-          }
-          
-          if (waiting_for == -1)  //this row is done
-          {
-            if (row == 0)
-              vec_entries[get_global_id(0)] /= elements[0];
-            else
-              vec_entries[get_global_id(0)] /= diagonal_entry;
-            buffer[get_global_id(0)] = 1;
-            waiting_for = -2; //magic number: thread is finished
-          }
-        } 
-      } //row < size
-      else
-        buffer[get_global_id(0)] = 1; //work done (because there is no work to be done at all...)
+        
+      } // for k
       
-      ///////// check whether all threads are done. If yes, exit loop /////////////
-      if (buffer[get_global_id(0)] == 0)
-        buffer[get_global_size(0)] = 0;
-      barrier(CLK_LOCAL_MEM_FENCE);
-      
-      if (buffer[get_global_size(0)] > 0)  //all threads break the loop simultaneously
-        break;
-
-      if (get_global_id(0) == 0)
-        buffer[get_global_size(0)] = 1;
-    } //for k
-
-    if (row < size)
-      vector[row] = vec_entries[get_global_id(0)];
-      //vector[row] = diagonal_entry;
+      row_at_window_start = current_row;
+    } // if (get_local_id(0) == 0)
     
-    //if (row == 0)
-      //vector[0] = diagonal_entry;
-      //vector[0] = elements[0];
-
-    barrier(CLK_GLOBAL_MEM_FENCE);
-  } //for block_num
+    __syncthreads();
+    
+    if (i < get_local_size(0))
+      break;
+    
+    i -= get_local_size(0);
+  } //for i
 }
 

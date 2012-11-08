@@ -33,6 +33,7 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/operation_sparse.hpp>
 
 //
 // *** ViennaCL
@@ -266,7 +267,7 @@ int test(Epsilon const& epsilon)
   rhs.resize(ublas_matrix.size2());
   for (std::size_t i=0; i<rhs.size(); ++i)
   {
-    ublas_matrix(i,i) = NumericT(-1);   // Get rid of round-off errors by making row-sums unequal to zero:
+    ublas_matrix(i,i) = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
     rhs[i] = NumericT(1) + random<NumericT>();
   }
 
@@ -298,8 +299,45 @@ int test(Epsilon const& epsilon)
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
     retval = EXIT_FAILURE;
   }
+  
+  
+  /*std::cout << "Testing unit lower triangular solve: compressed_matrix" << std::endl;
+  viennacl::copy(result, vcl_result);
+  std::cout << "ublas..." << std::endl;
+  boost::numeric::ublas::inplace_solve(ublas_matrix, result, boost::numeric::ublas::unit_lower_tag());
+  std::cout << "ViennaCL..." << std::endl;
+  viennacl::backend::finish();
+  Timer timer;
+  viennacl::linalg::inplace_solve(vcl_compressed_matrix, vcl_result, viennacl::linalg::unit_lower_tag());
+  viennacl::backend::finish();
+  
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: unit lower triangular solve with compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }*/
+  
+  std::cout << "Testing upper triangular solve: compressed_matrix" << std::endl;
+  viennacl::copy(result, vcl_result);
+  std::cout << "ublas..." << std::endl;
+  boost::numeric::ublas::inplace_solve(ublas_matrix, result, boost::numeric::ublas::upper_tag());
+  std::cout << "ViennaCL..." << std::endl;
+  viennacl::linalg::inplace_solve(vcl_compressed_matrix, vcl_result, viennacl::linalg::upper_tag());
+  
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: upper triangular solve with compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+  
+  
+  
+  
 
   std::cout << "Testing products: coordinate_matrix" << std::endl;
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
   vcl_result = viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs);
   
   if( std::fabs(diff(result, vcl_result)) > epsilon )
