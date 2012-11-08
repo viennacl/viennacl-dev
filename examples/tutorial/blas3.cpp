@@ -38,7 +38,7 @@
 
 
 // Must be set if you want to use ViennaCL algorithms on ublas objects
-#define VIENNACL_HAVE_UBLAS 1
+#define VIENNACL_WITH_UBLAS 1
 
 //
 // ViennaCL includes
@@ -64,7 +64,7 @@
 using namespace boost::numeric;
 
 
-#ifndef VIENNACL_HAVE_OPENCL
+#ifndef VIENNACL_WITH_OPENCL
   struct dummy
   {
     std::size_t size() const { return 1; }
@@ -137,7 +137,7 @@ int main()
   // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
   //
   std::cout << std::endl << "--- Computing matrix-matrix product on each available compute device using ViennaCL ---" << std::endl;
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
 #else
   dummy devices;
@@ -145,7 +145,7 @@ int main()
   
   for (std::size_t i=0; i<devices.size(); ++i)
   {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
@@ -159,12 +159,12 @@ int main()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::get_queue().finish();
 #endif
     timer.start();
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::get_queue().finish();
 #endif
     exec_time = timer.get();

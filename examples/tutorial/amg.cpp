@@ -21,7 +21,7 @@
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/operation_sparse.hpp>
 
-#define VIENNACL_HAVE_UBLAS 1
+#define VIENNACL_WITH_UBLAS 1
 
 #define SOLVER_ITERS 2500
 //#define SCALAR float

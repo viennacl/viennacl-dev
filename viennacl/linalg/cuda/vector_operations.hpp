@@ -564,13 +564,14 @@ namespace viennacl
                                            unsigned int start1,
                                            unsigned int inc1,          
                                            unsigned int size1,
+                                           unsigned int internal_size1,
                                             
                                            T alpha)
       { 
         for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
-                          i < size1;
+                          i < internal_size1;
                           i += gridDim.x * blockDim.x)
-          vec1[i*inc1+start1] = alpha;
+          vec1[i*inc1+start1] =  (i < size1) ? alpha : 0;
       }
       
       /** @brief Assign a constant value to a vector (-range/-slice)
@@ -594,6 +595,7 @@ namespace viennacl
                                            static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                            static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                            static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                           static_cast<unsigned int>(vec1.internal_size()),  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
                                               
                                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
         VIENNACL_CUDA_LAST_ERROR_CHECK("avbv_v_kernel");

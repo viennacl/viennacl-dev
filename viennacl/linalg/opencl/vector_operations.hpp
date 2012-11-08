@@ -250,6 +250,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(vec1)),
                                  cl_uint(viennacl::traits::stride(vec1)),
                                  cl_uint(viennacl::traits::size(vec1)),
+                                 cl_uint(vec1.internal_size()),     //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
                                  viennacl::traits::opencl_handle(value_type(alpha)) )
                               );
       }

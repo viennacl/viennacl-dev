@@ -73,7 +73,7 @@ int run_benchmark()
   //
   // Set up some ViennaCL objects
   //
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   viennacl::ocl::set_context_device_type(0, viennacl::ocl::gpu_tag());
 #endif
 
@@ -95,14 +95,14 @@ int run_benchmark()
   std::cout << " ------ Benchmark 1: Matrix-Matrix product ------ " << std::endl;
   
   
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
 #else
   std::vector<long> devices(1);
 #endif
   for (size_t i=0; i<devices.size(); ++i)
   {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
@@ -129,7 +129,7 @@ int run_benchmark()
   viennacl::range r(BLAS3_MATRIX_SIZE/4, 3 * BLAS3_MATRIX_SIZE/4);
   for (size_t i=0; i<devices.size(); ++i)
   {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
@@ -156,7 +156,7 @@ int run_benchmark()
   viennacl::slice s(0, 2, BLAS3_MATRIX_SIZE/2);
   for (size_t i=0; i<devices.size(); ++i)
   {
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
@@ -188,7 +188,7 @@ int main()
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
 #endif  
   
@@ -203,7 +203,7 @@ int main()
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
   run_benchmark<float>();
-#ifdef VIENNACL_HAVE_OPENCL
+#ifdef VIENNACL_WITH_OPENCL
   if( viennacl::ocl::current_device().double_support() )
 #endif
   {

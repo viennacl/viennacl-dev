@@ -123,8 +123,35 @@ int test(Epsilon const& epsilon,
 {
   int retval = EXIT_SUCCESS;
   
-  NumericT                    cpu_result;
-  viennacl::scalar<NumericT>  gpu_result;
+  NumericT                    cpu_result = 42.0;
+  viennacl::scalar<NumericT>  gpu_result = 43.0;
+  
+  //
+  // Initializer:
+  //
+  std::cout << "Checking for zero_vector initializer..." << std::endl;
+  ublas_v1 = ublas::zero_vector<NumericT>(ublas_v1.size());
+  vcl_v1 = viennacl::zero_vector<NumericT>(vcl_v1.size());
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  std::cout << "Checking for scalar_vector initializer..." << std::endl;
+  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), cpu_result);
+  vcl_v1 = viennacl::scalar_vector<NumericT>(vcl_v1.size(), cpu_result);
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), gpu_result);
+  vcl_v1 = viennacl::scalar_vector<NumericT>(vcl_v1.size(), gpu_result);
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << "Checking for unit_vector initializer..." << std::endl;
+  ublas_v1 = ublas::unit_vector<NumericT>(ublas_v1.size(), 5);
+  vcl_v1 = viennacl::unit_vector<NumericT>(vcl_v1.size(), 5);
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {

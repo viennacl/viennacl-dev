@@ -28,7 +28,7 @@
 //
 // Must be set prior to any ViennaCL includes if you want to use ViennaCL algorithms on MTL4 objects
 //
-#define VIENNACL_HAVE_MTL4 1
+#define VIENNACL_WITH_MTL4 1
 
 //#define VIENNACL_BUILD_INFO
 //#define VIENNACL_DEBUG_ALL

@@ -188,11 +188,12 @@ namespace viennacl
         std::size_t start1 = viennacl::traits::start(vec1);
         std::size_t inc1   = viennacl::traits::stride(vec1);
         std::size_t size1  = viennacl::traits::size(vec1);
+        std::size_t internal_size1  = vec1.internal_size();  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
         
         value_type data_alpha = alpha;
         
-        for (std::size_t i = 0; i < size1; ++i)
-          data_vec1[i*inc1+start1] = data_alpha;
+        for (std::size_t i = 0; i < internal_size1; ++i)
+          data_vec1[i*inc1+start1] = (i < size1) ? data_alpha : 0;
       }
 
       

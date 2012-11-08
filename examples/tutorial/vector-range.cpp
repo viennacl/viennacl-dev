@@ -15,7 +15,7 @@
 ============================================================================= */
 
 // activate ublas support in ViennaCL
-#define VIENNACL_HAVE_UBLAS
+#define VIENNACL_WITH_UBLAS
 
 //
 // include necessary system headers

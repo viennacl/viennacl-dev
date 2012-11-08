@@ -54,6 +54,7 @@ namespace viennacl
                    
       size_type start() const { return entry_range_.start(); }
       size_type size() const { return entry_range_.size(); }
+      size_type internal_size() const { return entry_range_.size(); }
 
       
       /** @brief Operator overload for v1 = A * v2, where v1 and v2 are vector ranges and A is a dense matrix.
@@ -118,6 +119,41 @@ namespace viennacl
                              proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
         return *this;
       }
+      
+      /** @brief Creates the vector from the supplied unit vector. */
+      self_type & operator = (unit_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0));
+        this->operator()(v.index()) = cpu_value_type(1);
+        
+        return *this;
+      }
+      
+      /** @brief Creates the vector from the supplied zero vector. */
+      self_type & operator = (zero_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0));
+        
+        return *this;
+      }
+
+      /** @brief Creates the vector from the supplied scalar vector. */
+      self_type & operator = (scalar_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, v[0]);
+        
+        return *this;
+      }
+      
       
       //
       ///////////// operators with implicit conversion
@@ -349,6 +385,7 @@ namespace viennacl
       size_type start() const { return entry_slice_.start(); }
       size_type stride() const { return entry_slice_.stride(); }
       size_type size() const { return entry_slice_.size(); }
+      size_type internal_size() const { return entry_slice_.size(); }
 
       
       /** @brief Operator overload for v1 = A * v2, where v1 and v2 are vector slices and A is a dense matrix.
@@ -412,6 +449,37 @@ namespace viennacl
       }
       
 
+      /** @brief Creates the vector from the supplied unit vector. */
+      self_type & operator = (unit_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0));
+        this->operator()(v.index()) = cpu_value_type(1);
+        return *this;
+      }
+      
+      /** @brief Creates the vector from the supplied zero vector. */
+      self_type & operator = (zero_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0));
+        return *this;
+      }
+
+      /** @brief Creates the vector from the supplied scalar vector. */
+      self_type & operator = (scalar_vector<cpu_value_type> const & v)
+      {
+        assert( (v.size() == size())
+                && bool("Incompatible vector sizes!"));
+        
+        viennacl::linalg::vector_assign(*this, v[0]);
+        return *this;
+      }
+      
 
       ///////////// operator overloads with implicit conversion:
       /** @brief Scales this vector range by a CPU scalar value

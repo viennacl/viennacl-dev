@@ -21,7 +21,7 @@
   #define NDEBUG
 #endif
 
-#define VIENNACL_HAVE_UBLAS
+#define VIENNACL_WITH_UBLAS
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"

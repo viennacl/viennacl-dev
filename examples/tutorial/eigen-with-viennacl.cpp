@@ -28,7 +28,7 @@
 //
 // IMPORTANT: Must be set prior to any ViennaCL includes if you want to use ViennaCL algorithms on Eigen objects
 //
-#define VIENNACL_HAVE_EIGEN 1
+#define VIENNACL_WITH_EIGEN 1
 
 //
 // ViennaCL includes

@@ -20,8 +20,8 @@
 #include <iostream>
 #include <string>
 
-#ifndef VIENNACL_HAVE_OPENCL
-  #define VIENNACL_HAVE_OPENCL
+#ifndef VIENNACL_WITH_OPENCL
+  #define VIENNACL_WITH_OPENCL
 #endif
 
 //

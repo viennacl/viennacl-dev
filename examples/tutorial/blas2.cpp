@@ -32,7 +32,7 @@
 
 
 // Must be set if you want to use ViennaCL algorithms on ublas objects
-#define VIENNACL_HAVE_UBLAS 1
+#define VIENNACL_WITH_UBLAS 1
 
 
 //

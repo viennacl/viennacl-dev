@@ -14,7 +14,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#define VIENNACL_HAVE_UBLAS
+#define VIENNACL_WITH_UBLAS
 #ifndef NDEBUG
  #define NDEBUG
 #endif
