@@ -615,14 +615,13 @@ namespace viennacl
     }
     
     /** @brief Returns an expression template class representing a transposed matrix */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
-    matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                       const matrix<SCALARTYPE, F, ALIGNMENT>,
-                       op_trans> trans(const matrix<SCALARTYPE, F, ALIGNMENT> & mat)
+    template<typename M1>
+    typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_matrix<M1>::value,
+                                 matrix_expression< const M1, const M1, op_trans>
+                                >::type
+    trans(const M1 & mat)
     {
-      return matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                op_trans>(mat, mat);
+      return matrix_expression< const M1, const M1, op_trans>(mat, mat);
     }
     
     

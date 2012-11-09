@@ -103,6 +103,7 @@ set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/jacobi_precond.cl
    compressed_matrix/align1/lu_backward.cl
    compressed_matrix/align1/lu_forward.cl
+   compressed_matrix/align1/trans_unit_lu_forward.cl
    compressed_matrix/align1/row_scaling_1.cl
    compressed_matrix/align1/row_scaling_2.cl
    compressed_matrix/align1/vec_mul.cl

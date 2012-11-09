@@ -98,6 +98,34 @@ namespace viennacl
       }
       
       
+      /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy_L,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_lower_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
+
+        k.local_work_size(0, 32);
+        k.global_work_size(0, k.local_work_size());
+        viennacl::ocl::enqueue(k(proxy_L.lhs().handle1().opencl_handle(), proxy_L.lhs().handle2().opencl_handle(), proxy_L.lhs().handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(proxy_L.lhs().size1())
+                                )
+                              );
+      }
+      
+      
+      
+      
+      
       /** @brief Inplace solution of a upper triangular compressed_matrix. Typically used for LU substitutions
       *
       * @param U      The upper triangular matrix

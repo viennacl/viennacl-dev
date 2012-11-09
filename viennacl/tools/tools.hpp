@@ -321,6 +321,12 @@ namespace viennacl
       typedef viennacl::matrix<ScalarType, F, A>   ResultType;
     };
 
+    template <typename LHS, typename ScalarType, unsigned int A>
+    struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::compressed_matrix<ScalarType, A> >
+    {
+      typedef viennacl::compressed_matrix<ScalarType, A>   ResultType;
+    };
+    
     template <typename LHS, typename MatrixType>
     struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix_range<MatrixType> >
     {
@@ -340,6 +346,12 @@ namespace viennacl
       typedef viennacl::matrix<ScalarType, F, A>   ResultType;
     };
 
+    template <typename RHS, typename ScalarType, unsigned int A>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::compressed_matrix<ScalarType, A>, RHS>
+    {
+      typedef viennacl::compressed_matrix<ScalarType, A>   ResultType;
+    };
+    
     template <typename MatrixType, typename RHS>
     struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType>, RHS>
     {
@@ -358,6 +370,12 @@ namespace viennacl
       typedef viennacl::matrix<ScalarType, F1, A1>   ResultType;
     };
 
+    template <typename ScalarType, unsigned int A1, unsigned int A2>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::compressed_matrix<ScalarType, A1>, viennacl::compressed_matrix<ScalarType, A2> >
+    {
+      typedef viennacl::compressed_matrix<ScalarType, A1>   ResultType;
+    };
+    
     template <typename ScalarType, typename F, unsigned int A, typename MatrixType>
     struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, viennacl::matrix_range<MatrixType> >
     {

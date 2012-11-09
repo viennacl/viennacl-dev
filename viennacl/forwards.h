@@ -260,7 +260,7 @@ namespace viennacl
   struct is_row_major;
   
   template <typename T>
-  struct is_sparse_matrix;
+  struct is_any_sparse_matrix;
   
   template <typename T>
   struct is_any_matrix;
@@ -343,7 +343,7 @@ namespace viennacl
                     VectorType2 & result);
 
     template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
-    typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value,
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vector_expression<const SparseMatrixType,
                                                     const vector<SCALARTYPE, ALIGNMENT>, 
                                                     op_prod >

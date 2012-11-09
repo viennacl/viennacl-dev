@@ -352,6 +352,7 @@ namespace viennacl
       public:
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+        typedef vcl_size_t                                                                                 size_type;
         
         /** @brief Default construction of a compressed matrix. No memory is allocated */
         compressed_matrix() : rows_(0), cols_(0), nonzeros_(0) {}

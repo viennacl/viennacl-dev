@@ -157,15 +157,18 @@ int run_benchmark()
   
   std::cout << "Testing triangular solves: compressed_matrix" << std::endl;
   viennacl::copy(ublas_vec1, vcl_vec1);
+  viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
+  viennacl::copy(ublas_vec1, vcl_vec1);
   std::cout << "ublas..." << std::endl;
-  boost::numeric::ublas::inplace_solve(ublas_matrix, ublas_vec1, boost::numeric::ublas::upper_tag());
+  boost::numeric::ublas::inplace_solve(trans(ublas_matrix), ublas_vec1, boost::numeric::ublas::unit_lower_tag());
   std::cout << "ViennaCL..." << std::endl;
   viennacl::backend::finish();
   timer.start();
-  viennacl::linalg::inplace_solve(vcl_compressed_matrix_1, vcl_vec1, viennacl::linalg::upper_tag());
+  viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
   viennacl::backend::finish();
   std::cout << "Time elapsed: " << timer.get() << std::endl;
   
+  ublas_vec1 = boost::numeric::ublas::prod(ublas_matrix, ublas_vec2);
   
   viennacl::backend::finish();
   timer.start();

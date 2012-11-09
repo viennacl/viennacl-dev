@@ -540,7 +540,7 @@ int main()
   std::cout << "   -------------------------------" << std::endl;
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
-  //run_benchmark<float>();
+  run_benchmark<float>();
   if( viennacl::ocl::current_device().double_support() )
   {
     std::cout << std::endl;

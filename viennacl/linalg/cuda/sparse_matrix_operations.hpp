@@ -161,7 +161,7 @@ namespace viennacl
       * @param result The result vector
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
-      typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value>::type
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
                     viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::linalg::lower_tag)
@@ -175,8 +175,127 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("csr_lu_forward_kernel");
       }
 
+
+      template <typename T>
+      __global__ void csr_trans_lu_forward_kernel2(
+                const unsigned int * row_indices,
+                const unsigned int * column_indices, 
+                const T * elements,
+                      T * vector,
+                unsigned int size) 
+      {
+        for (unsigned int row = 0; row < size; ++row) 
+        { 
+          T result_entry = vector[row]; 
+          
+          unsigned int row_start = row_indices[row]; 
+          unsigned int row_stop  = row_indices[row + 1];
+          for (unsigned int entry_index = row_start + threadIdx.x; entry_index < row_stop; entry_index += blockDim.x) 
+          {
+            unsigned int col_index = column_indices[entry_index];
+            if (col_index > row)
+              vector[col_index] -= result_entry * elements[entry_index]; 
+          }
+          
+          __syncthreads();
+        } 
+      }      
+      
+      template <typename T>
+      __global__ void csr_trans_lu_forward_kernel(
+                const unsigned int * row_indices,
+                const unsigned int * column_indices, 
+                const T * elements,
+                      T * vector,
+                unsigned int size) 
+      {
+        __shared__  unsigned int row_index_lookahead[256];
+        __shared__  unsigned int row_index_buffer[256];
+        
+        unsigned int row_index;
+        unsigned int col_index;
+        T matrix_entry;
+        unsigned int nnz = row_indices[size];
+        unsigned int row_at_window_start = 0;
+        unsigned int row_at_window_end = 0;
+        unsigned int loop_end = ( (nnz - 1) / blockDim.x + 1) * blockDim.x;
+        
+        for (unsigned int i = threadIdx.x; i < loop_end; i += blockDim.x)
+        {
+          col_index    = (i < nnz) ? column_indices[i] : 0;
+          matrix_entry = (i < nnz) ? elements[i]       : 0;
+          row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : size - 1;
+
+          __syncthreads();
+          
+          if (i < nnz)
+          {
+            unsigned int row_index_inc = 0;
+            while (i >= row_index_lookahead[row_index_inc + 1])
+              ++row_index_inc;
+            row_index = row_at_window_start + row_index_inc;
+            row_index_buffer[threadIdx.x] = row_index;
+          }
+          else
+          {
+            row_index = size+1;
+            row_index_buffer[threadIdx.x] = size - 1;
+          }
+          
+          __syncthreads();
+          
+          row_at_window_start = row_index_buffer[0];
+          row_at_window_end   = row_index_buffer[blockDim.x - 1];
+          
+          //forward elimination
+          for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
+          { 
+            T result_entry = vector[row];
+            
+            if ( (row_index == row) && (col_index > row) )
+              vector[col_index] -= result_entry * matrix_entry; 
+
+            __syncthreads();
+          }
+          
+          row_at_window_start = row_at_window_end;
+        }
+          
+      }
       
       
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::unit_lower_tag)
+      {
+        std::cout << "size: " << mat.lhs().size1() << std::endl;
+        csr_trans_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                detail::cuda_arg<ScalarType>(vec),
+                                                static_cast<unsigned int>(mat.lhs().size1())
+                                               );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_lu_forward_kernel");
+      }
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      //////////////////////// backward solve ///////////////////////////
       
       template <typename T>
       __global__ void csr_lu_backward_kernel(
@@ -263,7 +382,7 @@ namespace viennacl
       * @param result The result vector
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
-      typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value>::type
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
                     viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::linalg::upper_tag)
@@ -288,7 +407,28 @@ namespace viennacl
                       T * vector,
                 unsigned int size) 
       {
-        // 
+        T result_entry = 0;
+        
+        //backward elimination, using U and D: 
+        for (unsigned int row2 = 0; row2 < size; ++row2) 
+        { 
+          unsigned int row = (size - row2) - 1;
+          result_entry = vector[row] / diagonal_entries[row]; 
+          
+          unsigned int row_start = row_indices[row]; 
+          unsigned int row_stop  = row_indices[row + 1];
+          for (unsigned int entry_index = row_start + threadIdx.x; entry_index < row_stop; ++entry_index) 
+          {
+            unsigned int col_index = column_indices[entry_index];
+            if (col_index < row)
+              vector[col_index] -= result_entry * elements[entry_index]; 
+          }
+          
+          __syncthreads();
+          
+          if (threadIdx.x == 0)
+            vector[row] = result_entry;
+        } 
       }
       
       
@@ -299,7 +439,7 @@ namespace viennacl
       * @param result The result vector
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
-      typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value>::type
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
                     viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::linalg::upper_tag)

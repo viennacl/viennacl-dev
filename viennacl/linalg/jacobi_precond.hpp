@@ -142,6 +142,8 @@ namespace viennacl
         
         void init_gpu()
         {
+          viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::init();
+          
           viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(
                                               viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(),
                                               "jacobi_precond");

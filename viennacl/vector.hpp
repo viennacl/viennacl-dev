@@ -754,7 +754,7 @@ namespace viennacl
     // Sparse matrices
     //
     template <typename SparseMatrixType>
-    typename viennacl::enable_if< viennacl::is_sparse_matrix<SparseMatrixType>::value,
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   self_type & >::type
     operator=(const viennacl::vector_expression< const SparseMatrixType,
                                                   const viennacl::vector<SCALARTYPE, ALIGNMENT>,
