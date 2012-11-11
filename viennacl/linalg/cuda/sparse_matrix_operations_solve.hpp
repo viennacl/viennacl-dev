@@ -110,7 +110,6 @@ namespace viennacl
                 const unsigned int * row_indices,
                 const unsigned int * column_indices, 
                 const T * elements,
-                const T * diagonal_entries,
                       T * vector,
                 unsigned int size) 
       {
@@ -122,6 +121,7 @@ namespace viennacl
         unsigned int current_row = 0;
         unsigned int row_at_window_start = 0;
         T current_vector_entry = vector[0];
+        T diagonal_entry = 0;
         unsigned int loop_end = (nnz / blockDim.x + 1) * blockDim.x;
         unsigned int next_row = row_indices[1];
         
@@ -146,7 +146,7 @@ namespace viennacl
             {
               if (current_row < size && i+k == next_row) //current row is finished. Write back result
               {
-                vector[current_row] = current_vector_entry / diagonal_entries[current_row];
+                vector[current_row] = current_vector_entry / diagonal_entry;
                 ++current_row;
                 if (current_row < size) //load next row's data
                 {
@@ -162,6 +162,8 @@ namespace viennacl
                 else if (col_index_buffer[k] < current_row) //use buffered data
                   current_vector_entry -= element_buffer[k] * vector[col_index_buffer[k]];
               }
+              else if (col_index_buffer[k] == current_row)
+                diagonal_entry = element_buffer[k];
 
             } // for k
             
@@ -473,7 +475,6 @@ namespace viennacl
           for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
           { 
             T result_entry = vector[row] / diagonal_entries[row];
-            vector[row] = result_entry;
             
             if ( (row_index == row) && (col_index > row) )
               vector[col_index] -= result_entry * matrix_entry; 
@@ -483,6 +484,10 @@ namespace viennacl
           
           row_at_window_start = row_at_window_end;
         }
+        
+        // final step: Divide vector by diagonal entries:
+        for (unsigned int i = threadIdx.x; i < size; i += blockDim.x)
+          vector[i] /= diagonal_entries[i];
           
       }
       
@@ -502,23 +507,23 @@ namespace viennacl
         unsigned int col_index;
         T matrix_entry;
         unsigned int nnz = row_indices[size];
-        unsigned int row_at_window_start = 0;
-        unsigned int row_at_window_end = 0;
+        unsigned int row_at_window_start = size;
+        unsigned int row_at_window_end;
         unsigned int loop_end = ( (nnz - 1) / blockDim.x + 1) * blockDim.x;
         
         for (unsigned int i2 = threadIdx.x; i2 < loop_end; i2 += blockDim.x)
         {
-          unsigned i = (loop_end - i2) - 1;
-          col_index    = (i < nnz) ? column_indices[i] : 0;
-          matrix_entry = (i < nnz) ? elements[i]       : 0;
-          row_index_lookahead[threadIdx.x] = (row_at_window_start >= blockDim - threadIdx.x) ? row_indices[row_at_window_start - (blockDim - threadIdx.x - 1)] : 0;
+          unsigned int i = (nnz - i2) - 1;
+          col_index    = (i2 < nnz) ? column_indices[i] : 0;
+          matrix_entry = (i2 < nnz) ? elements[i]       : 0;
+          row_index_lookahead[threadIdx.x] = (row_at_window_start >= threadIdx.x) ? row_indices[row_at_window_start - threadIdx.x] : 0;
 
           __syncthreads();
           
-          if (i < nnz)
+          if (i2 < nnz)
           {
             unsigned int row_index_dec = 0;
-            while (row_index_lookahead[blockDim.x - row_index_dec - 1] > i)
+            while (row_index_lookahead[row_index_dec] > i)
               ++row_index_dec;
             row_index = row_at_window_start - row_index_dec;
             row_index_buffer[threadIdx.x] = row_index;
@@ -526,7 +531,7 @@ namespace viennacl
           else
           {
             row_index = size+1;
-            row_index_buffer[threadIdx.x] = size - 1;
+            row_index_buffer[threadIdx.x] = 0;
           }
           
           __syncthreads();
@@ -535,8 +540,9 @@ namespace viennacl
           row_at_window_end   = row_index_buffer[blockDim.x - 1];
           
           //backward elimination
-          for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
+          for (unsigned int row2 = 0; row2 <= (row_at_window_start - row_at_window_end); ++row2) 
           { 
+            unsigned int row = row_at_window_start - row2;
             T result_entry = vector[row];
             
             if ( (row_index == row) && (col_index < row) )
@@ -602,23 +608,23 @@ namespace viennacl
         unsigned int col_index;
         T matrix_entry;
         unsigned int nnz = row_indices[size];
-        unsigned int row_at_window_start = 0;
-        unsigned int row_at_window_end = 0;
+        unsigned int row_at_window_start = size;
+        unsigned int row_at_window_end;
         unsigned int loop_end = ( (nnz - 1) / blockDim.x + 1) * blockDim.x;
         
         for (unsigned int i2 = threadIdx.x; i2 < loop_end; i2 += blockDim.x)
         {
-          unsigned i = (loop_end - i2) - 1;
-          col_index    = (i < nnz) ? column_indices[i] : 0;
-          matrix_entry = (i < nnz) ? elements[i]       : 0;
-          row_index_lookahead[threadIdx.x] = (row_at_window_start >= blockDim - threadIdx.x) ? row_indices[row_at_window_start - (blockDim - threadIdx.x - 1)] : 0;
+          unsigned int i = (nnz - i2) - 1;
+          col_index    = (i2 < nnz) ? column_indices[i] : 0;
+          matrix_entry = (i2 < nnz) ? elements[i]       : 0;
+          row_index_lookahead[threadIdx.x] = (row_at_window_start >= threadIdx.x) ? row_indices[row_at_window_start - threadIdx.x] : 0;
 
           __syncthreads();
           
-          if (i < nnz)
+          if (i2 < nnz)
           {
             unsigned int row_index_dec = 0;
-            while (row_index_lookahead[blockDim.x - row_index_dec - 1] > i)
+            while (row_index_lookahead[row_index_dec] > i)
               ++row_index_dec;
             row_index = row_at_window_start - row_index_dec;
             row_index_buffer[threadIdx.x] = row_index;
@@ -626,7 +632,7 @@ namespace viennacl
           else
           {
             row_index = size+1;
-            row_index_buffer[threadIdx.x] = size - 1;
+            row_index_buffer[threadIdx.x] = 0;
           }
           
           __syncthreads();
@@ -635,10 +641,10 @@ namespace viennacl
           row_at_window_end   = row_index_buffer[blockDim.x - 1];
           
           //backward elimination
-          for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
+          for (unsigned int row2 = 0; row2 <= (row_at_window_start - row_at_window_end); ++row2) 
           { 
+            unsigned int row = row_at_window_start - row2;
             T result_entry = vector[row] / diagonal_entries[row];
-            vector[row] = result_entry;
             
             if ( (row_index == row) && (col_index < row) )
               vector[col_index] -= result_entry * matrix_entry; 
@@ -648,6 +654,11 @@ namespace viennacl
           
           row_at_window_start = row_at_window_end;
         }
+          
+        
+        // final step: Divide vector by diagonal entries:
+        for (unsigned int i = threadIdx.x; i < size; i += blockDim.x)
+          vector[i] /= diagonal_entries[i];
           
       }
       

@@ -3,7 +3,7 @@
 
  
 // compute y in Ly = z for incomplete LU factorizations of a sparse matrix in compressed format
-__kernel void lu_forward(
+__kernel void unit_lu_forward(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,

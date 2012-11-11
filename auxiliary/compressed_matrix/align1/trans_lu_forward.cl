@@ -3,10 +3,11 @@
 
  
 // compute y in Ly = z for incomplete LU factorizations of a sparse matrix in compressed format
-__kernel void trans_unit_lu_forward(
+__kernel void trans_lu_forward(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,
+          __global const float * diagonal_entries,
           __global float * vector,
           unsigned int size) 
 {
@@ -51,7 +52,7 @@ __kernel void trans_unit_lu_forward(
     //forward elimination
     for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
     { 
-      float result_entry = vector[row];
+      float result_entry = vector[row] / diagonal_entries[row];
       
       if ( (row_index == row) && (col_index > row) )
         vector[col_index] -= result_entry * matrix_entry; 
@@ -61,6 +62,10 @@ __kernel void trans_unit_lu_forward(
     
     row_at_window_start = row_at_window_end;
   }
+  
+  // final step: Divide vector by diagonal entries:
+  for (unsigned int i = get_local_id(0); i < size; i += get_local_size(0))
+    vector[i] /= diagonal_entries[i];
 }
 
 

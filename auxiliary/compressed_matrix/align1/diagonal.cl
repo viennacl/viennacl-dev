@@ -1,6 +1,6 @@
 
 
-__kernel void vec_mul(
+__kernel void diagonal(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,

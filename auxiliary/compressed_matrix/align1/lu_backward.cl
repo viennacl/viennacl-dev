@@ -15,6 +15,7 @@ __kernel void lu_backward(
   unsigned int current_row = size-1;
   unsigned int row_at_window_start = size-1;
   float current_vector_entry = vector[size-1];
+  float diagonal_entry = 0;
   unsigned int loop_end = ( (nnz - 1) / get_local_size(0)) * get_local_size(0);
   unsigned int next_row = row_indices[size-1];
   
@@ -48,11 +49,11 @@ __kernel void lu_backward(
         else if (col_index_buffer[k] > current_row) //use buffered data
           current_vector_entry -= element_buffer[k] * vector[col_index_buffer[k]];
         else if (col_index_buffer[k] == current_row)
-          current_vector_entry /= element_buffer[k];
+          diagonal_entry = element_buffer[k];
         
         if (i+k == next_row) //current row is finished. Write back result
         {
-          vector[current_row] = current_vector_entry;
+          vector[current_row] = current_vector_entry / diagonal_entry;
           if (current_row > 0) //load next row's data
           {
             --current_row;

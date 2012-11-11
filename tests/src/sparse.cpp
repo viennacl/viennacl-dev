@@ -231,27 +231,26 @@ int resize_test(Epsilon const& epsilon)
         retval = EXIT_FAILURE;
     }
     
-/*    
    ublas::vector<NumericT> ublas_vec = ublas::scalar_vector<NumericT>(ublas_matrix.size1(), 3.1415);
    viennacl::vector<NumericT> vcl_vec(ublas_matrix.size1());
    
    
-  std::cout << "Testing transposed unit lower triangular solve: compressed_matrix" << std::endl;
+  std::cout << "Testing transposed unit upper triangular solve: compressed_matrix" << std::endl;
   viennacl::copy(ublas_vec, vcl_vec);
   std::cout << "matrix: " << ublas_matrix << std::endl;
   std::cout << "vector: " << ublas_vec << std::endl;
   std::cout << "ViennaCL matrix size: " << vcl_matrix.size1() << " x " << vcl_matrix.size2() << std::endl;
   
   std::cout << "ublas..." << std::endl;
-  boost::numeric::ublas::inplace_solve(trans(ublas_matrix), ublas_vec, boost::numeric::ublas::unit_lower_tag());
+  boost::numeric::ublas::inplace_solve((ublas_matrix), ublas_vec, boost::numeric::ublas::lower_tag());
   std::cout << "ViennaCL..." << std::endl;
-  viennacl::linalg::inplace_solve(trans(vcl_matrix), vcl_vec, viennacl::linalg::unit_lower_tag());
+  viennacl::linalg::inplace_solve((vcl_matrix), vcl_vec, viennacl::linalg::lower_tag());
   
   for (std::size_t i=0; i<ublas_vec.size(); ++i)
   {
     std::cout << ublas_vec[i] << " vs. " << vcl_vec[i] << std::endl;
   }
-*/
+
   return retval;
 }
 

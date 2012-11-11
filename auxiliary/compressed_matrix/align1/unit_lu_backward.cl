@@ -1,7 +1,7 @@
 
 
 // compute x in Ux = y for incomplete LU factorizations of a sparse matrix in compressed format
-__kernel void lu_backward(
+__kernel void unit_lu_backward(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,
@@ -47,8 +47,6 @@ __kernel void lu_backward(
           current_vector_entry -= element_buffer[k] * vector_buffer[k];
         else if (col_index_buffer[k] > current_row) //use buffered data
           current_vector_entry -= element_buffer[k] * vector[col_index_buffer[k]];
-        else if (col_index_buffer[k] == current_row)
-          current_vector_entry /= element_buffer[k];
         
         if (i+k == next_row) //current row is finished. Write back result
         {
