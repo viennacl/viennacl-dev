@@ -535,6 +535,13 @@ namespace viennacl
         const handle_type & handle2() const { return col_buffer_; }
         /** @brief  Returns the OpenCL handle to the matrix entry array */
         const handle_type & handle() const { return elements_; }
+
+        /** @brief  Returns the OpenCL handle to the row index array */
+        handle_type & handle1() { return row_buffer_; }
+        /** @brief  Returns the OpenCL handle to the column index array */
+        handle_type & handle2() { return col_buffer_; }
+        /** @brief  Returns the OpenCL handle to the matrix entry array */
+        handle_type & handle() { return elements_; }
         
       private:
         

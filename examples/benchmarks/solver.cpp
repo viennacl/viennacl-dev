@@ -273,6 +273,7 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "Setup time: " << exec_time << std::endl;
   
+  ublas_ilut.apply(ublas_vec1);
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     ublas_ilut.apply(ublas_vec1);
@@ -286,6 +287,7 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "Setup time: " << exec_time << std::endl;
   
+  vcl_ilut.apply(vcl_vec1);
   viennacl::ocl::get_queue().finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -307,6 +309,7 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "Setup time: " << exec_time << std::endl;
   
+  ublas_block_ilut.apply(ublas_vec1);
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     ublas_block_ilut.apply(ublas_vec1);

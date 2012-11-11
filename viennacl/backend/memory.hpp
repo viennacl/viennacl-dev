@@ -68,7 +68,7 @@ namespace viennacl
         typedef viennacl::tools::shared_ptr<char>      ram_handle_type;
         typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
         
-        mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED) {}
+        mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
         
         ram_handle_type       & ram_handle()       { return ram_handle_; }
         ram_handle_type const & ram_handle() const { return ram_handle_; }
@@ -90,8 +90,31 @@ namespace viennacl
           {
             if (active_handle_ == MEMORY_NOT_INITIALIZED)
               active_handle_ = new_id;
-            else
-              throw "Not implemented!";
+            else if (active_handle_ == MAIN_MEMORY)
+            {
+              if (new_id == MAIN_MEMORY)
+              {
+                //nothing to do
+              }
+#ifdef VIENNACL_WITH_OPENCL
+              else if (new_id == OPENCL_MEMORY)
+              {
+                opencl_handle_ = opencl::memory_create(size_in_bytes_, ram_handle_.get());
+                active_handle_ = new_id;
+              }
+#endif
+            }
+#ifdef VIENNACL_WITH_OPENCL
+            else if (active_handle_ == OPENCL_MEMORY)
+            {
+              if (new_id == MAIN_MEMORY)
+              {
+                ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
+                opencl::memory_read(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
+                active_handle_ = new_id;
+              }
+            }
+#endif
           }
         }
         
@@ -143,6 +166,9 @@ namespace viennacl
 #endif          
         }
         
+        std::size_t raw_size() const               { return size_in_bytes_; }
+        void        raw_size(std::size_t new_size) { size_in_bytes_ = new_size; }
+        
       private:
         memory_types active_handle_;
         ram_handle_type ram_handle_;
@@ -152,6 +178,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_CUDA
         cuda_handle_type        cuda_handle_;
 #endif
+        std::size_t size_in_bytes_;
     };
 
 
@@ -254,15 +281,18 @@ namespace viennacl
         {
           case MAIN_MEMORY:
             handle.ram_handle() = cpu_ram::memory_create(size_in_bytes, host_ptr);
+            handle.raw_size(size_in_bytes);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
+            handle.raw_size(size_in_bytes);
             break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
           case CUDA_MEMORY:
             handle.cuda_handle() = cuda::memory_create(size_in_bytes, host_ptr);
+            handle.raw_size(size_in_bytes);
             break;
 #endif
           default:

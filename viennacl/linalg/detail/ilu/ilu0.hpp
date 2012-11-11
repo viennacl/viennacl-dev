@@ -38,6 +38,8 @@ License:         MIT (X11), see file LICENSE in the base directory
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
 
+#include "viennacl/linalg/single_threaded/common.hpp"
+
 #include <map>
 
 namespace viennacl
@@ -63,8 +65,7 @@ namespace viennacl
         unsigned int row_start_, row_end_;
     };
 
-
-    /** @brief Implementation of a ILU-preconditioner with static pattern
+    /** @brief Implementation of a ILU-preconditioner with static pattern. Generic version for UBLAS-compatible matrix interface.
       *
       * refer to the Algorithm in Saad's book (1996 edition)
       *
@@ -127,7 +128,7 @@ namespace viennacl
           double temp = k->second / output(index_k, index_k);
           if (output(index_k, index_k) == 0.0)
           {
-              std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry is zero in row " << index_k << "!" << std::endl;
+              std::cerr << "ViennaCL: FATAL ERROR in ILU0(): Diagonal entry is zero in row " << index_k << "!" << std::endl;
 
           }
 
@@ -158,8 +159,85 @@ namespace viennacl
       } //for i
     }
 
+    
+    
+    /** @brief Implementation of a ILU-preconditioner with static pattern. Optimized version for CSR matrices.
+      *
+      * refer to the Algorithm in Saad's book (1996 edition)
+      *
+      *  @param input   The input matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns
+      *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
+      *  @param tag     An ilu0_tag in order to dispatch among several other preconditioners.
+      */
+    template<typename ScalarType>
+    void precondition(viennacl::compressed_matrix<ScalarType> & A, ilu0_tag const & tag)
+    {
+      assert( (A.handle1().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle2().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      
+      ScalarType         * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
+      unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
+      unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle2());
+      
+      // Note: Line numbers in the following refer to the algorithm in Saad's book
+      
+      for (std::size_t i=1; i<A.size1(); ++i)  // Line 1
+      {
+        unsigned int row_i_begin = row_buffer[i];
+        unsigned int row_i_end   = row_buffer[i+1];
+        for (unsigned int buf_index_k = row_i_begin; buf_index_k < row_i_end; ++buf_index_k) //Note: We do not assume that the column indices within a row are sorted
+        {
+          unsigned int k = col_buffer[buf_index_k];
+          if (k >= i)
+            continue; //Note: We do not assume that the column indices within a row are sorted
+            
+          unsigned int row_k_begin = row_buffer[k];
+          unsigned int row_k_end   = row_buffer[k+1];
+            
+          // get a_kk:
+          ScalarType a_kk = 0;
+          for (unsigned int buf_index_akk = row_k_begin; buf_index_akk < row_k_end; ++buf_index_akk)
+          {
+            if (col_buffer[buf_index_akk] == k)
+            {
+              a_kk = elements[buf_index_akk];
+              break;
+            }
+          }
+          
+          ScalarType & a_ik = elements[buf_index_k];
+          a_ik /= a_kk;                                 //Line 3
+          
+          for (unsigned int buf_index_j = row_i_begin; buf_index_j < row_i_end; ++buf_index_j) //Note: We do not assume that the column indices within a row are sorted
+          {
+            unsigned int j = col_buffer[buf_index_j];
+            if (j <= k)
+              continue;
+            
+            // determine a_kj:
+            ScalarType a_kj = 0;
+            for (unsigned int buf_index_akj = row_k_begin; buf_index_akj < row_k_end; ++buf_index_akj)
+            {
+              if (col_buffer[buf_index_akj] == j)
+              {
+                a_kk = elements[buf_index_akj];
+                break;
+              }
+            }
+            
+            //a_ij -= a_ik * a_kj
+            elements[buf_index_j] -= a_ik * a_kj;  //Line 5
+          }
+        }
+      }
+      
+      
+    }
+    
+    
 
-    /** @brief ILUT preconditioner class, can be supplied to solve()-routines
+    /** @brief ILU0 preconditioner class, can be supplied to solve()-routines
     */
     template <typename MatrixType>
     class ilu0_precond
@@ -204,46 +282,79 @@ namespace viennacl
     {
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
-        public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1())
+      public:
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
         {
-            //initialize preconditioner:
-            //std::cout << "Start GPU precond" << std::endl;
-            init(mat);          
-            //std::cout << "End GPU precond" << std::endl;
+          //initialize preconditioner:
+          //std::cout << "Start GPU precond" << std::endl;
+          init(mat);          
+          //std::cout << "End GPU precond" << std::endl;
         }
 
         void apply(vector<ScalarType> & vec) const
         {
-            copy(vec, temp_vec);
-            //lu_substitute(LU, vec);
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU);
-            viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, temp_vec);
-
-            copy(temp_vec, vec);
+          if (vec.handle().get_active_handle_id() != viennacl::backend::MAIN_MEMORY)
+          {
+            viennacl::backend::memory_types old_memory_location = vec.handle().get_active_handle_id();
+            vec.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
+            viennacl::linalg::inplace_solve(LU, vec, upper_tag());
+            vec.handle().switch_active_handle_id(old_memory_location);
+          }
+          else //apply ILU0 directly:
+          {
+            viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
+            viennacl::linalg::inplace_solve(LU, vec, upper_tag());
+          }
         }
 
-        private:
+      private:
         void init(MatrixType const & mat)
         {
-            std::vector< std::map<unsigned int, ScalarType> > temp(mat.size1());
-            //std::vector< std::map<unsigned int, ScalarType> > LU_cpu(mat.size1());
+          // get data from input matrix
+          viennacl::backend::integral_type_host_array<unsigned int> row_buffer(mat.handle1(), mat.size1() + 1);
+          viennacl::backend::integral_type_host_array<unsigned int> col_buffer(mat.handle2(), mat.nnz());
+          std::vector<ScalarType> elements(mat.nnz());
+          
+          //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
+          
+          viennacl::backend::memory_read(mat.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+          viennacl::backend::memory_read(mat.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
+          viennacl::backend::memory_read(mat.handle(), 0,  sizeof(ScalarType) * elements.size(), &(elements[0]));
+          
+          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          
+          if (row_buffer.element_size() != sizeof(unsigned int))
+          {
+            //conversion from cl_uint to host type 'unsigned int' required
+            std::vector<unsigned int> row_buffer_host(row_buffer.size());
+            for (std::size_t i=0; i<row_buffer_host.size(); ++i)
+              row_buffer_host[i] = row_buffer[i];
+            
+            std::vector<unsigned int> col_buffer_host(col_buffer.size());
+            for (std::size_t i=0; i<col_buffer_host.size(); ++i)
+              col_buffer_host[i] = col_buffer[i];
+            
+            viennacl::backend::memory_create(LU.handle1(), sizeof(unsigned int) * row_buffer_host.size(), &(row_buffer_host[0]));
+            viennacl::backend::memory_create(LU.handle2(), sizeof(unsigned int) * col_buffer_host.size(), &(col_buffer_host[0]));
+          }
+          else
+          {
+            // fill LU with nonzero pattern:
+            viennacl::backend::memory_create(LU.handle1(), viennacl::backend::integral_type_host_array<unsigned int>(LU.handle1()).element_size() * (mat.size1() + 1), row_buffer.get());
+            viennacl::backend::memory_create(LU.handle2(), viennacl::backend::integral_type_host_array<unsigned int>(LU.handle2()).element_size() * mat.nnz(),         col_buffer.get());
+          }          
+          
+          viennacl::backend::memory_create(LU.handle(), sizeof(ScalarType) * mat.nnz(), &(elements[0])); //initialize with all zeros
+          
 
-            //copy to cpu:
-            copy(mat, temp);
-
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType>       temp_adapter(temp);
-            viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU);
-            viennacl::linalg::precondition(temp_adapter, LU_adapter, tag_);
-
-            temp_vec.resize(mat.size1());
-
+          viennacl::linalg::precondition(LU, tag_);
         }
 
-        ilu0_tag const & tag_;
-        //MatrixType LU;
-        public: std::vector< std::map<unsigned int, ScalarType> > LU;
-        private: mutable std::vector<ScalarType> temp_vec;
+         ilu0_tag const & tag_;
+         viennacl::compressed_matrix<ScalarType> LU;
     };
 
   }
