@@ -64,6 +64,8 @@ namespace viennacl
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                 vec, result, static_cast<cl_uint>(mat.size1())));
       }
+      
+      // triangular solvers
 
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
@@ -76,17 +78,11 @@ namespace viennacl
                          viennacl::linalg::unit_lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_forward");
         unsigned int threads = k.local_work_size();
 
         k.global_work_size(0, k.local_work_size());
-        /*viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_int) * (threads+1)),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
-                                 viennacl::traits::opencl_handle(vec),
-                                 cl_uint(L.size1())
-                                )
-                              );*/
+
         viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
                                  viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
                                  viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
@@ -97,6 +93,114 @@ namespace viennacl
                               );
       }
       
+      /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::lower_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        
+        viennacl::vector<SCALARTYPE> diagonal(vec.size());
+        
+        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
+        
+        viennacl::ocl::enqueue(diagonal_kernel(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
+                                               viennacl::traits::opencl_handle(diagonal),
+                                               cl_uint(L.size1())
+                                              )
+                              );
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
+        unsigned int threads = k.local_work_size();
+
+        k.global_work_size(0, k.local_work_size());
+
+        viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(diagonal),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(L.size1())
+                                )
+                              );
+      }
+      
+      
+      /** @brief Inplace solution of an upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_upper_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_backward");
+        unsigned int threads = k.local_work_size();
+
+        k.global_work_size(0, k.local_work_size());
+
+        viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(U.size1())
+                                )
+                              );
+      }
+      
+      /** @brief Inplace solution of an upper triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::upper_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        
+        viennacl::vector<SCALARTYPE> diagonal(vec.size());
+        
+        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
+        
+        viennacl::ocl::enqueue(diagonal_kernel(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
+                                               viennacl::traits::opencl_handle(diagonal),
+                                               cl_uint(U.size1())
+                                              )
+                              );
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
+        unsigned int threads = k.local_work_size();
+
+        k.global_work_size(0, k.local_work_size());
+
+        viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
+                                 viennacl::traits::opencl_handle(diagonal),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(U.size1())
+                                )
+                              );
+      }
+      
+      
+      
+      
+      
+      // transposed triangular solvers
       
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
@@ -113,7 +217,7 @@ namespace viennacl
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
 
-        k.local_work_size(0, 32);
+        k.local_work_size(0, 256);
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(proxy_L.lhs().handle1().opencl_handle(), proxy_L.lhs().handle2().opencl_handle(), proxy_L.lhs().handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
@@ -123,40 +227,99 @@ namespace viennacl
       }
       
       
-      
-      
-      
-      /** @brief Inplace solution of a upper triangular compressed_matrix. Typically used for LU substitutions
+      /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
-      * @param U      The upper triangular matrix
+      * @param L    The matrix
       * @param vec    The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
-      void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
+      void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy_L,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::lower_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+
+        viennacl::vector<SCALARTYPE> diagonal(vec.size());
+        
+        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
+        
+        viennacl::ocl::enqueue(diagonal_kernel(proxy_L.lhs().handle1().opencl_handle(), proxy_L.lhs().handle2().opencl_handle(), proxy_L.lhs().handle().opencl_handle(),
+                                               viennacl::traits::opencl_handle(diagonal),
+                                               cl_uint(proxy_L.lhs().size1())
+                                              )
+                              );
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
+        k.local_work_size(0, 256);
+        k.global_work_size(0, k.local_work_size());
+        viennacl::ocl::enqueue(k(proxy_L.lhs().handle1().opencl_handle(), proxy_L.lhs().handle2().opencl_handle(), proxy_L.lhs().handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(proxy_L.lhs().size1())
+                                )
+                              );
+      }
+      
+      /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy_U,
+                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_upper_tag)
+      {
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
+
+        k.local_work_size(0, 256);
+        k.global_work_size(0, k.local_work_size());
+        viennacl::ocl::enqueue(k(proxy_U.lhs().handle1().opencl_handle(), proxy_U.lhs().handle2().opencl_handle(), proxy_U.lhs().handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(vec),
+                                 cl_uint(proxy_U.lhs().size1())
+                                )
+                              );
+      }
+      
+      
+      /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy_U,
                          vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                          viennacl::linalg::upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
-        unsigned int threads = k.local_work_size();
+
+        viennacl::vector<SCALARTYPE> diagonal(vec.size());
         
-        k.global_work_size(k.local_work_size());
-        /*viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_int) * (threads+2)),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * (threads+2)),
+        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
+        
+        viennacl::ocl::enqueue(diagonal_kernel(proxy_U.lhs().handle1().opencl_handle(), proxy_U.lhs().handle2().opencl_handle(), proxy_U.lhs().handle().opencl_handle(),
+                                               viennacl::traits::opencl_handle(diagonal),
+                                               cl_uint(proxy_U.lhs().size1())
+                                              )
+                              );
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_backward");
+        k.local_work_size(0, 256);
+        k.global_work_size(0, k.local_work_size());
+        viennacl::ocl::enqueue(k(proxy_U.lhs().handle1().opencl_handle(), proxy_U.lhs().handle2().opencl_handle(), proxy_U.lhs().handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
-                                 cl_uint(U.size1())
-                                )
-                              );*/
-        viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * threads),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * threads),
-                                 viennacl::traits::opencl_handle(vec),
-                                 cl_uint(U.size1())
+                                 cl_uint(proxy_U.lhs().size1())
                                 )
                               );
       }
+      
 
       
       //

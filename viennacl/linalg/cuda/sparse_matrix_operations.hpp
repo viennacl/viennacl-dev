@@ -27,6 +27,8 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/cuda/common.hpp"
 
+#include "viennacl/linalg/cuda/sparse_matrix_operations_solve.hpp"
+
 namespace viennacl
 {
   namespace linalg
@@ -85,72 +87,58 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
       }
 
-      
-      
+
+      //
+      // triangular solves for compressed_matrix
+      //
+
       template <typename T>
-      __global__ void csr_lu_forward_kernel(
+      __global__ void compressed_matrix_diagonal_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices, 
                 const T * elements,
-                      T * vector,
+                T * result,
                 unsigned int size) 
-      {
-        __shared__  unsigned int col_index_buffer[128];
-        __shared__  T element_buffer[128];
-        __shared__  T vector_buffer[128];
-        
-        unsigned int nnz = row_indices[size];
-        unsigned int current_row = 0;
-        unsigned int row_at_window_start = 0;
-        T current_vector_entry = vector[0];
-        unsigned int loop_end = (nnz / blockDim.x + 1) * blockDim.x;
-        unsigned int next_row = row_indices[1];
-        
-        for (unsigned int i = threadIdx.x; i < loop_end; i += blockDim.x)
+      { 
+        for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                          row  < size;
+                          row += gridDim.x * blockDim.x)
         {
-          //load into shared memory (coalesced access):
-          if (i < nnz)
+          T diag = (T)0;
+          unsigned int row_end = row_indices[row+1];
+          for (unsigned int i = row_indices[row]; i < row_end; ++i)
           {
-            element_buffer[threadIdx.x] = elements[i];
-            unsigned int tmp = column_indices[i];
-            col_index_buffer[threadIdx.x] = tmp;
-            vector_buffer[threadIdx.x] = vector[tmp];
-          }
-          
-          __syncthreads();
-          
-          //now a single thread does the remaining work in shared memory:
-          if (threadIdx.x == 0)
-          {
-            // traverse through all the loaded data:
-            for (unsigned int k=0; k<blockDim.x; ++k)
+            unsigned int col_index = column_indices[i];
+            if (col_index == row)
             {
-              if (current_row < size && i+k == next_row) //current row is finished. Write back result
-              {
-                vector[current_row] = current_vector_entry;
-                ++current_row;
-                if (current_row < size) //load next row's data
-                {
-                  next_row = row_indices[current_row+1];
-                  current_vector_entry = vector[current_row];
-                }
-              }
-              
-              if (current_row < size && col_index_buffer[k] < current_row) //substitute
-              {
-                if (col_index_buffer[k] < row_at_window_start) //use recently computed results
-                  current_vector_entry -= element_buffer[k] * vector_buffer[k];
-                else if (col_index_buffer[k] < current_row) //use buffered data
-                  current_vector_entry -= element_buffer[k] * vector[col_index_buffer[k]];
-              }
-
-            } // for k
-            
-            row_at_window_start = current_row;
-          } // if (get_local_id(0) == 0)
-          
-          __syncthreads();
-        } //for i
+              diag = elements[i];
+              break;
+            }
+          }
+          result[row] = diag;
+        }
+      }
+      
+      
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const SparseMatrixType & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::unit_lower_tag)
+      {
+        csr_unit_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                          detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(vec),
+                                          static_cast<unsigned int>(mat.size1())
+                                         );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_unit_lu_forward_kernel");
       }
 
 
@@ -166,103 +154,83 @@ namespace viennacl
                     viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::linalg::lower_tag)
       {
+        viennacl::vector<ScalarType> diagonal(vec.size());
+        
+        compressed_matrix_diagonal_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(diagonal),
+                                                      static_cast<unsigned int>(mat.size1())
+                                                     );
+        
         csr_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
                                           detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                           detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(diagonal),
                                           detail::cuda_arg<ScalarType>(vec),
                                           static_cast<unsigned int>(mat.size1())
                                          );
         VIENNACL_CUDA_LAST_ERROR_CHECK("csr_lu_forward_kernel");
       }
-
-
-      template <typename T>
-      __global__ void csr_trans_lu_forward_kernel2(
-                const unsigned int * row_indices,
-                const unsigned int * column_indices, 
-                const T * elements,
-                      T * vector,
-                unsigned int size) 
-      {
-        for (unsigned int row = 0; row < size; ++row) 
-        { 
-          T result_entry = vector[row]; 
-          
-          unsigned int row_start = row_indices[row]; 
-          unsigned int row_stop  = row_indices[row + 1];
-          for (unsigned int entry_index = row_start + threadIdx.x; entry_index < row_stop; entry_index += blockDim.x) 
-          {
-            unsigned int col_index = column_indices[entry_index];
-            if (col_index > row)
-              vector[col_index] -= result_entry * elements[entry_index]; 
-          }
-          
-          __syncthreads();
-        } 
-      }      
       
-      template <typename T>
-      __global__ void csr_trans_lu_forward_kernel(
-                const unsigned int * row_indices,
-                const unsigned int * column_indices, 
-                const T * elements,
-                      T * vector,
-                unsigned int size) 
+
+      
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const SparseMatrixType & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::unit_upper_tag)
       {
-        __shared__  unsigned int row_index_lookahead[256];
-        __shared__  unsigned int row_index_buffer[256];
-        
-        unsigned int row_index;
-        unsigned int col_index;
-        T matrix_entry;
-        unsigned int nnz = row_indices[size];
-        unsigned int row_at_window_start = 0;
-        unsigned int row_at_window_end = 0;
-        unsigned int loop_end = ( (nnz - 1) / blockDim.x + 1) * blockDim.x;
-        
-        for (unsigned int i = threadIdx.x; i < loop_end; i += blockDim.x)
-        {
-          col_index    = (i < nnz) ? column_indices[i] : 0;
-          matrix_entry = (i < nnz) ? elements[i]       : 0;
-          row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : size - 1;
+        csr_unit_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                          detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(vec),
+                                          static_cast<unsigned int>(mat.size1())
+                                         );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_unit_lu_backward_kernel");
+      }
 
-          __syncthreads();
-          
-          if (i < nnz)
-          {
-            unsigned int row_index_inc = 0;
-            while (i >= row_index_lookahead[row_index_inc + 1])
-              ++row_index_inc;
-            row_index = row_at_window_start + row_index_inc;
-            row_index_buffer[threadIdx.x] = row_index;
-          }
-          else
-          {
-            row_index = size+1;
-            row_index_buffer[threadIdx.x] = size - 1;
-          }
-          
-          __syncthreads();
-          
-          row_at_window_start = row_index_buffer[0];
-          row_at_window_end   = row_index_buffer[blockDim.x - 1];
-          
-          //forward elimination
-          for (unsigned int row = row_at_window_start; row <= row_at_window_end; ++row) 
-          { 
-            T result_entry = vector[row];
-            
-            if ( (row_index == row) && (col_index > row) )
-              vector[col_index] -= result_entry * matrix_entry; 
 
-            __syncthreads();
-          }
-          
-          row_at_window_start = row_at_window_end;
-        }
-          
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const SparseMatrixType & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::upper_tag)
+      {
+        viennacl::vector<ScalarType> diagonal(vec.size());
+        
+        compressed_matrix_diagonal_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(diagonal),
+                                                      static_cast<unsigned int>(mat.size1())
+                                                     );
+        
+        csr_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                          detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                          detail::cuda_arg<ScalarType>(diagonal),
+                                          detail::cuda_arg<ScalarType>(vec),
+                                          static_cast<unsigned int>(mat.size1())
+                                         );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_lu_backward_kernel");
       }
       
+
+      
+      // transposed      
       
       /** @brief Carries out triangular inplace solves
       *
@@ -276,14 +244,99 @@ namespace viennacl
                     viennacl::vector<ScalarType, ALIGNMENT> & vec,
                     viennacl::linalg::unit_lower_tag)
       {
-        std::cout << "size: " << mat.lhs().size1() << std::endl;
-        csr_trans_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+        csr_trans_unit_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(vec),
                                                 static_cast<unsigned int>(mat.lhs().size1())
                                                );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_unit_lu_forward_kernel");
+      }
+      
+      
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::lower_tag)
+      {
+        viennacl::vector<ScalarType> diagonal(vec.size());
+        
+        compressed_matrix_diagonal_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(diagonal),
+                                                      static_cast<unsigned int>(mat.size1())
+                                                     );
+        
+        csr_trans_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                detail::cuda_arg<ScalarType>(diagonal),
+                                                detail::cuda_arg<ScalarType>(vec),
+                                                static_cast<unsigned int>(mat.lhs().size1())
+                                               );
         VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_lu_forward_kernel");
+      }
+      
+      
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::unit_upper_tag)
+      {
+        csr_trans_unit_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(vec),
+                                                      static_cast<unsigned int>(mat.lhs().size1())
+                                                    );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_unit_lu_backward_kernel");
+      }
+      
+      
+      /** @brief Carries out triangular inplace solves
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::linalg::upper_tag)
+      {
+        viennacl::vector<ScalarType> diagonal(vec.size());
+        
+        compressed_matrix_diagonal_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(diagonal),
+                                                      static_cast<unsigned int>(mat.size1())
+                                                     );
+        
+        csr_trans_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
+                                                 detail::cuda_arg<unsigned int>(mat.lhs().handle2().cuda_handle()),
+                                                 detail::cuda_arg<ScalarType>(mat.lhs().handle().cuda_handle()),
+                                                 detail::cuda_arg<ScalarType>(diagonal),
+                                                 detail::cuda_arg<ScalarType>(vec),
+                                                 static_cast<unsigned int>(mat.lhs().size1())
+                                                );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_lu_backward_kernel");
       }
       
       

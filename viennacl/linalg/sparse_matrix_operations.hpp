@@ -120,9 +120,9 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
-        //case viennacl::backend::MAIN_MEMORY:
-        //  viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
-        //  break;
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
+          break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, tag);
@@ -156,9 +156,9 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat.lhs()).get_active_handle_id())
       {
-        //case viennacl::backend::MAIN_MEMORY:
-        //  viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
-        //  break;
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
+          break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::backend::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, tag);

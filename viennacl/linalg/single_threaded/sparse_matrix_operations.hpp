@@ -21,6 +21,8 @@
     @brief Implementations of operations using sparse matrices on the CPU using a single thread
 */
 
+#include <list>
+
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -66,6 +68,324 @@ namespace viennacl
         }
         
       }
+      
+      //
+      // Triangular solve for compressed_matrix, A \ b
+      //
+      /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_lower_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(L.handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(L.handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(L.handle2());
+        
+        std::size_t row_begin = row_buffer[1];
+        for (std::size_t row = 1; row < L.size2(); ++row)
+        {
+          ScalarType vec_entry = vec_buf[row];
+          std::size_t row_end = row_buffer[row+1];
+          for (std::size_t i = row_begin; i < row_end; ++i)
+          {
+            unsigned int col_index = col_buffer[i];
+            if (col_index < row)
+              vec_entry -= vec_buf[col_index] * elements[i];
+          }
+          vec_buf[row] = vec_entry;
+          row_begin = row_end;
+        }
+      }
+      
+      /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::lower_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(L.handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(L.handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(L.handle2());
+        
+        std::size_t row_begin = row_buffer[0];
+        for (std::size_t row = 0; row < L.size2(); ++row)
+        {
+          ScalarType vec_entry = vec_buf[row];
+          
+          // substitute and remember diagonal entry
+          std::size_t row_end = row_buffer[row+1];
+          ScalarType diagonal_entry = 0;
+          for (std::size_t i = row_begin; i < row_end; ++i)
+          {
+            unsigned int col_index = col_buffer[i];
+            if (col_index < row)
+              vec_entry -= vec_buf[col_index] * elements[i];
+            else if (col_index == row)
+              diagonal_entry = elements[i];
+          }
+          
+          vec_buf[row] = vec_entry / diagonal_entry;
+          row_begin = row_end;
+        }
+      }
+      
+      
+      /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param U    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_upper_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(U.handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(U.handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(U.handle2());
+        
+        for (std::size_t row2 = 1; row2 < U.size2(); ++row2)
+        {
+          unsigned int row = (U.size2() - row2) - 1;
+          ScalarType vec_entry = vec_buf[row];
+          std::size_t row_begin = row_buffer[row];
+          std::size_t row_end   = row_buffer[row+1];
+          for (std::size_t i = row_begin; i < row_end; ++i)
+          {
+            unsigned int col_index = col_buffer[i];
+            if (col_index > row)
+              vec_entry -= vec_buf[col_index] * elements[i];
+          }
+          vec_buf[row] = vec_entry;
+        }
+      }
+      
+      /** @brief Inplace solution of a upper triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param U    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::upper_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(U.handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(U.handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(U.handle2());
+        
+        for (std::size_t row2 = 0; row2 < U.size2(); ++row2)
+        {
+          unsigned int row = (U.size2() - row2) - 1;
+          ScalarType vec_entry = vec_buf[row];
+          
+          // substitute and remember diagonal entry
+          std::size_t row_begin = row_buffer[row];
+          std::size_t row_end   = row_buffer[row+1];
+          ScalarType diagonal_entry = 0;
+          for (std::size_t i = row_begin; i < row_end; ++i)
+          {
+            unsigned int col_index = col_buffer[i];
+            if (col_index > row)
+              vec_entry -= vec_buf[col_index] * elements[i];
+            else if (col_index == row)
+              diagonal_entry = elements[i];
+          }
+          
+          vec_buf[row] = vec_entry / diagonal_entry;
+        }
+      }
+      
+      
+      
+      
+      
+      
+      
+      //
+      // Triangular solve for compressed_matrix, A^T \ b
+      //
+      
+      /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_lower_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(proxy.lhs().handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle2());
+        
+        std::size_t col_begin = row_buffer[0];
+        for (std::size_t col = 0; col < proxy.lhs().size1(); ++col)
+        {
+          ScalarType vec_entry = vec_buf[col];
+          std::size_t col_end = row_buffer[col+1];
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index > col)
+              vec_buf[row_index] -= vec_entry * elements[i];
+          }
+          col_begin = col_end;
+        }
+      }
+
+      /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::lower_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(proxy.lhs().handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle2());
+        
+        std::size_t col_begin = row_buffer[0];
+        for (std::size_t col = 0; col < proxy.lhs().size1(); ++col)
+        {
+          std::size_t col_end = row_buffer[col+1];
+          
+          // Stage 1: Find diagonal entry:
+          ScalarType diagonal_entry = 0;
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index == col)
+            {
+              diagonal_entry = elements[i];
+              break;
+            }
+          }
+          
+          // Stage 2: Substitute
+          ScalarType vec_entry = vec_buf[col] / diagonal_entry;
+          vec_buf[col] = vec_entry;
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index > col)
+              vec_buf[row_index] -= vec_entry * elements[i];
+          }
+          col_begin = col_end;
+        }
+      }
+      
+      
+      /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::unit_upper_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(proxy.lhs().handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle2());
+        
+        for (std::size_t col2 = 0; col2 < proxy.lhs().size1(); ++col2)
+        {
+          unsigned int col = (proxy.lhs().size1() - col2) - 1;
+          
+          ScalarType vec_entry = vec_buf[col];
+          std::size_t col_begin = row_buffer[col];
+          std::size_t col_end = row_buffer[col+1];
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index < col)
+              vec_buf[row_index] -= vec_entry * elements[i];
+          }
+          
+        }
+      }
+      
+      
+      /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
+      *
+      * @param L    The matrix
+      * @param vec    The vector
+      */
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                            op_trans> const & proxy,
+                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         viennacl::linalg::upper_tag)
+      {
+        ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(proxy.lhs().handle());
+        unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle1());
+        unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(proxy.lhs().handle2());
+        
+        for (std::size_t col2 = 0; col2 < proxy.lhs().size1(); ++col2)
+        {
+          unsigned int col = (proxy.lhs().size1() - col2) - 1;
+          std::size_t col_begin = row_buffer[col];
+          std::size_t col_end = row_buffer[col+1];
+          
+          // Stage 1: Find diagonal entry:
+          ScalarType diagonal_entry = 0;
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index == col)
+            {
+              diagonal_entry = elements[i];
+              break;
+            }
+          }
+          
+          // Stage 2: Substitute
+          ScalarType vec_entry = vec_buf[col] / diagonal_entry;
+          vec_buf[col] = vec_entry;
+          for (std::size_t i = col_begin; i < col_end; ++i)
+          {
+            unsigned int row_index = col_buffer[i];
+            if (row_index < col)
+              vec_buf[row_index] -= vec_entry * elements[i];
+          }
+        }
+      }
+      
+      
+      
+      
+      
+      
 
       //
       // Coordinate Matrix

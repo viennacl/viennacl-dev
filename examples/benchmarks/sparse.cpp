@@ -35,6 +35,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
+#include "viennacl/linalg/ilu.hpp"
 
 
 #include <iostream>
@@ -153,14 +154,20 @@ int run_benchmark()
   std::cout << "GPU align1 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
-  
-  
   std::cout << "Testing triangular solves: compressed_matrix" << std::endl;
+  
+  std::cout << "ilu-substitute..." << std::endl;
+  timer.start();
+  viennacl::linalg::detail::ilu_inplace_solve(ublas_matrix, ublas_vec1, viennacl::linalg::unit_lower_tag());
+  std::cout << "Time elapsed: " << timer.get() << std::endl;
+  
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
   viennacl::copy(ublas_vec1, vcl_vec1);
   std::cout << "ublas..." << std::endl;
+  timer.start();
   boost::numeric::ublas::inplace_solve(trans(ublas_matrix), ublas_vec1, boost::numeric::ublas::unit_lower_tag());
+  std::cout << "Time elapsed: " << timer.get() << std::endl;
   std::cout << "ViennaCL..." << std::endl;
   viennacl::backend::finish();
   timer.start();
