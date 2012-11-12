@@ -89,13 +89,14 @@ namespace viennacl
             {
                 pa->destroy();
                 delete pa;
+                pa = NULL;
             }
           }
         }
 
       public:
 
-        shared_ptr() :pa(), pt() {}
+        shared_ptr() :pa(NULL), pt(NULL) {}
 
         template<class U, class Deleter>
         shared_ptr(U* pu, Deleter d) : pa(new auximpl<U, Deleter>(pu, d)), pt(pu) {}

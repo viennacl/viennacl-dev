@@ -92,29 +92,94 @@ namespace viennacl
               active_handle_ = new_id;
             else if (active_handle_ == MAIN_MEMORY)
             {
-              if (new_id == MAIN_MEMORY)
+              switch (new_id)
               {
-                //nothing to do
-              }
+                case MAIN_MEMORY: break; //nothing to do
+
 #ifdef VIENNACL_WITH_OPENCL
-              else if (new_id == OPENCL_MEMORY)
-              {
-                opencl_handle_ = opencl::memory_create(size_in_bytes_, ram_handle_.get());
-                active_handle_ = new_id;
-              }
+                case OPENCL_MEMORY:
+                  if (opencl_handle_.get())
+                    opencl::memory_write(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  else
+                    opencl_handle_ = opencl::memory_create(size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
 #endif
-            }
+#ifdef VIENNACL_WITH_CUDA
+                case CUDA_MEMORY:
+                  if (cuda_handle_.get())
+                    cuda::memory_write(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  else
+                    cuda_handle_ = cuda::memory_create(size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
+#endif
+                default:
+                  throw "invalid new memory region!";
+              }
+            }    
+                  
+                  
 #ifdef VIENNACL_WITH_OPENCL
             else if (active_handle_ == OPENCL_MEMORY)
             {
-              if (new_id == MAIN_MEMORY)
+              switch (new_id)
               {
-                ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
-                opencl::memory_read(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
-                active_handle_ = new_id;
+                case MAIN_MEMORY:
+                  if (!ram_handle_.get())
+                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
+                  opencl::memory_read(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
+                  
+                case OPENCL_MEMORY: break;
+                
+#ifdef VIENNACL_WITH_CUDA
+                case CUDA_MEMORY:
+                  
+                  if (cuda_handle_.get())
+                    cuda::memory_write(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  else
+                    cuda_handle_ = cuda::memory_create(size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
+#endif
+                default:
+                  throw "invalid new memory region!";
               }
             }
 #endif
+
+#ifdef VIENNACL_WITH_CUDA
+            else if (active_handle_ == CUDA_MEMORY)
+            {
+              switch (new_id)
+              {
+                case MAIN_MEMORY:
+                  if (!ram_handle_.get())
+                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
+                  cuda::memory_read(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
+                  
+#ifdef VIENNACL_WITH_OPENCL
+                case OPENCL_MEMORY:
+                  if (!ram_handle_.get())
+                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
+                  cuda::memory_read(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  opencl::memory_write(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
+                  active_handle_ = new_id;
+                  break;
+#endif
+                case CUDA_MEMORY: break;
+                default:
+                  throw "invalid new memory region!";
+              }
+            }
+#endif
+            else
+              throw "invalid new memory region!";
+
           }
         }
         
@@ -351,10 +416,10 @@ namespace viennacl
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-          case CUDA_MEMORY:
-            dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
-            dst_buffer.cuda_handle() = src_buffer.cuda_handle();
-            break;
+        case CUDA_MEMORY:
+          dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
+          dst_buffer.cuda_handle() = src_buffer.cuda_handle();
+          break;
 #endif
         default:
           throw "unknown memory handle!";
