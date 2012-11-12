@@ -37,6 +37,7 @@ License:         MIT (X11), see file LICENSE in the base directory
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
+#include "viennacl/compressed_matrix.hpp"
 
 #include "viennacl/linalg/single_threaded/common.hpp"
 
@@ -49,117 +50,8 @@ namespace viennacl
 
     /** @brief A tag for incomplete LU factorization with threshold (ILUT)
     */
-    class ilu0_tag
-    {
-      public:
-        /** @brief The constructor.
-          *
-          * @param row_start     The starting row for the block to which we apply ILU
-          * @param row_end       The end column of the block to which we apply ILU
-          */
-        ilu0_tag(unsigned int row_start = 0, unsigned int row_end = static_cast<unsigned int>(-1))
-            : row_start_(row_start),  
-              row_end_(row_end) {}
-              
-      public: 
-        unsigned int row_start_, row_end_;
-    };
+    class ilu0_tag {};
 
-    /** @brief Implementation of a ILU-preconditioner with static pattern. Generic version for UBLAS-compatible matrix interface.
-      *
-      * refer to the Algorithm in Saad's book (1996 edition)
-      *
-      *  @param input   The input matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns
-      *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
-      *  @param tag     An ilu0_tag in order to dispatch among several other preconditioners.
-      */
-    template<typename MatrixType, typename LUType>
-    void precondition(MatrixType const & input, LUType & output, ilu0_tag const & tag)
-    {
-      typedef std::map<unsigned int, double>          SparseVector;
-      typedef typename SparseVector::iterator         SparseVectorIterator;
-      typedef typename MatrixType::const_iterator1    InputRowIterator;  //iterate along increasing row index
-      typedef typename MatrixType::const_iterator2    InputColIterator;  //iterate along increasing column index
-      typedef typename LUType::iterator1              OutputRowIterator;  //iterate along increasing row index
-      typedef typename LUType::iterator2              OutputColIterator;  //iterate along increasing column index
-
-      output.clear();
-      assert(input.size1() == output.size1());
-      assert(input.size2() == output.size2());
-      output.resize(static_cast<unsigned int>(input.size1()), static_cast<unsigned int>(input.size2()), false);
-      SparseVector w;
-
-
-      std::map<double, unsigned int> temp_map;
-
-      // For i = 2, ... , N, DO
-      for (InputRowIterator row_iter = input.begin1(); row_iter != input.end1(); ++row_iter)
-      {
-        w.clear();
-        for (InputColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-        {
-          // Only work on the block described by (row_start:row_end, row_start:row_end)
-          if ((static_cast<unsigned int>(row_iter.index1()) >= tag.row_start_) && (static_cast<unsigned int>(row_iter.index1()) < tag.row_end_))
-          {
-              if ((static_cast<unsigned int>(col_iter.index2()) >= tag.row_start_) && (static_cast<unsigned int>(col_iter.index2()) < tag.row_end_))
-              {
-                  w[static_cast<unsigned int>(col_iter.index2())] = *col_iter;
-              }
-          } 
-          else 
-          {
-              // Put identity on the excluded diagonal
-              w[static_cast<unsigned int>(row_iter.index1())] = 1.; 
-          }
-        }
-
-        //line 3:
-        OutputRowIterator row_iter_out = output.begin1();
-        for (SparseVectorIterator k = w.begin(); k != w.end(); ++k)
-        {
-          unsigned int index_k = k->first;
-          // Enforce i = 2 and 
-          if (index_k >= static_cast<unsigned int>(row_iter.index1()))
-              break;
-
-          detail::ilu_inc_row_iterator_to_row_index(row_iter_out, index_k);
-
-          //line 3: temp = a_ik = a_ik / a_kk
-          double temp = k->second / output(index_k, index_k);
-          if (output(index_k, index_k) == 0.0)
-          {
-              std::cerr << "ViennaCL: FATAL ERROR in ILU0(): Diagonal entry is zero in row " << index_k << "!" << std::endl;
-
-          }
-
-          for (OutputColIterator j = row_iter_out.begin(); j != row_iter_out.end(); ++j)
-          {
-              // Only fill if it a nonzero element of the input matrix
-              if (input(row_iter.index1(), j.index2())) {
-                  // Follow standard ILU algorithm (i.e., for j = k+1, ... , N)
-                  if (j.index2() > index_k) 
-                  {
-                      // set a_ij
-                      w[j.index2()] -= temp * *j;
-                  }
-              }
-          }
-          // Set a_ik
-          w[index_k] = temp;
-          
-        } //for k
-
-        // Write rows back to LU factor output
-        unsigned int k_count = 0; 
-        for (SparseVectorIterator k = w.begin(); k != w.end(); ++k )
-        {
-          output(static_cast<unsigned int>(row_iter.index1()), k->first) = static_cast<typename LUType::value_type>(w[k->first]);
-          k_count ++; 
-        }
-      } //for i
-    }
-
-    
     
     /** @brief Implementation of a ILU-preconditioner with static pattern. Optimized version for CSR matrices.
       *
@@ -232,10 +124,8 @@ namespace viennacl
         }
       }
       
-      
     }
-    
-    
+
 
     /** @brief ILU0 preconditioner class, can be supplied to solve()-routines
     */
@@ -245,7 +135,7 @@ namespace viennacl
         typedef typename MatrixType::value_type      ScalarType;
 
       public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1())
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU()
         {
             //initialize preconditioner:
             //std::cout << "Start CPU precond" << std::endl;
@@ -254,26 +144,34 @@ namespace viennacl
         }
 
         template <typename VectorType>
-            void apply(VectorType & vec) const
-            {
-                viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU);
-                viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec);
-            }
+        void apply(VectorType & vec) const
+        {
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU.handle());
+          
+          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), unit_lower_tag());
+          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), upper_tag());
+        }
 
       private:
         void init(MatrixType const & mat)
         {
-            viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU);
-            viennacl::linalg::precondition(mat, LU_adapter, tag_);
+          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          
+          viennacl::copy(mat, LU);
+          viennacl::linalg::precondition(LU, tag_);
         }
 
         ilu0_tag const & tag_;
         
-        public: std::vector< std::map<unsigned int, ScalarType> > LU;
+        viennacl::compressed_matrix<ScalarType> LU;
     };
 
 
-    /** @brief ILUT preconditioner class, can be supplied to solve()-routines.
+    /** @brief ILU0 preconditioner class, can be supplied to solve()-routines.
       *
       *  Specialization for compressed_matrix
       */
@@ -311,23 +209,23 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          // get data from input matrix
-          viennacl::backend::integral_type_host_array<unsigned int> row_buffer(mat.handle1(), mat.size1() + 1);
-          viennacl::backend::integral_type_host_array<unsigned int> col_buffer(mat.handle2(), mat.nnz());
-          std::vector<ScalarType> elements(mat.nnz());
-          
           //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
-          
-          viennacl::backend::memory_read(mat.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
-          viennacl::backend::memory_read(mat.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
-          viennacl::backend::memory_read(mat.handle(), 0,  sizeof(ScalarType) * elements.size(), &(elements[0]));
+          viennacl::backend::integral_type_host_array<unsigned int> dummy(mat.handle1());
           
           LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           
-          if (row_buffer.element_size() != sizeof(unsigned int))
+          if (dummy.element_size() != sizeof(unsigned int))  //Additional effort required: cl_uint on device is different from 'unsigned int' on host
           {
+            // get data from input matrix
+            viennacl::backend::integral_type_host_array<unsigned int> row_buffer(mat.handle1(), mat.size1() + 1);
+            viennacl::backend::integral_type_host_array<unsigned int> col_buffer(mat.handle2(), mat.nnz());
+            
+            viennacl::backend::memory_read(mat.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+            viennacl::backend::memory_read(mat.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
+            
+            
             //conversion from cl_uint to host type 'unsigned int' required
             std::vector<unsigned int> row_buffer_host(row_buffer.size());
             for (std::size_t i=0; i<row_buffer_host.size(); ++i)
@@ -340,21 +238,24 @@ namespace viennacl
             viennacl::backend::memory_create(LU.handle1(), sizeof(unsigned int) * row_buffer_host.size(), &(row_buffer_host[0]));
             viennacl::backend::memory_create(LU.handle2(), sizeof(unsigned int) * col_buffer_host.size(), &(col_buffer_host[0]));
           }
-          else
+          else //direct copy to new data structure
           {
-            // fill LU with nonzero pattern:
-            viennacl::backend::memory_create(LU.handle1(), viennacl::backend::integral_type_host_array<unsigned int>(LU.handle1()).element_size() * (mat.size1() + 1), row_buffer.get());
-            viennacl::backend::memory_create(LU.handle2(), viennacl::backend::integral_type_host_array<unsigned int>(LU.handle2()).element_size() * mat.nnz(),         col_buffer.get());
+            viennacl::backend::memory_create(LU.handle1(), sizeof(unsigned int) * (mat.size1() + 1));
+            viennacl::backend::memory_create(LU.handle2(), sizeof(unsigned int) * mat.nnz());
+            
+            viennacl::backend::memory_read(mat.handle1(), 0, LU.handle1().raw_size(), LU.handle1().ram_handle().get());
+            viennacl::backend::memory_read(mat.handle2(), 0, LU.handle2().raw_size(), LU.handle2().ram_handle().get());
           }          
           
-          viennacl::backend::memory_create(LU.handle(), sizeof(ScalarType) * mat.nnz(), &(elements[0])); //initialize with all zeros
+          viennacl::backend::memory_create(LU.handle(), sizeof(ScalarType) * mat.nnz());
+          viennacl::backend::memory_read(mat.handle(), 0,  sizeof(ScalarType) * mat.nnz(), LU.handle().ram_handle().get());
           
 
           viennacl::linalg::precondition(LU, tag_);
         }
 
-         ilu0_tag const & tag_;
-         viennacl::compressed_matrix<ScalarType> LU;
+        ilu0_tag const & tag_;
+        viennacl::compressed_matrix<ScalarType> LU;
     };
 
   }

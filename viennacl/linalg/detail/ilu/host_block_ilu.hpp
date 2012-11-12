@@ -123,7 +123,6 @@ namespace viennacl
     class block_ilu_precond
     {
       typedef typename MatrixType::value_type      ScalarType;
-      typedef std::vector< std::map<unsigned int, ScalarType> >   InternalMatrixType;
       
       public:
         typedef std::vector<std::pair<std::size_t, std::size_t> >    index_vector_type;   //the pair refers to index range [a, b) of each block
@@ -168,13 +167,21 @@ namespace viennacl
         {
           for (std::size_t i=0; i<block_indices_.size(); ++i)
           {
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU_blocks[i],
+            /*viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU_blocks[i],
                                                                                       LU_blocks[i].size(),
                                                                                       LU_blocks[i].size());
+            viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec_range);*/
             detail::ilu_vector_range<VectorType>  vec_range(vec,
                                                             block_indices_[i].first,
-                                                            LU_blocks[i].size());
-            viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec_range);
+                                                            LU_blocks[i].size2());
+            
+            unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
+            unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());
+            ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU_blocks[i].handle());
+            
+            viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), unit_lower_tag());
+            viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), upper_tag());
+            
           }
         }
         
@@ -186,22 +193,45 @@ namespace viennacl
           {
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
-            InternalMatrixType mat_block(block_size);
+            std::vector< std::map<unsigned int, ScalarType> > mat_block(block_size);
             detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
             
             
             // Step 2: Precondition blocks:
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType>  mat_block_adapter(mat_block, block_size, block_size);
-            viennacl::tools::sparse_matrix_adapter<ScalarType>        LU_adapter(LU_blocks[i], block_size, block_size);
-            viennacl::linalg::precondition(mat_block_adapter, LU_adapter, tag_);
+            preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
           }
           
         }
+        
+        void preconditioner_dispatch(std::vector< std::map<unsigned int, ScalarType> > const & mat_block,
+                                     viennacl::compressed_matrix<ScalarType> & LU,
+                                     viennacl::linalg::ilu0_tag)
+        {
+          viennacl::copy(mat_block, LU);
+          viennacl::linalg::precondition(LU, tag_);
+        }
 
+        void preconditioner_dispatch(std::vector< std::map<unsigned int, ScalarType> > const & mat_block,
+                                     viennacl::compressed_matrix<ScalarType> & LU,
+                                     viennacl::linalg::ilut_tag)
+        {
+          viennacl::tools::const_sparse_matrix_adapter<ScalarType> adapted_mat_block(mat_block,
+                                                                                     mat_block.size(),
+                                                                                     mat_block.size());
+          
+          std::vector< std::map<unsigned int, ScalarType> > temp(mat_block.size());
+          viennacl::tools::sparse_matrix_adapter<ScalarType> adapted_temp(temp,
+                                                                          temp.size(),
+                                                                          temp.size());
+          
+          viennacl::linalg::precondition(adapted_mat_block, adapted_temp, tag_);
+          
+          viennacl::copy(temp, LU);
+        }
         
         ILUTag const & tag_;
         index_vector_type block_indices_;
-        std::vector< InternalMatrixType > LU_blocks;
+        std::vector< viennacl::compressed_matrix<ScalarType> > LU_blocks;
     };
 
 

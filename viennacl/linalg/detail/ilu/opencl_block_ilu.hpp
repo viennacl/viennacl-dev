@@ -166,7 +166,7 @@ namespace viennacl
             // Step 2: Precondition blocks:
             viennacl::tools::const_sparse_matrix_adapter<ScalarType>  mat_block_adapter(mat_block, block_size, block_size);
             viennacl::tools::sparse_matrix_adapter<ScalarType>        LU_adapter(LU_blocks[i], block_size, block_size);
-            viennacl::linalg::precondition(mat_block_adapter, LU_adapter, tag_);
+            preconditioner_dispatch(mat_block_adapter, LU_adapter, tag_);
           }
           
           /*
@@ -233,6 +233,23 @@ namespace viennacl
           viennacl::copy(L_transposed, gpu_L_trans);
           viennacl::copy(U_transposed, gpu_U_trans);
           viennacl::copy(entries_D, gpu_D);
+        }
+        
+        void preconditioner_dispatch(viennacl::tools::const_sparse_matrix_adapter<ScalarType> const & mat_block,
+                                     viennacl::tools::sparse_matrix_adapter<ScalarType> & LU,
+                                     viennacl::linalg::ilu0_tag)
+        {
+          viennacl::compressed_matrix<ScalarType> temp(LU.size1(), LU.size2());
+          viennacl::copy(mat_block, temp);
+          viennacl::linalg::precondition(temp, tag_);
+          viennacl::copy(temp, LU);
+        }
+
+        void preconditioner_dispatch(viennacl::tools::const_sparse_matrix_adapter<ScalarType> const & mat_block,
+                                     viennacl::tools::sparse_matrix_adapter<ScalarType> & LU,
+                                     viennacl::linalg::ilut_tag)
+        {
+          viennacl::linalg::precondition(mat_block, LU, tag_);
         }
         
         

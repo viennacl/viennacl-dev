@@ -28,6 +28,9 @@
 #include "viennacl/tools/tools.hpp"
 
 #include "viennacl/linalg/detail/ilu/common.hpp"
+#include "viennacl/compressed_matrix.hpp"
+
+#include "viennacl/linalg/single_threaded/common.hpp"
 
 #include <map>
 
@@ -194,7 +197,7 @@ namespace viennacl
       } //for i
     }
 
-
+    
     /** @brief ILUT preconditioner class, can be supplied to solve()-routines
     */
     template <typename MatrixType>
@@ -203,7 +206,7 @@ namespace viennacl
       typedef typename MatrixType::value_type      ScalarType;
       
       public:
-        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1())
+        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
         {
           //initialize preconditioner:
           //std::cout << "Start CPU precond" << std::endl;
@@ -214,19 +217,33 @@ namespace viennacl
         template <typename VectorType>
         void apply(VectorType & vec) const
         {
-          viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec);
+          //viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU, LU.size(), LU.size());
+          //viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec);
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU.handle());
+          
+          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), unit_lower_tag());
+          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), upper_tag());
         }
         
       private:
         void init(MatrixType const & mat)
         {
-          viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::precondition(mat, LU_adapter, tag_);
+          std::vector< std::map<unsigned int, ScalarType> > LU_temp(mat.size1());
+          viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_temp_adapter(LU_temp, LU_temp.size(), LU_temp.size());
+          
+          viennacl::linalg::precondition(mat, LU_temp_adapter, tag_);
+          
+          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          
+          viennacl::copy(LU_temp, LU);
         }
         
         ilut_tag const & tag_;
-        std::vector< std::map<unsigned int, ScalarType> > LU;
+        viennacl::compressed_matrix<ScalarType> LU;
     };
 
     
@@ -240,7 +257,7 @@ namespace viennacl
       typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
       
       public:
-        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1())
+        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
@@ -250,37 +267,44 @@ namespace viennacl
         
         void apply(vector<ScalarType> & vec) const
         {
-          copy(vec, temp_vec);
-          //lu_substitute(LU, vec);
-          viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, temp_vec);
-          
-          copy(temp_vec, vec);
+          if (vec.handle().get_active_handle_id() != viennacl::backend::MAIN_MEMORY)
+          {
+            viennacl::backend::memory_types old_memory_location = vec.handle().get_active_handle_id();
+            vec.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
+            viennacl::linalg::inplace_solve(LU, vec, upper_tag());
+            vec.handle().switch_active_handle_id(old_memory_location);
+          }
+          else //apply ILU0 directly:
+          {
+            viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
+            viennacl::linalg::inplace_solve(LU, vec, upper_tag());
+          }
         }
         
       private:
         void init(MatrixType const & mat)
         {
-          std::vector< std::map<unsigned int, ScalarType> > temp(mat.size1());
-          //std::vector< std::map<unsigned int, ScalarType> > LU_cpu(mat.size1());
+          std::vector< std::map<unsigned int, ScalarType> > mat_temp(mat.size1());
+          std::vector< std::map<unsigned int, ScalarType> > LU_temp(mat.size1());
 
           //copy to cpu:
-          copy(mat, temp);
+          copy(mat, mat_temp);
           
-          viennacl::tools::const_sparse_matrix_adapter<ScalarType>       temp_adapter(temp, temp.size(), temp.size());
-          viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_adapter(LU, LU.size(), LU.size());
-          viennacl::linalg::precondition(temp_adapter, LU_adapter, tag_);
+          viennacl::tools::const_sparse_matrix_adapter<ScalarType> mat_temp_adapter(mat_temp, mat_temp.size(), mat_temp.size());
+          viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_temp_adapter(LU_temp, LU_temp.size(), LU_temp.size());
+          viennacl::linalg::precondition(mat_temp_adapter, LU_temp_adapter, tag_);
           
-          temp_vec.resize(mat.size1());
+          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           
-          //copy resulting preconditioner back to gpu:
-          //copy(LU_cpu, LU);
+          viennacl::copy(LU_temp, LU);
+          
         }
         
         ilut_tag const & tag_;
-        //MatrixType LU;
-        std::vector< std::map<unsigned int, ScalarType> > LU;
-        mutable std::vector<ScalarType> temp_vec;
+        viennacl::compressed_matrix<ScalarType> LU;
     };
 
   }

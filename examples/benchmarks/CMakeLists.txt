@@ -4,7 +4,7 @@ endforeach()
 
 if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
-    foreach(bench sparse)
+    foreach(bench sparse solver)
       add_executable(${bench}bench-cpu ${bench}.cpp)
     endforeach()
 endif (ENABLE_UBLAS)
