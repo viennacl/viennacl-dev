@@ -76,9 +76,7 @@ namespace viennacl
         }
         
         if (num_entries == 0) //we copy an empty matrix
-        {
           num_entries = 1;
-        }
         
         //set up matrix entries:
         
@@ -128,9 +126,9 @@ namespace viennacl
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix,
-                     compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
+                             compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
-      copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(cpu_matrix, cpu_matrix.size(), cpu_matrix.size()), gpu_matrix);
+      viennacl::copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(cpu_matrix, cpu_matrix.size(), cpu_matrix.size()), gpu_matrix);
     }
     
     #ifdef VIENNACL_WITH_EIGEN

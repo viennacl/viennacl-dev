@@ -198,6 +198,148 @@ namespace viennacl
     }
 
     
+    
+    
+    /** @brief Implementation of a ILU-preconditioner with threshold. Optimized implementation for compressed_matrix.
+    *
+    * refer to Algorithm 10.6 by Saad's book (1996 edition)
+    *
+    *  @param input   The input matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns
+    *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
+    *  @param tag     An ilut_tag in order to dispatch among several other preconditioners.
+    */
+    template<typename ScalarType, typename SizeType>
+    void precondition(viennacl::compressed_matrix<ScalarType> const & A,
+                      std::vector< std::map<SizeType, ScalarType> > & output,
+                      ilut_tag const & tag)
+    {
+      typedef std::map<SizeType, ScalarType>          SparseVector;
+      typedef typename SparseVector::iterator         SparseVectorIterator;
+      typedef typename std::map<SizeType, ScalarType>::const_iterator   OutputRowConstIterator;
+      typedef std::map<ScalarType, std::pair<SizeType, ScalarType> >  TemporarySortMap;
+
+      assert( (A.handle1().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle2().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert(input.size1() == input.size2() && bool("Input matrix must be square") );
+      assert(input.size1() == output.size() && bool("Output matrix size mismatch") );
+      
+      ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
+      unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
+      unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle2());
+      
+      SparseVector w;
+      TemporarySortMap temp_map;
+      
+      for (SizeType i=0; i<A.size1(); ++i)  // Line 1
+      {
+    /*    if (i%10 == 0)
+      std::cout << i << std::endl;*/
+    
+        //line 2: set up w
+        SizeType row_i_begin = static_cast<SizeType>(row_buffer[i]);
+        SizeType row_i_end   = static_cast<SizeType>(row_buffer[i+1]);
+        ScalarType row_norm = 0;
+        for (SizeType buf_index_i = row_i_begin; buf_index_i < row_i_end; ++buf_index_i) //Note: We do not assume that the column indices within a row are sorted
+        {
+          ScalarType entry = elements[buf_index_i];
+          w[col_buffer[buf_index_i]] = entry;
+          row_norm += entry * entry;
+        }
+        row_norm = std::sqrt(row_norm);
+        ScalarType tau_i = tag.get_drop_tolerance() * row_norm;
+
+        //line 3:
+        for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
+        {
+          SizeType k = w_k->first;
+          if (k >= i)
+            break;
+          
+          //line 4:
+          ScalarType a_kk = output[k][k];
+          if (a_kk == 0)
+          {
+            std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry is zero in row " << k 
+                      << " while processing line " << i << "!" << std::endl;
+            throw "ILUT zero diagonal!";
+          }
+          
+          ScalarType w_k_entry = w_k->second / a_kk;
+          w_k->second = w_k_entry;
+          
+          //line 5: (dropping rule to w_k)
+          if ( std::fabs(w_k_entry) > tau_i)
+          {
+            //line 7:
+            for (OutputRowConstIterator u_k = output[k].begin(); u_k != output[k].end(); ++u_k)
+            {
+              if (u_k->first > k)
+                w[u_k->first] -= w_k_entry * u_k->second;
+            }
+          }
+          //else
+          //  w.erase(k);
+          
+        } //for w_k
+        
+        //Line 10: Apply a dropping rule to w
+        //Sort entries which are kept
+        temp_map.clear();
+        for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
+        {
+          SizeType k = w_k->first;
+          ScalarType w_k_entry = w_k->second;
+          
+          if ( (std::fabs(w_k_entry) > tau_i) || (k == i) )//do not drop diagonal element!
+          { 
+            ScalarType temp = std::fabs(w_k_entry);
+            
+            if (temp == 0) // this can only happen for diagonal entry
+              throw "Triangular factor in ILUT singular!"; 
+            
+            while (temp_map.find(temp) != temp_map.end())
+              temp *= static_cast<ScalarType>(1.000001); //make entry slightly larger to maintain uniqueness of the entry
+            temp_map[temp] = std::make_pair(k, w_k_entry);
+          }
+        }
+
+        //Lines 10-12: write the largest p values to L and U
+        SizeType written_L = 0;
+        SizeType written_U = 0;
+        for (typename TemporarySortMap::reverse_iterator iter = temp_map.rbegin(); iter != temp_map.rend(); ++iter)
+        {
+          SizeType j = (iter->second).first;
+          ScalarType w_j_entry = (iter->second).second;
+          
+          if (j < i) // Line 11: entry for L
+          {
+            if (written_L < tag.get_entries_per_row())
+            {
+              output[i][j] = w_j_entry;
+              ++written_L;
+            }
+          }
+          else if (j == i)  // Diagonal entry is always kept
+          {
+            output[i][j] = w_j_entry;
+          }
+          else //Line 12: entry for U
+          {
+            if (written_U < tag.get_entries_per_row())
+            {
+              output[i][j] = w_j_entry;
+              ++written_U;
+            }
+          }
+        }
+        
+        w.clear(); //Line 13
+        
+      } //for i
+    }
+    
+    
     /** @brief ILUT preconditioner class, can be supplied to solve()-routines
     */
     template <typename MatrixType>
@@ -240,6 +382,7 @@ namespace viennacl
           LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           
           viennacl::copy(LU_temp, LU);
+          std::cout << "ILUT nnz: " << LU.nnz() << std::endl;
         }
         
         ilut_tag const & tag_;
@@ -275,7 +418,7 @@ namespace viennacl
             viennacl::linalg::inplace_solve(LU, vec, upper_tag());
             vec.handle().switch_active_handle_id(old_memory_location);
           }
-          else //apply ILU0 directly:
+          else //apply ILUT directly:
           {
             viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
             viennacl::linalg::inplace_solve(LU, vec, upper_tag());
@@ -285,22 +428,24 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          std::vector< std::map<unsigned int, ScalarType> > mat_temp(mat.size1());
-          std::vector< std::map<unsigned int, ScalarType> > LU_temp(mat.size1());
+          if (mat.handle().get_active_handle_id() == viennacl::backend::MAIN_MEMORY)
+          {
+            std::vector< std::map<unsigned int, ScalarType> > LU_temp(mat.size1());
 
-          //copy to cpu:
-          copy(mat, mat_temp);
-          
-          viennacl::tools::const_sparse_matrix_adapter<ScalarType> mat_temp_adapter(mat_temp, mat_temp.size(), mat_temp.size());
-          viennacl::tools::sparse_matrix_adapter<ScalarType>       LU_temp_adapter(LU_temp, LU_temp.size(), LU_temp.size());
-          viennacl::linalg::precondition(mat_temp_adapter, LU_temp_adapter, tag_);
-          
-          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          
-          viennacl::copy(LU_temp, LU);
-          
+            viennacl::linalg::precondition(mat, LU_temp, tag_);
+            
+            LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            
+            viennacl::copy(LU_temp, LU);
+            
+            std::cout << "ILUT nnz: " << LU.nnz() << std::endl;
+          }
+          else
+          {
+            throw "not implemented!";
+          }
         }
         
         ilut_tag const & tag_;

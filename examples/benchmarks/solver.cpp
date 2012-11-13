@@ -30,6 +30,7 @@
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
 #include "viennacl/linalg/ilu.hpp"
+#include "viennacl/linalg/ichol.hpp"
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/linalg/gmres.hpp"
@@ -194,6 +195,38 @@ int run_benchmark()
   viennacl::linalg::row_scaling< ublas::compressed_matrix<ScalarType> >    ublas_row_scaling(ublas_matrix, viennacl::linalg::row_scaling_tag(1));
   viennacl::linalg::row_scaling< viennacl::compressed_matrix<ScalarType> > vcl_row_scaling(vcl_compressed_matrix, viennacl::linalg::row_scaling_tag(1));
 #endif
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////  Incomplete Cholesky preconditioner   //////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  std::cout << "------- ICHOL0 on CPU (ublas) ----------" << std::endl;
+
+  timer.start();
+  viennacl::linalg::ichol0_precond< ublas::compressed_matrix<ScalarType> >    ublas_ichol0(ublas_matrix, viennacl::linalg::ichol0_tag());
+  exec_time = timer.get();
+  std::cout << "Setup time: " << exec_time << std::endl;
+  
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    ublas_ichol0.apply(ublas_vec1);
+  exec_time = timer.get();
+  std::cout << "ublas time: " << exec_time << std::endl;
+  
+  std::cout << "------- ICHOL0 with ViennaCL ----------" << std::endl;
+
+  timer.start();
+  viennacl::linalg::ichol0_precond< viennacl::compressed_matrix<ScalarType> > vcl_ichol0(vcl_compressed_matrix, viennacl::linalg::ichol0_tag());
+  exec_time = timer.get();
+  std::cout << "Setup time: " << exec_time << std::endl;
+  
+  viennacl::backend::finish();
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    vcl_ichol0.apply(vcl_vec1);
+  viennacl::backend::finish();
+  exec_time = timer.get();
+  std::cout << "ViennaCL time: " << exec_time << std::endl;
+  
   
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////           ILU preconditioner         //////////////////
