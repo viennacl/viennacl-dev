@@ -44,6 +44,7 @@
 #include "boost/numeric/ublas/vector_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
+using namespace boost::numeric;
 
 template <typename MatrixType, typename VCLMatrixType>
 bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A, double epsilon)
@@ -51,6 +52,7 @@ bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A,
   typedef typename MatrixType::value_type   value_type;
   
   boost::numeric::ublas::matrix<value_type> vcl_A_cpu(vcl_A.size1(), vcl_A.size2());
+  viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
   viennacl::copy(vcl_A, vcl_A_cpu);
   
   for (std::size_t i=0; i<ublas_A.size1(); ++i)
@@ -91,6 +93,32 @@ int run_test(double epsilon,
   cpu_value_type beta = 2.7182;
   viennacl::scalar<cpu_value_type>   gpu_beta = beta;
   
+
+  //
+  // Initializer:
+  //
+  std::cout << "Checking for zero_matrix initializer..." << std::endl;
+  ublas_A = ublas::zero_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2());
+  vcl_A = viennacl::zero_matrix<cpu_value_type>(vcl_A.size1(), vcl_A.size2());
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+  
+  std::cout << "Checking for scalar_matrix initializer..." << std::endl;
+  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), alpha);
+  vcl_A = viennacl::scalar_matrix<cpu_value_type>(vcl_A.size1(), vcl_A.size2(), alpha);
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+  
+  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), gpu_beta);
+  vcl_A = viennacl::scalar_matrix<cpu_value_type>(vcl_A.size1(), vcl_A.size2(), gpu_beta);
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  /*std::cout << "Checking for identity initializer..." << std::endl;
+  ublas_A = ublas::identity_matrix<cpu_value_type>(ublas_A.size1());
+  vcl_A = viennacl::identity_matrix<cpu_value_type>(vcl_A.size1());
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;*/
   
   
   std::cout << std::endl;
@@ -98,7 +126,8 @@ int run_test(double epsilon,
   //std::cout << "////////// Test: Assignments //////////" << std::endl;
   //std::cout << "//" << std::endl;
 
-  std::cout << "Testing matrix assigned to range... ";
+  std::cout << "Testing matrix assignment... ";
+  //std::cout << ublas_B(0,0) << " vs. " << vcl_B(0,0) << std::endl;
   ublas_A = ublas_B;
   vcl_A = vcl_B;
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
@@ -278,10 +307,10 @@ int run_test(double epsilon)
     
     typedef viennacl::matrix<ScalarType, T>    VCLMatrixType;
     
-    //std::size_t dim_rows = 151;
-    //std::size_t dim_cols = 37;
-    std::size_t dim_rows = 5;
-    std::size_t dim_cols = 3;
+    std::size_t dim_rows = 131;
+    std::size_t dim_cols = 33;
+    //std::size_t dim_rows = 5;
+    //std::size_t dim_cols = 3;
     
     //setup ublas objects:
     MatrixType ublas_A(dim_rows, dim_cols);
@@ -401,6 +430,9 @@ int run_test(double epsilon)
     
     /////// A=matrix:
     std::cout << "Testing A=matrix, B=matrix, C=matrix ..." << std::endl;
+    viennacl::copy(ublas_A, vcl_A);
+    viennacl::copy(ublas_B, vcl_B);
+    viennacl::copy(ublas_C, vcl_C);
     if (run_test(epsilon,
                  ublas_A, ublas_B, ublas_C,
                  vcl_A, vcl_B, vcl_C) != EXIT_SUCCESS)

@@ -122,6 +122,36 @@ namespace viennacl
         return *this;
       }
 
+      /** @brief Assigns the supplied identity matrix to the matrix. */
+      self_type & operator = (identity_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(1,0));          //set everything to zero
+        viennacl::linalg::matrix_diagonal_assign(*this, m(0,0)); //set unit diagonal
+        return *this;
+      }
+      
+      /** @brief Assigns the supplied zero matrix to the matrix. */
+      self_type & operator = (zero_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(0,0));
+        return *this;
+      }
+
+      /** @brief Assigns the supplied scalar vector to the matrix. */
+      self_type & operator = (scalar_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(0,0));
+        return *this;
+      }
 
 
       ////////// operator*= //////////////////////////
@@ -515,7 +545,37 @@ namespace viennacl
         return *this;
       }
 
+      /** @brief Assigns the supplied identity matrix to the matrix. */
+      self_type & operator = (identity_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(1,0));          //set everything to zero
+        viennacl::linalg::matrix_diagonal_assign(*this, m(0,0)); //set unit diagonal
+        return *this;
+      }
       
+      /** @brief Assigns the supplied zero matrix to the matrix. */
+      self_type & operator = (zero_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(0,0));
+        return *this;
+      }
+
+      /** @brief Assigns the supplied scalar vector to the matrix. */
+      self_type & operator = (scalar_matrix<cpu_value_type> const & m)
+      {
+        assert( (m.size1() == size1()) && bool("Size mismatch!") );
+        assert( (m.size2() == size2()) && bool("Size mismatch!") );
+
+        viennacl::linalg::matrix_assign(*this, m(0,0));
+        return *this;
+      }
+
       
       ////////// operator*= //////////////////////////
       

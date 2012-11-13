@@ -63,7 +63,8 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
-   copy(v2.begin(), v2.end(), v2_cpu.begin());
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
+   viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
@@ -80,10 +81,8 @@ template <typename ScalarType, typename F, unsigned int ALIGNMENT>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F, ALIGNMENT> & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
-#ifdef VIENNACL_HAVE_OPENCL   
-   viennacl::ocl::get_queue().finish();   //workaround for a bug in AMD APP SDK 2.7
-#endif
-   copy(mat2, mat2_cpu);
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
+   viennacl::copy(mat2, mat2_cpu);
    ScalarType ret = 0;
    ScalarType act = 0;
 

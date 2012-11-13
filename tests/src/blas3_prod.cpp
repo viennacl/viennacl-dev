@@ -66,6 +66,7 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (std::size_t i=0;i<v1.size(); ++i)
@@ -84,6 +85,7 @@ template <typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
    double ret = 0;
    double act = 0;

@@ -158,6 +158,60 @@ namespace viennacl
     }
 
 
+    template <typename M1, typename ScalarType>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_cpu_scalar<ScalarType>::value
+                                >::type    
+    matrix_assign(M1 & mat, ScalarType s)
+    {
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::matrix_assign(mat, s);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_assign(mat, s);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_assign(mat, s);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
+    
+    template <typename M1, typename ScalarType>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_cpu_scalar<ScalarType>::value
+                                >::type    
+    matrix_diagonal_assign(M1 & mat, ScalarType s)
+    {
+      switch (viennacl::traits::handle(mat).get_active_handle_id())
+      {
+        case viennacl::backend::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::matrix_diagonal_assign(mat, s);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::backend::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_diagonal_assign(mat, s);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::backend::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_diagonal_assign(mat, s);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+    
+    
     //
     /////////////////////////   matrix-vector products /////////////////////////////////
     //

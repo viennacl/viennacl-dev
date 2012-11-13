@@ -49,7 +49,9 @@ bool readVectorFromFile ( const std::string & filename, boost::numeric::ublas::v
 }
 
 template <typename ScalarType>
-ScalarType diff ( ScalarType & s1, viennacl::scalar<ScalarType> & s2 ) {
+ScalarType diff ( ScalarType & s1, viennacl::scalar<ScalarType> & s2 ) 
+{
+    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
     if ( s1 != s2 )
         return ( s1 - s2 ) / std::max ( fabs ( s1 ), fabs ( s2 ) );
     return 0;

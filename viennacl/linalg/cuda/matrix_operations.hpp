@@ -277,6 +277,69 @@ namespace viennacl
       }
 
 
+      
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        value_type alpha = s;                             
+
+        if (viennacl::is_row_major<M1>::value)
+        {
+          matrix_row_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
+                                                 static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                                 static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                                 static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                                 static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+                                                 alpha);
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_assign_kernel");
+        }
+        else
+        {
+          matrix_col_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+                                                  alpha);
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_assign_kernel");
+        }
+      }
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_diagonal_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        value_type alpha = s;                             
+
+        if (viennacl::is_row_major<M1>::value)
+        {
+          matrix_row_diagonal_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
+                                                          static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+                                                          alpha);
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_diagonal_assign_kernel");
+        }
+        else
+        {
+          matrix_col_diagonal_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
+                                                          static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+                                                          alpha);
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_diagonal_assign_kernel");
+        }
+      }      
 
       //
       /////////////////////////   matrix-vector products /////////////////////////////////

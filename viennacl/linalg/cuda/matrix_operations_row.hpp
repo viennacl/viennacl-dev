@@ -466,6 +466,42 @@ namespace viennacl
            + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
       
+      //
+      // assignments
+      //
+      
+      template <typename T>
+      __global__ void matrix_row_assign_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+                T alpha)
+      { 
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+        
+        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = alpha;
+      }
+      
+      
+      template <typename T>
+      __global__ void matrix_row_diagonal_assign_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+                T alpha)
+      { 
+        unsigned int gid = (blockIdx.x * blockDim.x + threadIdx.x);
+        
+        for (unsigned int row = gid; row < A_size1; row += blockDim.x * gridDim.x)
+          A[(row * A_inc1 + A_start1) * A_internal_size2 + row * A_inc2 + A_start2] = alpha;
+      }
       
       
       //

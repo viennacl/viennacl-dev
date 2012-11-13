@@ -271,6 +271,78 @@ namespace viennacl
       }
 
 
+      
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        
+        value_type       * data_A = detail::extract_raw_pointer<value_type>(mat);
+        value_type alpha = static_cast<value_type>(s);
+        
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        std::size_t A_size1  = viennacl::traits::size1(mat);
+        std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+        
+        detail::matrix_array_wrapper<value_type,       typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        
+        if (detail::is_row_major(typename M1::orientation_category()))
+        {
+          for (std::size_t row = 0; row < A_size1; ++row)
+            for (std::size_t col = 0; col < A_size2; ++col)
+              wrapper_A(row, col) = alpha;
+              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] 
+              // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
+        }
+        else
+        {
+          for (std::size_t col = 0; col < A_size2; ++col)
+            for (std::size_t row = 0; row < A_size1; ++row)
+              wrapper_A(row, col) = alpha;
+              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] 
+              // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
+        }
+      }
+      
+      
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_diagonal_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        
+        value_type       * data_A = detail::extract_raw_pointer<value_type>(mat);
+        value_type alpha = static_cast<value_type>(s);
+        
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+        
+        detail::matrix_array_wrapper<value_type, typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        
+        for (std::size_t row = 0; row < A_size1; ++row)
+          wrapper_A(row, row) = alpha;
+      }
+      
+      
+      
 
       //
       /////////////////////////   matrix-vector products /////////////////////////////////

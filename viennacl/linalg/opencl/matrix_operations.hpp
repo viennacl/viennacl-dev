@@ -219,6 +219,51 @@ namespace viennacl
       }
 
 
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        value_type alpha = static_cast<value_type>(s);
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "assign_cpu");
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
+                                 cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
+                                 cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
+                                 cl_uint(viennacl::traits::size1(mat)),            cl_uint(viennacl::traits::size2(mat)),
+                                 cl_uint(viennacl::traits::internal_size1(mat)),   cl_uint(viennacl::traits::internal_size2(mat)),
+                                 alpha
+                                )
+                              );
+      }
+      
+      template <typename M1, typename ScalarType>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_cpu_scalar<ScalarType>::value
+                                  >::type    
+      matrix_diagonal_assign(M1 & mat, ScalarType s)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER<M1>::ResultType    KernelClass;
+        KernelClass::init();
+        
+        value_type alpha = static_cast<value_type>(s);
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "diagonal_assign_cpu");
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
+                                 cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
+                                 cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
+                                 cl_uint(viennacl::traits::size1(mat)),            cl_uint(viennacl::traits::size2(mat)),
+                                 cl_uint(viennacl::traits::internal_size1(mat)),   cl_uint(viennacl::traits::internal_size2(mat)),
+                                 alpha
+                                )
+                              );
+      }
 
       //
       /////////////////////////   matrix-vector products /////////////////////////////////

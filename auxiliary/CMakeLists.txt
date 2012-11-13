@@ -139,6 +139,7 @@ set(MATRIX_COL_SRCS
    matrix_col/align1/ambm_m_gpu_cpu.cl
    matrix_col/align1/ambm_m_gpu_gpu.cl
    matrix_col/align1/assign_cpu.cl
+   matrix_col/align1/diagonal_assign_cpu.cl
    matrix_col/align1/fft_direct.cl
    matrix_col/align1/fft_radix2.cl
    matrix_col/align1/fft_radix2_local.cl
@@ -163,6 +164,7 @@ set(MATRIX_ROW_SRCS
    matrix_row/align1/ambm_m_gpu_cpu.cl
    matrix_row/align1/ambm_m_gpu_gpu.cl
    matrix_row/align1/assign_cpu.cl
+   matrix_row/align1/diagonal_assign_cpu.cl
    matrix_row/align1/fft_direct.cl
    matrix_row/align1/fft_radix2.cl
    matrix_row/align1/fft_radix2_local.cl
