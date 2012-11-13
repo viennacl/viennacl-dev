@@ -1,6 +1,7 @@
 #!/bin/bash
 
 rm cmake/*.*~
+rm auxiliary/*.*~
 rm viennacl/*.*~
 rm viennacl/traits/*.*~
 rm viennacl/meta/*.*~

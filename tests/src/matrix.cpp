@@ -424,6 +424,53 @@ int run_test(double epsilon)
       }
     }
     
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Initializer for matrix type //////////" << std::endl;
+    std::cout << "//" << std::endl;
+    
+    {
+      ublas::matrix<ScalarType> ublas_dummy1 = ublas::identity_matrix<ScalarType>(ublas_A.size1());
+      ublas::matrix<ScalarType> ublas_dummy2 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      ublas::matrix<ScalarType> ublas_dummy3 = ublas::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
+      
+      viennacl::matrix<ScalarType> vcl_dummy1 = viennacl::identity_matrix<ScalarType>(ublas_A.size1());
+      viennacl::matrix<ScalarType> vcl_dummy2 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      viennacl::matrix<ScalarType> vcl_dummy3 = viennacl::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
+      
+      std::cout << "Testing initializer CTOR... ";
+      if (   check_for_equality(ublas_dummy1, vcl_dummy1, epsilon)
+          && check_for_equality(ublas_dummy2, vcl_dummy2, epsilon)
+          && check_for_equality(ublas_dummy3, vcl_dummy3, epsilon)
+         )
+        std::cout << "PASSED!" << std::endl;
+      else
+      {
+        std::cout << std::endl << "TEST failed!" << std::endl;
+        return EXIT_FAILURE;
+      }
+      
+      ublas_dummy1 = ublas::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
+      ublas_dummy2 = ublas::identity_matrix<ScalarType>(ublas_A.size1());
+      ublas_dummy3 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+
+      vcl_dummy1 = viennacl::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
+      vcl_dummy2 = viennacl::identity_matrix<ScalarType>(ublas_A.size1());
+      vcl_dummy3 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      
+      std::cout << "Testing initializer assignment... ";
+      if (   check_for_equality(ublas_dummy1, vcl_dummy1, epsilon)
+          && check_for_equality(ublas_dummy2, vcl_dummy2, epsilon)
+          && check_for_equality(ublas_dummy3, vcl_dummy3, epsilon)
+         )
+        std::cout << "PASSED!" << std::endl;
+      else
+      {
+        std::cout << std::endl << "TEST failed!" << std::endl;
+        return EXIT_FAILURE;
+      }
+    }
+    
+    
     //
     // run operation tests:
     //

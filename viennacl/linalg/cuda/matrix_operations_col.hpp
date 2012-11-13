@@ -502,7 +502,7 @@ namespace viennacl
         unsigned int gid = (blockIdx.x * blockDim.x + threadIdx.x);
         
         for (unsigned int row = gid; row < A_size1; row += blockDim.x * gridDim.x)
-          A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = alpha;
+          A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1] = alpha;
       }
 
       
