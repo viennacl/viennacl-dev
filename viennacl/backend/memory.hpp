@@ -62,6 +62,7 @@ namespace viennacl
 #endif    
 
 
+
     class mem_handle
     {
       public:
@@ -92,94 +93,26 @@ namespace viennacl
               active_handle_ = new_id;
             else if (active_handle_ == MAIN_MEMORY)
             {
-              switch (new_id)
-              {
-                case MAIN_MEMORY: break; //nothing to do
-
-#ifdef VIENNACL_WITH_OPENCL
-                case OPENCL_MEMORY:
-                  if (opencl_handle_.get())
-                    opencl::memory_write(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  else
-                    opencl_handle_ = opencl::memory_create(size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-                case CUDA_MEMORY:
-                  if (cuda_handle_.get())
-                    cuda::memory_write(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  else
-                    cuda_handle_ = cuda::memory_create(size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-#endif
-                default:
-                  throw "invalid new memory region!";
-              }
-            }    
-                  
-                  
-#ifdef VIENNACL_WITH_OPENCL
+              active_handle_ = new_id;
+            }
             else if (active_handle_ == OPENCL_MEMORY)
             {
-              switch (new_id)
-              {
-                case MAIN_MEMORY:
-                  if (!ram_handle_.get())
-                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
-                  opencl::memory_read(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-                  
-                case OPENCL_MEMORY: break;
-                
-#ifdef VIENNACL_WITH_CUDA
-                case CUDA_MEMORY:
-                  
-                  if (cuda_handle_.get())
-                    cuda::memory_write(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  else
-                    cuda_handle_ = cuda::memory_create(size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-#endif
-                default:
-                  throw "invalid new memory region!";
-              }
+#ifdef VIENNACL_WITH_OPENCL
+              active_handle_ = new_id;
+#else
+              throw "compiled without OpenCL suppport!";
+#endif              
             }
-#endif
-
-#ifdef VIENNACL_WITH_CUDA
             else if (active_handle_ == CUDA_MEMORY)
             {
-              switch (new_id)
-              {
-                case MAIN_MEMORY:
-                  if (!ram_handle_.get())
-                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
-                  cuda::memory_read(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-                  
-#ifdef VIENNACL_WITH_OPENCL
-                case OPENCL_MEMORY:
-                  if (!ram_handle_.get())
-                    ram_handle_ = cpu_ram::memory_create(size_in_bytes_, NULL);
-                  cuda::memory_read(cuda_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  opencl::memory_write(opencl_handle_, 0, size_in_bytes_, ram_handle_.get());
-                  active_handle_ = new_id;
-                  break;
-#endif
-                case CUDA_MEMORY: break;
-                default:
-                  throw "invalid new memory region!";
-              }
+#ifdef VIENNACL_WITH_CUDA
+              active_handle_ = new_id;
+#else
+              throw "compiled without CUDA suppport!";
+#endif              
             }
-#endif
             else
               throw "invalid new memory region!";
-
           }
         }
         
@@ -328,11 +261,8 @@ namespace viennacl
     //
     // * memory_create(size, host_ptr)
     // * memory_copy(src, dest, offset_src, offset_dest, size)
-    // * memory_write_from_main_memory(src, offset, size,
-    //                                 dest, offset, size)
-    // * memory_read_to_main_memory(src, offset, size
-    //                              dest, offset, size)
-    // * memory_free()
+    // * memory_write(src, offset, size, ptr)
+    // * memory_read(src, offset, size, ptr)
     //
 
     inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, void * host_ptr = NULL)
@@ -366,13 +296,16 @@ namespace viennacl
       }
     }
     
+    
+    
+    
     inline void memory_copy(mem_handle const & src_buffer,
                             mem_handle & dst_buffer,
                             std::size_t src_offset,
                             std::size_t dst_offset,
                             std::size_t bytes_to_copy)
     {
-      assert( (src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id()) && bool("Different memory locations for source and destination! Not supported!"));
+      assert( src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id() && bool("memory_copy() must be called on buffers from the same domain") );
       
       if (bytes_to_copy > 0)
       {
@@ -483,6 +416,304 @@ namespace viennacl
     }
     
     
+    
+    namespace detail
+    {
+      template <typename T>
+      std::size_t element_size(memory_types mem_type)
+      {
+        return sizeof(T);
+      }
+
+      
+      template <>
+      inline std::size_t element_size<unsigned long>(memory_types mem_type)
+      {
+#ifdef VIENNACL_WITH_OPENCL
+        if (mem_type == OPENCL_MEMORY)
+          return sizeof(cl_ulong);
+#endif
+        return sizeof(unsigned long);
+      }
+
+      template <>
+      inline std::size_t element_size<long>(memory_types mem_type)
+      {
+#ifdef VIENNACL_WITH_OPENCL
+        if (mem_type == OPENCL_MEMORY)
+          return sizeof(cl_long);
+#endif
+        return sizeof(long);
+      }
+      
+      
+      template <>
+      inline std::size_t element_size<unsigned int>(memory_types mem_type)
+      {
+#ifdef VIENNACL_WITH_OPENCL
+        if (mem_type == OPENCL_MEMORY)
+          return sizeof(cl_uint);
+#endif
+        return sizeof(unsigned int);
+      }
+
+      template <>
+      inline std::size_t element_size<int>(memory_types mem_type)
+      {
+#ifdef VIENNACL_WITH_OPENCL
+        if (mem_type == OPENCL_MEMORY)
+          return sizeof(cl_int);
+#endif
+        return sizeof(int);
+      }
+      
+      
+    }
+
+    
+    /** @brief Switches the active memory domain within a memory handle. Data is copied if the new active domain differs from the old one. Memory in the source handle is not free'd. */
+    template <typename DataType>
+    void switch_memory_domain(mem_handle & handle, viennacl::backend::memory_types new_mem_domain)
+    {
+      if (handle.get_active_handle_id() == new_mem_domain)
+        return;
+      
+      std::size_t size_dst = detail::element_size<DataType>(handle.get_active_handle_id());
+      std::size_t size_src = detail::element_size<DataType>(new_mem_domain);
+      
+      if (size_dst != size_src)  // OpenCL data element size not the same as host data element size
+      {
+        throw "Heterogeneous data element sizes not yet supported!";
+      }
+      else //no data conversion required
+      {
+        if (handle.get_active_handle_id() == MAIN_MEMORY) //we can access the existing data directly
+        {
+          switch (new_mem_domain)
+          {
+#ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              handle.opencl_handle() = opencl::memory_create(handle.raw_size(), handle.ram_handle().get());
+              break;
+#endif              
+#ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              handle.cuda_handle() = cuda::memory_create(handle.raw_size(), handle.ram_handle().get());
+              break;
+#endif
+            default:
+              throw "Invalid destination domain";
+          }
+        }
+        else if (handle.get_active_handle_id() == MAIN_MEMORY) // data can be dumped into destination directly
+        {
+          switch (new_mem_domain)
+          {
+#ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              handle.ram_handle() = cpu_ram::memory_create(handle.raw_size());
+              opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), handle.ram_handle().get());
+              break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              handle.ram_handle() = cpu_ram::memory_create(handle.raw_size());
+              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), handle.ram_handle().get());
+              break;
+#endif
+            default:
+              throw "Invalid source domain";
+          }
+        }
+        else //copy between CUDA and OpenCL
+        {
+          std::vector<DataType> buffer( handle.raw_size() / sizeof(DataType));
+          
+          // read into buffer
+          switch (handle.get_active_handle_id())
+          {
+#ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), &(buffer[0]));
+              break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), &(buffer[0]));
+              break;
+#endif
+            default:
+              throw "Unsupported source memory domain";
+          }
+
+            
+          // write
+          switch (new_mem_domain)
+          {
+#ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              handle.opencl_handle() = opencl::memory_create(handle.raw_size(), &(buffer[0]));
+              break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+            case   CUDA_MEMORY:
+              handle.cuda_handle() = cuda::memory_create(handle.raw_size(), &(buffer[0]));
+              break;
+#endif
+            default:
+              throw "Unsupported source memory domain";
+          }
+        }
+
+        // everything succeeded so far, now switch to new domain:
+        handle.switch_active_handle_id(new_mem_domain);
+        
+      } // no data conversion
+    }
+    
+    
+    
+    
+    template <typename DataType>
+    void typesafe_memory_copy(mem_handle const & handle_src, mem_handle & handle_dst)
+    {
+      std::size_t element_size_src = detail::element_size<DataType>(handle_src.get_active_handle_id());
+      std::size_t element_size_dst = detail::element_size<DataType>(handle_dst.get_active_handle_id());
+      
+      if (element_size_src != element_size_dst)
+      {
+        // Data needs to be converted.
+        
+        integral_type_host_array<DataType> buffer_dst(handle_dst, handle_src.raw_size() / element_size_src);
+        
+        //
+        // Step 1: Fill buffer_dst depending on where the data resides:
+        //
+        switch (handle_src.get_active_handle_id())
+        {
+          case MAIN_MEMORY:
+            DataType const * src_data = reinterpret_cast<DataType const *>(handle_src.ram_handle().get());
+            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+              buffer_dst.set(i, src_data[i]);
+            break;
+            
+#ifdef VIENNACL_WITH_OPENCL
+          case OPENCL_MEMORY:
+            integral_type_host_array<DataType> buffer_src_opencl(handle_src, handle_src.raw_size() / element_size_src);
+            opencl::memory_read(handle_src, 0, buffer_src_opencl.raw_size(), buffer_src_opencl.get());
+            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+              buffer_dst.set(i, buffer_src_opencl[i]);
+            break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+          case CUDA_MEMORY:
+            integral_type_host_array<DataType> buffer_src_cuda(handle_src, handle_src.raw_size() / element_size_src);
+            cuda::memory_read(handle_src, 0, buffer_src_cuda.raw_size(), buffer_src_cuda.get());
+            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+              buffer_dst.set(i, buffer_src_cuda[i]);
+            break;
+#endif
+            
+          default:
+            throw "unsupported memory domain";
+        }
+
+        //
+        // Step 2: Write to destination
+        //
+        if (handle_dst.raw_size() == buffer_dst.raw_size())
+          viennacl::backend::memory_write(handle_dst, 0, buffer_dst.raw_size(), buffer_dst.get());
+        else
+          viennacl::backend::memory_create(handle_dst, buffer_dst.raw_size(), buffer_dst.get());
+          
+      }
+      else
+      {
+        // No data conversion required.
+        switch (handle_src.get_active_handle_id())
+        {
+          case MAIN_MEMORY:
+            switch (handle_dst.get_active_handle_id())
+            {
+              case MAIN_MEMORY:
+              case OPENCL_MEMORY:
+              case CUDA_MEMORY:
+                if (handle_dst.raw_size() == handle_src.raw_size())
+                  viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), handle_src.ram_handle().get());
+                else
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), handle_src.ram_handle().get());
+                break;
+                
+              default:
+                throw "unsupported destination memory domain";
+            }
+            break;
+            
+          case OPENCL_MEMORY:
+            switch (handle_dst.get_active_handle_id())
+            {
+              case MAIN_MEMORY:
+                viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
+                break;
+                
+              case OPENCL_MEMORY:
+                viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
+                break;
+                
+              case CUDA_MEMORY:
+                integral_type_host_array<DataType> buffer(handle_src, handle_src.raw_size() / element_size_src);
+                viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
+                viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
+                break;
+                
+              default:
+                throw "unsupported destination memory domain";
+            }
+            break;
+            
+          case CUDA_MEMORY:
+            switch (handle_dst.get_active_handle_id())
+            {
+              case MAIN_MEMORY:
+                viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
+                break;
+                
+              case OPENCL_MEMORY:
+                integral_type_host_array<DataType> buffer(handle_src, handle_src.raw_size() / element_size_src);
+                viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
+                viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
+                break;
+                
+              case CUDA_MEMORY:
+                viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
+                break;
+                
+              default:
+                throw "unsupported destination memory domain";
+            }
+            break;
+            
+          default:
+            throw "unsupported source memory domain";
+        }
+        
+      }
+    }
+    
+    
   } //backend
+
+  
+  //
+  // Convenience layer:
+  //
+  
+  template <typename T>
+  void switch_memory_domain(T & obj, viennacl::backend::memory_types new_mem_domain)
+  {
+    obj.switch_memory_domain(new_mem_domain);
+  }
+  
+  
 } //viennacl
 #endif
