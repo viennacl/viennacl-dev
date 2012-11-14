@@ -64,9 +64,9 @@ namespace viennacl
     template<typename ScalarType>
     void precondition(viennacl::compressed_matrix<ScalarType> & A, ilu0_tag const & tag)
     {
-      assert( (A.handle1().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle2().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle().get_active_handle_id == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle1().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle2().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
       
       ScalarType         * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
       unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());

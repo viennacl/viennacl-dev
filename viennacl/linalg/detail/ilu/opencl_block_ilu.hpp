@@ -164,9 +164,8 @@ namespace viennacl
             
             
             // Step 2: Precondition blocks:
-            viennacl::tools::const_sparse_matrix_adapter<ScalarType>  mat_block_adapter(mat_block, block_size, block_size);
-            viennacl::tools::sparse_matrix_adapter<ScalarType>        LU_adapter(LU_blocks[i], block_size, block_size);
-            preconditioner_dispatch(mat_block_adapter, LU_adapter, tag_);
+            LU_blocks[i].resize(block_size);
+            preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
           }
           
           /*
@@ -235,20 +234,25 @@ namespace viennacl
           viennacl::copy(entries_D, gpu_D);
         }
         
-        void preconditioner_dispatch(viennacl::tools::const_sparse_matrix_adapter<ScalarType> const & mat_block,
-                                     viennacl::tools::sparse_matrix_adapter<ScalarType> & LU,
+        void preconditioner_dispatch(InternalMatrixType const & mat_block,
+                                     InternalMatrixType & LU,
                                      viennacl::linalg::ilu0_tag)
         {
-          viennacl::compressed_matrix<ScalarType> temp(LU.size1(), LU.size2());
+          viennacl::compressed_matrix<ScalarType> temp(LU.size(), LU.size());
+          temp.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          temp.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          temp.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
           viennacl::copy(mat_block, temp);
           viennacl::linalg::precondition(temp, tag_);
           viennacl::copy(temp, LU);
         }
 
-        void preconditioner_dispatch(viennacl::tools::const_sparse_matrix_adapter<ScalarType> const & mat_block,
-                                     viennacl::tools::sparse_matrix_adapter<ScalarType> & LU,
+        void preconditioner_dispatch(InternalMatrixType const & mat_block,
+                                     InternalMatrixType & LU,
                                      viennacl::linalg::ilut_tag)
         {
+          //std::cout << "mat_block.size(): " << mat_block.size() << std::endl;
+          //std::cout << "LU.size(): " << LU.size() << std::endl;
           viennacl::linalg::precondition(mat_block, LU, tag_);
         }
         

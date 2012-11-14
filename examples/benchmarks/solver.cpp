@@ -401,7 +401,14 @@ int run_benchmark()
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, hyb_matrix ----------" << std::endl;
   run_solver(vcl_hyb_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
   
+  
+  std::cout << "------- CG solver (ICHOL0 preconditioner) using ublas ----------" << std::endl;
+  run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_ichol0, cg_ops);
 
+  std::cout << "------- CG solver (ICHOL0 preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_ichol0, cg_ops);
+
+  
   std::cout << "------- CG solver (ILU0 preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_ilu0, cg_ops);
 

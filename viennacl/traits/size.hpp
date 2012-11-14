@@ -182,6 +182,10 @@ namespace viennacl
     vcl_size_t
     size1(MatrixType const & mat) { return mat.size1(); }
 
+    template <typename RowType>
+    vcl_size_t
+    size1(std::vector< RowType > const & mat) { return mat.size(); }
+    
     #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size1(Eigen::MatrixXf const & m) { return m.rows(); }
     inline vcl_size_t size1(Eigen::MatrixXd const & m) { return m.rows(); }
