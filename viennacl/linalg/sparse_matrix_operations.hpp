@@ -84,16 +84,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::prod_impl(mat, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::prod_impl(mat, vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::prod_impl(mat, vec, result);
           break;
 #endif
@@ -120,16 +120,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, tag);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(mat, vec, tag);
           break;
 #endif
@@ -156,16 +156,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat.lhs()).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, tag);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(mat, vec, tag);
           break;
 #endif

@@ -108,7 +108,7 @@ namespace viennacl
 
         std::size_t nnz = gpu_matrix.internal_nnz();
 
-        viennacl::backend::integral_type_host_array<unsigned int> coords(gpu_matrix.handle2(), nnz);
+        viennacl::backend::typesafe_host_array<unsigned int> coords(gpu_matrix.handle2(), nnz);
         std::vector<SCALARTYPE> elements(nnz, 0);
 
         // std::cout << "ELL_MATRIX copy " << gpu_matrix.maxnnz_ << " " << gpu_matrix.rows_ << " " << gpu_matrix.cols_ << " " 
@@ -140,7 +140,7 @@ namespace viennacl
         cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2());
 
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
-        viennacl::backend::integral_type_host_array<unsigned int> coords(gpu_matrix.handle2(), gpu_matrix.internal_nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> coords(gpu_matrix.handle2(), gpu_matrix.internal_nnz());
 
         viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
         viennacl::backend::memory_read(gpu_matrix.handle2(), 0, coords.raw_size(), coords.get());

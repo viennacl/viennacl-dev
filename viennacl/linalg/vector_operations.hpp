@@ -57,16 +57,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
@@ -94,20 +94,20 @@ namespace viennacl
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::avbv(vec1,
                                                   vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                   vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::avbv(vec1,
                                          vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                          vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::avbv(vec1,
                                        vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                        vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
@@ -137,20 +137,20 @@ namespace viennacl
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::avbv_v(vec1,
                                                     vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                     vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::avbv_v(vec1,
                                            vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                            vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::avbv_v(vec1,
                                          vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                          vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
@@ -175,16 +175,16 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::vector_assign(vec1, alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_assign(vec1, alpha);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::vector_assign(vec1, alpha);
           break;
 #endif
@@ -209,16 +209,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::vector_swap(vec1, vec2);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_swap(vec1, vec2);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::vector_swap(vec1, vec2);
           break;
 #endif
@@ -252,16 +252,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inner_prod_impl(vec1, vec2, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA          
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
@@ -290,16 +290,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inner_prod_impl(vec1, vec2, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inner_prod_cpu(vec1, vec2, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inner_prod_cpu(vec1, vec2, result);
           break;
 #endif
@@ -345,16 +345,16 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::norm_1_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_1_impl(vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::norm_1_impl(vec, result);
           break;
 #endif
@@ -377,16 +377,16 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::norm_2_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_2_impl(vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::norm_2_impl(vec, result);
           break;
 #endif
@@ -409,16 +409,16 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::norm_inf_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_inf_impl(vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::norm_inf_impl(vec, result);
           break;
 #endif
@@ -443,14 +443,14 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           return viennacl::linalg::single_threaded::index_norm_inf(vec);
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           return viennacl::linalg::opencl::index_norm_inf(vec);
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           return viennacl::linalg::cuda::index_norm_inf(vec);
 #endif
         default:
@@ -480,16 +480,16 @@ namespace viennacl
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #endif

@@ -167,19 +167,19 @@ namespace viennacl
     // Active handle ID
     //
     template <typename T>
-    viennacl::backend::memory_types active_handle_id(T const & obj)
+    viennacl::memory_types active_handle_id(T const & obj)
     {
       return handle(obj).get_active_handle_id();
     }
 
     template <typename LHS, typename RHS, typename OP>
-    viennacl::backend::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj)
+    viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj)
     {
       return active_handle_id(obj.lhs());
     }
 
     template <typename LHS, typename RHS, typename OP>
-    viennacl::backend::memory_types active_handle_id(viennacl::matrix_expression<LHS, RHS, OP> const & obj)
+    viennacl::memory_types active_handle_id(viennacl::matrix_expression<LHS, RHS, OP> const & obj)
     {
       return active_handle_id(obj.lhs());
     }

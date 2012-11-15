@@ -23,11 +23,15 @@
 
 #include <vector>
 #include <cassert>
-#include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/forwards.h"
+#include "viennacl/backend/mem_handle.hpp"
+#include "viennacl/backend/util.hpp"
+
 #include "viennacl/backend/cpu_ram.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/backend/opencl.hpp"
+  #include "viennacl/ocl/backend.hpp"
 #endif
 
 #ifdef VIENNACL_WITH_CUDA
@@ -40,219 +44,19 @@ namespace viennacl
   namespace backend
   {
     
-    enum memory_types
-    {
-      MEMORY_NOT_INITIALIZED
-      , MAIN_MEMORY
-      , OPENCL_MEMORY
-      , CUDA_MEMORY
-    };
-
 
 // if a user compiles with CUDA, it is reasonable to expect that CUDA should be the default
+    inline void finish()
+    {
 #ifdef VIENNACL_WITH_CUDA
-    inline memory_types default_memory_type() { return CUDA_MEMORY; }
-    inline void finish() { cudaDeviceSynchronize(); }
-#elif defined(VIENNACL_WITH_OPENCL)
-    inline memory_types default_memory_type() { return OPENCL_MEMORY; }
-    inline void finish() { viennacl::ocl::get_queue().finish(); }
-#else
-    inline memory_types default_memory_type() { return MAIN_MEMORY; }
-    inline void finish() {}
+      cudaDeviceSynchronize();
 #endif    
-
-
-
-    class mem_handle
-    {
-      public:
-        typedef viennacl::tools::shared_ptr<char>      ram_handle_type;
-        typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
-        
-        mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
-        
-        ram_handle_type       & ram_handle()       { return ram_handle_; }
-        ram_handle_type const & ram_handle() const { return ram_handle_; }
-        
 #ifdef VIENNACL_WITH_OPENCL
-        viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
-        viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
-#endif        
-
-#ifdef VIENNACL_WITH_CUDA
-        cuda_handle_type       & cuda_handle()       { return cuda_handle_; }
-        cuda_handle_type const & cuda_handle() const { return cuda_handle_; }
-#endif        
-
-        memory_types get_active_handle_id() const { return active_handle_; }
-        void switch_active_handle_id(memory_types new_id)
-        {
-          if (new_id != active_handle_)
-          {
-            if (active_handle_ == MEMORY_NOT_INITIALIZED)
-              active_handle_ = new_id;
-            else if (active_handle_ == MAIN_MEMORY)
-            {
-              active_handle_ = new_id;
-            }
-            else if (active_handle_ == OPENCL_MEMORY)
-            {
-#ifdef VIENNACL_WITH_OPENCL
-              active_handle_ = new_id;
-#else
-              throw "compiled without OpenCL suppport!";
-#endif              
-            }
-            else if (active_handle_ == CUDA_MEMORY)
-            {
-#ifdef VIENNACL_WITH_CUDA
-              active_handle_ = new_id;
-#else
-              throw "compiled without CUDA suppport!";
-#endif              
-            }
-            else
-              throw "invalid new memory region!";
-          }
-        }
-        
-        bool operator==(mem_handle const & other) const
-        {
-          if (active_handle_ != other.active_handle_)
-            return false;
-          
-          switch (active_handle_)
-          {
-            case MAIN_MEMORY:
-              return ram_handle_.get() == other.ram_handle_.get();
-#ifdef VIENNACL_WITH_OPENCL
-            case OPENCL_MEMORY:
-              return opencl_handle_.get() == other.opencl_handle_.get();
-#endif
-#ifdef VIENNACL_WITH_CUDA
-            case CUDA_MEMORY:
-              return cuda_handle_.get() == other.cuda_handle_.get();
-#endif
-            default: break;
-          }
-          
-          return false;
-        }
-        
-        bool operator!=(mem_handle const & other) const { return !(*this == other); }
-
-        void swap(mem_handle & other)
-        {
-          // swap handle type:
-          memory_types active_handle_tmp = other.active_handle_;
-          other.active_handle_ = active_handle_;
-          active_handle_ = active_handle_tmp;
-          
-          // swap ram handle:
-          ram_handle_type ram_handle_tmp = other.ram_handle_;
-          other.ram_handle_ = ram_handle_;
-          ram_handle_ = ram_handle_tmp;
-          
-          // swap OpenCL handle:
-#ifdef VIENNACL_WITH_OPENCL
-          opencl_handle_.swap(other.opencl_handle_);
-#endif          
-#ifdef VIENNACL_WITH_CUDA
-          cuda_handle_type cuda_handle_tmp = other.cuda_handle_;
-          other.cuda_handle_ = cuda_handle_;
-          cuda_handle_ = cuda_handle_tmp;
-#endif          
-        }
-        
-        std::size_t raw_size() const               { return size_in_bytes_; }
-        void        raw_size(std::size_t new_size) { size_in_bytes_ = new_size; }
-        
-      private:
-        memory_types active_handle_;
-        ram_handle_type ram_handle_;
-#ifdef VIENNACL_WITH_OPENCL
-        viennacl::ocl::handle<cl_mem> opencl_handle_;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        cuda_handle_type        cuda_handle_;
-#endif
-        std::size_t size_in_bytes_;
-    };
+      viennacl::ocl::get_queue().finish();
+#endif    
+    }
 
 
-    template <typename T>
-    struct integral_type_host_array;
-    
-    template <>
-    struct integral_type_host_array<unsigned int>
-    {
-      public:
-        explicit integral_type_host_array() : convert_to_opencl_( (default_memory_type() == OPENCL_MEMORY) ? true : false), bytes_buffer_(NULL), buffer_size_(0) {}
-        
-        explicit integral_type_host_array(mem_handle const & handle, std::size_t num = 0) : convert_to_opencl_(false), bytes_buffer_(NULL), buffer_size_(sizeof(unsigned int) * num)
-        {
-          
-#ifdef VIENNACL_WITH_OPENCL
-          memory_types mem_type = handle.get_active_handle_id();
-          if (mem_type == MEMORY_NOT_INITIALIZED)
-            mem_type = default_memory_type();
-          
-          if (mem_type == OPENCL_MEMORY)
-          {
-            convert_to_opencl_ = true;
-            buffer_size_ = sizeof(cl_uint) * num;
-          }
-#endif
-
-          if (num > 0)
-          {
-            bytes_buffer_ = new char[buffer_size_];
-            
-            for (std::size_t i=0; i<buffer_size_; ++i)
-              bytes_buffer_[i] = 0;
-          }
-        }
-        
-        ~integral_type_host_array() { delete[] bytes_buffer_; }
-        
-        template <typename U>
-        void set(std::size_t index, U value)
-        {
-#ifdef VIENNACL_WITH_OPENCL
-          if (convert_to_opencl_)
-            reinterpret_cast<cl_uint *>(bytes_buffer_)[index] = static_cast<cl_uint>(value);
-          else
-#endif
-            reinterpret_cast<unsigned int *>(bytes_buffer_)[index] = static_cast<unsigned int>(value);
-        }
-
-        void * get() { return reinterpret_cast<void *>(bytes_buffer_); }
-        unsigned int operator[](std::size_t index) const 
-        {
-          assert(index < size() && bool("index out of bounds"));
-#ifdef VIENNACL_WITH_OPENCL
-          if (convert_to_opencl_)
-            return static_cast<unsigned int>(reinterpret_cast<cl_uint *>(bytes_buffer_)[index]);
-#endif
-          return reinterpret_cast<unsigned int *>(bytes_buffer_)[index];
-        }
-        
-        std::size_t raw_size() const { return buffer_size_; }
-        std::size_t element_size() const
-        {
-#ifdef VIENNACL_WITH_OPENCL
-          if (convert_to_opencl_)
-            return sizeof(cl_uint);
-#endif
-          return sizeof(unsigned int); 
-        }
-        std::size_t size() const { return buffer_size_ / element_size(); }
-        
-      private:
-        bool convert_to_opencl_;
-        char * bytes_buffer_;
-        std::size_t buffer_size_;
-    };
     
     
     // Requirements for backend:
@@ -473,10 +277,17 @@ namespace viennacl
     
     /** @brief Switches the active memory domain within a memory handle. Data is copied if the new active domain differs from the old one. Memory in the source handle is not free'd. */
     template <typename DataType>
-    void switch_memory_domain(mem_handle & handle, viennacl::backend::memory_types new_mem_domain)
+    void switch_memory_domain(mem_handle & handle, viennacl::memory_types new_mem_domain)
     {
       if (handle.get_active_handle_id() == new_mem_domain)
         return;
+      
+      if (handle.get_active_handle_id() == viennacl::MEMORY_NOT_INITIALIZED)
+      {
+        handle.switch_active_handle_id(new_mem_domain);
+        return;
+      }
+      
       
       std::size_t size_dst = detail::element_size<DataType>(handle.get_active_handle_id());
       std::size_t size_src = detail::element_size<DataType>(new_mem_domain);
@@ -505,65 +316,53 @@ namespace viennacl
               throw "Invalid destination domain";
           }
         }
-        else if (handle.get_active_handle_id() == MAIN_MEMORY) // data can be dumped into destination directly
+#ifdef VIENNACL_WITH_OPENCL
+        else if (handle.get_active_handle_id() == OPENCL_MEMORY) // data can be dumped into destination directly
         {
+          std::vector<DataType> buffer;
+          
           switch (new_mem_domain)
           {
-#ifdef VIENNACL_WITH_OPENCL
-            case OPENCL_MEMORY:
+            case MAIN_MEMORY:
               handle.ram_handle() = cpu_ram::memory_create(handle.raw_size());
               opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), handle.ram_handle().get());
               break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
+  #ifdef VIENNACL_WITH_CUDA
             case CUDA_MEMORY:
-              handle.ram_handle() = cpu_ram::memory_create(handle.raw_size());
-              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), handle.ram_handle().get());
+              buffer.resize(handle.raw_size() / sizeof(DataType));
+              opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), &(buffer[0]));
+              cuda::memory_create(handle.cuda_handle(), handle.raw_size(), &(buffer[0]));
               break;
-#endif
+  #endif
             default:
-              throw "Invalid source domain";
+              throw "Invalid destination domain";
           }
         }
-        else //copy between CUDA and OpenCL
-        {
-          std::vector<DataType> buffer( handle.raw_size() / sizeof(DataType));
-          
-          // read into buffer
-          switch (handle.get_active_handle_id())
-          {
-#ifdef VIENNACL_WITH_OPENCL
-            case OPENCL_MEMORY:
-              opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), &(buffer[0]));
-              break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-            case CUDA_MEMORY:
-              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), &(buffer[0]));
-              break;
-#endif
-            default:
-              throw "Unsupported source memory domain";
-          }
-
-            
+        else //CUDA_MEMORY
+        {
+          std::vector<DataType> buffer;
+          
           // write
           switch (new_mem_domain)
           {
-#ifdef VIENNACL_WITH_OPENCL
+            case MAIN_MEMORY:
+              handle.ram_handle() = cpu_ram::memory_create(handle.raw_size());
+              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), handle.ram_handle().get());
+              break;
+  #ifdef VIENNACL_WITH_OPENCL
             case OPENCL_MEMORY:
+              buffer.resize(handle.raw_size() / sizeof(DataType));
+              cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), &(buffer[0]));
               handle.opencl_handle() = opencl::memory_create(handle.raw_size(), &(buffer[0]));
               break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-            case   CUDA_MEMORY:
-              handle.cuda_handle() = cuda::memory_create(handle.raw_size(), &(buffer[0]));
-              break;
-#endif
+  #endif
             default:
               throw "Unsupported source memory domain";
           }
         }
+#endif
 
         // everything succeeded so far, now switch to new domain:
         handle.switch_active_handle_id(new_mem_domain);
@@ -577,6 +376,9 @@ namespace viennacl
     template <typename DataType>
     void typesafe_memory_copy(mem_handle const & handle_src, mem_handle & handle_dst)
     {
+      if (handle_dst.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
+        handle_dst.switch_active_handle_id(default_memory_type());
+      
       std::size_t element_size_src = detail::element_size<DataType>(handle_src.get_active_handle_id());
       std::size_t element_size_dst = detail::element_size<DataType>(handle_dst.get_active_handle_id());
       
@@ -584,33 +386,35 @@ namespace viennacl
       {
         // Data needs to be converted.
         
-        integral_type_host_array<DataType> buffer_dst(handle_dst, handle_src.raw_size() / element_size_src);
+        typesafe_host_array<DataType> buffer_src(handle_src);
+        typesafe_host_array<DataType> buffer_dst(handle_dst, handle_src.raw_size() / element_size_src);
         
         //
         // Step 1: Fill buffer_dst depending on where the data resides:
         //
+        DataType const * src_data;
         switch (handle_src.get_active_handle_id())
         {
           case MAIN_MEMORY:
-            DataType const * src_data = reinterpret_cast<DataType const *>(handle_src.ram_handle().get());
+            src_data = reinterpret_cast<DataType const *>(handle_src.ram_handle().get());
             for (std::size_t i=0; i<buffer_dst.size(); ++i)
               buffer_dst.set(i, src_data[i]);
             break;
             
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
-            integral_type_host_array<DataType> buffer_src_opencl(handle_src, handle_src.raw_size() / element_size_src);
-            opencl::memory_read(handle_src, 0, buffer_src_opencl.raw_size(), buffer_src_opencl.get());
+            buffer_src.resize(handle_src, handle_src.raw_size() / element_size_src);
+            opencl::memory_read(handle_src.opencl_handle(), 0, buffer_src.raw_size(), buffer_src.get());
             for (std::size_t i=0; i<buffer_dst.size(); ++i)
-              buffer_dst.set(i, buffer_src_opencl[i]);
+              buffer_dst.set(i, buffer_src[i]);
             break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
           case CUDA_MEMORY:
-            integral_type_host_array<DataType> buffer_src_cuda(handle_src, handle_src.raw_size() / element_size_src);
-            cuda::memory_read(handle_src, 0, buffer_src_cuda.raw_size(), buffer_src_cuda.get());
+            buffer_src.resize(handle_src, handle_src.raw_size() / element_size_src);
+            cuda::memory_read(handle_src.cuda_handle(), 0, buffer_src.raw_size(), buffer_src.get());
             for (std::size_t i=0; i<buffer_dst.size(); ++i)
-              buffer_dst.set(i, buffer_src_cuda[i]);
+              buffer_dst.set(i, buffer_src[i]);
             break;
 #endif
             
@@ -630,6 +434,8 @@ namespace viennacl
       else
       {
         // No data conversion required.
+        typesafe_host_array<DataType> buffer(handle_src);
+        
         switch (handle_src.get_active_handle_id())
         {
           case MAIN_MEMORY:
@@ -653,15 +459,21 @@ namespace viennacl
             switch (handle_dst.get_active_handle_id())
             {
               case MAIN_MEMORY:
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
                 break;
                 
               case OPENCL_MEMORY:
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
                 viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
                 break;
                 
               case CUDA_MEMORY:
-                integral_type_host_array<DataType> buffer(handle_src, handle_src.raw_size() / element_size_src);
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                buffer.resize(handle_src, handle_src.raw_size() / element_size_src);
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
                 viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
                 break;
@@ -675,16 +487,22 @@ namespace viennacl
             switch (handle_dst.get_active_handle_id())
             {
               case MAIN_MEMORY:
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
                 break;
                 
               case OPENCL_MEMORY:
-                integral_type_host_array<DataType> buffer(handle_src, handle_src.raw_size() / element_size_src);
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                buffer.resize(handle_src, handle_src.raw_size() / element_size_src);
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
                 viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
                 break;
                 
               case CUDA_MEMORY:
+                if (handle_dst.raw_size() != handle_src.raw_size())
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
                 viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
                 break;
                 
@@ -709,11 +527,16 @@ namespace viennacl
   //
   
   template <typename T>
-  void switch_memory_domain(T & obj, viennacl::backend::memory_types new_mem_domain)
+  void switch_memory_domain(T & obj, viennacl::memory_types new_mem_domain)
   {
     obj.switch_memory_domain(new_mem_domain);
   }
   
+  template <typename T>
+  viennacl::memory_types memory_domain(T & obj)
+  {
+    return obj.memory_domain();
+  }
   
 } //viennacl
 #endif

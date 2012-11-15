@@ -129,8 +129,8 @@ namespace viennacl
 
         std::size_t nnz = gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz();
 
-        viennacl::backend::integral_type_host_array<unsigned int>  ell_coords(gpu_matrix.ell_coords_, nnz);
-        viennacl::backend::integral_type_host_array<unsigned int>  csr_rows(gpu_matrix.csr_rows_, cpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int>  ell_coords(gpu_matrix.ell_coords_, nnz);
+        viennacl::backend::typesafe_host_array<unsigned int>  csr_rows(gpu_matrix.csr_rows_, cpu_matrix.size1() + 1);
         std::vector<unsigned int> csr_cols;
 
         std::vector<SCALARTYPE> ell_elements(nnz);
@@ -174,7 +174,7 @@ namespace viennacl
 
         gpu_matrix.csrnnz_ = csr_cols.size();
 
-        viennacl::backend::integral_type_host_array<unsigned int> csr_cols_for_gpu(gpu_matrix.csr_cols_, csr_cols.size());
+        viennacl::backend::typesafe_host_array<unsigned int> csr_cols_for_gpu(gpu_matrix.csr_cols_, csr_cols.size());
         for (std::size_t i=0; i<csr_cols.size(); ++i)
           csr_cols_for_gpu.set(i, csr_cols[i]);
         
@@ -195,11 +195,11 @@ namespace viennacl
         cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2());
 
         std::vector<SCALARTYPE> ell_elements(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
-        viennacl::backend::integral_type_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
+        viennacl::backend::typesafe_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
 
         std::vector<SCALARTYPE> csr_elements(gpu_matrix.csr_nnz());
-        viennacl::backend::integral_type_host_array<unsigned int> csr_rows(gpu_matrix.handle3(), gpu_matrix.size1() + 1);
-        viennacl::backend::integral_type_host_array<unsigned int> csr_cols(gpu_matrix.handle4(), gpu_matrix.csr_nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> csr_rows(gpu_matrix.handle3(), gpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> csr_cols(gpu_matrix.handle4(), gpu_matrix.csr_nnz());
 
         viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
         viennacl::backend::memory_read(gpu_matrix.handle2(), 0, ell_coords.raw_size(), ell_coords.get());

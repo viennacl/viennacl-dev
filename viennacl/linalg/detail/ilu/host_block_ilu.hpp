@@ -200,9 +200,7 @@ namespace viennacl
             
             
             // Step 2: Precondition blocks:
-            LU_blocks[i].handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-            LU_blocks[i].handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-            LU_blocks[i].handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            viennacl::switch_memory_domain(LU_blocks[i], viennacl::MAIN_MEMORY);
             preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
           }
           

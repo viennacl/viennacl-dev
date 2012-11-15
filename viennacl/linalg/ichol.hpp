@@ -54,9 +54,7 @@ namespace viennacl
     template<typename ScalarType>
     void precondition(viennacl::compressed_matrix<ScalarType> & A, ichol0_tag const & tag)
     {
-      assert( (A.handle1().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle2().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (viennacl::memory_domain(A) == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ICHOL0") );
       
       ScalarType         * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
       unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
@@ -131,7 +129,7 @@ namespace viennacl
         typedef typename MatrixType::value_type      ScalarType;
 
       public:
-        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LU()
+        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LLT(mat.size1(), mat.size2())
         {
             //initialize preconditioner:
             //std::cout << "Start CPU precond" << std::endl;
@@ -142,29 +140,26 @@ namespace viennacl
         template <typename VectorType>
         void apply(VectorType & vec) const
         {
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU.handle());
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LLT.handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LLT.handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LLT.handle());
           
           // Note: L is stored in a column-oriented fashion, i.e. transposed w.r.t. the row-oriented layout. Thus, the factorization A = L L^T holds L in the upper triangular part of A.
-          viennacl::linalg::single_threaded::detail::csr_trans_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), lower_tag());
-          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), upper_tag());
+          viennacl::linalg::single_threaded::detail::csr_trans_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), lower_tag());
+          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), upper_tag());
         }
 
       private:
         void init(MatrixType const & mat)
         {
-          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          viennacl::switch_memory_domain(LLT, viennacl::MAIN_MEMORY);
           
-          viennacl::copy(mat, LU);
-          viennacl::linalg::precondition(LU, tag_);
+          viennacl::copy(mat, LLT);
+          viennacl::linalg::precondition(LLT, tag_);
         }
 
         ichol0_tag const & tag_;
-        
-        viennacl::compressed_matrix<ScalarType> LU;
+        viennacl::compressed_matrix<ScalarType> LLT;
     };
 
 
@@ -188,13 +183,13 @@ namespace viennacl
 
         void apply(vector<ScalarType> & vec) const
         {
-          if (vec.handle().get_active_handle_id() != viennacl::backend::MAIN_MEMORY)
+          if (viennacl::memory_domain(vec) != viennacl::MAIN_MEMORY)
           {
-            viennacl::backend::memory_types old_memory_location = vec.handle().get_active_handle_id();
-            vec.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
+            viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
             viennacl::linalg::inplace_solve(trans(LLT), vec, lower_tag());
             viennacl::linalg::inplace_solve(LLT, vec, upper_tag());
-            vec.handle().switch_active_handle_id(old_memory_location);
+            viennacl::switch_memory_domain(vec, old_memory_location);
           }
           else //apply ILU0 directly:
           {
@@ -207,51 +202,9 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
-          viennacl::backend::integral_type_host_array<unsigned int> dummy(mat.handle1());
+          viennacl::switch_memory_domain(LLT, viennacl::MAIN_MEMORY);
+          LLT = mat;
           
-          LLT.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LLT.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LLT.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          
-          if (dummy.element_size() != sizeof(unsigned int))  //Additional effort required: cl_uint on device is different from 'unsigned int' on host
-          {
-            // get data from input matrix
-            viennacl::backend::integral_type_host_array<unsigned int> row_buffer(mat.handle1(), mat.size1() + 1);
-            viennacl::backend::integral_type_host_array<unsigned int> col_buffer(mat.handle2(), mat.nnz());
-            
-            viennacl::backend::memory_read(mat.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
-            viennacl::backend::memory_read(mat.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
-            
-            
-            //conversion from cl_uint to host type 'unsigned int' required
-            std::vector<unsigned int> row_buffer_host(row_buffer.size());
-            for (std::size_t i=0; i<row_buffer_host.size(); ++i)
-              row_buffer_host[i] = row_buffer[i];
-            
-            std::vector<unsigned int> col_buffer_host(col_buffer.size());
-            for (std::size_t i=0; i<col_buffer_host.size(); ++i)
-              col_buffer_host[i] = col_buffer[i];
-            
-            //std::cout << "Creating unsigned int buffers of sizes " << row_buffer_host.size() << " and " << col_buffer_host.size() << std::endl;
-            viennacl::backend::memory_create(LLT.handle1(), sizeof(unsigned int) * row_buffer_host.size(), &(row_buffer_host[0]));
-            viennacl::backend::memory_create(LLT.handle2(), sizeof(unsigned int) * col_buffer_host.size(), &(col_buffer_host[0]));
-          }
-          else //direct copy to new data structure
-          {
-            //std::cout << "Creating unsigned int buffers of sizes " << (mat.size1() + 1) << " and " << mat.nnz() << std::endl;
-            viennacl::backend::memory_create(LLT.handle1(), sizeof(unsigned int) * (mat.size1() + 1));
-            viennacl::backend::memory_create(LLT.handle2(), sizeof(unsigned int) * mat.nnz());
-            
-            viennacl::backend::memory_read(mat.handle1(), 0, LLT.handle1().raw_size(), LLT.handle1().ram_handle().get());
-            viennacl::backend::memory_read(mat.handle2(), 0, LLT.handle2().raw_size(), LLT.handle2().ram_handle().get());
-          }          
-          
-          //std::cout << "Creating memory for " << mat.nnz() << " nonzeros" << std::endl;
-          viennacl::backend::memory_create(LLT.handle(), sizeof(ScalarType) * mat.nnz());
-          viennacl::backend::memory_read(mat.handle(), 0, sizeof(ScalarType) * mat.nnz(), LLT.handle().ram_handle().get());
-          
-
           viennacl::linalg::precondition(LLT, tag_);
         }
 

@@ -64,9 +64,9 @@ namespace viennacl
     template<typename ScalarType>
     void precondition(viennacl::compressed_matrix<ScalarType> & A, ilu0_tag const & tag)
     {
-      assert( (A.handle1().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle2().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      assert( (A.handle().get_active_handle_id() == viennacl::backend::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle1().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle2().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+      assert( (A.handle().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
       
       ScalarType         * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
       unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
@@ -157,9 +157,7 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
           
           viennacl::copy(mat, LU);
           viennacl::linalg::precondition(LU, tag_);
@@ -191,13 +189,13 @@ namespace viennacl
 
         void apply(vector<ScalarType> & vec) const
         {
-          if (vec.handle().get_active_handle_id() != viennacl::backend::MAIN_MEMORY)
+          if (vec.handle().get_active_handle_id() != viennacl::MAIN_MEMORY)
           {
-            viennacl::backend::memory_types old_memory_location = vec.handle().get_active_handle_id();
-            vec.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+            viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
+            viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
             viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
             viennacl::linalg::inplace_solve(LU, vec, upper_tag());
-            vec.handle().switch_active_handle_id(old_memory_location);
+            viennacl::switch_memory_domain(vec, old_memory_location);
           }
           else //apply ILU0 directly:
           {
@@ -209,48 +207,8 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
-          viennacl::backend::integral_type_host_array<unsigned int> dummy(mat.handle1());
-          
-          LU.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          LU.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          
-          if (dummy.element_size() != sizeof(unsigned int))  //Additional effort required: cl_uint on device is different from 'unsigned int' on host
-          {
-            // get data from input matrix
-            viennacl::backend::integral_type_host_array<unsigned int> row_buffer(mat.handle1(), mat.size1() + 1);
-            viennacl::backend::integral_type_host_array<unsigned int> col_buffer(mat.handle2(), mat.nnz());
-            
-            viennacl::backend::memory_read(mat.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
-            viennacl::backend::memory_read(mat.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
-            
-            
-            //conversion from cl_uint to host type 'unsigned int' required
-            std::vector<unsigned int> row_buffer_host(row_buffer.size());
-            for (std::size_t i=0; i<row_buffer_host.size(); ++i)
-              row_buffer_host[i] = row_buffer[i];
-            
-            std::vector<unsigned int> col_buffer_host(col_buffer.size());
-            for (std::size_t i=0; i<col_buffer_host.size(); ++i)
-              col_buffer_host[i] = col_buffer[i];
-            
-            viennacl::backend::memory_create(LU.handle1(), sizeof(unsigned int) * row_buffer_host.size(), &(row_buffer_host[0]));
-            viennacl::backend::memory_create(LU.handle2(), sizeof(unsigned int) * col_buffer_host.size(), &(col_buffer_host[0]));
-          }
-          else //direct copy to new data structure
-          {
-            viennacl::backend::memory_create(LU.handle1(), sizeof(unsigned int) * (mat.size1() + 1));
-            viennacl::backend::memory_create(LU.handle2(), sizeof(unsigned int) * mat.nnz());
-            
-            viennacl::backend::memory_read(mat.handle1(), 0, LU.handle1().raw_size(), LU.handle1().ram_handle().get());
-            viennacl::backend::memory_read(mat.handle2(), 0, LU.handle2().raw_size(), LU.handle2().ram_handle().get());
-          }          
-          
-          viennacl::backend::memory_create(LU.handle(), sizeof(ScalarType) * mat.nnz());
-          viennacl::backend::memory_read(mat.handle(), 0,  sizeof(ScalarType) * mat.nnz(), LU.handle().ram_handle().get());
-          
-
+          viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
+          LU = mat;
           viennacl::linalg::precondition(LU, tag_);
         }
 

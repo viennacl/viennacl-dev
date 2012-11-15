@@ -61,16 +61,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(A, B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(A, B, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(A, B, SOLVERTAG());
           break;
 #endif
@@ -98,16 +98,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #endif
@@ -136,16 +136,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #endif
@@ -173,16 +173,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #endif
@@ -205,16 +205,16 @@ namespace viennacl
       
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #endif
@@ -240,16 +240,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #endif
@@ -464,16 +464,16 @@ namespace viennacl
 
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
-        case viennacl::backend::MAIN_MEMORY:
+        case viennacl::MAIN_MEMORY:
           viennacl::linalg::single_threaded::lu_factorize(mat);
           break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::backend::OPENCL_MEMORY:
+        case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::lu_factorize(mat);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::backend::CUDA_MEMORY:
+        case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::lu_factorize(mat);
           break;
 #endif

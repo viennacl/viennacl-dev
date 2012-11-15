@@ -82,8 +82,8 @@ namespace viennacl
         
         //std::vector<cl_uint> row_buffer(cpu_matrix.size1() + 1);
         //std::vector<cl_uint> col_buffer(num_entries);
-        viennacl::backend::integral_type_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
-        viennacl::backend::integral_type_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), num_entries);
+        viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), num_entries);
         std::vector<SCALARTYPE> elements(num_entries);
         
         std::size_t row_index  = 0;
@@ -210,8 +210,8 @@ namespace viennacl
         cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
         
         //get raw data from memory:
-        viennacl::backend::integral_type_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
-        viennacl::backend::integral_type_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
         //std::cout << "GPU->CPU, nonzeros: " << gpu_matrix.nnz() << std::endl;
@@ -365,11 +365,11 @@ namespace viennacl
         {
           if (rows > 0)
           {
-            viennacl::backend::memory_create(row_buffer_, viennacl::backend::integral_type_host_array<unsigned int>().element_size() * (rows + 1));
+            viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1));
           }
           if (nonzeros > 0)
           {
-            viennacl::backend::memory_create(col_buffer_, viennacl::backend::integral_type_host_array<unsigned int>().element_size() * nonzeros);
+            viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * nonzeros);
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros);
           }
         }
@@ -379,19 +379,38 @@ namespace viennacl
                                   std::size_t rows, std::size_t cols, std::size_t nonzeros) : 
           rows_(rows), cols_(cols), nonzeros_(nonzeros)
         {
-            row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            row_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
             row_buffer_.opencl_handle() = mem_row_buffer;
             row_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
             
-            col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            col_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
             col_buffer_.opencl_handle() = mem_col_buffer;
             col_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
             
-            elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+            elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
             elements_.opencl_handle() = mem_elements;
             elements_.opencl_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
         }
 #endif        
+        
+        
+        /** @brief Assignment a compressed matrix from possibly another memory domain. */
+        compressed_matrix & operator=(compressed_matrix const & other)
+        {
+          assert( (rows_ == 0 || rows_ == other.size1()) && bool("Size mismatch") );
+          assert( (cols_ == 0 || cols_ == other.size2()) && bool("Size mismatch") );
+          
+          rows_ = other.size1();
+          cols_ = other.size2();
+          nonzeros_ = other.nnz();
+          
+          viennacl::backend::typesafe_memory_copy<unsigned int>(other.row_buffer_, row_buffer_);
+          viennacl::backend::typesafe_memory_copy<unsigned int>(other.col_buffer_, col_buffer_);
+          viennacl::backend::typesafe_memory_copy<SCALARTYPE>(other.elements_, elements_);
+          
+          return *this;
+        }
+        
         
         /** @brief Sets the row, column and value arrays of the compressed matrix
         *
@@ -415,10 +434,10 @@ namespace viennacl
           //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
           
           //row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(row_buffer_, viennacl::backend::integral_type_host_array<unsigned int>(row_buffer_).element_size() * (rows + 1), row_jumper);
+          viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(row_buffer_).element_size() * (rows + 1), row_jumper);
 
           //col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(col_buffer_, viennacl::backend::integral_type_host_array<unsigned int>(col_buffer_).element_size() * nonzeros, col_buffer);
+          viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(col_buffer_).element_size() * nonzeros, col_buffer);
 
           //elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, elements);
@@ -438,7 +457,7 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(col_buffer_, col_buffer_old);
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
             
-            viennacl::backend::integral_type_host_array<unsigned int> size_deducer(col_buffer_);
+            viennacl::backend::typesafe_host_array<unsigned int> size_deducer(col_buffer_);
             viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros);
             viennacl::backend::memory_create(elements_,   sizeof(SCALARTYPE) * new_nonzeros);
             
@@ -541,21 +560,33 @@ namespace viennacl
         /** @brief  Returns the OpenCL handle to the matrix entry array */
         handle_type & handle() { return elements_; }
         
+        void switch_memory_domain(viennacl::memory_types new_domain)
+        {
+          viennacl::backend::switch_memory_domain<unsigned int>(row_buffer_, new_domain);
+          viennacl::backend::switch_memory_domain<unsigned int>(col_buffer_, new_domain);
+          viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+        }
+        
+        viennacl::memory_types memory_domain() const
+        {
+          return row_buffer_.get_active_handle_id();
+        }
+        
       private:
         
         std::size_t element_index(std::size_t i, std::size_t j)
         {
           //read row indices
-          viennacl::backend::integral_type_host_array<unsigned int> row_indices(row_buffer_, 2);
+          viennacl::backend::typesafe_host_array<unsigned int> row_indices(row_buffer_, 2);
           viennacl::backend::memory_read(row_buffer_, row_indices.element_size()*i, row_indices.element_size()*2, row_indices.get());
 
           //get column indices for row i:
-          viennacl::backend::integral_type_host_array<unsigned int> col_indices(col_buffer_, row_indices[1] - row_indices[0]);
+          viennacl::backend::typesafe_host_array<unsigned int> col_indices(col_buffer_, row_indices[1] - row_indices[0]);
           viennacl::backend::memory_read(col_buffer_, col_indices.element_size()*row_indices[0], row_indices.element_size()*col_indices.size(), col_indices.get());
 
           //get entries for row i:
-          std::vector<SCALARTYPE> row_entries(row_indices[1] - row_indices[0]);
-          viennacl::backend::memory_read(elements_, sizeof(SCALARTYPE)*row_indices[0], sizeof(SCALARTYPE)*row_entries.size(), &(row_entries[0]));
+          viennacl::backend::typesafe_host_array<SCALARTYPE> row_entries(elements_, row_indices[1] - row_indices[0]);
+          viennacl::backend::memory_read(elements_, sizeof(SCALARTYPE)*row_indices[0], sizeof(SCALARTYPE)*row_entries.size(), row_entries.get());
 
           for (std::size_t k=0; k<col_indices.size(); ++k)
           {
@@ -569,9 +600,6 @@ namespace viennacl
         
         // /** @brief Copy constructor is by now not available. */
         //compressed_matrix(compressed_matrix const &);
-        
-        /** @brief Assignment is by now not available. */
-        compressed_matrix & operator=(compressed_matrix const &);
         
         
         std::size_t rows_;

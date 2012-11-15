@@ -69,8 +69,8 @@ namespace viennacl
         gpu_matrix.rows_ = cpu_matrix.size1();
         gpu_matrix.cols_ = cpu_matrix.size2();
 
-        viennacl::backend::integral_type_host_array<unsigned int> group_boundaries(gpu_matrix.handle3(), group_num + 1);
-        viennacl::backend::integral_type_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.internal_nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> group_boundaries(gpu_matrix.handle3(), group_num + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.internal_nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
         
         std::size_t data_index = 0;
@@ -139,7 +139,7 @@ namespace viennacl
         cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
         
         //get raw data from memory:
-        viennacl::backend::integral_type_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
         //std::cout << "GPU nonzeros: " << gpu_matrix.nnz() << std::endl;
@@ -197,8 +197,8 @@ namespace viennacl
         {
           if (nonzeros > 0)
           {
-            viennacl::backend::memory_create(group_boundaries_, viennacl::backend::integral_type_host_array<unsigned int>().element_size() * (group_num_ + 1));
-            viennacl::backend::memory_create(coord_buffer_,     viennacl::backend::integral_type_host_array<unsigned int>().element_size() * 2 * internal_nnz());
+            viennacl::backend::memory_create(group_boundaries_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (group_num_ + 1));
+            viennacl::backend::memory_create(coord_buffer_,     viennacl::backend::typesafe_host_array<unsigned int>().element_size() * 2 * internal_nnz());
             viennacl::backend::memory_create(elements_,         sizeof(SCALARTYPE) * internal_nnz());
           }
         }
@@ -214,7 +214,7 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
             
             std::size_t internal_new_nnz = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_nonzeros, ALIGNMENT);
-            viennacl::backend::integral_type_host_array<unsigned int> size_deducer(coord_buffer_);
+            viennacl::backend::typesafe_host_array<unsigned int> size_deducer(coord_buffer_);
             viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz);
             viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz);
 

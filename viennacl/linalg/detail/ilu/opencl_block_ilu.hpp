@@ -239,9 +239,7 @@ namespace viennacl
                                      viennacl::linalg::ilu0_tag)
         {
           viennacl::compressed_matrix<ScalarType> temp(LU.size(), LU.size());
-          temp.handle1().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          temp.handle2().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
-          temp.handle().switch_active_handle_id(viennacl::backend::MAIN_MEMORY);
+          viennacl::switch_memory_domain(temp, viennacl::MAIN_MEMORY);
           viennacl::copy(mat_block, temp);
           viennacl::linalg::precondition(temp, tag_);
           viennacl::copy(temp, LU);

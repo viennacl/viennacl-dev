@@ -265,6 +265,17 @@ namespace viennacl
   template <typename T>
   struct is_any_matrix;
   
+  
+  enum memory_types
+  {
+    MEMORY_NOT_INITIALIZED
+    , MAIN_MEMORY
+    , OPENCL_MEMORY
+    , CUDA_MEMORY
+  };
+
+  
+  
   namespace tools
   {
     //helper for matrix row/col iterators 

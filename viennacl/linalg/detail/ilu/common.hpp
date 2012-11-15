@@ -210,13 +210,13 @@ namespace viennacl
           if (num_tainted_cols > 0)
           {
             row_index_arrays.push_back(viennacl::backend::mem_handle());
-            viennacl::backend::integral_type_host_array<unsigned int> row_index_array(row_index_arrays.back(), num_tainted_cols);
+            viennacl::backend::typesafe_host_array<unsigned int> row_index_array(row_index_arrays.back(), num_tainted_cols);
             
             row_buffers.push_back(viennacl::backend::mem_handle());
-            viennacl::backend::integral_type_host_array<unsigned int> row_buffer(row_buffers.back(), num_tainted_cols + 1);
+            viennacl::backend::typesafe_host_array<unsigned int> row_buffer(row_buffers.back(), num_tainted_cols + 1);
             
             col_buffers.push_back(viennacl::backend::mem_handle());
-            viennacl::backend::integral_type_host_array<unsigned int> col_buffer(col_buffers.back(), num_entries);
+            viennacl::backend::typesafe_host_array<unsigned int> col_buffer(col_buffers.back(), num_entries);
             
             element_buffers.push_back(viennacl::backend::mem_handle());
             std::vector<ScalarType> elements_buffer(num_entries);

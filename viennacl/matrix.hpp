@@ -203,7 +203,7 @@ namespace viennacl
     explicit matrix(cl_mem mem, size_type rows, size_type columns) :
       rows_(rows), columns_(columns)
     {
-      elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+      elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
       elements_.opencl_handle() = mem;
       elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
     }
@@ -721,6 +721,17 @@ namespace viennacl
           handle_type & handle()       { return elements_; }
     /** @brief Returns the OpenCL handle, const-version */
     const handle_type & handle() const { return elements_; }
+    
+    void switch_memory_domain(viennacl::memory_types new_domain)
+    {
+      viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+    }
+    
+    viennacl::memory_types memory_domain() const
+    {
+      return elements_.get_active_handle_id();
+    }
+
     
   private:
     size_type rows_;

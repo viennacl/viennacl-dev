@@ -92,7 +92,7 @@ namespace viennacl
         
         switch (viennacl::traits::handle(mat).get_active_handle_id())
         {
-          case viennacl::backend::OPENCL_MEMORY:
+          case viennacl::OPENCL_MEMORY:
             viennacl::linalg::opencl::prod_impl(mat, vec, result);
             break;
           default:

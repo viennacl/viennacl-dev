@@ -358,7 +358,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENCL
     explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
     {
-      elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
+      elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
       elements_.opencl_handle() = existing_mem;
       elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
     }
@@ -1176,6 +1176,15 @@ namespace viennacl
       }
     }
     
+    void switch_memory_domain(viennacl::memory_types new_domain)
+    {
+      viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+    }
+    
+    viennacl::memory_types memory_domain() const
+    {
+      return elements_.get_active_handle_id();
+    }
 
     //TODO: Think about implementing the following public member functions
     //void insert_element(unsigned int i, SCALARTYPE val){}
