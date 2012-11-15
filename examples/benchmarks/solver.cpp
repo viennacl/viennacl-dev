@@ -29,19 +29,22 @@
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
-#include "viennacl/linalg/ilu.hpp"
-#include "viennacl/linalg/ichol.hpp"
+
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/linalg/gmres.hpp"
-#include "viennacl/io/matrix_market.hpp"
+
+#include "viennacl/linalg/ilu.hpp"
+#include "viennacl/linalg/ichol.hpp"
+#include "viennacl/linalg/jacobi_precond.hpp"
+#include "viennacl/linalg/row_scaling.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/mixed_precision_cg.hpp"
   #include "viennacl/linalg/detail/ilu/opencl_block_ilu.hpp"  //preview feature: OpenCL accelerated block-ILU
-  #include "viennacl/linalg/jacobi_precond.hpp"
-  #include "viennacl/linalg/row_scaling.hpp"
 #endif  
+
+#include "viennacl/io/matrix_market.hpp"
 
 
 #include <iostream>
@@ -188,13 +191,12 @@ int run_benchmark()
   viennacl::copy(ublas_result, vcl_result);
   
   
-#ifdef VIENNACL_WITH_OPENCL
   viennacl::linalg::jacobi_precond< ublas::compressed_matrix<ScalarType> >    ublas_jacobi(ublas_matrix, viennacl::linalg::jacobi_tag());
   viennacl::linalg::jacobi_precond< viennacl::compressed_matrix<ScalarType> > vcl_jacobi(vcl_compressed_matrix, viennacl::linalg::jacobi_tag());
   
   viennacl::linalg::row_scaling< ublas::compressed_matrix<ScalarType> >    ublas_row_scaling(ublas_matrix, viennacl::linalg::row_scaling_tag(1));
   viennacl::linalg::row_scaling< viennacl::compressed_matrix<ScalarType> > vcl_row_scaling(vcl_compressed_matrix, viennacl::linalg::row_scaling_tag(1));
-#endif
+
   
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////  Incomplete Cholesky preconditioner   //////////////////
@@ -436,6 +438,7 @@ int run_benchmark()
 #ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- CG solver (Block-ILUT preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_block_ilut, cg_ops);
+#endif  
 
   
 //  std::cout << "------- CG solver (ILUT preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
@@ -457,7 +460,6 @@ int run_benchmark()
   
   std::cout << "------- CG solver (row scaling preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_row_scaling, cg_ops);
-#endif  
   
 //  std::cout << "------- CG solver (row scaling preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
 //  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, cg_solver, vcl_row_scaling, cg_ops);
@@ -492,6 +494,7 @@ int run_benchmark()
 #ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- BiCGStab solver (Block-ILUT preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_block_ilut, bicgstab_ops);
+#endif
   
 //  std::cout << "------- BiCGStab solver (ILUT preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
 //  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_ilut, bicgstab_ops);
@@ -510,7 +513,6 @@ int run_benchmark()
   
   std::cout << "------- BiCGStab solver (row scaling preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_row_scaling, bicgstab_ops);
-#endif
   
 //  std::cout << "------- CG solver row scaling preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
 //  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_row_scaling, bicgstab_ops);
@@ -543,7 +545,6 @@ int run_benchmark()
 //  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, gmres_solver, vcl_ilut, gmres_ops);
 
 
-#ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- GMRES solver (Jacobi preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, gmres_solver, ublas_jacobi, gmres_ops);
   
@@ -559,7 +560,6 @@ int run_benchmark()
   
   std::cout << "------- GMRES solver (row scaling preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, gmres_solver, vcl_row_scaling, gmres_ops);
-#endif
   
 //  std::cout << "------- GMRES solver (row scaling preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
 //  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, gmres_solver, vcl_row_scaling, gmres_ops);

@@ -21,6 +21,8 @@
     @brief Implementations of vector operations using OpenCL
 */
 
+#include <cmath>
+
 #include "viennacl/forwards.h"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
@@ -284,9 +286,86 @@ namespace viennacl
                               );
       }
 
+      ///////////////////////// Elementwise operations /////////////
+      
+      /** @brief Swaps the contents of two vectors, data is copied
+      *
+      * @param vec1   The first vector (or -range, or -slice)
+      * @param vec2   The second vector (or -range, or -slice)
+      */
+      template <typename V1, typename V2, typename V3, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  >::type
+      element_op(V1 & vec1,
+                vector_expression<const V2, const V3, OP> const & proxy)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "element_op");
+
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+                                 cl_uint(viennacl::traits::start(vec1)),
+                                 cl_uint(viennacl::traits::stride(vec1)),
+                                 cl_uint(viennacl::traits::size(vec1)),
+
+                                 viennacl::traits::opencl_handle(proxy.lhs()),
+                                 cl_uint(viennacl::traits::start(proxy.lhs())),
+                                 cl_uint(viennacl::traits::stride(proxy.lhs())),
+                                 
+                                 viennacl::traits::opencl_handle(proxy.rhs()),
+                                 cl_uint(viennacl::traits::start(proxy.rhs())),
+                                 cl_uint(viennacl::traits::stride(proxy.rhs())),
+                                 
+                                 cl_uint(viennacl::is_division<OP>::value))
+                              );
+      }
 
       ///////////////////////// Norms and inner product ///////////////////
 
+      /** @brief Computes the partial inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
+      *
+      * @param vec1 The first vector
+      * @param vec2 The second vector
+      * @param result The results of each group
+      */
+      template <typename V1, typename V2, typename V3>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  >::type
+      inner_prod_impl(V1 const & vec1,
+                      V2 const & vec2,
+                      V3 & partial_result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+      
+        assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
+              && bool("Incompatible vector sizes in inner_prod_impl()!"));
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
+
+        assert( (k.global_work_size() / k.local_work_size() == partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
+                
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+                                 cl_uint(viennacl::traits::start(vec1)),
+                                 cl_uint(viennacl::traits::stride(vec1)),
+                                 cl_uint(viennacl::traits::size(vec1)),
+                                 viennacl::traits::opencl_handle(vec2),
+                                 cl_uint(viennacl::traits::start(vec2)),
+                                 cl_uint(viennacl::traits::stride(vec2)),
+                                 cl_uint(viennacl::traits::size(vec2)),
+                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
+                                 viennacl::traits::opencl_handle(partial_result)
+                                )
+                              );        
+      }
+      
 
       //implementation of inner product:
       //namespace {
@@ -307,44 +386,14 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
-      
-        assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
-              && bool("Incompatible vector sizes in inner_prod_impl()!"));
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
-        //cl_uint size = static_cast<cl_uint>(std::min(vec1.internal_size(), vec2.internal_size()));
-        unsigned int work_groups = k.global_work_size() / k.local_work_size();
-        
+        static std::size_t work_groups = 128;
         static viennacl::vector<value_type> temp(work_groups);
-        
-        //Note: Number of work groups MUST be a power of two!
-        //std::cout << work_groups << ", " << k.local_work_size() << ", " << k.global_work_size() << std::endl;
-        assert( work_groups * k.local_work_size() == k.global_work_size() );
-        assert( (k.global_work_size() / k.local_work_size()) == 1 
-                || (k.global_work_size() / k.local_work_size()) == 2 
-                || (k.global_work_size() / k.local_work_size()) == 4
-                || (k.global_work_size() / k.local_work_size()) == 8
-                || (k.global_work_size() / k.local_work_size()) == 16
-                || (k.global_work_size() / k.local_work_size()) == 32
-                || (k.global_work_size() / k.local_work_size()) == 64
-                || (k.global_work_size() / k.local_work_size()) == 128
-                || (k.global_work_size() / k.local_work_size()) == 256
-                || (k.global_work_size() / k.local_work_size()) == 512 );
-                
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
-                                 viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
-                                 cl_uint(viennacl::traits::size(vec2)),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
-                                 viennacl::traits::opencl_handle(temp)
-                                )
-                              );        
 
+        // Step 1: Compute partial inner products for each work group:
+        inner_prod_impl(vec1, vec2, temp);
+        
+        // Step 2: Sum partial results:
         viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
@@ -378,40 +427,14 @@ namespace viennacl
                      S3 & result)
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
-      
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
-        static const unsigned int work_groups = k.global_work_size() / k.local_work_size();
         
+        static std::size_t work_groups = 128;
         static viennacl::vector<value_type> temp(work_groups);
+
+        // Step 1: Compute partial inner products for each work group:
+        inner_prod_impl(vec1, vec2, temp);
         
-        //Note: Number of work groups MUST be a power of two!
-        //std::cout << work_groups << ", " << k.local_work_size() << ", " << k.global_work_size() << std::endl;
-        assert( work_groups * k.local_work_size() == k.global_work_size() );
-        assert( (k.global_work_size() / k.local_work_size()) == 1 
-                || (k.global_work_size() / k.local_work_size()) == 2 
-                || (k.global_work_size() / k.local_work_size()) == 4
-                || (k.global_work_size() / k.local_work_size()) == 8
-                || (k.global_work_size() / k.local_work_size()) == 16
-                || (k.global_work_size() / k.local_work_size()) == 32
-                || (k.global_work_size() / k.local_work_size()) == 64
-                || (k.global_work_size() / k.local_work_size()) == 128
-                || (k.global_work_size() / k.local_work_size()) == 256
-                || (k.global_work_size() / k.local_work_size()) == 512 );
-                
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
-                                 viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
-                                 cl_uint(viennacl::traits::size(vec2)),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
-                                 viennacl::traits::opencl_handle(temp)
-                                )
-                              );        
+        // Step 2: Sum partial results:
 
         // Now copy partial results from GPU back to CPU and run reduction there:
         static std::vector<value_type> temp_cpu(work_groups);
@@ -422,6 +445,42 @@ namespace viennacl
           result += *it;
       }
       
+      
+      //////////// Helper for norms
+      
+      /** @brief Computes the partial work group results for vector norms
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      */
+      template <typename V1, typename V2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  >::type
+      norm_reduction_impl(V1 const & vec,
+                          V2 & partial_result,
+                          cl_uint norm_id)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
+        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
+
+        assert( (k.global_work_size() / k.local_work_size() == partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
+        
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
+                                 cl_uint(viennacl::traits::start(vec)),
+                                 cl_uint(viennacl::traits::stride(vec)),
+                                 cl_uint(viennacl::traits::size(vec)),
+                                 cl_uint(norm_id),
+                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
+                                 viennacl::traits::opencl_handle(partial_result) )
+                              );        
+      }
+      
+      
+      //////////// Norm 1
       
       /** @brief Computes the l^1-norm of a vector
       *
@@ -437,37 +496,14 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
-        //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
-        
-        unsigned int work_groups = k.global_work_size() / k.local_work_size();
-        viennacl::vector<value_type> temp(work_groups);
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
 
-        //Note: Number of work groups MUST be a power of two!
-        //std::cout << work_groups << ", " << k.local_work_size() << ", " << k.global_work_size() << std::endl;
-        assert( work_groups * k.local_work_size() == k.global_work_size() );
-        assert( (k.global_work_size() / k.local_work_size()) == 1 
-              || (k.global_work_size() / k.local_work_size()) == 2 
-              || (k.global_work_size() / k.local_work_size()) == 4
-              || (k.global_work_size() / k.local_work_size()) == 8
-              || (k.global_work_size() / k.local_work_size()) == 16
-              || (k.global_work_size() / k.local_work_size()) == 32
-              || (k.global_work_size() / k.local_work_size()) == 64
-              || (k.global_work_size() / k.local_work_size()) == 128
-              || (k.global_work_size() / k.local_work_size()) == 256
-              || (k.global_work_size() / k.local_work_size()) == 512 );
-                
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),
-                                 cl_uint(1),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
-                                 viennacl::traits::opencl_handle(temp) )
-                              );        
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 1);
         
+        // Step 2: Compute the partial reduction using OpenCL
         viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
@@ -481,12 +517,45 @@ namespace viennacl
                                     result)
                               );
       }
-
-      /** @brief Computes the l^2-norm of a vector - implementation
+      
+      /** @brief Computes the l^1-norm of a vector with final reduction on CPU
       *
       * @param vec The vector
       * @param result The result scalar
-      * @param dummy  Dummy parameter used for SFINAE
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_1_cpu(V1 const & vec,
+                 S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 1);
+        
+        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result += *it;
+      }
+      
+      
+      
+      //////// Norm 2
+
+      
+      /** @brief Computes the l^2-norm of a vector - implementation using OpenCL summation at second step
+      *
+      * @param vec The vector
+      * @param result The result scalar
       */
       template <typename V1, typename S2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -497,51 +566,62 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
-        //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
-        
-        unsigned int work_groups = k.global_work_size() / k.local_work_size();
-        viennacl::vector<value_type> temp(work_groups);
-          
-        //Note: Number of work groups MUST be a power of two!
-        //std::cout << work_groups << ", " << k.local_work_size() << ", " << k.global_work_size() << std::endl;
-        assert( work_groups * k.local_work_size() == k.global_work_size() );
-        assert( (k.global_work_size() / k.local_work_size()) == 1 
-              || (k.global_work_size() / k.local_work_size()) == 2 
-              || (k.global_work_size() / k.local_work_size()) == 4
-              || (k.global_work_size() / k.local_work_size()) == 8
-              || (k.global_work_size() / k.local_work_size()) == 16
-              || (k.global_work_size() / k.local_work_size()) == 32
-              || (k.global_work_size() / k.local_work_size()) == 64
-              || (k.global_work_size() / k.local_work_size()) == 128
-              || (k.global_work_size() / k.local_work_size()) == 256
-              || (k.global_work_size() / k.local_work_size()) == 512 );
-                
-          viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-                                   cl_uint(viennacl::traits::start(vec)),
-                                   cl_uint(viennacl::traits::stride(vec)),
-                                   cl_uint(viennacl::traits::size(vec)),                                 
-                                   cl_uint(2),
-                                   viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
-                                   temp)
-                                );
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
 
-          viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
-          
-          ksum.local_work_size(0, work_groups);
-          ksum.global_work_size(0, work_groups);
-          viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
-                                       cl_uint(viennacl::traits::start(temp)),
-                                       cl_uint(viennacl::traits::stride(temp)),
-                                       cl_uint(viennacl::traits::size(temp)),
-                                       cl_uint(2),
-                                       viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
-                                       result)
-                                );
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 2);
+
+        // Step 2: Reduction via OpenCL
+        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
+        
+        ksum.local_work_size(0, work_groups);
+        ksum.global_work_size(0, work_groups);
+        viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
+                                      cl_uint(viennacl::traits::start(temp)),
+                                      cl_uint(viennacl::traits::stride(temp)),
+                                      cl_uint(viennacl::traits::size(temp)),
+                                      cl_uint(2),
+                                      viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                      result)
+                              );
       }
+      
+      /** @brief Computes the l^1-norm of a vector with final reduction on CPU
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_2_cpu(V1 const & vec,
+                 S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
 
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 2);
+        
+        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result += *it;
+        result = std::sqrt(result);
+      }
+      
+
+      
+      ////////// Norm inf
+      
       /** @brief Computes the supremum-norm of a vector
       *
       * @param vec The vector
@@ -556,36 +636,12 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
         
-        //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
-        
-        unsigned int work_groups = k.global_work_size() / k.local_work_size();
-        viennacl::vector<value_type> temp(work_groups);
-          
-        //Note: Number of work groups MUST be a power of two!
-        //std::cout << work_groups << ", " << k.local_work_size() << ", " << k.global_work_size() << std::endl;
-        assert( work_groups * k.local_work_size() == k.global_work_size() );
-        assert( work_groups == 1 
-              || work_groups == 2 
-              || work_groups == 4
-              || work_groups == 8
-              || work_groups == 16
-              || work_groups == 32
-              || work_groups == 64
-              || work_groups == 128
-              || work_groups == 256
-              || work_groups == 512 );
-                
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),                                 
-                                 cl_uint(0),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
-                                 temp));
-        //viennacl::ocl::get_queue().finish();
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 0);
         
         //part 2: parallel reduction of reduced kernel:
         viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
@@ -602,6 +658,38 @@ namespace viennacl
                               );
       }
 
+      /** @brief Computes the supremum-norm of a vector
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_inf_cpu(V1 const & vec,
+                   S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+
+        // Step 1: Compute the partial work group results
+        norm_reduction_impl(vec, temp, 0);
+        
+        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result = std::max(result, *it);
+      }
+      
+      
+      /////////// index norm_inf
+      
       //This function should return a CPU scalar, otherwise statements like 
       // vcl_rhs[index_norm_inf(vcl_rhs)] 
       // are ambiguous

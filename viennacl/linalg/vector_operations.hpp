@@ -226,8 +226,151 @@ namespace viennacl
           throw "not implemented";
       }
     }
+    
+    
+    ///////////////////////// Elementwise operations /////////////
+    
+    
+    
+    /** @brief Swaps the contents of two vectors, data is copied
+    *
+    * @param vec1   The first vector (or -range, or -slice)
+    * @param vec2   The second vector (or -range, or -slice)
+    */
+    template <typename V1, typename V2, typename V3, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                >::type
+    element_op(V1 & vec1,
+               vector_expression<const V2, const V3, OP> const & proxy)
+    {
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
+
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::element_op(vec1, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(vec1, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(vec1, proxy);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
 
 
+
+    
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::vector_expression<const V1, const V2, op_prod>
+                                >::type
+    element_prod(V1 const & v1, V2 const & v2)
+    {
+      return viennacl::vector_expression<const V1, const V2, op_prod>(v1, v2);
+    }
+
+    template <typename V1, typename V2, typename OP, typename V3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V3>::value,
+                                  vector<typename viennacl::result_of::cpu_value_type<V3>::type>
+                                >::type
+    element_prod(vector_expression<const V1, const V2, OP> const & proxy, V3 const & v2)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V3>::type>  VectorType;
+      VectorType temp = proxy; 
+      temp = element_prod(temp, v2);
+      return temp;
+    }
+    
+    template <typename V1, typename V2, typename V3, typename OP>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+                                >::type
+    element_prod(V1 const & v1, vector_expression<const V2, const V3, OP> const & proxy)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
+      VectorType temp = proxy; 
+      temp = element_prod(v1, temp);
+      return temp;
+    }
+    
+    template <typename V1, typename V2, typename OP1,
+              typename V3, typename V4, typename OP2>
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+    element_prod(vector_expression<const V1, const V2, OP1> const & proxy1,
+                 vector_expression<const V3, const V4, OP2> const & proxy2)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
+      VectorType temp1 = proxy1; 
+      VectorType temp2 = proxy2;
+      temp1 = element_prod(temp1, temp2);
+      return temp1;
+    }
+    
+
+    
+    
+    
+    
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::vector_expression<const V1, const V2, op_div>
+                                >::type
+    element_div(V1 const & v1, V2 const & v2)
+    {
+      return viennacl::vector_expression<const V1, const V2, op_div>(v1, v2);
+    }
+    
+    template <typename V1, typename V2, typename OP, typename V3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V3>::value,
+                                  vector<typename viennacl::result_of::cpu_value_type<V3>::type>
+                                >::type
+    element_div(vector_expression<const V1, const V2, OP> const & proxy, V3 const & v2)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V3>::type>  VectorType;
+      VectorType temp = proxy; 
+      temp = element_div(temp, v2);
+      return temp;
+    }
+    
+    template <typename V1, typename V2, typename V3, typename OP>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+                                >::type
+    element_div(V1 const & v1, vector_expression<const V2, const V3, OP> const & proxy)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
+      VectorType temp = proxy; 
+      temp = element_div(v1, temp);
+      return temp;
+    }
+    
+    template <typename V1, typename V2, typename OP1,
+              typename V3, typename V4, typename OP2>
+    vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+    element_div(vector_expression<const V1, const V2, OP1> const & proxy1,
+                vector_expression<const V3, const V4, OP2> const & proxy2)
+    {
+      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
+      VectorType temp1 = proxy1; 
+      VectorType temp2 = proxy2; 
+      temp1 = element_div(temp1, temp2);
+      return temp1;
+    }
+    
+    
+    
     ///////////////////////// Norms and inner product ///////////////////
 
 
@@ -316,7 +459,7 @@ namespace viennacl
     * @param vec2 The second vector
     * @return The result
     */
-    template <typename V1, typename V2>
+    /*template <typename V1, typename V2>
     typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
                                   && viennacl::is_any_dense_nonstructured_vector<V2>::value,
                                   viennacl::scalar_expression< const V1, const V2, viennacl::op_inner_prod >
@@ -327,7 +470,7 @@ namespace viennacl
       return viennacl::scalar_expression< const V1, 
                                           const V2,
                                           viennacl::op_inner_prod >(vec1, vec2);
-    }
+    }*/
 
 
     
@@ -363,6 +506,42 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the l^1-norm of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_1_cpu(V1 const & vec,
+                S2 & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::norm_1_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::norm_1_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_1_cpu(vec, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
+    
+    
+    
+    
     /** @brief Computes the l^2-norm of a vector - dispatcher interface
     *
     * @param vec The vector
@@ -395,6 +574,42 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the l^2-norm of a vector with final reduction on the CPU - dispatcher interface
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_2_cpu(V1 const & vec,
+                S2 & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::norm_2_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::norm_2_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_2_cpu(vec, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+    
+    
+    
+    
+    
     /** @brief Computes the supremum-norm of a vector
     *
     * @param vec The vector
@@ -427,6 +642,39 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the supremum-norm of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_inf_cpu(V1 const & vec,
+                 S2 & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::single_threaded::norm_inf_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL          
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::norm_inf_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::norm_inf_cpu(vec, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
+    
     //This function should return a CPU scalar, otherwise statements like 
     // vcl_rhs[index_norm_inf(vcl_rhs)] 
     // are ambiguous

@@ -26,6 +26,7 @@
 #include <sstream>
 #include "viennacl/forwards.h"
 #include "viennacl/meta/result_of.hpp"
+#include "viennacl/meta/predicate.hpp"
 
 #ifdef VIENNACL_WITH_UBLAS  
 #include <boost/numeric/ublas/matrix_sparse.hpp>
@@ -146,7 +147,8 @@ namespace viennacl
     }
     
     template <typename LHS, typename RHS>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<RHS>::value,
+    typename viennacl::enable_if<    viennacl::is_any_matrix<LHS>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<RHS>::value,
                                   vcl_size_t >::type
     size(vector_expression<const LHS, const RHS, op_prod> const & proxy)  //matrix-vector product
     {
@@ -162,7 +164,6 @@ namespace viennacl
     {
       return proxy.lhs().lhs().size2();
     }
-    
     
     
     #ifdef VIENNACL_WITH_MTL4

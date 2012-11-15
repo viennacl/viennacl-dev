@@ -229,6 +229,51 @@ namespace viennacl
           data_vec1[i*inc1+start1] = temp;
         }
       }
+      
+      
+      ///////////////////////// Elementwise operations /////////////
+      
+      /** @brief Swaps the contents of two vectors, data is copied
+      *
+      * @param vec1   The first vector (or -range, or -slice)
+      * @param vec2   The second vector (or -range, or -slice)
+      */
+      template <typename V1, typename V2, typename V3, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  >::type
+      element_op(V1 & vec1,
+                vector_expression<const V2, const V3, OP> const & proxy)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+        value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(proxy.lhs());
+        value_type const * data_vec3 = detail::extract_raw_pointer<value_type>(proxy.rhs());
+        
+        std::size_t start1 = viennacl::traits::start(vec1);
+        std::size_t inc1   = viennacl::traits::stride(vec1);
+        std::size_t size1  = viennacl::traits::size(vec1);
+        
+        std::size_t start2 = viennacl::traits::start(proxy.lhs());
+        std::size_t inc2   = viennacl::traits::stride(proxy.lhs());
+
+        std::size_t start3 = viennacl::traits::start(proxy.rhs());
+        std::size_t inc3   = viennacl::traits::stride(proxy.rhs());
+        
+        if (viennacl::is_product<OP>::value)
+        {
+          for (std::size_t i = 0; i < size1; ++i)
+            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_vec3[i*inc3+start3];
+        }
+        else
+        {
+          for (std::size_t i = 0; i < size1; ++i)
+            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_vec3[i*inc3+start3];
+        }
+      }
+
 
 
       ///////////////////////// Norms and inner product ///////////////////
@@ -279,7 +324,7 @@ namespace viennacl
       */
       template <typename V1, typename S2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
+                                    && viennacl::is_any_scalar<S2>::value
                                   >::type
       norm_1_impl(V1 const & vec1,
                   S2 & result)
@@ -308,7 +353,7 @@ namespace viennacl
       */
       template <typename V1, typename S2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
+                                    && viennacl::is_any_scalar<S2>::value
                                   >::type
       norm_2_impl(V1 const & vec1,
                   S2 & result)
@@ -340,7 +385,7 @@ namespace viennacl
       */
       template <typename V1, typename S2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
+                                    && viennacl::is_any_scalar<S2>::value
                                   >::type
       norm_inf_impl(V1 const & vec1,
                     S2 & result)

@@ -126,7 +126,8 @@ int run_benchmark()
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    ublas_vec1 = boost::numeric::ublas::prod(ublas_matrix, ublas_vec2);
+    //ublas_vec1 = boost::numeric::ublas::prod(ublas_matrix, ublas_vec2);
+    boost::numeric::ublas::axpy_prod(ublas_matrix, ublas_vec2, ublas_vec1, true);
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;

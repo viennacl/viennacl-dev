@@ -39,6 +39,61 @@ namespace viennacl
       // Compressed matrix
       //
       
+      namespace detail
+      {
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
+                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          ScalarType         * result_buf = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          ScalarType   const * elements   = detail::extract_raw_pointer<ScalarType>(mat.handle());
+          unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle1());
+          unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle2());
+          
+          for (std::size_t row = 0; row < mat.size1(); ++row)
+          {
+            ScalarType value = 0;
+            unsigned int row_end = row_buffer[row+1];
+            
+            switch (info_selector)
+            {
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_INF: //inf-norm
+                for (unsigned int i = row_buffer[row]; i < row_end; ++i)
+                  value = std::max<ScalarType>(value, std::fabs(elements[i]));
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_1: //1-norm
+                for (unsigned int i = row_buffer[row]; i < row_end; ++i)
+                  value += std::fabs(elements[i]);
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_2: //2-norm
+                for (unsigned int i = row_buffer[row]; i < row_end; ++i)
+                  value += elements[i] * elements[i];
+                value = std::sqrt(value);
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_DIAGONAL: //diagonal entry
+                for (unsigned int i = row_buffer[row]; i < row_end; ++i)
+                {
+                  if (col_buffer[i] == row)
+                  {
+                    value = elements[i];
+                    break;
+                  }
+                }
+                break;
+                
+              default:
+                break;
+            }
+            result_buf[row] = value;
+          }
+        }
+      }
+      
+      
       /** @brief Carries out matrix-vector multiplication with a compressed_matrix
       *
       * Implementation of the convenience expression result = prod(mat, vec);

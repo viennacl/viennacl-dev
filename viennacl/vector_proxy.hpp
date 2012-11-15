@@ -65,21 +65,16 @@ namespace viennacl
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
                                     && viennacl::is_any_dense_nonstructured_vector<V1>::value,
                                     self_type &>::type
-      operator=(const vector_expression< const M1,
-                                         const V1,
-                                         op_prod> & proxy)
+      operator=(const vector_expression< const M1, const V1, op_prod> & proxy)
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
         return *this;
       }
       
-      
-      
 
+      /** @brief Generic overload for any assigned vector_expressions. Forward to vector<> */
       template <typename LHS, typename RHS, typename OP>
-      self_type & operator=(const vector_expression< LHS,
-                                                     RHS,
-                                                     OP > & proxy) 
+      self_type & operator=(const vector_expression< LHS, RHS, OP > & proxy) 
       {
         VectorType temp = proxy;
         *this = temp;

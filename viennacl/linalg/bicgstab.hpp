@@ -27,6 +27,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
+#include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/traits/clear.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/meta/result_of.hpp"
@@ -97,13 +98,14 @@ namespace viennacl
       VectorType tmp1(problem_size);
       VectorType s(problem_size);
 
-      CPU_ScalarType ip_rr0star = viennacl::linalg::inner_prod(rhs,r0star);
-      CPU_ScalarType norm_rhs_host = ip_rr0star;
+      CPU_ScalarType ip_rr0star = viennacl::linalg::inner_prod(rhs, r0star);
+      CPU_ScalarType norm_rhs_host = std::sqrt(ip_rr0star);
       CPU_ScalarType beta;
       CPU_ScalarType alpha;
       CPU_ScalarType omega;
       //ScalarType inner_prod_temp; //temporary variable for inner product computation
       CPU_ScalarType new_ip_rr0star = 0;
+      CPU_ScalarType residual_norm = norm_rhs_host;
       
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
@@ -117,14 +119,16 @@ namespace viennacl
         s = residual - alpha*tmp0;
         
         tmp1 = viennacl::linalg::prod(matrix, s);
-        omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
+        CPU_ScalarType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
+        omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
+        //omega = viennacl::linalg::inner_prod(tmp1, s) / viennacl::linalg::inner_prod(tmp1, tmp1);
         
         result += alpha * p + omega * s;
-        
         residual = s - omega * tmp1;
         
-        new_ip_rr0star = viennacl::linalg::inner_prod(residual,r0star);
-        if (std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host) < tag.tolerance() * tag.tolerance())
+        new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
+        residual_norm = viennacl::linalg::norm_2(residual);
+        if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance())
           break;
         
         beta = new_ip_rr0star / ip_rr0star * alpha/omega;

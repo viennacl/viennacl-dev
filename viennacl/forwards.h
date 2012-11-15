@@ -323,6 +323,13 @@ namespace viennacl
                                 >::type
     norm_1_impl(V1 const & vec, S2 & result);
 
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_1_cpu(V1 const & vec,
+                S2 & result);
+    
     //forward definition of norm_2_impl function
     template <typename V1, typename S2>
     typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -330,12 +337,24 @@ namespace viennacl
                                 >::type
     norm_2_impl(V1 const & vec, S2 & result);
 
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_2_cpu(V1 const & vec, S2 & result);
+    
     //forward definition of norm_inf_impl function
     template <typename V1, typename S2>
     typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
                                   && viennacl::is_scalar<S2>::value
                                 >::type
     norm_inf_impl(V1 const & vec, S2 & result);
+    
+    template <typename V1, typename S2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_inf_cpu(V1 const & vec, S2 & result);
     
     
     //forward definition of prod_impl functions
@@ -362,32 +381,18 @@ namespace viennacl
     prod_impl(const SparseMatrixType & mat, 
               const vector<SCALARTYPE, ALIGNMENT> & vec);
     
-    /*
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::compressed_matrix<SCALARTYPE, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::compressed_matrix<SCALARTYPE, ALIGNMENT> & , 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
-
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::coordinate_matrix<SCALARTYPE, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::coordinate_matrix<SCALARTYPE, ALIGNMENT> & , 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
-
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::ell_matrix<SCALARTYPE, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::ell_matrix<SCALARTYPE, ALIGNMENT> & , 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
-
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::hyb_matrix<SCALARTYPE, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::hyb_matrix<SCALARTYPE, ALIGNMENT> & , 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &); */
-                                
-                    
+    namespace detail
+    {
+      enum row_info_types
+      {
+        SPARSE_ROW_NORM_INF = 0,
+        SPARSE_ROW_NORM_1,
+        SPARSE_ROW_NORM_2,
+        SPARSE_ROW_DIAGONAL
+      };
+    
+    }
+    
       
     /** @brief A tag class representing a lower triangular matrix */
     struct lower_tag 

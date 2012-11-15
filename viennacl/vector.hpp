@@ -629,6 +629,37 @@ namespace viennacl
     }
     
     
+    //v1 = v2 +- v3; 
+    /** @brief Implementation of the operation v1 = v2 +- v3
+    *
+    * @param proxy  An expression template proxy class.
+    */
+    template <typename V1, typename V2, typename OP>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && (viennacl::is_product<OP>::value || viennacl::is_division<OP>::value),
+                                  self_type &>::type
+    operator = (const vector_expression< const V1,
+                                         const V2,
+                                         OP> & proxy)
+    {
+      assert( ( (proxy.lhs().size() == size()) || (size() == 0) )
+              && bool("Incompatible vector sizes!"));
+      
+      if (size() == 0)
+      {
+        size_ = proxy.lhs().size();
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        pad();
+      } 
+
+      if (size() > 0)
+        viennacl::linalg::element_op(*this, proxy);
+      return *this;
+    }
+    
+    
+    
     // assign vector range or vector slice
     template <typename V1>
     typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_vector<V1>::value,

@@ -44,6 +44,24 @@ namespace viennacl
       // Compressed matrix
       //
       
+      namespace detail
+      {
+        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & mat,
+                      vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          viennacl::ocl::kernel & row_info_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
+          
+          viennacl::ocl::enqueue(row_info_kernel(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
+                                                 viennacl::traits::opencl_handle(vec),
+                                                 cl_uint(mat.size1()),
+                                                 cl_uint(info_selector)
+                                                )
+                                );
+        }
+      }
+      
       /** @brief Carries out matrix-vector multiplication with a compressed_matrix
       *
       * Implementation of the convenience expression result = prod(mat, vec);
@@ -64,6 +82,9 @@ namespace viennacl
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                 vec, result, static_cast<cl_uint>(mat.size1())));
       }
+      
+      
+      
       
       // triangular solvers
 
@@ -216,14 +237,7 @@ namespace viennacl
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
 
         viennacl::vector<SCALARTYPE> diagonal(vec.size());
-        
-        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
-        
-        viennacl::ocl::enqueue(diagonal_kernel(proxy_L.lhs().handle1().opencl_handle(), proxy_L.lhs().handle2().opencl_handle(), proxy_L.lhs().handle().opencl_handle(),
-                                               viennacl::traits::opencl_handle(diagonal),
-                                               cl_uint(proxy_L.lhs().size1())
-                                              )
-                              );
+        detail::row_info(proxy_L.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_forward");
         
@@ -277,15 +291,7 @@ namespace viennacl
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
 
         viennacl::vector<SCALARTYPE> diagonal(vec.size());
-        
-        viennacl::ocl::kernel & diagonal_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "diagonal");
-        
-        viennacl::ocl::enqueue(diagonal_kernel(proxy_U.lhs().handle1().opencl_handle(), proxy_U.lhs().handle2().opencl_handle(), proxy_U.lhs().handle().opencl_handle(),
-                                               viennacl::traits::opencl_handle(diagonal),
-                                               cl_uint(proxy_U.lhs().size1())
-                                              )
-                              );
-        
+        detail::row_info(proxy_U.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_backward");
         

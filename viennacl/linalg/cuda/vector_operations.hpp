@@ -649,37 +649,81 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("vector_swap_kernel");
       }
 
+      ///////////////////////// Elementwise operations /////////////
+      
+      template <typename T>
+      __global__ void element_op_kernel(T * vec1,
+                                         unsigned int start1,
+                                         unsigned int inc1,
+                                         unsigned int size1,
+                                          
+                                         T const * vec2,
+                                         unsigned int start2,
+                                         unsigned int inc2,
+                                         
+                                         T const * vec3,
+                                         unsigned int start3,
+                                         unsigned int inc3,
+                                         
+                                         unsigned int is_division
+                                       )
+      { 
+        if (is_division)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3];
+          }
+        }
+        else
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3];
+          }
+        }
+      }
+ 
+      
+      /** @brief Swaps the contents of two vectors, data is copied
+      *
+      * @param vec1   The first vector (or -range, or -slice)
+      * @param vec2   The second vector (or -range, or -slice)
+      */
+      template <typename V1, typename V2, typename V3, typename OP>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
+                                  >::type
+      element_op(V1 & vec1,
+                vector_expression<const V2, const V3, OP> const & proxy)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                          
+                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+                                        
+                                        detail::cuda_arg<value_type>(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+                                        
+                                        static_cast<unsigned int>(viennacl::is_division<OP>::value)
+                                       );                                          
+        VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+      }
+
 
       ///////////////////////// Norms and inner product ///////////////////
-
-
-      template <typename T>
-      __device__ T impl_inner_prod(     //worker for each thread block
-                const T * vec1,
-                unsigned int start1,
-                unsigned int inc1,
-                unsigned int size1,
-                const T * vec2,
-                unsigned int start2,
-                unsigned int inc2,
-                unsigned int size2,
-                T * tmp_buffer)
-      {
-        T tmp = 0;
-        for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
-          tmp += vec1[i*inc1+start1] * vec2[i*inc2+start2];
-        tmp_buffer[threadIdx.x] = tmp;
-
-        // parallel reduction
-        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
-        {
-          __syncthreads();
-          if (threadIdx.x < stride)
-            tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
-        }
-        
-        return tmp_buffer[0];
-      }
 
 
       template <typename T>
@@ -695,24 +739,27 @@ namespace viennacl
       {
         __shared__ T tmp_buffer[128]; 
         unsigned int group_start1 = (blockIdx.x * size1) / (gridDim.x) * inc1 + start1;
+        unsigned int group_start2 = (blockIdx.x * size2) / (gridDim.x) * inc2 + start2;
+        
         unsigned int group_size1 = ((blockIdx.x + 1) * size1) / (gridDim.x)
                                      - (  blockIdx.x * size1) / (gridDim.x);
                                      
-        unsigned int group_start2 = (blockIdx.x * size2) / (gridDim.x) * inc2 + start2;
-        unsigned int group_size2 = ((blockIdx.x + 1) * size2) / (gridDim.x)
-                                     - (  blockIdx.x * size2) / (gridDim.x);
-        T tmp = impl_inner_prod(vec1,
-                                group_start1,
-                                inc1,
-                                group_size1,
-                                vec2,
-                                group_start2,
-                                inc2,
-                                group_size2,
-                                tmp_buffer);
+
+        T tmp = 0;
+        for (unsigned int i = threadIdx.x; i < group_size1; i += blockDim.x)
+          tmp += vec1[i*inc1+group_start1] * vec2[i*inc2+group_start2];
+        tmp_buffer[threadIdx.x] = tmp;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          __syncthreads();
+          if (threadIdx.x < stride)
+            tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+        }
         
         if (threadIdx.x == 0)
-          group_buffer[blockIdx.x] = tmp;
+          group_buffer[blockIdx.x] = tmp_buffer[0];
         
       }
 
@@ -962,6 +1009,43 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
 
+      /** @brief Computes the l^1-norm of a vector
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_1_cpu(V1 const & vec1,
+                 S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(1),
+                                  detail::cuda_arg<value_type>(temp)
+                                 );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
+      
+        // Now copy partial results from GPU back to CPU and run reduction there:
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result += *it;
+      }
+
+      ///// norm_2
+      
       /** @brief Computes the l^2-norm of a vector - implementation
       *
       * @param vec The vector
@@ -998,6 +1082,45 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
 
+      /** @brief Computes the l^2-norm of a vector - implementation
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      * @param dummy  Dummy parameter used for SFINAE
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_2_cpu(V1 const & vec1,
+                  S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(2),
+                                  detail::cuda_arg<value_type>(temp)
+                                 );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
+      
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result += *it;
+        result = std::sqrt(result);
+      }
+
+      
+      ////// norm_inf
+      
       /** @brief Computes the supremum-norm of a vector
       *
       * @param vec The vector
@@ -1032,6 +1155,43 @@ namespace viennacl
                                       detail::cuda_arg<value_type>(result) );
         VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
       }
+
+      
+      
+      /** @brief Computes the supremum-norm of a vector
+      *
+      * @param vec The vector
+      * @param result The result scalar
+      */
+      template <typename V1, typename S2>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                    && viennacl::is_cpu_scalar<S2>::value
+                                  >::type
+      norm_inf_cpu(V1 const & vec1,
+                    S2 & result)
+      {
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        
+        static std::size_t work_groups = 128;
+        static viennacl::vector<value_type> temp(work_groups);
+        
+        norm_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                  static_cast<unsigned int>(0),
+                                  detail::cuda_arg<value_type>(temp)
+                                 );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
+      
+        static std::vector<value_type> temp_cpu(work_groups);
+        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+        
+        result = 0;
+        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+          result = std::max(result, *it);
+      }
+      
       
       //////////////////////////////////////
       

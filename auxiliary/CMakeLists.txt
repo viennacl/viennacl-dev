@@ -97,11 +97,7 @@ generate_blas3_prod_align1(MATRIX_PROD_SRCS)
 generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
 
 set(COMPRESSED_MATRIX_SRCS
-#   compressed_matrix/align1/bicgstab_kernel1.cl
-#   compressed_matrix/align1/bicgstab_kernel2.cl
-   compressed_matrix/align1/diagonal.cl
    compressed_matrix/align1/jacobi.cl
-   compressed_matrix/align1/jacobi_precond.cl
    compressed_matrix/align1/lu_backward.cl
    compressed_matrix/align1/lu_forward.cl
    compressed_matrix/align1/trans_lu_backward.cl
@@ -109,8 +105,7 @@ set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/trans_unit_lu_backward.cl
    compressed_matrix/align1/trans_unit_lu_forward.cl
    compressed_matrix/align1/trans_unit_lu_forward_slow.cl
-   compressed_matrix/align1/row_scaling_1.cl
-   compressed_matrix/align1/row_scaling_2.cl
+   compressed_matrix/align1/row_info_extractor.cl
    compressed_matrix/align1/unit_lu_backward.cl
    compressed_matrix/align1/unit_lu_forward.cl
    compressed_matrix/align1/vec_mul.cl
@@ -202,6 +197,7 @@ set(VECTOR_SRCS
    vector/align1/avbv_v_gpu_gpu.cl
    vector/align1/assign_cpu.cl
    vector/align1/diag_precond.cl
+   vector/align1/element_op.cl
    vector/align1/index_norm_inf.cl
    vector/align1/inner_prod.cl
    vector/align1/norm.cl

@@ -29,6 +29,7 @@
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
+#include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/traits/clear.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/meta/result_of.hpp"
@@ -103,10 +104,10 @@ namespace viennacl
       CPU_ScalarType alpha;
       CPU_ScalarType new_ip_rr = 0;
       CPU_ScalarType beta;
-      CPU_ScalarType norm_rhs_squared = ip_rr;
+      CPU_ScalarType norm_rhs = std::sqrt(ip_rr);
       
       //std::cout << "Starting CG solver iterations... " << std::endl;
-      if (norm_rhs_squared == 0) //solution is zero if RHS norm is zero
+      if (norm_rhs == 0) //solution is zero if RHS norm is zero
         return result;
       
       for (unsigned int i = 0; i < tag.max_iterations(); ++i)
@@ -118,9 +119,10 @@ namespace viennacl
         result += alpha * p;
         residual -= alpha * tmp;
         
-        new_ip_rr = viennacl::linalg::inner_prod(residual, residual);
-        if (new_ip_rr / norm_rhs_squared < tag.tolerance() *  tag.tolerance())//squared norms involved here
+        new_ip_rr = viennacl::linalg::norm_2(residual);
+        if (new_ip_rr / norm_rhs < tag.tolerance())
           break;
+        new_ip_rr *= new_ip_rr;
         
         beta = new_ip_rr / ip_rr;
         ip_rr = new_ip_rr;
@@ -129,7 +131,7 @@ namespace viennacl
       } 
       
       //store last error estimate:
-      tag.error(std::sqrt(new_ip_rr / norm_rhs_squared));
+      tag.error(std::sqrt(new_ip_rr) / norm_rhs);
       
       return result;
     }

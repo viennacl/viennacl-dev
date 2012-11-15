@@ -39,6 +39,80 @@ namespace viennacl
       // Compressed matrix
       //
       
+      namespace detail
+      {
+        
+        template <typename T>
+        __global__ void row_info_extractor_kernel(
+                  const unsigned int * row_indices,
+                  const unsigned int * column_indices, 
+                  const T * elements,
+                  T * result,
+                  unsigned int size,
+                  unsigned int option) 
+        { 
+          for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                            row  < size;
+                            row += gridDim.x * blockDim.x)
+          {
+            T value = 0;
+            unsigned int row_end = row_indices[row+1];
+            
+            switch (option)
+            {
+              case 0: //inf-norm
+                for (unsigned int i = row_indices[row]; i < row_end; ++i)
+                  value = max(value, fabs(elements[i]));
+                break;
+                
+              case 1: //1-norm
+                for (unsigned int i = row_indices[row]; i < row_end; ++i)
+                  value += fabs(elements[i]);
+                break;
+                
+              case 2: //2-norm
+                for (unsigned int i = row_indices[row]; i < row_end; ++i)
+                  value += elements[i] * elements[i];
+                value = sqrt(value);
+                break;
+                
+              case 3: //diagonal entry
+                for (unsigned int i = row_indices[row]; i < row_end; ++i)
+                {
+                  if (column_indices[i] == row)
+                  {
+                    value = elements[i];
+                    break;
+                  }
+                }
+                break;
+                
+              default:
+                break;
+            }
+            result[row] = value;
+          }
+        }
+
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
+                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                  detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                  detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                  detail::cuda_arg<ScalarType>(vec),
+                                                  static_cast<unsigned int>(mat.size1()),
+                                                  static_cast<unsigned int>(info_selector)
+                                                 );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("row_info_extractor_kernel");
+        }
+      
+      } //namespace detail
+      
+      
       template <typename T>
       __global__ void compressed_matrix_vec_mul_kernel(
                 const unsigned int * row_indices,

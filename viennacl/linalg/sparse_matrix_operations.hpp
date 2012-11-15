@@ -41,6 +41,38 @@ namespace viennacl
   namespace linalg
   {
     
+    namespace detail
+    {
+      
+      template<typename SparseMatrixType, typename SCALARTYPE, unsigned int VEC_ALIGNMENT>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value >::type
+      row_info(SparseMatrixType const & mat,
+               vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+               row_info_types info_selector)
+      {
+        switch (viennacl::traits::handle(mat).get_active_handle_id())
+        {
+          case viennacl::MAIN_MEMORY:
+            viennacl::linalg::single_threaded::detail::row_info(mat, vec, info_selector);
+            break;
+#ifdef VIENNACL_WITH_OPENCL
+          case viennacl::OPENCL_MEMORY:
+            viennacl::linalg::opencl::detail::row_info(mat, vec, info_selector);
+            break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+          case viennacl::CUDA_MEMORY:
+            viennacl::linalg::cuda::detail::row_info(mat, vec, info_selector);
+            break;
+#endif
+          default:
+            throw "not implemented";
+        }
+      }
+    
+    }
+    
+    
     
     // A * x
     /** @brief Returns a proxy class that represents matrix-vector multiplication with any sparse matrix type

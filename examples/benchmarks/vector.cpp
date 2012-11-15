@@ -22,6 +22,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
+#include "viennacl/linalg/norm_2.hpp"
 
 #include <iostream>
 #include <vector>
@@ -116,6 +117,40 @@ int run_benchmark()
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_factor2 = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2);
+  }
+  viennacl::backend::finish();
+  exec_time = timer.get();
+  std::cout << "GPU time: " << exec_time << std::endl;
+  std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "Result: " << vcl_factor2 << std::endl;
+
+  // inner product
+  viennacl::backend::finish();
+  std::cout << "------- Vector norm_2 ----------" << std::endl;
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  {
+    std_result = 0;
+    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    {
+      ScalarType entry = std_vec1[i]; 
+      std_result += entry * entry;
+    }
+  }
+  std_result = std::sqrt(std_result);
+  exec_time = timer.get();
+  std::cout << "CPU time: " << exec_time << std::endl;
+  std::cout << "CPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "Result:" << std_result << std::endl;
+  
+  
+  std_result = viennacl::linalg::norm_2(vcl_vec1); //startup calculation
+  std_result = 0.0;
+  viennacl::backend::finish();
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  {
+    vcl_factor2 = viennacl::linalg::norm_2(vcl_vec1);
   }
   viennacl::backend::finish();
   exec_time = timer.get();

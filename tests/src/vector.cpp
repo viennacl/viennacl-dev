@@ -189,6 +189,14 @@ int test(Epsilon const& epsilon,
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
+  gpu_result = 2 * cpu_result; //reset
+  gpu_result = ublas::norm_1(ublas_v1);
+  cpu_result = viennacl::linalg::norm_1(vcl_v1);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   // --------------------------------------------------------------------------
   std::cout << "Testing norm_2..." << std::endl;
   cpu_result = ublas::norm_2(ublas_v1);
@@ -196,10 +204,24 @@ int test(Epsilon const& epsilon,
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
+  gpu_result = 2 * cpu_result; //reset
+  gpu_result = ublas::norm_2(ublas_v1);
+  cpu_result = viennacl::linalg::norm_2(vcl_v1);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
   // --------------------------------------------------------------------------
   std::cout << "Testing norm_inf..." << std::endl;
   cpu_result = ublas::norm_inf(ublas_v1);
   gpu_result = viennacl::linalg::norm_inf(vcl_v1);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  gpu_result = 2 * cpu_result; //reset
+  gpu_result = ublas::norm_inf(ublas_v1);
+  cpu_result = viennacl::linalg::norm_inf(vcl_v1);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -624,6 +646,67 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing swap..." << std::endl;
   swap(ublas_v1, ublas_v2);
   swap(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  // --------------------------------------------------------------------------      
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  std::cout << "Testing elementwise multiplication..." << std::endl;
+  ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2);
+  vcl_v1 = viennacl::linalg::element_prod(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 = viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Testing elementwise division..." << std::endl;
+  ublas_v1 = ublas::element_div(ublas_v1, ublas_v2);
+  vcl_v1 = viennacl::linalg::element_div(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas::element_div(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 = viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas::element_div(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 = viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas::element_div(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 = viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;

@@ -288,6 +288,15 @@ namespace viennacl
       enum { value = true };
     };
     
+    //
+    // is_any_dense_structured_matrix
+    //
+    template <typename T>
+    struct is_any_dense_structured_matrix
+    {
+      enum { value = viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value };
+    };
+    
     
     
     //
@@ -390,13 +399,20 @@ namespace viennacl
     //
     // is_any_matrix
     //
-    /*template <typename T>
+    template <typename T>
     struct is_any_matrix
     {
-      enum { value = viennacl::is_matrix<T>::value || viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value
-                     || viennacl::is_compressed_matrix<T>::value || viennacl::is_coordinate_matrix<T>::value || viennacl::is_ell_matrix<T>::value || viennacl::is_hyb_matrix<T>::value };
-    };*/
+      enum { value =    viennacl::is_any_dense_nonstructured_matrix<T>::value
+                     || viennacl::is_any_sparse_matrix<T>::value
+                     || viennacl::is_any_dense_structured_matrix<T>::value 
+                     };
+    };
 
+    template <typename T>
+    struct is_any_transposed_matrix
+    {
+      enum { value = viennacl::is_any_dense_nonstructured_transposed_matrix<T>::value };
+    };
     
     //////////////// Part 2: Operator predicates ////////////////////
     
