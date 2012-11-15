@@ -14,7 +14,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-//#define VIENNACL_BUILD_INFO
+//#define VIENNACL_DEBUG_ALL
 #ifndef NDEBUG
  #define NDEBUG
 #endif

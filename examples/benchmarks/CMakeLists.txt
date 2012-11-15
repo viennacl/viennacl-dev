@@ -20,7 +20,7 @@ if (ENABLE_OPENCL)
   
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
-     foreach(bench sparse solver)
+     foreach(bench sparse solver vector)
        add_executable(${bench}bench-opencl ${bench}.cpp)
        target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
        set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
