@@ -1997,6 +1997,26 @@ namespace viennacl
     return result;
   }
 
+  /** @brief Operator overload for the addition of a vector with a vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
+  *
+  * @param proxy   Left hand side vector expression
+  * @param vec     Right hand side vector (also -range and -slice is allowed)
+  */
+  template <typename V1, typename LHS, typename RHS, typename OP>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> 
+                              >::type
+  operator + (V1 const & vec,
+              vector_expression<LHS, RHS, OP> const & proxy)
+  {
+    assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
+    result = vec;
+    result += proxy;
+    return result;
+  }
+
+  
   /** @brief Operator overload for the addition of a vector expression v1 @ alpha + v2, where @ denotes either product or division, and alpha is either a CPU or a GPU scalar.
   *
   * @param proxy   Left hand side vector expression
@@ -2097,7 +2117,7 @@ namespace viennacl
   }
   
   
-  /** @brief Operator overload for the addition of a vector expression with a vector or another vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
+  /** @brief Operator overload for the subtraction of a vector expression with a vector or another vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
   *
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
@@ -2116,6 +2136,25 @@ namespace viennacl
     return result;
   }
 
+  /** @brief Operator overload for the subtraction of a vector expression with a vector or another vector expression. This is the default implementation for all cases that are too complex in order to be covered within a single kernel, hence a temporary vector is created.
+  *
+  * @param proxy   Left hand side vector expression
+  * @param vec     Right hand side vector (also -range and -slice is allowed)
+  */
+  template <typename V1, typename LHS, typename RHS, typename OP>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> 
+                              >::type
+  operator - (V1 const & vec,
+              vector_expression< LHS, RHS, OP> const & proxy)
+  {
+    assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
+    result = vec;
+    result -= proxy;
+    return result;
+  }
+  
   /** @brief Operator overload for the addition of a vector expression v1 @ alpha + v2, where @ denotes either product or division, and alpha is either a CPU or a GPU scalar.
   *
   * @param proxy   Left hand side vector expression

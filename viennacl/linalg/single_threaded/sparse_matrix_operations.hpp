@@ -545,6 +545,65 @@ namespace viennacl
       // Coordinate Matrix
       //
       
+      namespace detail
+      {
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(coordinate_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
+                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          ScalarType         * result_buf   = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          ScalarType   const * elements     = detail::extract_raw_pointer<ScalarType>(mat.handle());
+          unsigned int const * coord_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle12());
+          
+          ScalarType value = 0;
+          unsigned int last_row = 0;
+          
+          for (std::size_t i = 0; i < mat.nnz(); ++i)
+          {
+            unsigned int current_row = coord_buffer[2*i];
+            
+            if (current_row != last_row)
+            {
+              if (info_selector == viennacl::linalg::detail::SPARSE_ROW_NORM_2)
+                value = std::sqrt(value);
+              
+              result_buf[last_row] = value;
+              value = 0;
+              last_row = current_row;
+            }
+            
+            switch (info_selector)
+            {
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_INF: //inf-norm
+                value = std::max<ScalarType>(value, std::fabs(elements[i]));
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_1: //1-norm
+                value += std::fabs(elements[i]);
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_NORM_2: //2-norm
+                value += elements[i] * elements[i];
+                break;
+                
+              case viennacl::linalg::detail::SPARSE_ROW_DIAGONAL: //diagonal entry
+                if (coord_buffer[2*i+1] == current_row)
+                  value = elements[i];
+                break;
+                
+              default:
+                break;
+            }
+          }
+          
+          if (info_selector == viennacl::linalg::detail::SPARSE_ROW_NORM_2)
+            value = std::sqrt(value);
+          
+          result_buf[last_row] = value;
+        }
+      }
+      
       /** @brief Carries out matrix-vector multiplication with a coordinate_matrix
       *
       * Implementation of the convenience expression result = prod(mat, vec);

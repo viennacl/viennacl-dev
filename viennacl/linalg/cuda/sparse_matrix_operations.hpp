@@ -43,7 +43,7 @@ namespace viennacl
       {
         
         template <typename T>
-        __global__ void row_info_extractor_kernel(
+        __global__ void csr_row_info_extractor_kernel(
                   const unsigned int * row_indices,
                   const unsigned int * column_indices, 
                   const T * elements,
@@ -100,14 +100,14 @@ namespace viennacl
                       vector<ScalarType, VEC_ALIGNMENT> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
-          row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
-                                                  detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-                                                  detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
-                                                  detail::cuda_arg<ScalarType>(vec),
-                                                  static_cast<unsigned int>(mat.size1()),
-                                                  static_cast<unsigned int>(info_selector)
-                                                 );
-          VIENNACL_CUDA_LAST_ERROR_CHECK("row_info_extractor_kernel");
+          csr_row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(vec),
+                                                      static_cast<unsigned int>(mat.size1()),
+                                                      static_cast<unsigned int>(info_selector)
+                                                     );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("csr_row_info_extractor_kernel");
         }
       
       } //namespace detail
@@ -401,6 +401,156 @@ namespace viennacl
       //
       // Coordinate Matrix
       //
+      
+      
+      namespace detail
+      {
+        
+        template <typename T>
+        __global__ void coo_row_info_extractor( const unsigned int * coords, //(row_index, column_index) 
+                                                const T * elements, 
+                                                const uint  * group_boundaries,
+                                                T * result,
+                                                unsigned int option) 
+        { 
+          __shared__ unsigned int shared_rows[128];
+          __shared__ T inter_results[128];
+          
+          uint2 tmp; 
+          T val;
+          uint last_index  = blockDim.x - 1;
+          uint group_start = group_boundaries[blockIdx.x];
+          uint group_end   = group_boundaries[blockIdx.x + 1];
+          uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+
+          uint local_index = 0;
+
+          for (uint k = 0; k < k_end; ++k)
+          { 
+            local_index = group_start + k * blockDim.x + threadIdx.x; 
+          
+            tmp = (local_index < group_end) ? ((const uint2 *)coords)[local_index] : ::make_uint2(0, 0); 
+            val = (local_index < group_end && (option != 3 || tmp.x == tmp.y) ) ? elements[local_index] : 0; 
+            
+            //check for carry from previous loop run: 
+            if (threadIdx.x == 0 && k > 0)
+            { 
+              if (tmp.x == shared_rows[last_index])
+              {
+                switch (option)
+                {
+                  case 0: //inf-norm
+                  case 3: //diagonal entry
+                    val = max(val, fabs(inter_results[last_index]));
+                    break;
+                    
+                  case 1: //1-norm
+                    val = fabs(val) + inter_results[last_index];
+                    break;
+                    
+                  case 2: //2-norm
+                    val = sqrt(val * val + inter_results[last_index]);
+                    break;
+                    
+                  default:
+                    break;
+                }
+              }
+              else 
+              {
+                switch (option)
+                {
+                  case 0: //inf-norm
+                  case 1: //1-norm
+                  case 3: //diagonal entry
+                    result[shared_rows[last_index]] = inter_results[last_index];
+                    break;
+                    
+                  case 2: //2-norm
+                    result[shared_rows[last_index]] = sqrt(inter_results[last_index]);
+                  default:
+                    break;
+                }
+              }
+            } 
+
+            //segmented parallel reduction begin
+            __syncthreads();
+            shared_rows[threadIdx.x] = tmp.x; 
+            switch (option)
+            {
+              case 0:
+              case 3:
+                inter_results[threadIdx.x] = val; 
+                break;
+              case 1:
+                inter_results[threadIdx.x] = fabs(val);
+                break;
+              case 2:
+                inter_results[threadIdx.x] = val * val;
+              default:
+                break;
+            }
+            T left = 0;
+            __syncthreads();
+            
+            for (unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+            {
+              left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
+              __syncthreads();
+              switch (option)
+              {
+                case 0: //inf-norm
+                case 3: //diagonal entry
+                  inter_results[threadIdx.x] = max(inter_results[threadIdx.x], left);
+                  break;
+                  
+                case 1: //1-norm
+                  inter_results[threadIdx.x] += left;
+                  break;
+                  
+                case 2: //2-norm
+                  inter_results[threadIdx.x] += left;
+                  break;
+                  
+                default:
+                  break;
+              }
+              __syncthreads();
+            }
+            //segmented parallel reduction end
+
+            if (threadIdx.x != last_index &&
+                shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1] &&
+                inter_results[threadIdx.x] != 0) 
+            { 
+              result[tmp.x] = (option == 2) ? sqrt(inter_results[threadIdx.x]) : inter_results[threadIdx.x]; 
+            }
+          
+            __syncthreads();
+          } //for k
+          
+          if (threadIdx.x == last_index && inter_results[last_index] != 0) 
+            result[tmp.x] = (option == 2) ? sqrt(inter_results[last_index]) : inter_results[last_index]; 
+        }
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(coordinate_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
+                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          coo_row_info_extractor<<<64, 128>>>(detail::cuda_arg<unsigned int>(mat.handle12().cuda_handle()),
+                                               detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                               detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+                                               detail::cuda_arg<ScalarType>(vec),
+                                               static_cast<unsigned int>(info_selector)
+                                              );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coo_row_info_extractor");
+        }
+      
+      } //namespace detail
+
+      
       
       template <typename T>
       __device__ void coordinate_matrix_segmented_parallel_reduction(unsigned int row, 

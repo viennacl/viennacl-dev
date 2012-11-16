@@ -1,62 +1,4 @@
 
-//segmented parallel reduction. At present restricted to up to 256 threads
-void segmented_parallel_reduction(unsigned int row, 
-                                  float val, 
-                                  __local unsigned int * shared_rows, 
-                                  __local float * inter_results) 
-{ 
-  //barrier(CLK_LOCAL_MEM_FENCE); 
-  shared_rows[get_local_id(0)] = row; 
-  inter_results[get_local_id(0)] = val; 
-  float left = 0;
- 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  if( get_local_id(0) >=  1 && row == shared_rows[get_local_id(0) -  1] ) { left = inter_results[get_local_id(0) -  1]; }  
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >=  2 && row == shared_rows[get_local_id(0) -  2] ) { left = inter_results[get_local_id(0) -  2]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >=  4 && row == shared_rows[get_local_id(0) -  4] ) { left = inter_results[get_local_id(0) -  4]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >=  8 && row == shared_rows[get_local_id(0) -  8] ) { left = inter_results[get_local_id(0) -  8]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >= 16 && row == shared_rows[get_local_id(0) - 16] ) { left = inter_results[get_local_id(0) - 16]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >= 32 && row == shared_rows[get_local_id(0) - 32] ) { left = inter_results[get_local_id(0) - 32]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >= 64 && row == shared_rows[get_local_id(0) - 64] ) { left = inter_results[get_local_id(0) - 64]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  if( get_local_id(0) >= 128 && row == shared_rows[get_local_id(0) - 128] ) { left = inter_results[get_local_id(0) - 128]; } 
-  barrier(CLK_LOCAL_MEM_FENCE); 
-  inter_results[get_local_id(0)] += left; left = 0;
-  barrier(CLK_LOCAL_MEM_FENCE); 
-
-  //if( get_local_id(0) >= 256 && row == shared_rows[get_local_id(0) - 256] ) { left = inter_results[get_local_id(0) - 256]; } 
-  //barrier(CLK_LOCAL_MEM_FENCE);  
-  //inter_results[get_local_id(0)] += left; left = 0;
-  //barrier(CLK_LOCAL_MEM_FENCE); 
-}
-
 
 __kernel void vec_mul( 
           __global const uint2 * coords, //(row_index, column_index) 
@@ -78,23 +20,10 @@ __kernel void vec_mul(
 
   for (uint k = 0; k < k_end; ++k)
   { 
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); 
-    
     local_index = group_start + k * get_local_size(0) + get_local_id(0); 
   
-    if (local_index < group_end)
-    {
-      tmp = coords[local_index]; 
-      val = elements[local_index] * vector[tmp.y]; 
-    }
-    else
-    {
-      tmp.x = 0;
-      tmp.y = 0;
-      val = 0;
-    }
-
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); 
+    tmp = (local_index < group_end) ? coords[local_index] : (uint2) 0; 
+    val = (local_index < group_end) ? elements[local_index] * vector[tmp.y] : 0; 
 
     //check for carry from previous loop run: 
     if (get_local_id(0) == 0 && k > 0)
@@ -102,25 +31,35 @@ __kernel void vec_mul(
       if (tmp.x == shared_rows[last_index]) 
         val += inter_results[last_index]; 
       else 
-        result[shared_rows[last_index]] += inter_results[last_index]; 
+        result[shared_rows[last_index]] = inter_results[last_index]; 
     } 
 
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); 
-
-    segmented_parallel_reduction(tmp.x, val, shared_rows, inter_results); //all threads have to enter this function
-
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); 
+    //segmented parallel reduction begin
+    barrier(CLK_LOCAL_MEM_FENCE); 
+    shared_rows[get_local_id(0)] = tmp.x; 
+    inter_results[get_local_id(0)] = val; 
+    float left = 0;
+    barrier(CLK_LOCAL_MEM_FENCE); 
+    
+    for (unsigned int stride = 1; stride < get_local_size(0); stride *= 2)
+    {
+      left = (get_local_id(0) >= stride && tmp.x == shared_rows[get_local_id(0) - stride]) ? inter_results[get_local_id(0) - stride] : 0;
+      barrier(CLK_LOCAL_MEM_FENCE); 
+      inter_results[get_local_id(0)] += left;
+      barrier(CLK_LOCAL_MEM_FENCE); 
+    }
+    //segmented parallel reduction end
 
     if (get_local_id(0) != last_index &&
         shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1] &&
         inter_results[get_local_id(0)] != 0) 
     { 
-      result[tmp.x] += inter_results[get_local_id(0)]; 
+      result[tmp.x] = inter_results[get_local_id(0)]; 
     }
    
-    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); 
+    barrier(CLK_LOCAL_MEM_FENCE); 
   } //for k
    
   if (get_local_id(0) == last_index && inter_results[last_index] != 0) 
-    result[tmp.x] += inter_results[last_index]; 
+    result[tmp.x] = inter_results[last_index]; 
 }

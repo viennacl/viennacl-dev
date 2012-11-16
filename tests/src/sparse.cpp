@@ -324,7 +324,7 @@ int test(Epsilon const& epsilon)
   //
   // Triangular solvers for A \ b:
   //
-  
+  /*
   std::cout << "Testing unit upper triangular solve: compressed_matrix" << std::endl;
   result = rhs;
   viennacl::copy(result, vcl_result);
@@ -376,7 +376,7 @@ int test(Epsilon const& epsilon)
     std::cout << "# Error at operation: lower triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
     retval = EXIT_FAILURE;
-  }
+  }*/
   
   //
   // Triangular solvers for A^T \ b

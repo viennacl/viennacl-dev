@@ -28,6 +28,7 @@
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/sparse_matrix_operations.hpp"
+#include "viennacl/linalg/row_scaling.hpp"
 
 #include <map>
 
@@ -43,7 +44,8 @@ namespace viennacl
 
     /** @brief Jacobi preconditioner class, can be supplied to solve()-routines. Generic version for non-ViennaCL matrices.
     */
-    template <typename MatrixType>
+    template <typename MatrixType,
+              bool is_viennacl = detail::row_scaling_for_viennacl<MatrixType>::value >
     class jacobi_precond
     {
       typedef typename MatrixType::value_type      ScalarType;
@@ -97,16 +99,14 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT>
-    class jacobi_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT> >
+    template <typename MatrixType>
+    class jacobi_precond< MatrixType, true>
     {
-      typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
+        typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
       
       public:
         jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(mat.size1())
         {
-          assert(system_matrix.size1() == system_matrix.size2());
-
           init(mat);
         }
           

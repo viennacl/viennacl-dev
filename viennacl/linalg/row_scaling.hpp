@@ -52,11 +52,38 @@ namespace viennacl
       private:
         unsigned int norm_;
     };
+
+    
+    namespace detail
+    {
+      template <typename T>
+      struct row_scaling_for_viennacl
+      {
+        enum { value = false };
+      };
+      
+      template <typename ScalarType, unsigned int ALIGNMENT>
+      struct row_scaling_for_viennacl< viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
+      {
+        enum { value = true };
+      };
+      
+      template <typename ScalarType, unsigned int ALIGNMENT>
+      struct row_scaling_for_viennacl< viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
+      {
+        enum { value = true };
+      };
+      
+      
+    }
     
 
-    /** @brief Jacobi preconditioner class, can be supplied to solve()-routines
-    */
-    template <typename MatrixType>
+    /** @brief Jacobi-type preconditioner class, can be supplied to solve()-routines. This is a diagonal preconditioner with the diagonal entries being (configurable) row norms of the matrix. 
+     *
+     *  Default implementation for non-native ViennaCL matrices (e.g. uBLAS)
+     */
+    template <typename MatrixType,
+              bool is_viennacl = detail::row_scaling_for_viennacl<MatrixType>::value >
     class row_scaling
     {
       typedef typename MatrixType::value_type      ScalarType;
@@ -69,7 +96,7 @@ namespace viennacl
         */
         row_scaling(MatrixType const & mat, row_scaling_tag const & tag) : diag_M(viennacl::traits::size1(mat))
         {
-          assert(mat.size1() == mat.size2());
+          assert(mat.size1() == mat.size2() && bool("Size mismatch"));
           init(mat, tag);
         }
         
@@ -105,7 +132,7 @@ namespace viennacl
         template <typename VectorType>
         void apply(VectorType & vec) const
         {
-          assert(vec.size() == diag_M.size());
+          assert(vec.size() == diag_M.size() && bool("Size mismatch"));
           for (size_t i=0; i<vec.size(); ++i)
             vec[i] /= diag_M[i];
         }
@@ -119,10 +146,11 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT>
-    class row_scaling< compressed_matrix<ScalarType, MAT_ALIGNMENT> >
+    template <typename MatrixType>
+    class row_scaling< MatrixType, true>
     {
-      typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
+        typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
+        
       
       public:
         /** @brief Constructor for the preconditioner
@@ -156,7 +184,7 @@ namespace viennacl
         template <unsigned int ALIGNMENT>
         void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
         {
-          assert(viennacl::traits::size1(diag_M.size()) == viennacl::traits::size(vec));
+          assert(viennacl::traits::size1(diag_M.size()) == viennacl::traits::size(vec) && bool("Size mismatch"));
           vec = element_div(vec, diag_M);
         }
         

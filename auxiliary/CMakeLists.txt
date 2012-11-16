@@ -114,6 +114,7 @@ set(COMPRESSED_MATRIX_SRCS
 
 set(COORDINATE_MATRIX_SRCS
    coordinate_matrix/align1/vec_mul.cl
+   coordinate_matrix/align1/row_info_extractor.cl
    coordinate_matrix/align128/dummy)
 
 set(ELL_MATRIX_SRCS

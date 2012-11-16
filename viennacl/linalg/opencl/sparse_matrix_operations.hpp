@@ -312,6 +312,28 @@ namespace viennacl
       // Coordinate matrix
       //
       
+      namespace detail
+      {
+        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void row_info(coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT> const & mat,
+                      vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                      viennacl::linalg::detail::row_info_types info_selector)
+        {
+          viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+          viennacl::ocl::kernel & row_info_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
+          unsigned int thread_num = 256; //k.local_work_size(0);
+          
+          row_info_kernel.local_work_size(0, thread_num);
+          
+          row_info_kernel.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
+          viennacl::ocl::enqueue(row_info_kernel(mat.handle12().opencl_handle(), mat.handle().opencl_handle(), mat.handle3().opencl_handle(),
+                                                 viennacl::traits::opencl_handle(vec),
+                                                 cl_uint(info_selector),
+                                                 viennacl::ocl::local_mem(sizeof(cl_uint)*thread_num),
+                                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE)*thread_num)) );
+        }
+      }
+      
       /** @brief Carries out matrix-vector multiplication with a coordinate_matrix
       *
       * Implementation of the convenience expression result = prod(mat, vec);
@@ -320,18 +342,18 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      void prod_impl(const viennacl::coordinate_matrix<TYPE, ALIGNMENT> & mat, 
-                     const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
+      template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      void prod_impl(const viennacl::coordinate_matrix<SCALARTYPE, ALIGNMENT> & mat, 
+                     const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec,
+                           viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
       {
-        viennacl::linalg::kernels::coordinate_matrix<TYPE, ALIGNMENT>::init();
+        viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::init();
         
         result.clear();
         
         //std::cout << "prod(coordinate_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::coordinate_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::program_name(), "vec_mul");
         unsigned int thread_num = 256; //k.local_work_size(0);
         
         k.local_work_size(0, thread_num);
@@ -342,7 +364,7 @@ namespace viennacl
                                  viennacl::traits::opencl_handle(vec),
                                  viennacl::traits::opencl_handle(result),
                                  viennacl::ocl::local_mem(sizeof(cl_uint)*thread_num),
-                                 viennacl::ocl::local_mem(sizeof(TYPE)*thread_num)) );
+                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE)*thread_num)) );
 
       }
       
