@@ -51,6 +51,7 @@ namespace viennacl
                       vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
+          viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
           viennacl::ocl::kernel & row_info_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
           
           viennacl::ocl::enqueue(row_info_kernel(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),

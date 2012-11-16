@@ -1,5 +1,5 @@
-#ifndef VIENNACL_JACOBI_PRECOND_HPP_
-#define VIENNACL_JACOBI_PRECOND_HPP_
+#ifndef VIENNACL_LINALG_JACOBI_PRECOND_HPP_
+#define VIENNACL_LINALG_JACOBI_PRECOND_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file jacobi_precond.hpp
+/** @file viennacl/linalg/jacobi_precond.hpp
     @brief Implementation of a simple Jacobi preconditioner
 */
 

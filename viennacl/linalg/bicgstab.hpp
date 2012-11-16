@@ -142,7 +142,7 @@ namespace viennacl
       }
       
       //store last error estimate:
-      tag.error(std::sqrt(std::fabs(CPU_ScalarType(viennacl::linalg::inner_prod(residual, residual)) / norm_rhs_host)));
+      tag.error(residual_norm / norm_rhs_host);
       
       return result;
     }

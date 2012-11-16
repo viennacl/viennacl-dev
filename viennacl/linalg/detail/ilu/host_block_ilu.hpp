@@ -52,13 +52,13 @@ namespace viennacl
           value_type & operator()(size_type index)
           {
             assert(index < size_ && bool("Index out of bounds!"));
-            
             return vec_[start_ + index];  
           }
           
           value_type & operator[](size_type index)
           {
-            return this->operator()(index);
+            assert(index < size_ && bool("Index out of bounds!"));
+            return vec_[start_ + index];  
           }
           
           size_type size() const { return size_; }
@@ -76,38 +76,48 @@ namespace viennacl
         * @param start_index         First row- and column-index of the block
         * @param stop_index          First row- and column-index beyond the block
         */
-      template <typename MatrixType, typename STLMatrixType>
-      void extract_block_matrix(MatrixType const & compressed_matrix,
-                                STLMatrixType & block_matrix,
+      template <typename ScalarType>
+      void extract_block_matrix(viennacl::compressed_matrix<ScalarType> const & A,
+                                viennacl::compressed_matrix<ScalarType> & diagonal_block_A,
                                 std::size_t start_index,
                                 std::size_t stop_index
                                 )
       {
-        typedef typename MatrixType::const_iterator1     RowIterator;
-        typedef typename MatrixType::const_iterator2     ColumnIterator;
+        
+        assert( (A.handle1().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+        assert( (A.handle2().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+        assert( (A.handle().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
+        
+        ScalarType   const * A_elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
+        unsigned int const * A_row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
+        unsigned int const * A_col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
-        for (RowIterator row_iter = compressed_matrix.begin1();
-                        row_iter != compressed_matrix.end1();
-                      ++row_iter)
+        ScalarType   * output_elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(diagonal_block_A.handle());
+        unsigned int * output_row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(diagonal_block_A.handle1());
+        unsigned int * output_col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(diagonal_block_A.handle2());
+        
+        std::size_t output_counter = 0;
+        for (std::size_t row = start_index; row < stop_index; ++row)
         {
-          if (row_iter.index1() < start_index)
-            continue;
-
-          if (row_iter.index1() >= stop_index)
-            break;
-
-          for (ColumnIterator col_iter = row_iter.begin();
-                              col_iter != row_iter.end();
-                            ++col_iter)
+          unsigned int buffer_col_start = A_row_buffer[row];
+          unsigned int buffer_col_end   = A_row_buffer[row+1];
+          
+          output_row_buffer[row - start_index] = output_counter;
+          
+          for (unsigned int buf_index = buffer_col_start; buf_index < buffer_col_end; ++buf_index)
           {
-            if (col_iter.index2() < start_index)
+            unsigned int col = A_col_buffer[buf_index];
+            if (col < start_index)
               continue;
 
-            if (col_iter.index2() >= static_cast<std::size_t>(stop_index))
+            if (col >= static_cast<unsigned int>(stop_index))
               continue;
 
-            block_matrix[col_iter.index1() - start_index][col_iter.index2() - start_index] = *col_iter;
+            output_col_buffer[output_counter] = col - start_index;
+            output_elements[output_counter] = A_elements[buf_index];
+            ++output_counter;
           }
+          output_row_buffer[row - start_index + 1] = output_counter;
         }
       }
           
@@ -167,10 +177,6 @@ namespace viennacl
         {
           for (std::size_t i=0; i<block_indices_.size(); ++i)
           {
-            /*viennacl::tools::const_sparse_matrix_adapter<ScalarType> LU_const_adapter(LU_blocks[i],
-                                                                                      LU_blocks[i].size(),
-                                                                                      LU_blocks[i].size());
-            viennacl::linalg::detail::ilu_lu_substitute(LU_const_adapter, vec_range);*/
             detail::ilu_vector_range<VectorType>  vec_range(vec,
                                                             block_indices_[i].first,
                                                             LU_blocks[i].size2());
@@ -186,8 +192,16 @@ namespace viennacl
         }
         
       private:
-        void init(MatrixType const & mat)
+        void init(MatrixType const & A)
         {
+          
+          viennacl::compressed_matrix<ScalarType> mat(A.size1(), A.size2());
+          viennacl::switch_memory_domain(mat, viennacl::MAIN_MEMORY);
+          
+          viennacl::copy(A, mat);
+          
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(mat.handle1());
+          
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
@@ -195,9 +209,11 @@ namespace viennacl
           {
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
-            std::vector< std::map<unsigned int, ScalarType> > mat_block(block_size);
-            detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
+            std::size_t block_nnz  = row_buffer[block_indices_[i].second] - row_buffer[block_indices_[i].first];
+            viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz);
+            viennacl::switch_memory_domain(mat_block, viennacl::MAIN_MEMORY);
             
+            detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
             
             // Step 2: Precondition blocks:
             viennacl::switch_memory_domain(LU_blocks[i], viennacl::MAIN_MEMORY);
@@ -206,20 +222,19 @@ namespace viennacl
           
         }
         
-        void preconditioner_dispatch(std::vector< std::map<unsigned int, ScalarType> > const & mat_block,
+        void preconditioner_dispatch(viennacl::compressed_matrix<ScalarType> const & mat_block,
                                      viennacl::compressed_matrix<ScalarType> & LU,
                                      viennacl::linalg::ilu0_tag)
         {
-
-          viennacl::copy(mat_block, LU);
+          LU = mat_block;
           viennacl::linalg::precondition(LU, tag_);
         }
 
-        void preconditioner_dispatch(std::vector< std::map<unsigned int, ScalarType> > const & mat_block,
+        void preconditioner_dispatch(viennacl::compressed_matrix<ScalarType> const & mat_block,
                                      viennacl::compressed_matrix<ScalarType> & LU,
                                      viennacl::linalg::ilut_tag)
         {
-          std::vector< std::map<unsigned int, ScalarType> > temp(mat_block.size());
+          std::vector< std::map<unsigned int, ScalarType> > temp(mat_block.size1());
           
           viennacl::linalg::precondition(mat_block, temp, tag_);
           
