@@ -110,7 +110,7 @@ namespace viennacl
       CPU_ScalarType omega;
       //ScalarType inner_prod_temp; //temporary variable for inner product computation
       CPU_ScalarType new_ip_rr0star = 0;
-      CPU_ScalarType residual_norm;
+      CPU_ScalarType residual_norm = norm_rhs_host;
       
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
@@ -206,7 +206,7 @@ namespace viennacl
       CPU_ScalarType alpha;
       CPU_ScalarType omega;
       CPU_ScalarType new_ip_rr0star = 0;
-      CPU_ScalarType residual_norm;
+      CPU_ScalarType residual_norm = norm_rhs_host;
       
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;

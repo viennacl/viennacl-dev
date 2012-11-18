@@ -48,6 +48,8 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
+#include "viennacl/linalg/ilu.hpp"
+#include "viennacl/linalg/detail/ilu/common.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "examples/tutorial/Random.hpp"
 #include "examples/tutorial/vector-io.hpp"
@@ -235,7 +237,75 @@ int resize_test(Epsilon const& epsilon)
    viennacl::vector<NumericT> vcl_vec(ublas_matrix.size1());
    
    
-  std::cout << "Testing transposed unit upper triangular solve: compressed_matrix" << std::endl;
+  std::cout << "Testing transposed unit lower triangular solve: compressed_matrix" << std::endl;
+  viennacl::copy(ublas_vec, vcl_vec);
+  std::cout << "matrix: " << ublas_matrix << std::endl;
+  std::cout << "vector: " << ublas_vec << std::endl;
+  std::cout << "ViennaCL matrix size: " << vcl_matrix.size1() << " x " << vcl_matrix.size2() << std::endl;
+  
+  std::cout << "ublas..." << std::endl;
+  boost::numeric::ublas::inplace_solve((ublas_matrix), ublas_vec, boost::numeric::ublas::unit_lower_tag());
+  std::cout << "ViennaCL..." << std::endl;
+  viennacl::linalg::inplace_solve((vcl_matrix), vcl_vec, viennacl::linalg::unit_lower_tag());
+  
+  /*
+  std::list< viennacl::backend::mem_handle > multifrontal_L_row_index_arrays_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
+  std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
+  
+  viennacl::vector<NumericT> multifrontal_U_diagonal_;
+  
+  viennacl::linalg::detail::multifrontal_setup_L(vcl_matrix,
+                                                  multifrontal_U_diagonal_, //dummy
+                                                  multifrontal_L_row_index_arrays_,
+                                                  multifrontal_L_row_buffers_,
+                                                  multifrontal_L_col_buffers_,
+                                                  multifrontal_L_element_buffers_,
+                                                  multifrontal_L_row_elimination_num_list_);
+  
+  viennacl::linalg::detail::multifrontal_substitute(vcl_vec,
+                                                    multifrontal_L_row_index_arrays_,
+                                                    multifrontal_L_row_buffers_,
+                                                    multifrontal_L_col_buffers_,
+                                                    multifrontal_L_element_buffers_,
+                                                    multifrontal_L_row_elimination_num_list_);
+  
+  
+  std::cout << "ublas..." << std::endl;
+  boost::numeric::ublas::inplace_solve((ublas_matrix), ublas_vec, boost::numeric::ublas::upper_tag());
+  std::cout << "ViennaCL..." << std::endl;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
+  std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
+  
+  multifrontal_U_diagonal_.resize(vcl_matrix.size1(), false);
+  viennacl::linalg::single_threaded::detail::row_info(vcl_matrix, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+  viennacl::linalg::detail::multifrontal_setup_U(vcl_matrix,
+                                                 multifrontal_U_diagonal_,
+                                                 multifrontal_U_row_index_arrays_,
+                                                 multifrontal_U_row_buffers_,
+                                                 multifrontal_U_col_buffers_,
+                                                 multifrontal_U_element_buffers_,
+                                                 multifrontal_U_row_elimination_num_list_);
+  
+  vcl_vec = viennacl::linalg::element_div(vcl_vec, multifrontal_U_diagonal_);
+  viennacl::linalg::detail::multifrontal_substitute(vcl_vec,
+                                                    multifrontal_U_row_index_arrays_,
+                                                    multifrontal_U_row_buffers_,
+                                                    multifrontal_U_col_buffers_,
+                                                    multifrontal_U_element_buffers_,
+                                                    multifrontal_U_row_elimination_num_list_);
+  */
+  for (std::size_t i=0; i<ublas_vec.size(); ++i)
+  {
+    std::cout << ublas_vec[i] << " vs. " << vcl_vec[i] << std::endl;
+  }
+
+  /*std::cout << "Testing transposed unit upper triangular solve: compressed_matrix" << std::endl;
   viennacl::copy(ublas_vec, vcl_vec);
   std::cout << "matrix: " << ublas_matrix << std::endl;
   std::cout << "vector: " << ublas_vec << std::endl;
@@ -249,8 +319,8 @@ int resize_test(Epsilon const& epsilon)
   for (std::size_t i=0; i<ublas_vec.size(); ++i)
   {
     std::cout << ublas_vec[i] << " vs. " << vcl_vec[i] << std::endl;
-  }
-
+  }*/
+  
   return retval;
 }
 
@@ -349,7 +419,7 @@ int test(Epsilon const& epsilon)
     std::cout << "# Error at operation: upper triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
     retval = EXIT_FAILURE;
-  }
+  } */
   
   
   std::cout << "Testing unit lower triangular solve: compressed_matrix" << std::endl;
@@ -358,6 +428,34 @@ int test(Epsilon const& epsilon)
   boost::numeric::ublas::inplace_solve(ublas_matrix, result, boost::numeric::ublas::unit_lower_tag());
   viennacl::linalg::inplace_solve(vcl_compressed_matrix, vcl_result, viennacl::linalg::unit_lower_tag());
   
+  /*std::list< viennacl::backend::mem_handle > multifrontal_L_row_index_arrays_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
+  std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
+  
+  viennacl::vector<NumericT> multifrontal_U_diagonal_;
+  
+  viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::MAIN_MEMORY);
+  multifrontal_U_diagonal_.resize(vcl_compressed_matrix.size1(), false);
+  viennacl::linalg::single_threaded::detail::row_info(vcl_compressed_matrix, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+  
+  viennacl::linalg::detail::multifrontal_setup_L(vcl_compressed_matrix,
+                                                  multifrontal_U_diagonal_, //dummy
+                                                  multifrontal_L_row_index_arrays_,
+                                                  multifrontal_L_row_buffers_,
+                                                  multifrontal_L_col_buffers_,
+                                                  multifrontal_L_element_buffers_,
+                                                  multifrontal_L_row_elimination_num_list_);
+  
+  viennacl::linalg::detail::multifrontal_substitute(vcl_result,
+                                                    multifrontal_L_row_index_arrays_,
+                                                    multifrontal_L_row_buffers_,
+                                                    multifrontal_L_col_buffers_,
+                                                    multifrontal_L_element_buffers_,
+                                                    multifrontal_L_row_elimination_num_list_);*/
+  
+  
   if( std::fabs(diff(result, vcl_result)) > epsilon )
   {
     std::cout << "# Error at operation: unit lower triangular solve with compressed_matrix" << std::endl;
@@ -365,6 +463,46 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
+  
+  std::cout << "Testing upper triangular solve: compressed_matrix" << std::endl;
+  result = rhs;
+  viennacl::copy(result, vcl_result);
+  boost::numeric::ublas::inplace_solve(ublas_matrix, result, boost::numeric::ublas::upper_tag());
+  viennacl::linalg::inplace_solve(vcl_compressed_matrix, vcl_result, viennacl::linalg::upper_tag());
+  
+  /*std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
+  std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
+  std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
+  
+  multifrontal_U_diagonal_.resize(vcl_compressed_matrix.size1(), false);
+  viennacl::linalg::single_threaded::detail::row_info(vcl_compressed_matrix, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+  viennacl::linalg::detail::multifrontal_setup_U(vcl_compressed_matrix,
+                                                 multifrontal_U_diagonal_,
+                                                 multifrontal_U_row_index_arrays_,
+                                                 multifrontal_U_row_buffers_,
+                                                 multifrontal_U_col_buffers_,
+                                                 multifrontal_U_element_buffers_,
+                                                 multifrontal_U_row_elimination_num_list_);
+  
+  vcl_result = viennacl::linalg::element_div(vcl_result, multifrontal_U_diagonal_);
+  viennacl::linalg::detail::multifrontal_substitute(vcl_result,
+                                                    multifrontal_U_row_index_arrays_,
+                                                    multifrontal_U_row_buffers_,
+                                                    multifrontal_U_col_buffers_,
+                                                    multifrontal_U_element_buffers_,
+                                                    multifrontal_U_row_elimination_num_list_);*/
+  
+  
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: upper triangular solve with compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+  
+/*  
   std::cout << "Testing lower triangular solve: compressed_matrix" << std::endl;
   result = rhs;
   viennacl::copy(result, vcl_result);

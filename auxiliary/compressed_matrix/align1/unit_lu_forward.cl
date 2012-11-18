@@ -7,12 +7,13 @@ __kernel void unit_lu_forward(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 
           __global const float * elements,
-          __local  unsigned int * col_index_buffer,                              
-          __local  float * element_buffer,                              
-          __local  float * vector_buffer,
           __global float * vector,
           unsigned int size) 
 {
+  __local  unsigned int col_index_buffer[128];
+  __local  float element_buffer[128];
+  __local  float vector_buffer[128];
+
   unsigned int nnz = row_indices[size];
   unsigned int current_row = 0;
   unsigned int row_at_window_start = 0;

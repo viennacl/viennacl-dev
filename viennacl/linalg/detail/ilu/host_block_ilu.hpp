@@ -37,36 +37,36 @@ namespace viennacl
   {
     namespace detail
     {
-      template <typename VectorType>
+      template <typename VectorType, typename ValueType, typename SizeType = std::size_t>
       class ilu_vector_range
       {
         public:
-          typedef typename VectorType::value_type      value_type;
-          typedef typename VectorType::size_type       size_type;
+          //typedef typename VectorType::value_type      value_type;
+          //typedef typename VectorType::size_type       size_type;
           
           ilu_vector_range(VectorType & v,
-                           size_type start_index,
-                           size_type vec_size
+                           SizeType start_index,
+                           SizeType vec_size
                           ) : vec_(v), start_(start_index), size_(vec_size) {}
           
-          value_type & operator()(size_type index)
+          ValueType & operator()(SizeType index)
           {
             assert(index < size_ && bool("Index out of bounds!"));
             return vec_[start_ + index];  
           }
           
-          value_type & operator[](size_type index)
+          ValueType & operator[](SizeType index)
           {
             assert(index < size_ && bool("Index out of bounds!"));
             return vec_[start_ + index];  
           }
           
-          size_type size() const { return size_; }
+          SizeType size() const { return size_; }
           
         private:
           VectorType & vec_;
-          size_type start_;
-          size_type size_;
+          SizeType start_;
+          SizeType size_;
       };
       
       /** @brief Extracts a diagonal block from a larger system matrix
@@ -177,9 +177,7 @@ namespace viennacl
         {
           for (std::size_t i=0; i<block_indices_.size(); ++i)
           {
-            detail::ilu_vector_range<VectorType>  vec_range(vec,
-                                                            block_indices_[i].first,
-                                                            LU_blocks[i].size2());
+            detail::ilu_vector_range<VectorType, ScalarType>  vec_range(vec, block_indices_[i].first, LU_blocks[i].size2());
             
             unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
             unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());

@@ -297,6 +297,20 @@ namespace viennacl
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& input2,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& output);
     
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::vector_expression<const V1, const V2, op_prod>
+                                >::type
+    element_prod(V1 const & v1, V2 const & v2);
+    
+    template <typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::vector_expression<const V1, const V2, op_div>
+                                >::type
+    element_div(V1 const & v1, V2 const & v2);
+    
 
     template <typename V1, typename V2, typename S3>
     typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value

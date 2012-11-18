@@ -1,0 +1,76 @@
+#ifndef VIENNACL_LINALG_SINGLE_THREADED_MISC_OPERATIONS_HPP_
+#define VIENNACL_LINALG_SINGLE_THREADED_MISC_OPERATIONS_HPP_
+
+/* =========================================================================
+   Copyright (c) 2010-2012, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+               
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
+/** @file viennacl/linalg/single_threaded/misc_operations.hpp
+    @brief Implementations of miscellaneous operations on the CPU using a single thread
+*/
+
+#include <list>
+
+#include "viennacl/forwards.h"
+#include "viennacl/scalar.hpp"
+#include "viennacl/vector.hpp"
+#include "viennacl/tools/tools.hpp"
+#include "viennacl/linalg/single_threaded/common.hpp"
+
+namespace viennacl
+{
+  namespace linalg
+  {
+    namespace single_threaded
+    {
+      namespace detail
+      {
+        template <typename ScalarType>
+        void multifrontal_substitute(vector<ScalarType> & vec,
+                                     viennacl::backend::mem_handle const & row_index_array,
+                                     viennacl::backend::mem_handle const & row_buffer,
+                                     viennacl::backend::mem_handle const & col_buffer,
+                                     viennacl::backend::mem_handle const & element_buffer,
+                                     std::size_t num_rows
+                                    )
+        {
+          ScalarType * vec_buf = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(vec.handle());
+          
+          unsigned int const * elim_row_index  = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(row_index_array);
+          unsigned int const * elim_row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(row_buffer);
+          unsigned int const * elim_col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(col_buffer);
+          ScalarType   const * elim_elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(element_buffer);
+          
+          for (std::size_t row=0; row < num_rows; ++row)
+          {
+            unsigned int eq_row = elim_row_index[row];
+            ScalarType vec_entry = vec_buf[eq_row];
+            unsigned int row_end = elim_row_buffer[row+1];
+            
+            for (std::size_t j = elim_row_buffer[row]; j < row_end; ++j)
+              vec_entry -= vec_buf[elim_col_buffer[j]] * elim_elements[j];
+            
+            vec_buf[eq_row] = vec_entry;
+          }
+            
+        }
+      }
+      
+    } // namespace opencl
+  } //namespace linalg
+} //namespace viennacl
+
+
+#endif

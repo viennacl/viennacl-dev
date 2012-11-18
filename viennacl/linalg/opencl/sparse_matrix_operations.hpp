@@ -105,9 +105,6 @@ namespace viennacl
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(vec),
                                  cl_uint(L.size1())
                                 )
@@ -131,9 +128,6 @@ namespace viennacl
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(vec),
                                  cl_uint(L.size1())
                                 )
@@ -157,9 +151,6 @@ namespace viennacl
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(vec),
                                  cl_uint(U.size1())
                                 )
@@ -183,9 +174,6 @@ namespace viennacl
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle(),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint)    * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(vec),
                                  cl_uint(U.size1())
                                 )

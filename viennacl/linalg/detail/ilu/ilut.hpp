@@ -130,7 +130,7 @@ namespace viennacl
       typedef std::map<SizeType, ScalarType>          SparseVector;
       typedef typename SparseVector::iterator         SparseVectorIterator;
       typedef typename std::map<SizeType, ScalarType>::const_iterator   OutputRowConstIterator;
-      typedef std::map<ScalarType, std::pair<SizeType, ScalarType> >  TemporarySortMap;
+      typedef std::multimap<ScalarType, std::pair<SizeType, ScalarType> >  TemporarySortMap;
 
       assert(viennacl::traits::size1(A) == output.size() && bool("Output matrix size mismatch") );
       
@@ -188,16 +188,14 @@ namespace viennacl
           SizeType k = w_k->first;
           ScalarType w_k_entry = w_k->second;
           
-          if ( (std::fabs(w_k_entry) > tau_i) || (k == i) )//do not drop diagonal element!
+          ScalarType abs_w_k = std::fabs(w_k_entry);
+          if ( (abs_w_k > tau_i) || (k == i) )//do not drop diagonal element!
           { 
-            ScalarType temp = std::fabs(w_k_entry);
             
-            if (temp == 0) // this can only happen for diagonal entry
+            if (abs_w_k == 0) // this can only happen for diagonal entry
               throw "Triangular factor in ILUT singular!"; 
             
-            while (temp_map.find(temp) != temp_map.end())
-              temp *= static_cast<ScalarType>(1.000001); //make entry slightly larger to maintain uniqueness of the entry
-            temp_map[temp] = std::make_pair(k, w_k_entry);
+            temp_map.insert(std::make_pair(abs_w_k, std::make_pair(k, w_k_entry)));
           }
         }
 

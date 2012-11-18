@@ -102,7 +102,7 @@ namespace viennacl
         
         void apply(vector<ScalarType> & vec) const
         {
-          apply_cpu(vec);
+          apply_gpu(vec);
         }
 
         // GPU application (default)
@@ -111,12 +111,12 @@ namespace viennacl
           viennacl::ocl::kernel & block_ilut_kernel =
                viennacl::ocl::get_kernel(viennacl::linalg::kernels::ilu<ScalarType, 1>::program_name(), "block_ilu_substitute");
 
-          viennacl::ocl::enqueue(block_ilut_kernel(gpu_L_trans.handle1(),  //L
-                                                   gpu_L_trans.handle2(),
-                                                   gpu_L_trans.handle(),
-                                                   gpu_U_trans.handle1(),  //U
-                                                   gpu_U_trans.handle2(),
-                                                   gpu_U_trans.handle(),
+          viennacl::ocl::enqueue(block_ilut_kernel(gpu_L_trans.handle1().opencl_handle(),  //L
+                                                   gpu_L_trans.handle2().opencl_handle(),
+                                                   gpu_L_trans.handle().opencl_handle(),
+                                                   gpu_U_trans.handle1().opencl_handle(),  //U
+                                                   gpu_U_trans.handle2().opencl_handle(),
+                                                   gpu_U_trans.handle().opencl_handle(),
                                                    gpu_D,                  //D
                                                    gpu_block_indices,
                                                    vec,
@@ -131,20 +131,36 @@ namespace viennacl
             viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
             viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
             
+            ScalarType * vector_entries = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(vec);
+            
             for (std::size_t i=0; i<block_indices_.size(); ++i)
             {
-              viennacl::linalg::inplace_solve(LU_blocks[i], vec, unit_lower_tag());
-              viennacl::linalg::inplace_solve(LU_blocks[i], vec, upper_tag());
+              detail::ilu_vector_range<ScalarType *, ScalarType>  vec_range(vector_entries, block_indices_[i].first, LU_blocks[i].size2());
+              
+              unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
+              unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());
+              ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU_blocks[i].handle());
+              
+              viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), unit_lower_tag());
+              viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), upper_tag());
             }
             
             viennacl::switch_memory_domain(vec, old_memory_location);
           }
-          else //apply ILUT directly:
+          else //apply directly:
           {
+            ScalarType * vector_entries = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(vec);
+            
             for (std::size_t i=0; i<block_indices_.size(); ++i)
             {
-              viennacl::linalg::inplace_solve(LU_blocks[i], vec, unit_lower_tag());
-              viennacl::linalg::inplace_solve(LU_blocks[i], vec, upper_tag());
+              detail::ilu_vector_range<ScalarType *, ScalarType>  vec_range(vector_entries, block_indices_[i].first, LU_blocks[i].size2());
+              
+              unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
+              unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());
+              ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU_blocks[i].handle());
+              
+              viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), unit_lower_tag());
+              viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), upper_tag());
             }
           }
           

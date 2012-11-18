@@ -257,6 +257,7 @@ set(NMF_SRCS
 
 set(ILU_SRCS
    ilu/align1/block_ilu_substitute.cl
+   ilu/align1/multifrontal_substitute.cl
    )
 
 set(CL_SRCS)

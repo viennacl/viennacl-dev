@@ -551,61 +551,6 @@ namespace viennacl
       } //namespace detail
 
       
-      
-      template <typename T>
-      __device__ void coordinate_matrix_segmented_parallel_reduction(unsigned int row, 
-                                                                     T val, 
-                                                                     unsigned int * shared_rows, 
-                                                                     T * inter_results) 
-      { 
-        shared_rows[threadIdx.x] = row; 
-        inter_results[threadIdx.x] = val; 
-        T left = 0;
-      
-        __syncthreads();
-        if( threadIdx.x >=  1 && row == shared_rows[threadIdx.x -  1] ) { left = inter_results[threadIdx.x -  1]; }  
-        __syncthreads(); 
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >=  2 && row == shared_rows[threadIdx.x -  2] ) { left = inter_results[threadIdx.x -  2]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >=  4 && row == shared_rows[threadIdx.x -  4] ) { left = inter_results[threadIdx.x -  4]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >=  8 && row == shared_rows[threadIdx.x -  8] ) { left = inter_results[threadIdx.x -  8]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >= 16 && row == shared_rows[threadIdx.x - 16] ) { left = inter_results[threadIdx.x - 16]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >= 32 && row == shared_rows[threadIdx.x - 32] ) { left = inter_results[threadIdx.x - 32]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >= 64 && row == shared_rows[threadIdx.x - 64] ) { left = inter_results[threadIdx.x - 64]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-        if( threadIdx.x >= 128 && row == shared_rows[threadIdx.x - 128] ) { left = inter_results[threadIdx.x - 128]; } 
-        __syncthreads();
-        inter_results[threadIdx.x] += left; left = 0;
-        __syncthreads();
-
-      }
-
-
       template <typename T>
       __global__ void coordinate_matrix_vec_mul_kernel(const unsigned int * coords, //(row_index, column_index) 
                                                        const T * elements, 
@@ -627,24 +572,10 @@ namespace viennacl
 
         for (uint k = 0; k < k_end; ++k)
         { 
-          __syncthreads();
-          
           local_index = group_start + k * blockDim.x + threadIdx.x; 
         
-          if (local_index < group_end)
-          {
-            tmp.x = coords[2*local_index]; 
-            tmp.y = coords[2*local_index+1]; 
-            val = elements[local_index] * vector[tmp.y]; 
-          }
-          else
-          {
-            tmp.x = 0;
-            tmp.y = 0;
-            val = 0;
-          }
-
-          __syncthreads();
+          tmp = (local_index < group_end) ? ((const uint2 *)coords)[local_index] : ::make_uint2(0, 0); 
+          val = (local_index < group_end) ? elements[local_index] * vector[tmp.y] : 0; 
 
           //check for carry from previous loop run: 
           if (threadIdx.x == 0 && k > 0)
@@ -655,11 +586,21 @@ namespace viennacl
               result[shared_rows[last_index]] += inter_results[last_index]; 
           } 
 
+          //segmented parallel reduction begin
           __syncthreads();
-
-          coordinate_matrix_segmented_parallel_reduction(tmp.x, val, shared_rows, inter_results); //all threads have to enter this function
-
+          shared_rows[threadIdx.x] = tmp.x; 
+          inter_results[threadIdx.x] = val; 
+          T left = 0;
           __syncthreads();
+          
+          for (unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+          {
+            left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
+            __syncthreads();
+            inter_results[threadIdx.x] += left;
+            __syncthreads();
+          }
+          //segmented parallel reduction end
 
           if (threadIdx.x != last_index &&
               shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1] &&
