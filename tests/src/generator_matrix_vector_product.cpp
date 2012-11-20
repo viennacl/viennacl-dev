@@ -114,9 +114,9 @@ int test ( Epsilon const& epsilon ) {
     }
 //
     //--------------------------------------------------------------------------
-    std::cout << "prod minus ( v minus prod ) " << std::endl;
-    result     = ublas::prod ( matrix, rhs ) - ( rhs - ublas::prod ( matrix,rhs ) ) ;
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,symv3 ) - ( symv3 - prod ( symm2,symv3 ) ), "prod_min_v_min_prod" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
+    std::cout << "prod minus v" << std::endl;
+    result     = ublas::prod ( matrix, rhs ) -  rhs  ;
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,symv3 ) - symv3 , "prod_min_v" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
     viennacl::ocl::get_queue().finish();
     if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
         std::cout << "# Error at operation: prod minus ( v minus prod )" << std::endl;
@@ -125,36 +125,30 @@ int test ( Epsilon const& epsilon ) {
     }
 
 
-//    //--------------------------------------------------------------------------
-//    std::cout << "Nested matrix-vector product" << std::endl;
-//    result     = ublas::prod ( matrix, ublas::vector<NumericT> ( ublas::prod ( matrix,result ) ) );
-//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,prod ( symm2,symv ) ) ) ( vcl_result,vcl_matrix ) );
-//    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-//        std::cout << "# Error at operation: nested matrix-vector product" << std::endl;
-//        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-//        retval = EXIT_FAILURE;
-//    }
-
-
-////    --------------------------------------------------------------------------
-//    std::cout << "Double nested matrix-vector product" << std::endl;
-//    result	  = ublas::prod ( matrix,ublas::vector<NumericT> ( ublas::prod ( matrix, ublas::vector<NumericT> ( ublas::prod ( matrix,rhs ) ) ) ) );
-//    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,prod ( symm2,prod ( symm2,symv3 ) ) ) ) ( vcl_result,vcl_matrix,vcl_rhs ) );
-//    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-//        std::cout << "# Error at operation: double nested matrix-vector product" << std::endl;
-//        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
-//        retval = EXIT_FAILURE;
-
-//    }
-
-    /*std::cout << "Complicated mess..." << std::endl;
-    result     = result + ublas::prod ( matrix,result ) + ublas::inner_prod ( result, rhs ) *ublas::prod ( matrix,rhs );
-    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = symv + prod ( symm2,symv ) + inner_prod ( symv,symv3 ) *prod ( symm2,symv3 ) ) ( vcl_result,vcl_matrix,vcl_rhs ) );
+    //--------------------------------------------------------------------------
+    std::cout << "prod + v" << std::endl;
+    result     = ublas::prod ( matrix, rhs ) +  rhs  ;
+    viennacl::ocl::enqueue ( viennacl::generator::custom_operation ( symv = prod ( symm2,symv3 ) + symv3 , "prod_plus_v" ) ( vcl_result,vcl_matrix,vcl_rhs ) );
+    viennacl::ocl::get_queue().finish();
     if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
-        std::cout << "# Error at operation : complicated mess" << std::endl;
+        std::cout << "# prod + v" << std::endl;
         std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
         retval = EXIT_FAILURE;
-    }*/
+    }
+
+    //--------------------------------------------------------------------------
+    std::cout << "prod plus inprod*v" << std::endl;
+    result     = ublas::prod ( matrix, rhs ) +   ublas::inner_prod (rhs,rhs)*rhs  ;
+    viennacl::generator::custom_operation op( symv = prod ( symm2,symv3 ) + symv3*inner_prod(symv3,symv3) , "prod_plus_inprod_v" );
+    viennacl::ocl::enqueue (  op( vcl_result,vcl_matrix,vcl_rhs ) );
+    viennacl::ocl::get_queue().finish();
+    if ( fabs ( diff ( result, vcl_result ) ) > epsilon ) {
+        std::cout << "# Error at operation: prod plus inprod*v" << std::endl;
+        std::cout << "  diff: " << fabs ( diff ( result, vcl_result ) ) << std::endl;
+        std::cout << op.kernels_source_code() << std::endl;
+        retval = EXIT_FAILURE;
+    }
+
 
     return retval;
 }
