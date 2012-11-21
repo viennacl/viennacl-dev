@@ -27,14 +27,16 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/circulant_matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
-#include "viennacl/hankel_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
-#include "viennacl/toeplitz_matrix.hpp"
-#include "viennacl/vandermonde_matrix.hpp"
+#ifdef VIENNACL_WITH_OPENCL
+  #include "viennacl/circulant_matrix.hpp"
+  #include "viennacl/hankel_matrix.hpp"
+  #include "viennacl/toeplitz_matrix.hpp"
+  #include "viennacl/vandermonde_matrix.hpp"
+#endif
 
 viennacl::scalar<float>  s1;
 viennacl::scalar<double> s2;
@@ -42,8 +44,8 @@ viennacl::scalar<double> s2;
 viennacl::vector<float>  v1;
 viennacl::vector<double> v2;
 
-//viennacl::matrix<float>  m1;
-//viennacl::matrix<double> m2;
+viennacl::matrix<float>  m1;
+viennacl::matrix<double> m2;
 
 // TODO: Add checks for other types
 
@@ -65,6 +67,9 @@ int main()
   
   v1 = viennacl::vector<float>(5);
   v2 = viennacl::vector<double>(5);
+
+  m1 = viennacl::matrix<float>(5, 4);
+  m2 = viennacl::matrix<double>(5, 4);
   
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;

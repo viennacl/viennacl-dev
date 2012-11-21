@@ -1,5 +1,5 @@
 
-__kernel void multifrontal_substitute(
+__kernel void level_scheduling_substitute(
           __global const unsigned int * row_index_array,
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices, 

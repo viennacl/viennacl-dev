@@ -97,6 +97,8 @@ generate_blas3_prod_align1(MATRIX_PROD_SRCS)
 generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
 
 set(COMPRESSED_MATRIX_SRCS
+   compressed_matrix/align1/block_trans_lu_backward.cl
+   compressed_matrix/align1/block_trans_unit_lu_forward.cl
    compressed_matrix/align1/jacobi.cl
    compressed_matrix/align1/lu_backward.cl
    compressed_matrix/align1/lu_forward.cl
@@ -256,8 +258,7 @@ set(NMF_SRCS
    )
 
 set(ILU_SRCS
-   ilu/align1/block_ilu_substitute.cl
-   ilu/align1/multifrontal_substitute.cl
+   ilu/align1/level_scheduling_substitute.cl
    )
 
 set(CL_SRCS)

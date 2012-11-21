@@ -36,6 +36,8 @@ file(RELATIVE_PATH CONF_REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
 # User options
 ##############
 
+option(ENABLE_CUDA "Use the CUDA backend" OFF)
+
 option(BUILD_EXAMPLES "Build example programs" ON)
 
 option(ENABLE_OPENCL "Use the OpenCL backend" ON)
@@ -85,9 +87,13 @@ if(ENABLE_UBLAS OR BUILD_TESTING OR VIENNACL_SRC_DIST)
    find_package(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
+if (ENABLE_CUDA)
+   find_package(CUDA REQUIRED)
+   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -x cu -arch=sm_13 -DVIENNACL_WITH_CUDA)
+endif(ENABLE_CUDA)
+
 if (ENABLE_OPENCL)
    find_package(OpenCL REQUIRED)
-   
 endif(ENABLE_OPENCL)
 
 if (ENABLE_OPENMP)

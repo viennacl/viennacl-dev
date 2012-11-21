@@ -51,7 +51,6 @@
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/ilu.hpp"
-#include "viennacl/linalg/detail/ilu/opencl_block_ilu.hpp"
 #include "viennacl/linalg/jacobi_precond.hpp"
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"

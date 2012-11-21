@@ -393,7 +393,51 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("csr_trans_lu_backward_kernel");
       }
       
-      
+      namespace detail
+      {
+        //
+        // block solves
+        //
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & L, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
+                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::unit_lower_tag)
+        {
+          csr_block_trans_unit_lu_forward<<<num_blocks, 128>>>(detail::cuda_arg<unsigned int>(L.lhs().handle1().cuda_handle()),
+                                                               detail::cuda_arg<unsigned int>(L.lhs().handle2().cuda_handle()),
+                                                               detail::cuda_arg<ScalarType>(L.lhs().handle().cuda_handle()),
+                                                               detail::cuda_arg<unsigned int>(block_indices.cuda_handle()),
+                                                               detail::cuda_arg<ScalarType>(vec),
+                                                               static_cast<unsigned int>(L.lhs().size1())
+                                                              );
+        }
+        
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & U, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
+                                 vector<ScalarType> const & U_diagonal,
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::upper_tag)
+        {
+          csr_block_trans_lu_backward<<<num_blocks, 128>>>(detail::cuda_arg<unsigned int>(U.lhs().handle1().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(U.lhs().handle2().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(U.lhs().handle().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(U_diagonal.handle().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(block_indices.cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(vec),
+                                                           static_cast<unsigned int>(U.lhs().size1())
+                                                          );
+        }
+        
+        
+      }
       
       
       

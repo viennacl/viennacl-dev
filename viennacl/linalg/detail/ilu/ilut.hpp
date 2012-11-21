@@ -50,7 +50,8 @@ namespace viennacl
         * @param drop_tolerance   The drop tolerance for ILUT
         */
         ilut_tag(unsigned int entries_per_row = 20,
-                 double drop_tolerance = 1e-4) : entries_per_row_(entries_per_row), drop_tolerance_(drop_tolerance) {}; 
+                 double drop_tolerance = 1e-4,
+                 bool with_level_scheduling = false) : entries_per_row_(entries_per_row), drop_tolerance_(drop_tolerance), use_level_scheduling_(with_level_scheduling) {}; 
 
         void set_drop_tolerance(double tol)
         {
@@ -67,9 +68,13 @@ namespace viennacl
 
         unsigned int get_entries_per_row() const { return entries_per_row_; }
 
+        bool use_level_scheduling() const { return use_level_scheduling_; }
+        void use_level_scheduling(bool b) { use_level_scheduling_ = b; }
+        
       private:
         unsigned int entries_per_row_;
         double drop_tolerance_;
+        bool use_level_scheduling_;
     };
     
 
@@ -307,11 +312,33 @@ namespace viennacl
         {
           if (vec.handle().get_active_handle_id() != viennacl::MAIN_MEMORY)
           {
-            viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
-            viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
-            viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
-            viennacl::linalg::inplace_solve(LU, vec, upper_tag());
-            viennacl::switch_memory_domain(vec, old_memory_location);
+            if (tag_.use_level_scheduling())
+            {
+              //std::cout << "Using multifrontal on GPU..." << std::endl;
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_L_row_index_arrays_,
+                                                  multifrontal_L_row_buffers_,
+                                                  multifrontal_L_col_buffers_,
+                                                  multifrontal_L_element_buffers_,
+                                                  multifrontal_L_row_elimination_num_list_);
+              
+              vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
+              
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_U_row_index_arrays_,
+                                                  multifrontal_U_row_buffers_,
+                                                  multifrontal_U_col_buffers_,
+                                                  multifrontal_U_element_buffers_,
+                                                  multifrontal_U_row_elimination_num_list_);
+            }
+            else
+            {
+              viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
+              viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
+              viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
+              viennacl::linalg::inplace_solve(LU, vec, upper_tag());
+              viennacl::switch_memory_domain(vec, old_memory_location);
+            }
           }
           else //apply ILUT directly:
           {
@@ -342,10 +369,104 @@ namespace viennacl
           }
             
           viennacl::copy(LU_temp, LU);
+          
+          if (!tag_.use_level_scheduling())
+            return;
+          
+          //
+          // multifrontal part:
+          //
+          
+          viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::MAIN_MEMORY);
+          multifrontal_U_diagonal_.resize(LU.size1(), false);
+          single_threaded::detail::row_info(LU, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+          
+          detail::level_scheduling_setup_L(LU,
+                                           multifrontal_U_diagonal_, //dummy
+                                           multifrontal_L_row_index_arrays_,
+                                           multifrontal_L_row_buffers_,
+                                           multifrontal_L_col_buffers_,
+                                           multifrontal_L_element_buffers_,
+                                           multifrontal_L_row_elimination_num_list_);
+          
+          
+          detail::level_scheduling_setup_U(LU,
+                                           multifrontal_U_diagonal_,
+                                           multifrontal_U_row_index_arrays_,
+                                           multifrontal_U_row_buffers_,
+                                           multifrontal_U_col_buffers_,
+                                           multifrontal_U_element_buffers_,
+                                           multifrontal_U_row_elimination_num_list_);
+          
+          //
+          // Bring to device if necessary:
+          //
+          
+          // L:
+          
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_index_arrays_.begin();
+                                                                             it != multifrontal_L_row_index_arrays_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_buffers_.begin();
+                                                                             it != multifrontal_L_row_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_col_buffers_.begin();
+                                                                             it != multifrontal_L_col_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_element_buffers_.begin();
+                                                                             it != multifrontal_L_element_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
+          
+          
+          // U:
+
+          viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_index_arrays_.begin();
+                                                                             it != multifrontal_U_row_index_arrays_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_buffers_.begin();
+                                                                             it != multifrontal_U_row_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_col_buffers_.begin();
+                                                                             it != multifrontal_U_col_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+
+          for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_element_buffers_.begin();
+                                                                             it != multifrontal_U_element_buffers_.end();
+                                                                           ++it)
+            viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
+          
+          
         }
         
         ilut_tag const & tag_;
         viennacl::compressed_matrix<ScalarType> LU;
+
+        std::list< viennacl::backend::mem_handle > multifrontal_L_row_index_arrays_;
+        std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
+        std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
+        std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
+        std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
+        
+        viennacl::vector<ScalarType> multifrontal_U_diagonal_;
+        std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
+        std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
+        std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
+        std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
+        std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
     };
 
   }

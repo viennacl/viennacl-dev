@@ -39,7 +39,7 @@ namespace viennacl
       {
         
         template <typename T>
-        __global__ void multifrontal_substitute_kernel(
+        __global__ void level_scheduling_substitute_kernel(
                   const unsigned int * row_index_array,
                   const unsigned int * row_indices,
                   const unsigned int * column_indices, 
@@ -65,7 +65,7 @@ namespace viennacl
         
         
         template <typename ScalarType>
-        void multifrontal_substitute(vector<ScalarType> & vec,
+        void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
                                      viennacl::backend::mem_handle const & row_buffer,
                                      viennacl::backend::mem_handle const & col_buffer,
@@ -80,7 +80,7 @@ namespace viennacl
           unsigned int const * elim_col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(col_buffer);
           ScalarType   const * elim_elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(element_buffer);
           
-          multifrontal_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
+          level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(row_buffer.cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(col_buffer.cuda_handle()),
                                                        detail::cuda_arg<ScalarType>(element_buffer.cuda_handle()),

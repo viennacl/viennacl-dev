@@ -42,7 +42,7 @@ namespace viennacl
       {
         
         template <typename ScalarType>
-        void multifrontal_substitute(vector<ScalarType> & vec,
+        void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
                                      viennacl::backend::mem_handle const & row_buffer,
                                      viennacl::backend::mem_handle const & col_buffer,
@@ -51,7 +51,7 @@ namespace viennacl
                                     )
         {
           viennacl::linalg::kernels::ilu<ScalarType, 1>::init();
-          viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::ilu<ScalarType, 1>::program_name(), "multifrontal_substitute");
+          viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::ilu<ScalarType, 1>::program_name(), "level_scheduling_substitute");
           
           viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
                                    vec, 

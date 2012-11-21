@@ -663,6 +663,74 @@ namespace viennacl
       }
       
       
+      template <typename T>
+      __global__ void csr_block_trans_unit_lu_forward(
+                const unsigned int * row_jumper_L,      //L part (note that L is transposed in memory)
+                const unsigned int * column_indices_L, 
+                const T * elements_L,
+                const unsigned int * block_offsets,
+                T * result,
+                unsigned int size)
+      {
+        unsigned int col_start = block_offsets[2*blockIdx.x];
+        unsigned int col_stop  = block_offsets[2*blockIdx.x+1];
+        unsigned int row_start = row_jumper_L[col_start];
+        unsigned int row_stop;
+        T result_entry = 0;
+
+        if (col_start >= col_stop)
+          return;
+
+        //forward elimination, using L:
+        for (unsigned int col = col_start; col < col_stop; ++col)
+        {
+          result_entry = result[col];
+          row_stop = row_jumper_L[col + 1];
+          for (unsigned int buffer_index = row_start + threadIdx.x; buffer_index < row_stop; buffer_index += blockDim.x)
+            result[column_indices_L[buffer_index]] -= result_entry * elements_L[buffer_index]; 
+          row_start = row_stop; //for next iteration (avoid unnecessary loads from GPU RAM)
+          __syncthreads();
+        } 
+
+      };
+      
+      
+      template <typename T>
+      __global__ void csr_block_trans_lu_backward(
+                const unsigned int * row_jumper_U,      //U part (note that U is transposed in memory)
+                const unsigned int * column_indices_U,
+                const T * elements_U,
+                const T * diagonal_U,
+                const unsigned int * block_offsets,
+                T * result,
+                unsigned int size)
+      {
+        unsigned int col_start = block_offsets[2*blockIdx.x];
+        unsigned int col_stop  = block_offsets[2*blockIdx.x+1];
+        unsigned int row_start;
+        unsigned int row_stop;
+        T result_entry = 0;
+
+        if (col_start >= col_stop)
+          return;
+
+        //backward elimination, using U and diagonal_U
+        for (unsigned int iter = 0; iter < col_stop - col_start; ++iter) 
+        { 
+          unsigned int col = (col_stop - iter) - 1;
+          result_entry = result[col] / diagonal_U[col];
+          row_start = row_jumper_U[col]; 
+          row_stop  = row_jumper_U[col + 1]; 
+          for (unsigned int buffer_index = row_start + threadIdx.x; buffer_index < row_stop; buffer_index += blockDim.x) 
+            result[column_indices_U[buffer_index]] -= result_entry * elements_U[buffer_index];
+          __syncthreads();
+        } 
+
+        //divide result vector by diagonal:
+        for (unsigned int col = col_start + threadIdx.x; col < col_stop; col += blockDim.x) 
+          result[col] /= diagonal_U[col];
+      };
+
       
       
       //

@@ -1,15 +1,17 @@
-foreach(bench vector blas3)
+# Targets using CPU-based execution
+foreach(bench blas3)
    add_executable(${bench}bench-cpu ${bench}.cpp)
 endforeach()
 
 if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
-    foreach(bench sparse solver)
+    foreach(bench sparse solver vector)
       add_executable(${bench}bench-cpu ${bench}.cpp)
     endforeach()
 endif (ENABLE_UBLAS)
   
 
+# Targets using OpenCL
 if (ENABLE_OPENCL)
 
   foreach(bench blas3 opencl)
@@ -28,6 +30,22 @@ if (ENABLE_OPENCL)
   endif (ENABLE_UBLAS)
   
 endif (ENABLE_OPENCL)
+
+# Targets using CUDA
+if (ENABLE_CUDA)
+  
+  foreach(bench blas3)
+     cuda_add_executable(${bench}bench-cuda ${bench}.cpp OPTIONS -x cu)
+  endforeach()
+  
+  if (ENABLE_UBLAS)
+     include_directories(${Boost_INCLUDE_DIRS})
+     foreach(bench sparse solver vector)
+       add_executable(${bench}bench-cuda ${bench}.cpp)
+     endforeach()
+  endif (ENABLE_UBLAS)
+  
+endif (ENABLE_CUDA)
 
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)

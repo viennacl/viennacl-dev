@@ -45,7 +45,7 @@ namespace viennacl
     {
       
       template <typename ScalarType>
-      void multifrontal_substitute(vector<ScalarType> & vec,
+      void level_scheduling_substitute(vector<ScalarType> & vec,
                                   viennacl::backend::mem_handle const & row_index_array,
                                   viennacl::backend::mem_handle const & row_buffer,
                                   viennacl::backend::mem_handle const & col_buffer,
@@ -61,16 +61,16 @@ namespace viennacl
         switch (viennacl::traits::handle(vec).get_active_handle_id())
         {
           case viennacl::MAIN_MEMORY:
-            viennacl::linalg::single_threaded::detail::multifrontal_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
+            viennacl::linalg::single_threaded::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case viennacl::OPENCL_MEMORY:
-            viennacl::linalg::opencl::detail::multifrontal_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
+            viennacl::linalg::opencl::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
             break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
           case viennacl::CUDA_MEMORY:
-            viennacl::linalg::cuda::detail::multifrontal_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
+            viennacl::linalg::cuda::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
             break;
 #endif
           default:

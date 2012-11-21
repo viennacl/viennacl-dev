@@ -206,7 +206,44 @@ namespace viennacl
       }
     }
     
+
     
+    namespace detail
+    {
+      
+      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
+      typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+      block_inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+                          viennacl::backend::mem_handle const & block_index_array, std::size_t num_blocks,
+                          viennacl::vector<ScalarType> const & mat_diagonal,
+                          viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                          SOLVERTAG tag)
+      {
+        assert( (mat.size1() == mat.size2()) && bool("Size check failed for triangular solve on transposed compressed matrix: size1(mat) != size2(mat)"));
+        assert( (mat.size1() == vec.size())  && bool("Size check failed for transposed compressed matrix triangular solve: size1(mat) != size(x)"));
+
+        switch (viennacl::traits::handle(mat.lhs()).get_active_handle_id())
+        {
+          case viennacl::MAIN_MEMORY:
+            viennacl::linalg::single_threaded::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
+            break;
+  #ifdef VIENNACL_WITH_OPENCL
+          case viennacl::OPENCL_MEMORY:
+            viennacl::linalg::opencl::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
+            break;
+  #endif
+  #ifdef VIENNACL_WITH_CUDA
+          case viennacl::CUDA_MEMORY:
+            viennacl::linalg::cuda::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
+            break;
+  #endif
+          default:
+            throw "not implemented";
+        }
+      }
+      
+      
+    }
     
     
 

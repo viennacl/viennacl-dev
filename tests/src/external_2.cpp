@@ -34,10 +34,12 @@
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
-#include "viennacl/circulant_matrix.hpp"
-#include "viennacl/hankel_matrix.hpp"
-#include "viennacl/toeplitz_matrix.hpp"
-#include "viennacl/vandermonde_matrix.hpp"
+#ifdef VIENNACL_WITH_OPENCL
+  #include "viennacl/circulant_matrix.hpp"
+  #include "viennacl/hankel_matrix.hpp"
+  #include "viennacl/toeplitz_matrix.hpp"
+  #include "viennacl/vandermonde_matrix.hpp"
+#endif
 
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/row_scaling.hpp"
@@ -47,15 +49,19 @@
 #include "viennacl/linalg/gmres.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/linalg/qr.hpp"
-#include "viennacl/linalg/svd.hpp"
 
-#include "viennacl/fft.hpp"
 #include "viennacl/misc/bandwidth_reduction.hpp"
 
-#include "viennacl/io/kernel_parameters.hpp"
+#ifdef VIENNACL_WITH_OPENCL
+  #include "viennacl/fft.hpp"
+  #include "viennacl/linalg/svd.hpp"
+  #include "viennacl/fft.hpp"
+  #include "viennacl/io/kernel_parameters.hpp"
+  #include "viennacl/generator/custom_operation.hpp"
+#endif
+
 #include "viennacl/io/matrix_market.hpp"
 
-#include "viennacl/generator/custom_operation.hpp"
 
 void other_func()
 {

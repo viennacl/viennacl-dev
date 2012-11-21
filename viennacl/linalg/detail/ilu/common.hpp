@@ -41,145 +41,30 @@ namespace viennacl
     namespace detail
     {
     
-      /** @brief Increments a row iterator (iteration along increasing row indices) up to a certain row index k.
-      * 
-      * Generic implementation using the iterator concept from boost::numeric::ublas. Could not find a better way for sparse matrices...
-      *
-      * @param row_iter   The row iterator
-      * @param k      The final row index
-      */
-      template <typename T>
-      void ilu_inc_row_iterator_to_row_index(T & row_iter, unsigned int k)
-      {
-        while (row_iter.index1() < k)
-          ++row_iter;
-      }
-      
-      /** @brief Increments a row iterator (iteration along increasing row indices) up to a certain row index k.
-      * 
-      * Specialization for the sparse matrix adapter shipped with ViennaCL
-      *
-      * @param row_iter   The row iterator
-      * @param k      The final row index
-      */
-      template <typename ScalarType>
-      void ilu_inc_row_iterator_to_row_index(viennacl::tools::sparse_matrix_adapter<ScalarType> & row_iter, unsigned int k)
-      {
-        row_iter += k - row_iter.index1();
-      }
-      
-      /** @brief Increments a row iterator (iteration along increasing row indices) up to a certain row index k.
-      * 
-      * Specialization for the const sparse matrix adapter shipped with ViennaCL
-      *
-      * @param row_iter   The row iterator
-      * @param k      The final row index
-      */
-      template <typename ScalarType>
-      void ilu_inc_row_iterator_to_row_index(viennacl::tools::const_sparse_matrix_adapter<ScalarType> & row_iter, unsigned int k)
-      {
-        row_iter += k - row_iter.index1();
-      }
-
-      /** @brief Generic inplace solution of a unit lower triangular system
-      *   
-      * @param mat  The system matrix
-      * @param vec  The right hand side vector
-      */
-      template<typename MatrixType, typename VectorType>
-      void ilu_inplace_solve(MatrixType const & mat, VectorType & vec, viennacl::linalg::unit_lower_tag)
-      {
-        typedef typename MatrixType::const_iterator1    InputRowIterator;  //iterate along increasing row index
-        typedef typename MatrixType::const_iterator2    InputColIterator;  //iterate along increasing column index
-        
-        for (InputRowIterator row_iter = mat.begin1(); row_iter != mat.end1(); ++row_iter)
-        {
-          for (InputColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-          {
-            if (col_iter.index2() < col_iter.index1())
-              vec[col_iter.index1()] -= *col_iter * vec[col_iter.index2()];
-          }
-        }
-      }
-
-      /** @brief Generic inplace solution of a upper triangular system
-      *   
-      * @param mat  The system matrix
-      * @param vec  The right hand side vector
-      */
-      template<typename MatrixType, typename VectorType>
-      void ilu_inplace_solve(MatrixType const & mat, VectorType & vec, viennacl::linalg::upper_tag)
-      {
-        typedef typename MatrixType::const_reverse_iterator1    InputRowIterator;  //iterate along increasing row index
-        typedef typename MatrixType::const_iterator2            InputColIterator;  //iterate along increasing column index
-        typedef typename VectorType::value_type                 ScalarType;
-        
-        ScalarType diagonal_entry = 1.0;
-        
-        for (InputRowIterator row_iter = mat.rbegin1(); row_iter != mat.rend1(); ++row_iter)
-        {
-          for (InputColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-          {
-            if (col_iter.index2() > col_iter.index1())
-              vec[col_iter.index1()] -= *col_iter * vec[col_iter.index2()];
-            if (col_iter.index2() == col_iter.index1())
-              diagonal_entry = *col_iter;
-          }
-          vec[row_iter.index1()] /= diagonal_entry;
-        }
-      }
-
-      /** @brief Generic LU substitution
-      *   
-      * @param mat  The system matrix
-      * @param vec  The right hand side vector
-      */
-      template<typename MatrixType, typename VectorType>
-      void ilu_lu_substitute(MatrixType const & mat, VectorType & vec)
-      {
-        ilu_inplace_solve(mat, vec, unit_lower_tag());
-        ilu_inplace_solve(mat, vec, upper_tag());
-      }
-
-      
-      
-      /** @brief Builds a dependency graph for fast LU substitutions of sparse factors on GPU */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
-      void ilu_inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
-                                                const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
-                                                op_trans> const & proxy_L,
-                             vector<ScalarType, VEC_ALIGNMENT> & vec,
-                             viennacl::linalg::unit_lower_tag)
-      {
-      }
-
       
       //
-      // Multifrontal Setup:
+      // Level Scheduling Setup for ILU:
       //
       
       template <typename ScalarType, unsigned int ALIGNMENT>
-      void multifrontal_setup_impl(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
-                                   vector<ScalarType> const & diagonal_LU,
-                                   std::list< viennacl::backend::mem_handle > & row_index_arrays,
-                                   std::list< viennacl::backend::mem_handle > & row_buffers,
-                                   std::list< viennacl::backend::mem_handle > & col_buffers,
-                                   std::list< viennacl::backend::mem_handle > & element_buffers,
-                                   std::list< std::size_t > & row_elimination_num_list,
-                                   bool setup_U)
+      void level_scheduling_setup_impl(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
+                                       vector<ScalarType> const & diagonal_LU,
+                                       std::list< viennacl::backend::mem_handle > & row_index_arrays,
+                                       std::list< viennacl::backend::mem_handle > & row_buffers,
+                                       std::list< viennacl::backend::mem_handle > & col_buffers,
+                                       std::list< viennacl::backend::mem_handle > & element_buffers,
+                                       std::list< std::size_t > & row_elimination_num_list,
+                                       bool setup_U)
       {
         ScalarType   const * diagonal_buf = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(diagonal_LU.handle());
         ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU.handle());
         unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle1());
         unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle2());
         
-        //std::cout << "Building dependency graph..." << std::endl;
-        std::vector<std::size_t> row_elimination(LU.size1());
-        
-        
         //
         // Step 1: Determine row elimination order for each row and build up meta information about the number of entries taking part in each elimination step:
         //
+        std::vector<std::size_t> row_elimination(LU.size1());
         std::map<std::size_t, std::map<std::size_t, std::size_t> > row_entries_per_elimination_step;
         
         std::size_t max_elimination_runs = 0;
@@ -203,26 +88,10 @@ namespace viennacl
           max_elimination_runs = std::max<std::size_t>(max_elimination_runs, elimination_index + 1);
         }
         
-        //
-        // Step 2: Build up meta information about the number of entries taking part in each elimination step:
-        //
-        
-        /*for (std::size_t row2 = 0; row2 < LU.size1(); ++row2)
-        {
-          std::size_t row = setup_U ? (LU.size1() - row2) - 1 : row2;
-          
-          std::size_t row_begin = row_buffer[row];
-          std::size_t row_end   = row_buffer[row+1];
-          for (std::size_t i = row_begin; i < row_end; ++i)
-          {
-            unsigned int col = col_buffer[i];
-            if ( (!setup_U && col < row) || (setup_U && col > row) )
-          }
-        }*/
-        
+        //std::cout << "Number of elimination runs: " << max_elimination_runs << std::endl;
         
         //
-        // Step 3: Build row-major elimination matrix for each elimination step
+        // Step 2: Build row-major elimination matrix for each elimination step
         //
         
         //std::cout << "Elimination order: " << std::endl;
@@ -314,7 +183,7 @@ namespace viennacl
       
       
       template <typename ScalarType, unsigned int ALIGNMENT>
-      void multifrontal_setup_L(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
+      void level_scheduling_setup_L(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
                                 std::list< viennacl::backend::mem_handle > & row_index_arrays,
                                 std::list< viennacl::backend::mem_handle > & row_buffers,
@@ -322,7 +191,7 @@ namespace viennacl
                                 std::list< viennacl::backend::mem_handle > & element_buffers,
                                 std::list< std::size_t > & row_elimination_num_list)
       {
-         multifrontal_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, false);
+        level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, false);
       }
       
       
@@ -331,7 +200,7 @@ namespace viennacl
       //
       
       template <typename ScalarType, unsigned int ALIGNMENT>
-      void multifrontal_setup_U(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
+      void level_scheduling_setup_U(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
                                 std::list< viennacl::backend::mem_handle > & row_index_arrays,
                                 std::list< viennacl::backend::mem_handle > & row_buffers,
@@ -339,7 +208,7 @@ namespace viennacl
                                 std::list< viennacl::backend::mem_handle > & element_buffers,
                                 std::list< std::size_t > & row_elimination_num_list)
       {
-         multifrontal_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, true);
+        level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, true);
       }
       
       
@@ -347,12 +216,12 @@ namespace viennacl
       // Multifrontal substitution (both L and U). Will partly be moved to single_threaded/opencl/cuda implementations
       //
       template <typename ScalarType>
-      void multifrontal_substitute(vector<ScalarType> & vec,
-                                   std::list< viennacl::backend::mem_handle > const & row_index_arrays,
-                                   std::list< viennacl::backend::mem_handle > const & row_buffers,
-                                   std::list< viennacl::backend::mem_handle > const & col_buffers,
-                                   std::list< viennacl::backend::mem_handle > const & element_buffers,
-                                   std::list< std::size_t > const & row_elimination_num_list)
+      void level_scheduling_substitute(vector<ScalarType> & vec,
+                                       std::list< viennacl::backend::mem_handle > const & row_index_arrays,
+                                       std::list< viennacl::backend::mem_handle > const & row_buffers,
+                                       std::list< viennacl::backend::mem_handle > const & col_buffers,
+                                       std::list< viennacl::backend::mem_handle > const & element_buffers,
+                                       std::list< std::size_t > const & row_elimination_num_list)
       {
         typedef typename std::list< viennacl::backend::mem_handle >::const_iterator  ListIterator;
         ListIterator row_index_array_it = row_index_arrays.begin();
@@ -362,7 +231,7 @@ namespace viennacl
         typename std::list< std::size_t>::const_iterator row_elimination_num_it = row_elimination_num_list.begin();
         for (std::size_t i=0; i<row_index_arrays.size(); ++i)
         {
-          viennacl::linalg::detail::multifrontal_substitute(vec, *row_index_array_it, *row_buffers_it, *col_buffers_it, *element_buffers_it, *row_elimination_num_it);
+          viennacl::linalg::detail::level_scheduling_substitute(vec, *row_index_array_it, *row_buffers_it, *col_buffers_it, *element_buffers_it, *row_elimination_num_it);
           
           ++row_index_array_it;
           ++row_buffers_it;

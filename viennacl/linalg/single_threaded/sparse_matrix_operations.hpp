@@ -451,6 +451,146 @@ namespace viennacl
           }
         }
         
+        
+        //
+        // block solves
+        //
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & L, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::unit_lower_tag)
+        {
+          // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
+          
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
+          ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          
+          std::size_t col_begin = row_buffer[0];
+          for (std::size_t col = 0; col < L.lhs().size1(); ++col)
+          {
+            ScalarType vec_entry = vec_buffer[col];
+            std::size_t col_end = row_buffer[col+1];
+            for (std::size_t i = col_begin; i < col_end; ++i)
+            {
+              unsigned int row_index = col_buffer[i];
+              if (row_index > col)
+                vec_buffer[row_index] -= vec_entry * elements[i];
+            }
+            col_begin = col_end;
+          }
+        }
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & L, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 vector<ScalarType> const & L_diagonal,
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::lower_tag)
+        {
+          // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
+          
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
+          ScalarType   const * diagonal_buffer = detail::extract_raw_pointer<ScalarType>(L_diagonal.handle());
+          ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          
+          std::size_t col_begin = row_buffer[0];
+          for (std::size_t col = 0; col < L.lhs().size1(); ++col)
+          {
+            std::size_t col_end = row_buffer[col+1];
+            
+            ScalarType vec_entry = vec_buffer[col] / diagonal_buffer[col];
+            vec_buffer[col] = vec_entry;
+            for (std::size_t i = col_begin; i < col_end; ++i)
+            {
+              std::size_t row_index = col_buffer[i];
+              if (row_index > col)
+                vec_buffer[row_index] -= vec_entry * elements[i];
+            }
+            col_begin = col_end;
+          }
+        }
+        
+        
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & U, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 vector<ScalarType> const & /* U_diagonal */, //ignored
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::unit_upper_tag)
+        {
+          // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
+          
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
+          ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          
+          for (std::size_t col2 = 0; col2 < U.lhs().size1(); ++col2)
+          {
+            std::size_t col = (U.lhs().size1() - col2) - 1;
+            
+            ScalarType vec_entry = vec_buffer[col];
+            std::size_t col_begin = row_buffer[col];
+            std::size_t col_end = row_buffer[col+1];
+            for (std::size_t i = col_begin; i < col_end; ++i)
+            {
+              std::size_t row_index = col_buffer[i];
+              if (row_index < col)
+                vec_buffer[row_index] -= vec_entry * elements[i];
+            }
+            
+          }
+        }
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & U, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 vector<ScalarType> const & U_diagonal,
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::upper_tag)
+        {
+          // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
+          
+          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
+          ScalarType   const * diagonal_buffer = detail::extract_raw_pointer<ScalarType>(U_diagonal.handle());
+          ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
+          
+          for (std::size_t col2 = 0; col2 < U.lhs().size1(); ++col2)
+          {
+            std::size_t col = (U.lhs().size1() - col2) - 1;
+            std::size_t col_begin = row_buffer[col];
+            std::size_t col_end = row_buffer[col+1];
+            
+            // Stage 2: Substitute
+            ScalarType vec_entry = vec_buffer[col] / diagonal_buffer[col];
+            vec_buffer[col] = vec_entry;
+            for (std::size_t i = col_begin; i < col_end; ++i)
+            {
+              std::size_t row_index = col_buffer[i];
+              if (row_index < col)
+                vec_buffer[row_index] -= vec_entry * elements[i];
+            }
+          }
+        }
+        
+        
       } //namespace detail
       
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions

@@ -66,3 +66,23 @@ if (ENABLE_OPENCL)
     endforeach()
   endif()
 endif (ENABLE_OPENCL)
+
+
+#
+# Part 3: Tutorials with CUDA support
+# 
+
+if (ENABLE_CUDA)
+  foreach(tut blas1)
+    cuda_add_executable(${tut}-cuda ${tut}.cu)
+  endforeach()
+
+  if(ENABLE_UBLAS)
+    include_directories(${Boost_INCLUDE_DIRS})
+    foreach(tut blas2 blas3 matrix-range power-iter qr sparse vector-range)
+        cuda_add_executable(${tut}-cuda ${tut}.cu)
+    endforeach()
+  endif()
+
+endif (ENABLE_CUDA)
+

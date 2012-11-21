@@ -42,7 +42,6 @@
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/mixed_precision_cg.hpp"
-  #include "viennacl/linalg/detail/ilu/opencl_block_ilu.hpp"  //preview feature: OpenCL accelerated block-ILU
 #endif  
 
 #include "viennacl/io/matrix_market.hpp"
@@ -237,25 +236,25 @@ int run_benchmark()
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////           ILU preconditioner         //////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  std::cout << "------- ILU0 on CPU (ublas) ----------" << std::endl;
+  std::cout << "------- ILU0 on with ublas ----------" << std::endl;
 
   timer.start();
   viennacl::linalg::ilu0_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
   exec_time = timer.get();
-  std::cout << "Setup time: " << exec_time << std::endl;
-  
+  std::cout << "Setup time (no level scheduling): " << exec_time << std::endl;
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     ublas_ilu0.apply(ublas_vec1);
   exec_time = timer.get();
-  std::cout << "ublas time: " << exec_time << std::endl;
+  std::cout << "ublas ILU0 substitution time (no level scheduling): " << exec_time << std::endl;
+  
   
   std::cout << "------- ILU0 with ViennaCL ----------" << std::endl;
 
   timer.start();
   viennacl::linalg::ilu0_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilu0(vcl_compressed_matrix, viennacl::linalg::ilu0_tag());
   exec_time = timer.get();
-  std::cout << "Setup time: " << exec_time << std::endl;
+  std::cout << "Setup time (no level scheduling): " << exec_time << std::endl;
   
   viennacl::backend::finish();
   timer.start();
@@ -263,11 +262,27 @@ int run_benchmark()
     vcl_ilu0.apply(vcl_vec1);
   viennacl::backend::finish();
   exec_time = timer.get();
-  std::cout << "ViennaCL time: " << exec_time << std::endl;
+  std::cout << "ViennaCL ILU0 substitution time (no level scheduling): " << exec_time << std::endl;
   
+  timer.start();
+  viennacl::linalg::ilu0_tag ilu0_with_level_scheduling; ilu0_with_level_scheduling.use_level_scheduling(true);
+  viennacl::linalg::ilu0_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilu0_level_scheduling(vcl_compressed_matrix, ilu0_with_level_scheduling);
+  exec_time = timer.get();
+  std::cout << "Setup time (with level scheduling): " << exec_time << std::endl;
+  
+  viennacl::backend::finish();
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    vcl_ilu0_level_scheduling.apply(vcl_vec1);
+  viennacl::backend::finish();
+  exec_time = timer.get();
+  std::cout << "ViennaCL ILU0 substitution time (with level scheduling): " << exec_time << std::endl;
+
+
+
   ////////////////////////////////////////////
 
-  std::cout << "------- Block-ILU0 on CPU (ublas) ----------" << std::endl;
+  std::cout << "------- Block-ILU0 with ublas ----------" << std::endl;
 
   ublas_vec1 = ublas_vec2;
   viennacl::copy(ublas_vec1, vcl_vec1);
@@ -284,7 +299,6 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "ublas time: " << exec_time << std::endl;
   
-#ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- Block-ILU0 with ViennaCL ----------" << std::endl;
 
   timer.start();
@@ -294,53 +308,65 @@ int run_benchmark()
   std::cout << "Setup time: " << exec_time << std::endl;
   
   //vcl_block_ilu0.apply(vcl_vec1);  //warm-up
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     vcl_block_ilu0.apply(vcl_vec1);
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "ViennaCL time: " << exec_time << std::endl;
-#endif
   
   ////////////////////////////////////////////
   
-  std::cout << "------- ILUT on CPU (ublas) ----------" << std::endl;
+  std::cout << "------- ILUT with ublas ----------" << std::endl;
 
   ublas_vec1 = ublas_vec2;
   viennacl::copy(ublas_vec1, vcl_vec1);
-  
+
   timer.start();
   viennacl::linalg::ilut_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilut(ublas_matrix, viennacl::linalg::ilut_tag());
   exec_time = timer.get();
-  std::cout << "Setup time: " << exec_time << std::endl;
-  
-  ublas_ilut.apply(ublas_vec1);
+  std::cout << "Setup time (no level scheduling): " << exec_time << std::endl;
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     ublas_ilut.apply(ublas_vec1);
   exec_time = timer.get();
-  std::cout << "ublas time: " << exec_time << std::endl;
-
+  std::cout << "ublas ILUT substitution time (no level scheduling): " << exec_time << std::endl;
+  
+  
   std::cout << "------- ILUT with ViennaCL ----------" << std::endl;
 
   timer.start();
   viennacl::linalg::ilut_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilut(vcl_compressed_matrix, viennacl::linalg::ilut_tag());
   exec_time = timer.get();
-  std::cout << "Setup time: " << exec_time << std::endl;
+  std::cout << "Setup time (no level scheduling): " << exec_time << std::endl;
   
-  vcl_ilut.apply(vcl_vec1);
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     vcl_ilut.apply(vcl_vec1);
   viennacl::backend::finish();
   exec_time = timer.get();
-  std::cout << "ViennaCL time: " << exec_time << std::endl;
+  std::cout << "ViennaCL ILUT substitution time (no level scheduling): " << exec_time << std::endl;
+  
+  timer.start();
+  viennacl::linalg::ilut_tag ilut_with_level_scheduling; ilut_with_level_scheduling.use_level_scheduling(true);
+  viennacl::linalg::ilut_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilut_level_scheduling(vcl_compressed_matrix, ilut_with_level_scheduling);
+  exec_time = timer.get();
+  std::cout << "Setup time (with level scheduling): " << exec_time << std::endl;
+  
+  viennacl::backend::finish();
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    vcl_ilut_level_scheduling.apply(vcl_vec1);
+  viennacl::backend::finish();
+  exec_time = timer.get();
+  std::cout << "ViennaCL ILUT substitution time (with level scheduling): " << exec_time << std::endl;
+
 
   ////////////////////////////////////////////
 
-  std::cout << "------- Block-ILUT on CPU (ublas) ----------" << std::endl;
+  std::cout << "------- Block-ILUT with ublas ----------" << std::endl;
 
   ublas_vec1 = ublas_vec2;
   viennacl::copy(ublas_vec1, vcl_vec1);
@@ -351,14 +377,13 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "Setup time: " << exec_time << std::endl;
   
-  ublas_block_ilut.apply(ublas_vec1);
+  //ublas_block_ilut.apply(ublas_vec1);
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     ublas_block_ilut.apply(ublas_vec1);
   exec_time = timer.get();
   std::cout << "ublas time: " << exec_time << std::endl;
   
-#ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- Block-ILUT with ViennaCL ----------" << std::endl;
 
   timer.start();
@@ -367,15 +392,16 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "Setup time: " << exec_time << std::endl;
   
-  vcl_block_ilut.apply(vcl_vec1);  //warm-up
-  viennacl::ocl::get_queue().finish();
+  //vcl_block_ilut.apply(vcl_vec1);  //warm-up
+  viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     vcl_block_ilut.apply(vcl_vec1);
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "ViennaCL time: " << exec_time << std::endl;
-#endif  
+  
+  std::cout << "Diff: " << diff_inf(ublas_vec1, vcl_vec1) << std::endl;
   
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////              CG solver                //////////////////
@@ -427,10 +453,8 @@ int run_benchmark()
   std::cout << "------- CG solver (Block-ILU0 preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_block_ilu0, cg_ops);
 
-#ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- CG solver (Block-ILU0 preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_block_ilu0, cg_ops);
-#endif
   
   std::cout << "------- CG solver (ILUT preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_ilut, cg_ops);
@@ -444,10 +468,8 @@ int run_benchmark()
   std::cout << "------- CG solver (Block-ILUT preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_block_ilut, cg_ops);
 
-#ifdef VIENNACL_WITH_OPENCL
   std::cout << "------- CG solver (Block-ILUT preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_block_ilut, cg_ops);
-#endif  
   
   std::cout << "------- CG solver (Jacobi preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_jacobi, cg_ops);

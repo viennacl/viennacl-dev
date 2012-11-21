@@ -157,11 +157,6 @@ int run_benchmark()
 
   std::cout << "Testing triangular solves: compressed_matrix" << std::endl;
   
-  std::cout << "ilu-substitute..." << std::endl;
-  timer.start();
-  viennacl::linalg::detail::ilu_inplace_solve(ublas_matrix, ublas_vec1, viennacl::linalg::unit_lower_tag());
-  std::cout << "Time elapsed: " << timer.get() << std::endl;
-  
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
   viennacl::copy(ublas_vec1, vcl_vec1);

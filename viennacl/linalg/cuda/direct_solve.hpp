@@ -215,14 +215,14 @@ namespace viennacl
         template <typename T>
         bool is_unit_solve(T const & tag) { return false; }
         
-        bool is_unit_solve(viennacl::linalg::unit_lower_tag) { return true; }
-        bool is_unit_solve(viennacl::linalg::unit_upper_tag) { return true; }
+        inline bool is_unit_solve(viennacl::linalg::unit_lower_tag) { return true; }
+        inline bool is_unit_solve(viennacl::linalg::unit_upper_tag) { return true; }
         
         template <typename T>
         bool is_upper_solve(T const & tag) { return false; }
         
-        bool is_upper_solve(viennacl::linalg::upper_tag) { return true; }
-        bool is_upper_solve(viennacl::linalg::unit_upper_tag) { return true; }
+        inline bool is_upper_solve(viennacl::linalg::upper_tag) { return true; }
+        inline bool is_upper_solve(viennacl::linalg::unit_upper_tag) { return true; }
         
         template <typename M1, typename M2, typename SolverTag>
         void inplace_solve_impl(M1 const & A, bool transpose_A,

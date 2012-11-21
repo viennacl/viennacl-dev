@@ -186,6 +186,59 @@ namespace viennacl
       
       // transposed triangular solvers
       
+      namespace detail
+      {
+        //
+        // block solves
+        //
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & L, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
+                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::unit_lower_tag)
+        {
+          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
+          viennacl::ocl::kernel & block_solve_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_unit_lu_forward");
+          block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
+          
+          viennacl::ocl::enqueue(block_solve_kernel(L.lhs().handle1().opencl_handle(),
+                                                    L.lhs().handle2().opencl_handle(),
+                                                    L.lhs().handle().opencl_handle(),
+                                                    block_indices.opencl_handle(),
+                                                    vec,
+                                                    static_cast<cl_uint>(vec.size())));
+        }
+        
+        
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
+                                                         op_trans> & U, 
+                                 viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
+                                 vector<ScalarType> const & U_diagonal,
+                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 viennacl::linalg::upper_tag)
+        {
+          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
+          viennacl::ocl::kernel & block_solve_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_lu_backward");
+          block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
+
+          viennacl::ocl::enqueue(block_solve_kernel(U.lhs().handle1().opencl_handle(),
+                                                    U.lhs().handle2().opencl_handle(),
+                                                    U.lhs().handle().opencl_handle(),
+                                                    U_diagonal,
+                                                    block_indices.opencl_handle(),
+                                                    vec,
+                                                    static_cast<cl_uint>(vec.size())));
+        }
+        
+        
+      }
+      
+      
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
       * @param L    The matrix

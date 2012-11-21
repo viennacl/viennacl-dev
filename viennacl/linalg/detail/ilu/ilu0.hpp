@@ -19,8 +19,10 @@ License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/ilu/ilu0.hpp
-  @brief Implementations of incomplete factorization preconditioners with static nonzero pattern. Contributed by Evan Bollig.
+  @brief Implementations of incomplete factorization preconditioners with static nonzero pattern.
 
+  Contributed by Evan Bollig.
+  
   ILU0 (Incomplete LU with zero fill-in) 
   - All preconditioner nonzeros exist at locations that were nonzero in the input matrix. 
   - The number of nonzeros in the output preconditioner are exactly the same number as the input matrix
@@ -28,6 +30,8 @@ License:         MIT (X11), see file LICENSE in the base directory
  Evan Bollig 3/30/12
  
  Adapted from viennacl/linalg/detail/ilut.hpp
+ 
+ Low-level reimplementation by Karl Rupp in Nov 2012, increasing performance substantially. Also added level-scheduling.
 
 */
 
@@ -51,7 +55,17 @@ namespace viennacl
 
     /** @brief A tag for incomplete LU factorization with static pattern (ILU0)
     */
-    class ilu0_tag {};
+    class ilu0_tag 
+    {
+      public:
+        ilu0_tag(bool with_level_scheduling = false) : use_level_scheduling_(with_level_scheduling) {}
+        
+        bool use_level_scheduling() const { return use_level_scheduling_; }
+        void use_level_scheduling(bool b) { use_level_scheduling_ = b; }
+        
+      private:
+        bool use_level_scheduling_;
+    };
 
     
     /** @brief Implementation of a ILU-preconditioner with static pattern. Optimized version for CSR matrices.
@@ -180,7 +194,7 @@ namespace viennacl
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
       public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2()), use_multifrontal_(true)
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
@@ -192,24 +206,24 @@ namespace viennacl
         {
           if (vec.handle().get_active_handle_id() != viennacl::MAIN_MEMORY)
           {
-            if (use_multifrontal_)
+            if (tag_.use_level_scheduling())
             {
               //std::cout << "Using multifrontal on GPU..." << std::endl;
-              detail::multifrontal_substitute(vec,
-                                              multifrontal_L_row_index_arrays_,
-                                              multifrontal_L_row_buffers_,
-                                              multifrontal_L_col_buffers_,
-                                              multifrontal_L_element_buffers_,
-                                              multifrontal_L_row_elimination_num_list_);
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_L_row_index_arrays_,
+                                                  multifrontal_L_row_buffers_,
+                                                  multifrontal_L_col_buffers_,
+                                                  multifrontal_L_element_buffers_,
+                                                  multifrontal_L_row_elimination_num_list_);
               
               vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
               
-              detail::multifrontal_substitute(vec,
-                                              multifrontal_U_row_index_arrays_,
-                                              multifrontal_U_row_buffers_,
-                                              multifrontal_U_col_buffers_,
-                                              multifrontal_U_element_buffers_,
-                                              multifrontal_U_row_elimination_num_list_);
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_U_row_index_arrays_,
+                                                  multifrontal_U_row_buffers_,
+                                                  multifrontal_U_col_buffers_,
+                                                  multifrontal_U_element_buffers_,
+                                                  multifrontal_U_row_elimination_num_list_);
             }
             else
             {
@@ -220,26 +234,26 @@ namespace viennacl
               viennacl::switch_memory_domain(vec, old_memory_location);
             }
           }
-          else //apply ILU0 directly:
+          else //apply ILU0 directly on CPU
           {
-            if (use_multifrontal_)
+            if (tag_.use_level_scheduling())
             {
               //std::cout << "Using multifrontal..." << std::endl;
-              detail::multifrontal_substitute(vec,
-                                              multifrontal_L_row_index_arrays_,
-                                              multifrontal_L_row_buffers_,
-                                              multifrontal_L_col_buffers_,
-                                              multifrontal_L_element_buffers_,
-                                              multifrontal_L_row_elimination_num_list_);
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_L_row_index_arrays_,
+                                                  multifrontal_L_row_buffers_,
+                                                  multifrontal_L_col_buffers_,
+                                                  multifrontal_L_element_buffers_,
+                                                  multifrontal_L_row_elimination_num_list_);
               
               vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
               
-              detail::multifrontal_substitute(vec,
-                                              multifrontal_U_row_index_arrays_,
-                                              multifrontal_U_row_buffers_,
-                                              multifrontal_U_col_buffers_,
-                                              multifrontal_U_element_buffers_,
-                                              multifrontal_U_row_elimination_num_list_);
+              detail::level_scheduling_substitute(vec,
+                                                  multifrontal_U_row_index_arrays_,
+                                                  multifrontal_U_row_buffers_,
+                                                  multifrontal_U_col_buffers_,
+                                                  multifrontal_U_element_buffers_,
+                                                  multifrontal_U_row_elimination_num_list_);
             }
             else
             {
@@ -256,31 +270,30 @@ namespace viennacl
           LU = mat;
           viennacl::linalg::precondition(LU, tag_);
           
-          
-          // multifrontal part:
-          if (!use_multifrontal_)
+          if (!tag_.use_level_scheduling())
             return;
           
+          // multifrontal part:
           viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::MAIN_MEMORY);
           multifrontal_U_diagonal_.resize(LU.size1(), false);
           single_threaded::detail::row_info(LU, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
           
-          detail::multifrontal_setup_L(LU,
-                                       multifrontal_U_diagonal_, //dummy
-                                       multifrontal_L_row_index_arrays_,
-                                       multifrontal_L_row_buffers_,
-                                       multifrontal_L_col_buffers_,
-                                       multifrontal_L_element_buffers_,
-                                       multifrontal_L_row_elimination_num_list_);
+          detail::level_scheduling_setup_L(LU,
+                                           multifrontal_U_diagonal_, //dummy
+                                           multifrontal_L_row_index_arrays_,
+                                           multifrontal_L_row_buffers_,
+                                           multifrontal_L_col_buffers_,
+                                           multifrontal_L_element_buffers_,
+                                           multifrontal_L_row_elimination_num_list_);
           
           
-          detail::multifrontal_setup_U(LU,
-                                       multifrontal_U_diagonal_,
-                                       multifrontal_U_row_index_arrays_,
-                                       multifrontal_U_row_buffers_,
-                                       multifrontal_U_col_buffers_,
-                                       multifrontal_U_element_buffers_,
-                                       multifrontal_U_row_elimination_num_list_);
+          detail::level_scheduling_setup_U(LU,
+                                           multifrontal_U_diagonal_,
+                                           multifrontal_U_row_index_arrays_,
+                                           multifrontal_U_row_buffers_,
+                                           multifrontal_U_col_buffers_,
+                                           multifrontal_U_element_buffers_,
+                                           multifrontal_U_row_elimination_num_list_);
           
           //
           // Bring to device if necessary:
@@ -338,7 +351,6 @@ namespace viennacl
         ilu0_tag const & tag_;
         viennacl::compressed_matrix<ScalarType> LU;
         
-        bool use_multifrontal_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_index_arrays_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;

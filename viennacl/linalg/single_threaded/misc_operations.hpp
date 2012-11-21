@@ -38,7 +38,7 @@ namespace viennacl
       namespace detail
       {
         template <typename ScalarType>
-        void multifrontal_substitute(vector<ScalarType> & vec,
+        void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
                                      viennacl::backend::mem_handle const & row_buffer,
                                      viennacl::backend::mem_handle const & col_buffer,
