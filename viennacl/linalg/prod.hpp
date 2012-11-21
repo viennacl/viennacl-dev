@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file prod.hpp
+/** @file viennacl/linalg/prod.hpp
     @brief Generic interface for matrix-vector and matrix-matrix products. 
            See viennacl/linalg/vector_operations.hpp, viennacl/linalg/matrix_operations.hpp,
            viennacl/linalg/compressed_matrix_operations.hpp and viennacl/linalg/coordinate_matrix_operations.hpp for implementations.

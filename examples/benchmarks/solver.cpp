@@ -401,7 +401,6 @@ int run_benchmark()
   exec_time = timer.get();
   std::cout << "ViennaCL time: " << exec_time << std::endl;
   
-  std::cout << "Diff: " << diff_inf(ublas_vec1, vcl_vec1) << std::endl;
   
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////              CG solver                //////////////////

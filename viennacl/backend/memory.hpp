@@ -69,7 +69,7 @@ namespace viennacl
     // * memory_read(src, offset, size, ptr)
     //
 
-    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, void * host_ptr = NULL)
+    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
     {
       if (size_in_bytes > 0)
       {

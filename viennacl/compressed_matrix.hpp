@@ -34,57 +34,16 @@
 
 namespace viennacl
 {
-    
-
-    //provide copy-operation:
-    /** @brief Copies a sparse matrix from the host to the OpenCL device (either GPU or multi-core CPU)
-    *
-    * There are some type requirements on the CPU_MATRIX type (fulfilled by e.g. boost::numeric::ublas):
-    * - .size1() returns the number of rows
-    * - .size2() returns the number of columns
-    * - const_iterator1    is a type definition for an iterator along increasing row indices
-    * - const_iterator2    is a type definition for an iterator along increasing columns indices
-    * - The const_iterator1 type provides an iterator of type const_iterator2 via members .begin() and .end() that iterates along column indices in the current row.
-    * - The types const_iterator1 and const_iterator2 provide members functions .index1() and .index2() that return the current row and column indices respectively.
-    * - Dereferenciation of an object of type const_iterator2 returns the entry.
-    *
-    * @param cpu_matrix   A sparse matrix on the host.
-    * @param gpu_matrix   A compressed_matrix from ViennaCL
-    */
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
-    void copy(const CPU_MATRIX & cpu_matrix,
-              compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
+    namespace detail
     {
-      //std::cout << "copy for (" << cpu_matrix.size1() << ", " << cpu_matrix.size2() << ", " << cpu_matrix.nnz() << ")" << std::endl;
-      
-      if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
+      template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+      void copy_impl(const CPU_MATRIX & cpu_matrix,
+                     compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
+                     std::size_t nonzeros)
       {
-        //determine nonzeros:
-        long num_entries = 0;
-        for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
-              row_it != cpu_matrix.end1();
-              ++row_it)
-        {
-          std::size_t entries_per_row = 0;
-          for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
-                col_it != row_it.end();
-                ++col_it)
-          {
-            ++entries_per_row;
-          }
-          num_entries += viennacl::tools::roundUpToNextMultiple<std::size_t>(entries_per_row, ALIGNMENT);
-        }
-        
-        if (num_entries == 0) //we copy an empty matrix
-          num_entries = 1;
-        
-        //set up matrix entries:
-        
-        //std::vector<cl_uint> row_buffer(cpu_matrix.size1() + 1);
-        //std::vector<cl_uint> col_buffer(num_entries);
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
-        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), num_entries);
-        std::vector<SCALARTYPE> elements(num_entries);
+        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), nonzeros);
+        std::vector<SCALARTYPE> elements(nonzeros);
         
         std::size_t row_index  = 0;
         std::size_t data_index = 0;
@@ -113,7 +72,57 @@ namespace viennacl
                        &elements[0], 
                        cpu_matrix.size1(),
                        cpu_matrix.size2(),
-                       num_entries);
+                       nonzeros);
+      }
+    }
+
+    //provide copy-operation:
+    /** @brief Copies a sparse matrix from the host to the OpenCL device (either GPU or multi-core CPU)
+    *
+    * There are some type requirements on the CPU_MATRIX type (fulfilled by e.g. boost::numeric::ublas):
+    * - .size1() returns the number of rows
+    * - .size2() returns the number of columns
+    * - const_iterator1    is a type definition for an iterator along increasing row indices
+    * - const_iterator2    is a type definition for an iterator along increasing columns indices
+    * - The const_iterator1 type provides an iterator of type const_iterator2 via members .begin() and .end() that iterates along column indices in the current row.
+    * - The types const_iterator1 and const_iterator2 provide members functions .index1() and .index2() that return the current row and column indices respectively.
+    * - Dereferenciation of an object of type const_iterator2 returns the entry.
+    *
+    * @param cpu_matrix   A sparse matrix on the host.
+    * @param gpu_matrix   A compressed_matrix from ViennaCL
+    */
+    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    void copy(const CPU_MATRIX & cpu_matrix,
+              compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
+    {
+      assert( (gpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+      
+      //std::cout << "copy for (" << cpu_matrix.size1() << ", " << cpu_matrix.size2() << ", " << cpu_matrix.nnz() << ")" << std::endl;
+      
+      if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
+      {
+        //determine nonzeros:
+        long num_entries = 0;
+        for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
+              row_it != cpu_matrix.end1();
+              ++row_it)
+        {
+          std::size_t entries_per_row = 0;
+          for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
+                col_it != row_it.end();
+                ++col_it)
+          {
+            ++entries_per_row;
+          }
+          num_entries += viennacl::tools::roundUpToNextMultiple<std::size_t>(entries_per_row, ALIGNMENT);
+        }
+        
+        if (num_entries == 0) //we copy an empty matrix
+          num_entries = 1;
+        
+        //set up matrix entries:
+        detail::copy_impl(cpu_matrix, gpu_matrix, num_entries);
       }
     }
     
@@ -124,12 +133,42 @@ namespace viennacl
     * @param cpu_matrix   A sparse square matrix on the host using STL types
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    void copy(const std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix,
+    template <typename SizeType, typename SCALARTYPE, unsigned int ALIGNMENT>
+    void copy(const std::vector< std::map<SizeType, SCALARTYPE> > & cpu_matrix,
                              compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
-      viennacl::copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(cpu_matrix, cpu_matrix.size(), cpu_matrix.size()), gpu_matrix);
+      std::size_t nonzeros = 0;
+      for (std::size_t i=0; i<cpu_matrix.size(); ++i)
+        nonzeros += cpu_matrix[i].size();
+      
+      viennacl::detail::copy_impl(tools::const_sparse_matrix_adapter<SCALARTYPE, SizeType>(cpu_matrix, cpu_matrix.size(), cpu_matrix.size()),
+                                  gpu_matrix,
+                                  nonzeros);
     }
+
+    #ifdef VIENNACL_WITH_UBLAS
+    template <typename ScalarType, typename F, std::size_t IB, typename IA, typename TA, unsigned int ALIGNMENT>
+    void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
+              viennacl::compressed_matrix<ScalarType, ALIGNMENT> & gpu_matrix)
+    {
+      //we just need to copy the CSR arrays:
+      viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), ublas_matrix.size1() + 1);
+      for (std::size_t i=0; i<ublas_matrix.size1() + 1; ++i)
+        row_buffer.set(i, ublas_matrix.index1_data()[i]);
+        
+      viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), ublas_matrix.nnz());
+      for (std::size_t i=0; i<ublas_matrix.nnz(); ++i)
+        col_buffer.set(i, ublas_matrix.index2_data()[i]);
+
+      gpu_matrix.set(row_buffer.get(),
+                     col_buffer.get(),
+                     &(ublas_matrix.value_data()[0]), 
+                     ublas_matrix.size1(),
+                     ublas_matrix.size2(),
+                     ublas_matrix.nnz());
+        
+    }
+    #endif
     
     #ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
@@ -203,11 +242,15 @@ namespace viennacl
     */
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
-                     CPU_MATRIX & cpu_matrix )
+              CPU_MATRIX & cpu_matrix )
     {
+      assert( (cpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (cpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+      
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
+        if (cpu_matrix.size1() == 0 || cpu_matrix.size2() == 0)
+          cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
         
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
@@ -254,6 +297,38 @@ namespace viennacl
       copy(gpu_matrix, temp);
     }
     
+    #ifdef VIENNACL_WITH_UBLAS
+    template <typename ScalarType, unsigned int ALIGNMENT, typename F, std::size_t IB, typename IA, typename TA>
+    void copy(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & gpu_matrix,
+              boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix)
+    {
+      assert( (ublas_matrix.size1() == 0 || ublas_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (ublas_matrix.size2() == 0 || ublas_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+
+      viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);
+      viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
+      
+      viennacl::backend::memory_read(gpu_matrix.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+      viennacl::backend::memory_read(gpu_matrix.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
+
+      if (ublas_matrix.size1() == 0 || ublas_matrix.size2() == 0)
+        ublas_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
+      
+      ublas_matrix.clear();
+      ublas_matrix.reserve(gpu_matrix.nnz());
+      
+      ublas_matrix.set_filled(gpu_matrix.size1() + 1, gpu_matrix.nnz());
+      
+      for (std::size_t i=0; i<ublas_matrix.size1() + 1; ++i)
+        ublas_matrix.index1_data()[i] = row_buffer[i];
+        
+      for (std::size_t i=0; i<ublas_matrix.nnz(); ++i)
+        ublas_matrix.index2_data()[i] = col_buffer[i];
+
+      viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(ScalarType) * gpu_matrix.nnz(), &(ublas_matrix.value_data()[0]));
+      
+    }
+    #endif
     
     #ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
@@ -421,9 +496,9 @@ namespace viennacl
         * @param cols           Number of columns of the sparse matrix
         * @param nonzeros       Number of nonzeros
         */
-        void set(void * row_jumper, 
-                 void * col_buffer,
-                 SCALARTYPE * elements, 
+        void set(const void * row_jumper, 
+                 const void * col_buffer,
+                 const SCALARTYPE * elements, 
                  std::size_t rows,
                  std::size_t cols,
                  std::size_t nonzeros)

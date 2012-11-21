@@ -75,7 +75,7 @@ namespace viennacl
         
       }
       
-      inline handle_type  memory_create(std::size_t size_in_bytes, void * host_ptr = NULL)
+      inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         void * dev_ptr = NULL;
         VIENNACL_CUDA_ERROR_CHECK( cudaMalloc(&dev_ptr, size_in_bytes) );

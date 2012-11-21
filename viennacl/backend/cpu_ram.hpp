@@ -53,7 +53,7 @@ namespace viennacl
         
       }
       
-      inline handle_type  memory_create(std::size_t size_in_bytes, void * host_ptr = NULL)
+      inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         if (!host_ptr)
           return handle_type(new char[size_in_bytes], detail::array_deleter<char>());
@@ -62,7 +62,7 @@ namespace viennacl
         
         // copy data:
         char * raw_ptr = new_handle.get();
-        char * data_ptr = static_cast<char *>(host_ptr);
+        const char * data_ptr = static_cast<const char *>(host_ptr);
         for (std::size_t i=0; i<size_in_bytes; ++i)
           raw_ptr[i] = data_ptr[i];
         

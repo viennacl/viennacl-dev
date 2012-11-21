@@ -44,10 +44,10 @@ namespace viennacl
       // * 
       //
       
-      inline cl_mem memory_create(std::size_t size_in_bytes, void * host_ptr = NULL)
+      inline cl_mem memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << std::endl;
-        return viennacl::ocl::current_context().create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, host_ptr);
+        return viennacl::ocl::current_context().create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
       }
     
       inline void memory_copy(viennacl::ocl::handle<cl_mem> const & src_buffer,
