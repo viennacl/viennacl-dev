@@ -172,12 +172,16 @@ namespace viennacl
       //  Solve on vector
       //
 
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                         SOLVERTAG)
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const M1 & mat,
+                          V1 & vec,
+                    SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
         KernelClass::init();
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
@@ -203,14 +207,16 @@ namespace viennacl
       * @param proxy    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  op_trans> & proxy,
-                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                        SOLVERTAG)
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
+                    V1 & vec,
+                    SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
         KernelClass::init();
         
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag

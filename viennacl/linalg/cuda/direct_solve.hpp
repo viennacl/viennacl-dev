@@ -492,10 +492,19 @@ namespace viennacl
       
       }
       
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                         SOLVERTAG)
+      /** @brief Direct inplace solver for dense triangular systems (non-transposed version)
+      *
+      * @param mat    The system matrix proxy
+      * @param vec    The load vector, where the solution is directly written to
+      */
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const M1 & mat,
+                          V1 & vec,
+                    SOLVERTAG)
       {
         unsigned int options = detail::get_option_for_solver_tag(SOLVERTAG());
         
@@ -505,17 +514,19 @@ namespace viennacl
       
       
       
-      /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
+      /** @brief Direct inplace solver for dense triangular systems (transposed version)
       *
       * @param proxy    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  op_trans> & proxy,
-                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                        SOLVERTAG)
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
+                    V1 & vec,
+                    SOLVERTAG)
       {
         unsigned int options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
         
@@ -523,92 +534,6 @@ namespace viennacl
       }
       
       
-      ///////////////////////////// lu factorization ///////////////////////
-      
-      template <typename T>
-      __global__ void lu_factorize_row_kernel(
-                T * matrix,
-                unsigned int matrix_rows,
-                unsigned int matrix_cols,
-                unsigned int matrix_internal_rows,
-                unsigned int matrix_internal_cols) 
-      { 
-        T temp;
-        unsigned rowi;
-        unsigned rowk;
-        for (unsigned int i=1; i<matrix_rows; ++i)
-        {
-          rowi = i * matrix_internal_cols;
-          for (unsigned int k=0; k<i; ++k)
-          {
-            rowk = k * matrix_internal_cols;
-            if (threadIdx.x == 0)
-              matrix[rowi + k] /= matrix[rowk + k];
-
-            __syncthreads();
-            temp = matrix[rowi + k];
-            
-            //parallel subtraction:
-            for (unsigned int j=k+1 + threadIdx.x; j<matrix_rows; j += blockDim.x)
-              matrix[rowi + j] -= temp * matrix[rowk + j];
-          }
-        }
-      } 
-      
-      
-      template <typename T>
-      __global__ void lu_factorize_col_kernel(
-                T * matrix,
-                unsigned int matrix_rows,
-                unsigned int matrix_cols,
-                unsigned int matrix_internal_rows,
-                unsigned int matrix_internal_cols) 
-      { 
-        T temp;
-        for (unsigned int i=1; i<matrix_rows; ++i)
-        {
-          for (unsigned int k=0; k<i; ++k)
-          {
-            if (threadIdx.x == 0)
-              matrix[i + k*matrix_internal_rows] /= matrix[k + k*matrix_internal_rows];
-
-            __syncthreads();
-            temp = matrix[i + k*matrix_internal_rows];
-            
-            //parallel subtraction:
-            for (unsigned int j=k+1 + threadIdx.x; j<matrix_cols; j += blockDim.x)
-              matrix[i + j*matrix_internal_rows] -= temp * matrix[k + j*matrix_internal_rows];
-          }
-        }
-      } 
-      
-      
-      
-      /** @brief LU factorization of a dense matrix.
-      *
-      * @param mat    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
-      */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      void lu_factorize(matrix<SCALARTYPE, F, ALIGNMENT> & mat)
-      {
-        typedef SCALARTYPE   value_type;
-        
-        if (viennacl::is_row_major< matrix<SCALARTYPE, F, ALIGNMENT> >::value)
-        {
-          lu_factorize_row_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(mat),
-                                              static_cast<unsigned int>(mat.size1()),          static_cast<unsigned int>(mat.size2()),
-                                              static_cast<unsigned int>(mat.internal_size1()), static_cast<unsigned int>(mat.internal_size2())
-                                             );
-        }
-        else
-        {
-          lu_factorize_col_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(mat),
-                                              static_cast<unsigned int>(mat.size1()),          static_cast<unsigned int>(mat.size2()),
-                                              static_cast<unsigned int>(mat.internal_size1()), static_cast<unsigned int>(mat.internal_size2())
-                                             );
-        }
-        
-      }
 
     }
   }

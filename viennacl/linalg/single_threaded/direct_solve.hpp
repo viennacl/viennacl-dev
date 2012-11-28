@@ -363,12 +363,17 @@ namespace viennacl
           
       }
 
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                        SOLVERTAG)
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const M1 & mat,
+                          V1 & vec,
+                    SOLVERTAG)
       {
-        typedef SCALARTYPE        value_type;
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type  value_type;
+        typedef typename viennacl::result_of::orientation_functor<M1>::type F;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(mat);
         value_type       * data_v = detail::extract_raw_pointer<value_type>(vec);
@@ -397,14 +402,17 @@ namespace viennacl
       * @param proxy    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                  op_trans> & proxy,
-                        vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                        SOLVERTAG)
+      template <typename M1,
+                typename V1, typename SOLVERTAG>
+      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  >::type
+      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
+                    V1 & vec,
+                    SOLVERTAG)
       {
-        typedef SCALARTYPE        value_type;
+        typedef typename viennacl::result_of::cpu_value_type<V1>::type  value_type;
+        typedef typename viennacl::result_of::orientation_functor<M1>::type F;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy.lhs());
         value_type       * data_v = detail::extract_raw_pointer<value_type>(vec);
@@ -427,42 +435,6 @@ namespace viennacl
       }
       
       
-      ///////////////////////////// lu factorization ///////////////////////
-      /** @brief LU factorization of a dense matrix.
-      *
-      * @param mat    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
-      */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      void lu_factorize(matrix<SCALARTYPE, F, ALIGNMENT> & mat)
-      {
-        
-        typedef SCALARTYPE        value_type;
-       
-        value_type * data_A = detail::extract_raw_pointer<value_type>(mat);
-        
-        std::size_t A_start1 = viennacl::traits::start1(mat);
-        std::size_t A_start2 = viennacl::traits::start2(mat);
-        std::size_t A_inc1   = viennacl::traits::stride1(mat);
-        std::size_t A_inc2   = viennacl::traits::stride2(mat);
-        std::size_t A_size   = viennacl::traits::size1(mat);
-        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
-        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
-        
-        detail::matrix_array_wrapper<value_type, typename F::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        
-        
-        for (std::size_t i = 1; i < A_size; ++i)
-        {
-          for (std::size_t k = 0; k < i; ++k)
-          {
-            wrapper_A(i, k) /= wrapper_A(k, k);
-            
-            value_type temp = wrapper_A(i, k);
-            for (std::size_t j = k+1; j < A_size; ++j)
-              wrapper_A(i, j) -= temp * wrapper_A(k, j);
-          }
-        }
-      }
       
     }
   }

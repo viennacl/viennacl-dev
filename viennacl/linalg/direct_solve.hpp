@@ -195,10 +195,14 @@ namespace viennacl
     // A \ b
     //
     
-    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-    void inplace_solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                       vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                       SOLVERTAG)
+    template <typename M1,
+              typename V1, typename SOLVERTAG>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                >::type
+    inplace_solve(const M1 & mat,
+                        V1 & vec,
+                  SOLVERTAG)
     {
       assert( (mat.size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
       assert( (mat.size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
@@ -228,12 +232,14 @@ namespace viennacl
     * @param proxy    The system matrix proxy
     * @param vec    The load vector, where the solution is directly written to
     */
-    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename SOLVERTAG>
-    void inplace_solve(const matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                op_trans> & proxy,
-                       vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                       SOLVERTAG)
+    template <typename M1,
+              typename V1, typename SOLVERTAG>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                >::type
+    inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
+                  V1 & vec,
+                  SOLVERTAG)
     {
       assert( (proxy.lhs().size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
       assert( (proxy.lhs().size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
@@ -356,13 +362,18 @@ namespace viennacl
     * @param vec    The load vector
     * @param tag    Dispatch tag
     */
-    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename TAG>
-    vector<SCALARTYPE, VEC_ALIGNMENT> solve(const matrix<SCALARTYPE, F, ALIGNMENT> & mat,
-                                        const vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                                        TAG const & tag)
+    template<typename M1,
+             typename V1, typename SOLVERTAG>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  typename detail::extract_embedded_type<V1>::type
+                                >::type
+    solve(const M1 & mat,
+          const V1 & vec,
+          SOLVERTAG const & tag)
     {
       // do an inplace solve on the result vector:
-      vector<SCALARTYPE, VEC_ALIGNMENT> result(vec);
+      typename detail::extract_embedded_type<V1>::type result(vec);
     
       inplace_solve(mat, result, tag);
     
@@ -430,15 +441,20 @@ namespace viennacl
     * @param vec    The load vector, where the solution is directly written to
     * @param tag    Dispatch tag
     */
-    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VEC_ALIGNMENT, typename TAG>
-    vector<SCALARTYPE, VEC_ALIGNMENT> solve(const matrix_expression< const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                                     const matrix<SCALARTYPE, F, ALIGNMENT>,
-                                                                     op_trans> & proxy,
-                                            const vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
-                                            TAG const & tag)
+    template<typename M1,
+             typename V1, typename SOLVERTAG>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  typename detail::extract_embedded_type<V1>::type
+                                >::type
+    solve(const matrix_expression< const M1,
+                                   const M1,
+                                   op_trans> & proxy,
+          const V1 & vec,
+          SOLVERTAG const & tag)
     {
       // do an inplace solve on the result vector:
-      vector<SCALARTYPE, VEC_ALIGNMENT> result(vec);
+      typename detail::extract_embedded_type<V1>::type result(vec);
     
       inplace_solve(proxy, result, tag);
     

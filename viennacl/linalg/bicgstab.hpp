@@ -190,7 +190,7 @@ namespace viennacl
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       unsigned int problem_size = viennacl::traits::size(rhs);
       VectorType result(problem_size);
-      result.clear();
+      viennacl::traits::clear(result);
 
       VectorType residual = rhs;
       VectorType r0star = residual;  //can be chosen arbitrarily in fact

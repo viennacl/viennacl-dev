@@ -48,57 +48,6 @@ namespace viennacl
     namespace detail
     {
       
-      // orthogonalises j-th column of A
-      /*template <typename MatrixType, typename VectorType>
-      typename MatrixType::value_type setup_householder_vector(MatrixType const & A, VectorType & v, std::size_t j)
-      {
-        typedef typename MatrixType::value_type   ScalarType;
-        
-        //compute norm of column below diagonal:
-        ScalarType sigma = 0;
-        ScalarType beta = 0;
-        for (std::size_t k = j+1; k<A.size1(); ++k)
-          sigma += A(k, j) * A(k, j);
-
-        //get v from A:
-        v[j] = 1;
-        ScalarType scaling = 1.0;
-        for (std::size_t k = j+1; k<A.size1(); ++k)
-          v[k] = A(k, j) / scaling;
-        sigma = sigma / (scaling * scaling);
-        ScalarType A_jj = A(j,j) / scaling;
-        
-        //std::cout << "sigma: " << sigma << std::endl;
-        assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
-
-        
-        if (sigma == 0)
-          return 0;
-        else
-        {
-          ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
-          std::cout << "mu: " << mu << std::endl;
-          std::cout << "sigma: " << sigma << std::endl;
-          
-          ScalarType v1;
-          if (A_jj <= 0)
-            v1 = A_jj - mu;
-          else
-            v1 = -sigma / (A_jj + mu);
-          
-          beta = 2.0 * v1 * v1 / (sigma + v1 * v1);
-          
-          //divide v by its diagonal element v[j]
-          v[j] = 1;
-          std::cout << "v1: " << v1 << std::endl;
-          for (std::size_t k = j+1; k<A.size1(); ++k)
-            v[k] /= v1;
-        }
-          
-        return beta;
-      }*/
-      
-
       template <typename MatrixType, typename VectorType>
       typename MatrixType::value_type setup_householder_vector_ublas(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, std::size_t j)
       {
@@ -108,9 +57,6 @@ namespace viennacl
         typedef typename MatrixType::value_type   ScalarType;
         
         //compute norm of column below diagonal:
-        //ScalarType sigma = 0;
-        //for (std::size_t k = j+1; k<A.size1(); ++k)
-        //  sigma += A(k, j) * A(k, j);
         matrix_1x1 = boost::numeric::ublas::prod( trans(project(A, range(j+1, A.size1()), range(j, j+1))),
                                                         project(A, range(j+1, A.size1()), range(j, j+1))
                                                 );
@@ -121,8 +67,6 @@ namespace viennacl
         assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
 
         //get v from A:
-        //for (std::size_t k = j+1; k<A.size1(); ++k)
-        //  v[k] = A(k, j);
         v(j,0) = 1.0;
         project(v, range(j+1, A.size1()), range(0,1)) = project(A, range(j+1, A.size1()), range(j,j+1));
         
@@ -131,21 +75,11 @@ namespace viennacl
         else
         {
           ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
-          //std::cout << "mu: " << mu << std::endl;
-          //std::cout << "sigma: " << sigma << std::endl;
           
-          ScalarType v1;
-          if (A_jj <= 0)
-            v1 = A_jj - mu;
-          else
-            v1 = -sigma / (A_jj + mu);
-          
+          ScalarType v1 = (A_jj <= 0) ? (A_jj - mu) : (-sigma / (A_jj + mu));
           beta = 2.0 * v1 * v1 / (sigma + v1 * v1);
           
           //divide v by its diagonal element v[j]
-          //v[j] = 1;
-          //for (std::size_t k = j+1; k<A.size1(); ++k)
-          //  v[k] /= v1;
           project(v, range(j+1, A.size1()), range(0,1)) /= v1;
         }
           
@@ -157,17 +91,12 @@ namespace viennacl
       typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type 
       setup_householder_vector_viennacl(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, std::size_t j)
       {
-        //using boost::numeric::ublas::range;
-        //using boost::numeric::ublas::project;
         using viennacl::range;
         using viennacl::project;
         
         typedef typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type   ScalarType;
         
         //compute norm of column below diagonal:
-        //ScalarType sigma = 0;
-        //for (std::size_t k = j+1; k<A.size1(); ++k)
-        //  sigma += A(k, j) * A(k, j);
         matrix_1x1 = viennacl::linalg::prod( trans(project(A, range(j+1, A.size1()), range(j, j+1))),
                                                    project(A, range(j+1, A.size1()), range(j, j+1))
                                            );
@@ -175,13 +104,9 @@ namespace viennacl
         ScalarType beta = 0;
         ScalarType A_jj = A(j,j);
 
-        //std::cout << "sigma: " << sigma << std::endl;
         assert( sigma >= 0.0  && bool("sigma must be non-negative!"));
 
-
         //get v from A:
-        //for (std::size_t k = j+1; k<A.size1(); ++k)
-        //  v[k] = A(k, j);
         v(j,0) = 1.0;
         project(v, range(j+1, A.size1()), range(0,1)) = project(A, range(j+1, A.size1()), range(j,j+1));
         
@@ -190,22 +115,12 @@ namespace viennacl
         else
         {
           ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
-          //std::cout << "mu: " << mu << std::endl;
-          //std::cout << "sigma: " << sigma << std::endl;
           
-          ScalarType v1;
-          if (A_jj <= 0)
-            v1 = A_jj - mu;
-          else
-            v1 = -sigma / (A_jj + mu);
+          ScalarType v1 = (A_jj <= 0) ? (A_jj - mu) : (-sigma / (A_jj + mu));
           
           beta = 2.0 * v1 * v1 / (sigma + v1 * v1);
           
           //divide v by its diagonal element v[j]
-          //v[j] = 1;
-          //for (std::size_t k = j+1; k<A.size1(); ++k)
-          //  v[k] /= v1;
-          //v(j,0) = 1.0;
           project(v, range(j+1, A.size1()), range(0,1)) /= v1;
         }
           
@@ -221,9 +136,7 @@ namespace viennacl
         for (std::size_t i=j+1; i<A.size1(); ++i)
           v_in_col += v[i] * A(i,k);
 
-        assert(v[j] == 1.0);
-        //std::cout << "v[]: " << v[0] << ", " << v[1] << ", " << v[2] << std::endl;
-        //std::cout << "v_in_col: " << v_in_col << std::endl;
+        //assert(v[j] == 1.0);
         
         for (std::size_t i=j; i<A.size1(); ++i)
           A(i,k) -= beta * v_in_col * v[i];
@@ -236,38 +149,25 @@ namespace viennacl
         using boost::numeric::ublas::project;
         
         ScalarType v_in_col = A(j,k);
-        //for (std::size_t i=j+1; i<A.size1(); ++i)
-        //  v_in_col += v[i] * A(i,k);
-
         matrix_1x1 = boost::numeric::ublas::prod(trans(project(v, range(j+1, A.size1()), range(0, 1))),
                                                        project(A, range(j+1, A.size1()), range(k,k+1)));
         v_in_col += matrix_1x1(0,0);
                          
-        //for (std::size_t i=j; i<A.size1(); ++i)
-        //  A(i,k) -= beta * v_in_col * v[i];
-        
         project(A, range(j, A.size1()), range(k, k+1)) -= (beta * v_in_col) * project(v, range(j, A.size1()), range(0, 1));
       }
 
       template <typename MatrixType, typename VectorType, typename ScalarType>
       void householder_reflect_viennacl(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, std::size_t j, std::size_t k)
       {
-        //using boost::numeric::ublas::range;
-        //using boost::numeric::ublas::project;
         using viennacl::range;
         using viennacl::project;
         
         ScalarType v_in_col = A(j,k);
-        //for (std::size_t i=j+1; i<A.size1(); ++i)
-        //  v_in_col += v[i] * A(i,k);
 
         matrix_1x1 = viennacl::linalg::prod(trans(project(v, range(j+1, A.size1()), range(0, 1))),
                                                   project(A, range(j+1, A.size1()), range(k,k+1)));
         v_in_col += matrix_1x1(0,0);
                          
-        //for (std::size_t i=j; i<A.size1(); ++i)
-        //  A(i,k) -= beta * v_in_col * v[i];
-        
         if ( beta * v_in_col != 0.0)
         {
           VectorType temp = project(v, range(j, A.size1()), range(0, 1));
@@ -299,8 +199,6 @@ namespace viennacl
       template <typename MatrixType, typename VectorType>
       void write_householder_to_A_ublas(MatrixType & A, VectorType const & v, std::size_t j)
       {
-        //for (std::size_t i=j+1; i<A.size1(); ++i)
-        //  A(i,j) = v[i];
         using boost::numeric::ublas::range;
         using boost::numeric::ublas::project;
         
@@ -335,7 +233,6 @@ namespace viennacl
         using boost::numeric::ublas::project;
         
         std::vector<ScalarType> betas(A.size2());
-        //boost::numeric::ublas::vector<ScalarType> v(A.size1());
         MatrixType v(A.size1(), 1);
         MatrixType matrix_1x1(1,1);
 
@@ -426,13 +323,10 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type   ScalarType;
         typedef viennacl::matrix_range<MatrixType>  MatrixRange;
         
-        //using boost::numeric::ublas::range;
-        //using boost::numeric::ublas::project;
         using viennacl::range;
         using viennacl::project;
         
         std::vector<ScalarType> betas(A.size2());
-        //boost::numeric::ublas::vector<ScalarType> v(A.size1());
         MatrixType v(A.size1(), 1);
         MatrixType matrix_1x1(1,1);
 
@@ -486,12 +380,9 @@ namespace viennacl
             MatrixRange Y_old = project(Y, range(j, A.size1()), range(0, k));
             MatrixRange v_k   = project(Y, range(j, A.size1()), range(k, k+1));
             MatrixRange W_old = project(W, range(j, A.size1()), range(0, k));
-            //MatrixRange z     = project(W, range(0, A.size1()), range(k, k+1));
           
-            //std::cout << "should: " << k << std::endl;
             project(YT_prod_v, range(0, k), range(0,1)) = prod(trans(Y_old), v_k);
             project(z, range(j, A.size1()), range(0,1)) = prod(W_old, project(YT_prod_v, range(0, k), range(0,1)));
-            //project(W, range(0, A.size1()), range(k, k+1)) = - betas[j+k] * (v_k + prod(W_old, YT_prod_v));
             project(W, range(j, A.size1()), range(k, k+1)) = project(z, range(j, A.size1()), range(0,1));
             project(W, range(j, A.size1()), range(k, k+1)) += v_k;
             project(W, range(j, A.size1()), range(k, k+1)) *= - betas[j+k];
@@ -501,7 +392,7 @@ namespace viennacl
           //apply (I+WY^T)^T = I + Y W^T to the remaining columns of A:
           //
           
-          if (A.size2() - j - effective_block_size > 0)
+          if (A.size2() > j + effective_block_size)
           {
             
             MatrixRange A_part(A, range(j, A.size1()), range(j+effective_block_size, A.size2()));
@@ -538,9 +429,6 @@ namespace viennacl
         typedef viennacl::matrix_range<MatrixType>                    VCLMatrixRange;
         typedef boost::numeric::ublas::matrix<ScalarType>             UblasMatrixType;
         typedef boost::numeric::ublas::matrix_range<UblasMatrixType>  UblasMatrixRange;
-        
-        //using boost::numeric::ublas::range;
-        //using boost::numeric::ublas::project;
         
         std::vector<ScalarType> betas(A.size2());
         UblasMatrixType v(A.size1(), 1);
@@ -648,17 +536,15 @@ namespace viennacl
           viennacl::copy(ublasW, vclW);
           viennacl::copy(ublasY, vclY);
           
-          if (A.size2() - j - effective_block_size > 0)
+          if (A.size2() > j + effective_block_size)
           {
             
             VCLMatrixRange A_part(A, viennacl::range(j, A.size1()), viennacl::range(j+effective_block_size, A.size2()));
             VCLMatrixRange W_part(vclW, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size));
             MatrixType temp = viennacl::linalg::prod(trans(W_part), A_part);
             
-            A_part += viennacl::linalg::prod(viennacl::project(vclY, 
-                                             viennacl::range(j, A.size1()), 
-                                             viennacl::range(0, vclY.size2())),
-                          temp);
+            A_part += viennacl::linalg::prod(viennacl::project(vclY, viennacl::range(j, A.size1()), viennacl::range(0, vclY.size2())),
+                                             temp);
           }
         }
 
@@ -705,17 +591,50 @@ namespace viennacl
         for (std::size_t i=col_index+1; i<A.size1(); ++i)
           v[i] = A(i, col_index);
         
-        /*std::cout << "Recovery with beta = " << betas[col_index] << ", j=" << col_index << std::endl;
-        std::cout << "v: ";
-        for (size_t i=0; i<v.size(); ++i)
-          std::cout << v[i] << ", ";
-        std::cout << std::endl;*/
-
         if (betas[col_index] != 0)
           detail::householder_reflect(Q, v, betas[col_index], col_index);
       }
     }
 
+
+    /** @brief Computes Q^T b, where Q is an implicit orthogonal matrix defined via its Householder reflectors stored in A. 
+     * 
+     *  @param A    A matrix holding the Householder reflectors in the lower triangular part. Typically obtained from calling inplace_qr() on the original matrix
+     */
+    template <typename MatrixType, typename VectorType1, typename VectorType2>
+    void inplace_qr_apply_trans_Q(MatrixType const & A, VectorType1 const & betas, VectorType2 & b)
+    {
+      typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type   ScalarType;
+      
+      //
+      // Apply Q^T = (I - beta_m v_m v_m^T) \times ... \times (I - beta_0 v_0 v_0^T) by applying all the Householder reflectors to b:
+      //
+      for (std::size_t col_index=0; col_index<std::min(A.size1(), A.size2()); ++col_index)
+      {
+        ScalarType v_in_b = b[col_index];
+        for (std::size_t i=col_index+1; i<A.size1(); ++i)
+          v_in_b += A(i, col_index) * b[i];
+        
+        b[col_index] -= betas[col_index] * v_in_b;
+        for (std::size_t i=col_index+1; i<A.size1(); ++i)
+          b[i] -= betas[col_index] * A(i, col_index) * v_in_b;
+      }
+    }
+    
+    template <typename T, typename F, unsigned int ALIGNMENT, typename VectorType1, unsigned int A2>
+    void inplace_qr_apply_trans_Q(viennacl::matrix<T, F, ALIGNMENT> const & A, VectorType1 const & betas, viennacl::vector<T, A2> & b)
+    {
+      boost::numeric::ublas::matrix<T> ublas_A(A.size1(), A.size2());
+      viennacl::copy(A, ublas_A);
+      
+      std::vector<T> stl_b(b.size());
+      viennacl::copy(b, stl_b);
+      
+      inplace_qr_apply_trans_Q(ublas_A, betas, stl_b);
+      
+      viennacl::copy(stl_b, b);
+    }
+    
     /** @brief Overload of inplace-QR factorization of a ViennaCL matrix A 
      * 
      * @param A            A dense ViennaCL matrix to be factored
@@ -724,9 +643,6 @@ namespace viennacl
     template<typename T, typename F, unsigned int ALIGNMENT>
     std::vector<T> inplace_qr(viennacl::matrix<T, F, ALIGNMENT> & A, std::size_t block_size = 16)
     {
-      if (A.size2() % block_size != 0)
-        std::cerr << "ViennaCL: Warning in inplace_qr(): Number of columns is not a multiple of the block size" << std::endl;
-      
       return detail::inplace_qr_hybrid(A, block_size);
     }
 
@@ -738,9 +654,6 @@ namespace viennacl
     template<typename MatrixType>
     std::vector<typename MatrixType::value_type> inplace_qr(MatrixType & A, std::size_t block_size = 16)
     {
-      if (A.size2() % block_size != 0)
-        std::cerr << "ViennaCL: Warning in inplace_qr(): Number of columns is not a multiple of the block size" << std::endl;
-      
       return detail::inplace_qr_ublas(A, block_size);
     }
 

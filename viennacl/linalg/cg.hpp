@@ -160,7 +160,7 @@ namespace viennacl
       unsigned int problem_size = viennacl::traits::size(rhs);
       
       VectorType result(problem_size);
-      result.clear();
+      viennacl::traits::clear(result);
       
       VectorType residual = rhs;
       VectorType tmp(problem_size);

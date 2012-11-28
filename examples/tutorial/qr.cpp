@@ -87,7 +87,7 @@ double check(MatrixType const & qr, MatrixType const & ref)
 
 int main (int, const char **)
 {
-  typedef float               ScalarType;     //feel free to change this to 'double' if supported by your hardware
+  typedef double               ScalarType;     //feel free to change this to 'double' if supported by your hardware
   typedef boost::numeric::ublas::matrix<ScalarType>        MatrixType;
   typedef boost::numeric::ublas::vector<ScalarType>        VectorType;
   typedef viennacl::matrix<ScalarType, viennacl::column_major>        VCLMatrixType;
@@ -139,7 +139,7 @@ int main (int, const char **)
   //
 
   std::cout << "--- Boost.uBLAS ---" << std::endl;
-  std::vector<ScalarType> ublas_betas = viennacl::linalg::inplace_qr(ublas_A, 12);  //computes the QR factorization
+  std::vector<ScalarType> ublas_betas = viennacl::linalg::inplace_qr(ublas_A);  //computes the QR factorization
   
   //
   // A check for the correct result:
@@ -154,7 +154,7 @@ int main (int, const char **)
   //
   std::cout << "--- Hybrid (default) ---" << std::endl;
   viennacl::copy(ublas_A_backup, vcl_A);
-  std::vector<ScalarType> hybrid_betas = viennacl::linalg::inplace_qr(vcl_A, 12);
+  std::vector<ScalarType> hybrid_betas = viennacl::linalg::inplace_qr(vcl_A);
   
 
   //
