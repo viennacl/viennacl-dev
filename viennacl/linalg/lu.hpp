@@ -84,18 +84,18 @@ namespace viennacl
                                         sizeof(SCALARTYPE) * current_block_size * A.internal_size2(),
                                         &(temp_buffer[0]));
         
-        //
-        // Compute L_12 = [ (U_11)^{T}^{-1} A_{21}^T ]^T
-        //
-        viennacl::matrix_range<MatrixType> U_11(A, block_range,     block_range);
-        viennacl::matrix_range<MatrixType> A_21(A, remainder_range, block_range);
-        viennacl::linalg::inplace_solve(trans(U_11), trans(A_21), viennacl::linalg::lower_tag());
-        
-        //
-        // Update remainder of A
-        //
         if (remainder_range.size() > 0)
         {
+          //
+          // Compute L_12 = [ (U_11)^{T}^{-1} A_{21}^T ]^T
+          //
+          viennacl::matrix_range<MatrixType> U_11(A, block_range,     block_range);
+          viennacl::matrix_range<MatrixType> A_21(A, remainder_range, block_range);
+          viennacl::linalg::inplace_solve(trans(U_11), trans(A_21), viennacl::linalg::lower_tag());
+          
+          //
+          // Update remainder of A
+          //
           viennacl::matrix_range<MatrixType> L_21(A, remainder_range, block_range);
           viennacl::matrix_range<MatrixType> U_12(A, block_range,     remainder_range);
           viennacl::matrix_range<MatrixType> A_22(A, remainder_range, remainder_range);
@@ -161,18 +161,18 @@ namespace viennacl
                                         sizeof(SCALARTYPE) * current_block_size * A.internal_size1(),
                                         &(temp_buffer[0]));
         
-        //
-        // Compute U_12:
-        //
-        viennacl::matrix_range<MatrixType> L_11(A, block_range,     block_range);
-        viennacl::matrix_range<MatrixType> A_12(A, block_range, remainder_range);
-        viennacl::linalg::inplace_solve(L_11, A_12, viennacl::linalg::unit_lower_tag());
-        
-        //
-        // Update remainder of A
-        //
         if (remainder_range.size() > 0)
         {
+          //
+          // Compute U_12:
+          //
+          viennacl::matrix_range<MatrixType> L_11(A, block_range,     block_range);
+          viennacl::matrix_range<MatrixType> A_12(A, block_range, remainder_range);
+          viennacl::linalg::inplace_solve(L_11, A_12, viennacl::linalg::unit_lower_tag());
+        
+          //
+          // Update remainder of A
+          //
           viennacl::matrix_range<MatrixType> L_21(A, remainder_range, block_range);
           viennacl::matrix_range<MatrixType> U_12(A, block_range,     remainder_range);
           viennacl::matrix_range<MatrixType> A_22(A, remainder_range, remainder_range);

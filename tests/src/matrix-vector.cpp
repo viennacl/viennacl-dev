@@ -42,6 +42,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
+#include "viennacl/linalg/lu.hpp"
 #include "examples/tutorial/Random.hpp"
 
 //

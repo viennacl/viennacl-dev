@@ -44,6 +44,7 @@
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/linalg/prod.hpp"       //generic matrix-vector product
 #include "viennacl/linalg/norm_2.hpp"     //generic l2-norm for vectors
+#include "viennacl/linalg/lu.hpp"         //LU substitution routines
 
 // Some helper functions for this tutorial:
 #include "Random.hpp"
