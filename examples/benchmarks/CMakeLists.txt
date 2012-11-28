@@ -35,13 +35,13 @@ endif (ENABLE_OPENCL)
 if (ENABLE_CUDA)
   
   foreach(bench blas3)
-     cuda_add_executable(${bench}bench-cuda ${bench}.cpp OPTIONS -x cu)
+     cuda_add_executable(${bench}bench-cuda ${bench}.cu)
   endforeach()
   
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver vector)
-       add_executable(${bench}bench-cuda ${bench}.cpp)
+       cuda_add_executable(${bench}bench-cuda ${bench}.cu)
      endforeach()
   endif (ENABLE_UBLAS)
   

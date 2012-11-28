@@ -15,7 +15,8 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
                               bool transpose_A, bool transpose_B, bool write_cuda)
 {
   //write header:
-  std::cout << "// file automatically generated - do not edit!" << std::endl;
+  if (!write_cuda)
+    std::cout << "// file automatically generated - do not edit!" << std::endl;
   std::cout << "// matrix-matrix multiplication C = ";
   if (transpose_A)
     std::cout << "A^T * ";
@@ -313,6 +314,8 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   }
   std::cout << "}" << std::endl;
   
+  if (write_cuda)
+    std::cout << std::endl;
 }
 
 void printUsage()

@@ -23,6 +23,7 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/linalg/prod.hpp"
+#include "viennacl/linalg/lu.hpp"
 
 #include <iostream>
 #include <vector>

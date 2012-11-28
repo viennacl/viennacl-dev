@@ -178,6 +178,7 @@ namespace viennacl
                          SOLVERTAG)
       {
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
+        KernelClass::init();
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
@@ -210,6 +211,7 @@ namespace viennacl
                         SOLVERTAG)
       {
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
+        KernelClass::init();
         
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
@@ -230,26 +232,6 @@ namespace viennacl
       }
       
       
-      ///////////////////////////// lu factorization ///////////////////////
-      /** @brief LU factorization of a dense matrix.
-      *
-      * @param mat    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
-      */
-      template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      void lu_factorize(matrix<SCALARTYPE, F, ALIGNMENT> & mat)
-      {
-        assert(mat.size1() == mat.size2());
-
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix<SCALARTYPE, F, ALIGNMENT> >::ResultType    KernelClass;
-        
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "lu_factorize");
-        
-        k.global_work_size(0, k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(mat.size1()), cl_uint(mat.size2()),
-                                 cl_uint(mat.internal_size1()), cl_uint(mat.internal_size2())) );        
-      }
-
     }
   }
 }

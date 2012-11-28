@@ -32,6 +32,7 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/matrix_proxy.hpp"
+#include "viennacl/linalg/lu.hpp"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
@@ -44,7 +45,7 @@
 *   
 */
 
-#define BLAS3_MATRIX_SIZE   1024
+#define BLAS3_MATRIX_SIZE   2048
 
 template<typename ScalarType>
 int run_benchmark()
@@ -178,6 +179,30 @@ int run_benchmark()
     std::cout << std::endl;
   }
 
+  
+  std::cout << " ------ Benchmark 4: LU factorization ------ " << std::endl;
+
+  for (std::size_t i=0; i<devices.size(); ++i)
+  {
+#ifdef VIENNACL_WITH_OPENCL
+    viennacl::ocl::current_context().switch_device(devices[i]);
+    std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
+#endif
+
+    viennacl::fast_copy(&(stl_A[0]),
+                        &(stl_A[0]) + stl_A.size(),
+                        vcl_A);
+    viennacl::linalg::lu_factorize(vcl_A);
+    viennacl::backend::finish();
+    timer.start();
+    viennacl::linalg::lu_factorize(vcl_A);
+    viennacl::backend::finish();
+    exec_time = timer.get();
+    std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
+    std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_A.size2() / 1000.0) / exec_time << std::endl;
+    std::cout << std::endl;
+  }
+  
   return EXIT_SUCCESS;
 }
 

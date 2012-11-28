@@ -529,9 +529,9 @@ namespace viennacl
         assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(A, B): size2(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
+        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
         
         detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
@@ -564,9 +564,9 @@ namespace viennacl
         assert( (viennacl::traits::size2(B)       == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
+        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
         
         detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
       }
@@ -597,9 +597,9 @@ namespace viennacl
         assert( (viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
+        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
         
         detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
       }
@@ -627,9 +627,9 @@ namespace viennacl
         assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(B) != size2(C)"));
         
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
+        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
+              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
         
         detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
       }

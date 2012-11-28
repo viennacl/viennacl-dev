@@ -89,7 +89,7 @@ namespace viennacl
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
                                     && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
                                     self_type &>::type
-      operator = (const matrix_expression< M1, M2, op_prod > & proxy) 
+      operator = (const matrix_expression< const M1, const M2, op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
@@ -512,7 +512,7 @@ namespace viennacl
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
                                     && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
                                     self_type &>::type
-      operator = (const matrix_expression< M1, M2, op_prod > & proxy) 
+      operator = (const matrix_expression< const M1, const M2, op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
