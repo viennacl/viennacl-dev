@@ -219,24 +219,6 @@ namespace viennacl
 
 
     // A * x
-    /** @brief Returns a proxy class that represents matrix-vector multiplication
-    *
-    * This is used for the convenience expression result = prod(mat, vec);
-    *
-    * @param mat    The matrix
-    * @param vec    The vector
-    */
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec)
-    {
-      return viennacl::vector_expression<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT>,
-                                         const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                         op_prod >(mat, vec);
-    }
-
 
     /** @brief Carries out matrix-vector multiplication
     *

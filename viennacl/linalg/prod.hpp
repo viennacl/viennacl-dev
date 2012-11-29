@@ -210,7 +210,9 @@ namespace viennacl
          viennacl::vector<NumericT, ALIGNMENT> const & vector)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::linalg::prod_impl(matrix, vector);
+      return viennacl::vector_expression< const MatrixT, 
+                                          const viennacl::vector<NumericT, ALIGNMENT>,
+                                          viennacl::op_prod >(matrix, vector);
     }
 
     template< typename MatrixT, typename VectorType >

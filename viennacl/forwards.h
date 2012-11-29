@@ -372,11 +372,6 @@ namespace viennacl
     
     
     //forward definition of prod_impl functions
-    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                op_prod > prod_impl(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> &, 
-                                                    const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> &);
 
     template <typename MatrixType, typename VectorType1, typename VectorType2>
     typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
@@ -386,14 +381,14 @@ namespace viennacl
               const VectorType1 & vec, 
                     VectorType2 & result);
 
-    template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
+/*    template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vector_expression<const SparseMatrixType,
                                                     const vector<SCALARTYPE, ALIGNMENT>, 
                                                     op_prod >
                                  >::type
     prod_impl(const SparseMatrixType & mat, 
-              const vector<SCALARTYPE, ALIGNMENT> & vec);
+              const vector<SCALARTYPE, ALIGNMENT> & vec); */
     
     namespace detail
     {

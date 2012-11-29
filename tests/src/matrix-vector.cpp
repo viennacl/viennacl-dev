@@ -60,8 +60,8 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template <typename ScalarType>
-ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
+template <typename ScalarType, typename VCLVectorType>
+ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
@@ -78,8 +78,8 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
    return norm_inf(v2_cpu);
 }
 
-template <typename ScalarType, typename F, unsigned int ALIGNMENT>
-ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F, ALIGNMENT> & mat2)
+template <typename ScalarType, typename VCLMatrixType>
+ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
@@ -99,6 +99,230 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, viennacl::matrix<ScalarType, F
    //std::cout << ret << std::endl;
    return ret;
 }
+//
+// -------------------------------------------------------------
+//
+
+template <typename NumericT, typename Epsilon, 
+          typename UblasMatrixType, typename UblasVectorType,
+          typename VCLMatrixType, typename VCLVectorType1, typename VCLVectorType2>
+int test_prod_rank1(Epsilon const & epsilon,
+                    UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2, 
+                    VCLMatrixType & vcl_m1, VCLVectorType1 & vcl_v1, VCLVectorType2 & vcl_v2)
+{
+   int retval = EXIT_SUCCESS;
+  
+   // sync data:
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+   viennacl::copy(ublas_m1, vcl_m1);
+   
+   // --------------------------------------------------------------------------            
+   std::cout << "Rank 1 update" << std::endl;
+   
+   ublas_m1 += ublas::outer_prod(ublas_v1, ublas_v2);
+   vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
+   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   {
+      std::cout << "# Error at operation: rank 1 update" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      return EXIT_FAILURE;
+   }
+   
+   
+   
+   // --------------------------------------------------------------------------            
+   std::cout << "Scaled rank 1 update" << std::endl;
+   ublas_m1 += NumericT(4.2) * ublas::outer_prod(ublas_v1, ublas_v2);
+   vcl_m1 += NumericT(2.1) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
+   vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * NumericT(2.1);  //check proper compilation
+   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   {
+      std::cout << "# Error at operation: scaled rank 1 update" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      return EXIT_FAILURE;
+   }
+   
+   //reset vcl_matrix:
+   viennacl::copy(ublas_m1, vcl_m1);
+   
+   // --------------------------------------------------------------------------            
+   std::cout << "Matrix-Vector product" << std::endl;
+   ublas_v1 = viennacl::linalg::prod(ublas_m1, ublas_v2);
+   vcl_v1   = viennacl::linalg::prod(vcl_m1, vcl_v2);
+   
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------            
+   std::cout << "Matrix-Vector product with scaled add" << std::endl;
+   NumericT alpha = static_cast<NumericT>(2.786);
+   NumericT beta = static_cast<NumericT>(1.432);
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+   ublas_v1 = alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) + beta * ublas_v1;
+   vcl_v1   = alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) + beta * vcl_v1;
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------            
+
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+   std::cout << "Transposed Matrix-Vector product" << std::endl;
+   ublas_v2     = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);  
+   vcl_v2 = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Transposed Matrix-Vector product with scaled add" << std::endl;
+   ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;  
+   vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2;
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------            
+
+}
+
+
+
+template <typename NumericT, typename Epsilon, 
+          typename UblasMatrixType, typename UblasVectorType,
+          typename VCLMatrixType, typename VCLVectorType1>
+int test_solve(Epsilon const & epsilon,
+               UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1,
+               VCLMatrixType & vcl_m1, VCLVectorType1 & vcl_v1)
+{
+   int retval = EXIT_SUCCESS;
+  
+   // sync data:
+   //viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v1, vcl_v1);
+   viennacl::copy(ublas_m1, vcl_m1);
+
+   /////////////////// test direct solvers ////////////////////////////
+   
+   //upper triangular:
+   std::cout << "Upper triangular solver" << std::endl;
+   ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::upper_tag());
+   vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::upper_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: upper triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //upper unit triangular:
+   std::cout << "Upper unit triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::unit_upper_tag());
+   vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::unit_upper_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //lower triangular:
+   std::cout << "Lower triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::lower_tag());
+   vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::lower_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: lower triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //lower unit triangular:
+   std::cout << "Lower unit triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::unit_lower_tag());
+   vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::unit_lower_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+
+
+
+
+   //transposed upper triangular:
+   std::cout << "Transposed upper triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::upper_tag());
+   vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::upper_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: upper triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //transposed upper unit triangular:
+   std::cout << "Transposed unit upper triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::unit_upper_tag());
+   vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::unit_upper_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //transposed lower triangular:
+   std::cout << "Transposed lower triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::lower_tag());
+   vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::lower_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: lower triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   //transposed lower unit triangular:
+   std::cout << "Transposed unit lower triangular solver" << std::endl;
+   viennacl::copy(ublas_v1, vcl_v1);
+   ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::unit_lower_tag());
+   vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::unit_lower_tag());
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   
+   return retval;
+}
+
 
 //
 // -------------------------------------------------------------
@@ -108,38 +332,63 @@ int test(Epsilon const& epsilon)
 {
    int retval = EXIT_SUCCESS;
    
-   std::size_t num_rows = 121;
+   std::size_t num_rows = 141;
    std::size_t num_cols = 103;
    
    // --------------------------------------------------------------------------            
-   ublas::vector<NumericT> rhs(num_rows);
-   for (unsigned int i = 0; i < rhs.size(); ++i)
-     rhs(i) = random<NumericT>();
-   ublas::vector<NumericT> rhs2 = rhs;
-   ublas::vector<NumericT> result = ublas::scalar_vector<NumericT>(num_cols, NumericT(3.1415));
-   ublas::vector<NumericT> result2 = result;
-   ublas::vector<NumericT> rhs_trans = result;
-   ublas::vector<NumericT> result_trans = ublas::zero_vector<NumericT>(rhs.size());
+   ublas::vector<NumericT> ublas_v1(num_rows);
+   for (std::size_t i = 0; i < ublas_v1.size(); ++i)
+     ublas_v1(i) = random<NumericT>();
+   ublas::vector<NumericT> ublas_v2 = ublas::scalar_vector<NumericT>(num_cols, NumericT(3.1415));
 
   
-   ublas::matrix<NumericT> matrix(result.size(), rhs.size());
+   ublas::matrix<NumericT> ublas_m1(ublas_v1.size(), ublas_v2.size());
   
-   for (unsigned int i = 0; i < matrix.size1(); ++i)
-      for (unsigned int j = 0; j < matrix.size2(); ++j)
-         matrix(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
+   for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
+      for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
+         ublas_m1(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
 
-   viennacl::vector<NumericT> vcl_rhs(rhs.size());
-   viennacl::vector<NumericT> vcl_rhs_trans(rhs_trans.size());
-   viennacl::vector<NumericT> vcl_result_trans(result_trans.size());
-   viennacl::vector<NumericT> vcl_result(result.size()); 
-   viennacl::matrix<NumericT, F> vcl_matrix(result.size(), rhs.size());
+      
+   ublas::matrix<NumericT> ublas_m2(ublas_v1.size(), ublas_v1.size());
+  
+   for (std::size_t i = 0; i < ublas_m2.size1(); ++i)
+   {
+      for (std::size_t j = 0; j < ublas_m2.size2(); ++j)
+         ublas_m2(i,j) = static_cast<NumericT>(-0.1) * random<NumericT>();
+      ublas_m2(i, i) = static_cast<NumericT>(2) + random<NumericT>();
+   }
 
-   std::cout << "Creating mem" << std::endl;
-   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   viennacl::copy(result, vcl_result);
-   viennacl::copy(matrix, vcl_matrix);
+      
+   viennacl::vector<NumericT> vcl_v1_native(ublas_v1.size());
+   viennacl::vector<NumericT> vcl_v1_large(4 * ublas_v1.size());
+   viennacl::vector_range< viennacl::vector<NumericT> > vcl_v1_range(vcl_v1_large, viennacl::range(3, ublas_v1.size() + 3));
+   viennacl::vector_slice< viennacl::vector<NumericT> > vcl_v1_slice(vcl_v1_large, viennacl::slice(2, 3, ublas_v1.size()));
    
-   std::cout << "Matrix resizing (to larger)" << std::endl;
+   viennacl::vector<NumericT> vcl_v2_native(ublas_v2.size());
+   viennacl::vector<NumericT> vcl_v2_large(4 * ublas_v2.size());
+   viennacl::vector_range< viennacl::vector<NumericT> > vcl_v2_range(vcl_v2_large, viennacl::range(8, ublas_v2.size() + 8));
+   viennacl::vector_slice< viennacl::vector<NumericT> > vcl_v2_slice(vcl_v2_large, viennacl::slice(6, 2, ublas_v2.size()));
+   
+   viennacl::matrix<NumericT, F> vcl_m1_native(ublas_m1.size1(), ublas_m1.size2());
+   viennacl::matrix<NumericT, F> vcl_m1_large(4 * ublas_m1.size1(), 4 * ublas_m1.size2());
+   viennacl::matrix_range< viennacl::matrix<NumericT, F> > vcl_m1_range(vcl_m1_large,
+                                                                        viennacl::range(8, ublas_m1.size1() + 8),
+                                                                        viennacl::range(ublas_m1.size2(), 2 * ublas_m1.size2()) );
+   viennacl::matrix_slice< viennacl::matrix<NumericT, F> > vcl_m1_slice(vcl_m1_large,
+                                                                        viennacl::slice(6, 2, ublas_m1.size1()),
+                                                                        viennacl::slice(ublas_m1.size2(), 2, ublas_m1.size2()) );
+   
+   viennacl::matrix<NumericT, F> vcl_m2_native(ublas_m2.size1(), ublas_m2.size2());
+   viennacl::matrix<NumericT, F> vcl_m2_large(4 * ublas_m2.size1(), 4 * ublas_m2.size2());
+   viennacl::matrix_range< viennacl::matrix<NumericT, F> > vcl_m2_range(vcl_m2_large,
+                                                                        viennacl::range(8, ublas_m2.size1() + 8),
+                                                                        viennacl::range(ublas_m2.size2(), 2 * ublas_m2.size2()) );
+   viennacl::matrix_slice< viennacl::matrix<NumericT, F> > vcl_m2_slice(vcl_m2_large,
+                                                                        viennacl::slice(6, 2, ublas_m2.size1()),
+                                                                        viennacl::slice(ublas_m2.size2(), 2, ublas_m2.size2()) );
+
+   
+/*   std::cout << "Matrix resizing (to larger)" << std::endl;
    matrix.resize(2*num_rows, 2*num_cols, true);
    for (unsigned int i = 0; i < matrix.size1(); ++i)
    {
@@ -171,241 +420,513 @@ int test(Epsilon const& epsilon)
       std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix)) << std::endl;
       return EXIT_FAILURE;
    }
+   */
 
-
-   std::cout << "Matrix addition and subtraction" << std::endl;
-   viennacl::matrix<NumericT, F> vcl_matrix2 = vcl_matrix;
-   vcl_matrix2 += vcl_matrix;
-   vcl_matrix2 = vcl_matrix2 + vcl_matrix;
-   matrix *= 3.0;
-
-   if( fabs(diff(matrix, vcl_matrix2)) > epsilon )
-   {
-      std::cout << "# Error at operation: matrix addition and subtraction (part 1b)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix2)) << std::endl;
-      return EXIT_FAILURE;
-   }
-
-   vcl_matrix2 -= vcl_matrix;
-   vcl_matrix2 = vcl_matrix2 - vcl_matrix;
-   matrix /= 3.0;
-
-   if( fabs(diff(matrix, vcl_matrix2)) > epsilon )
-   {
-      std::cout << "# Error at operation: matrix addition and subtraction (part 2)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix2)) << std::endl;
-      return EXIT_FAILURE;
-   }
+   //
+   // Run a bunch of tests for rank-1-updates, matrix-vector products
+   //
+   std::cout << "------------ Testing rank-1-updates and matrix-vector products ------------------" << std::endl;
    
-   // --------------------------------------------------------------------------            
-   std::cout << "Rank 1 update" << std::endl;
-   ublas::matrix<NumericT> matrix2 = matrix;
+   std::cout << "* m = full, v1 = full, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
    
-   matrix2 += ublas::outer_prod(result, rhs);
-   vcl_matrix += viennacl::linalg::outer_prod(vcl_result, vcl_rhs);
-   if( fabs(diff(matrix2, vcl_matrix)) > epsilon )
+   std::cout << "* m = full, v1 = full, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
    {
-      std::cout << "# Error at operation: rank 1 update" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix2, vcl_matrix)) << std::endl;
-      return EXIT_FAILURE;
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
    }
-   // --------------------------------------------------------------------------            
-   std::cout << "Scaled rank 1 update" << std::endl;
-   matrix2 += 4.2f * ublas::outer_prod(result, rhs);
-   vcl_matrix += 2.1f * viennacl::linalg::outer_prod(vcl_result, vcl_rhs);
-   vcl_matrix += viennacl::linalg::outer_prod(vcl_result, vcl_rhs) * 2.1f;  //check proper compilation
-   if( fabs(diff(matrix2, vcl_matrix)) > epsilon )
-   {
-      std::cout << "# Error at operation: scaled rank 1 update" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix2, vcl_matrix)) << std::endl;
-      return EXIT_FAILURE;
-   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
    
-   //reset vcl_matrix:
-   viennacl::copy(matrix, vcl_matrix);
+   std::cout << "* m = full, v1 = full, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
    
-   // --------------------------------------------------------------------------            
-   std::cout << "Matrix-Vector product" << std::endl;
-   result     = viennacl::linalg::prod(matrix, rhs);
-   vcl_result = viennacl::linalg::prod(vcl_matrix, vcl_rhs);
+   // v1 = range
    
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------            
-   std::cout << "Matrix-Vector product with scaled add" << std::endl;
-   NumericT alpha = static_cast<NumericT>(2.786);
-   NumericT beta = static_cast<NumericT>(1.432);
-   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-   viennacl::copy(result.begin(), result.end(), vcl_result.begin());
-
-   result     = alpha * viennacl::linalg::prod(matrix, rhs) + beta * result;
-   vcl_result = alpha * viennacl::linalg::prod(vcl_matrix, vcl_rhs) + beta * vcl_result;
-
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------            
-
-   viennacl::copy(rhs_trans.begin(), rhs_trans.end(), vcl_rhs_trans.begin());
-   viennacl::copy(result_trans.begin(), result_trans.end(), vcl_result_trans.begin());
-
-   std::cout << "Transposed Matrix-Vector product" << std::endl;
-   result_trans     = alpha * viennacl::linalg::prod(trans(matrix), rhs_trans);  
-   vcl_result_trans = alpha * viennacl::linalg::prod(trans(vcl_matrix), vcl_rhs_trans);
-
-   if( fabs(diff(result_trans, vcl_result_trans)) > epsilon )
-   {
-      std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result_trans, vcl_result_trans)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   std::cout << "Transposed Matrix-Vector product with scaled add" << std::endl;
-   result_trans     = alpha * viennacl::linalg::prod(trans(matrix), rhs_trans) + beta * result_trans;  
-   vcl_result_trans = alpha * viennacl::linalg::prod(trans(vcl_matrix), vcl_rhs_trans) + beta * vcl_result_trans;
-
-   if( fabs(diff(result_trans, vcl_result_trans)) > epsilon )
-   {
-      std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result_trans, vcl_result_trans)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-   // --------------------------------------------------------------------------            
-
-   /////////////////// test direct solvers ////////////////////////////
    
-   rhs.resize(40);
-   matrix.resize(rhs.size(), rhs.size());
-   result.resize(rhs.size());
-
-   std::cout << "Resizing vcl_rhs..." << std::endl;
-   vcl_rhs.resize(rhs.size());
-   std::cout << "Resizing vcl_rhs done" << std::endl;
-   vcl_matrix.resize(rhs.size(), rhs.size());
-   std::cout << "Resizing vcl_result..." << std::endl;
-   vcl_result.resize(rhs.size());
-   std::cout << "Resizing vcl_result done" << std::endl;
-
-   for (unsigned int i = 0; i < matrix.size1(); ++i)
+   std::cout << "* m = full, v1 = range, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
    {
-      for (unsigned int j = 0; j < matrix.size2(); ++j)
-         matrix(i,j) = -random<NumericT>();
-      rhs(i) = random<NumericT>();
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
    }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
 
-   //force unit diagonal
-   for (unsigned int i = 0; i < matrix.size1(); ++i)
-      matrix(i,i) = static_cast<NumericT>(3) + random<NumericT>();
-
-   viennacl::copy(matrix, vcl_matrix);
-   viennacl::copy(rhs, vcl_rhs);
-
-   //upper triangular:
-   std::cout << "Upper triangular solver" << std::endl;
-   result = ublas::solve(matrix, rhs, ublas::upper_tag());
-   vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::upper_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //upper unit triangular:
-   std::cout << "Upper unit triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(matrix, rhs, ublas::unit_upper_tag());
-   vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::unit_upper_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //lower triangular:
-   std::cout << "Lower triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(matrix, rhs, ublas::lower_tag());
-   vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::lower_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //lower unit triangular:
-   std::cout << "Lower unit triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(matrix, rhs, ublas::unit_lower_tag());
-   vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::unit_lower_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-
-
-
-
-   //transposed upper triangular:
-   std::cout << "Transposed upper triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(trans(matrix), rhs, ublas::upper_tag());
-   vcl_result = viennacl::linalg::solve(trans(vcl_matrix), vcl_rhs, viennacl::linalg::upper_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //transposed upper unit triangular:
-   std::cout << "Transposed unit upper triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(trans(matrix), rhs, ublas::unit_upper_tag());
-   vcl_result = viennacl::linalg::solve(trans(vcl_matrix), vcl_rhs, viennacl::linalg::unit_upper_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //transposed lower triangular:
-   std::cout << "Transposed lower triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(trans(matrix), rhs, ublas::lower_tag());
-   vcl_result = viennacl::linalg::solve(trans(vcl_matrix), vcl_rhs, viennacl::linalg::lower_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
-
-   //transposed lower unit triangular:
-   std::cout << "Transposed unit lower triangular solver" << std::endl;
-   viennacl::copy(rhs, vcl_rhs);
-   result = ublas::solve(trans(matrix), rhs, ublas::unit_lower_tag());
-   vcl_result = viennacl::linalg::solve(trans(vcl_matrix), vcl_rhs, viennacl::linalg::unit_lower_tag());
-   if( fabs(diff(result, vcl_result)) > epsilon )
-   {
-      std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
-   }
    
+   std::cout << "* m = full, v1 = range, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = full, v1 = range, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+
+   
+   // v1 = slice
+   
+   std::cout << "* m = full, v1 = slice, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = full, v1 = slice, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = full, v1 = slice, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   ///////////////////////////// matrix_range
+     
+   std::cout << "* m = range, v1 = full, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = full, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = full, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   // v1 = range
+   
+   
+   std::cout << "* m = range, v1 = range, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = range, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = range, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+
+   
+   // v1 = slice
+   
+   std::cout << "* m = range, v1 = slice, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = slice, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = range, v1 = slice, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   ///////////////////////////// matrix_slice
+
+   std::cout << "* m = slice, v1 = full, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = full, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = full, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   // v1 = range
+   
+   
+   std::cout << "* m = slice, v1 = range, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = range, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = range, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+
+   
+   // v1 = slice
+   
+   std::cout << "* m = slice, v1 = slice, v2 = full" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = slice, v2 = range" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   std::cout << "* m = slice, v1 = slice, v2 = slice" << std::endl;
+   retval = test_prod_rank1<NumericT>(epsilon,
+                                      ublas_m1, ublas_v1, ublas_v2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   
+   
+   //
+   // Testing triangular solve() routines
+   //
+     
+   std::cout << "------------ Testing triangular solves ------------------" << std::endl;
+     
+   std::cout << "* m = full, v1 = full" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_native, vcl_v1_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+     
+   std::cout << "* m = full, v1 = range" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_native, vcl_v1_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   std::cout << "* m = full, v1 = slice" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_native, vcl_v1_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   ///////// matrix_range
+   
+     
+   std::cout << "* m = range, v1 = full" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_range, vcl_v1_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+     
+   std::cout << "* m = range, v1 = range" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_range, vcl_v1_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   std::cout << "* m = range, v1 = slice" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_range, vcl_v1_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   //////// matrix_slice
+     
+   std::cout << "* m = slice, v1 = full" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_slice, vcl_v1_native);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+     
+   std::cout << "* m = slice, v1 = range" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_slice, vcl_v1_range);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+
+   std::cout << "* m = slice, v1 = slice" << std::endl;
+   retval = test_solve<NumericT>(epsilon,
+                                 ublas_m2, ublas_v1,
+                                 vcl_m2_slice, vcl_v1_slice);
+   if (retval == EXIT_FAILURE)
+   {
+     std::cout << " --- FAILED! ---" << std::endl;
+     return retval;
+   }
+   else
+     std::cout << " --- PASSED ---" << std::endl;
+     
+     
+   
+   
+   
+   
+   
+   ////////////// Final test for full LU decomposition:
    
    //full solver:
    std::cout << "Full solver" << std::endl;

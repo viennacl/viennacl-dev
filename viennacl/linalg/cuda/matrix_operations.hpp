@@ -438,7 +438,7 @@ namespace viennacl
 
         
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-        assert(vec.handle() != result.handle() && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
+        assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
         
         if (viennacl::is_row_major<M1>::value)
         {
