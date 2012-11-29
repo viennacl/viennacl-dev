@@ -25,7 +25,7 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/linalg/single_threaded/direct_solve.hpp"
+#include "viennacl/linalg/host_based/direct_solve.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/direct_solve.hpp"
@@ -62,7 +62,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(A, B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(A, B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -99,7 +99,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(A, proxy_B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -137,7 +137,7 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(proxy_A, B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -174,7 +174,7 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -210,7 +210,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(mat, vec, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -247,7 +247,7 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(proxy, vec, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:

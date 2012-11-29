@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file hankel_matrix_operations.hpp
+/** @file viennacl/linalg/hankel_matrix_operations.hpp
     @brief Implementations of operations using hankel_matrix
 */
 
@@ -30,7 +30,6 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/fft.hpp"
 #include "viennacl/linalg/toeplitz_matrix_operations.hpp"
-//#include "viennacl/linalg/kernels/coordinate_matrix_kernels.h"
 
 namespace viennacl
 {

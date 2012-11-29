@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_SINGLE_THREADED_COMMON_HPP_
-#define VIENNACL_LINALG_SINGLE_THREADED_COMMON_HPP_
+#ifndef VIENNACL_LINALG_HOST_BASED_COMMON_HPP_
+#define VIENNACL_LINALG_HOST_BASED_COMMON_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/single_threaded/common.hpp
+/** @file viennacl/linalg/host_based/common.hpp
     @brief Common routines for single-threaded execution on CPU
 */
 
@@ -27,7 +27,7 @@ namespace viennacl
 {
   namespace linalg
   {
-    namespace single_threaded
+    namespace host_based
     {
       namespace detail
       {
@@ -150,7 +150,7 @@ namespace viennacl
         
       }
 
-    } //namespace single_threaded
+    } //namespace host_based
   } //namespace linalg
 } //namespace viennacl
 

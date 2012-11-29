@@ -31,7 +31,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/backend/memory.hpp"
 
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/misc_operations.hpp"
 
 namespace viennacl
@@ -56,10 +56,10 @@ namespace viennacl
                                        std::list< std::size_t > & row_elimination_num_list,
                                        bool setup_U)
       {
-        ScalarType   const * diagonal_buf = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(diagonal_LU.handle());
-        ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LU.handle());
-        unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle1());
-        unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LU.handle2());
+        ScalarType   const * diagonal_buf = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(diagonal_LU.handle());
+        ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LU.handle());
+        unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle1());
+        unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle2());
         
         //
         // Step 1: Determine row elimination order for each row and build up meta information about the number of entries taking part in each elimination step:

@@ -33,7 +33,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
-#include "viennacl/linalg/single_threaded/matrix_operations.hpp"
+#include "viennacl/linalg/host_based/matrix_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/matrix_operations.hpp"
@@ -60,7 +60,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::am(mat1, mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          viennacl::linalg::host_based::am(mat1, mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -94,9 +94,9 @@ namespace viennacl
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::ambm(mat1,
-                                                  mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                                  mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::ambm(mat1,
+                                             mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                             mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -134,9 +134,9 @@ namespace viennacl
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::ambm_m(mat1,
-                                                    mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                                    mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::ambm_m(mat1,
+                                               mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                               mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -167,7 +167,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::matrix_assign(mat, s);
+          viennacl::linalg::host_based::matrix_assign(mat, s);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -194,7 +194,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::matrix_diagonal_assign(mat, s);
+          viennacl::linalg::host_based::matrix_diagonal_assign(mat, s);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -260,7 +260,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(mat, vec, result);
+          viennacl::linalg::host_based::prod_impl(mat, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -327,7 +327,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat_trans.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(mat_trans, vec, result);
+          viennacl::linalg::host_based::prod_impl(mat_trans, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -373,7 +373,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -417,7 +417,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -460,7 +460,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -502,7 +502,7 @@ namespace viennacl
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -566,9 +566,9 @@ namespace viennacl
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::scaled_rank_1_update(mat1,
-                                                                  alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                                                  vec1, vec2);
+          viennacl::linalg::host_based::scaled_rank_1_update(mat1,
+                                                             alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                                             vec1, vec2);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:

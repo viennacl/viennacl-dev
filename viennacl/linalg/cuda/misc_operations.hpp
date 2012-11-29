@@ -73,13 +73,6 @@ namespace viennacl
                                      std::size_t num_rows
                                     )
         {
-          ScalarType * vec_buf = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(vec.handle());
-          
-          unsigned int const * elim_row_index  = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(row_index_array);
-          unsigned int const * elim_row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(row_buffer);
-          unsigned int const * elim_col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(col_buffer);
-          ScalarType   const * elim_elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(element_buffer);
-          
           level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(row_buffer.cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(col_buffer.cuda_handle()),

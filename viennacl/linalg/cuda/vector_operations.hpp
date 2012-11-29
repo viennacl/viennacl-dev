@@ -29,7 +29,6 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
-#include "viennacl/linalg/single_threaded/common.hpp"
 #include "viennacl/traits/stride.hpp"
 
 namespace viennacl

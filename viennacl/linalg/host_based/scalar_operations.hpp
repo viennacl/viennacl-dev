@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_SINGLE_THREADED_SCALAR_OPERATIONS_HPP_
-#define VIENNACL_LINALG_SINGLE_THREADED_SCALAR_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_HOST_BASED_SCALAR_OPERATIONS_HPP_
+#define VIENNACL_LINALG_HOST_BASED_SCALAR_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/single_threaded/scalar_operations.hpp
+/** @file viennacl/linalg/host_based/scalar_operations.hpp
     @brief Implementations of scalar operations using a plain single-threaded execution on CPU
 */
 
@@ -29,13 +29,13 @@
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/stride.hpp"
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 
 namespace viennacl
 {
   namespace linalg
   {
-    namespace single_threaded
+    namespace host_based
     {
       template <typename S1,
                 typename S2, typename ScalarType1>
@@ -154,7 +154,7 @@ namespace viennacl
 
 
 
-    } //namespace single_threaded
+    } //namespace host_based
   } //namespace linalg
 } //namespace viennacl
 

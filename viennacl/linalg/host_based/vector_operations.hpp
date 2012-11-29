@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_SINGLE_THREADED_VECTOR_OPERATIONS_HPP_
-#define VIENNACL_LINALG_SINGLE_THREADED_VECTOR_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_HOST_BASED_VECTOR_OPERATIONS_HPP_
+#define VIENNACL_LINALG_HOST_BASED_VECTOR_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/single_threaded/vector_operations.hpp
+/** @file viennacl/linalg/host_based/vector_operations.hpp
     @brief Implementations of vector operations using a plain single-threaded execution on CPU
 */
 
@@ -29,14 +29,14 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/traits/stride.hpp"
 
 namespace viennacl
 {
   namespace linalg
   {
-    namespace single_threaded
+    namespace host_based
     {
       
       //
@@ -492,7 +492,7 @@ namespace viennacl
         }
       }
 
-    } //namespace opencl
+    } //namespace host_based
   } //namespace linalg
 } //namespace viennacl
 

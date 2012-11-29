@@ -30,7 +30,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
-#include "viennacl/linalg/single_threaded/scalar_operations.hpp"
+#include "viennacl/linalg/host_based/scalar_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/scalar_operations.hpp"
@@ -67,7 +67,7 @@ namespace viennacl
       switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          viennacl::linalg::host_based::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -113,9 +113,9 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::asbs(vec1,
-                                                  vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                                  vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::asbs(vec1,
+                                             vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                             vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -165,9 +165,9 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::asbs_s(vec1,
-                                                    vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                                    vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::asbs_s(vec1,
+                                               vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                               vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -204,7 +204,7 @@ namespace viennacl
       switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::swap(s1, s2);
+          viennacl::linalg::host_based::swap(s1, s2);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:

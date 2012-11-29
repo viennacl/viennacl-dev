@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_SINGLE_THREADED_DIRECT_SOLVE_HPP
-#define VIENNACL_LINALG_SINGLE_THREADED_DIRECT_SOLVE_HPP
+#ifndef VIENNACL_LINALG_HOST_BASED_DIRECT_SOLVE_HPP
+#define VIENNACL_LINALG_HOST_BASED_DIRECT_SOLVE_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,20 +17,20 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/single_threaded/direct_solve.hpp
+/** @file viennacl/linalg/host_based/direct_solve.hpp
     @brief Implementations of dense direct solvers are found here.
 */
 
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 
 namespace viennacl
 {
   namespace linalg
   {
-    namespace single_threaded
+    namespace host_based
     {
       
       namespace detail

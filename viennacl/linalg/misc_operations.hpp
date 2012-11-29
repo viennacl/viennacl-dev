@@ -26,7 +26,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/single_threaded/misc_operations.hpp"
+#include "viennacl/linalg/host_based/misc_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/misc_operations.hpp"
@@ -61,7 +61,7 @@ namespace viennacl
         switch (viennacl::traits::handle(vec).get_active_handle_id())
         {
           case viennacl::MAIN_MEMORY:
-            viennacl::linalg::single_threaded::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
+            viennacl::linalg::host_based::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case viennacl::OPENCL_MEMORY:

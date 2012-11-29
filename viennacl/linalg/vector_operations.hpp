@@ -1,5 +1,5 @@
-#ifndef VIENNACL_VECTOR_OPERATIONS_HPP_
-#define VIENNACL_VECTOR_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_VECTOR_OPERATIONS_HPP_
+#define VIENNACL_LINALG_VECTOR_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -30,7 +30,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
-#include "viennacl/linalg/single_threaded/vector_operations.hpp"
+#include "viennacl/linalg/host_based/vector_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/vector_operations.hpp"
@@ -58,7 +58,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
+          viennacl::linalg::host_based::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -95,7 +95,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::avbv(vec1,
+          viennacl::linalg::host_based::avbv(vec1,
                                                   vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                   vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
@@ -138,7 +138,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::avbv_v(vec1,
+          viennacl::linalg::host_based::avbv_v(vec1,
                                                     vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                     vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
@@ -176,7 +176,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::vector_assign(vec1, alpha);
+          viennacl::linalg::host_based::vector_assign(vec1, alpha);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -210,7 +210,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::vector_swap(vec1, vec2);
+          viennacl::linalg::host_based::vector_swap(vec1, vec2);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -250,7 +250,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::element_op(vec1, proxy);
+          viennacl::linalg::host_based::element_op(vec1, proxy);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -396,7 +396,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inner_prod_impl(vec1, vec2, result);
+          viennacl::linalg::host_based::inner_prod_impl(vec1, vec2, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -434,7 +434,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inner_prod_impl(vec1, vec2, result);
+          viennacl::linalg::host_based::inner_prod_impl(vec1, vec2, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -489,7 +489,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_1_impl(vec, result);
+          viennacl::linalg::host_based::norm_1_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -521,7 +521,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_1_impl(vec, result);
+          viennacl::linalg::host_based::norm_1_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -557,7 +557,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_2_impl(vec, result);
+          viennacl::linalg::host_based::norm_2_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -589,7 +589,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_2_impl(vec, result);
+          viennacl::linalg::host_based::norm_2_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -625,7 +625,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_inf_impl(vec, result);
+          viennacl::linalg::host_based::norm_inf_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -657,7 +657,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::norm_inf_impl(vec, result);
+          viennacl::linalg::host_based::norm_inf_impl(vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
@@ -692,7 +692,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          return viennacl::linalg::single_threaded::index_norm_inf(vec);
+          return viennacl::linalg::host_based::index_norm_inf(vec);
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
           return viennacl::linalg::opencl::index_norm_inf(vec);
@@ -729,7 +729,7 @@ namespace viennacl
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::plane_rotation(vec1, vec2, alpha, beta);
+          viennacl::linalg::host_based::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:

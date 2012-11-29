@@ -15,7 +15,7 @@ rm viennacl/linalg/*.*~
 rm viennacl/linalg/kernels/*.*~
 rm viennacl/linalg/backend/*.*~
 rm viennacl/linalg/opencl/*.*~
-rm viennacl/linalg/single_threaded/*.*~
+rm viennacl/linalg/host_based/*.*~
 rm viennacl/linalg/cuda/*.*~
 rm viennacl/linalg/detail/amg/*.*~
 rm viennacl/linalg/detail/spai/*.*~

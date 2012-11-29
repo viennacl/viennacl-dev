@@ -29,7 +29,7 @@ License:         MIT (X11), see file LICENSE in the base directory
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/compressed_matrix.hpp"
 
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 
 #include <map>
 
@@ -56,9 +56,9 @@ namespace viennacl
     {
       assert( (viennacl::memory_domain(A) == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ICHOL0") );
       
-      ScalarType         * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(A.handle());
-      unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle1());
-      unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(A.handle2());
+      ScalarType         * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(A.handle());
+      unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+      unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
       
       //std::cout << A.size1() << std::endl;
       for (std::size_t i=0; i<A.size1(); ++i)
@@ -140,13 +140,13 @@ namespace viennacl
         template <typename VectorType>
         void apply(VectorType & vec) const
         {
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LLT.handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(LLT.handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(LLT.handle());
+          unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LLT.handle1());
+          unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LLT.handle2());
+          ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LLT.handle());
           
           // Note: L is stored in a column-oriented fashion, i.e. transposed w.r.t. the row-oriented layout. Thus, the factorization A = L L^T holds L in the upper triangular part of A.
-          viennacl::linalg::single_threaded::detail::csr_trans_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), lower_tag());
-          viennacl::linalg::single_threaded::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), upper_tag());
+          viennacl::linalg::host_based::detail::csr_trans_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), lower_tag());
+          viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LLT.size2(), upper_tag());
         }
 
       private:

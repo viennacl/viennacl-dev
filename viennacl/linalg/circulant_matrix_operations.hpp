@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file circulant_matrix_operations.hpp
+/** @file viennacl/linalg/circulant_matrix_operations.hpp
     @brief Implementations of operations using circulant_matrix
 */
 

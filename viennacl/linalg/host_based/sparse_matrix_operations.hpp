@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINALG_SINGLE_THREADED_SPARSE_MATRIX_OPERATIONS_HPP_
-#define VIENNACL_LINALG_SINGLE_THREADED_SPARSE_MATRIX_OPERATIONS_HPP_
+#ifndef VIENNACL_LINALG_HOST_BASED_SPARSE_MATRIX_OPERATIONS_HPP_
+#define VIENNACL_LINALG_HOST_BASED_SPARSE_MATRIX_OPERATIONS_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
@@ -17,7 +17,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/single_threaded/sparse_matrix_operations.hpp
+/** @file viennacl/linalg/host_based/sparse_matrix_operations.hpp
     @brief Implementations of operations using sparse matrices on the CPU using a single thread
 */
 
@@ -27,13 +27,13 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/single_threaded/common.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 
 namespace viennacl
 {
   namespace linalg
   {
-    namespace single_threaded
+    namespace host_based
     {
       //
       // Compressed matrix
@@ -466,9 +466,9 @@ namespace viennacl
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
           
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
+          unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
           ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
           
           std::size_t col_begin = row_buffer[0];
@@ -497,9 +497,9 @@ namespace viennacl
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
           
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
+          unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(L.lhs().handle());
           ScalarType   const * diagonal_buffer = detail::extract_raw_pointer<ScalarType>(L_diagonal.handle());
           ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
           
@@ -533,9 +533,9 @@ namespace viennacl
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
           
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
+          unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
           ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
           
           for (std::size_t col2 = 0; col2 < U.lhs().size1(); ++col2)
@@ -566,9 +566,9 @@ namespace viennacl
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
           
-          unsigned int const * row_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
-          unsigned int const * col_buffer = viennacl::linalg::single_threaded::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
-          ScalarType   const * elements   = viennacl::linalg::single_threaded::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
+          unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.lhs().handle1());
+          unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.lhs().handle2());
+          ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(U.lhs().handle());
           ScalarType   const * diagonal_buffer = detail::extract_raw_pointer<ScalarType>(U_diagonal.handle());
           ScalarType         * vec_buffer = detail::extract_raw_pointer<ScalarType>(vec.handle());
           
@@ -873,7 +873,7 @@ namespace viennacl
       }
       
       
-    } // namespace opencl
+    } // namespace host_based
   } //namespace linalg
 } //namespace viennacl
 

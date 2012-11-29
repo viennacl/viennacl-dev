@@ -26,7 +26,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/single_threaded/sparse_matrix_operations.hpp"
+#include "viennacl/linalg/host_based/sparse_matrix_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/linalg/opencl/sparse_matrix_operations.hpp"
@@ -53,7 +53,7 @@ namespace viennacl
         switch (viennacl::traits::handle(mat).get_active_handle_id())
         {
           case viennacl::MAIN_MEMORY:
-            viennacl::linalg::single_threaded::detail::row_info(mat, vec, info_selector);
+            viennacl::linalg::host_based::detail::row_info(mat, vec, info_selector);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case viennacl::OPENCL_MEMORY:
@@ -117,7 +117,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::prod_impl(mat, vec, result);
+          viennacl::linalg::host_based::prod_impl(mat, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -153,7 +153,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
+          viennacl::linalg::host_based::inplace_solve(mat, vec, tag);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -189,7 +189,7 @@ namespace viennacl
       switch (viennacl::traits::handle(mat.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::single_threaded::inplace_solve(mat, vec, tag);
+          viennacl::linalg::host_based::inplace_solve(mat, vec, tag);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
@@ -225,7 +225,7 @@ namespace viennacl
         switch (viennacl::traits::handle(mat.lhs()).get_active_handle_id())
         {
           case viennacl::MAIN_MEMORY:
-            viennacl::linalg::single_threaded::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
+            viennacl::linalg::host_based::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
             break;
   #ifdef VIENNACL_WITH_OPENCL
           case viennacl::OPENCL_MEMORY:
