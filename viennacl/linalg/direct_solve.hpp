@@ -82,8 +82,8 @@ namespace viennacl
     
     /** @brief Direct inplace solver for dense upper triangular systems
     *
-    * @param mat    The system matrix
-    * @param B      The (transposed) matrix of row vectors, where the solution is directly written to
+    * @param A      The system matrix
+    * @param proxyB The transposed matrix of row vectors, where the solution is directly written to
     */
     template <typename M1,
               typename M2, typename SOLVERTAG>

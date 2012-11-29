@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file vandermonde_matrix_operations.hpp
+/** @file viennacl/linalg/vandermonde_matrix_operations.hpp
     @brief Implementations of operations using vandermonde_matrix
 */
 

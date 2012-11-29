@@ -600,7 +600,9 @@ namespace viennacl
 
     /** @brief Computes Q^T b, where Q is an implicit orthogonal matrix defined via its Householder reflectors stored in A. 
      * 
-     *  @param A    A matrix holding the Householder reflectors in the lower triangular part. Typically obtained from calling inplace_qr() on the original matrix
+     *  @param A      A matrix holding the Householder reflectors in the lower triangular part. Typically obtained from calling inplace_qr() on the original matrix
+     *  @param betas  The scalars beta_i for each Householder reflector (I - beta_i v_i v_i^T)
+     *  @param b      The vector b to which the result Q^T b is directly written to
      */
     template <typename MatrixType, typename VectorType1, typename VectorType2>
     void inplace_qr_apply_trans_Q(MatrixType const & A, VectorType1 const & betas, VectorType2 & b)
@@ -639,7 +641,7 @@ namespace viennacl
     /** @brief Overload of inplace-QR factorization of a ViennaCL matrix A 
      * 
      * @param A            A dense ViennaCL matrix to be factored
-     * @param block_size   The block size to be used. The number of columns of A must be a multiple of block_size
+     * @param block_size   The block size to be used.
      */
     template<typename T, typename F, unsigned int ALIGNMENT>
     std::vector<T> inplace_qr(viennacl::matrix<T, F, ALIGNMENT> & A, std::size_t block_size = 16)
@@ -650,7 +652,7 @@ namespace viennacl
     /** @brief Overload of inplace-QR factorization for a general Boost.uBLAS compatible matrix A 
      * 
      * @param A            A dense compatible to Boost.uBLAS
-     * @param block_size   The block size to be used. The number of columns of A must be a multiple of block_size
+     * @param block_size   The block size to be used.
      */
     template<typename MatrixType>
     std::vector<typename MatrixType::value_type> inplace_qr(MatrixType & A, std::size_t block_size = 16)

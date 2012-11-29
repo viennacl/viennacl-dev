@@ -1,5 +1,41 @@
 
-\chapter*{Change Logs} \addcontentsline{toc}{chapter}{Change Logs}
+\chapter{Change Logs} %\addcontentsline{toc}{chapter}{Change Logs}
+
+\section*{Version 1.4.x}
+
+\subsection*{Version 1.4.0}
+The transition from 1.3.x to 1.4.x features the largest number of additions, improvements, and cleanups since the initial release.
+In particular, host-, OpenCL-, and CUDA-based execution is now supported. OpenCL now needs to be enabled explicitly!
+New features and feature improvements are as follows:
+\begin{itemize}
+ \item Added host-based and CUDA-enabled operations on ViennaCL objects. The default is now a host-based execution for reasons of compatibility.
+       Enable OpenCL- or CUDA-based execution by defining the preprocessor constant \lstinline|VIENNACL_WITH_OPENCL| and \lstinline|VIENNACL_WITH_CUDA| respectively.
+       Note that CUDA-based execution requires the use of nvcc.
+ \item Added mixed-precision CG solver (OpenCL-based).
+ \item Greatly improved performance of ILU0 and ILUT preconditioners (up to 10-fold). Also fixed a bug in ILUT.
+ \item Added initializer types from Boost.uBLAS (\lstinline|unit_vector|, \lstinline|zero_vector|, \lstinline|scalar_vector|, \lstinline|identity_matrix|, \lstinline|zero_matrix|, \lstinline|scalar_matrix|).
+       Thanks to Karsten Ahnert for suggesting the feature.
+ \item Added incomplete Cholesky factorization preconditioner.
+ \item Added element-wise operations for vectors as available in Boost.uBLAS (\lstinline|element_prod|, \lstinline|element_div|).
+ \item Added restart-after-N-cycles option to BiCGStab.
+ \item Added level-scheduling for ILU-preconditioners. Performance strongly depends on matrix pattern.
+ \item Added least-squares example including a function \lstinline|inplace_qr_apply_trans_Q()| to compute the right hand side vector $Q^T b$ without rebuilding $Q$.
+ \item Improved performance of LU-factorization of dense matrices.
+ \item Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
+ \item Reduced overhead when copying to/from \lstinline|ublas::compressed_matrix|.
+ \item ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
+ \item Refurbished OpenCL vector kernels backend. 
+       All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
+ \item \lstinline|matrix_range| and \lstinline|matrix_slice| as well as \lstinline|vector_range| and \lstinline|vector_slice| can now be used and mixed completely seamlessly with all standard operations except \lstinline|lu_factorize()|.
+ \item Fixed a bug when using copy() with iterators on vector proxy objects.
+ \item Final reduction step in \lstinline|inner_prod()| and norms is now computed on CPU if the result is a CPU scalar.
+ \item Reduced kernel launch overhead of simple vector kernels by packing multiple kernel arguments together.
+ \item Updated SVD code and added routines for the computation of symmetric eigenvalues using OpenCL.
+\end{itemize}
+
+
+
+
 
 \section*{Version 1.3.x}
 

@@ -290,6 +290,7 @@ namespace viennacl
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
   *
+  * @param result The result vector v1
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT, typename SparseMatrixType>
@@ -306,6 +307,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
   *
+  * @param result The result vector v1
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT, typename SparseMatrixType>
@@ -324,7 +326,8 @@ namespace viennacl
   //free functions:
   /** @brief Implementation of the operation 'result = v1 + A * v2', where A is a matrix
   *
-  * @param proxy  An expression template proxy class.
+  * @param result The vector the result is written to.
+  * @param proxy  An expression template proxy class holding v1, A, and v2.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT, typename SparseMatrixType>
   typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,

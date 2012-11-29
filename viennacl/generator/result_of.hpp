@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/generator/traits/result_of.hpp
+/** @file viennacl/generator/result_of.hpp
  *  @brief Provides a set of metafunctions for type deductions within the kernel generator framework.
  *
  *  Generator code contributed by Philippe Tillet

@@ -619,6 +619,7 @@ namespace viennacl
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
   *
+  * @param v1     The result vector v1 where A * v2 is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename M2, typename V2>
@@ -642,6 +643,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
   *
+  * @param v1     The result vector v1 where A * v2 is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename M2, typename V2>
@@ -670,6 +672,7 @@ namespace viennacl
   //free functions:
   /** @brief Implementation of the operation 'result = v1 + A * v2', where A is a matrix
   *
+  * @param v1     The addend vector.
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename V1, typename V2>
@@ -693,6 +696,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation 'result = v1 - A * v2', where A is a matrix
   *
+  * @param v1     The addend vector.
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename V1, typename V2>
@@ -752,6 +756,7 @@ namespace viennacl
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
   *
+  * @param v1     The addend vector where the result is written to.
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename M2, typename V2>
@@ -776,6 +781,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
   *
+  * @param v1     The addend vector where the result is written to.
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename M2, typename V2>
@@ -802,6 +808,7 @@ namespace viennacl
   //free functions:
   /** @brief Implementation of the operation 'result = v1 + A * v2', where A is a matrix
   *
+  * @param v1     The addend vector.
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename V1, typename V2>
@@ -827,6 +834,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation 'result = v1 - A * v2', where A is a matrix
   *
+  * @param v1     The addend vector.
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename V1, typename V2>

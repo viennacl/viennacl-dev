@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/opencl/compressed_matrix_operations.hpp
-    @brief Implementations of operations using compressed_matrix and OpenCL
+/** @file viennacl/linalg/opencl/sparse_matrix_operations.hpp
+    @brief Implementations of operations using sparse matrices and OpenCL
 */
 
 #include "viennacl/forwards.h"

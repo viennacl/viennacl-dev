@@ -1214,6 +1214,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation m1 += m2 +- m3
   *
+  * @param m1     The result matrix where m2 +- m3 is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename M2, typename M3, typename OP>
@@ -1240,6 +1241,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation m1 += m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 +- m3 @ beta is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,
@@ -1276,6 +1278,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation m1 += m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 @ alpha +- m3 is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,
@@ -1307,6 +1310,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation m1 += m2 @ alpha +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 @ alpha +- m3 @ beta is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,
@@ -1520,6 +1524,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation m1 -= m2 +- m3
   *
+  * @param m1     The result matrix where m2 +- m3 is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename M1, typename M2, typename M3, typename OP>
@@ -1543,8 +1548,9 @@ namespace viennacl
     return m1;
   }
   
-  /** @brief Implementation of the operation m1 = m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation m1 -= m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 +- m3 @ beta is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,
@@ -1579,8 +1585,9 @@ namespace viennacl
     return m1;
   }
 
-  /** @brief Implementation of the operation m1 = m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation m1 -= m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 @ alpha +- m3 is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,
@@ -1610,8 +1617,9 @@ namespace viennacl
     return m1;
   }
   
-  /** @brief Implementation of the operation m1 = m2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation m1 -= m2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param m1     The result matrix where m2 @ alpha +- m3 @ beta is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename M1,

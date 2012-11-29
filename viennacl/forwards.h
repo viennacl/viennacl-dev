@@ -145,7 +145,6 @@ namespace viennacl
     *
     * @param i   row index
     * @param j   column index
-    * @param num_rows  number of entries per row (including alignment)
     * @param num_cols  number of entries per column (including alignment)
     */
     static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t /* num_rows */, vcl_size_t num_cols)
@@ -163,7 +162,6 @@ namespace viennacl
     * @param i   row index
     * @param j   column index
     * @param num_rows  number of entries per row (including alignment)
-    * @param num_cols  number of entries per column (including alignment)
     */
     static vcl_size_t mem_index(vcl_size_t i, vcl_size_t j, vcl_size_t num_rows, vcl_size_t /* num_cols */)
     {

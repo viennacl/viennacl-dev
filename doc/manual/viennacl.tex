@@ -16,6 +16,7 @@
 \usepackage{epsfig}
 %\usepackage{subfig}
 \usepackage{subfigure}
+\usepackage[toc,page]{appendix}
 
 
 \usepackage[colorlinks=true,linktocpage=true]{hyperref}
@@ -97,12 +98,21 @@
 \include{introduction}
 \include{installation}
 
+%%%%%%%%%%%%%%%% Core Functionality %%%%%%%%%%%%%%%%
+
 \part{Core Functionality}
 Quite a bit of text explaining the functionality.
+
+
 
 \include{types}
 \include{operations}
 \include{algorithms}
+
+
+
+%%%%%%%%%%%%%%% Addon Functionality %%%%%%%%%%%%%%%%
+
 
 \part{Addon Functionality}
 Functionality that is not available with all backends.
@@ -115,12 +125,24 @@ Functionality that is not available with all backends.
 \include{other-libs}
 %\include{benchmarks}
 
-% Appendix
+
+%%%%%%%%%%%%%%% Addon Functionality %%%%%%%%%%%%%%%%
+
 \part{Miscellaneous}
 \include{design}
+
+% Appendix
+%\appendix
+%\appendixpage
+%\addappheadtotoc
+
+\begin{appendices}
 \include{versioning}
 \include{changelogs}
 \include{license}
+ 
+\end{appendices}
+
 
 %\section{Bibliography}
 \bibliographystyle{IEEEtran_v1.13}

@@ -232,12 +232,12 @@ namespace viennacl
         viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), &val);
       }
       
+#ifdef VIENNACL_WITH_OPENCL          
       /** @brief Wraps an existing memory entry into a scalar 
       *
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
-#ifdef VIENNACL_WITH_OPENCL          
       explicit scalar(cl_mem mem, size_t size)
       {
         val_.switch_active_handle_id(viennacl::OPENCL_MEMORY);

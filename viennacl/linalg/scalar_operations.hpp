@@ -52,6 +52,7 @@ namespace viennacl
      * 
      * @param s1                The first  (GPU) scalar
      * @param s2                The second (GPU) scalar
+     * @param alpha             The scalar alpha in the operation
      * @param len_alpha         If alpha is obtained from summing over a small GPU vector (e.g. the final summation after a multi-group reduction), then supply the length of the array here
      * @param reciprocal_alpha  If true, then s2 / alpha instead of s2 * alpha is computed
      * @param flip_sign_alpha   If true, then (-alpha) is used instead of alpha
@@ -90,10 +91,12 @@ namespace viennacl
      * 
      * @param s1                The first  (GPU) scalar
      * @param s2                The second (GPU) scalar
+     * @param alpha             The scalar alpha in the operation
      * @param len_alpha         If alpha is a small GPU vector, which needs to be summed in order to obtain the final scalar, then supply the length of the array here
      * @param reciprocal_alpha  If true, then s2 / alpha instead of s2 * alpha is computed
      * @param flip_sign_alpha   If true, then (-alpha) is used instead of alpha
      * @param s3                The third (GPU) scalar
+     * @param beta              The scalar beta in the operation
      * @param len_beta          If beta is obtained from summing over a small GPU vector (e.g. the final summation after a multi-group reduction), then supply the length of the array here
      * @param reciprocal_beta   If true, then s2 / beta instead of s2 * beta is computed
      * @param flip_sign_beta    If true, then (-beta) is used instead of beta
@@ -107,29 +110,29 @@ namespace viennacl
                                   && viennacl::is_any_scalar<ScalarType1>::value
                                   && viennacl::is_any_scalar<ScalarType2>::value
                                 >::type
-    asbs(S1 & vec1, 
-         S2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-         S3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    asbs(S1 & s1, 
+         S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+         S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
-      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::asbs(vec1,
-                                             vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                             vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::asbs(s1,
+                                             s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                             s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::asbs(vec1,
-                                         vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                         vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::opencl::asbs(s1,
+                                         s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                         s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::asbs(vec1,
-                                       vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                       vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::cuda::asbs(s1,
+                                       s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                       s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
         default:
@@ -142,10 +145,12 @@ namespace viennacl
      * 
      * @param s1                The first  (GPU) scalar
      * @param s2                The second (GPU) scalar
+     * @param alpha             The scalar alpha in the operation
      * @param len_alpha         If alpha is a small GPU vector, which needs to be summed in order to obtain the final scalar, then supply the length of the array here
      * @param reciprocal_alpha  If true, then s2 / alpha instead of s2 * alpha is computed
      * @param flip_sign_alpha   If true, then (-alpha) is used instead of alpha
      * @param s3                The third (GPU) scalar
+     * @param beta              The scalar beta in the operation
      * @param len_beta          If beta is obtained from summing over a small GPU vector (e.g. the final summation after a multi-group reduction), then supply the length of the array here
      * @param reciprocal_beta   If true, then s2 / beta instead of s2 * beta is computed
      * @param flip_sign_beta    If true, then (-beta) is used instead of beta
@@ -159,29 +164,29 @@ namespace viennacl
                                   && viennacl::is_any_scalar<ScalarType1>::value
                                   && viennacl::is_any_scalar<ScalarType2>::value
                                 >::type
-    asbs_s(S1 & vec1,
-           S2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           S3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    asbs_s(S1 & s1,
+           S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
-      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      switch (viennacl::traits::handle(s1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::asbs_s(vec1,
-                                               vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                               vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::host_based::asbs_s(s1,
+                                               s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                               s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL          
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::asbs_s(vec1,
-                                           vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                           vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::opencl::asbs_s(s1,
+                                           s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                           s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif          
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::asbs_s(vec1,
-                                         vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                         vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
+          viennacl::linalg::cuda::asbs_s(s1,
+                                         s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                         s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif          
         default:

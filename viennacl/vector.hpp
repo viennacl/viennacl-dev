@@ -278,6 +278,8 @@ namespace viennacl
       /** @brief Constructor
       *   @param vec    The vector over which to iterate
       *   @param index  The starting index of the iterator
+      *   @param start  Offset from the beginning of the underlying vector (for ranges and slices)
+      *   @param stride Stride for slices
       */        
       vector_iterator(vector<SCALARTYPE, ALIGNMENT> & vec,
                       std::size_t index,
@@ -1634,6 +1636,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation v1 += v2 +- v3
   *
+  * @param v1     The result vector where v2 +- v3 is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename V2, typename V3, typename OP>
@@ -1658,6 +1661,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation v1 += v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 +- v3 @ beta is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -1692,6 +1696,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation v1 += v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 @ alpha +- v3 is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -1721,6 +1726,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation v1 += v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 @ alpha +- v3 @ beta is added to
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -1797,6 +1803,7 @@ namespace viennacl
   
   /** @brief Implementation of the operation v1 -= v2 +- v3
   *
+  * @param v1     The result vector where v2 +- v3 is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename V1, typename V2, typename V3, typename OP>
@@ -1818,8 +1825,9 @@ namespace viennacl
     return v1;
   }
   
-  /** @brief Implementation of the operation v1 = v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation v1 -= v2 +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 +- v3 @ beta is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -1852,8 +1860,9 @@ namespace viennacl
     return v1;
   }
 
-  /** @brief Implementation of the operation v1 = v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation v1 -= v2 @ alpha +- v3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 @ alpha +- v3 is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -1881,8 +1890,9 @@ namespace viennacl
     return v1;
   }
   
-  /** @brief Implementation of the operation v1 = v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
+  /** @brief Implementation of the operation v1 -= v2 @ alpha +- v3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
   *
+  * @param v1     The result vector where v2 @ alpha +- v3 @ beta is subtracted from
   * @param proxy  An expression template proxy class.
   */
   template <typename V1,
@@ -2041,8 +2051,8 @@ namespace viennacl
   
   /** @brief Operator overload for the addition of a vector expression v1 @ alpha + v2 @ beta, where @ denotes either product or division, and alpha, beta are either CPU or GPU scalars.
   *
-  * @param proxy   Left hand side vector expression
-  * @param vec     Right hand side vector (also -range and -slice is allowed)
+  * @param lhs   Left hand side addend v1 @ alpha
+  * @param rhs   Right hand side addend v2 @ beta
   */
   template <typename V1, typename S1, typename OP1,
             typename V2, typename S2, typename OP2>
@@ -2156,7 +2166,7 @@ namespace viennacl
     return result;
   }
   
-  /** @brief Operator overload for the addition of a vector expression v1 @ alpha + v2, where @ denotes either product or division, and alpha is either a CPU or a GPU scalar.
+  /** @brief Operator overload for the addition of a vector expression v1 @ alpha - v2, where @ denotes either product or division, and alpha is either a CPU or a GPU scalar.
   *
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
@@ -2177,10 +2187,10 @@ namespace viennacl
                               op_sub>(proxy, vec);
   }
   
-  /** @brief Operator overload for the addition of a vector expression v1 @ alpha + v2 @ beta, where @ denotes either product or division, and alpha, beta are either CPU or GPU scalars.
+  /** @brief Operator overload for the addition of a vector expression v1 @ alpha - v2 @ beta, where @ denotes either product or division, and alpha, beta are either CPU or GPU scalars.
   *
-  * @param proxy   Left hand side vector expression
-  * @param vec     Right hand side vector (also -range and -slice is allowed)
+  * @param lhs   Left hand side addend v1 @ alpha
+  * @param rhs   Right hand side addend v2 @ beta
   */
   template <typename V1, typename S1, typename OP1,
             typename V2, typename S2, typename OP2>
