@@ -56,8 +56,8 @@
 \newcommand{\OpenMP} {\texttt{OpenMP}}
 \newcommand{\OpenCL} {\texttt{OpenCL}}
 \newcommand{\ViennaCL} {\texttt{ViennaCL}}
-\newcommand{\ViennaCLversion} {\texttt{ViennaCL 1.3.1}}
-\newcommand{\ViennaCLminorversion} {\texttt{ViennaCL 1.3.x}}
+\newcommand{\ViennaCLversion} {\texttt{ViennaCL 1.4.0}}
+\newcommand{\ViennaCLminorversion} {\texttt{ViennaCL 1.4.x}}
 \newcommand{\Boost} {\texttt{Boost}}
 \newcommand{\ublas} {\texttt{ublas}}
 \newcommand{\Eigen} {\texttt{Eigen}}
@@ -67,6 +67,18 @@
 
 \include{keywords} % [KR] This is a mess, we should delete unused Minimos-stuff
 \include{setup}
+
+\makeatletter
+\renewcommand\@endpart{\vfil
+              \if@twoside
+                \null
+                \thispagestyle{empty}%
+                \newpage
+              \fi
+              \if@tempswa
+                \twocolumn
+              \fi}
+\makeatother
 
 \begin{document}
 \pagenumbering{roman}
@@ -84,16 +96,27 @@
 \pagenumbering{arabic}
 \include{introduction}
 \include{installation}
+
+\part{Core Functionality}
+Quite a bit of text explaining the functionality.
+
 \include{types}
 \include{operations}
 \include{algorithms}
+
+\part{Addon Functionality}
+Functionality that is not available with all backends.
+
 \include{multi-device}
 \include{custom-kernels}
 \include{custom-contexts}
 \include{kernel-generation}
 \include{tuning}
 \include{other-libs}
-\include{benchmarks}
+%\include{benchmarks}
+
+% Appendix
+\part{Miscellaneous}
 \include{design}
 \include{versioning}
 \include{changelogs}

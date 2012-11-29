@@ -3,19 +3,20 @@
 #define VIENNACL_LINALG_DETAIL_ILU0_HPP_
 
 /* =========================================================================
-   Copyright (c) 2010-2011, Institute for Microelectronics,
-   Institute for Analysis and Scientific Computing,
-   TU Wien.
+   Copyright (c) 2010-2012, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
 
-   -----------------
-   ViennaCL - The Vienna Computing Library
-   -----------------
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-
+               
    (A list of authors and contributors can be found in the PDF manual)
 
-License:         MIT (X11), see file LICENSE in the base directory
+   License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/ilu/ilu0.hpp

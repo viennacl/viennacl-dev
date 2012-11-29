@@ -1,10 +1,11 @@
-#ifndef VIENNACL_GENERATOR_SYMBOLIC_TYPES_CONVENIENCE__HPP
-#define VIENNACL_GENERATOR_SYMBOLIC_TYPES_CONVENIENCE__HPP
+#ifndef VIENNACL_GENERATOR_SYMBOLIC_TYPES_CONVENIENCE_TYPEDEF_HPP
+#define VIENNACL_GENERATOR_SYMBOLIC_TYPES_CONVENIENCE_TYPEDEF_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2012, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
 
                             -----------------
                   ViennaCL - The Vienna Computing Library
@@ -17,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file convenience_.hpp
- *  @brief Convenience s for quick creation of symbolic types
+/** @file convenience_typedef.hpp
+ *  @brief Convenience typedefs for quick creation of symbolic types
  *
  *  Generator code contributed by Philippe Tillet
  */
