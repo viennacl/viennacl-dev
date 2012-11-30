@@ -225,14 +225,18 @@ namespace viennacl
     namespace detail
     {
       template <typename T>
-      std::size_t element_size(memory_types mem_type)
+      std::size_t element_size(memory_types /* mem_type */)
       {
         return sizeof(T);
       }
 
       
       template <>
-      inline std::size_t element_size<unsigned long>(memory_types mem_type)
+      inline std::size_t element_size<unsigned long>(memory_types
+#ifdef VIENNACL_WITH_OPENCL
+                                                      mem_type  //in order to compile cleanly at -Wextra in GCC
+#endif
+                                                    )
       {
 #ifdef VIENNACL_WITH_OPENCL
         if (mem_type == OPENCL_MEMORY)
@@ -242,7 +246,11 @@ namespace viennacl
       }
 
       template <>
-      inline std::size_t element_size<long>(memory_types mem_type)
+      inline std::size_t element_size<long>(memory_types 
+#ifdef VIENNACL_WITH_OPENCL
+                                                      mem_type  //in order to compile cleanly at -Wextra in GCC
+#endif
+                                           )
       {
 #ifdef VIENNACL_WITH_OPENCL
         if (mem_type == OPENCL_MEMORY)
@@ -253,7 +261,11 @@ namespace viennacl
       
       
       template <>
-      inline std::size_t element_size<unsigned int>(memory_types mem_type)
+      inline std::size_t element_size<unsigned int>(memory_types
+#ifdef VIENNACL_WITH_OPENCL
+                                                      mem_type  //in order to compile cleanly at -Wextra in GCC
+#endif
+                                                   )
       {
 #ifdef VIENNACL_WITH_OPENCL
         if (mem_type == OPENCL_MEMORY)
@@ -263,7 +275,11 @@ namespace viennacl
       }
 
       template <>
-      inline std::size_t element_size<int>(memory_types mem_type)
+      inline std::size_t element_size<int>(memory_types
+#ifdef VIENNACL_WITH_OPENCL
+                                           mem_type  //in order to compile cleanly at -Wextra in GCC
+#endif
+                                          )
       {
 #ifdef VIENNACL_WITH_OPENCL
         if (mem_type == OPENCL_MEMORY)

@@ -74,10 +74,9 @@ namespace viennacl
       * refer to the Algorithm in Saad's book (1996 edition)
       *
       *  @param A       The sparse matrix matrix. The result is directly written to A.
-      *  @param tag     An ilu0_tag in order to dispatch among several other preconditioners.
       */
     template<typename ScalarType>
-    void precondition(viennacl::compressed_matrix<ScalarType> & A, ilu0_tag const & tag)
+    void precondition(viennacl::compressed_matrix<ScalarType> & A, ilu0_tag const & /* tag */)
     {
       assert( (A.handle1().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
       assert( (A.handle2().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );

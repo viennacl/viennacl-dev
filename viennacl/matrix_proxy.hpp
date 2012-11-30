@@ -427,10 +427,22 @@ namespace viennacl
   template <typename MatrixType>
   matrix_range<MatrixType> project(MatrixType & A, viennacl::range const & r1, viennacl::range const & r2)
   {
+    assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
+    
     return matrix_range<MatrixType>(A, r1, r2);
   }
 
 
+  template <typename MatrixType>
+  matrix_range<MatrixType> project(matrix_range<MatrixType> & A, viennacl::range const & r1, viennacl::range const & r2)
+  {
+    assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
+    
+    return matrix_range<MatrixType>(A.get(),
+                                    viennacl::range(A.start1() + r1.start(), A.start1() + r1.start() + r1.size()),
+                                    viennacl::range(A.start2() + r2.start(), A.start2() + r2.start() + r2.size())
+                                   );
+  }
 
 
 
@@ -795,10 +807,34 @@ namespace viennacl
   template <typename MatrixType>
   matrix_slice<MatrixType> project(MatrixType & A, viennacl::slice const & r1, viennacl::slice const & r2)
   {
+    assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
+    
     return matrix_slice<MatrixType>(A, r1, r2);
   }
 
+  template <typename MatrixType>
+  matrix_slice<MatrixType> project(matrix_range<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
+  {
+    assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
+    
+    return matrix_slice<MatrixType>(A,
+                                    viennacl::slice(A.start1() + r1.start(), r1.stride(), r1.size()),
+                                    viennacl::slice(A.start2() + r2.start(), r2.stride(), r2.size())
+                                   );
+  }
 
+  template <typename MatrixType>
+  matrix_slice<MatrixType> project(matrix_slice<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
+  {
+    assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
+    
+    return matrix_slice<MatrixType>(A,
+                                    viennacl::slice(A.start1() + r1.start(), A.stride1() * r1.stride(), r1.size()),
+                                    viennacl::slice(A.start2() + r2.start(), A.stride2() * r2.stride(), r2.size())
+                                   );
+  }
+
+  // TODO: Allow mix of range/slice
 
 }
 

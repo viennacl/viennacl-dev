@@ -69,7 +69,7 @@ namespace viennacl
       
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
-      const_reference operator()(size_type i, size_type j) const { return val_; }
+      const_reference operator()(size_type /*i*/, size_type /*j*/) const { return val_; }
       
     private:
       size_type size1_;
@@ -90,7 +90,7 @@ namespace viennacl
       
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
-      const_reference operator()(size_type i, size_type j) const { return value_; }
+      const_reference operator()(size_type /*i*/, size_type /*j*/) const { return value_; }
       
     private:
       size_type size1_;

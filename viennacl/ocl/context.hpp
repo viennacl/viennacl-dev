@@ -428,6 +428,7 @@ namespace viennacl
           
           //set context handle:
           h_ = c;
+          h_.inc(); // if the user provides the context, then the user will also call release() on the context. Without inc(), we would get a seg-fault due to double-free at program termination.
           
           if (devices_.empty())
           {

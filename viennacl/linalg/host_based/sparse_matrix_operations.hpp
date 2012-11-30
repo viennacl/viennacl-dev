@@ -464,7 +464,7 @@ namespace viennacl
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & L, 
-                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 viennacl::backend::mem_handle const & /* block_indices */, std::size_t /* num_blocks */,
                                  vector<ScalarType> const & /* L_diagonal */,  //ignored
                                  vector<ScalarType, VEC_ALIGNMENT> & vec,
                                  viennacl::linalg::unit_lower_tag)
@@ -564,7 +564,7 @@ namespace viennacl
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & U, 
-                                 viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
+                                 viennacl::backend::mem_handle const & /* block_indices */, std::size_t /* num_blocks */,
                                  vector<ScalarType> const & U_diagonal,
                                  vector<ScalarType, VEC_ALIGNMENT> & vec,
                                  viennacl::linalg::upper_tag)

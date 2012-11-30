@@ -88,7 +88,7 @@ namespace viennacl
         mutable double last_error_;
     };
     
-    namespace
+    namespace detail
     {
       
       template <typename SRC_VECTOR, typename DEST_VECTOR>
@@ -224,7 +224,7 @@ namespace viennacl
           viennacl::traits::clear(U[k]);
           viennacl::traits::resize(U[k], problem_size);
           //copy first k entries from v_k_tilde to U[k]:
-          gmres_copy_helper(v_k_tilde, U[k], k);
+          detail::gmres_copy_helper(v_k_tilde, U[k], k);
           
           U[k][k] = std::sqrt( viennacl::linalg::inner_prod(v_k_tilde, v_k_tilde) - viennacl::linalg::inner_prod(U[k], U[k]) );
 
@@ -232,7 +232,7 @@ namespace viennacl
             break; //Note: Solution is essentially (up to round-off error) already in Krylov space. No need to proceed.
           
           //copy first k+1 entries from U[k] to R[k]
-          gmres_copy_helper(U[k], R[k], k+1);
+          detail::gmres_copy_helper(U[k], R[k], k+1);
           
           U[k] -= v_k_tilde;
           //std::cout << "U[k] before normalization: " << U[k] << std::endl;

@@ -225,9 +225,7 @@ namespace viennacl
         template<class SCALARTYPE, unsigned int ALIGNMENT>
         void bluestein(viennacl::vector<SCALARTYPE, ALIGNMENT>& in,
                        viennacl::vector<SCALARTYPE, ALIGNMENT>& out,
-                       std::size_t /*batch_num*/,
-                       SCALARTYPE sign = -1.0
-                       )
+                       std::size_t /*batch_num*/)
         {
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
 

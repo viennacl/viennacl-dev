@@ -111,7 +111,7 @@ namespace viennacl
         //
         
         /** @brief Resize without initializing the new memory */
-        void raw_resize(mem_handle const & handle, std::size_t num)
+        void raw_resize(mem_handle const & /*handle*/, std::size_t num)
         {
           buffer_size_ = sizeof(cpu_type) * num;
           

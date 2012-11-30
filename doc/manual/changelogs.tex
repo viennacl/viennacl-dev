@@ -31,6 +31,11 @@ New features and feature improvements are as follows:
  \item Final reduction step in \lstinline|inner_prod()| and norms is now computed on CPU if the result is a CPU scalar.
  \item Reduced kernel launch overhead of simple vector kernels by packing multiple kernel arguments together.
  \item Updated SVD code and added routines for the computation of symmetric eigenvalues using OpenCL.
+ \item \lstinline|custom_operation|'s constructor now support multiple arguments, allowing multiple expression to be packed in the same kernel for improved performances. However, all the datastructures in the multiple operations must have the same size.
+ \item Further improvements to the OpenCL kernel generator: Added a repeat feature for generating loops inside a kernel,
+       added element-wise products and division, added support for every one-argument OpenCL function.
+ \item The name of the operation is now a mandatory argument of the constructor of \lstinline|custom_operation|.
+ \item Improved performances of the generated matrix-vector product code.
 \end{itemize}
 
 

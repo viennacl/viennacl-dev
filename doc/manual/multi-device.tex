@@ -19,7 +19,7 @@ This default context is identified by the ID $0$ (of type \lstinline|long|).
 If a different platform should be used on a machine with multiple platforms available,
 this can be achieved with
 \begin{lstlisting}
- viennacl::ocl::setup_context_platform_index(id, platform_index);
+ viennacl::ocl::set_context_platform_index(id, platform_index);
 \end{lstlisting}
 where the context ID is \lstinline|id| and \lstinline|platform_index| refers to the array index of the platform as returned by \lstinline|clGetPlatformIDs()|.
 

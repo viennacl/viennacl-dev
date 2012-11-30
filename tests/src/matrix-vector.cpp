@@ -202,6 +202,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    }
    // --------------------------------------------------------------------------            
 
+   return retval;
 }
 
 

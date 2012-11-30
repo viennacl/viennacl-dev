@@ -70,8 +70,8 @@ namespace viennacl
       zero_vector(size_type s) : size_(s) {}
       
       size_type size() const { return size_; }
-      const_reference operator()(size_type i) const { return 0; }
-      const_reference operator[](size_type i) const { return 0; }
+      const_reference operator()(size_type /*i*/) const { return 0; }
+      const_reference operator[](size_type /*i*/) const { return 0; }
       
     private:
       size_type size_;
@@ -89,8 +89,8 @@ namespace viennacl
       scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
       
       size_type size() const { return size_; }
-      const_reference operator()(size_type i) const { return value_; }
-      const_reference operator[](size_type i) const { return value_; }
+      const_reference operator()(size_type /*i*/) const { return value_; }
+      const_reference operator[](size_type /*i*/) const { return value_; }
       
     private:
       size_type size_;
@@ -393,7 +393,7 @@ namespace viennacl
     // copy-create vector range or vector slice (implemented in vector_proxy.hpp)
     template <typename V1>
     vector(const V1 & v1, 
-            typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_vector<V1>::value>::type * dummy = NULL) : size_(v1.size())
+           typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_vector<V1>::value>::type * dummy = NULL) : size_(v1.size())
     {
       if (v1.size() > 0)
       {

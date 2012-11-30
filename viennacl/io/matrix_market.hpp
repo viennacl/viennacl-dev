@@ -40,9 +40,9 @@ namespace viennacl
   namespace io
   {
     //helper
-    namespace
+    namespace detail
     {
-      void trim(char * buffer, long max_size)
+      inline void trim(char * buffer, long max_size)
       {
         //trim at beginning of string
         long start = 0;
@@ -76,7 +76,7 @@ namespace viennacl
           buffer[0] = 0;
       }      
       
-      std::string tolower(std::string & s)
+      inline std::string tolower(std::string & s)
       {
         std::transform(s.begin(), s.end(), s.begin(), static_cast < int(*)(int) > (std::tolower));
         return s;
@@ -127,7 +127,7 @@ namespace viennacl
         {
           reader.getline(buffer, 1024);
           ++linenum;
-          trim(buffer, 1024);
+          detail::trim(buffer, 1024);
         }
         while (reader.good() && buffer[0] == 0);
         
@@ -138,23 +138,23 @@ namespace viennacl
             //parse header:
             std::stringstream line(std::string(buffer + 2));
             line >> token;
-            if (tolower(token) != "matrixmarket")
+            if (detail::tolower(token) != "matrixmarket")
             {
               std::cerr << "Error in file " << file << " at line " << linenum << " in file " << file << ": Expected 'MatrixMarket', got '" << token << "'" << std::endl;
               return 0;
             }
 
             line >> token;
-            if (tolower(token) != "matrix")
+            if (detail::tolower(token) != "matrix")
             {
               std::cerr << "Error in file " << file << " at line " << linenum << " in file " << file << ": Expected 'matrix', got '" << token << "'" << std::endl;
               return 0;
             }
 
             line >> token;
-            if (tolower(token) != "coordinate")
+            if (detail::tolower(token) != "coordinate")
             {
-              if (tolower(token) == "array")
+              if (detail::tolower(token) == "array")
               {
                 dense_format = true;
                 std::cerr << "Error in file " << file << " at line " << linenum << " in file " << file << ": 'array' type is not supported yet!" << std::endl;
@@ -168,15 +168,15 @@ namespace viennacl
             }
 
             line >> token;
-            if (tolower(token) != "real")
+            if (detail::tolower(token) != "real")
             {
               std::cerr << "Error in file " << file << ": The MatrixMarket reader provided with ViennaCL supports only real valued floating point arithmetic." << std::endl;
               return 0;
             }
 
             line >> token;
-            if (tolower(token) == "general"){ }
-            else if (tolower(token) == "symmetric"){ symmetric = true; }
+            if (detail::tolower(token) == "general"){ }
+            else if (detail::tolower(token) == "symmetric"){ symmetric = true; }
             else
             {
               std::cerr << "Error in file " << file << ": The MatrixMarket reader provided with ViennaCL supports only general or symmetric matrices." << std::endl;

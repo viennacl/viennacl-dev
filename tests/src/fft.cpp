@@ -258,7 +258,7 @@ ScalarType opencl_radix2(std::vector<ScalarType>& in,
 
 ScalarType opencl_convolve(std::vector<ScalarType>& in1,
                            std::vector<ScalarType>& in2,
-                           unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size)
+                           unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_size*/)
 {
     //if(in1.size() > 2048) return -1;
     viennacl::vector<ScalarType> input1(in1.size());

@@ -52,7 +52,7 @@ namespace viennacl
       *  @param tag     An ichol0_tag in order to dispatch among several other preconditioners.
       */
     template<typename ScalarType>
-    void precondition(viennacl::compressed_matrix<ScalarType> & A, ichol0_tag const & tag)
+    void precondition(viennacl::compressed_matrix<ScalarType> & A, ichol0_tag const & /* tag */)
     {
       assert( (viennacl::memory_domain(A) == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ICHOL0") );
       
