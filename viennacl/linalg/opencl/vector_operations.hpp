@@ -75,11 +75,13 @@ namespace viennacl
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
         size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
         size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
 
         viennacl::ocl::packed_cl_uint size_vec2;
         size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
         size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
         size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
         
         
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
@@ -135,16 +137,19 @@ namespace viennacl
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
         size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
         size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
 
         viennacl::ocl::packed_cl_uint size_vec2;
         size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
         size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
         size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
 
         viennacl::ocl::packed_cl_uint size_vec3;
         size_vec3.start  = cl_uint(viennacl::traits::start(vec3));
         size_vec3.stride = cl_uint(viennacl::traits::stride(vec3));
         size_vec3.size   = cl_uint(viennacl::traits::size(vec3));
+        size_vec3.internal_size   = cl_uint(viennacl::traits::internal_size(vec3));
         
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  size_vec1,
@@ -204,16 +209,19 @@ namespace viennacl
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
         size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
         size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
 
         viennacl::ocl::packed_cl_uint size_vec2;
         size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
         size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
         size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
+        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
 
         viennacl::ocl::packed_cl_uint size_vec3;
         size_vec3.start  = cl_uint(viennacl::traits::start(vec3));
         size_vec3.stride = cl_uint(viennacl::traits::stride(vec3));
         size_vec3.size   = cl_uint(viennacl::traits::size(vec3));
+        size_vec3.internal_size   = cl_uint(viennacl::traits::internal_size(vec3));
         
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  size_vec1,

@@ -221,7 +221,6 @@ int main()
   // GMRES solver:
   //
   std::cout << "----- GMRES Test -----" << std::endl;
-  std::cout << " ATTENTION: Please be aware that GMRES may not work on ATI GPUs when using Stream SDK v2.1." << std::endl;
 
   //
   // for ublas objects:

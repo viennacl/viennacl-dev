@@ -79,7 +79,7 @@ if (ENABLE_CUDA)
 
   if(ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
-    foreach(tut blas2 blas3 matrix-range power-iter qr sparse vector-range)
+    foreach(tut blas2 blas3 iterative least-squares matrix-range power-iter qr sparse vector-range)
         cuda_add_executable(${tut}-cuda ${tut}.cu)
     endforeach()
   endif()

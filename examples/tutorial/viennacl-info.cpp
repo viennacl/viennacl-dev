@@ -51,7 +51,10 @@ int main()
     std::cout << "#" << std::endl;
     
     if (is_first_element)
+    {
       std::cout << "# ViennaCL uses this OpenCL platform by default." << std::endl;
+      is_first_element = false;
+    }
     
     
     //
