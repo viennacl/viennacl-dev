@@ -246,7 +246,8 @@ namespace viennacl
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
       * @param L    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
+      * @param tag  The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
@@ -264,7 +265,8 @@ namespace viennacl
       /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
       * @param L    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
+      * @param tag  The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
@@ -283,7 +285,8 @@ namespace viennacl
       /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
       * @param U    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
+      * @param tag  The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
@@ -301,7 +304,8 @@ namespace viennacl
       /** @brief Inplace solution of a upper triangular compressed_matrix. Typically used for LU substitutions
       *
       * @param U    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
+      * @param tag  The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
@@ -596,8 +600,9 @@ namespace viennacl
       
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy  Proxy object for a transposed CSR-matrix
+      * @param vec    The right hand side vector
+      * @param tag    The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
@@ -616,8 +621,9 @@ namespace viennacl
 
       /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy  Proxy object for a transposed CSR-matrix
+      * @param vec    The right hand side vector
+      * @param tag    The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
@@ -637,8 +643,9 @@ namespace viennacl
       
       /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy  Proxy object for a transposed CSR-matrix
+      * @param vec    The right hand side vector
+      * @param tag    The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
@@ -658,8 +665,9 @@ namespace viennacl
       
       /** @brief Inplace solution of a upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy  Proxy object for a transposed CSR-matrix
+      * @param vec    The right hand side vector
+      * @param tag    The solver tag identifying the respective triangular solver
       */
       template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,

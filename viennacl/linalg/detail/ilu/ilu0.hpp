@@ -73,8 +73,7 @@ namespace viennacl
       *
       * refer to the Algorithm in Saad's book (1996 edition)
       *
-      *  @param input   The input matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns
-      *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
+      *  @param A       The sparse matrix matrix. The result is directly written to A.
       *  @param tag     An ilu0_tag in order to dispatch among several other preconditioners.
       */
     template<typename ScalarType>

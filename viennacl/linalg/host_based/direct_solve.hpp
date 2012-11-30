@@ -121,9 +121,9 @@ namespace viennacl
       //
       
       ////////////////// upper triangular solver (upper_tag) //////////////////////////////////////
-      /** @brief Direct inplace solver for dense upper triangular systems
+      /** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation)
       *
-      * @param A    The system matrix
+      * @param A      The system matrix
       * @param B      The matrix of row vectors, where the solution is directly written to
       */
       template <typename M1,
@@ -161,10 +161,10 @@ namespace viennacl
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
       }
       
-      /** @brief Direct inplace solver for dense upper triangular systems
+      /** @brief Direct inplace solver for triangular systems with multiple transposed right hand sides, i.e. A \ B^T   (MATLAB notation)
       *
-      * @param A      The system matrix
-      * @param B      The (transposed) matrix of row vectors, where the solution is directly written to
+      * @param A       The system matrix
+      * @param proxy_B The proxy for the transposed matrix of row vectors, where the solution is directly written to
       */
       template <typename M1,
                 typename M2, typename SOLVERTAG>
@@ -204,9 +204,9 @@ namespace viennacl
       }
       
       //upper triangular solver for transposed lower triangular matrices
-      /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
+      /** @brief Direct inplace solver for transposed triangular systems with multiple right hand sides, i.e. A^T \ B   (MATLAB notation)
       *
-      * @param proxy    The system matrix proxy
+      * @param proxy_A  The transposed system matrix proxy
       * @param B        The matrix holding the load vectors, where the solution is directly written to
       */
       template <typename M1,
@@ -246,10 +246,10 @@ namespace viennacl
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
       }
 
-      /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
+      /** @brief Direct inplace solver for transposed triangular systems with multiple transposed right hand sides, i.e. A^T \ B^T   (MATLAB notation)
       *
-      * @param proxy    The system matrix proxy
-      * @param B        The matrix holding the load vectors, where the solution is directly written to
+      * @param proxy_A    The transposed system matrix proxy
+      * @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
       */
       template <typename M1,
                 typename M2, typename SOLVERTAG>

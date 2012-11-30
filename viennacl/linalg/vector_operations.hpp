@@ -454,25 +454,6 @@ namespace viennacl
     
 
     //public interface of inner product
-    /** @brief Computes the inner product of two vectors - returns an expression template for lazy evaluation.
-    *
-    * @param vec1 The first vector
-    * @param vec2 The second vector
-    * @return The result
-    */
-    /*template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::scalar_expression< const V1, const V2, viennacl::op_inner_prod >
-                                >::type
-    inner_prod_impl(V1 const & vec1,
-                    V2 const & vec2)
-    {
-      return viennacl::scalar_expression< const V1, 
-                                          const V2,
-                                          viennacl::op_inner_prod >(vec1, vec2);
-    }*/
-
 
     
     /** @brief Computes the l^1-norm of a vector - dispatcher interface

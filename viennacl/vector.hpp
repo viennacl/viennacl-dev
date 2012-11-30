@@ -350,6 +350,7 @@ namespace viennacl
       }
     }
 
+#ifdef VIENNACL_WITH_OPENCL
     /** @brief Create a vector from existing OpenCL memory
     *
     * Note: The provided memory must take an eventual ALIGNMENT into account, i.e. existing_mem must be at least of size internal_size()!
@@ -358,7 +359,6 @@ namespace viennacl
     * @param existing_mem   An OpenCL handle representing the memory
     * @param vec_size       The size of the vector. 
     */
-#ifdef VIENNACL_WITH_OPENCL
     explicit vector(cl_mem existing_mem, size_type vec_size) : size_(vec_size)
     {
       elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);

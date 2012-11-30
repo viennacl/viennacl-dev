@@ -47,8 +47,9 @@ namespace viennacl
       public:
         /** @brief The constructor.
         *
-        * @param entries_per_row  Number of nonzero entries per row in L and U. Note that L and U are stored in a single matrix, thus there are 2*entries_per_row in total.
-        * @param drop_tolerance   The drop tolerance for ILUT
+        * @param entries_per_row        Number of nonzero entries per row in L and U. Note that L and U are stored in a single matrix, thus there are 2*entries_per_row in total.
+        * @param drop_tolerance         The drop tolerance for ILUT
+        * @param with_level_scheduling  Flag for enabling level scheduling on GPUs.
         */
         ilut_tag(unsigned int entries_per_row = 20,
                  double drop_tolerance = 1e-4,
@@ -124,7 +125,7 @@ namespace viennacl
     *
     * refer to Algorithm 10.6 by Saad's book (1996 edition)
     *
-    *  @param input   The input matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns
+    *  @param A       The input matrix. Either a compressed_matrix or of type std::vector< std::map<T, U> >
     *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
     *  @param tag     An ilut_tag in order to dispatch among several other preconditioners.
     */

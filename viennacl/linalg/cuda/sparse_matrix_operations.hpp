@@ -198,8 +198,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -220,8 +219,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -243,8 +241,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -265,8 +262,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -290,8 +286,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -312,8 +307,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -344,8 +338,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -366,8 +359,7 @@ namespace viennacl
       /** @brief Carries out triangular inplace solves
       *
       * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type

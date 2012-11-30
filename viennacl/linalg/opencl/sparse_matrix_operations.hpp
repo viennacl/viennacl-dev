@@ -71,12 +71,11 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector
       * @param result The result vector
-      * @param NUM_THREADS Number of threads per work group. Can be used for fine-tuning.
       */
       template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & mat, 
-                    const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
-                          viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
+                           viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
       {
         viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
@@ -93,7 +92,7 @@ namespace viennacl
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
       * @param L    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
@@ -115,7 +114,7 @@ namespace viennacl
       /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
       * @param L    The matrix
-      * @param vec    The vector
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
@@ -138,8 +137,8 @@ namespace viennacl
       
       /** @brief Inplace solution of an upper triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param U    The matrix
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
@@ -160,8 +159,8 @@ namespace viennacl
       
       /** @brief Inplace solution of an upper triangular compressed_matrix. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param U    The matrix
+      * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
@@ -242,8 +241,8 @@ namespace viennacl
       
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy_L  The transposed matrix proxy
+      * @param vec      The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
@@ -267,8 +266,8 @@ namespace viennacl
       
       /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy_L  The transposed matrix proxy
+      * @param vec      The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
@@ -296,8 +295,8 @@ namespace viennacl
       
       /** @brief Inplace solution of a lower triangular compressed_matrix with unit diagonal. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy_U  The transposed matrix proxy
+      * @param vec      The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
@@ -321,8 +320,8 @@ namespace viennacl
       
       /** @brief Inplace solution of a lower triangular compressed_matrix. Typically used for LU substitutions
       *
-      * @param L    The matrix
-      * @param vec    The vector
+      * @param proxy_U  The transposed matrix proxy
+      * @param vec      The vector
       */
       template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,

@@ -140,7 +140,7 @@ namespace viennacl
     *
     * @param mat    The matrix
     * @param vec    The vector
-    * @param result The result vector
+    * @param tag    The solver tag (lower_tag, unit_lower_tag, unit_upper_tag, or upper_tag)
     */
     template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -176,7 +176,7 @@ namespace viennacl
     *
     * @param mat    The matrix
     * @param vec    The vector
-    * @param result The result vector
+    * @param tag    The solver tag (lower_tag, unit_lower_tag, unit_upper_tag, or upper_tag)
     */
     template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT, typename SOLVERTAG>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
@@ -344,6 +344,7 @@ namespace viennacl
 
   /** @brief Implementation of the operation 'result = v1 - A * v2', where A is a matrix
   *
+  * @param result The vector the result is written to.
   * @param proxy  An expression template proxy class.
   */
   template <typename SCALARTYPE, unsigned int ALIGNMENT, typename SparseMatrixType>

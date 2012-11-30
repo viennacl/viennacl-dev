@@ -72,8 +72,8 @@ namespace viennacl
       
       /** @brief Extracts a diagonal block from a larger system matrix
         *
-        * @param compressed_matrix   The full matrix
-        * @param block_matrix        The output matrix, to which the extracted block is written to
+        * @param A                   The full matrix
+        * @param diagonal_block_A    The output matrix, to which the extracted block is written to
         * @param start_index         First row- and column-index of the block
         * @param stop_index          First row- and column-index beyond the block
         */

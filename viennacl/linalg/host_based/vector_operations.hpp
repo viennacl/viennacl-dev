@@ -234,10 +234,10 @@ namespace viennacl
       
       ///////////////////////// Elementwise operations /////////////
       
-      /** @brief Swaps the contents of two vectors, data is copied
+      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
       *
-      * @param vec1   The first vector (or -range, or -slice)
-      * @param vec2   The second vector (or -range, or -slice)
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2, v3 and the operation
       */
       template <typename V1, typename V2, typename V3, typename OP>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -320,7 +320,7 @@ namespace viennacl
       
       /** @brief Computes the l^1-norm of a vector
       *
-      * @param vec The vector
+      * @param vec1 The vector
       * @param result The result scalar
       */
       template <typename V1, typename S2>
@@ -348,9 +348,8 @@ namespace viennacl
 
       /** @brief Computes the l^2-norm of a vector - implementation
       *
-      * @param vec The vector
+      * @param vec1 The vector
       * @param result The result scalar
-      * @param dummy  Dummy parameter used for SFINAE
       */
       template <typename V1, typename S2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -381,7 +380,7 @@ namespace viennacl
 
       /** @brief Computes the supremum-norm of a vector
       *
-      * @param vec The vector
+      * @param vec1 The vector
       * @param result The result scalar
       */
       template <typename V1, typename S2>
@@ -412,7 +411,7 @@ namespace viennacl
       // are ambiguous
       /** @brief Computes the index of the first entry that is equal to the supremum-norm in modulus.
       *
-      * @param vec The vector
+      * @param vec1 The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
       template <typename V1>

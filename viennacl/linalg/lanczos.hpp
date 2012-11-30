@@ -306,7 +306,6 @@ namespace viennacl
       *   @param A            The system matrix
       *   @param r            Random start vector 
       *   @param size         Size of krylov-space
-      *   @param tag          Lanczos_tag with several options for the algorithm
       *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
       */
       template< typename MatrixT, typename VectorT >
@@ -364,7 +363,6 @@ namespace viennacl
       *   @param A            The system matrix 
       *   @param r            Random start vector 
       *   @param size         Size of krylov-space
-      *   @param tag          Lanczos_tag with several options for the algorithm
       *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
       */
       template< typename MatrixT, typename VectorT >

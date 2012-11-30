@@ -289,10 +289,10 @@ namespace viennacl
 
       ///////////////////////// Elementwise operations /////////////
       
-      /** @brief Swaps the contents of two vectors, data is copied
+      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
       *
-      * @param vec1   The first vector (or -range, or -slice)
-      * @param vec2   The second vector (or -range, or -slice)
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2, v3 and the operation
       */
       template <typename V1, typename V2, typename V3, typename OP>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -331,7 +331,7 @@ namespace viennacl
       *
       * @param vec1 The first vector
       * @param vec2 The second vector
-      * @param result The results of each group
+      * @param partial_result The results of each group
       */
       template <typename V1, typename V2, typename V3>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
@@ -452,7 +452,8 @@ namespace viennacl
       /** @brief Computes the partial work group results for vector norms
       *
       * @param vec The vector
-      * @param result The result scalar
+      * @param partial_result The result scalar
+      * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
       */
       template <typename V1, typename V2>
       typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value

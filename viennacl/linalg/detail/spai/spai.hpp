@@ -194,7 +194,6 @@ namespace viennacl
          * @param g_J container of column indices
          * @param g_A_I_J container of dense matrices -> R matrices after QR factorization
          * @param g_bv container of vectors beta, necessary for Q recovery
-         * @param cur_iter number of current iteration
          */ 
         template<typename ScalarType, unsigned int MAT_ALIGNMENT, typename SparseVectorType>
         void block_set_up(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A,
@@ -204,14 +203,13 @@ namespace viennacl
                           std::vector<std::vector<unsigned int> >& g_I, 
                           std::vector<std::vector<unsigned int> >& g_J, 
                           block_matrix & g_A_I_J, 
-                          block_vector & g_bv,
-                          const unsigned int cur_iter)
+                          block_vector & g_bv)
         {
             bool is_empty_block;
             //build index set
             index_set_up(A_v_c, M_v, g_J, g_I);
-            block_assembly(A, g_J, g_I, g_A_I_J, g_is_update, is_empty_block, cur_iter);
-            block_qr<ScalarType>(g_I, g_J, g_A_I_J, g_bv, g_is_update, cur_iter);
+            block_assembly(A, g_J, g_I, g_A_I_J, g_is_update, is_empty_block);
+            block_qr<ScalarType>(g_I, g_J, g_A_I_J, g_bv, g_is_update);
             
         }
         
@@ -250,7 +248,6 @@ namespace viennacl
          * @param g_res container of residuals 
          * @param g_is_update container with indicators which blocks are active
          * @param tag spai tag
-         * @param cur_iter current iteration number
          */ 
         template<typename SparseVectorType, typename ScalarType>
         void least_square_solve(std::vector<SparseVectorType> & A_v_c, 
@@ -261,8 +258,7 @@ namespace viennacl
                                 block_vector & g_bv_vcl,
                                 std::vector<SparseVectorType> & g_res,
                                 std::vector<cl_uint> & g_is_update,
-                                const spai_tag & tag,
-                                const unsigned int){
+                                const spai_tag & tag){
             unsigned int y_sz, m_sz;
             std::vector<cl_uint> y_inds(M_v.size() + 1, static_cast<cl_uint>(0));
             std::vector<cl_uint> m_inds(M_v.size() + 1, static_cast<cl_uint>(0));
@@ -281,16 +277,6 @@ namespace viennacl
             get_size(g_J, m_sz);
             std::vector<ScalarType> m_v(m_sz, static_cast<cl_uint>(0));
             
-            //acquire kernel
-            /*if(cur_iter == 0){
-                std::string ls_kernel_file_name = "kernels/spai/ls_g.cl";
-                std::string ls_kernel_source;
-                read_kernel_from_file(ls_kernel_file_name, ls_kernel_source);
-                //compilation of a kernel
-                viennacl::ocl::program & ls_prog = viennacl::ocl::current_context().add_program(ls_kernel_source.c_str(), "ls_kernel_source");
-                //least square kernel
-                ls_prog.add_kernel("block_least_squares");
-            }*/
             block_vector y_v_vcl;
             block_vector m_v_vcl;
             //prepearing memory for least square problem on GPU
@@ -450,15 +436,14 @@ namespace viennacl
          * @param g_A_I_J_vcl contigious blocks A(I, J) using GPU memory
          * @param g_is_update container with indicators which blocks are active
          * @param is_empty_block parameter that indicates if no block were assembled 
-         * @param cur_iter current iteration number 
          */ 
         template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_assembly(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, const std::vector<std::vector<unsigned int> >& g_J, 
                             const std::vector<std::vector<unsigned int> >& g_I,
                             block_matrix& g_A_I_J_vcl, 
                             std::vector<cl_uint>& g_is_update,
-                            bool& is_empty_block,
-                            const unsigned int){
+                            bool& is_empty_block)
+        {
             //computing start indices for index sets and start indices for block matrices
             unsigned int sz_I, sz_J, sz_blocks;
             std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));
@@ -483,15 +468,6 @@ namespace viennacl
                 compute_blocks_size(g_I, g_J, sz_blocks, blocks_ind, matrix_dims);
                 std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
                 
-                /*if(cur_iter == 0){
-                    std::string block_asm_file_name = "kernels/spai/block_assembly_g.cl";
-                    std::string block_asm_source;
-                    read_kernel_from_file(block_asm_file_name, block_asm_source);
-                    viennacl::ocl::program & block_asm_prog = viennacl::ocl::current_context().add_program(block_asm_source.c_str(), 
-                                                                                                           "block_assembly_kernel_source");
-                    
-                    block_asm_prog.add_kernel("assemble_blocks");
-                }*/
                 block_vector set_I_vcl, set_J_vcl;
                 //init memory on GPU
                 //contigious g_A_I_J
@@ -730,13 +706,15 @@ namespace viennacl
                 // PHASE ONE..
                 //timer.start();
                 //index set up on CPU
-                if(cur_iter == 0) block_set_up(A, A_v_c, M_v, g_is_update, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, cur_iter);
-                else block_update(A, A_v_c, g_is_update, g_res, g_J, g_I, g_A_I_J_vcl, g_bv_vcl, tag, cur_iter);
+                if(cur_iter == 0)
+                  block_set_up(A, A_v_c, M_v, g_is_update, g_I, g_J, g_A_I_J_vcl, g_bv_vcl);
+                else
+                  block_update(A, A_v_c, g_is_update, g_res, g_J, g_I, g_A_I_J_vcl, g_bv_vcl, tag);
                 //std::cout<<"Phase 2 timing: "<<timer.get()<<std::endl;
                 //PERFORM LEAST SQUARE problems solution
                 //PHASE TWO
                 //timer.start();
-                least_square_solve<SparseVectorType, ScalarType>(A_v_c, M_v, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, g_res, g_is_update, tag, cur_iter);
+                least_square_solve<SparseVectorType, ScalarType>(A_v_c, M_v, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, g_res, g_is_update, tag);
                 //std::cout<<"Phase 3 timing: "<<timer.get()<<std::endl;
                 if(tag.getIsStatic()) break;
                 cur_iter++;

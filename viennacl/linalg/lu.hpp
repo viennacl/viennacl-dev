@@ -34,7 +34,7 @@ namespace viennacl
   {
     /** @brief LU factorization of a row-major dense matrix.
     *
-    * @param mat    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
+    * @param A    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
     */
     template<typename SCALARTYPE>
     void lu_factorize(matrix<SCALARTYPE, viennacl::row_major> & A)

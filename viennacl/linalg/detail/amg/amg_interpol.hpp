@@ -52,13 +52,13 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_interpol(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
-  switch (tag.get_interpol())
-  {
-    case VIENNACL_AMG_INTERPOL_DIRECT: amg_interpol_direct (level, A, P, Pointvector, tag); break;
-    case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic (level, A, P, Pointvector, tag); break;
-    case VIENNACL_AMG_INTERPOL_AG: amg_interpol_ag (level, A, P, Pointvector, tag); break;
-    case VIENNACL_AMG_INTERPOL_SA: amg_interpol_sa (level, A, P, Pointvector, tag); break;
-  }
+      switch (tag.get_interpol())
+      {
+        case VIENNACL_AMG_INTERPOL_DIRECT: amg_interpol_direct (level, A, P, Pointvector, tag); break;
+        case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic (level, A, P, Pointvector, tag); break;
+        case VIENNACL_AMG_INTERPOL_AG: amg_interpol_ag (level, A, P, Pointvector, tag); break;
+        case VIENNACL_AMG_INTERPOL_SA: amg_interpol_sa (level, A, P, Pointvector, tag); break;
+      }
     } 
     /** @brief Direct interpolation. Multi-threaded! (VIENNACL_AMG_INTERPOL_DIRECT)
      * @param level    Coarse level identifier
@@ -96,61 +96,61 @@ namespace viennacl
 #endif      
       for (x=0; x < Pointvector[level].size(); ++x)
       {
-  pointx = Pointvector[level][x];
-  /*if (A[level](x,x) > 0) 
-    diag_sign = 1;
-  else
-    diag_sign = -1;*/
-  
-  // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
-  if (pointx->is_cpoint())
-    P[level](x,pointx->get_coarse_index()) = 1;
-  
-  // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
-  if (pointx->is_fpoint())
-  {
-    // Jump to row x
-    InternalRowIterator row_iter = A[level].begin1();
-    row_iter += x;
-    
-    // Row sum of coefficients (without diagonal) and sum of influencing C point coefficients has to be computed
-    row_sum = c_sum = diag = 0;
-    for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-    {
-      y = col_iter.index2();
-      if (x == y)// || *col_iter * diag_sign > 0)
-      {
-        diag += *col_iter;
-        continue;
-      }
-      
-      // Sum all other coefficients in line x
-      row_sum += *col_iter;
+        pointx = Pointvector[level][x];
+        /*if (A[level](x,x) > 0) 
+          diag_sign = 1;
+        else
+          diag_sign = -1;*/
+        
+        // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
+        if (pointx->is_cpoint())
+          P[level](x,pointx->get_coarse_index()) = 1;
+        
+        // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
+        if (pointx->is_fpoint())
+        {
+          // Jump to row x
+          InternalRowIterator row_iter = A[level].begin1();
+          row_iter += x;
+          
+          // Row sum of coefficients (without diagonal) and sum of influencing C point coefficients has to be computed
+          row_sum = c_sum = diag = 0;
+          for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+          {
+            y = col_iter.index2();
+            if (x == y)// || *col_iter * diag_sign > 0)
+            {
+              diag += *col_iter;
+              continue;
+            }
+            
+            // Sum all other coefficients in line x
+            row_sum += *col_iter;
 
-      pointy = Pointvector[level][y];
-      // Sum all coefficients that correspond to a strongly influencing C point
-      if (pointy->is_cpoint())
-        if (pointx->is_influencing(pointy))
-    c_sum += *col_iter;        
-    }
-    temp_res = -row_sum/(c_sum*diag);
+            pointy = Pointvector[level][y];
+            // Sum all coefficients that correspond to a strongly influencing C point
+            if (pointy->is_cpoint())
+              if (pointx->is_influencing(pointy))
+                c_sum += *col_iter;        
+          }
+          temp_res = -row_sum/(c_sum*diag);
 
-    // Iterate over all strongly influencing points of point x
-    for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
-    {    
-      pointy = *iter;
-      // The value is only non-zero for columns that correspond to a C point
-      if (pointy->is_cpoint())
-      {
-        if (temp_res != 0)
-    P[level](x, pointy->get_coarse_index()) = temp_res * A[level](x,pointy->get_index());
-      }
-    }
-    
-    //Truncate interpolation if chosen
-    if (tag.get_interpolweight() != 0)
-      amg_truncate_row(P[level], x, tag);
-  }
+          // Iterate over all strongly influencing points of point x
+          for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
+          {    
+            pointy = *iter;
+            // The value is only non-zero for columns that correspond to a C point
+            if (pointy->is_cpoint())
+            {
+              if (temp_res != 0)
+                P[level](x, pointy->get_coarse_index()) = temp_res * A[level](x,pointy->get_index());
+            }
+          }
+          
+          //Truncate interpolation if chosen
+          if (tag.get_interpolweight() != 0)
+            amg_truncate_row(P[level], x, tag);
+        }
       }
       
       // P test
@@ -161,6 +161,7 @@ namespace viennacl
       printmatrix (P[level]);
       #endif  
     }
+    
     /** @brief Classical interpolation. Don't use with onepass classical coarsening or RS0 (Yang, p.14)! Multi-threaded! (VIENNACL_AMG_INTERPOL_CLASSIC)
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -199,85 +200,85 @@ namespace viennacl
 #endif      
       for (x=0; x < Pointvector[level].size(); ++x)
       {
-  pointx = Pointvector[level][x];
-  if (A[level](x,x) > 0) 
-    diag_sign = 1;
-  else
-    diag_sign = -1;
-  
-  // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
-  if (pointx->is_cpoint())
-    P[level](x,pointx->get_coarse_index()) = 1;
+        pointx = Pointvector[level][x];
+        if (A[level](x,x) > 0) 
+          diag_sign = 1;
+        else
+          diag_sign = -1;
+        
+        // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
+        if (pointx->is_cpoint())
+          P[level](x,pointx->get_coarse_index()) = 1;
 
-  // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
-  if (pointx->is_fpoint())
-  {  
-    // Jump to row x
-    InternalRowIterator row_iter = A[level].begin1();
-    row_iter += x;
-    
-    weak_sum = 0;
-    c_sum_row = amg_sparsevector<ScalarType>(A[level].size1());
-    c_sum_row.clear();
-    for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-    {
-      k = col_iter.index2();
-      pointk = Pointvector[level][k];
-      
-      // Sum of weakly influencing neighbors + diagonal coefficient
-      if (x == k || !pointx->is_influencing(pointk))// || *col_iter * diag_sign > 0)
-      {
-        weak_sum += *col_iter;
-        continue;
-      }
-        
-      // Sums of coefficients in row k (strongly influening F neighbors) of C point neighbors of x are calculated
-      if (pointk->is_fpoint() && pointx->is_influencing(pointk))
-      {
-        for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
-        {
-    pointm = *iter;
-    m = pointm->get_index();
-    
-    if (pointm->is_cpoint())
-      // Only use coefficients that have opposite sign of diagonal.
-      if (A[level](k,m) * diag_sign < 0)
-        c_sum_row[k] += A[level](k,m);
+        // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
+        if (pointx->is_fpoint())
+        {  
+          // Jump to row x
+          InternalRowIterator row_iter = A[level].begin1();
+          row_iter += x;
+          
+          weak_sum = 0;
+          c_sum_row = amg_sparsevector<ScalarType>(A[level].size1());
+          c_sum_row.clear();
+          for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+          {
+            k = col_iter.index2();
+            pointk = Pointvector[level][k];
+            
+            // Sum of weakly influencing neighbors + diagonal coefficient
+            if (x == k || !pointx->is_influencing(pointk))// || *col_iter * diag_sign > 0)
+            {
+              weak_sum += *col_iter;
+              continue;
+            }
+              
+            // Sums of coefficients in row k (strongly influening F neighbors) of C point neighbors of x are calculated
+            if (pointk->is_fpoint() && pointx->is_influencing(pointk))
+            {
+              for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
+              {
+                pointm = *iter;
+                m = pointm->get_index();
+                
+                if (pointm->is_cpoint())
+                  // Only use coefficients that have opposite sign of diagonal.
+                  if (A[level](k,m) * diag_sign < 0)
+                    c_sum_row[k] += A[level](k,m);
+              }
+              continue;
+            }
+          }
+          
+          // Iterate over all strongly influencing points of point x
+          for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
+          {    
+            pointy = *iter;
+            y = pointy->get_index();
+            
+            // The value is only non-zero for columns that correspond to a C point
+            if (pointy->is_cpoint())
+            {
+              strong_sum = 0;
+              // Calculate term for strongly influencing F neighbors
+              for (typename amg_sparsevector<ScalarType>::iterator iter2 = c_sum_row.begin(); iter2 != c_sum_row.end(); ++iter2)
+              {
+                k = iter2.index();
+                // Only use coefficients that have opposite sign of diagonal.
+                if (A[level](k,y) * diag_sign < 0)
+                  strong_sum += (A[level](x,k) * A[level](k,y)) / (*iter2);
+              }
+              
+              // Calculate coefficient
+              temp_res = - (A[level](x,y) + strong_sum) / (weak_sum);
+              if (temp_res != 0)
+                P[level](x,pointy->get_coarse_index()) = temp_res;   
+            }
+          }
+          
+          //Truncate iteration if chosen
+          if (tag.get_interpolweight() != 0)
+            amg_truncate_row(P[level], x, tag);
         }
-        continue;
-      }
-    }
-    
-    // Iterate over all strongly influencing points of point x
-    for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
-    {    
-      pointy = *iter;
-      y = pointy->get_index();
-      
-      // The value is only non-zero for columns that correspond to a C point
-      if (pointy->is_cpoint())
-      {
-        strong_sum = 0;
-        // Calculate term for strongly influencing F neighbors
-        for (typename amg_sparsevector<ScalarType>::iterator iter2 = c_sum_row.begin(); iter2 != c_sum_row.end(); ++iter2)
-        {
-    k = iter2.index();
-    // Only use coefficients that have opposite sign of diagonal.
-    if (A[level](k,y) * diag_sign < 0)
-      strong_sum += (A[level](x,k) * A[level](k,y)) / (*iter2);
-        }
-        
-        // Calculate coefficient
-        temp_res = - (A[level](x,y) + strong_sum) / (weak_sum);
-        if (temp_res != 0)
-    P[level](x,pointy->get_coarse_index()) = temp_res;   
-      }
-    }
-    
-    //Truncate iteration if chosen
-    if (tag.get_interpolweight() != 0)
-      amg_truncate_row(P[level], x, tag);
-  }
       }
       
       #ifdef VIENNACL_AMG_DEBUG
@@ -356,7 +357,6 @@ namespace viennacl
      * @param A      Operator matrix on all levels
      * @param P      Prolongation matrices. P[level] is constructed
      * @param Pointvector  Vector of points on all levels
-     * @param tag    AMG preconditioner tag
     */
     template <typename InternalType1, typename InternalType2>
     void amg_interpol_ag(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag)

@@ -343,7 +343,8 @@ namespace viennacl
           * @param A output matrix
           */
           template<typename MatrixType, typename VectorType>
-          void apply_q_trans_mat(const MatrixType& R, const VectorType& b_v, MatrixType& A){
+          void apply_q_trans_mat(const MatrixType& R, const VectorType& b_v, MatrixType& A)
+          {
               VectorType tmp_v;
               for(size_t i = 0; i < A.size2(); ++i){
                   tmp_v = (VectorType)column(A,i);
@@ -353,22 +354,21 @@ namespace viennacl
           }
           
           //parallel QR for GPU
-          /** @brief Inplace QR factorization via Householder reflections c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.224 performed
-                      on GPU
+          /** @brief Inplace QR factorization via Householder reflections c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.224 performed on GPU
+          * 
           * @param g_I container of row indices
           * @param g_J container of column indices
           * @param g_A_I_J_vcl contigious matrices, GPU memory is used
           * @param g_bv_vcl contigios vectors beta, GPU memory is used 
           * @param g_is_update container of indicators that show active blocks  
-          * @param cur_iter current iteration
           */
           template<typename ScalarType>
           void block_qr(std::vector<std::vector<unsigned int> >& g_I, 
                         std::vector<std::vector<unsigned int> >& g_J, 
                         block_matrix& g_A_I_J_vcl,
                         block_vector& g_bv_vcl,
-                        std::vector<cl_uint>& g_is_update,
-                        const unsigned int ){
+                        std::vector<cl_uint>& g_is_update)
+          {
               //typedef typename MatrixType::value_type ScalarType;
               unsigned int bv_size;
               unsigned int v_size;
@@ -391,16 +391,6 @@ namespace viennacl
               std::vector<ScalarType> v(v_size, static_cast<ScalarType>(0));
               //call qr program
               block_vector v_vcl;
-              /*if(cur_iter == 0)
-              {
-                  //if first run - compile the program
-                  std::string qr_kernel_file_name = "kernels/spai/qr3_a_n.cl";
-                  std::string qr_kernel_source;
-                  read_kernel_from_file(qr_kernel_file_name, qr_kernel_source);
-                  viennacl::ocl::program & qr_prog = viennacl::ocl::current_context().add_program(qr_kernel_source.c_str(), "qr_kernel_source");
-                  qr_prog.add_kernel("block_qr");
-                  //
-              }*/
               
               g_bv_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,  
                                                                       static_cast<unsigned int>(sizeof(ScalarType)*bv_size), 

@@ -648,7 +648,10 @@ namespace viennacl
       * Implementation of the convenience expression result += alpha * outer_prod(vec1, vec2);
       *
       * @param mat1    The matrix to be updated
-      * @param val     The scaling factor
+      * @param alpha            The scaling factor (either a viennacl::scalar<>, float, or double)
+      * @param len_alpha        Length of the buffer for an eventual final reduction step (currently always '1')
+      * @param reciprocal_alpha Use 1/alpha instead of alpha
+      * @param flip_sign_alpha  Use -alpha instead of alpha
       * @param vec1    The first vector
       * @param vec2    The second vector
       */

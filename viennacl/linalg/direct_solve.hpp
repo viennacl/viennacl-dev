@@ -45,7 +45,7 @@ namespace viennacl
     // A \ B:
     //
     
-    /** @brief Direct inplace solver for dense upper triangular systems. Matlab notation: A \ B
+    /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
     *
     * @param A    The system matrix
     * @param B    The matrix of row vectors, where the solution is directly written to
@@ -80,10 +80,10 @@ namespace viennacl
       }
     }
     
-    /** @brief Direct inplace solver for dense upper triangular systems
+    /** @brief Direct inplace solver for dense triangular systems with transposed right hand side
     *
-    * @param A      The system matrix
-    * @param proxyB The transposed matrix of row vectors, where the solution is directly written to
+    * @param A       The system matrix
+    * @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
     */
     template <typename M1,
               typename M2, typename SOLVERTAG>
@@ -118,7 +118,7 @@ namespace viennacl
     }
     
     //upper triangular solver for transposed lower triangular matrices
-    /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
+    /** @brief Direct inplace solver for dense triangular systems that stem from transposed triangular systems
     *
     * @param proxy_A  The system matrix proxy
     * @param B        The matrix holding the load vectors, where the solution is directly written to
@@ -155,7 +155,7 @@ namespace viennacl
       }
     }
 
-    /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A' \ B'
+    /** @brief Direct inplace solver for dense transposed triangular systems with transposed right hand side. Matlab notation: A' \ B'
     *
     * @param proxy_A  The system matrix proxy
     * @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
