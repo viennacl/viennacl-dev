@@ -60,10 +60,10 @@ int main (int, const char **)
   VectorType ublas_v2(dim_small);
   
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
-    ublas_v1(i) = i+1;
+    ublas_v1(i) = ScalarType(i+1);
 
   for (std::size_t i=0; i<ublas_v2.size(); ++i)
-    ublas_v2(i) = dim_large + i;
+    ublas_v2(i) = ScalarType(dim_large + i);
     
   
   //

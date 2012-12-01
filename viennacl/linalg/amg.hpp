@@ -288,7 +288,7 @@ namespace viennacl
     * @param A      Operator matrix on coarsest level
     */
     template <typename ScalarType, typename SparseMatrixType>
-    void amg_lu(boost::numeric::ublas::compressed_matrix<ScalarType> & op, boost::numeric::ublas::permutation_matrix<ScalarType> & Permutation, SparseMatrixType const & A)
+    void amg_lu(boost::numeric::ublas::compressed_matrix<ScalarType> & op, boost::numeric::ublas::permutation_matrix<> & Permutation, SparseMatrixType const & A)
     {
       typedef typename SparseMatrixType::const_iterator1 ConstRowIterator;
       typedef typename SparseMatrixType::const_iterator2 ConstColIterator;
@@ -300,7 +300,7 @@ namespace viennacl
           op (col_iter.index1(), col_iter.index2()) = *col_iter;
       
       // Permutation matrix has to be reinitialized with actual size. Do not clear() or resize()!
-      Permutation = boost::numeric::ublas::permutation_matrix<ScalarType> (op.size1());
+      Permutation = boost::numeric::ublas::permutation_matrix<> (op.size1());
       boost::numeric::ublas::lu_factorize(op,Permutation);
     }
     
@@ -327,7 +327,7 @@ namespace viennacl
       boost::numeric::ublas::vector <PointVectorType> Pointvector;
        
       mutable boost::numeric::ublas::compressed_matrix<ScalarType> op;
-      mutable boost::numeric::ublas::permutation_matrix<ScalarType> Permutation;  
+      mutable boost::numeric::ublas::permutation_matrix<> Permutation;  
       
       mutable boost::numeric::ublas::vector <VectorType> result;
       mutable boost::numeric::ublas::vector <VectorType> rhs;
@@ -403,9 +403,9 @@ namespace viennacl
               level_coefficients++;
             }
           }
-          avgstencil[level] = level_coefficients/(double)A_setup[level].size1();
+          avgstencil[level] = level_coefficients/static_cast<ScalarType>(A_setup[level].size1());
         }
-        return nonzero/static_cast<double>(systemmat_nonzero);
+        return nonzero/static_cast<ScalarType>(systemmat_nonzero);
       }
 
       /** @brief Precondition Operation
@@ -520,7 +520,7 @@ namespace viennacl
               else
                 sum += *col_iter * old_result[col_iter.index2()];
             }
-            x[index]= tag_.get_jacobiweight() * (rhs[index] - sum) / diag + (1-tag_.get_jacobiweight()) * old_result[index];
+            x[index]= static_cast<ScalarType>(tag_.get_jacobiweight()) * (rhs[index] - sum) / diag + (1-static_cast<ScalarType>(tag_.get_jacobiweight())) * old_result[index];
           }
         }
       }
@@ -553,7 +553,7 @@ namespace viennacl
       boost::numeric::ublas::vector <PointVectorType> Pointvector;
       
       mutable boost::numeric::ublas::compressed_matrix<ScalarType> op;
-      mutable boost::numeric::ublas::permutation_matrix<ScalarType> Permutation;  
+      mutable boost::numeric::ublas::permutation_matrix<> Permutation;  
       
       mutable boost::numeric::ublas::vector <VectorType> result;
       mutable boost::numeric::ublas::vector <VectorType> rhs;

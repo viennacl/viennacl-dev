@@ -34,6 +34,7 @@
 #include "viennacl/traits/size.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/ocl/backend.hpp"
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/backend/memory.hpp"
 
 #include "viennacl/vector_proxy.hpp"
@@ -126,9 +127,7 @@ namespace viennacl
       VectorType residual = rhs;
 
       CPU_ScalarType ip_rr = viennacl::linalg::inner_prod(rhs, rhs);
-      CPU_ScalarType alpha;
       CPU_ScalarType new_ip_rr = 0;
-      CPU_ScalarType beta;
       CPU_ScalarType norm_rhs_squared = ip_rr;
 
       if (norm_rhs_squared == 0) //solution is zero if RHS norm is zero
@@ -147,9 +146,11 @@ namespace viennacl
       viennacl::vector<float> result_low_precision(problem_size); result_low_precision.clear();
       viennacl::vector<float> p_low_precision(problem_size);
       viennacl::vector<float> tmp_low_precision(problem_size);
-      float inner_ip_rr = ip_rr;
+      float inner_ip_rr = static_cast<float>(ip_rr);
       float new_inner_ip_rr = 0;
-      float initial_inner_rhs_norm_squared = ip_rr;
+      float initial_inner_rhs_norm_squared = static_cast<float>(ip_rr);
+      float alpha;
+      float beta;
       
       viennacl::ocl::kernel & assign_double_to_float      = viennacl::ocl::get_kernel("double_float_conversion_program", "assign_double_to_float");
       viennacl::ocl::kernel & inplace_add_float_to_double = viennacl::ocl::get_kernel("double_float_conversion_program", "inplace_add_float_to_double");
@@ -198,16 +199,16 @@ namespace viennacl
         
         
         
-        if (new_inner_ip_rr < 1e-2 * initial_inner_rhs_norm_squared || i == tag.max_iterations()-1)
+        if (new_inner_ip_rr < 1e-2f * initial_inner_rhs_norm_squared || i == tag.max_iterations()-1)
         {
-          std::cout << "outer correction at i=" << i << std::endl;
+          //std::cout << "outer correction at i=" << i << std::endl;
           //result += result_low_precision;
           viennacl::ocl::enqueue( inplace_add_float_to_double(result.handle().opencl_handle(),
                                                               result_low_precision.handle().opencl_handle(),
                                                               cl_uint(result.size())
                                                              ) );
           
-          // residual = b - Ax
+          // residual = b - Ax  (without introducing a temporary)
           residual = viennacl::linalg::prod(matrix, result);
           residual = rhs - residual;
         
@@ -222,8 +223,8 @@ namespace viennacl
                                                         ) );
           result_low_precision.clear();
           residual_low_precision = p_low_precision;
-          initial_inner_rhs_norm_squared = new_ip_rr;
-          inner_ip_rr = new_ip_rr;
+          initial_inner_rhs_norm_squared = static_cast<float>(new_ip_rr);
+          inner_ip_rr = static_cast<float>(new_ip_rr);
         }
       } 
       

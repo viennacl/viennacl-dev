@@ -84,7 +84,11 @@ ENDIF (BOOSTPATH)
 
 if(ENABLE_UBLAS OR BUILD_TESTING OR VIENNACL_SRC_DIST)
    set(Boost_USE_MULTITHREADED TRUE)
-   find_package(Boost REQUIRED COMPONENTS filesystem system)
+   if (VIENNACL_SRC_DIST)
+     find_package(Boost REQUIRED COMPONENTS filesystem system)
+   else(VIENNACL_SRC_DIST)
+     find_package(Boost REQUIRED)
+   endif(VIENNACL_SRC_DIST)
 endif()
 
 if (ENABLE_CUDA)

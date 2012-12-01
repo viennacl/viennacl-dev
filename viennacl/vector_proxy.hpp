@@ -245,6 +245,36 @@ namespace viennacl
   };
   
   
+  // implement copy-CTOR for vector:
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(vector_range<viennacl::vector<SCALARTYPE, ALIGNMENT> > const & proxy) : size_(proxy.size())
+  {
+    if (proxy.size() > 0)
+    {
+      elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+      pad();
+      
+      viennacl::linalg::av(*this, 
+                            proxy, SCALARTYPE(1.0), 1, false, false);
+    }
+  }
+
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(vector_range<const viennacl::vector<SCALARTYPE, ALIGNMENT> > const & proxy) : size_(proxy.size())
+  {
+    if (proxy.size() > 0)
+    {
+      elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+      pad();
+      
+      viennacl::linalg::av(*this, 
+                            proxy, SCALARTYPE(1.0), 1, false, false);
+    }
+  }
+  
+  
   template<typename VectorType>
   std::ostream & operator<<(std::ostream & s, vector_range<VectorType> const & proxy)
   {
@@ -570,6 +600,36 @@ namespace viennacl
   };
   
 
+  // implement copy-CTOR for vector:
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(vector_slice<viennacl::vector<SCALARTYPE, ALIGNMENT> > const & proxy) : size_(proxy.size())
+  {
+    if (proxy.size() > 0)
+    {
+      elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+      pad();
+      
+      viennacl::linalg::av(*this, 
+                            proxy, SCALARTYPE(1.0), 1, false, false);
+    }
+  }
+
+  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  viennacl::vector<SCALARTYPE, ALIGNMENT>::vector(vector_slice<const viennacl::vector<SCALARTYPE, ALIGNMENT> > const & proxy) : size_(proxy.size())
+  {
+    if (proxy.size() > 0)
+    {
+      elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+      pad();
+      
+      viennacl::linalg::av(*this, 
+                            proxy, SCALARTYPE(1.0), 1, false, false);
+    }
+  }
+  
+  
   
   template<typename VectorType>
   std::ostream & operator<<(std::ostream & s, vector_slice<VectorType> const & proxy)

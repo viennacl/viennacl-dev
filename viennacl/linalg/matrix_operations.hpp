@@ -589,35 +589,35 @@ namespace viennacl
 
 
   //v = A * x
-  /** @brief Implementation of the operation v1 = A * v2, where A is a matrix
-  *
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> & 
-                               >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const M1,
-                                                                                        const V1,
-                                                                                        viennacl::op_prod> & proxy) 
-  {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
-    
-    // check for the special case x = A * x
-    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-    {
-      viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-      *this = result;
-    }
-    else
-    {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-    }
-    return *this;
-  }
+//  /** @brief Implementation of the operation v1 = A * v2, where A is a matrix
+//  *
+//  * @param proxy  An expression template proxy class.
+//  */
+//   template <typename SCALARTYPE, unsigned int ALIGNMENT>
+//   template <typename M1, typename V1>
+//   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+//                                 && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+//                                 viennacl::vector<SCALARTYPE, ALIGNMENT> & 
+//                                >::type
+//   viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const M1,
+//                                                                                         const V1,
+//                                                                                         viennacl::op_prod> & proxy) 
+//   {
+//     assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
+//     
+//     // check for the special case x = A * x
+//     if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+//     {
+//       viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
+//       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+//       *this = result;
+//     }
+//     else
+//     {
+//       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+//     }
+//     return *this;
+//   }
 
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
@@ -726,35 +726,35 @@ namespace viennacl
 
 
   //v = trans(A) * x
-  /** @brief Implementation of the operation v1 = A * v2, where A is a matrix
-  *
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename M1, typename V1>
-  typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> &
-                              >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const matrix_expression< const M1, const M1, op_trans>,
-                                                                                        const V1,
-                                                                                        viennacl::op_prod> & proxy) 
-  {
-    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
-
-    // check for the special case x = trans(A) * x
-    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-    {
-      viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-      *this = result;
-    }
-    else
-    {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-    }
-    return *this;
-  }
+//   /** @brief Implementation of the operation v1 = A * v2, where A is a matrix
+//   *
+//   * @param proxy  An expression template proxy class.
+//   */
+//   template <typename SCALARTYPE, unsigned int ALIGNMENT>
+//   template <typename M1, typename V1>
+//   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+//                                 && viennacl::is_any_dense_nonstructured_vector<V1>::value,
+//                                 viennacl::vector<SCALARTYPE, ALIGNMENT> &
+//                               >::type
+//   viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const matrix_expression< const M1, const M1, op_trans>,
+//                                                                                         const V1,
+//                                                                                         viennacl::op_prod> & proxy) 
+//   {
+//     assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
+// 
+//     // check for the special case x = trans(A) * x
+//     if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+//     {
+//       viennacl::vector<SCALARTYPE, ALIGNMENT> result(viennacl::traits::size1(proxy.lhs()));
+//       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+//       *this = result;
+//     }
+//     else
+//     {
+//       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+//     }
+//     return *this;
+//   }
 
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix

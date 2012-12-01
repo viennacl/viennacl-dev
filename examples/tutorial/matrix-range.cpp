@@ -65,19 +65,19 @@ int main (int, const char **)
   
   for (std::size_t i=0; i<ublas_A.size1(); ++i)
     for (std::size_t j=0; j<ublas_A.size2(); ++j)
-      ublas_A(i,j) = (i+1) + (j+1)*(i+1);
+      ublas_A(i,j) = static_cast<ScalarType>((i+1) + (j+1)*(i+1));
 
   for (std::size_t i=0; i<ublas_B.size1(); ++i)
     for (std::size_t j=0; j<ublas_B.size2(); ++j)
-      ublas_B(i,j) = (i+1) + (j+1)*(i+1);
+      ublas_B(i,j) = static_cast<ScalarType>((i+1) + (j+1)*(i+1));
 
   for (std::size_t i=0; i<ublas_C.size1(); ++i)
     for (std::size_t j=0; j<ublas_C.size2(); ++j)
-      ublas_C(i,j) = (j+2) + (j+1)*(i+1);
+      ublas_C(i,j) = static_cast<ScalarType>((j+2) + (j+1)*(i+1));
 
   for (std::size_t i=0; i<ublas_D.size1(); ++i)
     for (std::size_t j=0; j<ublas_D.size2(); ++j)
-      ublas_D(i,j) = (j+2) + (j+1)*(i+1);
+      ublas_D(i,j) = static_cast<ScalarType>((j+2) + (j+1)*(i+1));
   
   //
   // Extract submatrices using the ranges in ublas

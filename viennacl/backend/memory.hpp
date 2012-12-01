@@ -329,6 +329,7 @@ namespace viennacl
               handle.cuda_handle() = cuda::memory_create(handle.raw_size(), handle.ram_handle().get());
               break;
 #endif
+            case MAIN_MEMORY:
             default:
               throw "Invalid destination domain";
           }

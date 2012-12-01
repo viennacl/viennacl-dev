@@ -265,8 +265,8 @@ namespace viennacl
           if (res[k] > rho) //machine precision reached
             res[k] = rho;
 
-          if (res[k] < -1.0 * rho) //machine precision reached
-            res[k] = -1.0 * rho;
+          if (res[k] < -rho) //machine precision reached
+            res[k] = -rho;
           
           projection_rhs[k] = res[k];
           

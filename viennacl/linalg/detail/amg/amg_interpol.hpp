@@ -412,7 +412,7 @@ namespace viennacl
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
       
       unsigned int x,y;
-      ScalarType diag;
+      ScalarType diag = 0;
       unsigned int c_points = Pointvector[level].get_cpoints();
            
       InternalType1 P_tentative = InternalType1(P.size());
@@ -449,10 +449,10 @@ namespace viennacl
         // Traverse through filtered A matrix and compute the Jacobi filtering
         for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
         {
-            *col_iter2 = - tag.get_interpolweight()/diag * *col_iter2;
+            *col_iter2 = - static_cast<ScalarType>(tag.get_interpolweight())/diag * *col_iter2;
         }
         // Diagonal can be computed seperately.
-        Jacobi (x,x) = 1 - tag.get_interpolweight();
+        Jacobi (x,x) = 1 - static_cast<ScalarType>(tag.get_interpolweight());
       }
           
       #ifdef VIENNACL_AMG_DEBUG

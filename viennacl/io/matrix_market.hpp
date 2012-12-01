@@ -101,7 +101,9 @@ namespace viennacl
                                       const char * file,
                                       long index_base)
     {
-      std::cout << "Reading matrix market file" << std::endl;
+      typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type    ScalarType;
+      
+      //std::cout << "Reading matrix market file" << std::endl;
       char buffer[1025];
       std::ifstream reader(file);
       std::string token;
@@ -117,7 +119,7 @@ namespace viennacl
       
       if (!reader){
         std::cerr << "ViennaCL: Matrix Market Reader: Cannot open file " << file << std::endl;
-        return 0;
+        return EXIT_FAILURE;
       }
       
       while (reader.good())
@@ -232,7 +234,7 @@ namespace viennacl
             //read data
             if (dense_format)
             {
-              double value;
+              ScalarType value;
               line >> value;
               viennacl::traits::fill(mat, cur_row, cur_col, value);
               
@@ -247,7 +249,7 @@ namespace viennacl
             {
               long row;
               long col;
-              double value;
+              ScalarType value;
               
               //parse data:
               if (line.good())

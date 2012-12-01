@@ -40,7 +40,7 @@ namespace viennacl
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
         
-        hyb_matrix() : csr_threshold_(0.8), rows_(0), cols_(0) {}
+        hyb_matrix() : csr_threshold_(SCALARTYPE(0.8)), rows_(0), cols_(0) {}
         
         //hyb_matrix(std::size_t row_num, std::size_t col_num) : csr_threshold_(0.8), rows_(row_num), cols_(col_num)
         //{

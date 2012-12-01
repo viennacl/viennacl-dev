@@ -151,7 +151,7 @@ namespace viennacl
     
         //line 2: set up w
         ScalarType row_norm = setup_w(A, i, w);
-        ScalarType tau_i = tag.get_drop_tolerance() * row_norm;
+        ScalarType tau_i = static_cast<ScalarType>(tag.get_drop_tolerance()) * row_norm;
 
         //line 3:
         for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)

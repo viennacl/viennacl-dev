@@ -78,7 +78,7 @@ namespace viennacl
           ScalarType mu = std::sqrt(sigma + A_jj*A_jj);
           
           ScalarType v1 = (A_jj <= 0) ? (A_jj - mu) : (-sigma / (A_jj + mu));
-          beta = 2.0 * v1 * v1 / (sigma + v1 * v1);
+          beta = static_cast<ScalarType>(2.0) * v1 * v1 / (sigma + v1 * v1);
           
           //divide v by its diagonal element v[j]
           project(v, range(j+1, A.size1()), range(0,1)) /= v1;

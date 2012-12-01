@@ -232,37 +232,117 @@ namespace viennacl
   
   
   template <typename T>
-  struct is_cpu_scalar;
+  struct is_cpu_scalar
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_scalar;
+  struct is_scalar
+  {
+    enum { value = false };
+  };
 
   template <typename T>
-  struct is_any_scalar;
+  struct is_flip_sign_scalar
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_vector;
+  struct is_any_scalar
+  {
+    enum { value = (is_scalar<T>::value || is_cpu_scalar<T>::value || is_flip_sign_scalar<T>::value )};
+  };
+  
+  template <typename T>
+  struct is_vector
+  {
+    enum { value = false };
+  };
 
   template <typename T>
-  struct is_any_dense_nonstructured_vector;
+  struct is_any_dense_nonstructured_vector
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_matrix;
+  struct is_matrix
+  {
+    enum { value = false };
+  };
 
   template <typename T>
-  struct is_any_dense_nonstructured_matrix;
+  struct is_any_dense_nonstructured_matrix
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_any_dense_nonstructured_transposed_matrix;
+  struct is_any_dense_nonstructured_transposed_matrix
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_row_major;
+  struct is_row_major
+  {
+    enum { value = false };
+  };
   
   template <typename T>
-  struct is_any_sparse_matrix;
+  struct is_any_sparse_matrix
+  {
+    enum { value = false };
+  };
+  
   
   template <typename T>
-  struct is_any_matrix;
+  struct is_circulant_matrix
+  {
+    enum { value = false };
+  };
+
+  template <typename T>
+  struct is_hankel_matrix
+  {
+    enum { value = false };
+  };
+  
+  template <typename T>
+  struct is_toeplitz_matrix
+  {
+    enum { value = false };
+  };
+  
+  template <typename T>
+  struct is_vandermonde_matrix
+  {
+    enum { value = false };
+  };
+  
+  template <typename T>
+  struct is_any_dense_structured_matrix
+  {
+    enum { value = viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value };
+  };
+  
+  template <typename T>
+  struct is_any_matrix
+  {
+    enum { value =    viennacl::is_any_dense_nonstructured_matrix<T>::value
+                    || viennacl::is_any_sparse_matrix<T>::value
+                    || viennacl::is_any_dense_structured_matrix<T>::value 
+                    };
+  };
+
+  template <typename T>
+  struct is_any_transposed_matrix
+  {
+    enum { value = viennacl::is_any_dense_nonstructured_transposed_matrix<T>::value };
+  };
+  
   
   
   enum memory_types
@@ -369,7 +449,6 @@ namespace viennacl
                                 >::type
     norm_inf_cpu(V1 const & vec, S2 & result);
     
-    
     //forward definition of prod_impl functions
 
     template <typename MatrixType, typename VectorType1, typename VectorType2>
@@ -380,14 +459,23 @@ namespace viennacl
               const VectorType1 & vec, 
                     VectorType2 & result);
 
-/*    template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
+    template <typename M1, typename V1, typename V2>
+    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                >::type
+    prod_impl(const viennacl::matrix_expression< const M1, const M1, op_trans> & mat_trans,
+              const V1 & vec, 
+                    V2 & result);
+    
+    template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vector_expression<const SparseMatrixType,
                                                     const vector<SCALARTYPE, ALIGNMENT>, 
                                                     op_prod >
                                  >::type
     prod_impl(const SparseMatrixType & mat, 
-              const vector<SCALARTYPE, ALIGNMENT> & vec); */
+              const vector<SCALARTYPE, ALIGNMENT> & vec); 
     
     namespace detail
     {
