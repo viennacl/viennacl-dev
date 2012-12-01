@@ -158,6 +158,7 @@ ScalarType opencl_fft(std::vector<ScalarType>& in,
 
     viennacl::fft(input, output, batch_size);
 
+    viennacl::backend::finish();
     viennacl::fast_copy(output, res);
 
     return diff_max(res, out);
@@ -175,6 +176,7 @@ ScalarType opencl_2d_fft_1arg(std::vector<ScalarType>& in,
     //std::cout << input << "\n";
     viennacl::inplace_fft(input);
     //std::cout << input << "\n";
+    viennacl::backend::finish();
     viennacl::fast_copy(input, &res[0]);
 
     return diff_max(res, out);
@@ -193,6 +195,7 @@ ScalarType opencl_2d_fft_2arg(std::vector<ScalarType>& in,
     //std::cout << input << "\n";
     viennacl::fft(input, output);
     //std::cout << input << "\n";
+    viennacl::backend::finish();
     viennacl::fast_copy(output, &res[0]);
 
     return diff_max(res, out);
@@ -213,6 +216,7 @@ ScalarType opencl_direct(std::vector<ScalarType>& in,
 
     viennacl::detail::fft::direct<ScalarType>(input.handle().opencl_handle(), output.handle().opencl_handle(), size, size, batch_num);
 
+    viennacl::backend::finish();
     viennacl::fast_copy(output, res);
 
     return diff_max(res, out);
@@ -231,6 +235,7 @@ ScalarType opencl_bluestein(std::vector<ScalarType>& in,
 
     viennacl::detail::fft::bluestein(input, output, batch_size);
 
+    viennacl::backend::finish();
     viennacl::fast_copy(output, res);
 
     return diff_max(res, out);
@@ -251,6 +256,7 @@ ScalarType opencl_radix2(std::vector<ScalarType>& in,
 
     viennacl::detail::fft::radix2<ScalarType>(input.handle().opencl_handle(), size, size, batch_num);
 
+    viennacl::backend::finish();
     viennacl::fast_copy(input, res);
 
     return diff_max(res, out);
@@ -270,6 +276,7 @@ ScalarType opencl_convolve(std::vector<ScalarType>& in1,
 
     viennacl::linalg::convolve(input1, input2, output);
 
+    viennacl::backend::finish();
     std::vector<ScalarType> res(in1.size());
     viennacl::fast_copy(output, res);
 

@@ -33,6 +33,7 @@
 template <typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2) 
 {
+   viennacl::backend::finish();
    if (s1 != s2)
       return (s1 - s2) / std::max(fabs(s1), fabs(s2));
    return 0;

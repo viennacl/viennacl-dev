@@ -51,6 +51,7 @@ using namespace boost::numeric;
 template <typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2) 
 {
+   viennacl::backend::finish();
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
@@ -61,6 +62,7 @@ ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 template <typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2) 
 {
+   viennacl::backend::finish();
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
@@ -71,6 +73,7 @@ ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2)
 template <typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const & s2) 
 {
+   viennacl::backend::finish();
    if (s1 != s2)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
@@ -82,9 +85,7 @@ template <typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
    ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
-#ifdef VIENNACL_HAVE_OPENCL   
-   viennacl::ocl::get_queue().finish();
-#endif
+   viennacl::backend::finish();
    viennacl::copy(vcl_vec, v2_cpu);
 
    for (unsigned int i=0;i<v1.size(); ++i)

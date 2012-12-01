@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 
-#define BOOST_FILESYSTEM_VERSION 2
+//#define BOOST_FILESYSTEM_VERSION 2
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -82,15 +82,15 @@ void createSourceFile(const char * dirname)
         {
             if (fs::is_directory( alignment_itr->path() ))
             {
-                std::cout << "\nGenerating kernels from directory " << alignment_itr->path().directory_string() << std::endl;
+                std::cout << "\nGenerating kernels from directory " << alignment_itr->path().string() << std::endl;
 
                 //write and register single precision sources:
                 for ( fs::directory_iterator cl_itr( alignment_itr->path() );
                       cl_itr != end_iter;
                       ++cl_itr )
                 {
-                    std::string fname = cl_itr->path().filename();
-                    std::string alignment = alignment_itr->path().filename();
+                    std::string fname = cl_itr->path().filename().string();
+                    std::string alignment = alignment_itr->path().filename().string();
 
                     size_t pos = fname.find(".cl");
                     if ( pos == std::string::npos )
@@ -135,7 +135,7 @@ unsigned int getBestKernel(const char * dirname, std::string & kernel_name, unsi
                   cl_itr != end_iter;
                   ++cl_itr )
             {
-                std::string fname = cl_itr->path().filename();
+                std::string fname = cl_itr->path().filename().string();
                 if (fname == kernel_name)
                 {
                   //std::cout << "Found matching kernel for " << kernel_name << " with alignment " << alignment << " at alignment " << search_alignment << std::endl;
@@ -206,7 +206,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
           cl_itr != end_iter;
           ++cl_itr )
     {
-        std::string fname = cl_itr->path().filename();
+        std::string fname = cl_itr->path().filename().string();
         size_t pos = fname.find(".cl");
         if ( pos == std::string::npos )
           continue;
@@ -236,7 +236,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
           cl_itr != end_iter;
           ++cl_itr )
     {
-        std::string fname = cl_itr->path().filename();
+        std::string fname = cl_itr->path().filename().string();
         size_t pos = fname.find(".cl");
         if ( pos == std::string::npos )
           continue;
@@ -302,7 +302,7 @@ void createKernelFile(const char * dirname)
         {
             if (fs::is_directory( alignment_itr->path() ))
             {
-                std::string subfolder = alignment_itr->path().filename();
+                std::string subfolder = alignment_itr->path().filename().string();
                 if( subfolder.find("align") == std::string::npos )
                   continue;
                 writeKernelInit(kernel_file, dirname, subfolder, true);
@@ -328,7 +328,7 @@ void createKernelFile(const char * dirname)
         {
             if (fs::is_directory( alignment_itr->path() ))
             {
-                std::string subfolder = alignment_itr->path().filename();
+                std::string subfolder = alignment_itr->path().filename().string();
                 if( subfolder.find("align") == std::string::npos )
                   continue;
                 writeKernelInit(kernel_file, dirname, subfolder, false);

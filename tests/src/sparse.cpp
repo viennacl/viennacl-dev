@@ -74,6 +74,7 @@ template <typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
+   viennacl::backend::finish();
    viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
    for (unsigned int i=0;i<v1.size(); ++i)
@@ -107,6 +108,7 @@ ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & 
   typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;
   CPU_MATRIX from_gpu;
    
+  viennacl::backend::finish();
   viennacl::copy(gpu_matrix, from_gpu);
 
   ScalarType error = 0;

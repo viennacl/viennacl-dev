@@ -197,6 +197,8 @@ namespace viennacl
                             std::size_t bytes_to_read,
                             void * ptr)
     {
+      //finish(); //Fixes some issues with AMD APP SDK. However, might sacrifice a few percents of performance in some cases.
+      
       if (bytes_to_read > 0)
       {
         switch(src_buffer.get_active_handle_id())
