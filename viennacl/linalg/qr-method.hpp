@@ -28,7 +28,9 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
-//namespace ublas = boost::numeric::ublas;
+/** @file viennacl/linalg/qr-method.hpp
+    @brief Implementation of the QR method for eigenvalue computations
+*/
 
 namespace viennacl
 {
@@ -894,7 +896,7 @@ namespace viennacl
 
             for (std::size_t i = 0; i < A.size1(); i++)
             {
-                if(std::fabs(E(i) < EPS))
+                if(std::fabs(E(i)) < EPS)
                 {
                     eigen_values(i, i) = D(i);
                 }

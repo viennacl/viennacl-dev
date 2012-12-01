@@ -147,7 +147,7 @@ namespace viennacl
                                   nonzeros);
     }
 
-    #ifdef VIENNACL_WITH_UBLAS
+#ifdef VIENNACL_WITH_UBLAS
     template <typename ScalarType, typename F, std::size_t IB, typename IA, typename TA, unsigned int ALIGNMENT>
     void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
               viennacl::compressed_matrix<ScalarType, ALIGNMENT> & gpu_matrix)
@@ -169,7 +169,7 @@ namespace viennacl
                      ublas_matrix.nnz());
         
     }
-    #endif
+#endif
     
     #ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
@@ -184,10 +184,10 @@ namespace viennacl
         
       copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(stl_matrix, eigen_matrix.rows(), eigen_matrix.cols()), gpu_matrix);
     }
-    #endif
+#endif
     
     
-    #ifdef VIENNACL_WITH_MTL4
+#ifdef VIENNACL_WITH_MTL4
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const mtl::compressed2D<SCALARTYPE> & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
@@ -221,7 +221,7 @@ namespace viennacl
       
       copy(tools::const_sparse_matrix_adapter<SCALARTYPE>(stl_matrix, cpu_matrix.num_rows(), cpu_matrix.num_cols()), gpu_matrix);
     }
-    #endif
+#endif
     
     
     
@@ -298,7 +298,7 @@ namespace viennacl
       copy(gpu_matrix, temp);
     }
     
-    #ifdef VIENNACL_WITH_UBLAS
+#ifdef VIENNACL_WITH_UBLAS
     template <typename ScalarType, unsigned int ALIGNMENT, typename F, std::size_t IB, typename IA, typename TA>
     void copy(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & gpu_matrix,
               boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix)
@@ -329,9 +329,9 @@ namespace viennacl
       viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(ScalarType) * gpu_matrix.nnz(), &(ublas_matrix.value_data()[0]));
       
     }
-    #endif
+#endif
     
-    #ifdef VIENNACL_WITH_EIGEN
+#ifdef VIENNACL_WITH_EIGEN
     template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix)
@@ -343,16 +343,15 @@ namespace viennacl
                && bool("Provided Eigen compressed matrix is too small!"));
         
         //get raw data from memory:
-        std::vector<cl_uint> row_buffer(gpu_matrix.size1() + 1);
-        std::vector<cl_uint> col_buffer(gpu_matrix.nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
-        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(cl_uint)   *(gpu_matrix.size1() + 1), &(row_buffer[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)   * gpu_matrix.nnz(),        &(col_buffer[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
         viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(),        &(elements[0]));
         
         eigen_matrix.setZero();
-        eigen_matrix.startFill();
         std::size_t data_index = 0;
         for (std::size_t row = 1; row <= gpu_matrix.size1(); ++row)
         {
@@ -360,18 +359,17 @@ namespace viennacl
           {
             assert(col_buffer[data_index] < gpu_matrix.size2() && bool("ViennaCL encountered invalid data at col_buffer"));
             if (elements[data_index] != static_cast<SCALARTYPE>(0.0))
-              eigen_matrix.fill(row-1, col_buffer[data_index]) = elements[data_index];
+              eigen_matrix.insert(row-1, col_buffer[data_index]) = elements[data_index];
             ++data_index;
           }
         }
-        eigen_matrix.endFill();
       }
     }
-    #endif
+#endif
     
     
     
-    #ifdef VIENNACL_WITH_MTL4
+#ifdef VIENNACL_WITH_MTL4
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               mtl::compressed2D<SCALARTYPE> & mtl4_matrix)
@@ -383,13 +381,13 @@ namespace viennacl
                && bool("Provided MTL4 compressed matrix is too small!"));
         
         //get raw data from memory:
-        std::vector<cl_uint> row_buffer(gpu_matrix.size1() + 1);
-        std::vector<cl_uint> col_buffer(gpu_matrix.nnz());
+        viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);
+        viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());
         
-        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, sizeof(cl_uint)   *(gpu_matrix.size1() + 1), &(row_buffer[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, sizeof(cl_uint)   * gpu_matrix.nnz(),        &(col_buffer[0]));
-        viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(),        &(elements[0]));
+        viennacl::backend::memory_read(gpu_matrix.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+        viennacl::backend::memory_read(gpu_matrix.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
+        viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(), &(elements[0]));
         
         //set_to_zero(mtl4_matrix);  
         //mtl4_matrix.change_dim(gpu_matrix.size1(), gpu_matrix.size2());
@@ -408,7 +406,7 @@ namespace viennacl
         }
       }
     }
-    #endif
+#endif
     
     
     

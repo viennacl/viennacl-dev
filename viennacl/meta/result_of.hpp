@@ -199,7 +199,41 @@ namespace viennacl
       {
         typedef typename T::value_type    type; 
       };
+      
+#ifdef VIENNACL_WITH_EIGEN  
+      template <>
+      struct value_type<Eigen::MatrixXf>
+      {
+        typedef Eigen::MatrixXf::RealScalar    type; 
+      };
+      
+      template <>
+      struct value_type<Eigen::MatrixXd>
+      {
+        typedef Eigen::MatrixXd::RealScalar    type; 
+      };
 
+      template <typename ScalarType, int option>
+      struct value_type<Eigen::SparseMatrix<ScalarType, option> >
+      {
+        typedef ScalarType    type; 
+      };
+
+      template <>
+      struct value_type<Eigen::VectorXf>
+      {
+        typedef Eigen::VectorXf::RealScalar    type; 
+      };
+
+      template <>
+      struct value_type<Eigen::VectorXd>
+      {
+        typedef Eigen::VectorXd::RealScalar    type; 
+      };
+      
+#endif
+      
+      
       //
       // Retrieve cpu value_type:
       //
@@ -288,39 +322,6 @@ namespace viennacl
         typedef typename cpu_value_type<T1>::type    type; 
       };
       
-      
-    #ifdef VIENNACL_WITH_EIGEN  
-      template <>
-      struct value_type<Eigen::MatrixXf>
-      {
-        typedef Eigen::MatrixXf::RealScalar    type; 
-      };
-      
-      template <>
-      struct value_type<Eigen::MatrixXd>
-      {
-        typedef Eigen::MatrixXd::RealScalar    type; 
-      };
-
-      template <typename ScalarType, int option>
-      struct value_type<Eigen::SparseMatrix<ScalarType, option> >
-      {
-        typedef ScalarType    type; 
-      };
-
-      template <>
-      struct value_type<Eigen::VectorXf>
-      {
-        typedef Eigen::VectorXf::RealScalar    type; 
-      };
-
-      template <>
-      struct value_type<Eigen::VectorXd>
-      {
-        typedef Eigen::VectorXd::RealScalar    type; 
-      };
-      
-    #endif
       
       
       

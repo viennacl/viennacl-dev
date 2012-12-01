@@ -54,6 +54,9 @@ namespace viennacl
           unsigned int const * elim_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(col_buffer);
           ScalarType   const * elim_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(element_buffer);
           
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row=0; row < num_rows; ++row)
           {
             unsigned int eq_row = elim_row_index[row];

@@ -61,7 +61,8 @@ void run_solver(MatrixType const & A, VectorType const & b, SolverTag const & so
 {
     VectorType result = viennacl::linalg::solve(A, b, solver_tag, precond);
     std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
-    VectorType residual = viennacl::linalg::prod(A, result) - b;
+    VectorType residual = viennacl::linalg::prod(A, result);
+    residual -= b;
     std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(b) << std::endl;
 }
 
@@ -79,11 +80,7 @@ int main (int, const char **)
     //
     // Read system matrix from file
     //
-    #ifdef _MSC_VER
-    if (!viennacl::io::read_matrix_market_file(M, "../../examples/testdata/mat65k.mtx"))
-    #else
     if (!viennacl::io::read_matrix_market_file(M, "../examples/testdata/mat65k.mtx"))
-    #endif
     {
       std::cerr<<"ERROR: Could not read matrix file " << std::endl;
       exit(EXIT_FAILURE);
@@ -120,7 +117,8 @@ int main (int, const char **)
     std::cout << "--- Reference 2: Pure BiCGStab on GPU ---" << std::endl;
     GPUVectorType gpu_result = viennacl::linalg::solve(gpu_M, gpu_rhs, solver_tag);
     std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
-    GPUVectorType gpu_residual = viennacl::linalg::prod(gpu_M, gpu_result) - gpu_rhs;
+    GPUVectorType gpu_residual = viennacl::linalg::prod(gpu_M, gpu_result);
+    gpu_residual -= gpu_rhs;
     std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(gpu_residual) / viennacl::linalg::norm_2(gpu_rhs) << std::endl;
     
     

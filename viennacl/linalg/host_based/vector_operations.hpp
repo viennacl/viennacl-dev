@@ -72,6 +72,9 @@ namespace viennacl
         std::size_t start2 = viennacl::traits::start(vec2);
         std::size_t inc2   = viennacl::traits::stride(vec2);
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t i = 0; i < size1; ++i)
           data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha;
       }
@@ -118,6 +121,9 @@ namespace viennacl
         std::size_t start3 = viennacl::traits::start(vec3);
         std::size_t inc3   = viennacl::traits::stride(vec3);
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t i = 0; i < size1; ++i)
           data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
       }
@@ -164,6 +170,9 @@ namespace viennacl
         std::size_t start3 = viennacl::traits::start(vec3);
         std::size_t inc3   = viennacl::traits::stride(vec3);
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t i = 0; i < size1; ++i)
           data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
       }
@@ -193,6 +202,9 @@ namespace viennacl
         
         value_type data_alpha = static_cast<value_type>(alpha);
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t i = 0; i < internal_size1; ++i)
           data_vec1[i*inc1+start1] = (i < size1) ? data_alpha : 0;
       }
@@ -221,11 +233,12 @@ namespace viennacl
         std::size_t start2 = viennacl::traits::start(vec2);
         std::size_t inc2   = viennacl::traits::stride(vec2);
         
-        value_type temp;
-        
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t i = 0; i < size1; ++i)
         {
-          temp = data_vec2[i*inc2+start2];
+          value_type temp = data_vec2[i*inc2+start2];
           data_vec2[i*inc2+start2] = data_vec1[i*inc1+start1];
           data_vec1[i*inc1+start1] = temp;
         }
@@ -265,11 +278,17 @@ namespace viennacl
         
         if (viennacl::is_product<OP>::value)
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t i = 0; i < size1; ++i)
             data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_vec3[i*inc3+start3];
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t i = 0; i < size1; ++i)
             data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_vec3[i*inc3+start3];
         }

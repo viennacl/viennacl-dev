@@ -137,22 +137,14 @@ int run_benchmark()
   unsigned int solver_krylov_dim = 20;
   double solver_tolerance = 1e-6;
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile<ScalarType>("../../examples/testdata/rhs65025.txt", ublas_vec1))
-  #else
   if (!readVectorFromFile<ScalarType>("../examples/testdata/rhs65025.txt", ublas_vec1))
-  #endif
   {
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
   }
   std::cout << "done reading rhs" << std::endl;
   ublas_vec2 = ublas_vec1;
-  #ifdef _MSC_VER
-  if (!readVectorFromFile<ScalarType>("../../examples/testdata/result65025.txt", ublas_result))
-  #else
   if (!readVectorFromFile<ScalarType>("../examples/testdata/result65025.txt", ublas_result))
-  #endif
   {
     std::cout << "Error reading result file" << std::endl;
     return 0;
@@ -170,11 +162,7 @@ int run_benchmark()
   
 
   ublas::compressed_matrix<ScalarType> ublas_matrix;
-  #ifdef _MSC_VER
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
-  #else
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  #endif
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;

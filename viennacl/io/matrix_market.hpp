@@ -101,7 +101,7 @@ namespace viennacl
                                       const char * file,
                                       long index_base)
     {
-      typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type    ScalarType;
+      typedef typename viennacl::result_of::cpu_value_type<typename viennacl::result_of::value_type<MatrixType>::type>::type    ScalarType;
       
       //std::cout << "Reading matrix market file" << std::endl;
       char buffer[1025];

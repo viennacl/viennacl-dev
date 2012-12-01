@@ -90,6 +90,9 @@ namespace viennacl
         
         if (detail::is_row_major(typename M1::orientation_category()))
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size1; ++row)
             for (std::size_t col = 0; col < A_size2; ++col)
               wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
@@ -98,6 +101,9 @@ namespace viennacl
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t col = 0; col < A_size2; ++col)
             for (std::size_t row = 0; row < A_size1; ++row)
               wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
@@ -167,6 +173,9 @@ namespace viennacl
         
         if (detail::is_row_major(typename M1::orientation_category()))
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size1; ++row)
             for (std::size_t col = 0; col < A_size2; ++col)
               wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
@@ -176,6 +185,9 @@ namespace viennacl
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t col = 0; col < A_size2; ++col)
             for (std::size_t row = 0; row < A_size1; ++row)
               wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
@@ -252,6 +264,9 @@ namespace viennacl
         
         if (detail::is_row_major(typename M1::orientation_category()))
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size1; ++row)
             for (std::size_t col = 0; col < A_size2; ++col)
               wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
@@ -261,6 +276,9 @@ namespace viennacl
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t col = 0; col < A_size2; ++col)
             for (std::size_t row = 0; row < A_size1; ++row)
               wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
@@ -298,6 +316,9 @@ namespace viennacl
         
         if (detail::is_row_major(typename M1::orientation_category()))
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size1; ++row)
             for (std::size_t col = 0; col < A_size2; ++col)
               wrapper_A(row, col) = alpha;
@@ -306,6 +327,9 @@ namespace viennacl
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t col = 0; col < A_size2; ++col)
             for (std::size_t row = 0; row < A_size1; ++row)
               wrapper_A(row, col) = alpha;
@@ -338,6 +362,9 @@ namespace viennacl
         
         detail::matrix_array_wrapper<value_type, typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t row = 0; row < A_size1; ++row)
           wrapper_A(row, row) = alpha;
       }
@@ -390,6 +417,9 @@ namespace viennacl
         
         if (detail::is_row_major(typename MatrixType::orientation_category()))
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size1; ++row)
           {
             value_type temp = 0;
@@ -475,6 +505,9 @@ namespace viennacl
         }
         else
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (std::size_t row = 0; row < A_size2; ++row)
           {
             value_type temp = 0;

@@ -122,7 +122,8 @@ namespace viennacl
       {
         if (restart_flag)
         {
-          residual = rhs - viennacl::linalg::prod(matrix, result);
+          residual = rhs;
+          residual -= viennacl::linalg::prod(matrix, result);
           p = residual;
           r0star = residual;
           ip_rr0star = viennacl::linalg::norm_2(residual);
@@ -218,7 +219,8 @@ namespace viennacl
       {
         if (restart_flag)
         {
-          residual = rhs - viennacl::linalg::prod(matrix, result);
+          residual = rhs;
+          residual -= viennacl::linalg::prod(matrix, result);
           precond.apply(residual);
           p = residual;
           r0star = residual;

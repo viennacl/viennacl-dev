@@ -118,13 +118,13 @@ void run_test()
   //
   Eigen::SparseMatrix<ScalarType, Eigen::RowMajor> eigen_sparsemat(6, 5);
   Eigen::SparseMatrix<ScalarType, Eigen::RowMajor> eigen_sparsemat2(6, 5);
-  eigen_sparsemat.startFill(5*2);
-  eigen_sparsemat.fill(0,0) = 2.0;   eigen_sparsemat.fill(0,1) = -1.0;
-  eigen_sparsemat.fill(1,1) = 2.0;   eigen_sparsemat.fill(1,2) = -1.0;
-  eigen_sparsemat.fill(2,2) = -1.0;  eigen_sparsemat.fill(2,3) = -1.0;
-  eigen_sparsemat.fill(3,3) = 2.0;   eigen_sparsemat.fill(3,4) = -1.0;
-  eigen_sparsemat.fill(5,4) = -1.0;
-  eigen_sparsemat.endFill();
+  eigen_sparsemat.reserve(5*2);
+  eigen_sparsemat.insert(0,0) = 2.0;   eigen_sparsemat.insert(0,1) = -1.0;
+  eigen_sparsemat.insert(1,1) = 2.0;   eigen_sparsemat.insert(1,2) = -1.0;
+  eigen_sparsemat.insert(2,2) = -1.0;  eigen_sparsemat.insert(2,3) = -1.0;
+  eigen_sparsemat.insert(3,3) = 2.0;   eigen_sparsemat.insert(3,4) = -1.0;
+  eigen_sparsemat.insert(5,4) = -1.0;
+  //eigen_sparsemat.endFill();
   
   //
   // Create and fill a few vectors from the Eigen library:
@@ -196,7 +196,9 @@ int main(int, char *[])
   std::cout << "----------------------------------------------" << std::endl;
   run_test<float>();
   
+#ifdef VIENNACL_HAVE_OPENCL   
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "## Double precision" << std::endl;

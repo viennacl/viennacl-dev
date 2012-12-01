@@ -80,33 +80,21 @@ int main()
   //
   // Read system from file
   //
-  #ifdef _MSC_VER
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
-  #else
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  #endif
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
   //std::cout << "done reading matrix" << std::endl;
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/rhs65025.txt", rhs))
-  #else
   if (!readVectorFromFile("../examples/testdata/rhs65025.txt", rhs))
-  #endif
   {
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
   }
   //std::cout << "done reading rhs" << std::endl;
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/result65025.txt", ref_result))
-  #else
   if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
-  #endif
   {
     std::cout << "Error reading Result file" << std::endl;
     return 0;

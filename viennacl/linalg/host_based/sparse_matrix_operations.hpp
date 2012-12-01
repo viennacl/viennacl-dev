@@ -114,6 +114,9 @@ namespace viennacl
         unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle1());
         unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle2());
         
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
         for (std::size_t row = 0; row < mat.size1(); ++row)
         {
           ScalarType dot_prod = 0;

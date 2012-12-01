@@ -160,14 +160,10 @@ int main()
                         &(stl_B[0]) + stl_B.size(),
                         vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-#ifdef VIENNACL_WITH_OPENCL
-    viennacl::ocl::get_queue().finish();
-#endif
+    viennacl::backend::finish();
     timer.start();
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
-#ifdef VIENNACL_WITH_OPENCL
-    viennacl::ocl::get_queue().finish();
-#endif
+    viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
     

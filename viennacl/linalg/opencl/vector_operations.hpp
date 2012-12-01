@@ -359,7 +359,7 @@ namespace viennacl
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
 
-        assert( (k.global_work_size() / k.local_work_size() == partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
+        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
                 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -397,7 +397,7 @@ namespace viennacl
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -438,7 +438,7 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -477,7 +477,7 @@ namespace viennacl
         
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
 
-        assert( (k.global_work_size() / k.local_work_size() == partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
+        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
         
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
                                  cl_uint(viennacl::traits::start(vec)),
@@ -508,7 +508,7 @@ namespace viennacl
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -543,7 +543,7 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -578,7 +578,7 @@ namespace viennacl
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -613,7 +613,7 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -648,7 +648,7 @@ namespace viennacl
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
@@ -683,7 +683,7 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);

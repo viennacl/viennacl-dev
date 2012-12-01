@@ -1,4 +1,6 @@
 
+include_directories(${Boost_INCLUDE_DIRS})
+
 # tests with CPU backend
 foreach(PROG blas3_prod blas3_solve iterators
              global_variables

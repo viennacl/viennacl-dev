@@ -70,11 +70,7 @@ int run_benchmark()
   boost::numeric::ublas::vector<ScalarType> ublas_vec1;
   boost::numeric::ublas::vector<ScalarType> ublas_vec2;
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile<ScalarType>("../../examples/testdata/result65025.txt", ublas_vec1))
-  #else
   if (!readVectorFromFile<ScalarType>("../examples/testdata/result65025.txt", ublas_vec1))
-  #endif
   {
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
@@ -92,11 +88,7 @@ int run_benchmark()
   viennacl::hyb_matrix<ScalarType, 1> vcl_hyb_matrix_1;
 
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
-  #ifdef _MSC_VER
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
-  #else
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  #endif
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;

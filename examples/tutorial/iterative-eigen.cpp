@@ -63,34 +63,23 @@ int main(int, char *[])
   //
   // Read system from file
   //
-  eigen_matrix.startFill(65025 * 7);
-  #ifdef _MSC_VER
-  if (!viennacl::io::read_matrix_market_file(eigen_matrix, "../../examples/testdata/mat65k.mtx"))
-  #else
+  std::cout << "Reading matrix..." << std::endl;
+  eigen_matrix.reserve(65025 * 7);
   if (!viennacl::io::read_matrix_market_file(eigen_matrix, "../examples/testdata/mat65k.mtx"))
-  #endif
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
-  eigen_matrix.endFill();
-  //std::cout << "done reading matrix" << std::endl;
+  //eigen_matrix.endFill();
+  std::cout << "Done: reading matrix" << std::endl;
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/rhs65025.txt", eigen_rhs))
-  #else
   if (!readVectorFromFile("../examples/testdata/rhs65025.txt", eigen_rhs))
-  #endif
   {
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
   }
   
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/result65025.txt", ref_result))
-  #else
   if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
-  #endif
   {
     std::cout << "Error reading Result file" << std::endl;
     return 0;

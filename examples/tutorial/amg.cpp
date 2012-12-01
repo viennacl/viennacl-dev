@@ -112,7 +112,9 @@ int main()
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   
+#ifdef VIENNACL_WITH_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
+#endif
   
   typedef float    ScalarType;  // feel free to change this to double if supported by your device
 
@@ -128,32 +130,20 @@ int main()
   viennacl::linalg::amg_precond<boost::numeric::ublas::compressed_matrix<ScalarType> > ublas_amg;
     
   // Read matrix
-  #ifdef _MSC_VER
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
-  #else
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  #endif
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }
   
   // Set up rhs and result vector
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/rhs65025.txt", ublas_vec))
-  #else
   if (!readVectorFromFile("../examples/testdata/rhs65025.txt", ublas_vec))
-  #endif
   {
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
   }
 
-  #ifdef _MSC_VER
-  if (!readVectorFromFile("../../examples/testdata/result65025.txt", ublas_result))
-  #else
   if (!readVectorFromFile("../examples/testdata/result65025.txt", ublas_result))
-  #endif
   {
     std::cout << "Error reading Result file" << std::endl;
     return 0;

@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file  viennacl/linalg/cuda/matrix_operations_row.hpp
-    @brief Implementations of row-major dense matrix related operations, including matrix-vector products, using CUDA.
+/** @file  viennacl/linalg/cuda/matrix_operations_col.hpp
+    @brief Implementations of column-major dense matrix related operations, including matrix-vector products, using CUDA.
 */
 
 

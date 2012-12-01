@@ -103,6 +103,9 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT>
   class const_vector_iterator;
   
+  template <typename SCALARTYPE>
+  class zero_vector;
+  
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class vector;
   
@@ -371,6 +374,8 @@ namespace viennacl
     
   namespace linalg
   {
+#ifndef _MSC_VER
+    
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     void convolve_i(viennacl::vector<SCALARTYPE, ALIGNMENT>& input1,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& input2,
@@ -476,6 +481,7 @@ namespace viennacl
                                  >::type
     prod_impl(const SparseMatrixType & mat, 
               const vector<SCALARTYPE, ALIGNMENT> & vec); 
+#endif
     
     namespace detail
     {

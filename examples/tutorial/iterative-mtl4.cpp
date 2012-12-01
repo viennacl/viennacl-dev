@@ -63,11 +63,7 @@ int main(int, char *[])
   // Read system from file
   //
 
-  #ifdef _MSC_VER
-  mtl::io::matrix_market_istream("../../examples/testdata/mat65k.mtx") >> mtl4_matrix;
-  #else
   mtl::io::matrix_market_istream("../examples/testdata/mat65k.mtx") >> mtl4_matrix;
-  #endif
     
   //
   //CG solver:

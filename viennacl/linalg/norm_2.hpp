@@ -82,13 +82,11 @@ namespace viennacl
     // ----------------------------------------------------
     // STL
     //
-    template< typename VectorT>
-    typename viennacl::enable_if< viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value,
-                                  typename VectorT::value_type>::type
-    norm_2(VectorT const& v1)
+    template< typename T, typename A >
+    T norm_2(std::vector<T, A> const & v1)
     {
-      typename VectorT::value_type result = 0;
-      for (typename VectorT::size_type i=0; i<v1.size(); ++i)
+      T result = 0;
+      for (typename std::vector<T, A>::size_type i=0; i<v1.size(); ++i)
         result += v1[i] * v1[i];
       
       return std::sqrt(result);

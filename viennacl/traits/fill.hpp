@@ -58,7 +58,7 @@ namespace viennacl
                      SCALARTYPE value
                     )
     {
-      m.fill(row_index, col_index) = value;
+      m.insert(row_index, col_index) = value;
     }    
     #endif
 

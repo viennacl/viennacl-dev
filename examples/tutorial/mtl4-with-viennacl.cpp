@@ -165,7 +165,9 @@ int main(int, char *[])
   std::cout << "----------------------------------------------" << std::endl;
   run_test<float>();
   
+#ifdef VIENNACL_HAVE_OPENCL   
   if( viennacl::ocl::current_device().double_support() )
+#endif
   {
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "## Double precision" << std::endl;

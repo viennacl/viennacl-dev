@@ -56,14 +56,12 @@ namespace viennacl
     // ----------------------------------------------------
     // STL
     //
-    template< typename VectorT>
-    typename viennacl::enable_if<viennacl::is_stl< typename viennacl::traits::tag_of< VectorT >::type >::value,
-                                 typename VectorT::value_type>::type
-    norm_inf(VectorT const& v1)
+    template< typename T, typename A >
+    T norm_inf(std::vector<T, A> const & v1)
     {
       //std::cout << "stl .. " << std::endl;
-      typename VectorT::value_type result = 0;
-      for (typename VectorT::size_type i=0; i<v1.size(); ++i)
+      T result = 0;
+      for (typename std::vector<T, A>::size_type i=0; i<v1.size(); ++i)
       {
         if (std::fabs(v1[i]) > result)
           result = std::fabs(v1[i]);

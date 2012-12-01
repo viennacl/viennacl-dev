@@ -232,7 +232,7 @@ int test(Epsilon const& epsilon,
   std::size_t cpu_index = ublas::index_norm_inf(ublas_v1);
   std::size_t gpu_index = viennacl::linalg::index_norm_inf(vcl_v1);
 
-  if (check(cpu_index, gpu_index, epsilon) != EXIT_SUCCESS)
+  if (check(static_cast<NumericT>(cpu_index), static_cast<NumericT>(gpu_index), epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   // --------------------------------------------------------------------------
   cpu_result = ublas_v1[index_norm_inf(ublas_v1)];

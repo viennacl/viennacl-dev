@@ -28,7 +28,9 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-//namespace ublas = boost::numeric::ublas;
+/** @file viennacl/linalg/qr-method-common.hpp
+    @brief Common routines used for the QR method and SVD
+*/
 
 namespace viennacl
 {
