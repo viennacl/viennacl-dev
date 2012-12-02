@@ -237,3 +237,4 @@ struct program_infos
 } // namespace generator
 } // namespace viennacl
 #endif
+

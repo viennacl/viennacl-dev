@@ -506,3 +506,4 @@ namespace viennacl
   } // namespace generator
 } // namespace viennacl
 #endif
+

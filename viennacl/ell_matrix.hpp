@@ -173,18 +173,3 @@ namespace viennacl
 #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

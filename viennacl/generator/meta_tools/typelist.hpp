@@ -500,3 +500,4 @@ namespace viennacl
 }
 
 #endif
+

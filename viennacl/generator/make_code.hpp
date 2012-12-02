@@ -615,3 +615,4 @@ namespace viennacl
 }
 
 #endif
+

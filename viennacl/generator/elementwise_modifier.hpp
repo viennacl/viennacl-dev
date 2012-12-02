@@ -200,3 +200,4 @@ namespace viennacl
 }
 
 #endif
+

@@ -28,5 +28,5 @@ build-pdf:
            -dAutoRotatePages=/None -dOptimize=true $(FILE).ps
 
 build-clean:
-	rm -f *.dvi *.log *.aux *.idx *.ps *.out *.toc *~ *.backup
+	rm -f *.dvi *.log *.aux *.idx *.ps *.out *.toc *~ *.ind *.bbl *.ilg *.blg *.backup
 	

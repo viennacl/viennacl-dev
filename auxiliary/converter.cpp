@@ -61,6 +61,8 @@ void createSourceFile(const char * dirname)
     source_file << "#ifndef VIENNACL_LINALG_KERNELS_" << dirname_uppercase << "_SOURCE_HPP_" << std::endl;
     source_file << "#define VIENNACL_LINALG_KERNELS_" << dirname_uppercase << "_SOURCE_HPP_" << std::endl;
     source_file << "//Automatically generated file from auxiliary-directory, do not edit manually!" << std::endl;
+    source_file << "/** @file " << header_name << "_source.h" << std::endl;
+    source_file << " *  @brief OpenCL kernel source file, generated automatically. */" << std::endl;
     source_file << "namespace viennacl" << std::endl;
     source_file << "{" << std::endl;
     source_file << " namespace linalg" << std::endl;
@@ -111,6 +113,7 @@ void createSourceFile(const char * dirname)
     source_file << " }  //namespace linalg" << std::endl;
     source_file << "}  //namespace viennacl" << std::endl;
     source_file << "#endif" << std::endl;
+    source_file << std::endl;
     source_file.close();
 }
 
@@ -275,6 +278,8 @@ void createKernelFile(const char * dirname)
     kernel_file << "#include \"viennacl/linalg/kernels/" << dirname << "_source.h\"" << std::endl;
     kernel_file << std::endl;
     kernel_file << "//Automatically generated file from aux-directory, do not edit manually!" << std::endl;
+    kernel_file << "/** @file " << header_name << "_kernels.h" << std::endl;
+    kernel_file << " *  @brief OpenCL kernel file, generated automatically. */" << std::endl;
     kernel_file << "namespace viennacl" << std::endl;
     kernel_file << "{" << std::endl;
     kernel_file << " namespace linalg" << std::endl;
@@ -344,6 +349,7 @@ void createKernelFile(const char * dirname)
     kernel_file << " }  //namespace linalg" << std::endl;
     kernel_file << "}  //namespace viennacl" << std::endl;
     kernel_file << "#endif" << std::endl;
+    kernel_file << std::endl;
     kernel_file.close();
 }
 

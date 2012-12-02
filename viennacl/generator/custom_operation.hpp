@@ -742,3 +742,4 @@ namespace viennacl
 }
 
 #endif
+
