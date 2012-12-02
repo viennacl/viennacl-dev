@@ -1,23 +1,21 @@
-\chapter{Basic Types}
+\chapter{Basic Types} \label{chap:basic-types}
 This chapter provides a brief overview of the basic interfaces and usage of the
-provided data types. The term \textit{GPU} refers here and in the following to
-both GPUs and multi-core CPUs accessed via {\OpenCL} and managed by
-{\ViennaCL}. Operations on the various types are explained in
+provided data types. Operations on the various types are explained in
 Chapter \ref{chap:operations}. For full details, refer to the reference pages
-in the folder
-\texttt{doc/doxygen}.
+in the folder \texttt{doc/doxygen}.
 
 \section {Scalar Type}
 The scalar type \lstinline|scalar<T>| with template parameter T
-denoting the underlying CPU scalar type (float and double, if supported - see Tab.~\ref{tab:double-precision-GPUs}) represents a
-single scalar value on the GPU. \lstinline|scalar<T>| is designed to behave much
-like a scalar type on the CPU, but library users have to keep in mind that
-every operation on \lstinline|scalar<T>| requires to launch the appropriate
-compute kernel on the GPU and is thus much slower then the CPU equivalent.
+denoting the underlying CPU scalar type (\lstinline|float| and \lstinline|double|, if supported - see Tab.~\ref{tab:double-precision-GPUs}) represents a
+single scalar value on the computing device. \lstinline|scalar<T>| is designed to behave much
+like a scalar type on conventional host-based CPU processing, but library users have to keep in mind that
+every operation on \lstinline|scalar<T>| may require the launch of an appropriate
+compute kernel on the GPU, thus making the operation much slower then the conventional CPU equivalent.
+Even if the host-based computing backend of {\ViennaCL} is used, some (small) overheads occur.
 
 \NOTE{Be aware that operations between objects of type \lstinline|scalar<T>|
-(e.g.~additions. comparisons) have large overhead. For every operation, a
-separate compute kernel launch is required.}
+(e.g.~additions. comparisons) have large overhead on GPU backends. A
+separate compute kernel launch is required for every operation in such case.}
 
 \subsection{Example Usage}
 The scalar type of {\ViennaCL} can be used just like the built-in
@@ -51,7 +49,7 @@ respective CPU counterparts, only a single public member function
 \begin{tabular}{p{6.5cm}|p{8.5cm}}
 Interface & Comment\\
 \hline
-\texttt{v.handle()}   & The GPU handle \\
+\texttt{v.handle()}   & The memory handle (CPU, {\CUDA}, or {\OpenCL}) \\
 \end{tabular}
 \caption{Interface of \texttt{vector$<$T$>$} in \ViennaCL. Destructors and
 operator overloads for BLAS are not listed.}
@@ -120,7 +118,7 @@ the memory can be initialized with zero values using the member function
 Tab.~\ref{tab:vector-interface} for other member functions.
 
 \NOTE{Accessing single elements of a vector using operator() or operator[] is
-very slow! Use with care!}
+very slow for GPUs due to PCI-Express latency! Use with care!}
 
 \begin{table}[tb]
 \begin{center}
@@ -128,18 +126,18 @@ very slow! Use with care!}
 Interface & Comment\\
 \hline
 \texttt{CTOR(n)}    & Constructor with number of entries \\
-\texttt{v(i)}    & Access to the $i$-th element of v (slow!) \\
-\texttt{v[i]}    & Access to the $i$-th element of v (slow!) \\
-\texttt{v.clear()}    & Initialize v with zeros \\
+\texttt{v(i)}       & Access to the $i$-th element of v (slow for GPUs!) \\
+\texttt{v[i]}       & Access to the $i$-th element of v (slow for GPUs!) \\
+\texttt{v.clear()}  & Initialize v with zeros \\
 \texttt{v.resize(n, bool preserve)}    & Resize v to length n. Preserves old values if bool is true. \\
-\texttt{v.begin()}   & Iterator to the begin of the matrix \\
-\texttt{v.end()}   & Iterator to the end of the matrix \\
-\texttt{v.size()}    & Length of the vector \\
-\texttt{v.swap(v2)}   & Swap the content of v with v2 \\
+\texttt{v.begin()}  & Iterator to the begin of the matrix \\
+\texttt{v.end()}    & Iterator to the end of the matrix \\
+\texttt{v.size()}   & Length of the vector \\
+\texttt{v.swap(v2)} & Swap the content of v with v2 \\
 \texttt{v.internal\_size()} & Returns the number of entries allocated on the GPU (taking alignment into account) \\
 \texttt{v.empty()}   & Shorthand notation for \texttt{v.size() == 0} \\
 \texttt{v.clear()}   & Sets all entries in v to zero \\
-\texttt{v.handle()}  & Returns the GPU handle (needed for custom kernels, see Chap.~\ref{chap:custom})
+\texttt{v.handle()}  & Returns the memory handle (needed for custom kernels, see Chap.~\ref{chap:custom})
 \end{tabular}
 \caption{Interface of \texttt{vector$<$T$>$} in \ViennaCL. Destructors and
 operator overloads for BLAS are not listed.}
@@ -156,7 +154,7 @@ magnitude. For example:
 for (size_t i=0; i<cpu_vector.size(); ++i)
     cpu_vector(i) = 1e-3f;
 
-// fill a ViennaCL vector - VERY SLOW!!
+// fill a ViennaCL vector - VERY SLOW with GPU backends!!
 for (size_t i=0; i<gpu_vector.size(); ++i)
     vcl_vector(i) = 1e-3f;
 \end{lstlisting} 
@@ -179,7 +177,7 @@ In this way, setup costs for the CPU vector and the {\ViennaCL} vector are compa
 \section{Dense Matrix Type}
 \texttt{matrix$<$T, F, alignment$>$} represents a dense matrix with interface listed in
 Tab.~\ref{tab:matrix-interface}. The second optional template argument \texttt{F}
-specifies the storage layout and defaults to \texttt{row\_major}. Since {\ViennaCL} 1.1.0, also \lstinline|column_major| memory layout can be used.
+specifies the storage layout and defaults to \texttt{row\_major}. As an alternative, a \lstinline|column_major| memory layout can be used.
 The third template argument \texttt{alignment} denotes an alignment for the rows and columns for row-major and column-major memory layout (cf.~\texttt{alignment} for the \texttt{vector} type).
 
 \subsection{Example Usage}
@@ -196,7 +194,7 @@ The use of \texttt{matrix$<$T, F$>$} is similar to that of the counterpart in {\
  vcl_matrix(3,4) = 3.1415; 
 \end{lstlisting} 
 
-\NOTE{Accessing single elements of a matrix using \texttt{operator()} is very slow! Use with care!}
+\NOTE{Accessing single elements of a matrix using \texttt{operator()} is very slow on GPU backends! Use with care!}
 
 A much better way is to initialize a dense matrix using the provided \texttt{copy()} function:
 \begin{lstlisting}
@@ -230,7 +228,7 @@ Interface & Comment\\
 \texttt{mat.size2()}            & Number of columns in mat \\
 \texttt{mat.internal\_size2()}   & Internal number of columns in mat \\
 \texttt{mat.clear()}   & Sets all entries in v to zero \\
-\texttt{mat.handle()}  & Returns the GPU handle (needed for custom kernels, see Chap.~\ref{chap:custom})
+\texttt{mat.handle()}  & Returns the memory handle (needed for custom kernels, see Chap.~\ref{chap:custom})
 \end{tabular}
 \caption{Interface of the dense matrix type \texttt{matrix$<$T, F$>$} in
 \ViennaCL. Constructors, Destructors and operator overloads for BLAS are not
@@ -238,104 +236,6 @@ listed.}
 \label{tab:matrix-interface}
 \end{center}
 \end{table}
-
-\section{Structured Matrix Types}
-
-\NOTE{Structured matrix types are experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may be included in
-future releases!}
-
-There are a number of structured dense matrices for which some algorithms such as matrix-vector products can be computed with much lower computational effort
-than for the general dense matrix case. In the following, four structured dense matrix types included in {\ViennaCL} are discussed. 
-Example code can be found in \lstinline|examples/tutorial/structured-matrices.cpp|.
-
-\subsection{Circulant Matrix}
-A circulant matrix is a matrix of the form
-\begin{align*}
- \left( \begin{array}{ccccc}
-         c_0 & c_{n-1} & \ldots & c_2 & c_1 \\
-         c_1 & c_0 & c_{n-1} & & c_2 \\
-         \vdots & c_1 & c_0 & \ddots & \vdots \\
-         c_{n-2} & & \ddots & \ddots & c_{n-1} \\
-         c_{n-1} & c_{n-2} & \hdots & c_1 & c_0 \\
-        \end{array} \right)
-\end{align*}
-and available in {\ViennaCL} via
-\begin{lstlisting}
- #include "viennacl/circulant_matrix.hpp"
-
- std::size_t s = 42;
- viennacl::circulant_matrix circ_mat(s, s);
-\end{lstlisting}
-The \lstinline|circulant_matrix| type can be manipulated in the same way as the dense matrix type \lstinline|matrix|. Note that writing to a single element of
-the matrix is structure-preserving, e.g.~changing \lstinline|circ_mat(1,2)| will automatically update \lstinline|circ_mat(0,1)|, \lstinline|circ_mat(2,3)| and
-so on.
-
-
-\subsection{Hankel Matrix}
-A Hankel matrix is a matrix of the form
-\begin{align*}
- \left( \begin{array}{cccc}
-         a & b & c & d \\
-         b & c & d & e \\
-         c & d & e & f \\
-         d & e & f & g \\
-        \end{array} \right)
-\end{align*}
-and available in {\ViennaCL} via
-\begin{lstlisting}
- #include "viennacl/hankel_matrix.hpp"
-
- std::size_t s = 42;
- viennacl::hankel_matrix hank_mat(s, s);
-\end{lstlisting}
-The \lstinline|hankel_matrix| type can be manipulated in the same way as the dense matrix type \lstinline|matrix|. Note that writing to a single element of
-the matrix is structure-preserving, e.g.~changing \lstinline|hank_mat(1,2)| in the example above will also update \lstinline|hank_mat(0,3)|,
-\lstinline|hank_mat(2,1)| and
-\lstinline|hank_mat(3,0)|.
-
-\subsection{Toeplitz Matrix}
-A Toeplitz matrix is a matrix of the form
-\begin{align*}
- \left( \begin{array}{cccc}
-         a & b & c & d \\
-         e & a & b & c \\
-         f & e & a & b \\
-         g & f & e & a \\
-        \end{array} \right)
-\end{align*}
-and available in {\ViennaCL} via
-\begin{lstlisting}
- #include "viennacl/toeplitz_matrix.hpp"
-
- std::size_t s = 42;
- viennacl::toeplitz_matrix toep_mat(s, s);
-\end{lstlisting}
-The \lstinline|toeplitz_matrix| type can be manipulated in the same way as the dense matrix type \lstinline|matrix|. Note that writing to a single element of
-the matrix is structure-preserving, e.g.~changing \lstinline|toep_mat(1,2)| in the example above will also update \lstinline|toep_mat(0,1)| and
-\lstinline|toep_mat(2,3)|.
-
-
-\subsection{Vandermonde Matrix}
-A Vandermonde matrix is a matrix of the form
-\begin{align*}
- \left( \begin{array}{ccccc}
-         1 & \alpha_1 & \alpha_1^2 & \ldots & \alpha_1^{n-1} \\
-         1 & \alpha_2 & \alpha_2^2 & \ldots & \alpha_2^{n-1} \\
-         1 & \vdots & \vdots & \vdots \\
-         1 & \alpha_m & \alpha_m^2 & \ldots & \alpha_m^{n-1} \\
-        \end{array} \right)
-\end{align*}
-and available in {\ViennaCL} via
-\begin{lstlisting}
- #include "viennacl/vandermonde_matrix.hpp"
-
- std::size_t s = 42;
- viennacl::vandermonde_matrix vand_mat(s, s);
-\end{lstlisting}
-The \lstinline|vandermonde_matrix| type can be manipulated in the same way as the dense matrix type \lstinline|matrix|, but restrictions apply. For
-example, the addition or subtraction of two Vandermonde matrices does not yield another Vandermonde matrix. Note that writing to a single element of
-the matrix is structure-preserving, e.g.~changing \lstinline|vand_mat(1,2)| in the example above will automatically update \lstinline|vand_mat(1,3)|,
-\lstinline|vand_mat(1,4)|, etc.
 
 
 \section{Sparse Matrix Types}
@@ -368,9 +268,9 @@ Interface & Comment\\
 \texttt{mat.nnz()}		& Number of nonzeroes in mat \\
 \parbox{6cm}{\texttt{mat.resize(m, n, \\
            \hphantom{mat.resize(}bool preserve)}}    & Resize mat to m rows and n columns. Currently, the boolean flag is ignored and entries always discarded. \\
-\texttt{mat.handle1()}  & Returns the GPU handle holding the row indices (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
-\texttt{mat.handle2()}  & Returns the GPU handle holding the column indices  (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
-\texttt{mat.handle()}  & Returns the GPU handle holding the entries (needed for custom kernels, see Chap.~\ref{chap:custom})
+\texttt{mat.handle1()}  & Returns the memory handle holding the row indices (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
+\texttt{mat.handle2()}  & Returns the memory handle holding the column indices  (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
+\texttt{mat.handle()}  & Returns the memory handle holding the entries (needed for custom kernels, see Chap.~\ref{chap:custom})
 \end{tabular}
 \caption{Interface of the sparse matrix type \texttt{compressed\_matrix$<$T, F$>$} in \ViennaCL. Destructors and operator overloads for BLAS are not listed.}
 \label{tab:compressed-matrix-interface}
@@ -435,7 +335,7 @@ Interface & Comment\\
 %\texttt{mat(i,j) const}    & Read-only access to the element in the $i$-th row and the $j$-th column of mat \\
 %\texttt{mat.readFrom(PointerType prows, PointerType pcols, PointerType pentries)} & Fill mat with the values from the supplied piece of memory. \\
 %\texttt{mat.writeTo(PointerType prows, PointerType pcols, PointerType pentries)}  & Fill the supplied piece of memory with values from mat. \\ \\
-\texttt{mat.reserve(num)}    & Reserve memory for up to \texttt{num} nonzero entries \\
+\texttt{mat.reserve(num)}    & Reserve memory for \texttt{num} nonzero entries \\
 \texttt{mat.size1()}            & Number of rows in mat \\
 \texttt{mat.size2()}            & Number of columns in mat \\
 \texttt{mat.nnz()}		& Number of nonzeroes in mat \\
@@ -443,8 +343,8 @@ Interface & Comment\\
            \hphantom{mat.resize(}bool preserve)}}    & Resize mat to m rows and n columns. Currently, the boolean flag is ignored and entries always discarded. \\
 %\texttt{mat.clear()}    & Initialize mat with zeros \\
 \texttt{mat.resize(m, n)}    & Resize mat to m rows and n columns. Does not preserve old values. \\
-\texttt{mat.handle12()}  & Returns the GPU handle holding the row and column indices (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
-\texttt{mat.handle()}  & Returns the GPU handle holding the entries (needed for custom kernels, see Chap.~\ref{chap:custom})
+\texttt{mat.handle12()}  & Returns the memory handle holding the row and column indices (needed for custom kernels, see Chap.~\ref{chap:custom}) \\
+\texttt{mat.handle()}  & Returns the memory handle holding the entries (needed for custom kernels, see Chap.~\ref{chap:custom})
 \end{tabular}
 \caption{Interface of the sparse matrix type \texttt{coordinate\_matrix$<$T, A$>$} in \ViennaCL. Destructors and operator overloads for BLAS are not listed.}
 \label{tab:coordinate-matrix-interface}
@@ -460,7 +360,7 @@ The use of \texttt{coordinate\_matrix$<$T, alignment$>$} is similar to that of t
 The interface is described in Tab.~\ref{tab:coordinate-matrix-interface}. 
 
 %\TIP{In {\ViennaCLversion} the use of \lstinline|compressed\_matrix| over \lstinline|coordinate\_matrix| is encouraged due to better performance!}
-\NOTE{Note that preconditioners in Sec.~\ref{sec:preconditioner} do not work with \lstinline|coordinate_matrix| yet.}
+\NOTE{Note that only a few preconditioners work with \lstinline|coordinate_matrix| so far, cf.~ Sec.~\ref{sec:preconditioner}.}
 
 
 \subsection{ELL Matrix}

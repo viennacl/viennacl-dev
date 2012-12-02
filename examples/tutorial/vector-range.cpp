@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Explains the use of vector ranges with simple BLAS level 1 and 2 operations.
+*             (vector-range.cpp and vector-range.cu are identical, the latter being required for compilation using CUDA nvcc)
+*
+*/
+
 // activate ublas support in ViennaCL
 #define VIENNACL_WITH_UBLAS
 
@@ -39,9 +46,6 @@
 #include "boost/numeric/ublas/vector_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
-/*
-*   Tutorial: Use of matrix ranges
-*/
 
 int main (int, const char **)
 {

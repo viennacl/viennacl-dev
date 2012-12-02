@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Iterative solvers in ViennaCL (iterative.cpp and iterative.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
 //
 // include necessary system headers
 //
@@ -64,11 +70,6 @@
 #include "vector-io.hpp"
 
 
-/*
-*
-*   Tutorial:  Iterative solvers
-*   
-*/
 using namespace boost::numeric;
 
 

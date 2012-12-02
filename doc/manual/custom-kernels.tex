@@ -1,6 +1,6 @@
 
 
-\chapter{Custom Compute Kernels} \label{chap:custom}
+\chapter{Custom OpenCL Compute Kernels} \label{chap:custom}
 
 For custom algorithms the built-in functionality of {\ViennaCL} may not be sufficient or not fast enough. In such cases it can be desirable to write a custom {\OpenCL} compute kernel, which is explained in this chapter. The following steps are necessary and explained one after another:
 \begin{itemize}
@@ -10,7 +10,7 @@ For custom algorithms the built-in functionality of {\ViennaCL} may not be suffi
 \end{itemize}
 A tutorial on this topic can be found at \texttt{examples/tutorial/custom-kernels.cpp}.
 
-\section{Setting up the Source Code}
+\section{Setting up the {\OpenCL} Source Code}
 The {\OpenCL} source code has to be provided as a string. One can either write the source code directly into a string within C++ files, or one can read the {\OpenCL} source from a file. For demonstration purposes, we write the source directly as a string constant:
 \begin{lstlisting}
 const char * my_compute_program = 
@@ -26,7 +26,7 @@ const char * my_compute_program =
 \end{lstlisting}
 The kernel takes three vector arguments \lstinline{vec1}, \lstinline{vec2} and \lstinline{result} and the vector length variable \lstinline{size} abd computes the entry-wise product of the vectors \lstinline|vec1| and \lstinline|vec2| and writes the result to the vector \lstinline|result|. For more detailed explanation of the {\OpenCL} source code, please refer to the specification available at the Khronos group webpage \cite{khronoscl}.
 
-\section{Compilation of the Source Code}
+\section{Compilation of the {\OpenCL} Source Code}
 The source code in the string constant \lstinline{my_compute_kernel} has to be compiled to an {\OpenCL} program.
 An {\OpenCL} program is a compilation unit and may contain several different compute kernels,
 so one could also include another kernel function \lstinline{inplace_elementwise_prod} which writes the result directly to one of the two operands \lstinline{vec1} or \lstinline{vec2} in the same program.
@@ -57,7 +57,7 @@ viennacl::ocl::kernel & my_kernel = my_prog.get_kernel("elementwise_prod");
 \end{lstlisting}
 This simplifies application development considerably, since no program and kernel objects need to be passed around.
 
-\section{Launching the Kernel}
+\section{Launching the {\OpenCL} Kernel}
 Before launching the kernel, one may adjust the global and local work sizes (readers not familiar with that are encouraged to read the {\OpenCL} standard \cite{khronoscl}).
 The following code specifies a one-dimensional execution model with 16 local workers and 128 global workers:
 \begin{lstlisting}

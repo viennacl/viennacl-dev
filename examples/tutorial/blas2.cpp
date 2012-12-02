@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: BLAS level 2 functionality (blas2.cpp and blas2.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
+
 //
 // include necessary system headers
 //
@@ -50,11 +57,6 @@
 // Some helper functions for this tutorial:
 #include "Random.hpp"
 #include "vector-io.hpp"
-
-/*
-*   Tutorial: BLAS level 2 functionality
-*   
-*/
 
 using namespace boost::numeric;
 

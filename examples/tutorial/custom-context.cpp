@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Use ViennaCL within user-defined (i.e. your own) OpenCL contexts
+*   
+*/
+
+
 //
 // include necessary system headers
 //
@@ -39,12 +46,6 @@
 // Some helper functions for this tutorial:
 #include "Random.hpp"
 
-
-/*
-*
-*   Tutorial:  Use ViennaCL within user-defined OpenCL contexts
-*   
-*/
 
 
 

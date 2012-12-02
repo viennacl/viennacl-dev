@@ -15,6 +15,15 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/*
+* 
+*   Tutorial: Algebraic multigrid preconditioner (only available with the OpenCL backend, experimental)
+*
+*/
+
+
+
 #ifndef NDEBUG     //without NDEBUG the performance of sparse ublas matrices is poor.
  #define NDEBUG
 #endif

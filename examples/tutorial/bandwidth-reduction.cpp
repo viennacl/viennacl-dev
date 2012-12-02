@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*   Tutorial: Matrix bandwidth reduction algorithms
+*/
+
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,10 +30,6 @@
 #include <cmath>
 
 #include "viennacl/misc/bandwidth_reduction.hpp"
-
-/*
-*   Tutorial: Matrix bandwidth reduction algorithms
-*/
 
 
 //

@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Handling sparse matrices (sparse.cpp and sparse.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
 //
 // include necessary system headers
 //
@@ -52,11 +58,6 @@
 #include "vector-io.hpp"
 
 
-/*
-*
-*   Tutorial:  Modification of sparse matrices
-*   
-*/
 using namespace boost::numeric;
 
 

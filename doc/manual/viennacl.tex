@@ -19,7 +19,10 @@
 \usepackage[toc,page]{appendix}
 
 
-\usepackage[colorlinks=true,linktocpage=true]{hyperref}
+\usepackage[pdfauthor={Karl Rupp et al.},
+            pdftitle={ViennaCL 1.4.0 Manual},
+            colorlinks=true,
+            linktocpage=true]{hyperref}
 
 %% Listings package START
 \usepackage{color}
@@ -56,11 +59,12 @@
 \newcommand{\CMake} {\texttt{CMake}}
 \newcommand{\OpenMP} {\texttt{OpenMP}}
 \newcommand{\OpenCL} {\texttt{OpenCL}}
+\newcommand{\CUDA} {\texttt{CUDA}}
 \newcommand{\ViennaCL} {\texttt{ViennaCL}}
 \newcommand{\ViennaCLversion} {\texttt{ViennaCL 1.4.0}}
 \newcommand{\ViennaCLminorversion} {\texttt{ViennaCL 1.4.x}}
 \newcommand{\Boost} {\texttt{Boost}}
-\newcommand{\ublas} {\texttt{ublas}}
+\newcommand{\ublas} {\texttt{uBLAS}}
 \newcommand{\Eigen} {\texttt{Eigen}}
 \newcommand{\MTL} {\texttt{MTL 4}}
 \newcommand{\GCC} {\texttt{GCC}}
@@ -101,13 +105,16 @@
 %%%%%%%%%%%%%%%% Core Functionality %%%%%%%%%%%%%%%%
 
 \part{Core Functionality}
-Quite a bit of text explaining the functionality.
+The {\ViennaCL} core consists of operations and algorithms which are available on all three computing backends ({\CUDA}, host-based, {\OpenCL}).
+These features are considered stable and full support is provided. However, note that performance-characteristics may differ considerably on the different computing backends.
+In particular, the use of GPUs will not pay off if the data is too small, hence PCI-Express latency is dominant.
 
 
-
+\include{memory-model}
 \include{types}
 \include{operations}
 \include{algorithms}
+\include{other-libs}
 
 
 
@@ -115,15 +122,20 @@ Quite a bit of text explaining the functionality.
 
 
 \part{Addon Functionality}
-Functionality that is not available with all backends.
+With the introduction of host-based, {\CUDA}- and {\OpenCL}-enabled computing backends in {\ViennaCL} 1.4.0, certain functionality is not available for all three backends and listed in the following.
+For example, the {\OpenCL} kernel generator makes sense in the {\OpenCL} computing backend, thus this functionality is moved out of the set of core functionality.
 
+Also, certain functionality is still in experimental stage and might experience interface changes.
+Although all functionality flagged as experimental and listed in this section passes a respective set of tests,
+library users are advised to use them with extra care and be prepared for interface changes when upgrading to a newer version of {\ViennaCL}.
+
+\include{additional-algorithms}
 \include{multi-device}
 \include{custom-kernels}
 \include{custom-contexts}
 \include{kernel-generation}
 \include{tuning}
-\include{other-libs}
-%\include{benchmarks}
+\include{structured-matrices}
 
 
 %%%%%%%%%%%%%%% Addon Functionality %%%%%%%%%%%%%%%%

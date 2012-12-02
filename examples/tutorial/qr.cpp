@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/*
+* 
+*   Tutorial: QR factorization of matrices from ViennaCL or Boost.uBLAS (qr.cpp and qr.cu are identical, the latter being required for compilation using CUDA nvcc)
+*
+*/
+
 // activate ublas support in ViennaCL
 #define VIENNACL_WITH_UBLAS 
 
@@ -81,10 +88,6 @@ double check(MatrixType const & qr, MatrixType const & ref)
   return max_error;
 }
 
-
-/*
-*   Tutorial: QR factorization of matrices from ViennaCL or Boost.uBLAS
-*/
 
 int main (int, const char **)
 {

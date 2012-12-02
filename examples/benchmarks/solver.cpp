@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Benchmark:  Iterative solver tests (solver.cpp and solver.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
+
 #ifndef NDEBUG
  #define NDEBUG
 #endif
@@ -55,12 +62,6 @@
 
 
 using namespace boost::numeric;
-
-/*
-*   Benchmark:
-*   Iterative solver tests
-*   
-*/
 
 #define BENCHMARK_RUNS          1
 

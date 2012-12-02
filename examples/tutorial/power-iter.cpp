@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Calculation of the eigenvalue with largest modulus using the power iteration method
+*             (power-iter.cpp and power-iter.cu are identical, the latter being required for compilation using CUDA nvcc)
+*
+*/
+
 // include necessary system headers
 #include <iostream>
 
@@ -44,11 +51,6 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/operation.hpp> 
 #include <boost/numeric/ublas/vector_expression.hpp>
-
-
-/*
-*   Tutorial: Power Iteration for finding the eigenvalue with largest modulus
-*/
 
 
 

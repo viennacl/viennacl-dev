@@ -130,8 +130,9 @@ the program will most likely terminate in a rather uncontrolled way.
  \item It requires the user to remember and write one extra line of code, even
 if the default settings are fine.
 \end{itemize}
-Initialization is instead done in the constructors of {\ViennaCL}
-objects. This allows a fine-grained control over which source code to compile
+Initialization is instead done in a lazy manner when requesting {\OpenCL} kernels. 
+Kernels with similar functionality are grouped together in a common compilation units.
+This allows a fine-grained control over which source code to compile
 where and when. For example, there is no reason to compile the sparse matrix
 compute kernels at program startup if there are no sparse matrices used at all.
 

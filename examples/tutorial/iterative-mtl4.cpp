@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Use of the iterative solvers in ViennaCL with MTL4 (http://www.mtl4.org/)
+*   
+*/
+
 //
 // include necessary system headers
 //

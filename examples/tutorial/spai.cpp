@@ -15,14 +15,18 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Sparse approximate inverse preconditioner (only available with the OpenCL backend, experimental)
+*
+*/
 
-//
+// enable Boost.uBLAS support
 #define VIENNACL_WITH_UBLAS
 
 #ifndef NDEBUG
  #define NDEBUG
 #endif
-//#define VIENNACL_BUILD_INFO
 
 #include <utility>
 #include <iostream>
@@ -32,7 +36,6 @@
 #include <algorithm>
 #include <stdio.h>
 #include <time.h>
-//#include <omp.h>
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
@@ -44,15 +47,11 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/spai.hpp"
-//#include "qr.hpp"
-//#include "spai-static.hpp"
-//#include "viennacl/linalg/fspai.hpp"
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/io.hpp"
 #include "boost/foreach.hpp"
 #include "boost/tokenizer.hpp"
-//#include "viennacl/linalg/detail/spai/small_matrix.hpp"
 
 #include "vector-io.hpp"
 

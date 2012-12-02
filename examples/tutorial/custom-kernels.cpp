@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Use user-provided OpenCL compute kernels with ViennaCL objects
+*   
+*/
+
+
 //
 // include necessary system headers
 //
@@ -37,12 +44,6 @@
 // Some helper functions for this tutorial:
 #include "Random.hpp"
 
-
-/*
-*
-*   Tutorial:  Custom compute kernels
-*   
-*/
 
 
 //

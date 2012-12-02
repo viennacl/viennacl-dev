@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Use of the iterative solvers in ViennaCL with Eigen (http://eigen.tuxfamily.org/)
+*   
+*/
+
 //
 // include necessary system headers
 //

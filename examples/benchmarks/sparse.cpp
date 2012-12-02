@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/*
+*   Benchmark:  Sparse matrix operations, i.e. matrix-vector products (sparse.cpp and sparse.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
 //#define VIENNACL_BUILD_INFO
 #ifndef NDEBUG
  #define NDEBUG
@@ -44,12 +50,6 @@
 #include "benchmark-utils.hpp"
 #include "io.hpp"
 
-
-/*
-*   Benchmark 1:
-*   Vector tests
-*   
-*/
 
 #define BENCHMARK_RUNS          10
 

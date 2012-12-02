@@ -20,19 +20,19 @@ the maining list at \\
 Thus, before you proceed with the installation of {\ViennaCL}, make sure you
 have a recent version of {\CMake} installed.
 
-To use {\ViennaCL}, the following prerequisites have to be fulfilled:
+To use {\ViennaCL}, only the following minimal prerequisite has to be fulfilled:
 \begin{itemize}
- \item A recent C++ compiler (e.g.~{\GCC} version 4.2.x or above and Visual C++
-2010 are known to work)
- \item {\OpenCL}~\cite{khronoscl,nvidiacl} for accessing compute devices (GPUs);
-see Section~\ref{opencllibs} for details.
-(optional, since iterative solvers can also be used standalone with other libraries (\ublas, Eigen, MTL4))
+ \item A fairly recent C++ compiler (e.g.~{\GCC} version 4.2.x or above and Visual C++
+2005 and 2010 are known to work)
 \end{itemize}
 
 
-The full potential of {\ViennaCL} is only available with the following optional libraries:
+The full potential of {\ViennaCL} is available with the following optional libraries:
 \begin{itemize}
  \item {\CMake}~\cite{cmake} as build system (optional, but highly recommended for building examples)
+ \item {\OpenCL}~\cite{khronoscl,nvidiacl} for accessing compute devices (GPUs); see Section~\ref{opencllibs} for details.
+ \item {\CUDA}~\cite{nvidiacuda} for using CUDA-accelerated operations.
+ \item {\OpenMP}~\cite{openmp} for directive-based parallelism on CPUs.
  \item {\ublas} (shipped with {\Boost}~\cite{boost}) provides the same interface as {\ViennaCL} and allows to switch between CPU and GPU seamlessly, see the tutorials.
  \item Eigen \cite{eigen} can be used to fill {\ViennaCL} types directly. Moreover, the iterative solvers in {\ViennaCL} can directly be used with Eigen objects.
  \item MTL 4 \cite{mtl4} can be used to fill {\ViennaCL} types directly. Even though MTL 4 provides its own iterative solvers, the {\ViennaCL} solvers can also be used with MTL 4 objects.
@@ -49,12 +49,13 @@ include path. On Unix based systems, this is often \lstinline|/usr/include/| or
 you should repeat the above procedure with the folder \lstinline|CL/|.
 
 On Windows, the situation strongly depends on your development environment. We advise users
-to consult the documentation of their compiler on how to set the include
-path correctly. With Visual Studio this is usually something like \texttt{C:$\setminus$Program Files$\setminus$Microsoft Visual Studio 9.0$\setminus$VC$\setminus$include}
-and can be set in \texttt{Tools -> Options -> Projects and Solutions -> VC++-\-Directories}. The include and library directories of your {\OpenCL} SDK should also be added there.
+to consult the documentation of their compiler on how to set the include path correctly.
+With Visual Studio this is usually something like \texttt{C:$\setminus$Program Files$\setminus$Microsoft Visual Studio 9.0$\setminus$VC$\setminus$include}
+and can be set in \texttt{Tools -> Options -> Projects and Solutions -> VC++-\-Directories}.
+For using the {\CUDA} backend, simply make sure that the {\CUDA} SDK is installed properly.
+If you wish to use the {\OpenCL} backend, the include and library directories of your {\OpenCL} SDK should also be added there.
 
-\NOTE{If multiple {\OpenCL} libraries are available on the host system, one has
-to ensure that the intended one is used.}
+\NOTE{If multiple {\OpenCL} libraries are available on the host system, {\ViennaCL} uses the first platform returned by the system. Consult Chap.~\ref{chap:multi-devices} for configuring the use of other platforms.}
 
 
 % -----------------------------------------------------------------------------
@@ -84,9 +85,10 @@ the Khronos group \cite{khronoscl} are also shipped with {\ViennaCL} in the
 folder \lstinline|CL/|.
 
 \subsection{AMD Accelerated Parallel Processing SDK (formerly Stream SDK)} \label{sec:opencl-on-ati}
-AMD provides the {\OpenCL} library with the Accelerated Parallel Processing (APP)
-SDK~\cite{atistream}. At the release of {\ViennaCLversion}, the latest version of the
-SDK is $2.4$. If used with AMD GPUs, recent AMD GPU drivers are typically required. If {\ViennaCL} is to be run on multi-core CPUs,
+AMD has provided the {\OpenCL} library with the Accelerated Parallel Processing (APP)
+SDK~\cite{atistream} previously, now the {\OpenCL} library is also included in the GPU driver.
+At the release of {\ViennaCLversion}, the latest version of the
+SDK is $2.7$. If used with AMD GPUs, recent AMD GPU drivers are typically required. If {\ViennaCL} is to be run on multi-core CPUs,
 no additional GPU driver is required. The installation notes
 of the APP SDK provides guidance throughout the
 installation process~\cite{atistreamdocu}. 
@@ -96,26 +98,48 @@ installation process~\cite{atistreamdocu}.
 Otherwise, linker errors will occur as the required library cannot be found.}
 
 It is important to note that the AMD APP SDK may not provide {\OpenCL}
-certified double precision support~\cite{atidouble} on some CPUs and GPUs. In
-\ViennaCL 1.0.x, double precision was only experimentally available in
-{\ViennaCL} by defining one of the preprocessor constants
-\begin{lstlisting}
-// for CPUs:
-#define VIENNACL_EXPERIMENTAL_DOUBLE_PRECISION_WITH_STREAM_SDK_ON_CPU
-// for GPUs:
-#define VIENNACL_EXPERIMENTAL_DOUBLE_PRECISION_WITH_STREAM_SDK_ON_GPU
-\end{lstlisting}
-prior to any inclusion of {\ViennaCL} header files. With
-{\ViennaCLminorversion}, this is not necessary anymore and double precision
-support is enabled by default -- provided that it is available on the device.
+certified double precision support~\cite{atidouble} on some CPUs and GPUs. 
 
-\NOTE{The functions \texttt{norm\_1}, \texttt{norm\_2}, \texttt{norm\_inf} and
-\texttt{index\_norm\_inf} are known to cause problems on GPUs in
-double precision using ATI Stream SDK v2.1.}
+\NOTE{Unfortunately, some versions of the AMD APP SDK are known to have bugs. For example, APP SDK 2.7 causes BiCGStab to fail on some devices.}
 
 \subsection{INTEL OpenCL SDK} \label{sec:opencl-on-intel}
  {\ViennaCL} works fine with the INTEL OpenCL SDK on Windows and Linux.
 The correct linker path is set automatically in \lstinline|CMakeLists.txt| when using the {\CMake} build system, cf.~Sec.~\ref{sec:viennacl-installation}.
+
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+\section{Enabling OpenMP, OpenCL, or CUDA Backends} \label{sec:cuda-opencl-backends}
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+
+\TIP{The new default behavior in {\ViennaCL} 1.4.0 is to use the CPU backend. {\OpenCL} and {\CUDA} backends need to be enabled by appropriate preprocessor \lstinline|#define|s.}
+
+By default, {\ViennaCL} now uses the single-threaded/OpenMP-enabled CPU backend.
+The {\OpenCL} and the {\CUDA}-backend need to be enabled explicitly by using preprocessor constants as follows:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+ \hline
+   \textbf{Preprocessor} \lstinline|#define| & \textbf{Default computing backend} \\
+ \hline
+ none                              & CPU, single-threaded \\
+ \hline
+ \lstinline|VIENNACL_WITH_OPENMP|  & CPU with OpenMP (compiler flags required) \\
+ \hline
+ \lstinline|VIENNACL_WITH_OPENCL|  & OpenCL \\
+ \hline
+ \lstinline|VIENNACL_WITH_CUDA|  & CUDA \\
+ \hline
+\end{tabular}
+\end{center}
+
+The preprocessor constants can be either defined at the beginning of the source file (prior to any ViennaCL-includes), or passed to the compiler as command line argument.
+For example, on \lstinline|g++| the respective command line option for enabling the OpenCL backend is \lstinline|-DVIENNACL_WITH_OPENCL|.
+Note that CUDA requires the \lstinline|nvcc| compiler. Furthermore, the use of {\OpenMP} usually requires additional compiler flags (on \lstinline|g++| this is for example \lstinline|-fopenmp|).
+
+\TIP{The CUDA backend requires a compilation using \lstinline|nvcc|.}
+
+Multiple backends can be used simultaneously. In such case, \lstinline|CUDA| has higher priority than \lstinline|OpenCL|, which has higher priority over the CPU backend when it comes to selecting the default backend.
 
 
 % -----------------------------------------------------------------------------
@@ -129,34 +153,38 @@ on your system. The other dependencies are listed in Tab.~\ref{tab:tutorial-depe
 \begin{table}[tb]
 \begin{center}
 \begin{tabular}{l|l}
-Tutorial No. & Dependencies\\
+Example/Tutorial & Dependencies\\
 \hline
 \texttt{tutorial/amg.cpp}        & {\OpenCL}, {\ublas} \\
 \texttt{tutorial/bandwidth-reduction.cpp} & - \\
-\texttt{tutorial/blas1.cpp}      & {\OpenCL} \\
-\texttt{tutorial/blas2.cpp}      & {\OpenCL}, {\ublas} \\
-\texttt{tutorial/blas3.cpp}      & {\OpenCL}, {\ublas} \\
+\texttt{tutorial/blas1.cpp/cu}      & - \\
+\texttt{tutorial/blas2.cpp/cu}      & {\ublas} \\
+\texttt{tutorial/blas3.cpp/cu}      & {\ublas} \\
 \texttt{tutorial/custom-kernels.cpp}       & {\OpenCL} \\
 \texttt{tutorial/custom-context.cpp}       & {\OpenCL} \\
-\texttt{tutorial/fft.cpp}        & {\OpenCL} \\
-\texttt{tutorial/iterative.cpp}  & {\OpenCL}, {\ublas} \\
+\texttt{tutorial/eigen-with-viennacl.cpp}  & {\Eigen} \\
+\texttt{tutorial/fft.cpp}                  & {\OpenCL} \\
+\texttt{tutorial/iterative.cpp/cu}         & {\ublas} \\
 \texttt{tutorial/iterative-ublas.cpp}      & {\ublas}  \\
 \texttt{tutorial/iterative-eigen.cpp}      & {\Eigen}   \\
 \texttt{tutorial/iterative-mtl4.cpp}       & {\MTL}    \\
-\texttt{tutorial/matrix-range.cpp}         & {\OpenCL}, {\ublas} \\
-\texttt{tutorial/qr.cpp}         & {\OpenCL}, {\ublas} \\
-\texttt{tutorial/spai.cpp}       & {\OpenCL}, {\ublas} \\
-\texttt{tutorial/eigen-with-viennacl.cpp}  & {\OpenCL}, {\Eigen} \\
-\texttt{tutorial/mtl4-with-viennacl.cpp}   & {\OpenCL}, {\MTL} \\
-\texttt{tutorial/vector-range.cpp}         & {\OpenCL}, {\ublas} \\
+\texttt{tutorial/lanczos.cpp/cu}           & {\ublas}    \\
+\texttt{tutorial/least-squares.cpp/cu}     & {\ublas}    \\
+\texttt{tutorial/matrix-range.cpp/cu}      & {\ublas} \\
+\texttt{tutorial/mtl4-with-viennacl.cpp}   & {\MTL} \\
+\texttt{tutorial/power-iter.cpp/cu}        & {\ublas} \\
+\texttt{tutorial/qr.cpp/cu}                & {\ublas} \\
+\texttt{tutorial/spai.cpp}                 & {\OpenCL}, {\ublas} \\
+\texttt{tutorial/vector-range.cpp/cu}      & {\ublas} \\
 \texttt{tutorial/viennacl-info.cpp}        & {\OpenCL} \\
-\texttt{benchmarks/blas3.cpp}   & {\OpenCL} \\
-\texttt{benchmarks/opencl.cpp}  & {\OpenCL} \\
-\texttt{benchmarks/solver.cpp}  & {\OpenCL}, {\ublas} \\
-\texttt{benchmarks/sparse.cpp}  & {\OpenCL}, {\ublas} \\
-\texttt{benchmarks/vector.cpp}  & {\OpenCL} \\
+\texttt{benchmarks/blas3.cpp/cu}   & - \\
+\texttt{benchmarks/opencl.cpp}     & {\OpenCL} \\
+\texttt{benchmarks/solver.cpp/cu}  & {\ublas} \\
+\texttt{benchmarks/sparse.cpp/cu}  & {\ublas} \\
+\texttt{benchmarks/vector.cpp/cu}  & - \\
 \end{tabular}
-\caption{Dependencies for the examples in the \texttt{examples/} folder}
+\caption{Dependencies for the examples in the \texttt{examples/} folder. Examples using the CUDA-backend use the \lstinline|.cu| file extension.
+Note that all examples can be run using either of the CPU, OpenCL, and CUDA backend unless an explicit {\OpenCL}-dependency is stated.}
 \label{tab:tutorial-dependencies}
 \end{center}
 \end{table}
@@ -165,6 +193,24 @@ Before building the examples, customize \texttt{CMakeLists.txt} in the {\ViennaC
 Per default, all examples using {\ublas}, {Eigen} and {MTL4} are turned off.
 Please enable the respective examples based on the libraries available on your machine.
 Directions on how to accomplish this are given directly within the \texttt{CMakeLists.txt} file.
+A brief overview of the most important flags is as follows:
+
+\begin{center}
+ \begin{tabular}{|l|l|}
+  \hline
+  {\CMake} Flag & Purpose \\
+  \hline
+  \lstinline|ENABLE_CUDA|   & Builds examples using {\CUDA}\\
+  \lstinline|ENABLE_OPENCL| & Builds examples using {\OpenCL}\\
+  \lstinline|ENABLE_OPENMP| & Builds examples with {\OpenMP} for CPU backend enabled\\
+  \hline
+  \lstinline|ENABLE_EIGEN|  & Builds examples depending on {\Eigen}\\
+  \lstinline|ENABLE_MTL4|   & Builds examples depending on {\MTL}\\
+  \lstinline|ENABLE_UBLAS|  & Builds examples depending on {\ublas}\\
+  \hline
+ \end{tabular}
+\end{center}
+
 
 \subsection{Linux}
 To build the examples, open a terminal and change to:
@@ -194,6 +240,8 @@ Execute the examples from the \lstinline|build/| folder as follows:
 \end{lstlisting}
 Note that all benchmark executables carry the suffix \lstinline|bench|. 
 
+\TIP{Use the {\CMake}-GUI via \lstinline|cmake-gui ..| within the \lstinline|build/| folder in order to enable or disable optional libraries conveniently.}
+
 \subsection{Mac OS X}
 \label{apple}
 The tools mentioned in Section \ref{dependencies} are available on 
@@ -218,10 +266,11 @@ In the following the procedure is outlined for \texttt{Visual Studio}: Assuming 
 \item Open the {\CMake} GUI.
 \item Set the {\ViennaCL} base directory as source directory.
 \item Set the \texttt{build/} directory as build directory.
-\item Click on 'Configure' and select the appropriate generator (e.g.~\texttt{Visual Studio 9 2008})
-\item If either Boost or some OpenCL paths cannot be found, please select the advanced view and provide the required paths manually
-\item Click again an 'Configure'
-\item Click on 'Generate'
+\item Click on 'Configure' and select the appropriate generator (e.g.~\texttt{Visual Studio 9 2008}).
+\item If you set \lstinline|ENABLE_CUDA|, \lstinline|ENABLE_CUDA|, \lstinline|ENABLE_MTL4|, or \lstinline|ENABLE_OPENCL| and the paths cannot be found, please select the advanced view and provide the required paths manually.
+\item If you set \lstinline|ENABLE_UBLAS| and the paths cannot be found, please select the advanced view and provide the required paths manually. You may have to specify the linker path for Boost manually within your Visual Studio IDE.
+\item Click again on 'Configure'. You should not receive an error at this point.
+\item Click on 'Generate'.
 \item The project files can now be found in the {\ViennaCL} build directory, where they can be opened and compiled with Visual Studio (provided that the include and library paths are set correctly, see Sec.~\ref{sec:viennacl-installation}).
 \end{itemize}
 

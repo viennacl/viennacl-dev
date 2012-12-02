@@ -1,6 +1,6 @@
-\chapter{Kernel Parameter Tuning} \label{chap:tuning}
+\chapter{OpenCL Kernel Parameter Tuning} \label{chap:tuning}
 The choice of the global and local work sizes for {\OpenCL} kernels typically has a considerable impact on the obtained device performance.
-The default setting in {\ViennaCL} is -- with some exceptions -- to use the same global and local work sizes for each compute kernel.
+The default setting in {\ViennaCL} is -- with some exceptions -- to use the same number of work groups and work items per work group (128) for each compute kernel.
 To obtain highest performance, optimal work sizes have to be determined for each kernel in dependence of the underlying device.
 
 \section{Start Tuning Runs}

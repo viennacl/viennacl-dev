@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Shows how to exchange data between ViennaCL and Eigen (http://eigen.tuxfamily.org/) objects.
+*   
+*/
+
 //
 // include necessary system headers
 //

@@ -54,10 +54,12 @@ namespace viennacl
         * @param tol              Relative tolerance for the residual (solver quits if ||r|| < tol * ||r_initial||)
         * @param max_iterations   The maximum number of iterations
         */
-        mixed_precision_cg_tag(double tol = 1e-8, unsigned int max_iterations = 300) : tol_(tol), iterations_(max_iterations) {};
+        mixed_precision_cg_tag(double tol = 1e-8, unsigned int max_iterations = 300, float inner_tol = 1e-2f) : tol_(tol), iterations_(max_iterations), inner_tol_(inner_tol) {};
       
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }
+        /** @brief Returns the relative tolerance */
+        float inner_tolerance() const { return inner_tol_; }
         /** @brief Returns the maximum number of iterations */
         unsigned int max_iterations() const { return iterations_; }
         
@@ -74,6 +76,7 @@ namespace viennacl
       private:
         double tol_;
         unsigned int iterations_;
+        float inner_tol_;
         
         //return values from solver
         mutable unsigned int iters_taken_;
@@ -199,7 +202,7 @@ namespace viennacl
         
         
         
-        if (new_inner_ip_rr < 1e-2f * initial_inner_rhs_norm_squared || i == tag.max_iterations()-1)
+        if (new_inner_ip_rr < tag.inner_tolerance() * initial_inner_rhs_norm_squared || i == tag.max_iterations()-1)
         {
           //std::cout << "outer correction at i=" << i << std::endl;
           //result += result_low_precision;

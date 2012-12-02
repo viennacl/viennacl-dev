@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Prints informations about the OpenCL backend. Requires compilation with VIENNACL_WITH_OPENCL being defined.
+*             
+*
+*/
+
 // include necessary system headers
 #include <iostream>
 

@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: BLAS level 1 functionality (blas1.cpp and blas1.cu are identical, the latter being required for compilation using CUDA nvcc)
+*
+*/
+
+
 // include necessary system headers
 #include <iostream>
 
@@ -32,10 +39,6 @@
 
 // Some helper functions for this tutorial:
 #include "Random.hpp"
-
-/*
-*   Tutorial: BLAS level 1 functionality
-*/
 
 int main()
 {

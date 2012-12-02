@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Calculation of eigenvalues using Lanczos' method (lanczos.cpp and lanczos.cu are identical, the latter being required for compilation using CUDA nvcc)
+*
+*/
+
 // include necessary system headers
 #include <iostream>
 
@@ -47,9 +53,6 @@
 #include <boost/numeric/ublas/vector_expression.hpp>
 
 
-/*
-*   Tutorial: calculation of eigenvalues - Lanczos
-*/
 
 template <typename MatrixType>
 std::vector<double> initEig(MatrixType const & A)

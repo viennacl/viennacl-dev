@@ -36,6 +36,8 @@ New features and feature improvements are as follows:
        added element-wise products and division, added support for every one-argument OpenCL function.
  \item The name of the operation is now a mandatory argument of the constructor of \lstinline|custom_operation|.
  \item Improved performances of the generated matrix-vector product code.
+ \item Updated interfacing code for the Eigen library, now working with Eigen 3.x.y.
+ \item Converter in source-release now depends on Boost.filesystem3 instead of Boost.filesystem2, thus requiring Boost 1.44 or above.
 \end{itemize}
 
 
@@ -162,7 +164,7 @@ storage.
  \item Dense and sparse matrix types now now be filled using STL-emulated types (\lstinline|std::vector< std::vector<NumericT> >| and \lstinline|std::vector< std::map< unsigned int, NumericT> >|)
  \item BLAS level 3 functionality is now complete. We are very happy with the general out-of-the-box performance of matrix-matrix-products, even though it cannot beat the extremely tuned implementations tailored to certain matrix sizes on a particular device yet.
  \item An automated performance tuning environment allows an optimization of the kernel parameters for the library user's machine. Best parameters can be obtained from a tuning run and stored in a XML file and read at program startup using pugixml.
- \item Two now preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
+ \item Two new preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
  \item Clean compilation of all examples under Visual Studio 2005 (we recommend newer compilers though...).
  \item Error handling is now carried out using C++ exceptions.
  \item Matrix Market now uses index base 1 per default (thanks to Evan Bollig for reporting that)

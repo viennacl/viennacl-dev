@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Benchmark:  Profiling performance of current OpenCL implementation
+*   
+*/
+
+
 #ifndef NDEBUG
  #define NDEBUG
 #endif
@@ -36,12 +43,6 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-
-/*
-*   Benchmark 4:
-*   Profiling performance of current OpenCL implementation
-*   
-*/
 
 #define BENCHMARK_VECTOR_SIZE   100000
 

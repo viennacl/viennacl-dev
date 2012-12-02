@@ -15,6 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Benchmark:   Vector operations (vector.cpp and vector.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   
+*/
+
+
 //#define VIENNACL_DEBUG_ALL
 #ifndef NDEBUG
  #define NDEBUG
@@ -33,12 +40,6 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-
-/*
-*   Benchmark 1:
-*   Vector tests
-*   
-*/
 
 #define BENCHMARK_VECTOR_SIZE   3000000
 #define BENCHMARK_RUNS          10

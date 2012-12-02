@@ -15,6 +15,14 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+* 
+*   Tutorial: Least Squares problem for matrices from ViennaCL or Boost.uBLAS (least-squares.cpp and least-squares.cu are identical, the latter being required for compilation using CUDA nvcc)
+* 
+*   See Example 2 at http://tutorial.math.lamar.edu/Classes/LinAlg/QRDecomposition.aspx for a reference solution.
+*
+*/
+
 // activate ublas support in ViennaCL
 #define VIENNACL_WITH_UBLAS 
 

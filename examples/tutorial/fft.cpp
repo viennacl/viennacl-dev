@@ -16,6 +16,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial: FFT functionality (experimental)
+*
+*/
+
+
 // include necessary system headers
 #include <iostream>
 #include <vector>
@@ -29,10 +36,6 @@
 
 // include FFT routines
 #include "viennacl/fft.hpp"
-
-/*
-*   Tutorial: FFT functionality (experimental in ViennaCL 1.2.x)
-*/
 
 int main() 
 {

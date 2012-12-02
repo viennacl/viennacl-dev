@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Use of the iterative solvers in ViennaCL with Boost.uBLAS
+*   
+*/
+
 //
 // include necessary system headers
 //
@@ -56,11 +62,6 @@
 #include "Random.hpp"
 #include "vector-io.hpp"
 
-/*
-*
-*   Tutorial:  Iterative solvers without OpenCL
-*   
-*/
 using namespace boost::numeric;
 
 

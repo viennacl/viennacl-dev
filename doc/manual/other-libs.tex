@@ -8,12 +8,12 @@ Please feel free to suggest additional libraries for which an interface should b
 
 Since it is unlikely that all third-party libraries for which {\ViennaCL} provides interfaces are installed
 on the target machine, the wrappers are disabled by default. To selectively enable the wrappers,
-the appropriate preprocessor constants \lstinline|VIENNACL_HAVE_XXXX| have to be defined \emph{prior to any 
+the appropriate preprocessor constants \lstinline|VIENNACL_WITH_XXXX| have to be defined \emph{prior to any 
 \lstinline|\#include| statements for {\ViennaCL} headers}. This can for example be assured by passing the
 preprocessor constant directly when launching the compiler. With \lstinline|GCC| this is for instance 
 achieved by the \lstinline|-D| switch.
 
-\section{\ublas}
+\section{Boost.uBLAS}
 Since all types in {\ViennaCL} have to same interface as their counterparts in {\ublas},
 most code written for {\ViennaCL} objects remains valid when using {\ublas} objects.
 \begin{lstlisting}
@@ -41,13 +41,13 @@ The above code is valid for either the {\ViennaCL} namespace declarations, or th
 iterative solvers are not part of {\ublas} and therefore the explicit namespace specification is required. More examples
 for the exchangability of {\ublas} and {\ViennaCL} can be found in the tutorials in the \texttt{examples/tutorials/} folder.
 
-When using the iterative solvers, the preprocessor constant \texttt{VIENNACL\_HAVE\_UBLAS} must be defined prior to any other {\ViennaCL} include statements.
+When using the iterative solvers, the preprocessor constant \texttt{VIENNACL\_WITH\_UBLAS} must be defined prior to any other {\ViennaCL} include statements.
 This is essential for enabling the respective wrappers.
 
 \TIP{Refer in particular to \texttt{iterative-ublas.cpp} for a complete example on iterative solvers using {\ublas} types.}
 
 \section{\Eigen}
-To copy data from {\Eigen} \cite{eigen} objects to {\ViennaCL}, the \texttt{copy()}-functions are used just as for {\ublas} and STL types:
+To copy data from {\Eigen} \cite{eigen} objects (version 3.x.y) to {\ViennaCL}, the \texttt{copy()}-functions are used just as for {\ublas} and STL types:
 \begin{lstlisting}
  //from Eigen to ViennaCL
  viennacl::copy(eigen_vector, vcl_vector);
@@ -71,7 +71,7 @@ The iterative solvers in {\ViennaCL} can also be used directly with {\Eigen} obj
   eigen_result = solve(eigen_matrix, eigen_rhs, bicgstab_tag());
   eigen_result = solve(eigen_matrix, eigen_rhs, gmres_tag());
 \end{lstlisting}
-When using the iterative solvers with {\Eigen}, the preprocessor constant \texttt{VIENNACL\_HAVE\_EIGEN} must be defined prior to any other {\ViennaCL} include statements.
+When using the iterative solvers with {\Eigen}, the preprocessor constant \texttt{VIENNACL\_WITH\_EIGEN} must be defined prior to any other {\ViennaCL} include statements.
 This is essential for enabling the respective wrappers.
 
 \TIP{Refer to \texttt{iterative-eigen.cpp} and \texttt{eigen-with-viennacl.cpp} for complete examples.}
@@ -105,7 +105,7 @@ Even though {\MTL} provides its own set of iterative solvers, the iterative solv
 \end{lstlisting}
 Our internal tests have shown that the execution time of {\MTL} solvers is equal to {\ViennaCL} solvers when using {\MTL} types.
 
-When using the iterative solvers with {\MTL}, the preprocessor constant \texttt{VIENNACL\_HAVE\_MTL4} must be defined prior to any other {\ViennaCL} include statements.
+When using the iterative solvers with {\MTL}, the preprocessor constant \texttt{VIENNACL\_WITH\_MTL4} must be defined prior to any other {\ViennaCL} include statements.
 This is essential for enabling the respective wrappers.
 
 \TIP{Refer to \texttt{iterative-mtl4.cpp} and \texttt{mtl4-with-viennacl.cpp} for complete examples.}

@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/*
+*
+*   Tutorial:  Handling structured dense matrices (experimental, only available with OpenCL backend)
+*   
+*/
+
 // include necessary system headers
 #include <iostream>
 
@@ -35,9 +41,6 @@
 #include "boost/numeric/ublas/matrix_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
-/*
-*   Tutorial: Structured matrices
-*/
 
 int main() 
 {

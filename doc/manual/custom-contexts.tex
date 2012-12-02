@@ -1,4 +1,4 @@
-\chapter{Using ViennaCL in User Provided OpenCL Contexts} \label{chap:custom-contexts}
+\chapter{Using ViennaCL in User-Provided OpenCL Contexts} \label{chap:custom-contexts}
 
 Many projects need similar basic linear algebra operations, but essentially operate in their own {\OpenCL} context. 
 To provide the functionality and convenience of {\ViennaCL} to such existing projects,
@@ -64,6 +64,7 @@ and the queues in a STL map:
 It is not necessary to pass all devices and queues created within a particular context to {\ViennaCL}, only those which {\ViennaCL} should use have to be passed.
 {\ViennaCL} will by default use the first queue on each device. The user has to care for appropriate synchronization between different queues.
 
+\TIP{{\ViennaCL} does not destroy the provided context automatically upon exit. The user should thus call \lstinline|clReleaseContext()| as usual for destroying the context.}
 
 \section{Wrapping Existing Memory with ViennaCL Types}
 Now as the user provided context is supplied to {\ViennaCL}, user-created memory objects have to be wrapped into {\ViennaCL} data-types in order to use the full functionality.

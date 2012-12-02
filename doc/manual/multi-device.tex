@@ -1,12 +1,14 @@
 
-\chapter{Configuring Contexts and Devices} \label{chap:multi-devices}
+\chapter{Configuring OpenCL Contexts and Devices} \label{chap:multi-devices}
 Support for multiple devices was officially added in {\OpenCL} 1.1.
 Among other things, this allows e.g.~to use all CPUs in a multi-socket CPU mainboard as a single {\OpenCL} compute device.
 Nevertheless, the efficient use of multiple {\OpenCL} devices is far from trivial, because algorithms have to be designed such that 
 they take distributed memory and synchronization issues into account.
 
-Support for multiple devices and contexts was introduced in {\ViennaCL} with version 1.1.0. In the following we give a description of the 
+Support for multiple {\OpenCL} devices and contexts was introduced in {\ViennaCL} with version 1.1.0. In the following we give a description of the 
 provided functionality.
+
+\NOTE{In {\ViennaCLversion} there is no support for multiple CUDA-devices. The default CUDA-compute device is used.}
 
 \section{Context Setup}
 Unless specified otherwise (see Chap.~\ref{chap:custom-contexts}), {\ViennaCL} silently creates its own context and adds all available default devices with a single queue per device to it.
@@ -28,7 +30,7 @@ By default, only the first device in the context is used for all operations. Thi
  viennacl::ocl::current_context().current_device();
  viennacl::ocl::current_device(); //equivalent to above
 \end{lstlisting}
-A user may wish to use multiple contexts, where each context consists of a subset of the available devices. 
+A user may wish to use multiple {\OpenCL} contexts, where each context consists of a subset of the available devices. 
 To setup a context with ID \lstinline|id| with a particular device type only, the user has to specify this 
 prior to any other {\ViennaCL} related statements:
 \begin{lstlisting}
@@ -68,7 +70,7 @@ However, memory transfer between contexts (and thus devices) has to be done manu
 to keep track in which context the individual {\ViennaCL} objects have been created, because all operands are assumed to be in the currently active context.
 
 \section{Switching Contexts and Devices}
-{\ViennaCL} always uses the currently active context with the currently active device to enqueue compute kernels. The default context is identified by ID '$0$'.
+{\ViennaCL} always uses the currently active {\OpenCL} context with the currently active device to enqueue compute kernels. The default context is identified by ID '$0$'.
 The context with ID \lstinline|id| can be set as active context with the line.
 \begin{lstlisting}
 viennacl::ocl::switch_context(id);
@@ -89,7 +91,7 @@ If the supplied device is not part of the context, an error message is printed a
 
 
 \section{Setting OpenCL Compiler Flags}
-Each context provides a member function \lstinline|.build_options()|, which can be used to pass OpenCL compiler flags prior to compilation.
+Each {\OpenCL} context provides a member function \lstinline|.build_options()|, which can be used to pass OpenCL compiler flags prior to compilation.
 Note that flags need to be passed to the context prior to the compilation of the respective kernels, i.e.~prior the first instantiation of the respective matrix or vector types.
 
 To pass the \lstinline|-cl-mad-enable| flag to the current context, the line

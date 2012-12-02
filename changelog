@@ -2,6 +2,43 @@
 **** ViennaCL Change Logs ****
 ******************************
 
+*** Version 1.4.x ***
+
+-- Version 1.4.0 --
+The transition from 1.3.x to 1.4.x features the largest number of additions, improvements, and cleanups since the initial release.
+In particular, host-, OpenCL-, and CUDA-based execution is now supported. OpenCL now needs to be enabled explicitly!
+New features and feature improvements are as follows:
+- Added host-based and CUDA-enabled operations on ViennaCL objects. The default is now a host-based execution for reasons of compatibility.
+  Enable OpenCL- or CUDA-based execution by defining the preprocessor constant VIENNACL_WITH_OPENCL and VIENNACL_WITH_CUDA respectively.
+  Note that CUDA-based execution requires the use of nvcc.
+- Added mixed-precision CG solver (OpenCL-based).
+- Greatly improved performance of ILU0 and ILUT preconditioners (up to 10-fold). Also fixed a bug in ILUT.
+- Added initializer types from Boost.uBLAS (unit_vector, zero_vector, scalar_vector, identity_matrix, zero_matrix, scalar_matrix).
+  Thanks to Karsten Ahnert for suggesting the feature.
+- Added incomplete Cholesky factorization preconditioner.
+- Added element-wise operations for vectors as available in Boost.uBLAS (element_prod, element_div).
+- Added restart-after-N-cycles option to BiCGStab.
+- Added level-scheduling for ILU-preconditioners. Performance strongly depends on matrix pattern.
+- Added least-squares example including a function inplace_qr_apply_trans_Q() to compute the right hand side vector Q^T b without rebuilding Q.
+- Improved performance of LU-factorization of dense matrices.
+- Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
+- Reduced overhead when copying to/from ublas::compressed_matrix.
+- ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
+- Refurbished OpenCL vector kernels backend. 
+  All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
+- matrix_range and matrix_slice as well as vector_range and vector_slice can now be used and mixed completely seamlessly with all standard operations except lu_factorize().
+- Fixed a bug when using copy() with iterators on vector proxy objects.
+- Final reduction step in inner_prod() and norms is now computed on CPU if the result is a CPU scalar.
+- Reduced kernel launch overhead of simple vector kernels by packing multiple kernel arguments together.
+- Updated SVD code and added routines for the computation of symmetric eigenvalues using OpenCL.
+- custom_operation's constructor now support multiple arguments, allowing multiple expression to be packed in the same kernel for improved performances.
+  However, all the datastructures in the multiple operations must have the same size.
+- Further improvements to the OpenCL kernel generator: Added a repeat feature for generating loops inside a kernel, added element-wise products and division, added support for every one-argument OpenCL function.
+- The name of the operation is now a mandatory argument of the constructor of custom_operation.
+- Improved performances of the generated matrix-vector product code.
+- Updated interfacing code for the Eigen library, now working with Eigen 3.x.y.
+- Converter in source-release now depends on Boost.filesystem3 instead of Boost.filesystem2, thus requiring Boost 1.44 or above.
+
 *** Version 1.3.x ***
 
 -- Version 1.3.1 --
@@ -100,7 +137,7 @@ storage.
  - Dense and sparse matrix types now now be filled using STL-emulated types (std::vector< std::vector<NumericT> > and std::vector< std::map< unsigned int, NumericT> >)
  - BLAS level 3 functionality is now complete. We are very happy with the general out-of-the-box performance of matrix-matrix-products, even though it cannot beat the extremely tuned implementations tailored to certain matrix sizes on a particular device yet.
  - An automated performance tuning environment allows an optimization of the kernel parameters for the library user's machine. Best parameters can be obtained from a tuning run and stored in a XML file and read at program startup using pugixml.
- - Two now preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
+ - Two new preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
  - Clean compilation of all examples under Visual Studio 2005 (we recommend newer compilers though...).
  - Error handling is now carried out using C++ exceptions.
  - Matrix Market now uses index base 1 per default (thanks to Evan Bollig for reporting that)

@@ -128,11 +128,27 @@ Thus, one may not obtain an overall performance benefit if too much time is spen
 
 \TIP{The preconditioner also works for {\ublas} types!}
 
+An overview of preconditioners available for the various sparse matrix types is as follows:
+\begin{center}
+ \begin{tabular}{|l|c|c|c|c|c|c|}
+  \hline
+  Matrix Type & ICHOL & (Block-)ILU[0/T] & Jacobi & Row-scaling & AMG & SPAI \\
+  \hline
+  \lstinline|compressed_matrix| & yes & yes & yes & yes & yes & yes \\
+  \lstinline|coordinate_matrix| & no & no & yes & yes & no & no \\
+  \lstinline|ell_matrix| & no & no & no & no & no & no \\
+  \lstinline|hyb_matrix| & no & no & no & no & no & no \\
+  \hline
+ \end{tabular}
+\end{center}
+Broader support of preconditioners particularly for \lstinline|ell_matrix| and \lstinline|hyb_matrix| is scheduled for future releases.
+AMG and SPAI preconditioners are described in Chap.~\ref{chap:additional-algorithms}.
+
+
 In the following it is assumed that the sparse linear system of equations is given as follows:
 \begin{lstlisting}
-using viennacl::compressed_matrix;
+typedef viennacl::compressed_matrix<float>   SparseMatrix;
 
-typedef compressed_matrix<float>   SparseMatrix;
 SparseMatrix  vcl_matrix;
 viennacl::vector<float>  vcl_rhs;
 viennacl::vector<float>  vcl_result;
@@ -161,13 +177,14 @@ viennacl::vector<float>  vcl_result;
 \subsection{Incomplete LU Factorization with Threshold (ILUT)}
 The incomplete LU factorization preconditioner aims at computing sparse matrices lower and upper triangular matrices $L$ and $U$ such that the sparse system
 matrix is approximately given by $A \approx LU$. In order to control the sparsity pattern of $L$ and $U$, a threshold strategy is used (ILUT)
-\cite{saad-iterative-solution}. Due to the serial nature of the preconditioner, the setup as well as each application of ILUT to the residual is computed on
-the CPU.
+\cite{saad-iterative-solution}. Due to the serial nature of the preconditioner, the setup of ILUT is always computed on
+the CPU using the respective ViennaCL backend. 
 
 \begin{lstlisting}
 //compute ILUT preconditioner:
-ilut_precond< SparseMatrix > vcl_ilut(vcl_matrix,
-                                      viennacl::linalg::ilut_tag());
+viennacl::linalg::ilut_tag ilut_config;
+viennacl::linalg::ilut_precond< SparseMatrix > vcl_ilut(vcl_matrix,
+                                                        ilut_config);
 
 //solve (e.g. using conjugate gradient solver)
 vcl_result = viennacl::linalg::solve(vcl_matrix,
@@ -175,19 +192,22 @@ vcl_result = viennacl::linalg::solve(vcl_matrix,
                                      viennacl::linalg::bicgstab_tag(),
                                      vcl_ilut);   //preconditioner here
 \end{lstlisting}
-Two parameters can be passed to the constructor of \lstinline|ilut_tag|: The first specifies the maximum number of entries per row in $L$ and $U$, while the
-second parameter specifies the drop tolerance.
+The triangular substitutions may be applied in parallel on GPUs by enabling \emph{level-scheduling} \cite{saad-iterative-solution} via the member function call \lstinline|use_level_scheduling(true)| in the \lstinline|ilut_config| object.
+
+Three parameters can be passed to the constructor of \lstinline|ilut_tag|: The first specifies the maximum number of entries per row in $L$ and $U$, while the
+second parameter specifies the drop tolerance. The third parameter is the boolean specifying whether level scheduling should be used.
+
+\TIP{The performance of level scheduling depends strongly on the matrix pattern and is thus disabled by default.}
 
 \subsection{Incomplete LU Factorization with Static Pattern (ILU0)}
 Similar to ILUT, ILU0 computes an approximate LU factorization with sparse factors L and U.
 While ILUT determines the location of nonzero entries on the fly, ILU0 uses the sparsity pattern of A for the sparsity pattern of L and U \cite{saad-iterative-solution}.
-Due to the serial nature of the preconditioner, the setup as well as each application of ILU0 to the residual is computed on
-the CPU.
-
+Due to the serial nature of the preconditioner, the setup of ILU0 is computed on the CPU.
 \begin{lstlisting}
 //compute ILU0 preconditioner:
-ilu0_precond< SparseMatrix > vcl_ilu0(vcl_matrix,
-                                      viennacl::linalg::ilu0_tag());
+viennacl::linalg::ilu0_tag ilu0_config;
+viennacl::linalg::ilu0_precond< SparseMatrix > vcl_ilut(vcl_matrix,
+                                                        ilu0_config);
 
 //solve (e.g. using conjugate gradient solver)
 vcl_result = viennacl::linalg::solve(vcl_matrix,
@@ -195,17 +215,18 @@ vcl_result = viennacl::linalg::solve(vcl_matrix,
                                      viennacl::linalg::bicgstab_tag(),
                                      vcl_ilut);   //preconditioner here
 \end{lstlisting}
-Two parameters can be passed to the constructor of \lstinline|ilu0_tag|:
-The first parameter specifies the lower row and column index for which ILU0 should be computed, while the second parameter specifies the upper bound on the row and column indices considered.
-For example, the parameter set $(2,5)$ is supplied, ILU0 is computed for the diagonal block $A(2:4, 2:4)$, where $2:4 = \{2, 3, 4 \}$.
-By default, ILU0 is computed for the full system matrix.
+The triangular substitutions may be applied in parallel on GPUs by enabling \emph{level-scheduling} \cite{saad-iterative-solution} via the member function call \lstinline|use_level_scheduling(true)| in the \lstinline|ilu0_config| object.
+
+One parameter can be passed to the constructor of \lstinline|ilu0_tag|, being the boolean specifying whether level scheduling should be used.
+
+\TIP{The performance of level scheduling depends strongly on the matrix pattern and is thus disabled by default.}
 
 \subsection{Block-ILU}
 To overcome the serial nature of ILUT and ILU0 applied to the full system matrix,
 a parallel variant is to apply ILU to diagonal blocks of the system matrix.
 This is accomplished by the \lstinline|block_ilu| preconditioner, which takes
 the system matrix type as first template argument and the respective ILU-tag type as second template argument
-(either \lstinline|ilut_tag| or \lstinline|ilu0_tag|). 
+(either \lstinline|ilut_tag| or \lstinline|ilu0_tag|). Support for accelerators using {\CUDA} or {\OpenCL} is provided.
 
 \begin{lstlisting}
 //compute block-ILU preconditioner using ILU0 for each block:
@@ -220,8 +241,9 @@ vcl_result = viennacl::linalg::solve(vcl_matrix,
                                      vcl_block_ilu0);
 \end{lstlisting}
 A third argument can be passed to the constructor of \lstinline|block_ilu_precond|: 
-Either the number of blocks to be used (defaults to 4), or an index vector with fine-grained control over the blocks. Refer to the Doxygen pages in doc/doxygen for details.
+Either the number of blocks to be used (defaults to $8$), or an index vector with fine-grained control over the blocks. Refer to the Doxygen pages in doc/doxygen for details.
 
+\TIP{The number of blocks is a design parameter for your sparse linear system at hand. Higher number of blocks leads to better memory bandwidth utilization on GPUs, but may increase the number of solver iterations.}
 
 \subsection{Jacobi Preconditioner}
 A Jacobi preconditioner is a simple diagonal preconditioner given by the reciprocals of the diagonal entries of the system matrix $A$.
@@ -255,181 +277,6 @@ vcl_result = viennacl::linalg::solve(vcl_matrix,
 \end{lstlisting}
 The tag \lstinline|viennacl::linalg::row_scaling_tag()| can be supplied with a parameter denoting the norm to be used. A value of \lstinline|1| specifies the
 $l^1$-norm, while a value of $2$ selects the $l^2$-norm (default).
-
-\subsection{Algebraic Multigrid}
-\NOTE{Algebraic Multigrid preconditioners are experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-\NOTE{Algebraic Multigrid preconditioners depend on {\ublas}.}
-
-Algebraic multigrid mimics the behavior of geometric multigrid on the algebraic level and is thus suited for black-box purposes, where only the system matrix
-and the right hand side vector are available \cite{trottenberg:multigrid}. Many different flavors of the individual multigrid ingredients exists
-\cite{yang:parallel-amg}, of which the most common ones are implemented in {\ViennaCL}.
-
-The two main ingredients of algebraic multigrid are a coarsening algorithm and an interpolation algorithm. The available coarsening methods are listed in
-Tab.~\ref{tab:amg-coarsening}.
-\begin{table}[tbp]
-\begin{center}
-\begin{tabular}{l|l}
-Description & {\ViennaCL} option constant \\
-\hline
-Classical Ruge-St\"uben (RS) & \lstinline|VIENNACL_AMG_COARSE_RS| \\
-One-Pass & \lstinline|VIENNACL_AMG_COARSE_ONEPASS| \\
-RS0 & \lstinline|VIENNACL_AMG_COARSE_RS0| \\
-RS3 & \lstinline|VIENNACL_AMG_COARSE_RS3| \\
-Aggregation & \lstinline|VIENNACL_AMG_COARSE_AG| \\
-Smoothed aggregation & \lstinline|VIENNACL_AMG_COARSE_SA| \\
-\end{tabular}
-\caption{AMG coarsening methods available in {\ViennaCL}. Per default, classical RS coarsening is used.\label{tab:amg-coarsening}}
-\end{center}
-\end{table}
-The available interpolation methods are given in Tab.~\ref{tab:amg-interpolation}.
-\begin{table}[tbp]
-\begin{center}
-\begin{tabular}{l|l}
-Description & {\ViennaCL} option constant \\
-\hline
-Direct & \lstinline|VIENNACL_AMG_INTERPOL_DIRECT| \\
-Classic & \lstinline|VIENNACL_AMG_INTERPOL_ONEPASS| \\
-RS0 coarsening & \lstinline|VIENNACL_AMG_INTERPOL_RS0| \\
-RS3 coarsening & \lstinline|VIENNACL_AMG_INTERPOL_RS3| \\
-\end{tabular}
-\caption{AMG interpolation methods available in {\ViennaCL}. Per default, direct interpolation is used.\label{tab:amg-interpolation}}
-\end{center}
-\end{table}
-In addition, the following parameters can be controlled in the \lstinline|amg_tag| and can be passed to the constructor:
-\begin{itemize}
- \item Strength of dependence threshold (default: $0.25$)
- \item Interpolation weight (default: $1$)
- \item Jacobi smoother weight (default: $1$)
- \item Number of pre-smoothing steps (default: $1$)
- \item Number of post-smoothing steps (default: $1$)
- \item Number of coarse levels
-\end{itemize}
-
-\TIP{Note that the efficiency of the various AMG flavors are typically highly problem-specific. Therefore, failure of one method for a particular problem does
-NOT imply that other coarsening or interpolation strategies will fail as well.}
-
-\subsection{Sparse Approximate Inverses}
-
-\NOTE{Sparse Approximate Inverse preconditioners are experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-\NOTE{Sparse Approximate Inverse preconditioners depend on {\ublas}.}
-
-An alternative construction of a preconditioner for a sparse system matrix $A$ is to compute a matrix $M$ with a prescribed sparsity pattern such that
-\begin{align}
- \Vert AM - I \Vert_F \rightarrow \min \ ,
-\end{align}
-where $\Vert \cdot \Vert_F$ denotes the Frobenius norm.
-This is the basic idea of sparse approximate inverse (SPAI) preconditioner. It becomes increasingly attractive because of their inherent high degree of
-parallelism, since the minimization problem can be solved independently for each column of $M$. {\ViennaCL} provides two preconditioners of
-this family: The first is the classical SPAI algorithm as described by Grote and Huckle \cite{grote:spai}, the second is the factored SPAI (FSPAI) for symmetric
-matrices as proposed by Huckle \cite{huckle:fspai}.
-
-SPAI can be employed for a CPU matrix \lstinline|M| of type \lstinline|MatrixType| as follows:
-\begin{lstlisting}
-// setup SPAI preconditioner, purely CPU-based
-viennacl::linalg::spai_precond<MatrixType> 
-  spai_cpu(M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
-
-//solve (e.g. using stab. Bi-conjugate gradient solver)
-vcl_result = viennacl::linalg::solve(M,
-                                     rhs,
-                                     viennacl::linalg::bicgstab_tag(),
-                                     spai_cpu);
-\end{lstlisting}
-The first parameter denotes the residual norm threshold for the full matrix, the second parameter the maximum number of pattern updates, and the third
-parameter is the threshold for the residual of each minimization problem.
-
-For GPU-matrices, only parts of the setup phase are computed on the CPU, because compute-intensive tasks can be carried out on the GPU:
-\begin{lstlisting}
-// setup SPAI preconditioner, GPU-assisted
-viennacl::linalg::spai_precond<GPUMatrixType> 
-  spai_gpu(vcl_matrix, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
-
-//solve (e.g. using conjugate gradient solver)
-vcl_result = viennacl::linalg::solve(vcl_matrix,
-                                     vcl_rhs,
-                                     viennacl::linalg::bicgstab_tag(),
-                                     spai_gpu);
-\end{lstlisting}
-The \lstinline|GPUMatrixType| is typically a \lstinline|viennacl::compressed_matrix| type.
-
-For symmetric matrices, FSPAI can be used with the conjugate gradient solver:
-\begin{lstlisting}
-viennacl::linalg::fspai_precond<MatrixType> fspai_cpu(M, viennacl::linalg::fspai_tag());
-
-//solve (e.g. using stab. Bi-conjugate gradient solver)
-vcl_result = viennacl::linalg::solve(M,
-                                     rhs,
-                                     viennacl::linalg::cg_tag(),
-                                     fspai_cpu);
-\end{lstlisting}
-Our experience is that FSPAI is typically more efficient than SPAI when applied to the same matrix, both in computational effort and in terms of convergence
-acceleration of the iterative solvers. 
-
-\NOTE{At present, there is no GPU-accelerated FSPAI included in {\ViennaCL}.}
-
-Note that FSPAI depends on the ordering of the unknowns, thus bandwidth reduction algorithms may be employed first, cf.~Sec.~\ref{sec:bandwidth-reduction}.
-
-
-\section{Fast Fourier Transform}
-\NOTE{The fast Fourier transform is experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-Since there is no standardized complex type in {\OpenCL} at the time of the release of {\ViennaCLversion}, vectors need to be set up with real- and imaginary
-part before computing a fast Fourier tranform (FFT). In order to store complex numbers $z_0$, $z_1$, etc.~in a \lstinline|viennacl::vector|, say \lstinline|v|,
-the real and imaginary parts are mapped to even and odd entries of \lstinline|v| respectively: \lstinline|v[0] = Real(z_0)|, \lstinline|v[1] = Imag(z_0)|,
-\lstinline|v[2] = Real(z_1)|, \lstinline|v[3] = Imag(z_1)|, etc.
-
-The FFT of \lstinline|v| can then be computed either by writing to a second vector \lstinline|output| or by directly writing the result to \lstinline|v|
-\begin{lstlisting}
- viennacl::fft(v, output);
- viennacl::inplace_fft(v);
-\end{lstlisting}
-Conversely, the inverse FFT is computed as
-\begin{lstlisting}
- viennacl::ifft(v, output);
- viennacl::inplace_ifft(v);
-\end{lstlisting}
-
-\NOTE{In {\ViennaCLversion} the FFT with complexity $N \log N$ is computed for vectors with a size of a power of two only. For other vector sizes, a standard
-discrete Fourier transform with complexity $N^2$ is employed. This is subject to change in future versions.}
-
-\section{Bandwidth Reduction} \label{sec:bandwidth-reduction}
-\NOTE{Bandwidth reduction algorithms are experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-The bandwidth of a sparse matrix is defined as the maximum difference of the indices of nonzero entries in a row, taken over all rows. A low bandwidth
-typically allows for the use of efficient banded matrix solvers instead of iterative solvers. Moreover, better cache utilization as well as lower fill-in in
-LU-factorization based algorithms can be expected.
-
-For a given sparse matrix with large bandwidth, {\ViennaCL} provides routines for renumbering the unknowns such that the reordered system matrix shows much
-smaller bandwidth. Typical applications stem from the discretization of partial differential equations by means of the finite element or the finite difference
-method. The algorithms employed are as follows:
-\begin{itemize}
- \item Classical Cuthill-McKee algorithm \cite{cuthill:reducing-bandwidth}
- \item Modified Cuthill-McKee algorithm \cite{cuthill:reducing-bandwidth}
- \item Gibbs-Poole-Stockmeyer algorithm, cf.~\cite{lewis:gps-algorithm}
-\end{itemize}
-The modified Cuthill-McKee algorithm also takes nodes with small, but not necessarily minimal degree as root node into account and may lead to better results
-than the classical Cuthill-McKee algorithm. A parameter $a \in [0,1]$ controls the number of nodes considered: All nodes with degree $d$ fulfilling
-\begin{align*}
- d_{\min} \leq d \leq d_{\min} + a(d_{\max} - d_{\min})
-\end{align*}
-are considered, where $d_{\min}$ and $d_{\max}$ are the miminum and maximum nodal degrees in the graph. A second parameter \lstinline|gmax| specifies the
-number of additional root nodes considered.
-
-The algorithms are called for a \lstinline|matrix| of a type compatible with \lstinline|std::vector< std::map<int, double> >| by
-\begin{lstlisting}
- r = viennacl::reorder(matrix, viennacl::cuthill_mckee_tag());
- r = viennacl::reorder(matrix, 
-                       viennacl::advanced_cuthill_mckee_tag(a, gmax));
- r = viennacl::reorder(matrix, viennacl::gibbs_poole_stockmeyer_tag());
-\end{lstlisting}
-and return the permutation array. In {\ViennaCLversion}, the user then needs to manually reorder the sparse matrix based on the permutation array. Example code
-can be found in \lstinline|examples/tutorial/bandwidth-reduction.cpp|.
 
 
 \section{Eigenvalue Computations}
@@ -486,6 +333,8 @@ viennacl::linalg::lanczos_tag ltag(0.85, 15, 0, 200);
 
 \section{QR Factorization}
 
+\NOTE{The current QR factorization implementation depends on {\ublas}.}
+
 A matrix $A \in \mathbb{R}^{n\times m}$ can be factored into $A = Q R$, where $Q \in \mathbb{R}^{n\times n}$ is an
 orthogonal matrix and $R \in \mathbb{R}^{n \times m}$ is upper triangular. This so-called QR-factorization is important for eigenvalue computations as well as
 for the solution of least-squares problems \cite{golub:matrix-computations}. {\ViennaCL} provides a generic implementation of the QR-factorization using
@@ -507,46 +356,11 @@ However, if $Q$ and $R$ have to be computed explicitly, the function \lstinline|
   viennacl::linalg::recoverQ(A, betas, Q, R); 
 \end{lstlisting}
 Here, \lstinline|A| is the inplace QR-factored matrix, \lstinline|betas| are the coefficients of the Householder reflectors as returned by
-\lstinline|inplace_qr|, while \lstinline|Q| and \lstinline|R| are the destination matrices.
-
-
-\section{Singular Value Decomposition}
-\NOTE{Singular Value Decomposition is experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-\NOTE{Singular Value Decomposition in {\ViennaCLversion} is provided for row-major dense matrices only.}
-
-Any matrix $A$ can be factored as
-\begin{align}
- A = U \Sigma V^{\mathrm{T}}
-\end{align}
-with orthogonal matrices $U$ and $V$ and a diagonal matrix $\Sigma$ consisting of non-negative diagonal entries only.
-
-The implementation in \texttt{viennacl/linalg/svd.hpp} provides the singular value decomposition as follows:
+\lstinline|inplace_qr|, while \lstinline|Q| and \lstinline|R| are the destination matrices. However, the explicit formation of $Q$ is expensive and is usually avoided.
+For a number of applications of the QR factorization it is required to apply $Q^T$ to a vector $b$. This is accomplished by
 \begin{lstlisting}
- viennacl::matrix<ScalarType> A(size1, size2);
- viennacl::matrix<ScalarType> U(size1, size1);
- viennacl::matrix<ScalarType> V(size2, size2);
-
- viennacl::linalg::svd(A, U, V);
+ viennacl::linalg::inplace_qr_apply_trans_Q(A, betas, b);
 \end{lstlisting}
-The input matrix \lstinline|A| is overwritten with $\Sigma$.
+without setting up $Q$ (or $Q^T$) explicitly.
 
-\section{Nonnegative Matrix Factorization}
-\NOTE{Nonnegative Matrix Factorization is experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
-be included in future releases!}
-
-In various fields such as text mining, a matrix $V$ needs to be factored into factors $W$ and $H$ such that the function
-\begin{align*}
- f(W, H) = \Vert V - WH \Vert_{\mathrm{F}}^2
-\end{align*}
-is minimized. The algorithm proposed by Lee and Seoung \cite{lee:nmf} is available in ViennaCL in the header file \texttt{viennacl/linalg/nmf.hpp} as
-\begin{lstlisting}
- viennacl::matrix<ScalarType> V(size1, size2);
- viennacl::matrix<ScalarType> W(size1, k);
- viennacl::matrix<ScalarType> H(k, size2);
-
- viennacl::linalg::nmf_config conf;
- viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
-\end{lstlisting}
-For an overview of the parameters (tolerances) of the configuration object \lstinline|conf|, please refer to the Doxygen documentation in \texttt{doc/doxygen/}.
+\TIP{Have a look at \lstinline|examples/tutorial/least-squares.cpp| for a least-squares computation using QR factorizations.}
