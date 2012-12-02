@@ -365,7 +365,7 @@ namespace viennacl
     {
       private:
 
-        typedef typename tree_utils::remove_if<T,result_of::is_symbolic_vector,false >::Result Products;
+        typedef typename tree_utils::extract_if<T,result_of::is_product_leaf>::Result::Head Products;
         typedef typename tree_utils::remove_if<T,result_of::is_product_leaf,false >::Result Vectors;
 
         typedef typename result_of::expression_type<T>::Result    IntermediateType;

@@ -113,9 +113,7 @@ namespace viennacl
             SIZE_T * size_arg = viennacl::any_cast<SIZE_T * >(runtime_args[size_id_]);
             viennacl::ocl::handle<cl_mem> handle = NULL;
             T * current_arg = viennacl::any_cast<T * >(runtime_args[arg_id_]);
-            handle = current_arg->handle().opencl_handle();
-
-            k.arg(arg_pos, handle );
+            k.arg(arg_pos, *current_arg );
             k.arg(arg_pos+1,cl_uint(size(size_arg)));
             k.arg(arg_pos+2,cl_uint(internal_size(size_arg)));
           }
@@ -175,7 +173,7 @@ namespace viennacl
             T * current_arg = any_cast<T * >(runtime_args[arg_id_]);
             SIZE1_T * size1_arg = any_cast<SIZE1_T * >(runtime_args[size1_id_]);
             SIZE2_T * size2_arg = any_cast<SIZE2_T * >(runtime_args[size2_id_]);
-            k.arg(arg_pos, current_arg->handle().opencl_handle());
+            k.arg(arg_pos, *current_arg);
             k.arg(arg_pos+1,cl_uint(0));
             k.arg(arg_pos+2,cl_uint(0));
             k.arg(arg_pos+3,cl_uint(size1_arg->size1()));
@@ -287,7 +285,7 @@ namespace viennacl
           else
           {
             viennacl::scalar<ScalarType>* current_arg = any_cast<viennacl::scalar<ScalarType> * >(runtime_args[arg_id_]);
-            k.arg(arg_pos, current_arg->handle().opencl_handle());
+            k.arg(arg_pos,* current_arg);
           }
 
         }

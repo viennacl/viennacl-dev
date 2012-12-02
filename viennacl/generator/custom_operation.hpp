@@ -79,11 +79,13 @@ namespace viennacl
           public:
             typedef typename tree_utils::extract_if<T,is_pure_product_leaf>::Result Products;
             static const bool is_inplace_product = tree_utils::count_if_type<Products,typename T::LHS>::value;
-            static const int n_nested_products = tree_utils::count_if<Products,is_pure_product_leaf>::value - typelist_utils::length<Products>::value;
+            static const int n_products = typelist_utils::length<Products>::value;
+            static const int n_nested_products = tree_utils::count_if<Products,is_pure_product_leaf>::value - n_products;
 
             static void execute()
             {
                 VIENNACL_STATIC_ASSERT(is_inplace_product == false,InplaceProductsForbidden);
+                VIENNACL_STATIC_ASSERT(n_products <= 1,OnlyOneProductAllowed);
                 VIENNACL_STATIC_ASSERT(n_nested_products==0,NestedProductsForbidden);
             }
         };
