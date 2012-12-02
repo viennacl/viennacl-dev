@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file  viennacl/linalg/host_based/matrix_operations.hpp
-    @brief Implementations of dense matrix related operations, including matrix-vector products, using a plain single-threaded execution on CPU.
+    @brief Implementations of dense matrix related operations, including matrix-vector products, using a plain single-threaded or OpenMP-enabled execution on CPU.
 */
 
 #include "viennacl/forwards.h"

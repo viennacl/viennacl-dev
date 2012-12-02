@@ -21,7 +21,7 @@
 #include <cmath>
 
 /** @file vandermonde_matrix.hpp
-    @brief Implementation of the vandermonde_matrix class for efficient manipulation of Vandermonde matrices.  Experimental in 1.2.x.
+    @brief Implementation of the vandermonde_matrix class for efficient manipulation of Vandermonde matrices.  Experimental.
 */
 
 #include "viennacl/forwards.h"

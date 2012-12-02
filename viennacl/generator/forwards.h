@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/forwards.h
- *  @brief Forward declarations of the important structures for the kernel generator
+ *  @brief Forward declarations of the important structures for the kernel generator. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

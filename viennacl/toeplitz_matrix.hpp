@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file toeplitz_matrix.hpp
-    @brief Implementation of the toeplitz_matrix class for efficient manipulation of Toeplitz matrices.  Experimental in 1.2.x.
+    @brief Implementation of the toeplitz_matrix class for efficient manipulation of Toeplitz matrices.  Experimental.
 */
 
 #include "viennacl/forwards.h"

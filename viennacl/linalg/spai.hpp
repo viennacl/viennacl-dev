@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/spai.hpp
-    @brief Main include file for the sparse approximate inverse preconditioner family (SPAI and FSPAI).  Experimental in 1.2.x.
+    @brief Main include file for the sparse approximate inverse preconditioner family (SPAI and FSPAI).  Experimental.
     
     Most implementation contributed by Nikolay Lukash.
 */

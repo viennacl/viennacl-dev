@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/amg.hpp
-    @brief Main include file for algebraic multigrid (AMG) preconditioners.  Experimental in 1.2.x.
+    @brief Main include file for algebraic multigrid (AMG) preconditioners.  Experimental.
     
     Implementation contributed by Markus Wagner
 */

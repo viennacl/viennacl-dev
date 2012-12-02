@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/circulant_matrix_operations.hpp
-    @brief Implementations of operations using circulant_matrix
+    @brief Implementations of operations using circulant_matrix. Experimental.
 */
 
 #include "viennacl/forwards.h"

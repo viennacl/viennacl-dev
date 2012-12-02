@@ -22,7 +22,7 @@
 #include "viennacl/generator/symbolic_types.hpp"
 
 /** @file viennacl/generator/tweaking.hpp
- *  @brief Additional operations on expressions.
+ *  @brief Additional operations on expressions. Experimental.
  * 
  *  Generator code contributed by Philippe Tillet
  */

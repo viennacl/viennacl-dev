@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/sparse_matrix_operations.hpp
-    @brief Implementations of operations using sparse matrices on the CPU using a single thread
+    @brief Implementations of operations using sparse matrices on the CPU using a single thread or OpenMP.
 */
 
 #include <list>

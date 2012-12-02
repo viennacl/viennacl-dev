@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/svd.hpp
-    @brief Provides singular value decomposition using a block-based approach.  Experimental in 1.3.x.
+    @brief Provides singular value decomposition using a block-based approach.  Experimental.
     
     Contributed by Volodymyr Kysenko.
 */

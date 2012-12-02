@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/misc/cuthill_mckee.hpp
-*    @brief Implementation of several flavors of the Cuthill-McKee algorithm.  Experimental in 1.2.x.
+*    @brief Implementation of several flavors of the Cuthill-McKee algorithm.  Experimental.
 *    
 *   Contributed by Philipp Grabenweger, interface adjustments by Karl Rupp.
 */

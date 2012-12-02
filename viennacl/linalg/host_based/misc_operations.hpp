@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/misc_operations.hpp
-    @brief Implementations of miscellaneous operations on the CPU using a single thread
+    @brief Implementations of miscellaneous operations on the CPU using a single thread or OpenMP.
 */
 
 #include <list>

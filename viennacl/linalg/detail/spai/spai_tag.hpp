@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/linalg/detail/spai/spai_tag.hpp
-    @brief Implementation of the spai tag holding SPAI configuration parameters. Experimental in 1.2.x.
+    @brief Implementation of the spai tag holding SPAI configuration parameters. Experimental.
     
     SPAI code contributed by Nikolay Lukash
 */

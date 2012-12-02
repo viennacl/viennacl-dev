@@ -49,7 +49,7 @@ namespace viennacl
       *  for one of many descriptions of incomplete Cholesky Factorizations
       *
       *  @param A       The input matrix in CSR format
-      *  @param tag     An ichol0_tag in order to dispatch among several other preconditioners.
+      *  // param tag     An ichol0_tag in order to dispatch among several other preconditioners.
       */
     template<typename ScalarType>
     void precondition(viennacl::compressed_matrix<ScalarType> & A, ichol0_tag const & /* tag */)

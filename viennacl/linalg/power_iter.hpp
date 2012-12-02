@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file power_iter.hpp
+/** @file viennacl/linalg/power_iter.hpp
     @brief Defines a tag for the configuration of the power iteration method.
     
     Contributed by Astrid Rupp.

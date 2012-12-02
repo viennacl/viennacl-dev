@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file circulant_matrix.hpp
-    @brief Implementation of the circulant_matrix class for efficient manipulation of circulant matrices.  Experimental in 1.2.x.
+    @brief Implementation of the circulant_matrix class for efficient manipulation of circulant matrices.  Experimental.
 */
 
 #include "viennacl/forwards.h"

@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/matrix_operations.hpp
-    @brief Implementations of dense matrix related operations. also matrix-vector products.
+    @brief Implementations of dense matrix related operations including matrix-vector products.
 */
 
 #include "viennacl/forwards.h"

@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file eig.hpp
+/** @file viennacl/linalg/eig.hpp
 *   @brief Convenience header file including all available eigenvalue algorithms
 */
 

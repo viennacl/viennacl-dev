@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file typelist.hpp
- *  @brief Generic implementation of a typelist
+ *  @brief Generic implementation of a typelist. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

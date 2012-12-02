@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/tree_operations.hpp
- *  @brief Functors for modifying the expression tree.
+ *  @brief Functors for modifying the expression tree. Experimental.
  * 
  *  Generator code contributed by Philippe Tillet
  */

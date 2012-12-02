@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/generator/operators.hpp
- *  @brief Definition of the operators between the symbolic types
+ *  @brief Definition of the operators between the symbolic types. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

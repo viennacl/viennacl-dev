@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/misc/gibbs_poole_stockmeyer.hpp
- *  @brief Implementation of the Gibbs-Poole-Stockmeyer algorithm.  Experimental in 1.2.x.
+ *  @brief Implementation of the Gibbs-Poole-Stockmeyer algorithm.  Experimental.
  *    
  *  Contributed by Philipp Grabenweger, interface adjustments by Karl Rupp.
  */

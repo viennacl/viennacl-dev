@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/spai/spai-dynamic.hpp
-    @brief Implementation of a dynamic SPAI. Provides the routines for automatic pattern updates Experimental in 1.2.x.
+    @brief Implementation of a dynamic SPAI. Provides the routines for automatic pattern updates Experimental.
     
     SPAI code contributed by Nikolay Lukash
 */

@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/spai/spai-static.hpp
-    @brief Implementation of a static SPAI. Experimental in 1.2.x.
+    @brief Implementation of a static SPAI. Experimental.
     
     SPAI code contributed by Nikolay Lukash
 */

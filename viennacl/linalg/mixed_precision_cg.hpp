@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/mixed_precision_cg.hpp
-    @brief The conjugate gradient method using mixed precision is implemented here
+    @brief The conjugate gradient method using mixed precision is implemented here. Experimental.
 */
 
 #include <vector>

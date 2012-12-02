@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/misc/bandwidth_reduction.hpp
-    @brief Convenience include for bandwidth reduction algorithms such as Cuthill-McKee or Gibbs-Poole-Stockmeyer.  Experimental in 1.2.x.
+    @brief Convenience include for bandwidth reduction algorithms such as Cuthill-McKee or Gibbs-Poole-Stockmeyer.  Experimental.
 */
 
 #include "viennacl/misc/cuthill_mckee.hpp"

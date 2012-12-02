@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/direct_solve.hpp
-    @brief Implementations of dense direct solvers are found here.
+    @brief Implementations of dense direct triangular solvers are found here.
 */
 
 #include "viennacl/vector.hpp"

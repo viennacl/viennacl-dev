@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/common.hpp
-    @brief Common routines for single-threaded execution on CPU
+    @brief Common routines for single-threaded or OpenMP-enabled execution on CPU
 */
 
 #include "viennacl/traits/handle.hpp"

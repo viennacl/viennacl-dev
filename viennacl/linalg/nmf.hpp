@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/nmf.hpp
-    @brief Provides a nonnegative matrix factorization implementation.  Experimental in 1.3.x.
+    @brief Provides a nonnegative matrix factorization implementation.  Experimental.
     
     Contributed by Volodymyr Kysenko.
 */

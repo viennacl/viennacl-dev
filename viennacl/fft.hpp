@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file fft.hpp
-    @brief All routines related to the Fast Fourier Transform. Experimental in 1.2.x.
+    @brief All routines related to the Fast Fourier Transform. Experimental.
 */
 
 #include <viennacl/vector.hpp>

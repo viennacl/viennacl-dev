@@ -50,6 +50,7 @@
 #include <cassert>
 #include "viennacl/meta/enable_if.hpp"
 
+/** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */
 namespace viennacl
 {
   typedef std::size_t                                       vcl_size_t;
@@ -357,7 +358,6 @@ namespace viennacl
   };
 
   
-  
   namespace tools
   {
     //helper for matrix row/col iterators 
@@ -530,6 +530,135 @@ namespace viennacl
     
     
   } //namespace linalg
+  
+  //
+  // More namespace comments to follow:
+  //
+  
+  /** @brief Namespace providing routines for handling the different memory domains. */
+  namespace backend 
+  {
+    /** @brief Provides implementations for handling memory buffers in CPU RAM. */
+    namespace cpu_ram
+    {
+      /** @brief Holds implementation details for handling memory buffers in CPU RAM. Not intended for direct use by library users. */
+      namespace detail {}
+    }
+    
+    /** @brief Provides implementations for handling CUDA memory buffers. */
+    namespace cuda
+    {
+      /** @brief Holds implementation details for handling CUDA memory buffers. Not intended for direct use by library users. */
+      namespace detail {}
+    }
+    
+    /** @brief Implementation details for the generic memory backend interface. */
+    namespace detail {}
+    
+    /** @brief Provides implementations for handling OpenCL memory buffers. */
+    namespace opencl
+    {
+      /** @brief Holds implementation details for handling OpenCL memory buffers. Not intended for direct use by library users. */
+      namespace detail {}
+    }
+  }
+  
+  
+  /** @brief Holds implementation details for functionality in the main viennacl-namespace. Not intended for direct use by library users. */
+  namespace detail
+  {
+    /** @brief Helper namespace for fast Fourier transforms. Not to be used directly by library users. */
+    namespace fft
+    {
+      /** @brief Helper namespace for fast-Fourier transformation. Deprecated. */
+      namespace FFT_DATA_ORDER {}
+    }
+  }
+  
+  
+  /** @brief Provides an OpenCL kernel generator. */
+  namespace generator
+  {
+    /** @brief Namespace holding unary math functions for use within the kernel generator. */
+    namespace math {}
+    
+    /** @brief Contains all the meta-functions used within the OpenCL kernel generator. */
+    namespace result_of {}
+    
+    /** @brief Contains helper routines for manipulating expression trees. */
+    namespace tree_utils {}
+    
+    /** @brief Contains helper routines for manipulating typelists. */
+    namespace typelist_utils {}
+  }
+  
+  /** @brief Provides basic input-output functionality. */
+  namespace io 
+  {
+    /** @brief Implementation details for IO functionality. Usually not of interest for a library user. */
+    namespace detail {}
+    
+    /** @brief Namespace holding the various XML tag definitions for the kernel parameter tuning facility. */
+    namespace tag {}
+    
+    /** @brief Namespace holding the various XML strings for the kernel parameter tuning facility. */
+    namespace val {}
+  }
+  
+  /** @brief Provides all linear algebra operations which are not covered by operator overloads. */  
+  namespace linalg
+  {
+    /** @brief Holds all CUDA compute kernels used by ViennaCL. */
+    namespace cuda
+    {
+      /** @brief Helper functions for the CUDA linear algebra backend. */
+      namespace detail {}
+    }
+    
+    /** @brief Namespace holding implementation details for linear algebra routines. Usually not of interest for a library user. */
+    namespace detail
+    {
+      /** @brief Implementation namespace for algebraic multigrid preconditioner. */
+      namespace amg {}
+      
+      /** @brief Implementation namespace for sparse approximate inverse preconditioner. */
+      namespace spai {}
+    }
+    
+    /** @brief Holds all compute kernels with conventional host-based execution (buffers in CPU RAM). */
+    namespace host_based
+    {
+      /** @brief Helper functions for the host-based linear algebra backend. */
+      namespace detail {}
+    }
+    
+    /** @brief Namespace containing the OpenCL kernels. Deprecated, will be moved to viennacl::linalg::opencl in future releases. */
+    namespace kernels {}
+    
+    /** @brief Holds all routines providing OpenCL linear algebra operations. */
+    namespace opencl
+    {
+      /** @brief Helper functions for OpenCL-accelerated linear algebra operations. */
+      namespace detail {} 
+    }
+  }
+  
+  /** @brief OpenCL backend. Manages platforms, contexts, buffers, kernels, etc. */
+  namespace ocl {}
+  
+  /** @brief Namespace containing many meta-functions. */
+  namespace result_of {}
+  
+  /** @brief Namespace for various tools used within ViennaCL. */
+  namespace tools
+  {
+    /** @brief Contains implementation details for the tools. Usually not of interest for the library user. */
+    namespace detail {}
+  }
+  
+  /** @brief Namespace providing traits-information as well as generic wrappers to common routines for vectors and matrices such as size() or clear() */
+  namespace traits {}
+  
 } //namespace viennacl
 
 #endif

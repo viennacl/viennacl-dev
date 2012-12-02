@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/spai/spai.hpp
-    @brief Main implementation of SPAI (not FSPAI)
+    @brief Main implementation of SPAI (not FSPAI). Experimental.
 */
 
 #include <utility>

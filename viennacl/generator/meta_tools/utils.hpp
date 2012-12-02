@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/meta_tools/utils.hpp
- *  @brief Various metaprogramming utilities
+ *  @brief Various metaprogramming utilities. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/generator/make_code.hpp
- *  @brief Definition of code generation policies.
+ *  @brief Definition of code generation policies. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

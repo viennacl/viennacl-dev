@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/hankel_matrix_operations.hpp
-    @brief Implementations of operations using hankel_matrix
+    @brief Implementations of operations using hankel_matrix. Experimental.
 */
 
 #include "viennacl/forwards.h"

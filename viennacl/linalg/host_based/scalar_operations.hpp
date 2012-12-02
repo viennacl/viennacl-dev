@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/scalar_operations.hpp
-    @brief Implementations of scalar operations using a plain single-threaded execution on CPU
+    @brief Implementations of scalar operations using a plain single-threaded or OpenMP-enabled execution on CPU
 */
 
 #include "viennacl/forwards.h"

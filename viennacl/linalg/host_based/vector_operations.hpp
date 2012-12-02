@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/host_based/vector_operations.hpp
-    @brief Implementations of vector operations using a plain single-threaded execution on CPU
+    @brief Implementations of vector operations using a plain single-threaded or OpenMP-enabled execution on CPU
 */
 
 #include <cmath>

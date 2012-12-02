@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file toeplitz_matrix_operations.hpp
-    @brief Implementations of operations using toeplitz_matrix
+    @brief Implementations of operations using toeplitz_matrix. Experimental.
 */
 
 #include "viennacl/forwards.h"

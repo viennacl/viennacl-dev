@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/tokens_management.hpp
- *  @brief Creation and management of the tokens list
+ *  @brief Creation and management of the tokens list. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

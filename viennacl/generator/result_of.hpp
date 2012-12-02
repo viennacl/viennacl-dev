@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/result_of.hpp
- *  @brief Provides a set of metafunctions for type deductions within the kernel generator framework.
+ *  @brief Provides a set of metafunctions for type deductions within the kernel generator framework. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

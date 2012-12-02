@@ -20,7 +20,7 @@
 
 
 /** @file hankel_matrix.hpp
-    @brief Implementation of the hankel_matrix class for efficient manipulation of Hankel matrices.  Experimental in 1.2.x.
+    @brief Implementation of the hankel_matrix class for efficient manipulation of Hankel matrices.  Experimental.
 */
 
 #include "viennacl/forwards.h"

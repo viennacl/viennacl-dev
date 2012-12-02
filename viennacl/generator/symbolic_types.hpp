@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/generator/symbolic_types.hpp
- *  @brief Definition of the symbolic types.
+ *  @brief Definition of the symbolic types. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

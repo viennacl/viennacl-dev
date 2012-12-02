@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/elementwise_modifier.hpp
- *   @brief Contains the stuffs related to the elementwise_modifier
+ *   @brief Contains the stuffs related to the elementwise_modifier. Experimental.
  * 
  *  Generator code contributed by Philippe Tillet
  */

@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/spai/sparse_vector.hpp
-    @brief Implementation of a helper sparse vector class for SPAI. Experimental in 1.2.x.
+    @brief Implementation of a helper sparse vector class for SPAI. Experimental.
     
     SPAI code contributed by Nikolay Lukash
 */

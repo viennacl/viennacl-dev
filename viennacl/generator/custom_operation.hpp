@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file custom_operation.hpp
- *  @brief User Interface for making custom operations.
+ *  @brief User Interface for making custom operations. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

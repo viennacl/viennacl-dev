@@ -29,7 +29,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 
 /** @file viennacl/linalg/qr-method.hpp
-    @brief Implementation of the QR method for eigenvalue computations
+    @brief Implementation of the QR method for eigenvalue computations. Experimental.
 */
 
 namespace viennacl

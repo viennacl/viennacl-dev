@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/detail/spai/small_matrix.hpp
-    @brief Implementation of a routines for small matrices (helper for SPAI). Experimental in 1.2.x.
+    @brief Implementation of a routines for small matrices (helper for SPAI). Experimental.
     
     SPAI code contributed by Nikolay Lukash
 */

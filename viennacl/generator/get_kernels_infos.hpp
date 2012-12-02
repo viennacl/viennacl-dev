@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/generator/get_kernels_infos.hpp
- *  @brief Provides information about kernels
+ *  @brief Provides information about kernels. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

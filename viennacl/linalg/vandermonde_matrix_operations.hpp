@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file viennacl/linalg/vandermonde_matrix_operations.hpp
-    @brief Implementations of operations using vandermonde_matrix
+    @brief Implementations of operations using vandermonde_matrix. Experimental.
 */
 
 #include "viennacl/forwards.h"

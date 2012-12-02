@@ -19,7 +19,7 @@
 ============================================================================= */
 
 /** @file convenience_typedef.hpp
- *  @brief Convenience typedefs for quick creation of symbolic types
+ *  @brief Convenience typedefs for quick creation of symbolic types. Experimental.
  *
  *  Generator code contributed by Philippe Tillet
  */

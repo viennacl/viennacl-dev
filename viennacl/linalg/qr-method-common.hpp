@@ -29,7 +29,7 @@
 #include <boost/numeric/ublas/io.hpp>
 
 /** @file viennacl/linalg/qr-method-common.hpp
-    @brief Common routines used for the QR method and SVD
+    @brief Common routines used for the QR method and SVD. Experimental.
 */
 
 namespace viennacl
