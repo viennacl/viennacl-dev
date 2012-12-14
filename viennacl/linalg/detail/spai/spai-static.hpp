@@ -51,7 +51,6 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
-#include "viennacl/linalg/ilu.hpp"
 
 //#include "boost/numeric/ublas/detail/matrix_assign.hpp"
 
@@ -63,6 +62,17 @@ namespace viennacl
     {
       namespace spai
       {
+        
+        /** @brief Determines if element ind is in set {J}
+        * @param J current set
+        * @param ind current element
+        */
+        bool isInIndexSet(const std::vector<unsigned int>& J, const unsigned int& ind)
+        {
+          return (std::find(J.begin(), J.end(), ind) != J.end());
+        }
+        
+        
       
         /********************************* STATIC SPAI FUNCTIONS******************************************/
         

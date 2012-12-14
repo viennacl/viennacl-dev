@@ -59,6 +59,7 @@
 #include "viennacl/linalg/detail/spai/block_matrix.hpp"
 #include "viennacl/linalg/detail/spai/block_vector.hpp"
 #include "viennacl/linalg/detail/spai/qr.hpp"
+#include "viennacl/linalg/detail/spai/spai-static.hpp"
 #include "viennacl/linalg/detail/spai/spai.hpp"
 #include "viennacl/linalg/detail/spai/spai_tag.hpp"
 #include "viennacl/linalg/kernels/spai_source.h"
@@ -82,34 +83,6 @@ namespace viennacl
             }
           };
           
-          
-          /** @brief Initializes Dense matrix from sparse one
-          * @param A_in Riginal sparse matrix
-          * @param J Set of column indices
-          * @param I Set of row indices 
-          * @param A_out dense matrix output
-          */
-          template<typename SparseMatrixType, typename DenseMatrixType>
-          void initProjectSubMatrix(const SparseMatrixType& A_in, const std::vector<unsigned int>& J, std::vector<unsigned int>& I,
-                                    DenseMatrixType& A_out)
-          {
-            typedef typename DenseMatrixType::value_type ScalarType;
-            A_out.resize(I.size(), J.size(), false);
-            for(size_t j = 0; j < J.size(); ++j)
-            {
-              for(size_t i = 0; i < I.size(); ++i)
-                A_out(i,j) = A_in(I[i],J[j]);
-            }
-          }
-          
-          /** @brief Determines if element ind is in set {J}
-          * @param J current set
-          * @param ind current element
-          */
-          bool isInIndexSet(const std::vector<unsigned int>& J, const unsigned int& ind)
-          {
-            return (std::find(J.begin(), J.end(), ind) != J.end());
-          }
           
           /** @brief Composition of new matrix R, that is going to be used in Least Square problem solving
           * @param A matrix Q'*A(I, \\tilde J), where \\tilde J - set of new column indices

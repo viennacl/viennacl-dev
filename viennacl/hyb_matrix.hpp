@@ -97,7 +97,7 @@ namespace viennacl
       {
         //determine max capacity for row
         std::size_t max_entries_per_row = 0;
-        std::vector<std::size_t> hist_entries(cpu_matrix.size1(), 0);
+        std::vector<std::size_t> hist_entries(cpu_matrix.size1() + 1, 0);
 
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1(); row_it != cpu_matrix.end1(); ++row_it)
         {

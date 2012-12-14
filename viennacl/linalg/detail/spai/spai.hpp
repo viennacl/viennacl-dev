@@ -134,6 +134,26 @@ namespace viennacl
             projectRows(A_v_c, J, I);
         }
         
+        /** @brief Initializes a dense matrix from a sparse one
+        * @param A_in Riginal sparse matrix
+        * @param J Set of column indices
+        * @param I Set of row indices 
+        * @param A_out dense matrix output
+        */
+        template<typename SparseMatrixType, typename DenseMatrixType>
+        void initProjectSubMatrix(const SparseMatrixType& A_in, const std::vector<unsigned int>& J, std::vector<unsigned int>& I,
+                                  DenseMatrixType& A_out)
+        {
+          typedef typename DenseMatrixType::value_type ScalarType;
+          A_out.resize(I.size(), J.size(), false);
+          for(size_t j = 0; j < J.size(); ++j)
+          {
+            for(size_t i = 0; i < I.size(); ++i)
+              A_out(i,j) = A_in(I[i],J[j]);
+          }
+        }
+        
+        
         /************************************************** CPU BLOCK SET UP ***************************************/
         /** @brief Setting up blocks and QR factorizing them on CPU
          * @param A initial sparse matrix 
