@@ -207,6 +207,7 @@ namespace viennacl
       elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
       elements_.opencl_handle() = mem;
       elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+      elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
     }
 #endif
 

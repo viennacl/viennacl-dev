@@ -364,6 +364,7 @@ namespace viennacl
       elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
       elements_.opencl_handle() = existing_mem;
       elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+      elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
     }
 #endif
     
@@ -1224,7 +1225,7 @@ namespace viennacl
     size_type internal_size() const { return viennacl::tools::roundUpToNextMultiple<size_type>(size_, ALIGNMENT); }
     
     /** @brief Returns true is the size is zero */
-    bool empty() { return size_ == 0; }
+    bool empty() const { return size_ == 0; }
     
     /** @brief Returns the memory handle. */
     const handle_type & handle() const { return elements_; }
