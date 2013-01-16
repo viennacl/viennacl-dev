@@ -75,6 +75,7 @@ namespace viennacl
         }
 
         viennacl::ocl::handle<cl_command_queue> const & handle() const { return handle_; }
+        viennacl::ocl::handle<cl_command_queue>       & handle()       { return handle_; }
 
       private:
         

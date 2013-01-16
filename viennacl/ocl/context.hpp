@@ -214,6 +214,7 @@ namespace viennacl
           std::cout << "ViennaCL: Adding existing queue " << q << " for device " << dev << " to context " << h_ << std::endl;
           #endif
           queues_[dev].push_back(viennacl::ocl::command_queue(q));
+          queues_[dev].back().handle().inc();
         }
         
         /** @brief Adds a queue for the given device to the context */
