@@ -435,12 +435,12 @@ namespace viennacl
         //************************************* BLOCK ASSEMBLY CODE *********************************************//
         
         
-        
-        void write_set_to_array(const std::vector<std::vector<unsigned int> >& ind_set, std::vector<cl_uint>& a){
-            unsigned int cnt = 0;
+        template <typename SizeType>
+        void write_set_to_array(const std::vector<std::vector<SizeType> >& ind_set, std::vector<cl_uint>& a){
+            std::size_t cnt = 0;
             //unsigned int tmp;
-            for(size_t i = 0; i < ind_set.size(); ++i){
-                for(size_t j = 0; j < ind_set[i].size(); ++j){
+            for(std::size_t i = 0; i < ind_set.size(); ++i){
+                for(std::size_t j = 0; j < ind_set[i].size(); ++j){
                     a[cnt++] = static_cast<cl_uint>(ind_set[i][j]); 
                 }
             }

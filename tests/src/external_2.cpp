@@ -20,6 +20,9 @@
 //
 
 
+//#define VIENNACL_HAVE_EIGEN
+#define VIENNACL_HAVE_UBLAS
+
 //
 // *** System
 //
@@ -54,7 +57,8 @@
 #include "viennacl/misc/bandwidth_reduction.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
-  #include "viennacl/fft.hpp"
+  #include "viennacl/linalg/amg.hpp"
+  #include "viennacl/linalg/spai.hpp"
   #include "viennacl/linalg/svd.hpp"
   #include "viennacl/fft.hpp"
   #include "viennacl/io/kernel_parameters.hpp"

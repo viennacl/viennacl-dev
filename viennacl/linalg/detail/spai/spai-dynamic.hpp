@@ -329,7 +329,9 @@ namespace viennacl
                                       block_matrix& g_A_I_J_u_vcl, 
                                       std::vector<cl_uint>& g_is_update)
           {
-            unsigned int local_r_n, local_c_n, sz_blocks;
+            unsigned int local_r_n = 0;
+            unsigned int local_c_n = 0;
+            unsigned int sz_blocks = 0;
             get_max_block_size(g_I, local_r_n);
             get_max_block_size(g_J_u, local_c_n);
             //for debug 
@@ -357,9 +359,10 @@ namespace viennacl
           * @param g_I_u container of new row indices 
           * @param g_I_q container of row indices for new QR blocks
           */
-          void assemble_qr_row_inds(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> > g_J, 
-                                    const std::vector<std::vector<unsigned int> >& g_I_u, 
-                                    std::vector<std::vector<unsigned int> >& g_I_q)
+          template <typename SizeType>
+          void assemble_qr_row_inds(const std::vector<std::vector<SizeType> >& g_I, const std::vector<std::vector<SizeType> > g_J, 
+                                    const std::vector<std::vector<SizeType> >& g_I_u, 
+                                    std::vector<std::vector<SizeType> >& g_I_q)
           {
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for

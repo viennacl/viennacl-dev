@@ -60,8 +60,6 @@ namespace viennacl
         namespace spai
         {
         
-          
-          
           //********** DEBUG FUNCTIONS *****************//
           template< typename T, typename InputIterator>
           void Print(std::ostream& ostr, InputIterator it_begin, InputIterator it_end){
@@ -113,8 +111,9 @@ namespace viennacl
           * @param blocks_ind start indices in a certain
           * @param matrix_dims matrix dimensions for each block
           */ 
-          void compute_blocks_size(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J, 
-                                  unsigned int& sz, std::vector<cl_uint>& blocks_ind, std::vector<cl_uint>& matrix_dims){
+          inline void compute_blocks_size(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J, 
+                                          unsigned int& sz, std::vector<cl_uint>& blocks_ind, std::vector<cl_uint>& matrix_dims)
+          {
               sz = 0;
               for(size_t i = 0; i < g_I.size(); ++i){
                   sz += static_cast<unsigned int>(g_I[i].size()*g_J[i].size());
@@ -128,9 +127,10 @@ namespace viennacl
           * @param inds container of index sets 
           * @param size output size 
           */ 
-          void get_size(const std::vector<std::vector<unsigned int> >& inds, unsigned int& size){
+          template <typename SizeType>
+          void get_size(const std::vector<std::vector<SizeType> >& inds, SizeType & size){
               size = 0;
-              for (size_t i = 0; i < inds.size(); ++i) {
+              for (std::size_t i = 0; i < inds.size(); ++i) {
                   size += static_cast<unsigned int>(inds[i].size());
               }
           }
@@ -139,8 +139,9 @@ namespace viennacl
           * @param inds container of index sets 
           * @param start_inds output index set 
           */
-          void init_start_inds(const std::vector<std::vector<unsigned int> >& inds, std::vector<cl_uint>& start_inds){
-              for(size_t i = 0; i < inds.size(); ++i){
+          template <typename SizeType>
+          void init_start_inds(const std::vector<std::vector<SizeType> >& inds, std::vector<cl_uint>& start_inds){
+              for(std::size_t i = 0; i < inds.size(); ++i){
                   start_inds[i+1] = start_inds[i] + static_cast<cl_uint>(inds[i].size());
               }
           }
@@ -266,10 +267,10 @@ namespace viennacl
           }
           
           //********************** HELP FUNCTIONS FOR GPU-based QR factorization *************************//
-          /** @brief Reading from text file into string
+          /* * @brief Reading from text file into string
           * @param file_name file name
           * @param kernel_source string that contains file
-          */
+          
           void read_kernel_from_file(std::string& file_name, std::string& kernel_source){
               std::ifstream ifs(file_name.c_str(), std::ifstream::in);
               
@@ -282,17 +283,18 @@ namespace viennacl
                   ost<<line<<std::endl;
               }
               kernel_source = ost.str();
-          }
+          }*/
           
           /** @brief Getting max size of rows/columns from container of index set
           * @param inds container of index set
           * @param max_size max size that corresponds to that container
           */
-          void get_max_block_size(const std::vector<std::vector<unsigned int> >& inds, unsigned int& max_size){
+          template <typename SizeType>
+          void get_max_block_size(const std::vector<std::vector<SizeType> >& inds, SizeType max_size){
               max_size = 0;
-              for(unsigned int i = 0; i < inds.size(); ++i){
+              for(std::size_t i = 0; i < inds.size(); ++i){
                   if(inds[i].size() > max_size){
-                      max_size = static_cast<unsigned int>(inds[i].size());
+                      max_size = static_cast<SizeType>(inds[i].size());
                   }
               }
           }
@@ -370,11 +372,12 @@ namespace viennacl
                         std::vector<cl_uint>& g_is_update)
           {
               //typedef typename MatrixType::value_type ScalarType;
-              unsigned int bv_size;
-              unsigned int v_size;
+              unsigned int bv_size = 0;
+              unsigned int v_size = 0;
               //set up arguments for GPU
               //find maximum size of rows/columns
-              unsigned int local_r_n, local_c_n;
+              unsigned int local_r_n = 0;
+              unsigned int local_c_n = 0;
               //find max size for blocks
               get_max_block_size(g_I, local_r_n);
               get_max_block_size(g_J, local_c_n);

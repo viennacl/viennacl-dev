@@ -67,7 +67,8 @@ namespace viennacl
         * @param J current set
         * @param ind current element
         */
-        bool isInIndexSet(const std::vector<unsigned int>& J, const unsigned int& ind)
+        template <typename SizeType>
+        bool isInIndexSet(const std::vector<SizeType>& J, SizeType ind)
         {
           return (std::find(J.begin(), J.end(), ind) != J.end());
         }
