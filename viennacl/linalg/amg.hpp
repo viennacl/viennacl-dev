@@ -232,18 +232,18 @@ namespace viennacl
       // Copy to GPU using the internal sparse matrix structure: std::vector<std::map>.
       for (unsigned int i=0; i<tag.get_coarselevels()+1; ++i)
       {
-        A[i].resize(A_setup[i].size1(),A_setup[i].size2(),false);
+        //A[i].resize(A_setup[i].size1(),A_setup[i].size2(),false);
         viennacl::copy(*(A_setup[i].get_internal_pointer()),A[i]);
       }
       for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
       {
-        P[i].resize(P_setup[i].size1(),P_setup[i].size2(),false);
+        //P[i].resize(P_setup[i].size1(),P_setup[i].size2(),false);
         viennacl::copy(*(P_setup[i].get_internal_pointer()),P[i]);
         //viennacl::copy((boost::numeric::ublas::compressed_matrix<ScalarType>)P_setup[i],P[i]);
       }
       for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
       {
-        R[i].resize(P_setup[i].size2(),P_setup[i].size1(),false);
+        //R[i].resize(P_setup[i].size2(),P_setup[i].size1(),false);
         P_setup[i].set_trans(true);
         viennacl::copy(*(P_setup[i].get_internal_pointer()),R[i]);
         P_setup[i].set_trans(false);

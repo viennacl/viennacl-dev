@@ -585,7 +585,7 @@ namespace viennacl
               }
             }
             
-            copy(stl_sparse_matrix, *this);
+            viennacl::copy(stl_sparse_matrix, *this);
             
             rows_ = new_size1;
             cols_ = new_size2;
