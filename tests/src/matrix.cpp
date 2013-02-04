@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#define VIENNACL_HAVE_UBLAS
+#define VIENNACL_WITH_UBLAS
 //#define NDEBUG
 //#define VIENNACL_BUILD_INFO
 
@@ -812,7 +812,7 @@ int main (int, const char **)
     return EXIT_FAILURE;
   
   
-#ifdef VIENNACL_HAVE_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL   
    if( viennacl::ocl::current_device().double_support() )
 #endif
   {

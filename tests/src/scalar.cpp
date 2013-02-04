@@ -200,7 +200,7 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-#ifdef VIENNACL_HAVE_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL   
    if( viennacl::ocl::current_device().double_support() )
 #endif
    {

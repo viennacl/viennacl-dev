@@ -20,8 +20,8 @@
 //
 
 
-//#define VIENNACL_HAVE_EIGEN
-#define VIENNACL_HAVE_UBLAS
+//#define VIENNACL_WITH_EIGEN
+#define VIENNACL_WITH_UBLAS
 
 //
 // *** System

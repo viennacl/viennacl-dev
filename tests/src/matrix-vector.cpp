@@ -36,7 +36,7 @@
 // *** ViennaCL
 //
 //#define VIENNACL_DEBUG_ALL
-#define VIENNACL_HAVE_UBLAS 1
+#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/vector.hpp"
@@ -1026,7 +1026,7 @@ int main()
    std::cout << std::endl;
    
    
-#ifdef VIENNACL_HAVE_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL   
    if( viennacl::ocl::current_device().double_support() )
 #endif
    {
