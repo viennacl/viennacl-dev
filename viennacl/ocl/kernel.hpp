@@ -734,7 +734,9 @@ namespace viennacl
 
       void set_work_size_defaults()
       {
-        if (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_GPU)
+        if (   (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_GPU)
+            || (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_ACCELERATOR) // Xeon Phi
+           )
         {
           local_work_size_[0] = 128; local_work_size_[1] = 0;
           global_work_size_[0] = 128*128; global_work_size_[1] = 0;
@@ -743,7 +745,14 @@ namespace viennacl
         {
           //conservative assumption: one thread per CPU core:
           local_work_size_[0] = 1; local_work_size_[1] = 0;
-          global_work_size_[0] = viennacl::ocl::current_device().max_compute_units(); global_work_size_[1] = 0;
+          
+          size_type units = viennacl::ocl::current_device().max_compute_units();
+          size_type s = 1;
+          
+          while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
+            s *= 2;
+          
+          global_work_size_[0] = s; global_work_size_[1] = 0;
         }
       }
 
