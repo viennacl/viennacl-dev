@@ -184,6 +184,16 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
+  cpu_result = inner_prod(ublas_v1 + ublas_v2, ublas_v2 - ublas_v1);
+  NumericT cpu_result3 = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
+  gpu_result = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
+
+  if (check(cpu_result, cpu_result3, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   // --------------------------------------------------------------------------
   std::cout << "Testing norm_1..." << std::endl;
   cpu_result = ublas::norm_1(ublas_v1);
@@ -195,6 +205,12 @@ int test(Epsilon const& epsilon,
   gpu_result = 2 * cpu_result; //reset
   gpu_result = ublas::norm_1(ublas_v1);
   cpu_result = viennacl::linalg::norm_1(vcl_v1);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  gpu_result = ublas::norm_1(ublas_v1 + ublas_v2);
+  cpu_result = viennacl::linalg::norm_1(vcl_v1 + vcl_v2);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -213,6 +229,13 @@ int test(Epsilon const& epsilon,
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
+  gpu_result = ublas::norm_2(ublas_v1 + ublas_v2);
+  cpu_result = viennacl::linalg::norm_2(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   // --------------------------------------------------------------------------
   std::cout << "Testing norm_inf..." << std::endl;
   cpu_result = ublas::norm_inf(ublas_v1);
@@ -227,6 +250,13 @@ int test(Epsilon const& epsilon,
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
+  gpu_result = ublas::norm_inf(ublas_v1 + ublas_v2);
+  cpu_result = viennacl::linalg::norm_inf(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   // --------------------------------------------------------------------------
   std::cout << "Testing index_norm_inf..." << std::endl;
   std::size_t cpu_index = ublas::index_norm_inf(ublas_v1);
@@ -237,6 +267,12 @@ int test(Epsilon const& epsilon,
   // --------------------------------------------------------------------------
   cpu_result = ublas_v1[index_norm_inf(ublas_v1)];
   gpu_result = vcl_v1[viennacl::linalg::index_norm_inf(vcl_v1)];
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = ublas_v1[index_norm_inf(ublas_v1 + ublas_v2)];
+  gpu_result = vcl_v1[viennacl::linalg::index_norm_inf(vcl_v1 + vcl_v2)];
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -256,11 +292,12 @@ int test(Epsilon const& epsilon,
   x.assign (t);
 
   viennacl::linalg::plane_rotation(vcl_v1, vcl_v2, NumericT(1.1), NumericT(2.3));
-
+  
   if (check(x, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   if (check(y, vcl_v2, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  
   // --------------------------------------------------------------------------
   
   std::cout << "Testing assignments..." << std::endl;

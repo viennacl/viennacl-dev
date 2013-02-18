@@ -414,6 +414,50 @@ namespace viennacl
       }
     }
     
+    // vector expression on lhs
+    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_scalar<S3>::value
+                                >::type
+    inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                    V2 const & vec2,
+                    S3 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp = vec1;
+      inner_prod_impl(temp, vec2, result);
+    }
+    
+    
+    // vector expression on rhs
+    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_scalar<S3>::value
+                                >::type
+    inner_prod_impl(V1 const & vec1,
+                    viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                    S3 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp = vec2;
+      inner_prod_impl(vec1, temp, result);
+    }
+    
+
+    // vector expression on lhs and rhs
+    template <typename LHS1, typename RHS1, typename OP1,
+              typename LHS2, typename RHS2, typename OP2, typename S3>
+    typename viennacl::enable_if< viennacl::is_scalar<S3>::value
+                                >::type
+    inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                    viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                    S3 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp1 = vec1;
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp2 = vec2;
+      inner_prod_impl(temp1, temp2, result);
+    }
+    
+    
+    
 
     /** @brief Computes the inner product of two vectors with the final reduction step on the CPU - dispatcher interface
      *
@@ -452,9 +496,51 @@ namespace viennacl
       }
     }
     
+    // vector expression on lhs
+    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
+                                  && viennacl::is_cpu_scalar<S3>::value
+                                >::type
+    inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                    V2 const & vec2,
+                    S3 & result)
+    {
+      viennacl::vector<S3> temp = vec1;
+      inner_prod_cpu(temp, vec2, result);
+    }
+    
+    
+    // vector expression on rhs
+    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
+                                  && viennacl::is_cpu_scalar<S3>::value
+                                >::type
+    inner_prod_cpu(V1 const & vec1,
+                   viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                   S3 & result)
+    {
+      viennacl::vector<S3> temp = vec2;
+      inner_prod_cpu(vec1, temp, result);
+    }
+    
 
-    //public interface of inner product
+    // vector expression on lhs and rhs
+    template <typename LHS1, typename RHS1, typename OP1,
+              typename LHS2, typename RHS2, typename OP2, typename S3>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value
+                                >::type
+    inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                   viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                   S3 & result)
+    {
+      viennacl::vector<S3> temp1 = vec1;
+      viennacl::vector<S3> temp2 = vec2;
+      inner_prod_cpu(temp1, temp2, result);
+    }
+    
 
+    
+    
     
     /** @brief Computes the l^1-norm of a vector - dispatcher interface
     *
@@ -487,6 +573,24 @@ namespace viennacl
           throw "not implemented";
       }
     }
+    
+    
+    /** @brief Computes the l^1-norm of a vector - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
+                                >::type
+    norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_1_impl(temp, result);
+    }
+    
+    
 
     /** @brief Computes the l^1-norm of a vector with final reduction on the CPU
     *
@@ -520,6 +624,20 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the l^1-norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+               S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_1_cpu(temp, result);
+    }
     
     
     
@@ -556,6 +674,22 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the l^2-norm of a vector - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
+                                >::type
+    norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_2_impl(temp, result);
+    }
+    
+    
     /** @brief Computes the l^2-norm of a vector with final reduction on the CPU - dispatcher interface
     *
     * @param vec The vector
@@ -588,6 +722,20 @@ namespace viennacl
       }
     }
     
+    /** @brief Computes the l^2-norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+               S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_2_cpu(temp, result);
+    }
     
     
     
@@ -624,6 +772,22 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the supremum norm of a vector - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
+                                >::type
+    norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_inf_impl(temp, result);
+    }
+    
+    
     /** @brief Computes the supremum-norm of a vector with final reduction on the CPU
     *
     * @param vec The vector
@@ -656,6 +820,21 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
+                                >::type
+    norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+               S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      norm_inf_cpu(temp, result);
+    }
+    
     
     //This function should return a CPU scalar, otherwise statements like 
     // vcl_rhs[index_norm_inf(vcl_rhs)] 
@@ -688,7 +867,19 @@ namespace viennacl
       }
     }
     
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template <typename LHS, typename RHS, typename OP>
+    std::size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
+      return index_norm_inf(temp);
+    }
 
+    
     /** @brief Computes a plane rotation of two vectors.
     *
     * Computes (x,y) <- (alpha * x + beta * y, -beta * x + alpha * y)

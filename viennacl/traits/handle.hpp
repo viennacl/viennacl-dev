@@ -174,6 +174,15 @@ namespace viennacl
     }
 
     template <typename LHS, typename RHS, typename OP>
+    viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj);
+
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::memory_types active_handle_id(viennacl::scalar_expression<LHS, RHS, OP> const & obj)
+    {
+      return active_handle_id(obj.lhs());
+    }
+    
+    template <typename LHS, typename RHS, typename OP>
     viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj)
     {
       return active_handle_id(obj.lhs());

@@ -104,6 +104,18 @@ namespace viennacl
                                           viennacl::op_norm_1 >(vector, vector);
     }
 
+    // with vector expression:
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::scalar_expression<const viennacl::vector_expression<const LHS, const RHS, OP>, 
+                                const viennacl::vector_expression<const LHS, const RHS, OP>,
+                                viennacl::op_norm_1>
+    norm_1(viennacl::vector_expression<const LHS, const RHS, OP> const & vector)
+    {
+      return viennacl::scalar_expression< const viennacl::vector_expression<const LHS, const RHS, OP>, 
+                                          const viennacl::vector_expression<const LHS, const RHS, OP>,
+                                          viennacl::op_norm_1 >(vector, vector);
+    }
+    
   } // end namespace linalg
 } // end namespace viennacl
 #endif

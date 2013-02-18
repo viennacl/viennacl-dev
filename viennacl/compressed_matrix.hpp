@@ -143,7 +143,8 @@ namespace viennacl
       for (std::size_t i=0; i<cpu_matrix.size(); ++i)
       {
         nonzeros += cpu_matrix[i].size();
-        max_col = std::max<std::size_t>(max_col, (cpu_matrix[i].rbegin())->first);
+        if (cpu_matrix[i].size() > 0)
+          max_col = std::max<std::size_t>(max_col, (cpu_matrix[i].rbegin())->first);
       }
       
       viennacl::detail::copy_impl(tools::const_sparse_matrix_adapter<SCALARTYPE, SizeType>(cpu_matrix, cpu_matrix.size(), max_col + 1),

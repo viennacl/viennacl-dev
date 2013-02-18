@@ -26,6 +26,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/meta/tag_of.hpp"
+#include "viennacl/meta/result_of.hpp"
 
 namespace viennacl
 {
@@ -114,6 +115,53 @@ namespace viennacl
     }
     
 
+    // expression on lhs:
+    template< typename LHS, typename RHS, typename OP, typename V2>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value,
+                                  viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
+                                                               const V2,
+                                                               viennacl::op_inner_prod >
+                                >::type
+    inner_prod(viennacl::vector_expression<LHS, RHS, OP> const & vector1,
+               V2 const & vector2)
+    {
+      //std::cout << "viennacl .. " << std::endl;
+      return viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>, 
+                                          const V2,
+                                          viennacl::op_inner_prod >(vector1, vector2);
+    }
+
+    // expression on rhs:
+    template <typename V1, typename LHS, typename RHS, typename OP>
+    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
+                                  viennacl::scalar_expression< const V1,
+                                                               const viennacl::vector_expression<LHS, RHS, OP>,
+                                                               viennacl::op_inner_prod >
+                                >::type
+    inner_prod(V1 const & vector1,
+               viennacl::vector_expression<LHS, RHS, OP> const & vector2)
+    {
+      //std::cout << "viennacl .. " << std::endl;
+      return viennacl::scalar_expression< const V1,
+                                          const viennacl::vector_expression<LHS, RHS, OP>, 
+                                          viennacl::op_inner_prod >(vector1, vector2);
+    }
+
+    // expression on lhs and rhs:
+    template <typename LHS1, typename RHS1, typename OP1,
+              typename LHS2, typename RHS2, typename OP2>
+    viennacl::scalar_expression< const viennacl::vector_expression<LHS1, RHS1, OP1>,
+                                 const viennacl::vector_expression<LHS2, RHS2, OP2>,
+                                 viennacl::op_inner_prod >
+    inner_prod(viennacl::vector_expression<LHS1, RHS1, OP1> const & vector1,
+               viennacl::vector_expression<LHS2, RHS2, OP2> const & vector2)
+    {
+      //std::cout << "viennacl .. " << std::endl;
+      return viennacl::scalar_expression< const viennacl::vector_expression<LHS1, RHS1, OP1>,
+                                          const viennacl::vector_expression<LHS2, RHS2, OP2>,
+                                          viennacl::op_inner_prod >(vector1, vector2);
+    }
+    
   } // end namespace linalg
 } // end namespace viennacl
 #endif

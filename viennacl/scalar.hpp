@@ -354,7 +354,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
       {
-        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        init_if_necessary(viennacl::traits::active_handle_id(proxy));
         
         viennacl::linalg::inner_prod_impl(proxy.lhs(), proxy.rhs(), *this);
         return *this;
@@ -364,7 +364,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
       {
-        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        init_if_necessary(viennacl::traits::active_handle_id(proxy));
         
         viennacl::linalg::norm_1_impl(proxy.lhs(), *this);
         return *this;
@@ -374,7 +374,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
       {
-        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        init_if_necessary(viennacl::traits::active_handle_id(proxy));
         
         viennacl::linalg::norm_2_impl(proxy.lhs(), *this);
         return *this;
@@ -384,7 +384,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
       {
-        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        init_if_necessary(viennacl::traits::active_handle_id(proxy));
         
         viennacl::linalg::norm_inf_impl(proxy.lhs(), *this);
         return *this;
@@ -394,7 +394,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
       {
-        init_if_necessary(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
+        init_if_necessary(viennacl::traits::active_handle_id(proxy));
         
         viennacl::linalg::as(*this, proxy.lhs(), SCALARTYPE(-1.0), 1, false, true);
         return *this;
