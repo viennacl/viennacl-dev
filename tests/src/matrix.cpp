@@ -110,8 +110,8 @@ int run_test(double epsilon,
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
     return EXIT_FAILURE;
   
-  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), gpu_beta);
-  vcl_A = viennacl::scalar_matrix<cpu_value_type>(vcl_A.size1(), vcl_A.size2(), gpu_beta);
+  ublas_A =    ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), gpu_beta);
+  vcl_A   = viennacl::scalar_matrix<cpu_value_type>(  vcl_A.size1(),   vcl_A.size2(), gpu_beta);
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
     return EXIT_FAILURE;
 
@@ -127,6 +127,9 @@ int run_test(double epsilon,
   //std::cout << "////////// Test: Assignments //////////" << std::endl;
   //std::cout << "//" << std::endl;
 
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+  
   std::cout << "Testing matrix assignment... ";
   //std::cout << ublas_B(0,0) << " vs. " << vcl_B(0,0) << std::endl;
   ublas_A = ublas_B;
@@ -177,38 +180,71 @@ int run_test(double epsilon,
 
   std::cout << "Inplace add: ";
   ublas_C += ublas_C;
-  vcl_C += vcl_C;
+  vcl_C   +=   vcl_C;
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
   std::cout << "Scaled inplace add: ";
   ublas_C += beta * ublas_A;
-  vcl_C += gpu_beta * vcl_A;
+  vcl_C   += gpu_beta * vcl_A;
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
   
   std::cout << "Add: ";
   ublas_C = ublas_A + ublas_B;
-  vcl_C = vcl_A + vcl_B;
+  vcl_C   =   vcl_A +   vcl_B;
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
-  std::cout << "Scaled add: ";
-  ublas_C = alpha * ublas_A + beta * ublas_B;
-  vcl_C = alpha * vcl_A + beta * vcl_B;
+  std::cout << "Add with flipsign: ";
+  ublas_C = - ublas_A + ublas_B;
+  vcl_C   = -   vcl_A +   vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Scaled add (left): ";
+  ublas_C = alpha * ublas_A + ublas_B;
+  vcl_C   = alpha *   vcl_A +   vcl_B;
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
-  std::cout << "Scaled add: ";
-  vcl_C = gpu_alpha * vcl_A + gpu_beta * vcl_B;
+  std::cout << "Scaled add (left): ";
+  vcl_C = gpu_alpha * vcl_A + vcl_B;
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+  
+
+  std::cout << "Scaled add (right): ";
+  ublas_C = ublas_A + beta * ublas_B;
+  vcl_C   =   vcl_A + beta *   vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  std::cout << "Scaled add (right): ";
+  vcl_C = vcl_A + gpu_beta * vcl_B;
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
   
+  
+  std::cout << "Scaled add (both): ";
+  ublas_C = alpha * ublas_A + beta * ublas_B;
+  vcl_C   = alpha *   vcl_A + beta *   vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  std::cout << "Scaled add (both): ";
+  vcl_C = gpu_alpha * vcl_A + gpu_beta * vcl_B;
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
   
   //std::cout << "//" << std::endl;
   //std::cout << "////////// Test 4: Subtraction //////////" << std::endl;
@@ -239,18 +275,51 @@ int run_test(double epsilon,
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
-  std::cout << "Scaled sub: ";
-  ublas_B = alpha * ublas_A - beta * ublas_C;
-  vcl_B = alpha * vcl_A - vcl_C * beta;
+  std::cout << "Scaled sub (left): ";
+  ublas_B = alpha * ublas_A - ublas_C;
+  vcl_B   = alpha *   vcl_A - vcl_C;
 
   if (!check_for_equality(ublas_B, vcl_B, epsilon))
     return EXIT_FAILURE;
 
-  std::cout << "Scaled sub: ";
+  std::cout << "Scaled sub (left): ";
+  vcl_B = gpu_alpha * vcl_A - vcl_C;
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+
+  
+  std::cout << "Scaled sub (right): ";
+  ublas_B = ublas_A - beta * ublas_C;
+  vcl_B   =   vcl_A - vcl_C * beta;
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+
+  std::cout << "Scaled sub (right): ";
+  vcl_B = vcl_A - vcl_C * gpu_beta;
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+
+  
+  std::cout << "Scaled sub (both): ";
+  ublas_B = alpha * ublas_A - beta * ublas_C;
+  vcl_B   = alpha * vcl_A - vcl_C * beta;
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+
+  std::cout << "Scaled sub (both): ";
   vcl_B = gpu_alpha * vcl_A - vcl_C * gpu_beta;
   if (!check_for_equality(ublas_B, vcl_B, epsilon))
     return EXIT_FAILURE;
 
+  
+  std::cout << "Unary operator-: ";
+  ublas_C = - ublas_A;
+  vcl_C   = -   vcl_A;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
   
   
   
@@ -286,6 +355,36 @@ int run_test(double epsilon,
   vcl_A /= gpu_beta;
 
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+  
+  
+  std::cout << "Complicated expressions: ";
+  //std::cout << "ublas_A: " << ublas_A << std::endl;
+  //std::cout << "ublas_B: " << ublas_B << std::endl;
+  //std::cout << "ublas_C: " << ublas_C << std::endl;
+  ublas_B +=     alpha * (- ublas_A - beta * ublas_C + ublas_A);
+  vcl_B   += gpu_alpha * (-   vcl_A - vcl_C * beta   +   vcl_A);
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+  
+  ublas_B += (- ublas_A - beta * ublas_C + ublas_A * beta) / gpu_alpha;
+  vcl_B   += (-   vcl_A - vcl_C * beta + gpu_beta * vcl_A) / gpu_alpha;
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+  
+
+  ublas_B -=     alpha * (- ublas_A - beta * ublas_C - ublas_A);
+  vcl_B   -= gpu_alpha * (-   vcl_A - vcl_C * beta - vcl_A);
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
+    return EXIT_FAILURE;
+  
+  ublas_B -= (- ublas_A - beta * ublas_C - ublas_A * beta) / alpha;
+  vcl_B   -= (-   vcl_A - vcl_C * beta - gpu_beta * vcl_A) / gpu_alpha;
+
+  if (!check_for_equality(ublas_B, vcl_B, epsilon))
     return EXIT_FAILURE;
 
   std::cout << std::endl;

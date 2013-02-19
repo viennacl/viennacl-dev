@@ -373,6 +373,13 @@ int test(Epsilon const& epsilon,
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << "Testing add on vector with flipsign..." << std::endl;
+  ublas_v1     = - ublas_v1 + ublas_v2;
+  vcl_v1       = -   vcl_v1 +   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
   std::cout << "Testing inplace-add on vector..." << std::endl;
   ublas_v1 += ublas_v2;
   vcl_v1   +=   vcl_v2;
@@ -698,6 +705,14 @@ int test(Epsilon const& epsilon,
   
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  
+  std::cout << "Testing unary operator-..." << std::endl;
+  ublas_v1 = - ublas_v2;
+  vcl_v1   = -   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  
 
   std::cout << "Testing elementwise multiplication..." << std::endl;
   ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2);

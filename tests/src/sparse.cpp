@@ -397,8 +397,22 @@ int test(Epsilon const& epsilon)
   //
   // Triangular solvers for A \ b:
   //
-  ublas::compressed_matrix<NumericT> ublas_matrix_trans = trans(ublas_matrix); //note: triangular solvers with uBLAS show atrocious performance, while transposed solvers are quite okay. To keep execution times short, we use a double-transpose-trick in the following.
+  ublas::compressed_matrix<NumericT> ublas_matrix_trans(ublas_matrix.size2(), ublas_matrix.size1(), ublas_matrix.nnz()); // = trans(ublas_matrix); //note: triangular solvers with uBLAS show atrocious performance, while transposed solvers are quite okay. To keep execution times short, we use a double-transpose-trick in the following.
 
+  // fast transpose:
+  for (typename ublas::compressed_matrix<NumericT>::iterator1 row_it  = ublas_matrix.begin1();
+                                                              row_it != ublas_matrix.end1();
+                                                            ++row_it)
+  {
+    for (typename ublas::compressed_matrix<NumericT>::iterator2 col_it  = row_it.begin();
+                                                                col_it != row_it.end();
+                                                              ++col_it)
+    {
+      ublas_matrix_trans(col_it.index1(), col_it.index2()) = *col_it;
+    }
+  }
+
+  
   std::cout << "Testing unit upper triangular solve: compressed_matrix" << std::endl;
   result = rhs;
   viennacl::copy(result, vcl_result);

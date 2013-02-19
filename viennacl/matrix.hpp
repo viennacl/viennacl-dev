@@ -682,6 +682,13 @@ namespace viennacl
     }
     
     
+    /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
+    matrix_expression<const self_type, const SCALARTYPE, op_prod> operator-() const
+    {
+      return matrix_expression<const self_type, const SCALARTYPE, op_prod>(*this, SCALARTYPE(-1.0));
+    }
+    
+    
     //
     // Matrix-Matrix products:
     //
@@ -1097,13 +1104,46 @@ namespace viennacl
               matrix_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
-            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy1))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result(proxy1.size());
-    result = proxy1;
+    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
     result += proxy2;
     return result;
   }
+  
+  template <typename LHS1, typename RHS1, typename OP1,
+            typename M>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M>::value,
+                                typename matrix_expression< LHS1, RHS1, OP1>::matrix_type
+                              >::type  
+  operator + (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
+              M const & proxy2)
+  {
+    assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
+            && bool("Incompatible matrix sizes!"));
+    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
+    result += proxy2;
+    return result;
+  }
+  
+  template <typename M,
+            typename LHS2, typename RHS2, typename OP2>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M>::value,
+                                typename matrix_expression< LHS2, RHS2, OP2>::matrix_type
+                              >::type  
+  operator + (M const & proxy1,
+              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+  {
+    assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
+            && bool("Incompatible matrix sizes!"));
+    typename matrix_expression< LHS2, RHS2, OP2>::matrix_type result = proxy1;
+    result += proxy2;
+    return result;
+  }
+  
+  
   
   /** @brief Operator overload for m1 + m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices */
   template <typename M1, typename M2>
@@ -1117,35 +1157,35 @@ namespace viennacl
   }
 
   /** @brief Operator overload for the addition of a matrix expression m1 + m2 @ beta, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename M1, typename M2, typename M3, typename OP>
+  template <typename M1, typename M2, typename S3, typename OP>
   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
                                 && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                && viennacl::is_any_dense_nonstructured_matrix<M3>::value,
+                                && viennacl::is_any_scalar<S3>::value,
                                 matrix_expression< const M1,
-                                                    const matrix_expression<const M2, const M3, OP>,
+                                                    const matrix_expression<const M2, const S3, OP>,
                                                     op_add >
                               >::type
   operator + (const M1 & m1,
-              const matrix_expression< const M2, const M3, OP> & proxy) 
+              const matrix_expression< const M2, const S3, OP> & proxy) 
   {
     return matrix_expression< const M1,
-                              const matrix_expression<const M2, const M3, OP>,
+                              const matrix_expression<const M2, const S3, OP>,
                               op_add > (m1, proxy);
   }
   
   /** @brief Operator overload for the addition of a matrix expression m1 @ alpha + m2, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename M1, typename M2, typename M3, typename OP>
+  template <typename M1, typename S2, typename M3, typename OP>
   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_scalar<S2>::value
                                 && viennacl::is_any_dense_nonstructured_matrix<M3>::value,
-                                matrix_expression< const matrix_expression<const M1, const M2, OP>,
+                                matrix_expression< const matrix_expression<const M1, const S2, OP>,
                                                     const M3,
                                                     op_add >
                               >::type
-  operator + (const matrix_expression< const M1, const M2, OP> & proxy,
+  operator + (const matrix_expression< const M1, const S2, OP> & proxy,
               const M3 & m3) 
   {
-    return matrix_expression< const matrix_expression<const M1, const M2, OP>,
+    return matrix_expression< const matrix_expression<const M1, const S2, OP>,
                               const M3,
                               op_add > (proxy, m3);
   }
@@ -1198,7 +1238,7 @@ namespace viennacl
                                 && viennacl::is_any_scalar<S2>::value,
                                 M1 &>::type
   operator += (M1 & m1, 
-                const matrix_expression< const M2, const S2, OP> & proxy)
+               const matrix_expression< const M2, const S2, OP> & proxy)
   {
     typedef typename viennacl::result_of::cpu_value_type<M1>::type   cpu_value_type;
     
@@ -1225,7 +1265,7 @@ namespace viennacl
                                 && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
                                 M1 &>::type
   operator += (M1 & m1, 
-                const matrix_expression< const M2, const M3, OP> & proxy)
+               const matrix_expression< const M2, const M3, OP> & proxy)
   {
     typedef typename viennacl::result_of::cpu_value_type<M1>::type   cpu_value_type;
     
@@ -1406,13 +1446,46 @@ namespace viennacl
               matrix_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
-            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy1))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result(proxy1.size());
-    result = proxy1;
+    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
     result -= proxy2;
     return result;
   }
+  
+  template <typename LHS1, typename RHS1, typename OP1,
+            typename M>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M>::value,
+                                typename matrix_expression< LHS1, RHS1, OP1>::matrix_type
+                              >::type  
+  operator - (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
+              M const & proxy2)
+  {
+    assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
+            && bool("Incompatible matrix sizes!"));
+    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
+    result -= proxy2;
+    return result;
+  }
+  
+  template <typename M,
+            typename LHS2, typename RHS2, typename OP2>
+  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M>::value,
+                                typename matrix_expression< LHS2, RHS2, OP2>::matrix_type
+                              >::type  
+  operator - (M const & proxy1,
+              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+  {
+    assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
+            && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
+            && bool("Incompatible matrix sizes!"));
+    typename matrix_expression< LHS2, RHS2, OP2>::matrix_type result = proxy1;
+    result -= proxy2;
+    return result;
+  }
+  
+  
   
   /** @brief Operator overload for m1 - m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices */
   template <typename M1, typename M2>
@@ -1426,35 +1499,35 @@ namespace viennacl
   }
   
   /** @brief Operator overload for the addition of a matrix expression m1 - m2 @ beta, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename M1, typename M2, typename M3, typename OP>
+  template <typename M1, typename M2, typename S3, typename OP>
   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
                                 && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                && viennacl::is_any_dense_nonstructured_matrix<M3>::value,
+                                && viennacl::is_any_scalar<S3>::value,
                                 matrix_expression< const M1,
-                                                    const matrix_expression<const M2, const M3, OP>,
+                                                    const matrix_expression<const M2, const S3, OP>,
                                                     op_sub >
                               >::type
   operator - (const M1 & m1,
-              const matrix_expression< const M2, const M3, OP> & proxy) 
+              const matrix_expression< const M2, const S3, OP> & proxy) 
   {
     return matrix_expression< const M1,
-                              const matrix_expression<const M2, const M3, OP>,
+                              const matrix_expression<const M2, const S3, OP>,
                               op_sub > (m1, proxy);
   }
   
   /** @brief Operator overload for the addition of a matrix expression m1 @ alpha - m2, where @ is either product or division, and alpha is either a CPU or GPU scalar. */
-  template <typename M1, typename M2, typename M3, typename OP>
+  template <typename M1, typename S2, typename M3, typename OP>
   typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                && viennacl::is_any_dense_nonstructured_matrix<M2>::value
+                                && viennacl::is_any_scalar<S2>::value
                                 && viennacl::is_any_dense_nonstructured_matrix<M3>::value,
-                                matrix_expression< const matrix_expression<const M1, const M2, OP>,
+                                matrix_expression< const matrix_expression<const M1, const S2, OP>,
                                                     const M3,
                                                     op_sub >
                               >::type
-  operator - (const matrix_expression< const M1, const M2, OP> & proxy,
+  operator - (const matrix_expression< const M1, const S2, OP> & proxy,
               const M3 & m3) 
   {
-    return matrix_expression< const matrix_expression<const M1, const M2, OP>,
+    return matrix_expression< const matrix_expression<const M1, const S2, OP>,
                               const M3,
                               op_sub > (proxy, m3);
   }

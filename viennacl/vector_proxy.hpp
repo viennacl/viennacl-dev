@@ -173,6 +173,11 @@ namespace viennacl
         return *this;
       }
       
+      /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
+      vector_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      {
+        return vector_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
+      }
       
       ///////////// Direct manipulation via operator() and operator[]
       //read-write access to an element of the vector
@@ -525,6 +530,12 @@ namespace viennacl
         viennacl::linalg::av(*this,
                              *this, val, 1, true, false);
         return *this;
+      }
+      
+      /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
+      vector_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      {
+        return vector_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
       }
       
       

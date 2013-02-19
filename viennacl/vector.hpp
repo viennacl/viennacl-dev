@@ -1171,6 +1171,12 @@ namespace viennacl
     }
     
     
+    /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
+    vector_expression<const self_type, const SCALARTYPE, op_prod> operator-() const
+    {
+      return vector_expression<const self_type, const SCALARTYPE, op_prod>(*this, SCALARTYPE(-1.0));
+    }
+    
     //
     //// iterators:
     //
@@ -2031,8 +2037,7 @@ namespace viennacl
               vector_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(proxy1.size() == proxy2.size() && bool("Incompatible vector sizes!"));
-    typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
-    result = proxy1;
+    typename vector_expression< LHS1, RHS1, OP1>::VectorType result = proxy1;
     result += proxy2;
     return result;
   }
@@ -2051,8 +2056,7 @@ namespace viennacl
               V1 const & vec)
   {
     assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
-    result = proxy;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result = proxy;
     result += vec;
     return result;
   }
@@ -2070,8 +2074,7 @@ namespace viennacl
               vector_expression<LHS, RHS, OP> const & proxy)
   {
     assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
-    result = vec;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result = vec;
     result += proxy;
     return result;
   }
@@ -2170,8 +2173,7 @@ namespace viennacl
               vector_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(proxy1.size() == proxy2.size() && bool("Incompatible vector sizes!"));
-    typename vector_expression< LHS1, RHS1, OP1>::VectorType result(proxy1.size());
-    result = proxy1;
+    typename vector_expression< LHS1, RHS1, OP1>::VectorType result = proxy1;
     result -= proxy2;
     return result;
   }
@@ -2190,8 +2192,7 @@ namespace viennacl
               V1 const & vec)
   {
     assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
-    result = proxy;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result = proxy;
     result -= vec;
     return result;
   }
@@ -2209,8 +2210,7 @@ namespace viennacl
               vector_expression< LHS, RHS, OP> const & proxy)
   {
     assert(proxy.size() == vec.size() && bool("Incompatible vector sizes!"));
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result(vec.size());
-    result = vec;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type, V1::alignment> result = vec;
     result -= proxy;
     return result;
   }
@@ -2321,8 +2321,7 @@ namespace viennacl
   operator * (vector_expression< LHS, RHS, OP> const & proxy,
               S1 const & val)
   {
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
-    result = proxy;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result = proxy;
     result *= val;
     return result;
   }
@@ -2339,8 +2338,7 @@ namespace viennacl
   operator * (S1 const & val,
               vector_expression< LHS, RHS, OP> const & proxy)
   {
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
-    result = proxy;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result = proxy;
     result *= val;
     return result;
   }
@@ -2372,8 +2370,7 @@ namespace viennacl
   operator / (vector_expression< LHS, RHS, OP> const & proxy,
               S1 const & val)
   {
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result(proxy.size());
-    result = proxy;
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<RHS>::type> result = proxy;
     result /= val;
     return result;
   }

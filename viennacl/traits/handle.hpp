@@ -61,7 +61,7 @@ namespace viennacl
     {
       return obj.lhs().handle();
     }
-    
+
     // proxy objects require extra care (at the moment)
     template <typename T>
     viennacl::backend::mem_handle       & handle(viennacl::vector_range<T>       & obj)
@@ -115,6 +115,19 @@ namespace viennacl
       return obj.get().handle();
     }
 
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::backend::mem_handle const & handle(viennacl::vector_expression<LHS, RHS, OP> const & obj)
+    {
+      return handle(obj.lhs());
+    }
+
+    template <typename LHS, typename RHS, typename OP>
+    viennacl::backend::mem_handle const & handle(viennacl::matrix_expression<LHS, RHS, OP> const & obj)
+    {
+      return handle(obj.lhs());
+    }
+    
+    
     
     //
     // RAM handle extraction

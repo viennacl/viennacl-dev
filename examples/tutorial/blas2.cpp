@@ -184,7 +184,7 @@ int main()
       tri_matrix(i,j) = matrix(i,j);
   }
   
-  viennacl::matrix<ScalarType> vcl_tri_matrix(tri_matrix.size1(), tri_matrix.size2());
+  viennacl::matrix<ScalarType> vcl_tri_matrix = viennacl::identity_matrix<ScalarType>(tri_matrix.size1());
   viennacl::copy(tri_matrix, vcl_tri_matrix);
   
   rhs.resize(tri_matrix.size1(), true);

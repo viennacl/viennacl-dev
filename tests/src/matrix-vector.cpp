@@ -181,8 +181,8 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
    std::cout << "Transposed Matrix-Vector product" << std::endl;
-   ublas_v2     = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);  
-   vcl_v2 = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
+   ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);  
+   vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
 
    if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {

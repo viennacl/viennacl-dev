@@ -174,6 +174,12 @@ namespace viennacl
       }
 
 
+      /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
+      matrix_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      {
+        return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
+      }
+      
       
 
       //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
@@ -609,6 +615,12 @@ namespace viennacl
       }
 
 
+      /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
+      matrix_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      {
+        return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
+      }
+      
 
       //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
       //reference operator()(size_type i, size_type j) { return A_(start1() + i, start2() + i); }
