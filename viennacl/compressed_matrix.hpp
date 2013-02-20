@@ -564,17 +564,24 @@ namespace viennacl
           {
             std::vector<std::map<unsigned int, SCALARTYPE> > stl_sparse_matrix;
             if (rows_ > 0)
-              stl_sparse_matrix.resize(rows_);
-            
-            if (preserve && rows_ > 0)
-              viennacl::copy(*this, stl_sparse_matrix);
+            {
+              if (preserve) 
+              {
+                stl_sparse_matrix.resize(rows_);
+                viennacl::copy(*this, stl_sparse_matrix);
+              } else
+                stl_sparse_matrix[0][0] = 0;
+            } else {
+              stl_sparse_matrix.resize(new_size1);
+              stl_sparse_matrix[0][0] = 0;      //enforces nonzero array sizes if matrix was initially empty
+            }
               
             stl_sparse_matrix.resize(new_size1);
             
             //discard entries with column index larger than new_size2
             if (new_size2 < cols_ && rows_ > 0)
             {
-              for (size_t i=0; i<stl_sparse_matrix.size(); ++i)
+              for (std::size_t i=0; i<stl_sparse_matrix.size(); ++i)
               {
                 std::list<unsigned int> to_delete;
                 for (typename std::map<unsigned int, SCALARTYPE>::iterator it = stl_sparse_matrix[i].begin();
