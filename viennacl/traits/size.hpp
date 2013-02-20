@@ -2,7 +2,7 @@
 #define VIENNACL_TRAITS_SIZE_HPP_
 
 /* =========================================================================
-   Copyright (c) 2010-2012, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file size.hpp
+/** @file viennacl/traits/size.hpp
     @brief Generic size and resize functionality for different vector and matrix types
 */
 

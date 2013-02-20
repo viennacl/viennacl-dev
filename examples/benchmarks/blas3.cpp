@@ -1,5 +1,5 @@
 /* =========================================================================
-   Copyright (c) 2010-2012, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.

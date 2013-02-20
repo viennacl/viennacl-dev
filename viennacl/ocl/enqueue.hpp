@@ -2,7 +2,7 @@
 #define VIENNACL_OCL_ENQUEUE_HPP_
 
 /* =========================================================================
-   Copyright (c) 2010-2012, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file enqueue.hpp
+/** @file viennacl/ocl/enqueue.hpp
     @brief Enqueues kernels into command queues
 */
 
