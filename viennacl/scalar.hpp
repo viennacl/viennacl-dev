@@ -238,7 +238,7 @@ namespace viennacl
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
-      explicit scalar(cl_mem mem, size_t size)
+      explicit scalar(cl_mem mem, size_type size)
       {
         val_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
         val_.opencl_handle() = mem;

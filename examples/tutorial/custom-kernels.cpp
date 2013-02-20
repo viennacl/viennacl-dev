@@ -117,7 +117,7 @@ int main()
   
   //
   // Launch the kernel with 'vector_size' threads in one work group
-  // Note that size_t might differ between host and device. Thus, a cast to cl_uint is necessary for the forth argument.
+  // Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary for the forth argument.
   //
   viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));  
   viennacl::ocl::enqueue(my_kernel_div(vec1, vec2, result_div, static_cast<cl_uint>(vec1.size())));

@@ -54,7 +54,7 @@ namespace viennacl
             contexts_[current_context_id_].init();
             //create one queue per device:
             std::vector<viennacl::ocl::device> devices = contexts_[current_context_id_].devices();
-            for (size_t j = 0; j<devices.size(); ++j)
+            for (std::size_t j = 0; j<devices.size(); ++j)
               contexts_[current_context_id_].add_queue(devices[j]);
             initialized_[current_context_id_] = true;
             /*
@@ -84,7 +84,7 @@ namespace viennacl
           else
           {
             //set devices for context:
-            for (size_t j = 0; j<devices.size(); ++j)
+            for (std::size_t j = 0; j<devices.size(); ++j)
               contexts_[i].add_device(devices[j]);
           }
         }
@@ -108,7 +108,7 @@ namespace viennacl
           else
           {
             //set devices for context:
-            for (size_t j = 0; j<devices.size(); ++j)
+            for (std::size_t j = 0; j<devices.size(); ++j)
               contexts_[i].add_device(devices[j]);
             
             //init context:
@@ -121,7 +121,7 @@ namespace viennacl
                               ++qit)
             {
               std::vector<cl_command_queue> const & queues_for_device = qit->second;
-              for (size_t j=0; j<queues_for_device.size(); ++j)
+              for (std::size_t j=0; j<queues_for_device.size(); ++j)
                 contexts_[i].add_queue(qit->first, queues_for_device[j]);
             }
             
@@ -142,7 +142,7 @@ namespace viennacl
           
           //wrap queue vector into map
           std::map< cl_device_id, std::vector<cl_command_queue> > queues_map;
-          for (size_t j = 0; j<devices.size(); ++j)
+          for (std::size_t j = 0; j<devices.size(); ++j)
             queues_map[devices[j]].push_back(queue[j]);
           
           setup_context(i, c, devices, queues_map);

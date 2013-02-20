@@ -243,7 +243,7 @@ namespace viennacl
 #ifdef VIENNACL_GMRES_DEBUG
           std::cout << "P_k v_k_tilde: " << (v_k_tilde - 2.0 * U[k] * inner_prod(U[k], v_k_tilde)) << std::endl;
           std::cout << "R[k]: [" << R[k].size() << "](";
-          for (size_t i=0; i<R[k].size(); ++i)
+          for (std::size_t i=0; i<R[k].size(); ++i)
             std::cout << R[k][i] << ",";
           std::cout << ")" << std::endl;
 #endif
@@ -293,9 +293,9 @@ namespace viennacl
         //inplace solution of the upper triangular matrix:
         std::cout << "Upper triangular system:" << std::endl;
         std::cout << "Size of Krylov space: " << k << std::endl;
-        for (size_t i=0; i<k; ++i)
+        for (std::size_t i=0; i<k; ++i)
         {
-          for (size_t j=0; j<k; ++j)
+          for (std::size_t j=0; j<k; ++j)
           {
             std::cout << R[j][i] << ", ";
           }
@@ -314,7 +314,7 @@ namespace viennacl
         
 #ifdef VIENNACL_GMRES_DEBUG
         std::cout << "Result of triangular solver: ";
-        for (size_t i=0; i<k; ++i)
+        for (std::size_t i=0; i<k; ++i)
           std::cout << projection_rhs[i] << ", ";
         std::cout << std::endl;
 #endif        

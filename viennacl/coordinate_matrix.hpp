@@ -47,7 +47,7 @@ namespace viennacl
     void copy(const CPU_MATRIX & cpu_matrix,
                      coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
-      size_t group_num = 64;
+      std::size_t group_num = 64;
       
       // Step 1: Determine nonzeros:
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
@@ -100,7 +100,7 @@ namespace viennacl
         //group_boundaries[1] = data_index; //for one compute unit
         
         /*std::cout << "Group boundaries: " << std::endl;
-        for (size_t i=0; i<group_boundaries.size(); ++i)
+        for (std::size_t i=0; i<group_boundaries.size(); ++i)
           std::cout << group_boundaries[i] << std::endl;*/
         
         viennacl::backend::memory_create(gpu_matrix.group_boundaries_, group_boundaries.raw_size(), group_boundaries.get());

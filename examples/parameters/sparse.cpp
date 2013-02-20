@@ -157,7 +157,7 @@ int main()
   std::string devname   = dev.name();
   std::string driver    = dev.driver_version();
   cl_uint compunits = dev.max_compute_units();      
-  size_t wgsize    = dev.max_workgroup_size();        
+  std::size_t wgsize    = dev.max_workgroup_size();        
   
   // -----------------------------------------
    paras.add_device();

@@ -197,7 +197,7 @@ int run_benchmark()
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   long err_cnt = 0;
-  for (size_t i=0; i<ublas_vec1.size(); ++i)
+  for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
     if ( fabs(ublas_vec1[i] - ublas_vec2[i]) / std::max(fabs(ublas_vec1[i]), fabs(ublas_vec2[i])) > 1e-2)
     {
@@ -227,7 +227,7 @@ int run_benchmark()
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   err_cnt = 0;
-  for (size_t i=0; i<ublas_vec1.size(); ++i)
+  for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
     if ( fabs(ublas_vec1[i] - ublas_vec2[i]) / std::max(fabs(ublas_vec1[i]), fabs(ublas_vec2[i])) > 1e-2)
     {
@@ -257,7 +257,7 @@ int run_benchmark()
   
   viennacl::copy(vcl_vec1, ublas_vec2);  
   err_cnt = 0;
-  for (size_t i=0; i<ublas_vec1.size(); ++i)
+  for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
     if ( fabs(ublas_vec1[i] - ublas_vec2[i]) / std::max(fabs(ublas_vec1[i]), fabs(ublas_vec2[i])) > 1e-2)
     {

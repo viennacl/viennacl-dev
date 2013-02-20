@@ -73,7 +73,7 @@ namespace viennacl
           cl_int err;
 
           //query a little bit of info:
-          err = clGetDeviceInfo(dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &max_work_group_size_, NULL);
+          err = clGetDeviceInfo(dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(std::size_t), &max_work_group_size_, NULL);
           VIENNACL_ERR_CHECK(err);
           err = clGetDeviceInfo(dev, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &compute_units_, NULL);
           VIENNACL_ERR_CHECK(err);
@@ -167,7 +167,7 @@ namespace viennacl
         }
         
         /** @brief Returns the maximum work group size for the device*/
-        size_t max_workgroup_size() const
+        std::size_t max_workgroup_size() const
         {
           return max_work_group_size_;
         }                        
@@ -240,7 +240,7 @@ namespace viennacl
           return ret;
         }
         
-        size_t max_work_group_size() const { return max_work_group_size_; }
+        std::size_t max_work_group_size() const { return max_work_group_size_; }
         cl_uint compute_units() const { return compute_units_; }
         cl_device_type type() const { return type_; }
         
@@ -257,7 +257,7 @@ namespace viennacl
       private:
         
         cl_device_id    device_;
-        size_t          max_work_group_size_;
+        std::size_t     max_work_group_size_;
         cl_uint         compute_units_;
         cl_device_type  type_; //device type
         cl_ulong        max_memory_alloc_;

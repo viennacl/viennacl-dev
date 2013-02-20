@@ -149,7 +149,7 @@ int main()
   //
   std::cout << std::endl << "--- Computing matrix-matrix product on each available compute device using ViennaCL ---" << std::endl;
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;

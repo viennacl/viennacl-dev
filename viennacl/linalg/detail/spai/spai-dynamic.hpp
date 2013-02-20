@@ -93,7 +93,7 @@ namespace viennacl
           void composeNewR(const MatrixType& A, const MatrixType& R_n, MatrixType& R)
           {
             typedef typename MatrixType::value_type ScalarType;
-            size_t row_n = R_n.size1() - (A.size1() - R.size2()); 
+            std::size_t row_n = R_n.size1() - (A.size1() - R.size2()); 
             MatrixType C = boost::numeric::ublas::zero_matrix<ScalarType>(R.size1() + row_n, R.size2() + A.size2());
             //write original R to new Composite R
             boost::numeric::ublas::project(C, boost::numeric::ublas::range(0,R.size1()), boost::numeric::ublas::range(0, R.size2())) += R;
@@ -175,7 +175,7 @@ namespace viennacl
                                       const spai_tag& tag)
           {
             std::vector<std::pair<unsigned int, ScalarType> > p;
-            size_t cur_size = 0;
+            std::size_t cur_size = 0;
             ScalarType inprod, norm2;
             //print_sparse_vector(res);
             for(typename SparseVectorType::const_iterator res_it = res.begin(); res_it != res.end(); ++res_it)
@@ -185,7 +185,7 @@ namespace viennacl
                 inprod = norm2 = 0;
                 sparse_inner_prod(res, A_v_c[res_it->first], inprod);
                 sparse_norm_2(A_v_c[res_it->first], norm2);
-                p.push_back(std::pair<size_t, ScalarType>(res_it->first, (inprod*inprod)/(norm2*norm2)));
+                p.push_back(std::pair<std::size_t, ScalarType>(res_it->first, (inprod*inprod)/(norm2*norm2)));
               }
             }
             
@@ -210,7 +210,7 @@ namespace viennacl
           void buildNewRowSet(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& I, 
                               const std::vector<unsigned int>& J_n, std::vector<unsigned int>& I_n)
           {
-            for(size_t i = 0; i < J_n.size(); ++i)
+            for(std::size_t i = 0; i < J_n.size(); ++i)
             {
               for(typename SparseVectorType::const_iterator col_it = A_v_c[J_n[i]].begin(); col_it!=A_v_c[J_n[i]].end(); ++col_it)
               {
@@ -229,10 +229,10 @@ namespace viennacl
           void QRBlockComposition(const MatrixType& A_I_J, const MatrixType& A_I_J_u, MatrixType& A_I_u_J_u)
           {
             typedef typename MatrixType::value_type ScalarType;
-            size_t row_n1 = A_I_J_u.size1() - A_I_J.size2();
-            size_t row_n2 = A_I_u_J_u.size1();
-            size_t row_n = row_n1 + row_n2;
-            size_t col_n = A_I_J_u.size2();
+            std::size_t row_n1 = A_I_J_u.size1() - A_I_J.size2();
+            std::size_t row_n2 = A_I_u_J_u.size1();
+            std::size_t row_n = row_n1 + row_n2;
+            std::size_t col_n = A_I_J_u.size2();
             MatrixType C = boost::numeric::ublas::zero_matrix<ScalarType>(row_n, col_n);
             boost::numeric::ublas::project(C, boost::numeric::ublas::range(0, row_n1), boost::numeric::ublas::range(0, col_n)) += 
             boost::numeric::ublas::project(A_I_J_u, boost::numeric::ublas::range(A_I_J.size2(), A_I_J_u.size1()),

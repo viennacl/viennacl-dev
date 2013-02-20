@@ -58,8 +58,8 @@ int main (int argc, const char * argv[])
     Timer timer;
     double elapsed;
 
-    size_t rows = 1800;
-    size_t cols = 1800;
+    std::size_t rows = 1800;
+    std::size_t cols = 1800;
     double num_ops_qr = 2.0 * cols * cols * (rows - cols/3.0);
     double num_ops_recovery = 4.0 * (rows*rows*cols - rows*cols*cols + cols*cols*cols);
     
@@ -67,14 +67,14 @@ int main (int argc, const char * argv[])
     MatrixType Q(rows, rows);
     MatrixType R(rows, cols);
     
-    for (size_t i=0; i<rows; ++i)
+    for (std::size_t i=0; i<rows; ++i)
     {
-      for (size_t j=0; j<cols; ++j)
+      for (std::size_t j=0; j<cols; ++j)
       {
         A(i,j) = 1.0 + (i + 1)*(j+1);
         R(i,j) = 0.0;
       }
-      for (size_t j=0; j<rows; ++j)
+      for (std::size_t j=0; j<rows; ++j)
       {
         Q(i,j) = 0.0;
       }

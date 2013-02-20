@@ -175,12 +175,12 @@ int main()
   // Setup suitable matrices
   //
   ublas::matrix<ScalarType> tri_matrix(10,10);
-  for (size_t i=0; i<tri_matrix.size1(); ++i)
+  for (std::size_t i=0; i<tri_matrix.size1(); ++i)
   {
-    for (size_t j=0; j<i; ++j)
+    for (std::size_t j=0; j<i; ++j)
       tri_matrix(i,j) = 0.0;
 
-    for (size_t j=i; j<tri_matrix.size2(); ++j)
+    for (std::size_t j=i; j<tri_matrix.size2(); ++j)
       tri_matrix(i,j) = matrix(i,j);
   }
   
@@ -213,18 +213,18 @@ int main()
   // Set up a full system for LU solver:
   // 
   std::cout << "----- LU factorization -----" << std::endl;
-  size_t lu_dim = 300;
+  std::size_t lu_dim = 300;
   ublas::matrix<ScalarType> square_matrix(lu_dim, lu_dim);
   ublas::vector<ScalarType> lu_rhs(lu_dim);
   viennacl::matrix<ScalarType> vcl_square_matrix(lu_dim, lu_dim);
   viennacl::vector<ScalarType> vcl_lu_rhs(lu_dim);
 
-  for (size_t i=0; i<lu_dim; ++i)
-    for (size_t j=0; j<lu_dim; ++j)
+  for (std::size_t i=0; i<lu_dim; ++i)
+    for (std::size_t j=0; j<lu_dim; ++j)
       square_matrix(i,j) = random<ScalarType>();
 
   //put some more weight on diagonal elements:
-  for (size_t j=0; j<lu_dim; ++j)
+  for (std::size_t j=0; j<lu_dim; ++j)
   {
     square_matrix(j,j) += 10.0;
     lu_rhs(j) = random<ScalarType>();

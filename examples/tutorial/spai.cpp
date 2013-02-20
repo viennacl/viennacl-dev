@@ -92,7 +92,7 @@ int main (int, const char **)
     // Use uniform load vector:
     //
     VectorType rhs(M.size2());
-    for (size_t i=0; i<rhs.size(); ++i)
+    for (std::size_t i=0; i<rhs.size(); ++i)
       rhs(i) = 1;
 
     GPUMatrixType  gpu_M(M.size1(), M.size2());

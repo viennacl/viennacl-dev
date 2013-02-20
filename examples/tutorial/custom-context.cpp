@@ -94,7 +94,7 @@ int main()
   std::cout << "Number of devices for custom context: " << devices.size() << std::endl;
   
   //set up context using all found devices:
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
       device_id_array.push_back(devices[i].id());
   }
@@ -135,7 +135,7 @@ int main()
   // 
   
   std::vector<cl_command_queue> queues(devices.size());
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
     queues[i] = clCreateCommandQueue(my_context, devices[i].id(), 0, &err);
     VIENNACL_ERR_CHECK(err);
@@ -144,7 +144,7 @@ int main()
   // 
   // create and build a program in the context:
   // 
-  size_t source_len = std::string(my_compute_program).length();
+  std::size_t source_len = std::string(my_compute_program).length();
   cl_program my_prog = clCreateProgramWithSource(my_context, 1, &my_compute_program, &source_len, &err);
   err = clBuildProgram(my_prog, 0, NULL, NULL, NULL, NULL);
   
@@ -176,8 +176,8 @@ int main()
   VIENNACL_ERR_CHECK(err);
   err = clSetKernelArg(my_kernel, 3, sizeof(unsigned int), (void*)&vector_size);
   VIENNACL_ERR_CHECK(err);
-  size_t global_size = vector_size;
-  size_t local_size = vector_size;
+  std::size_t global_size = vector_size;
+  std::size_t local_size = vector_size;
   err = clEnqueueNDRangeKernel(queues[0], my_kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
   VIENNACL_ERR_CHECK(err);
   
@@ -191,17 +191,17 @@ int main()
   VIENNACL_ERR_CHECK(err);
 
   std::cout << "vec1  : ";
-  for (size_t i=0; i<vec1.size(); ++i)
+  for (std::size_t i=0; i<vec1.size(); ++i)
     std::cout << vec1[i] << " ";
   std::cout << std::endl;
 
   std::cout << "vec2  : ";
-  for (size_t i=0; i<vec2.size(); ++i)
+  for (std::size_t i=0; i<vec2.size(); ++i)
     std::cout << vec2[i] << " ";
   std::cout << std::endl;
 
   std::cout << "result: ";
-  for (size_t i=0; i<result.size(); ++i)
+  for (std::size_t i=0; i<result.size(); ++i)
     std::cout << result[i] << " ";
   std::cout << std::endl;
   
@@ -248,7 +248,7 @@ int main()
   std::cout << "Using existing kernel within the OpenCL backend of ViennaCL:" << std::endl;
   viennacl::ocl::program & my_vcl_prog = viennacl::ocl::current_context().add_program(my_prog, "my_compute_program");
   viennacl::ocl::kernel & my_vcl_kernel = my_vcl_prog.add_kernel("elementwise_prod");
-  viennacl::ocl::enqueue(my_vcl_kernel(vcl_vec1, vcl_vec2, vcl_result, static_cast<cl_uint>(vcl_vec1.size())));  //Note that size_t might differ between host and device. Thus, a cast to cl_uint is necessary here.
+  viennacl::ocl::enqueue(my_vcl_kernel(vcl_vec1, vcl_vec2, vcl_result, static_cast<cl_uint>(vcl_vec1.size())));  //Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary here.
   
   std::cout << "vec1  : ";
   std::cout << vcl_vec1 << std::endl;

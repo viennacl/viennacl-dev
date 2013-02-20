@@ -37,26 +37,6 @@ namespace viennacl
   namespace linalg
   {
     
-    
-    // A * x
-    /** @brief Returns a proxy class that represents matrix-vector multiplication with a compressed_matrix
-    *
-    * This is used for the convenience expression result = prod(mat, vec);
-    *
-    * @param mat    The matrix
-    * @param vec    The vector
-    */
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    vector_expression<const hankel_matrix<SCALARTYPE, ALIGNMENT>,
-                      const vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                      op_prod > prod_impl(const hankel_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                                     const vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec)
-    {
-      return vector_expression<const hankel_matrix<SCALARTYPE, ALIGNMENT>,
-                               const vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                               op_prod >(mat, vec);
-    }
-    
     // A * x
     /** @brief Returns a proxy class that represents matrix-vector multiplication with a hankel_matrix
     *
@@ -64,14 +44,12 @@ namespace viennacl
     *
     * @param mat    The matrix
     * @param vec    The vector
-    * @param NUM_THREADS Number of threads per work group. Can be used for fine-tuning.
     */
     template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     viennacl::vector_expression<const viennacl::hankel_matrix<SCALARTYPE, ALIGNMENT>,
                                 const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
                                 viennacl::op_prod > prod_impl(const viennacl::hankel_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                                                              const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec, 
-                                                              size_t NUM_THREADS)
+                                                              const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec)
     {
       return viennacl::vector_expression<const viennacl::hankel_matrix<SCALARTYPE, ALIGNMENT>,
                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 

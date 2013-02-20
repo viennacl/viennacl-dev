@@ -58,17 +58,17 @@ namespace viennacl
           // Constructs an orthonormal sparse matrix M (with M^T M = Id). Is composed of elementary 2x2 rotation matrices with suitable renumbering.
           //
           template <typename MatrixType>
-          void make_rotation_matrix(MatrixType & mat, size_t new_size, size_t off_diagonal_distance = 4)
+          void make_rotation_matrix(MatrixType & mat, std::size_t new_size, std::size_t off_diagonal_distance = 4)
           {
             mat.resize(new_size, new_size, false);
             mat.clear();
 
             double val = 1.0 / std::sqrt(2.0);
 
-            for (size_t i=0; i<new_size; ++i)
+            for (std::size_t i=0; i<new_size; ++i)
               mat(i,i) = val;
 
-            for (size_t i=off_diagonal_distance; i<new_size; ++i)
+            for (std::size_t i=off_diagonal_distance; i<new_size; ++i)
             {
               mat(i-off_diagonal_distance, i) = val; mat(i, i-off_diagonal_distance) = -val;
             }

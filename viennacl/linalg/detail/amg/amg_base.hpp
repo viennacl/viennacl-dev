@@ -394,7 +394,7 @@ namespace viennacl
             // Note: Only internal_mat is written using operators and methods while internal_mat_trans is built from internal_mat using do_trans().
             InternalType internal_mat_trans;
             // Saves sizes.
-            size_t s1, s2;
+            std::size_t s1, s2;
             
             // True if the transposed of the matrix is used (for calculations, iteration, etc.).
             bool transposed_mode;
@@ -649,7 +649,7 @@ namespace viennacl
               transposed = true;
             }
 
-            size_t size1()
+            std::size_t size1()
             {
               if (!transposed_mode)
                 return s1;
@@ -657,7 +657,7 @@ namespace viennacl
                 return s2;
             }
             
-            size_t size1() const
+            std::size_t size1() const
             {
               if (!transposed_mode)
                 return s1;
@@ -666,14 +666,15 @@ namespace viennacl
             }
             
             
-            size_t size2()
+            std::size_t size2()
             {
               if (!transposed_mode)
                 return s2;
               else
                 return s1;
             }
-            size_t size2() const
+            
+            std::size_t size2() const
             {
               if (!transposed_mode)
                 return s2;

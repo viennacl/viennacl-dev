@@ -86,7 +86,7 @@ namespace viennacl
         void fanOutVector(const VectorType& m_in, const std::vector<unsigned int>& J, SparseVectorType& m)
         {
           unsigned int  cnt = 0;
-          for (size_t i = 0; i < J.size(); ++i) 
+          for (std::size_t i = 0; i < J.size(); ++i) 
             m[J[i]] = m_in(cnt++);
         }
         /** @brief Solution of linear:R*x=y system by backward substitution
@@ -101,7 +101,7 @@ namespace viennacl
           for (long i = R.size2()-1; i >= 0 ; i--) 
           {
             x(i) = y(i);
-            for (size_t j = i+1; j < R.size2(); ++j) 
+            for (std::size_t j = i+1; j < R.size2(); ++j) 
                 x(i) -= R(i,j)*x(j);
 
             x(i) /= R(i,i);
@@ -115,7 +115,7 @@ namespace viennacl
         template <typename VectorType, typename ScalarType>
         void projectI(const std::vector<unsigned int>& I, VectorType& y, unsigned int ind)
         {
-          for(size_t i = 0; i < I.size(); ++i)
+          for(std::size_t i = 0; i < I.size(); ++i)
           {
             //y.resize(y.size()+1);
             if(I[i] == ind)
@@ -169,7 +169,7 @@ namespace viennacl
         template <typename SparseVectorType>
         void projectRows(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& J, std::vector<unsigned int>& I)
         {
-          for(size_t i = 0; i < J.size(); ++i)
+          for(std::size_t i = 0; i < J.size(); ++i)
           {
             for(typename SparseVectorType::const_iterator col_it = A_v_c[J[i]].begin(); col_it!=A_v_c[J[i]].end(); ++col_it)
             {

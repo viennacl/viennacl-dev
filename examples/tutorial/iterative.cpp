@@ -113,7 +113,7 @@ int main()
   //
   // Set up some ViennaCL objects
   //
-  size_t vcl_size = rhs.size();
+  std::size_t vcl_size = rhs.size();
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix;
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix;
   viennacl::vector<ScalarType> vcl_rhs(vcl_size); 

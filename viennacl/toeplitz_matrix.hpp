@@ -72,7 +72,7 @@ namespace viennacl {
         * @param sz         New size of matrix
         * @param preserve   If true, existing values are preserved.
         */
-        void resize(size_t sz, bool preserve = true) {
+        void resize(std::size_t sz, bool preserve = true) {
             elements_.resize(sz * 2, preserve);
         }
 

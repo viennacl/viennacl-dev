@@ -1502,7 +1502,7 @@ namespace viennacl
             vector<float, ALIGNMENT> & gpu_vec)
   {
     std::vector<float> entries(eigen_vec.size());
-    for (size_t i = 0; i<entries.size(); ++i)
+    for (std::size_t i = 0; i<entries.size(); ++i)
       entries[i] = eigen_vec(i);
     viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
   }
@@ -1512,7 +1512,7 @@ namespace viennacl
             vector<double, ALIGNMENT> & gpu_vec)
   {
     std::vector<double> entries(eigen_vec.size());
-    for (size_t i = 0; i<entries.size(); ++i)
+    for (std::size_t i = 0; i<entries.size(); ++i)
       entries[i] = eigen_vec(i);
     viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
   }

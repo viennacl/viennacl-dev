@@ -146,9 +146,9 @@ namespace viennacl
         {
           typedef typename DenseMatrixType::value_type ScalarType;
           A_out.resize(I.size(), J.size(), false);
-          for(size_t j = 0; j < J.size(); ++j)
+          for(std::size_t j = 0; j < J.size(); ++j)
           {
-            for(size_t i = 0; i < I.size(); ++i)
+            for(std::size_t i = 0; i < I.size(); ++i)
               A_out(i,j) = A_in(I[i],J[j]);
           }
         }
@@ -573,7 +573,7 @@ namespace viennacl
         template<typename MatrixType>
         void sparse_transpose(const MatrixType& A_in, MatrixType& A){
             typedef typename MatrixType::value_type ScalarType;
-            std::vector<std::map<size_t, ScalarType> >   temp_A(A_in.size2());
+            std::vector<std::map<std::size_t, ScalarType> >   temp_A(A_in.size2());
             A.resize(A_in.size2(), A_in.size1(), false);
             
             for (typename MatrixType::const_iterator1 row_it = A_in.begin1();
@@ -588,9 +588,9 @@ namespace viennacl
                 }
             }
             
-            for (size_t i=0; i<temp_A.size(); ++i)
+            for (std::size_t i=0; i<temp_A.size(); ++i)
             {
-                for (typename std::map<size_t, ScalarType>::const_iterator it = temp_A[i].begin();
+                for (typename std::map<std::size_t, ScalarType>::const_iterator it = temp_A[i].begin();
                      it != temp_A[i].end();
                      ++it)
                     A(i, it->first) = it->second;

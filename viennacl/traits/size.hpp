@@ -55,13 +55,13 @@ namespace viennacl
     // Resize: Change the size of vectors and matrices
     //
     template <typename MatrixType>
-    void resize(MatrixType & matrix, size_t rows, size_t cols)
+    void resize(MatrixType & matrix, std::size_t rows, std::size_t cols)
     {
       matrix.resize(rows, cols); 
     }
     
     template <typename VectorType>
-    void resize(VectorType & vec, size_t new_size)
+    void resize(VectorType & vec, std::size_t new_size)
     {
       vec.resize(new_size); 
     }
@@ -70,8 +70,8 @@ namespace viennacl
     //ublas needs separate treatment:
     template <typename ScalarType>
     void resize(boost::numeric::ublas::compressed_matrix<ScalarType> & matrix,
-                size_t rows,
-                size_t cols)
+                std::size_t rows,
+                std::size_t cols)
     {
       matrix.resize(rows, cols, false); //Note: omitting third parameter leads to compile time error (not implemented in ublas <= 1.42) 
     }
@@ -81,15 +81,15 @@ namespace viennacl
     #ifdef VIENNACL_WITH_MTL4
     template <typename ScalarType>
     void resize(mtl::compressed2D<ScalarType> & matrix,
-                size_t rows,
-                size_t cols)
+                std::size_t rows,
+                std::size_t cols)
     {
       matrix.change_dim(rows, cols);
     }
     
     template <typename ScalarType>
     void resize(mtl::dense_vector<ScalarType> & vec,
-                size_t new_size)
+                std::size_t new_size)
     {
       vec.change_dim(new_size);
     }

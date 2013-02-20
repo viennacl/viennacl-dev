@@ -104,7 +104,7 @@ int run_benchmark()
 #else
   std::vector<long> devices(1);
 #endif
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
 #ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
@@ -131,7 +131,7 @@ int run_benchmark()
   std::cout << " ------ Benchmark 2: Matrix-Matrix product using ranges ------ " << std::endl;
 
   viennacl::range r(BLAS3_MATRIX_SIZE/4, 3 * BLAS3_MATRIX_SIZE/4);
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
 #ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
@@ -158,7 +158,7 @@ int run_benchmark()
   std::cout << " ------ Benchmark 3: Matrix-Matrix product using slices ------ " << std::endl;
 
   viennacl::slice s(0, 2, BLAS3_MATRIX_SIZE/2);
-  for (size_t i=0; i<devices.size(); ++i)
+  for (std::size_t i=0; i<devices.size(); ++i)
   {
 #ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::current_context().switch_device(devices[i]);
