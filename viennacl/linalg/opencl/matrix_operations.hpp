@@ -430,7 +430,7 @@ namespace viennacl
                                 );        
         }
         
-        // C = A * B, using fast kernel
+        // C = A * B, using fast kernel for NVIDIA
         template <typename T1, typename T2, typename T3, typename ScalarType >
         void prod_fast_kernel(const T1 & A, 
                               const T2 & B, 
@@ -477,6 +477,54 @@ namespace viennacl
                                   )
                                 );        
         }
+
+        // C = A * B, using kernel optimized for AMD Tahiti devices
+        template <typename T1, typename T2, typename T3, typename ScalarType >
+        void prod_amd_kernel(const T1 & A, 
+                             const T2 & B, 
+                             T3 & C,
+                             ScalarType alpha,
+                             ScalarType beta,
+                             std::string kernel_name)
+        {
+          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
+          
+          typedef typename viennacl::tools::MATRIX_PROD_KERNEL_CLASS_DEDUCER< T1, T2, T3 >::ResultType    KernelClass;
+          KernelClass::init();
+          
+          //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
+          viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
+          
+          k.local_work_size(0, 16);  //columns
+          k.local_work_size(1, 8);   //rows
+          k.global_work_size(0, viennacl::traits::size2(C) / 64 * k.local_work_size(0));
+          k.global_work_size(1, viennacl::traits::size1(C) / 64 * k.local_work_size(1));
+          
+          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
+          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
+          
+          viennacl::ocl::enqueue(k(cl_alpha,
+                                  viennacl::traits::opencl_handle(A), 
+                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)), 
+                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+                                  cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+                                   
+                                  viennacl::traits::opencl_handle(B), 
+                                  cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)), 
+                                  cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
+                                  cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
+                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
+                                   
+                                  cl_beta,
+                                  viennacl::traits::opencl_handle(C), 
+                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
+                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
+                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
+                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
+                                  )
+                                );        
+        }
         
         template <typename T1, typename T2, typename T3, typename ScalarType >
         void prod(const T1 & A, 
@@ -489,13 +537,37 @@ namespace viennacl
         {
           if (   (viennacl::traits::size1(A) < 64)
               || (viennacl::traits::size2(A) < 64)
-              || (viennacl::traits::size1(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
+              || (viennacl::traits::size1(B) < 64)
+              || (viennacl::traits::size2(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
           {
             prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
           }
+          else if (   (viennacl::traits::size1(A) % 256 == 0)
+                  && (viennacl::traits::size2(A) % 256 == 0)
+                  && (viennacl::traits::size2(B) % 256 == 0) )   // Check for AMD kernel
+          {
+            cl_uint vendor_id;
+            cl_int err = clGetDeviceInfo(viennacl::ocl::current_device().id(), CL_DEVICE_VENDOR_ID, sizeof(cl_uint), &vendor_id, NULL);
+            VIENNACL_ERR_CHECK(err);
+
+            if (vendor_id == 4098 // AMD's vendor ID
+                && viennacl::traits::start1(A) == 0 && viennacl::traits::start1(B) == 0 && viennacl::traits::start1(C) == 0
+                && viennacl::traits::start2(A) == 0 && viennacl::traits::start2(B) == 0 && viennacl::traits::start2(C) == 0
+                && viennacl::traits::stride1(A) == 0 && viennacl::traits::stride1(B) == 0 && viennacl::traits::stride1(C) == 0
+                && viennacl::traits::stride2(A) == 0 && viennacl::traits::stride2(B) == 0 && viennacl::traits::stride2(C) == 0
+                && viennacl::traits::size1(A) == viennacl::traits::size2(A) 
+                && viennacl::traits::size1(B) == viennacl::traits::size2(B) 
+                && viennacl::traits::size1(C) == viennacl::traits::size2(C) ) // use tuned AMD kernel for square matrices
+            {
+              //std::cout << "Using fast AMD kernel" << std::endl;
+              prod_amd_kernel(A, B, C, alpha, beta, slow_kernel_name + "_amd");
+            }
+            else
+              prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
+          }
           else if (   (viennacl::traits::size1(A) % 64 == 0)
-                  && (viennacl::traits::size2(A) % 64 == 0)
-                  && (viennacl::traits::size1(B) % 64 == 0) )   // allows the use of the fast kernel only
+                   && (viennacl::traits::size2(A) % 64 == 0)
+                   && (viennacl::traits::size1(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
           {
             prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
             //prod_slow_kernel(A, B, C, slow_kernel_name);

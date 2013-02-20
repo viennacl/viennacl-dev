@@ -328,6 +328,9 @@ int test_prod(Epsilon const& epsilon)
   //long matrix_size1 = 128;  //some odd number, not too large
   //long matrix_size2 = 64;  //some odd number, not too large
   //long matrix_size3 = 128;  //some odd number, not too large
+  //long matrix_size1 = 256;  // for testing AMD kernels
+  //long matrix_size2 = 256;  // for testing AMD kernels
+  //long matrix_size3 = 256;  // for testing AMD kernels
   
   // --------------------------------------------------------------------------       
   
