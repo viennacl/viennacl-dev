@@ -100,6 +100,7 @@ namespace viennacl
                                                          typename detail::extract_matrix<MatrixType3>::type>::ResultType   ResultType;
     };
     
+    /** \cond */
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
                                              viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
@@ -164,7 +165,7 @@ namespace viennacl
     {
       typedef viennacl::linalg::kernels::matrix_prod_col_col_col<SCALARTYPE, ALIGNMENT>     ResultType;
     };
-    
+    /** \endcond */
   }
 
 }

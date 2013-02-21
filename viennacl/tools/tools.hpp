@@ -35,7 +35,7 @@ namespace viennacl
 {
   namespace tools
   {
-    
+    /** \cond */
     /** @brief Supply suitable increment functions for the iterators: */
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
@@ -48,6 +48,7 @@ namespace viennacl
     {
       static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, unsigned int & row, unsigned int & col) { ++col; }
     };
+    /** \endcond */
 
     
     /** @brief A guard that checks whether the floating point type of GPU types is either float or double */
@@ -169,6 +170,7 @@ namespace viennacl
       typedef typename LHS::ERROR_COULD_NOT_EXTRACT_VECTOR_INFORMATION_FROM_VECTOR_EXPRESSION  ResultType;
     };
     
+    /** \cond */
     template <typename LHS, typename ScalarType, unsigned int A>
     struct VECTOR_EXTRACTOR_IMPL<LHS, viennacl::vector<ScalarType, A> >
     {
@@ -292,7 +294,7 @@ namespace viennacl
       typedef VectorType   ResultType;
     };
 
-    
+    /** \endcond */    
     
     
     template <typename LHS, typename RHS>
@@ -316,6 +318,7 @@ namespace viennacl
       typedef typename LHS::ERROR_COULD_NOT_EXTRACT_MATRIX_INFORMATION_FROM_MATRIX_EXPRESSION  ResultType;
     };
     
+    /** \cond */
     template <typename LHS, typename ScalarType, typename F, unsigned int A>
     struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix<ScalarType, F, A> >
     {
@@ -529,7 +532,8 @@ namespace viennacl
       typedef viennacl::matrix<ScalarType, viennacl::row_major>   ResultType;
     };
     
-    
+    /** \endcond */
+
     
     template <typename LHS, typename RHS>
     struct MATRIX_EXTRACTOR
@@ -559,6 +563,7 @@ namespace viennacl
       //typedef T       ResultType;
     };
 
+    /** \cond */
     template <>
     struct CPU_SCALAR_TYPE_DEDUCER< float >
     {
@@ -595,6 +600,7 @@ namespace viennacl
     {
       typedef T       ResultType;
     };
+    /** \endcond */
 
     //
     // Converts a scalar type when necessary unless it is a viennacl::scalar<> (typical use-case: convert user-provided floats to double (and vice versa) for OpenCL kernels)

@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/host-based/sse_kernels.hpp
+/** @file viennacl/linalg/host_based/sse_kernels.hpp
 *   @brief optimized linear algebra operations for the CPU
 * 
 *   Contributed by Alex Christensen.
@@ -478,6 +478,7 @@ namespace viennacl
       * @param m            The height of the matrix
       * @param n            The width of the matrix
       * @param block_size   The block size to be used
+      * @param num_threads  Number of threads to be used
       */
       template <typename ScalarType>
       std::vector<ScalarType> inplace_qr_row_major(ScalarType ** A, std::size_t m, std::size_t n, std::size_t block_size = 8, std::size_t num_threads = 1)

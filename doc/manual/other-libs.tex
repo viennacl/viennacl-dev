@@ -14,7 +14,7 @@ preprocessor constant directly when launching the compiler. With \lstinline|GCC|
 achieved by the \lstinline|-D| switch.
 
 \section{Boost.uBLAS}
-Since all types in {\ViennaCL} have to same interface as their counterparts in {\ublas},
+Since all types in {\ViennaCL} have the same interface as their counterparts in {\ublas},
 most code written for {\ViennaCL} objects remains valid when using {\ublas} objects.
 \begin{lstlisting}
 //Option 1: Using ViennaCL:
@@ -24,8 +24,8 @@ using namespace viennacl::linalg;
 //Option 2: Using ublas:
 //using namespace boost::numeric::ublas;
 
-matrix<float> dense_matrix(5,5);
-vector<float> dense_vector(5,5);
+matrix<float>            dense_matrix(5,5);
+vector<float>            dense_vector(5,5);
 compressed_matrix<float> sparse_matrix(1000, 1000);
 
 //fill with data:
@@ -50,8 +50,8 @@ This is essential for enabling the respective wrappers.
 To copy data from {\Eigen} \cite{eigen} objects (version 3.x.y) to {\ViennaCL}, the \texttt{copy()}-functions are used just as for {\ublas} and STL types:
 \begin{lstlisting}
  //from Eigen to ViennaCL
- viennacl::copy(eigen_vector, vcl_vector);
- viennacl::copy(eigen_densematrix, vcl_densematrix);
+ viennacl::copy(eigen_vector,       vcl_vector);
+ viennacl::copy(eigen_densematrix,  vcl_densematrix);
  viennacl::copy(eigen_sparsematrix, vcl_sparsematrix);
 \end{lstlisting}
 In addition, the STL-compliant iterator-version of \texttt{viennacl::copy()} taking three arguments can be used for copying vector data.
@@ -59,8 +59,8 @@ Here, all types prefixed with \texttt{eigen} are {\Eigen} types, the prefix \tex
 Similarly, the transfer from {\ViennaCL} back to {\Eigen} is accomplished by
 \begin{lstlisting}
  //from ViennaCL to Eigen
- viennacl::copy(vcl_vector, eigen_vector);
- viennacl::copy(vcl_densematrix, eigen_densematrix);
+ viennacl::copy(vcl_vector,       eigen_vector);
+ viennacl::copy(vcl_densematrix,  eigen_densematrix);
  viennacl::copy(vcl_sparsematrix, eigen_sparsematrix);
 \end{lstlisting}
 
@@ -82,8 +82,8 @@ This is essential for enabling the respective wrappers.
 The following lines demonstate how {\ViennaCL} types are filled with data from {\MTL} \cite{mtl4} objects:
 \begin{lstlisting}
  //from Eigen to ViennaCL
- viennacl::copy(mtl4_vector, vcl_vector);
- viennacl::copy(mtl4_densematrix, vcl_densematrix);
+ viennacl::copy(mtl4_vector,       vcl_vector);
+ viennacl::copy(mtl4_densematrix,  vcl_densematrix);
  viennacl::copy(mtl4_sparsematrix, vcl_sparsematrix);
 \end{lstlisting}
 In addition, the STL-compliant iterator-version of \texttt{viennacl::copy()} taking three arguments can be used for copying vector data.
@@ -91,8 +91,8 @@ Here, all types prefixed with \texttt{mtl4} are {\MTL} types, the prefix \texttt
 Similarly, the transfer from {\ViennaCL} back to {\MTL} is accomplished by
 \begin{lstlisting}
  //from ViennaCL to MTL4
- viennacl::copy(vcl_vector, mtl4_vector);
- viennacl::copy(vcl_densematrix, mtl4_densematrix);
+ viennacl::copy(vcl_vector,       mtl4_vector);
+ viennacl::copy(vcl_densematrix,  mtl4_densematrix);
  viennacl::copy(vcl_sparsematrix, mtl4_sparsematrix);
 \end{lstlisting}
 

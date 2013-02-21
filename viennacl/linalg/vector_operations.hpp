@@ -870,7 +870,6 @@ namespace viennacl
     /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
     *
     * @param vec    The vector expression
-    * @param result The result scalar
     */
     template <typename LHS, typename RHS, typename OP>
     std::size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec)

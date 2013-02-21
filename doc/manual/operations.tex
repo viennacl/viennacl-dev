@@ -88,12 +88,14 @@ be carried out immediately, as is shown in the tutorial located in
 
 As for performance, {\ViennaCL} yields decent performance gains at BLAS level
 3 on mid- to high-end GPUs compared to CPU implementations using a single core
-only. Nevertheless, one must not expect to obtain the reported peak performance
-of hundreds of GFLOPs for the multiplication of arbitrary matrices. These rates
-can typically only obtained when tailoring the compute kernel(s) to a
-particular device and certain matrix dimensions, while {\ViennaCL} provides
+only. However, highest performance is usually obtained only with careful tuning to the respective target device.
+Generally, {\ViennaCL} provides
 kernels that represent a good compromise between efficiency and portability
 among a large number of different devices and device types.
+
+\TIP{
+For certain matrix dimensions, typically multiples of 64 or 128, {\ViennaCL} also provides tuned kernels reaching over 1 TFLOP in single precision (AMD HD 7970).
+}
 
 \begin{table}[tb]
 \begin{center}
@@ -111,10 +113,10 @@ tri. matrix solve & $C \leftarrow A^\mathrm{T^{-1}} B$ & \lstinline|C = solve(tr
 tri. matrix solve & $C \leftarrow A^{-1} B^\mathrm{T}$ & \lstinline|C = solve(A, trans(B), tag);| \\
 tri. matrix solve & $C \leftarrow A^\mathrm{T^{-1}} B^\mathrm{T}$ & \lstinline|C = solve(trans(A), trans(B), tag);| \\
 %
-inplace solve & $B \leftarrow A^{-1} B$ & \lstinline|inplace\_solve(A, trans(B), tag);| \\
-inplace solve & $B \leftarrow A^\mathrm{T^{-1}} B$ & \lstinline|inplace\_solve(trans(A), x, tag);| \\
-inplace solve & $B \leftarrow A^{-1} B^\mathrm{T}$ & \lstinline|inplace\_solve(A, trans(B), tag);| \\
-inplace solve & $B \leftarrow A^\mathrm{T^{-1}} B^\mathrm{T}$ & \lstinline|inplace\_solve(trans(A), x, tag);| \\
+inplace solve & $B \leftarrow A^{-1} B$ & \lstinline|inplace_solve(A, trans(B), tag);| \\
+inplace solve & $B \leftarrow A^\mathrm{T^{-1}} B$ & \lstinline|inplace_solve(trans(A), x, tag);| \\
+inplace solve & $B \leftarrow A^{-1} B^\mathrm{T}$ & \lstinline|inplace_solve(A, trans(B), tag);| \\
+inplace solve & $B \leftarrow A^\mathrm{T^{-1}} B^\mathrm{T}$ & \lstinline|inplace_solve(trans(A), x, tag);| \\
 \end{tabular}
 \caption{BLAS level 3 routines mapped to \ViennaCL. Note that the free functions
 reside in namespace \texttt{viennacl::linalg}}

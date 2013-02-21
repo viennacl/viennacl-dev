@@ -8,7 +8,7 @@ they take distributed memory and synchronization issues into account.
 Support for multiple {\OpenCL} devices and contexts was introduced in {\ViennaCL} with version 1.1.0. In the following we give a description of the 
 provided functionality.
 
-\NOTE{In {\ViennaCLversion} there is no support for multiple CUDA-devices. The default CUDA-compute device is used.}
+\NOTE{In {\ViennaCLversion} there is no native support for automatically executing operations over multiple GPUs. Partition of data is left to the user.}
 
 \section{Context Setup}
 Unless specified otherwise (see Chap.~\ref{chap:custom-contexts}), {\ViennaCL} silently creates its own context and adds all available default devices with a single queue per device to it.

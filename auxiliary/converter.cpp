@@ -7,7 +7,8 @@
 #include <sstream>
 #include <string>
 
-//#define BOOST_FILESYSTEM_VERSION 2
+// uncomment the following if you are using Boost versions prior to 1.44
+//#define USE_OLD_BOOST_FILESYSTEM_VERSION
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -62,7 +63,7 @@ void createSourceFile(const char * dirname)
     source_file << "#define VIENNACL_LINALG_KERNELS_" << dirname_uppercase << "_SOURCE_HPP_" << std::endl;
     source_file << "//Automatically generated file from auxiliary-directory, do not edit manually!" << std::endl;
     source_file << "/** @file " << header_name << "_source.h" << std::endl;
-    source_file << " *  @brief OpenCL kernel source file, generated automatically. */" << std::endl;
+    source_file << " *  @brief OpenCL kernel source file, generated automatically from scripts in auxiliary/. */" << std::endl;
     source_file << "namespace viennacl" << std::endl;
     source_file << "{" << std::endl;
     source_file << " namespace linalg" << std::endl;
@@ -91,7 +92,11 @@ void createSourceFile(const char * dirname)
                       cl_itr != end_iter;
                       ++cl_itr )
                 {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+                    std::string fname = cl_itr->path().filename();
+#else
                     std::string fname = cl_itr->path().filename().string();
+#endif
                     std::string alignment = alignment_itr->path().filename().string();
 
                     size_t pos = fname.find(".cl");
@@ -138,7 +143,11 @@ unsigned int getBestKernel(const char * dirname, std::string & kernel_name, unsi
                   cl_itr != end_iter;
                   ++cl_itr )
             {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+                std::string fname = cl_itr->path().filename();
+#else
                 std::string fname = cl_itr->path().filename().string();
+#endif
                 if (fname == kernel_name)
                 {
                   //std::cout << "Found matching kernel for " << kernel_name << " with alignment " << alignment << " at alignment " << search_alignment << std::endl;
@@ -209,7 +218,11 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
           cl_itr != end_iter;
           ++cl_itr )
     {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+        std::string fname = cl_itr->path().filename();
+#else
         std::string fname = cl_itr->path().filename().string();
+#endif
         size_t pos = fname.find(".cl");
         if ( pos == std::string::npos )
           continue;
@@ -243,7 +256,11 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
           cl_itr != end_iter;
           ++cl_itr )
     {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+        std::string fname = cl_itr->path().filename();
+#else
         std::string fname = cl_itr->path().filename().string();
+#endif
         size_t pos = fname.find(".cl");
         if ( pos == std::string::npos )
           continue;
@@ -283,7 +300,7 @@ void createKernelFile(const char * dirname)
     kernel_file << std::endl;
     kernel_file << "//Automatically generated file from aux-directory, do not edit manually!" << std::endl;
     kernel_file << "/** @file " << header_name << "_kernels.h" << std::endl;
-    kernel_file << " *  @brief OpenCL kernel file, generated automatically. */" << std::endl;
+    kernel_file << " *  @brief OpenCL kernel file, generated automatically from scripts in auxiliary/. */" << std::endl;
     kernel_file << "namespace viennacl" << std::endl;
     kernel_file << "{" << std::endl;
     kernel_file << " namespace linalg" << std::endl;
@@ -311,7 +328,11 @@ void createKernelFile(const char * dirname)
         {
             if (fs::is_directory( alignment_itr->path() ))
             {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+                std::string subfolder = alignment_itr->path().filename();
+#else
                 std::string subfolder = alignment_itr->path().filename().string();
+#endif
                 if( subfolder.find("align") == std::string::npos )
                   continue;
                 writeKernelInit(kernel_file, dirname, subfolder, true);
@@ -337,7 +358,11 @@ void createKernelFile(const char * dirname)
         {
             if (fs::is_directory( alignment_itr->path() ))
             {
+#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
+                std::string subfolder = alignment_itr->path().filename();
+#else
                 std::string subfolder = alignment_itr->path().filename().string();
+#endif
                 if( subfolder.find("align") == std::string::npos )
                   continue;
                 writeKernelInit(kernel_file, dirname, subfolder, false);

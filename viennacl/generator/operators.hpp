@@ -240,6 +240,7 @@ namespace viennacl
     template<class LHS, class RHS>
     struct make_inner_prod;
 
+    /** \cond */
     template<class LHS, class LHS_SIZE_DESCRIPTOR,
             class RHS, class RHS_SIZE_DESCRIPTOR>
     struct make_inner_prod<result_of::vector_expression<LHS, LHS_SIZE_DESCRIPTOR>,
@@ -247,6 +248,7 @@ namespace viennacl
     {
       typedef compound_node<LHS,inner_prod_type,RHS> Result;
     };
+    /** \endcond */
 
 
     /** @brief Inner product operator */

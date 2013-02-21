@@ -341,7 +341,7 @@ namespace viennacl
       /*
        * Compound Nodes - General case
        */
-
+      /** \cond */
       template <class LHS, class OP, class RHS>
       struct expression_type<compound_node<LHS,OP,RHS> >
       {
@@ -611,6 +611,8 @@ namespace viennacl
       {
         typedef scalar_expression< gpu_symbolic_scalar<ID, SCALARTYPE> > Result;
       };
+      
+      /** \endcond */
 
     }//result_of
 

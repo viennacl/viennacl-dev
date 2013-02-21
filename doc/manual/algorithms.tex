@@ -289,7 +289,7 @@ Two algorithms for the computations of the eigenvalues of a matrix $A$ are imple
 Depending on the parameter \lstinline|tag| either one of them is called. 
 Both algorithms can be used for either {\ublas} or {\ViennaCL} compressed matrices.\\
 In order to get the eigenvalue with the greatest absolut value the power iteration should be called. \\
-The lanczos algorithm returns a vector of the largest eigenvalues with the same type as the entries of the matrix.
+The Lanczos algorithm returns a vector of the largest eigenvalues with the same type as the entries of the matrix.
 
 The algorithms are called for a matrix object \lstinline|A| by
 \begin{lstlisting}
@@ -311,15 +311,16 @@ viennacl::linalg::piter_tag ptag(1e-8);
 \TIP{Example code can be found in \lstinline|examples/tutorial/power-iter.cpp|.}
 
 \subsection{The Lanczos Algorithm}
-In order to compute the eigenvalues of a sparse high-dimensional matrix the lanczos algorithm can be used to find these. 
-This algorithm reformulates the given high-dimensional matrix in a way such that the matrix can be rewritten in a tridiagonal matrix at much lower dimension. The eigenvalues of this tridiagonal matrix are equal to the largest eigenvalues of the original matrix. \\
+In order to compute the eigenvalues of a sparse high-dimensional matrix the Lanczos algorithm can be used to find these. 
+This algorithm reformulates the given high-dimensional matrix in a way such that the matrix can be rewritten in a tridiagonal matrix at much lower dimension.
+The eigenvalues of this tridiagonal matrix are equal to the largest eigenvalues of the original matrix. \\
 The eigenvalues of the tridiagonal matrix are calculated by using the bisection method \cite{golub:matrix-computations}. \\
-To call this lanczos algorithm, \lstinline|lanczos_tag| must be used.
+To call this Lanczos algorithm, \lstinline|lanczos_tag| must be used.
 This tag has several parameters that can be passed to the constructor:
 
 \begin{itemize}
  \item The exponent of epsilon for the tolerance of the reorthogonalization, defined by the parameter \lstinline|factor| (default: $0.75$)
- \item The method of the lanczos algorithm: $0$ uses partial reorthogonalization, $1$ full reothogonalization and $2$ does not use reorthogonalization (default: $0$)
+ \item The method of the Lanczos algorithm: $0$ uses partial reorthogonalization, $1$ full reothogonalization and $2$ does not use reorthogonalization (default: $0$)
  \item The number of eigenvalues that are returned is specified by \lstinline|num_eigenvalues| (default: $10$)
  \item The size of the krylov space used for the computations can be set by the parameter \lstinline|krylov_size| (default: $100$). The maximum number of iterations can be equal or less this parameter
 \end{itemize}

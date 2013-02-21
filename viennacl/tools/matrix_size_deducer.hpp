@@ -50,7 +50,7 @@ namespace viennacl
       static std::size_t size2(LHS & /*lhs*/, RHS & rhs) { return rhs.size2(); }
     };
 
-    
+    /** \cond */
     //special case: outer vector product:
     template <typename ScalarType, unsigned int A1, unsigned int A2>
     struct MATRIX_SIZE_DEDUCER<const viennacl::vector<ScalarType, A1>,
@@ -373,7 +373,7 @@ namespace viennacl
       static std::size_t size2(LHSType const & /*lhs*/,
                                RHSType const & rhs) { return rhs.lhs().size1(); }
     };
-    
+    /** \endcond */
   }
 }
 

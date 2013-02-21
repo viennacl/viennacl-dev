@@ -41,6 +41,7 @@ namespace viennacl
     struct MATRIX_KERNEL_CLASS_DEDUCER
     {};
     
+    /** \cond */
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
     {
@@ -66,7 +67,7 @@ namespace viennacl
     {
       typedef typename MATRIX_KERNEL_CLASS_DEDUCER<T>::ResultType    ResultType;
     };
-    
+    /** \endcond */
   }
 
 }

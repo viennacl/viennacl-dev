@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/host-based/sse_blas.hpp
+/** @file viennacl/linalg/host_based/sse_blas.hpp
 *   @brief optimized BLAS functions using SSE2 and SSE3 intrinsic functions
 * 
 *   Contributed by Alex Christensen.

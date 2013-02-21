@@ -53,6 +53,7 @@ namespace viennacl
         *
         * @param tol              Relative tolerance for the residual (solver quits if ||r|| < tol * ||r_initial||)
         * @param max_iterations   The maximum number of iterations
+        * @param inner_tol        Inner tolerance for the low-precision iterations
         */
         mixed_precision_cg_tag(double tol = 1e-8, unsigned int max_iterations = 300, float inner_tol = 1e-2f) : tol_(tol), iterations_(max_iterations), inner_tol_(inner_tol) {};
       
