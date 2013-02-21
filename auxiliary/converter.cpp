@@ -94,10 +94,11 @@ void createSourceFile(const char * dirname)
                 {
 #ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
                     std::string fname = cl_itr->path().filename();
+                    std::string alignment = alignment_itr->path().filename();
 #else
                     std::string fname = cl_itr->path().filename().string();
-#endif
                     std::string alignment = alignment_itr->path().filename().string();
+#endif
 
                     size_t pos = fname.find(".cl");
                     if ( pos == std::string::npos )
