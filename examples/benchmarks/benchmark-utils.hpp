@@ -22,7 +22,7 @@
 
 void printOps(double num_ops, double exec_time)
 {
-  std::cout << "GFLOPS: " << num_ops / (1000000 * exec_time * 1000) << std::endl;
+  std::cout << "GFLOPs: " << num_ops / (1000000 * exec_time * 1000) << std::endl;
 }
 
 

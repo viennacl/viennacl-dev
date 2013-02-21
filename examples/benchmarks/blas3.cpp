@@ -124,7 +124,7 @@ int run_benchmark()
     viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
-    std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_B.size2() / 1000.0) / exec_time << std::endl;
+    std::cout << " - GFLOPs (counting multiply&add as separate operations): " << 2.0 * (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_B.size2() / 1000.0) / exec_time << std::endl;
     std::cout << std::endl;
   }
 
@@ -151,7 +151,7 @@ int run_benchmark()
     viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
-    std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
+    std::cout << " - GFLOPs (counting multiply&add as separate operations): " << 2.0 * (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
     std::cout << std::endl;
   }
 
@@ -178,7 +178,7 @@ int run_benchmark()
     viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
-    std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
+    std::cout << " - GFLOPs (counting multiply&add as separate operations): " << 2.0 * (vcl_A.size1() / 2000.0) * (vcl_A.size2() / 2000.0) * (vcl_B.size2() / 2000.0) / exec_time << std::endl;
     std::cout << std::endl;
   }
 
@@ -202,7 +202,7 @@ int run_benchmark()
     viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
-    std::cout << " - GFLOPs (counting multiply&add as one operation): " << (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_A.size2() / 1000.0) / exec_time << std::endl;
+    std::cout << " - GFLOPs (counting multiply&add as separate operations): " << 2.0 * (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_A.size2() / 1000.0) / exec_time << std::endl;
     std::cout << std::endl;
   }
   

@@ -124,7 +124,7 @@ int run_benchmark()
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << ublas_vec1[0] << std::endl;
   
   
@@ -145,7 +145,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align1: " << exec_time << std::endl;
-  std::cout << "GPU align1 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU align1 "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
   std::cout << "Testing triangular solves: compressed_matrix" << std::endl;
@@ -175,7 +175,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align4: " << exec_time << std::endl;
-  std::cout << "GPU align4 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU align4 "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
   viennacl::backend::finish();
@@ -187,7 +187,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time align8: " << exec_time << std::endl;
-  std::cout << "GPU align8 "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU align8 "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
   
   
@@ -217,7 +217,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
   
@@ -247,7 +247,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
   
@@ -277,7 +277,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
   
   

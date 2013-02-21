@@ -108,7 +108,7 @@ int run_benchmark()
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << "Result:" << std_result << std::endl;
   
   
@@ -123,7 +123,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << "Result: " << vcl_factor2 << std::endl;
 
   // inner product
@@ -142,7 +142,7 @@ int run_benchmark()
   std_result = std::sqrt(std_result);
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << "Result:" << std_result << std::endl;
   
   
@@ -157,7 +157,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << "Result: " << vcl_factor2 << std::endl;
   
   // vector addition
@@ -171,7 +171,7 @@ int run_benchmark()
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   
   vcl_vec3 = vcl_vec1 + vcl_vec2; //startup calculation
@@ -185,7 +185,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   
   
@@ -200,7 +200,7 @@ int run_benchmark()
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   
   vcl_vec1 += vcl_factor1 * vcl_vec2; //startup calculation
@@ -213,7 +213,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
  
   
@@ -228,7 +228,7 @@ int run_benchmark()
   }
   exec_time = timer.get();
   std::cout << "CPU time: " << exec_time << std::endl;
-  std::cout << "CPU "; printOps(3 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "CPU "; printOps(6.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   vcl_vec3 = vcl_vec2 / vcl_factor1 + vcl_factor2 * (vcl_vec1 - vcl_factor1*vcl_vec2); //startup calculation
   viennacl::backend::finish();
@@ -240,7 +240,7 @@ int run_benchmark()
   viennacl::backend::finish();
   exec_time = timer.get();
   std::cout << "GPU time: " << exec_time << std::endl;
-  std::cout << "GPU "; printOps(3 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << "GPU "; printOps(6.0 * static_cast<double>(std_vec1.size()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   
   return 0;
 }

@@ -86,7 +86,7 @@ int main (int argc, const char * argv[])
     //std::vector<ScalarType> betas = viennacl::linalg::qr(A);
     elapsed = timer.get();
     std::cout << "Time for QR on CPU: " << elapsed << std::endl;
-    std::cout << "Estimated GFLOPS: " << 1e-9 * num_ops_qr/ elapsed << std::endl;
+    std::cout << "Estimated GFLOPs: " << 2e-9 * num_ops_qr/ elapsed << std::endl;
     
     
     //std::cout << "Inplace QR-factored A: " << A << std::endl;
@@ -95,7 +95,7 @@ int main (int argc, const char * argv[])
     viennacl::linalg::recoverQ(A, betas, Q, R); 
     elapsed = timer.get();
     std::cout << "Time for Q-recovery on CPU: " << elapsed << std::endl;
-    std::cout << "Estimated GFLOPS: " << 1e-9 * num_ops_recovery / elapsed << std::endl;
+    std::cout << "Estimated GFLOPs: " << 2e-9 * num_ops_recovery / elapsed << std::endl;
 
     /*std::cout << "R after recovery: " << R << std::endl;
     std::cout << "Q after recovery: " << Q << std::endl;
