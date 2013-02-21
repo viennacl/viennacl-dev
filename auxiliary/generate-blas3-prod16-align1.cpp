@@ -176,13 +176,13 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   // run computations
   std::cout << "    for(size_t i = 0; i < " << block_size << "; i++) { " << std::endl;
   if (row_major_B && transpose_B)
-    std::cout << "      float bv = bp[i]; " << std::endl;
+    std::cout << "      float bv = bp[i * B_col_inc]; " << std::endl;
   else if (row_major_B && !transpose_B)
-    std::cout << "      float bv = bp[i * B_internal_cols]; " << std::endl;
+    std::cout << "      float bv = bp[i * B_row_inc * B_internal_cols]; " << std::endl;
   else if (!row_major_B && transpose_B)
-    std::cout << "      float bv = bp[i * B_internal_rows]; " << std::endl;
+    std::cout << "      float bv = bp[i * B_col_inc * B_internal_rows]; " << std::endl;
   else if (!row_major_B && !transpose_B)
-    std::cout << "      float bv = bp[i]; " << std::endl;
+    std::cout << "      float bv = bp[i * B_row_inc]; " << std::endl;
   std::cout << std::endl;
   std::cout << "      for(size_t k = 0; k < " << block_size << "; k++)  " << std::endl;
   std::cout << "	    cv[k] += ap[k] * bv; " << std::endl;

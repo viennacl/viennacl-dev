@@ -544,6 +544,7 @@ namespace viennacl
           }
           else if (   (viennacl::traits::size1(A) % 128 == 0)
                   && (viennacl::traits::size2(A) % 128 == 0)
+                  && (viennacl::traits::size1(B) % 128 == 0) 
                   && (viennacl::traits::size2(B) % 128 == 0) )   // Check for AMD kernel
           {
             cl_uint vendor_id;
@@ -564,12 +565,18 @@ namespace viennacl
               //std::cout << "Using fast AMD kernel" << std::endl;
               prod_amd_kernel(A, B, C, alpha, beta, slow_kernel_name + "_amd");
             }
-            else
+            else if (   (viennacl::traits::size1(A) % 64 == 0)
+                    && (viennacl::traits::size2(A) % 64 == 0)
+                    && (viennacl::traits::size1(B) % 64 == 0) 
+                    && (viennacl::traits::size2(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
               prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
+            else
+              prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
           }
           else if (   (viennacl::traits::size1(A) % 64 == 0)
                    && (viennacl::traits::size2(A) % 64 == 0)
-                   && (viennacl::traits::size1(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
+                   && (viennacl::traits::size1(B) % 64 == 0) 
+                   && (viennacl::traits::size2(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
           {
             prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
             //prod_slow_kernel(A, B, C, slow_kernel_name);
