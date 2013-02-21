@@ -126,6 +126,15 @@ struct matrix_descriptor{
 	std::string aligned_scalartype;
 };
 
+struct scalar_descriptor{
+	scalar_descriptor(std::string const & _name, std::string const & _scalartype) : name(_name), scalartype(_scalartype){ }
+	std::string name;
+	std::string scalartype;
+	std::string arguments_string() const{
+		return scalartype + " " + name;
+	}
+};
+
 class kernel_generation_stream : public std::ostream{
 private:
     class kgenstream : public std::stringbuf{
@@ -342,7 +351,9 @@ public:
 					
 					bool _is_result_rowmajor) : kss(_kss), lhs_descriptor(_alignment, _use_LHS_shared, _is_lhs_rowmajor, _is_lhs_transposed, "lhs", scalartype)
 														, rhs_descriptor(_alignment, _use_RHS_shared, _is_rhs_rowmajor, _is_rhs_transposed, "rhs", scalartype)
-														, result_descriptor(_alignment, false, _is_result_rowmajor, false, "res", scalartype){
+														, result_descriptor(_alignment, false, _is_result_rowmajor, false, "res", scalartype)
+														, alpha_descriptor("alpha",scalartype)
+														, beta_descriptor("beta",scalartype){
 						
 		alignment = _alignment;
 		ml = _ml;
@@ -359,10 +370,13 @@ public:
 
     void operator()() {
 
-                kss << "__kernel void prod_" << (lhs_descriptor.is_transposed ? "T" : "A") << (rhs_descriptor.is_transposed ? "T" : "A")
-                                        << "_amd( " << result_descriptor.arguments_string() << std::endl
-                                        << "," << lhs_descriptor.arguments_string() << std::endl
-                                        << "," << rhs_descriptor.arguments_string() << ")" << std::endl;
+		kss << "__kernel void prod_" << (lhs_descriptor.is_transposed ? "T" : "A") << (rhs_descriptor.is_transposed ? "T" : "A")
+                        << "_amd( "
+                        << alpha_descriptor.arguments_string() << std::endl
+												<< "," << lhs_descriptor.arguments_string() << std::endl
+												<< "," << rhs_descriptor.arguments_string() << std::endl
+												<< "," << beta_descriptor.arguments_string() << std::endl
+												<< "," << result_descriptor.arguments_string() << ")" << std::endl;
 		kss << "{" << std::endl;
 		kss.inc_tab();
         std::string lhs_value_scalartype;
@@ -689,7 +703,9 @@ public:
         if(result_descriptor.is_rowmajor){
             for(unsigned int m=0 ; m < ms_res ; ++m){
                 for(unsigned int n=0 ; n < ns_res ; ++n){
-                    kss << "*res_ptr++=" << "res" << m << n  << ";" << std::endl;
+                    kss << "*res_ptr = (" << beta_descriptor.name << " != 0) ? " << alpha_descriptor.name << "*" << "res" << m << n  << " + " << beta_descriptor.name << " * *res_ptr : "
+                                                                                 << alpha_descriptor.name << "*" << "res" << m << n  << ";" << std::endl;
+                    kss << "res_ptr++;" << std::endl;
                 }
                 if(m<ms_res-1)  kss << "res_ptr+=" << internal_size2_res << " - " << ns_res << ";" << std::endl;
             }
@@ -697,7 +713,9 @@ public:
         else{
             for(unsigned int n=0 ; n < ns_res ; ++n){
                 for(unsigned int m=0 ; m < ms_res ; ++m){
-                    kss << "*res_ptr++=" << "res" << m << n  << ";" << std::endl;
+                    kss << "*res_ptr = (" << beta_descriptor.name << " != 0) ? " << alpha_descriptor.name << "*" << "res" << m << n  << " + " << beta_descriptor.name << " * *res_ptr : "
+                                                                                 << alpha_descriptor.name << "*" << "res" << m << n  << ";" << std::endl;
+                    kss << "res_ptr++;" << std::endl;
                 }
                 if(n<ns_res-1) kss << "res_ptr+=" << internal_size1_res << " - " << ms_res << ";" << std::endl;
             }
@@ -727,6 +745,8 @@ private:
 	matrix_descriptor lhs_descriptor;
 	matrix_descriptor rhs_descriptor;
 	matrix_descriptor result_descriptor;
+	scalar_descriptor alpha_descriptor;
+	scalar_descriptor beta_descriptor;
 };
 
 int main(int args, char **argv){

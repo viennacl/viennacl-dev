@@ -164,13 +164,13 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << std::endl;
   std::cout << "    __local  float *ap = As; " << std::endl;
   if (row_major_B && transpose_B)
-    std::cout << "    __global float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_row_inc * B_internal_cols); " << std::endl;
+    std::cout << "    __global const float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_row_inc * B_internal_cols); " << std::endl;
   else if (row_major_B && !transpose_B)
-    std::cout << "    __global float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_col_inc); " << std::endl;
+    std::cout << "    __global const float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_col_inc); " << std::endl;
   else if (!row_major_B && transpose_B)
-    std::cout << "    __global float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_row_inc); " << std::endl;
+    std::cout << "    __global const float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_row_inc); " << std::endl;
   else if (!row_major_B && !transpose_B)
-    std::cout << "    __global float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_col_inc * B_internal_rows); " << std::endl;
+    std::cout << "    __global const float *bp = B + (b + (" << block_size << " * row_thread_id + col_thread_id) * B_col_inc * B_internal_rows); " << std::endl;
   std::cout << std::endl;
 
   // run computations

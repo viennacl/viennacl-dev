@@ -217,6 +217,10 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
         if (fname.substr(fname.size()-3, 3) == ".cl")
         {
             //add kernel source to program string:
+            std::string kernel_name_ending = fname.size() > 8 ? fname.substr(fname.size()-7, 4) : " ";
+            if (kernel_name_ending == "_amd")
+              kernel_file << "        if (viennacl::ocl::current_device().local_memory() > 20000)" << std::endl << "  ";  //fast AMD kernels require more than 20 kB of local memory
+            
             kernel_file << "        source.append(";
             if (!is_float)
                 kernel_file << "viennacl::tools::make_double_kernel(";
