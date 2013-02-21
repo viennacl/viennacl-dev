@@ -360,8 +360,8 @@ public:
     void operator()() {
 
                 kss << "__kernel void prod_" << (lhs_descriptor.is_transposed ? "T" : "A") << (rhs_descriptor.is_transposed ? "T" : "A")
-                                        << "_amd( " << result_descriptor.arguments_string()
-                                        << "," << lhs_descriptor.arguments_string()
+                                        << "_amd( " << result_descriptor.arguments_string() << std::endl
+                                        << "," << lhs_descriptor.arguments_string() << std::endl
                                         << "," << rhs_descriptor.arguments_string() << ")" << std::endl;
 		kss << "{" << std::endl;
 		kss.inc_tab();

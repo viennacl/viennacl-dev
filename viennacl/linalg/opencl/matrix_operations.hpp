@@ -479,12 +479,12 @@ namespace viennacl
         }
 
         // C = A * B, using kernel optimized for AMD Tahiti devices
-        template <typename T1, typename T2, typename T3, typename ScalarType >
+        template <typename T1, typename T2, typename T3>
         void prod_amd_kernel(const T1 & A, 
                              const T2 & B, 
                              T3 & C,
-                             ScalarType alpha,
-                             ScalarType beta,
+                             //ScalarType alpha,
+                             //ScalarType beta,
                              std::string kernel_name)
         {
           typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
@@ -495,15 +495,22 @@ namespace viennacl
           //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
           viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), kernel_name);
           
-          k.local_work_size(0, 16);  //columns
-          k.local_work_size(1, 8);   //rows
-          k.global_work_size(0, viennacl::traits::size2(C) / 64 * k.local_work_size(0));
-          k.global_work_size(1, viennacl::traits::size1(C) / 64 * k.local_work_size(1));
+          k.local_work_size(0, 8);
+          k.local_work_size(1, 32);
+          k.global_work_size(0, viennacl::traits::size2(C) / 32 * k.local_work_size(0));
+          k.global_work_size(1, viennacl::traits::size1(C) / 128 * k.local_work_size(1));
           
-          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
+          //cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
+          //cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
           
-          viennacl::ocl::enqueue(k(cl_alpha,
+          viennacl::ocl::enqueue(k(//cl_alpha,
+                                  //cl_beta,
+                                  viennacl::traits::opencl_handle(C), 
+                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
+                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
+                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
+                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C)),
+                                   
                                   viennacl::traits::opencl_handle(A), 
                                   cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)), 
                                   cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
@@ -514,14 +521,7 @@ namespace viennacl
                                   cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)), 
                                   cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
                                   cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-                                   
-                                  cl_beta,
-                                  viennacl::traits::opencl_handle(C), 
-                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)), 
-                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
+                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B))
                                   )
                                 );        
         }
@@ -553,14 +553,16 @@ namespace viennacl
             if (vendor_id == 4098 // AMD's vendor ID
                 && viennacl::traits::start1(A) == 0 && viennacl::traits::start1(B) == 0 && viennacl::traits::start1(C) == 0
                 && viennacl::traits::start2(A) == 0 && viennacl::traits::start2(B) == 0 && viennacl::traits::start2(C) == 0
-                && viennacl::traits::stride1(A) == 0 && viennacl::traits::stride1(B) == 0 && viennacl::traits::stride1(C) == 0
-                && viennacl::traits::stride2(A) == 0 && viennacl::traits::stride2(B) == 0 && viennacl::traits::stride2(C) == 0
+                && viennacl::traits::stride1(A) == 1 && viennacl::traits::stride1(B) == 1 && viennacl::traits::stride1(C) == 1
+                && viennacl::traits::stride2(A) == 1 && viennacl::traits::stride2(B) == 1 && viennacl::traits::stride2(C) == 1
                 && viennacl::traits::size1(A) == viennacl::traits::size2(A) 
                 && viennacl::traits::size1(B) == viennacl::traits::size2(B) 
-                && viennacl::traits::size1(C) == viennacl::traits::size2(C) ) // use tuned AMD kernel for square matrices
+                && viennacl::traits::size1(C) == viennacl::traits::size2(C)
+                && alpha == ScalarType(1) && beta == ScalarType(0)
+               ) // use tuned AMD kernel for square matrices
             {
               //std::cout << "Using fast AMD kernel" << std::endl;
-              prod_amd_kernel(A, B, C, alpha, beta, slow_kernel_name + "_amd");
+              prod_amd_kernel(A, B, C, slow_kernel_name + "_amd");
             }
             else
               prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
