@@ -10,6 +10,7 @@ This release focuses on improved stability and performance on AMD devices rather
   Our sample HD7970 reaches over 1.3 TFLOPs in single precision and 200 GFLOPs in double precision (counting multiplications and additions as separate operations).
 - All benchmark FLOPs are now using the common convention of counting multiplications and additions separately (ignoring fused multiply-add).
 - Fixed a bug for matrix-matrix multiplication with matrix_slice<> when slice dimensions are multiples of 64.
+- Improved detection logic for Intel OpenCL SDK.
 - Fixed issues when resizing an empty compressed_matrix.
 - Fixes and improved support for BLAS-1-type operations on dense matrices and vectors.
 - Vector expressions can now be passed to inner_prod() and norm_1(), norm_2() and norm_inf() directly.

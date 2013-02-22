@@ -242,6 +242,8 @@ if(ENABLE_DIST)
       COMMAND "${CMAKE_COMMAND}" -E copy
          "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-prod16-align1.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-prod16-align1.cpp"
       COMMAND "${CMAKE_COMMAND}" -E copy
+         "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-prod-amd.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-prod-amd.cpp"
+      COMMAND "${CMAKE_COMMAND}" -E copy
          "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-solve-align1.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-solve-align1.cpp"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
