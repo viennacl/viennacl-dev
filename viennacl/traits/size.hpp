@@ -43,6 +43,10 @@
 #include <boost/numeric/mtl/mtl.hpp>
 #endif
 
+#ifdef VIENNACL_WITH_STATCL
+#include <statcl/forwards.h>
+#endif
+
 #include <vector>
 #include <map>
 
@@ -165,6 +169,15 @@ namespace viennacl
     {
       return proxy.lhs().lhs().size2();
     }
+
+#ifdef VIENNACL_WITH_STATCL
+    template <typename T>
+    typename viennacl::enable_if<viennacl::is_any_matrix<T>::value, vcl_size_t>::type
+    size(vector_expression<T, T, statcl::op_mean> const & proxy)  //mean
+    {
+      return proxy.lhs().size1();
+    }
+#endif
     
     
     #ifdef VIENNACL_WITH_MTL4

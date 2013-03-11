@@ -32,7 +32,6 @@
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
 
-
 namespace viennacl
 {
   //
@@ -129,14 +128,14 @@ namespace viennacl
       typedef vcl_size_t       size_type;
       
       vector_expression(LHS & l, RHS & r) : lhs_(l), rhs_(r) {}
-      
+
       /** @brief Get left hand side operand
       */
       lhs_reference_type lhs() const { return lhs_; }
       /** @brief Get right hand side operand
       */
       rhs_reference_type rhs() const { return rhs_; }
-      
+
       /** @brief Returns the size of the result vector */
       size_type size() const { return viennacl::traits::size(*this); }
       
@@ -438,6 +437,18 @@ namespace viennacl
         viennacl::linalg::vector_assign(*this, v[0]);
       }
     }
+
+//#ifdef VIENNACL_WITH_STATCL
+//    template<class ScalarType, class Distribution>
+//    vector(statcl::rng::random_vector<ScalarType, Distribution> v) : size_(v.size())
+//    {
+//        if(size_ > 0)
+//        {
+//            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+//            statcl::rng::fill_random(*this, v.distribution);
+//        }
+//    }
+//#endif
 
 
     // vector_range (implemented in vector_proyx.hpp)
@@ -793,6 +804,17 @@ namespace viennacl
       return *this;
     }
 
+
+//#ifdef VIENNACL_WITH_STATCL
+//    template <typename M>
+//    typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_matrix<M>::value>::type
+//    operator=(const viennacl::vector_expression< const M, const M, statcl::op_mean> & proxy)
+//    {
+//      assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
+//      statcl::compute_mean(proxy.lhs(),*this);
+//      return *this;
+//    }
+//#endif
     
     //transposed_matrix_proxy:
     /** @brief Operator overload for v1 = trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.

@@ -286,3 +286,8 @@ if(ENABLE_DIST)
    add_dependencies(dist-src copymanual-src)
 
 endif()
+
+##Compatibility with Qt-Creator
+file( GLOB_RECURSE QtCreatorCompatibility_SRC
+    *.hpp *.h *.cl)
+add_custom_target( QtCreatorCompatibility SOURCES ${QtCreatorCompatibility_SRC} )

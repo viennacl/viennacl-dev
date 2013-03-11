@@ -251,6 +251,19 @@ namespace viennacl
       }
     }
 
+#ifdef VIENNACL_WITH_STATCL
+    /** @brief Creates the vector from the supplied random matrix. */
+    template<class DISTRIBUTION>
+    matrix(statcl::rng::random_matrix_t<SCALARTYPE, DISTRIBUTION> const & m) : rows_(m.size1), columns_(m.size2)
+    {
+        if (internal_size() > 0)
+        {
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          statcl::rng::fill_random(*this,m.distribution);
+        }
+    }
+
+#endif
     
     // matrix_range (implemented in matrix_proyx.hpp)
     matrix(matrix_range<self_type> const & proxy);

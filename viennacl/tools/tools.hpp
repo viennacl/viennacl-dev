@@ -294,6 +294,14 @@ namespace viennacl
       typedef VectorType   ResultType;
     };
 
+#ifdef VIENNACL_WITH_STATCL
+    template <typename ScalarType, typename F, unsigned int A>
+    struct VECTOR_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, viennacl::matrix<ScalarType, F, A> >
+    {
+      typedef viennacl::vector<ScalarType, A>   ResultType;
+    };
+#endif
+
     /** \endcond */    
     
     

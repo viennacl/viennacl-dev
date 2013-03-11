@@ -129,7 +129,31 @@ namespace viennacl
           
           return false;
         }
-        
+
+
+
+        bool operator<(mem_handle const & other) const
+        {
+          if (active_handle_ != other.active_handle_)
+            return false;
+
+          switch (active_handle_)
+          {
+            case MAIN_MEMORY:
+              return ram_handle_.get() < other.ram_handle_.get();
+            #ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              return opencl_handle_.get() < other.opencl_handle_.get();
+            #endif
+            #ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              return cuda_handle_.get() < other.cuda_handle_.get();
+            #endif
+            default: break;
+          }
+
+          return false;
+        }
         bool operator!=(mem_handle const & other) const { return !(*this == other); }
 
         void swap(mem_handle & other)

@@ -15,7 +15,8 @@ endforeach(PROG)
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
   foreach(PROG blas3_prod blas3_solve fft iterators
-               generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
+               gen_blas1
+               #generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
                global_variables
                matrix-vector matrix nmf qr-method
                scalar sparse structured-matrices svd

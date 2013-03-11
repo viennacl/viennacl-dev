@@ -301,6 +301,17 @@ namespace viennacl
           return programs_.back();
         }
         
+        /** @brief Returns whether the program with the provided name exists or not */
+        bool has_program(std::string const & name){
+            for (ProgramContainer::iterator it = programs_.begin();
+                  it != programs_.end();
+                  ++it)
+            {
+              if (it->name() == name) return true;
+            }
+            return false;
+        }
+
         /** @brief Returns the program with the provided name */
         viennacl::ocl::program & get_program(std::string const & name)
         {
