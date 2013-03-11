@@ -16,6 +16,17 @@ namespace viennacl
       typedef std::map<viennacl::backend::mem_handle, shared_infos_t> shared_infos_map_t;
       typedef std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> temporaries_map_t;
 
+      template<class Model, class LHS, class RHS>
+      struct get_symbolic_type;
+
+      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+      struct get_symbolic_type<vector_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef vector_expression<LHS2,OP,RHS2> type;};
+      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+      struct get_symbolic_type<scalar_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef scalar_expression<LHS2,OP,RHS2> type;};
+      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+      struct get_symbolic_type<matrix_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef matrix_expression<LHS2,OP,RHS2> type;};
+
+
       template<class T>
       struct dummy2exptree_impl
       {
@@ -65,24 +76,18 @@ namespace viennacl
           }
       };
 
-      template<class LHS, class RHS>
-      struct dummy2exptree_impl<inner_prod_wrapper<LHS,RHS> >{
-      private:
-          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
-          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
-      public:
-          typedef inprod_infos<LhsResult,RhsResult> result_type;
+      template<class ScalarType>
+      struct dummy2exptree_impl<dummy_scalar<ScalarType> >{
+          typedef gpu_symbolic_scalar<ScalarType> result_type;
           static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     inner_prod_wrapper<LHS,RHS> const & v){
-              return result_type(shared_infos, temporaries,
-                                 dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
-                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()));
+                                     temporaries_map_t & temporaries_,
+                                     dummy_scalar<ScalarType> const & s){
+              return result_type(shared_infos, s.scal());
           }
       };
 
       template<class LHS, class RHS, class OP_REDUCE>
-      struct dummy2exptree_impl<matrix_expression_wrapper<LHS, matmat_prod_type<OP_REDUCE>, RHS> >{
+      struct dummy2exptree_impl<matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
       private:
           typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
           typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
@@ -90,7 +95,7 @@ namespace viennacl
           typedef matmat_prod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
           static result_type execute(shared_infos_map_t & shared_infos,
                                      temporaries_map_t & temporaries,
-                                     matrix_expression_wrapper<LHS, matmat_prod_type<OP_REDUCE>, RHS> const & v){
+                                     matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
               return result_type(dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
                                  dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
                                  v.expr());
@@ -98,6 +103,22 @@ namespace viennacl
       };
 
 
+      template<class LHS, class RHS, class OP_REDUCE>
+      struct dummy2exptree_impl<scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
+      private:
+          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
+          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
+      public:
+          typedef inprod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
+          static result_type execute(shared_infos_map_t & shared_infos,
+                                     temporaries_map_t & temporaries,
+                                     scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
+              return result_type(shared_infos, temporaries,
+                                 dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
+                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
+                                 v.expr());
+          }
+      };
 
       template<class T1>
       struct dummy2exptree_impl<function_wrapper_impl<T1> >{
@@ -156,7 +177,7 @@ namespace viennacl
 
       private:
           void compile_program(std::string const & pgm_name) const{
-//              std::cout << source_code_ << std::endl;
+              std::cout << source_code_ << std::endl;
               assert(!source_code_.empty() && " Custom Operation not initialized ");
               viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code_, pgm_name);
               for(std::map<std::string, generator::code_generation::kernel_infos_t>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){

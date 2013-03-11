@@ -200,9 +200,9 @@ namespace viennacl{
         };
 
         template<class REDUCE_TYPE>
-        class matmat_prod_type : public nonarithmetic_op_infos_base{
+        class prod_type : public nonarithmetic_op_infos_base{
         public:
-            matmat_prod_type() : nonarithmetic_op_infos_base("prod"), op_reduce_(new REDUCE_TYPE()){ }
+            prod_type() : nonarithmetic_op_infos_base("prod"), op_reduce_(new REDUCE_TYPE()){ }
 
             op_infos_base* op_reduce(){ return op_reduce_.get(); }
 
@@ -232,7 +232,7 @@ namespace viennacl{
 
 
 
-        class binary_tree_infos_base{
+        class binary_tree_infos_base : public virtual infos_base{
         public:
             infos_base & lhs() const{ return *lhs_; }
             infos_base & rhs() const{ return *rhs_; }
@@ -248,10 +248,9 @@ namespace viennacl{
         };
 
 
-        class arithmetic_tree_infos_base :  public infos_base,public binary_tree_infos_base{
+        class arithmetic_tree_infos_base : public binary_tree_infos_base{
         public:
             std::string generate(unsigned int i) const { return "(" + lhs_->generate(i) + op_->generate(i) + rhs_->generate(i) + ")"; }
-            repr_t repr() const{ return binary_tree_infos_base::repr(); }
             infos_base::repr_t simplified_repr() const{
                 if(op_->is_assignment()){
                     return "p_"+lhs_->simplified_repr() + assign_type().repr() + rhs_->simplified_repr()+"_p";
@@ -280,7 +279,7 @@ namespace viennacl{
         };
 
 
-        class kernel_argument : public infos_base{
+        class kernel_argument : public virtual infos_base{
         public:
             virtual viennacl::backend::mem_handle const & handle() const = 0;
             kernel_argument( ) { }
@@ -310,20 +309,15 @@ namespace viennacl{
             shared_infos_t* infos_;
         };
 
-        class user_kernel_argument : public kernel_argument{
-        };
 
-
-        class temporary_kernel_argument : public kernel_argument{ };
-
-        class cpu_scal_infos_base : public user_kernel_argument{
+        class cpu_scal_infos_base : public kernel_argument{
         public:
             virtual std::string arguments_string() const{
                 return scalartype() + " " + name();
             }
         };
 
-        class gpu_scal_infos_base : public user_kernel_argument{
+        class gpu_scal_infos_base : public kernel_argument{
         public:
             virtual std::string arguments_string() const{
                 return  "__global " + scalartype() + "*"  + " " + name();
@@ -366,7 +360,7 @@ namespace viennacl{
             std::string val_name_;
         };
 
-        class inprod_infos_base : public binary_tree_infos_base,public temporary_kernel_argument{
+        class inprod_infos_base : public scalar_expression_infos_base, public kernel_argument{
         public:
             enum step_t{compute,reduce};
             step_t step(){ return *step_; }
@@ -374,6 +368,10 @@ namespace viennacl{
             local_memory<1> make_local_memory(unsigned int size){
                 return local_memory<1>(name()+"_local",size,scalartype());
             }
+            repr_t repr() const{ return "aa"; }
+
+            infos_base::repr_t simplified_repr() const { return scalar_expression_infos_base::simplified_repr(); }
+
             std::string arguments_string() const{
                 return "__global " + scalartype() + "*" + " " + name();
             }
@@ -387,26 +385,24 @@ namespace viennacl{
                 return name()+"_sum";
             }
 
-            repr_t repr() const{ return binary_tree_infos_base::repr(); }
-
-            repr_t simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
-
             unsigned int n_groupsize_used_for_compute(){ return 0; }
 
         protected:
             inprod_infos_base(infos_base * lhs
                               , infos_base * rhs
-                              ,step_t * step): binary_tree_infos_base(lhs,new inner_prod_type(),rhs),step_(step){
+                              , std::string const & f_expr
+                              ,step_t * step): scalar_expression_infos_base(lhs,new inner_prod_type(),rhs), f_expr_(f_expr), step_(step){
 
             }
 
 
         private:
+            std::string f_expr_;
             viennacl::tools::shared_ptr<step_t> step_;
         };
 
 
-        class vec_infos_base : public user_kernel_argument{
+        class vec_infos_base : public kernel_argument{
         public:
             std::string  size() const{ return name() + "_size"; }
 //            std::string  internal_size() const{ return name() + "_internal_size";}
@@ -418,11 +414,11 @@ namespace viennacl{
             virtual size_t real_size() const = 0;
             virtual ~vec_infos_base(){ }
         protected:
-            vec_infos_base() : user_kernel_argument() { }
+            vec_infos_base() : kernel_argument() { }
         };
 
 
-        class mat_infos_base : public user_kernel_argument{
+        class mat_infos_base : public kernel_argument{
         public:
             std::string  internal_size1() const{ return name() +"internal_size1_"; }
             std::string  internal_size2() const{ return name() +"internal_size2_"; }
@@ -453,7 +449,7 @@ namespace viennacl{
             virtual ~mat_infos_base() { }
         protected:
             mat_infos_base(bool is_rowmajor
-                           ,bool is_transposed) : user_kernel_argument()
+                           ,bool is_transposed) : kernel_argument()
                                                   ,is_rowmajor_(is_rowmajor)
                                                   ,is_transposed_(is_transposed){ }
         protected:
@@ -535,8 +531,8 @@ namespace viennacl{
             else if(binary_tree_infos_base const * p= dynamic_cast<binary_tree_infos_base const *>(&other)){
                 return first < p->lhs() || first < p->rhs();
             }
-            else if(user_kernel_argument const * t = dynamic_cast<user_kernel_argument const *>(&first)){
-                  if(user_kernel_argument const * p = dynamic_cast<user_kernel_argument const*>(&other)){
+            else if(kernel_argument const * t = dynamic_cast<kernel_argument const *>(&first)){
+                  if(kernel_argument const * p = dynamic_cast<kernel_argument const*>(&other)){
                      return t->handle() < p->handle();
                   }
             }

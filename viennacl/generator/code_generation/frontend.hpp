@@ -60,7 +60,7 @@ namespace viennacl{
                 code_generation::optimization_profile* profile() { return optimization_profile_.get(); }
 
                 void config_nd_range(viennacl::ocl::kernel & k) const{
-                    optimization_profile_->config_nd_range(k, &static_cast<arithmetic_tree_infos_base*>(trees_.front())->lhs());
+                    optimization_profile_->config_nd_range(k, &dynamic_cast<arithmetic_tree_infos_base*>(trees_.front())->lhs());
                 }
 
             private:
@@ -214,6 +214,7 @@ namespace viennacl{
                             add_operation<saxpy::profile>(p);
                         }
                         else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
+                            if(count_type<inner_prod_type>(p)) add_operation<inner_product::profile>(p);
                             add_operation<saxpy::profile>(p);
                         }
                         else{

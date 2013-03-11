@@ -20,7 +20,7 @@ class elementwise_prod_type;
 class elementwise_div_type;
 class trans_type;
 template<class REDUCE_TYPE>
-class matmat_prod_type;
+class prod_type;
 
 template<class LHS, class OP, class RHS, bool deep_copy=false>
 class compile_time_beast;

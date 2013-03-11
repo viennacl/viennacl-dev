@@ -39,9 +39,36 @@ namespace viennacl
       class matmat_prod_infos : public matmat_prod_infos_base{
       public:
           typedef typename LHS::ScalarType ScalarType;
-          matmat_prod_infos(LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matmat_prod_infos_base(new LHS(lhs), new matmat_prod_type<OP_REDUCE>(), new RHS(rhs), f_expr){ }
+          matmat_prod_infos(LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matmat_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs), f_expr){ }
       private:
 
+      };
+
+      template<class LHS, class RHS, class OP_REDUCE>
+      class inprod_infos : public inprod_infos_base{
+          typedef typename LHS::ScalarType ScalarType;
+      public:
+          template<class SharedInfosMapT, class TemporariesMapT>
+          inprod_infos(SharedInfosMapT & shared_infos,
+                       TemporariesMapT & temporaries_map,
+                       LHS const & lhs, RHS const & rhs,
+                       std::string const & f_expr):
+              inprod_infos_base(new LHS(lhs), new RHS(rhs), f_expr
+                                ,new step_t(inprod_infos_base::compute)){
+              typename TemporariesMapT::iterator it = temporaries_map.insert(std::make_pair(this,viennacl::backend::mem_handle())).first;
+              viennacl::backend::memory_create(it->second,sizeof(ScalarType)*128);
+              handle_ = it->second;
+              infos_= &shared_infos.insert(std::make_pair(handle_,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+          }
+
+           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
+               k.arg(arg++,handle_.opencl_handle());
+           }
+
+           viennacl::backend::mem_handle const & handle() const{ return handle_; }
+
+      private:
+          viennacl::backend::mem_handle handle_;
       };
 
       template<class LHS, class OP, class RHS>
@@ -76,32 +103,7 @@ namespace viennacl
 
 
 
-      template<class LHS, class RHS>
-      class inprod_infos : public inprod_infos_base{
-          typedef typename LHS::ScalarType ScalarType;
-          viennacl::backend::mem_handle const & handle() const{
-              return handle_;
-          }
 
-      public:
-          template<class SharedInfosMapT, class TemporariesMapT>
-          inprod_infos(SharedInfosMapT & shared_infos,
-                       TemporariesMapT & temporaries_map,
-                       LHS const & lhs, RHS const & rhs) :
-              inprod_infos_base(new LHS(lhs), new RHS(rhs)
-                                ,new step_t(inprod_infos_base::compute)){
-              typename TemporariesMapT::iterator it = temporaries_map.insert(std::make_pair(this,viennacl::backend::mem_handle())).first;
-              viennacl::backend::memory_create(it->second,sizeof(ScalarType)*128);
-              handle_ = it->second;
-              infos_ = &shared_infos.insert(std::make_pair(it->second,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value()))).first->second;
-          }
-
-           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
-               k.arg(arg++,handle_.opencl_handle());
-           }
-      private:
-          viennacl::backend::mem_handle handle_;
-      };
 
     /**
     * @brief Symbolic scalar type. Will be passed by value.
@@ -132,14 +134,27 @@ namespace viennacl
         typedef gpu_symbolic_scalar<SCALARTYPE> self_type;
 
       public:
-        typedef viennacl::scalar<SCALARTYPE> runtime_type;
+        typedef viennacl::scalar<SCALARTYPE> vcl_t;
         typedef SCALARTYPE ScalarType;
-        gpu_symbolic_scalar() : gpu_scal_infos_base(print_type<SCALARTYPE>::value()){ }
 
-        kernel_argument& get(){
-            static self_type res;
-            return res;
+        template<class SharedInfosMapT>
+        gpu_symbolic_scalar(SharedInfosMapT & map, vcl_t const & vcl_scal) : vcl_scal_(vcl_scal){
+            infos_= &map.insert(std::make_pair(vcl_scal_.handle(),shared_infos_t(map.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
+
+        viennacl::backend::mem_handle const & handle() const{ return vcl_scal_.handle(); }
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
+            k.arg(n_arg++,vcl_scal_);
+        }
+
+        repr_t repr() const{
+            return "gs"+repr_of<SCALARTYPE>::value();
+        }
+
+
+    private:
+        vcl_t const & vcl_scal_;
 
     };
 
@@ -164,6 +179,7 @@ namespace viennacl
               infos_= &map.insert(std::make_pair(vcl_vec_.handle(),shared_infos_t(map.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
           virtual viennacl::backend::mem_handle const & handle() const{ return vcl_vec_.handle(); }
+
           void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
               k.arg(n_arg++,vcl_vec_);
               k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()/infos_->alignment()));
@@ -238,18 +254,6 @@ namespace viennacl
           VCL_MATRIX const & vcl_mat_;
 
       };
-
-      template<class Model, class LHS, class RHS>
-      struct get_symbolic_type;
-
-      template<class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_symbolic_type<inner_prod_wrapper<LHS1, RHS1>, LHS2, RHS2> { typedef inprod_infos<LHS2,RHS2> type; };
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_symbolic_type<vector_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef vector_expression<LHS2,OP,RHS2> type;};
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_symbolic_type<scalar_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef scalar_expression<LHS2,OP,RHS2> type;};
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_symbolic_type<matrix_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef matrix_expression<LHS2,OP,RHS2> type;};
 
 
 
