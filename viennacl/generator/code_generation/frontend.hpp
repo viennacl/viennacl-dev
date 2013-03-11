@@ -134,8 +134,8 @@ namespace viennacl{
                             mat_exprs.push_back(*it);
                     }
                     code_generation::generator * gen;
-                    if(vector_saxpy::profile* p = dynamic_cast<vector_saxpy::profile*>(kernel_infos_.profile())){
-                        gen = new vector_saxpy::generator(vec_exprs,scal_exprs,p);
+                    if(saxpy::profile* p = dynamic_cast<saxpy::profile*>(kernel_infos_.profile())){
+                        gen = new saxpy::generator(vec_exprs,scal_exprs,mat_exprs,p);
                     }
                     else if(gemm::profile* p = dynamic_cast<gemm::profile*>(kernel_infos_.profile())){
                         gen = new gemm::generator(mat_exprs,p);
@@ -208,13 +208,13 @@ namespace viennacl{
                         infos_base* ptr = it->get();
                         if(matrix_expression_infos_base* p = dynamic_cast<matrix_expression_infos_base*>(ptr)){
                             if(count_type<matmat_prod_infos_base>(p)) add_operation<gemm::profile>(p);
-//                            else add_operation<matrix_saxpy::profile>(p);
+                            else add_operation<saxpy::profile>(p);
                         }
                         else if(vector_expression_infos_base* p = dynamic_cast<vector_expression_infos_base*>(ptr)){
-                            add_operation<vector_saxpy::profile>(p);
+                            add_operation<saxpy::profile>(p);
                         }
                         else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
-
+                            add_operation<saxpy::profile>(p);
                         }
                         else{
                             assert(false && "UNRECOGNIZED SCALARTYPE");
@@ -230,7 +230,7 @@ namespace viennacl{
 
                 template<class T>
                 void override_model(T const & o){
-                    overriden_models_[typeid(T).name()].reset(new vector_saxpy::profile(o));
+                    overriden_models_[typeid(T).name()].reset(new T(o));
                 }
 
                 template<class T>

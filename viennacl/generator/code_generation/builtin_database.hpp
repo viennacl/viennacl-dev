@@ -27,8 +27,8 @@ static  builtin_database_t make_database(){
         std::map<std::string,viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
         //BLAS 1
-            tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new vector_saxpy::profile(2,1,128))));
-            tmp.insert(std::make_pair("p_vfeqvf_p", viennacl::tools::shared_ptr<optimization_profile> ( new vector_saxpy::profile(2,1,128))));
+            tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,128))));
+            tmp.insert(std::make_pair("p_vfeqvf_p", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,128))));
 
         //BLAS 3
         //Row * Row and analogs
@@ -103,7 +103,7 @@ static  builtin_database_t make_database(){
     {
             std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
-            tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new vector_saxpy::profile(2,2,128))));
+            tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,2,128))));
 
 
         //Row * Row and analogs
@@ -183,7 +183,7 @@ static  builtin_database_t make_database(){
     {
         std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
-        tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new vector_saxpy::profile(4,16,64))));
+        tmp.insert(std::make_pair("p_mf_1_0eqmf_1_0_p", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(4,16,64))));
 
         //Row * Row and analogs
 
