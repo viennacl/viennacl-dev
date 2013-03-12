@@ -200,15 +200,13 @@ namespace viennacl{
                 }
 
                 template<class T>
-                void add_operation(infos_base* p){
+                T const & add_operation(infos_base* p){
                     if(kernels_list_.empty()) kernels_list_.push_back(create_infos<T>(p));
                     else{
-                        if(typeid(kernels_list_.back().profile())==typeid(T*))
-                            kernels_list_.back().trees().push_back(p);
-                        else{
-                            kernels_list_.push_back(create_infos<T>(p));
-                        }
+                        if(typeid(kernels_list_.back().profile())==typeid(T*)) kernels_list_.back().trees().push_back(p);
+                        else kernels_list_.push_back(create_infos<T>(p));
                     }
+                    return * static_cast<T*>(kernels_list_.back().profile());
                 }
 
                 void init(){
@@ -224,8 +222,8 @@ namespace viennacl{
                         }
                         else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
                             if(count_type<inprod_infos_base>(p)){
-                                add_operation<inner_product::profile>(p);
-                                kernels_list_.push_back(kernels_list_.back());
+                                inner_product::profile const & prof =add_operation<inner_product::profile>(p);
+                                kernels_list_.push_back(kernel_infos_t(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
                             }
                             else add_operation<saxpy::profile>(p);
                         }

@@ -56,7 +56,7 @@ namespace viennacl
               inprod_infos_base(new LHS(lhs), new RHS(rhs), f_expr
                                 ,new step_t(inprod_infos_base::compute)){
               typename TemporariesMapT::iterator it = temporaries_map.insert(std::make_pair(this,viennacl::backend::mem_handle())).first;
-              viennacl::backend::memory_create(it->second,sizeof(ScalarType)*128);
+              viennacl::backend::memory_create(it->second,sizeof(ScalarType)*256);
               handle_ = it->second;
               infos_= &shared_infos.insert(std::make_pair(handle_,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
