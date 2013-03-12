@@ -177,7 +177,7 @@ namespace viennacl
 
       private:
           void compile_program(std::string const & pgm_name) const{
-              std::cout << source_code_ << std::endl;
+//              std::cout << source_code_ << std::endl;
               assert(!source_code_.empty() && " Custom Operation not initialized ");
               viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code_, pgm_name);
               for(std::map<std::string, generator::code_generation::kernel_infos_t>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){

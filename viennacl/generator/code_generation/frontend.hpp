@@ -79,19 +79,21 @@ namespace viennacl{
             template<class T, class Pred>
             static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
                 if(arithmetic_tree_infos_base* p = dynamic_cast<arithmetic_tree_infos_base*>(root)){
-                    extract_to_list(&p->lhs(), args,pred);
-                    extract_to_list(&p->rhs(),args,pred);
+                    if(inprod_infos_base* ip = dynamic_cast<inprod_infos_base*>(root)){
+                        if(ip->step() == inprod_infos_base::compute){
+                            extract_to_list(&ip->lhs(), args,pred);
+                            extract_to_list(&ip->rhs(),args,pred);
+                        }
+                    }
+                    else{
+                        extract_to_list(&p->lhs(), args,pred);
+                        extract_to_list(&p->rhs(),args,pred);
+                    }
                 }
                 else if(function_base* p = dynamic_cast<function_base*>(root)){
                     std::list<infos_base*> func_args(p->args());
                     for(std::list<infos_base*>::const_iterator it = func_args.begin(); it!= func_args.end(); ++it){
                         extract_to_list(*it,args,pred);
-                    }
-                }
-                else if(inprod_infos_base* p = dynamic_cast<inprod_infos_base*>(root)){
-                    if(p->step() == inprod_infos_base::compute){
-                        extract_to_list(&p->lhs(), args,pred);
-                        extract_to_list(&p->rhs(),args,pred);
                     }
                 }
                 if(T* t = dynamic_cast<T*>(root)){
@@ -127,8 +129,7 @@ namespace viennacl{
                     for(std::list<infos_base*>::const_iterator it = kernel_infos_.trees().begin(); it!=kernel_infos_.trees().end();++it){
                         if(utils::is_type<vector_expression_infos_base>()(*it))
                             vec_exprs.push_back(*it);
-                        else if(utils::is_type<scalar_expression_infos_base>()(*it)
-                                ||utils::is_type<inprod_infos_base>()(*it))
+                        else if(utils::is_type<scalar_expression_infos_base>()(*it))
                             scal_exprs.push_back(*it);
                         else
                             mat_exprs.push_back(*it);
@@ -139,6 +140,9 @@ namespace viennacl{
                     }
                     else if(gemm::profile* p = dynamic_cast<gemm::profile*>(kernel_infos_.profile())){
                         gen = new gemm::generator(mat_exprs,p);
+                    }
+                    else if(inner_product::profile* p = dynamic_cast<inner_product::profile*>(kernel_infos_.profile())){
+                        gen = new inner_product::generator(scal_exprs,p);
                     }
                     assert(gen && "KERNEL TYPE NOT RECOGNIZED");
                     (*gen)(kss_);
@@ -171,6 +175,11 @@ namespace viennacl{
 
 
             class operations_manager{
+            public:
+                class barrier{
+
+                };
+
             private:
                 typedef std::list<viennacl::tools::shared_ptr<infos_base> > operations_t;
 
@@ -214,8 +223,11 @@ namespace viennacl{
                             add_operation<saxpy::profile>(p);
                         }
                         else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
-                            if(count_type<inner_prod_type>(p)) add_operation<inner_product::profile>(p);
-                            add_operation<saxpy::profile>(p);
+                            if(count_type<inprod_infos_base>(p)){
+                                add_operation<inner_product::profile>(p);
+                                kernels_list_.push_back(kernels_list_.back());
+                            }
+                            else add_operation<saxpy::profile>(p);
                         }
                         else{
                             assert(false && "UNRECOGNIZED SCALARTYPE");
