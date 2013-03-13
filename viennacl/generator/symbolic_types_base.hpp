@@ -357,19 +357,14 @@ namespace viennacl{
         };
 
 
-        class matvec_prod_infos_base : public vector_expression_infos_base, public kernel_argument{
+        class matvec_prod_infos_base : public vector_expression_infos_base{
         public:
-            enum step_t{compute,reduce};
-            step_t step(){ return *step_; }
-            void step(step_t s){ *step_ = s; }
-
-            matvec_prod_infos_base( infos_base * lhs, op_infos_base* op, infos_base * rhs, std::string const & f_expr,step_t * step) :
-                vector_expression_infos_base(lhs,op,rhs),f_expr_(f_expr), step_(step){
+            matvec_prod_infos_base( infos_base * lhs, op_infos_base* op, infos_base * rhs, std::string const & f_expr) :
+                vector_expression_infos_base(lhs,op,rhs),f_expr_(f_expr){
                 val_name_ = repr() + "_val";
             }
 
-
-            repr_t simplified_repr() const { return vector_expression_infos_base::simplified_repr(); }
+            repr_t simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
 
             std::string val_name(unsigned int m, unsigned int n){
                 return val_name_ +  '_' + to_string(m) + '_' + to_string(n);
@@ -389,18 +384,9 @@ namespace viennacl{
                 replace_all_occurences(res,"#2",rhs);
                 return res;
             }
-
-            std::string arguments_string() const{
-                return "__global " + scalartype() + "*" + " " + name();
-            }
-            std::string generate(unsigned int i) const{
-                return "";
-            }
-
         private:
             std::string f_expr_;
             std::string val_name_;
-            viennacl::tools::shared_ptr<step_t> step_;
         };
 
         class inprod_infos_base : public scalar_expression_infos_base, public kernel_argument{
@@ -424,11 +410,11 @@ namespace viennacl{
                 }
                 return infos_->access_name(0);
             }
-
             std::string sum_name() const{
                 return name()+"_sum";
             }
 
+            unsigned int n_groupsize_used_for_compute(){ return 0; }
 
         protected:
             inprod_infos_base(infos_base * lhs

@@ -48,24 +48,9 @@ namespace viennacl
       class matvec_prod_infos : public matvec_prod_infos_base{
       public:
           typedef typename LHS::ScalarType ScalarType;
-
-          template<class SharedInfosMapT, class TemporariesMapT>
-          matvec_prod_infos(SharedInfosMapT & shared_infos,
-                            TemporariesMapT & temporaries_map,
-                            LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matvec_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs), f_expr, new step_t(compute))
-            , tmp_(1024,256){
-              temporaries_map.insert(std::make_pair(this,tmp_.handle())).first;
-              infos_= &shared_infos.insert(std::make_pair(tmp_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
-          }
-
-           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
-               k.arg(arg++,tmp_.handle().opencl_handle());
-           }
-
-           viennacl::backend::mem_handle const & handle() const{ return tmp_.handle(); }
-
+          matvec_prod_infos(LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matvec_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs), f_expr){ }
       private:
-          viennacl::matrix<ScalarType> tmp_;
+
       };
 
       template<class LHS, class RHS, class OP_REDUCE>
@@ -78,7 +63,7 @@ namespace viennacl
                        LHS const & lhs, RHS const & rhs,
                        std::string const & f_expr):
               inprod_infos_base(new LHS(lhs), new RHS(rhs), f_expr
-                                ,new step_t(compute)), tmp_(1024){
+                                ,new step_t(inprod_infos_base::compute)), tmp_(1024){
               temporaries_map.insert(std::make_pair(this,tmp_.handle())).first;
               infos_= &shared_infos.insert(std::make_pair(tmp_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
