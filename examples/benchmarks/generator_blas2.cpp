@@ -178,7 +178,7 @@ int main(int argc, char* argv[]){
                         std::cerr << "Unknown Scalartype ... Aborting" << std::endl;
                         exit(EXIT_FAILURE);
                     }
-                    std::cout << size << "\t" << exec_time << std::endl;
+                    std::cout << size << "\t" << exec_time << " #" << 1e-9*size*(2*size-1)/exec_time << "GFLOPs" << std::endl;
                 }
             }
         }
