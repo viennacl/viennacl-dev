@@ -351,13 +351,56 @@ namespace viennacl{
                 replace_all_occurences(res,"#2",rhs);
                 return res;
             }
+        private:
+            std::string f_expr_;
+            std::string val_name_;
+        };
 
-//            op_infos_base const & op_reduce(){ return *op_reduce_; }
 
+        class matvec_prod_infos_base : public vector_expression_infos_base, public kernel_argument{
+        public:
+            enum step_t{compute,reduce};
+            step_t step(){ return *step_; }
+            void step(step_t s){ *step_ = s; }
+
+            matvec_prod_infos_base( infos_base * lhs, op_infos_base* op, infos_base * rhs, std::string const & f_expr,step_t * step) :
+                vector_expression_infos_base(lhs,op,rhs),f_expr_(f_expr), step_(step){
+                val_name_ = repr() + "_val";
+            }
+
+
+            repr_t simplified_repr() const { return vector_expression_infos_base::simplified_repr(); }
+
+            std::string val_name(unsigned int m, unsigned int n){
+                return val_name_ +  '_' + to_string(m) + '_' + to_string(n);
+            }
+
+            std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){
+                std::string expr(f_expr_);
+                replace_all_occurences(expr,"#1",lhs);
+                replace_all_occurences(expr,"#2",rhs);
+                return res + " = " + res + op_->generate(0) + "(" + expr + ")";
+
+            }
+
+            std::string make_expr(std::string const & lhs, std::string const & rhs){
+                std::string res(f_expr_);
+                replace_all_occurences(res,"#1",lhs);
+                replace_all_occurences(res,"#2",rhs);
+                return res;
+            }
+
+            std::string arguments_string() const{
+                return "__global " + scalartype() + "*" + " " + name();
+            }
+            std::string generate(unsigned int i) const{
+                return "";
+            }
 
         private:
             std::string f_expr_;
             std::string val_name_;
+            viennacl::tools::shared_ptr<step_t> step_;
         };
 
         class inprod_infos_base : public scalar_expression_infos_base, public kernel_argument{
@@ -381,11 +424,11 @@ namespace viennacl{
                 }
                 return infos_->access_name(0);
             }
+
             std::string sum_name() const{
                 return name()+"_sum";
             }
 
-            unsigned int n_groupsize_used_for_compute(){ return 0; }
 
         protected:
             inprod_infos_base(infos_base * lhs

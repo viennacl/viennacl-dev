@@ -85,6 +85,12 @@ namespace viennacl{
                             extract_to_list(&ip->rhs(),args,pred);
                         }
                     }
+                    else if(matvec_prod_infos_base* mvp = dynamic_cast<matvec_prod_infos_base*>(root)){
+                        if(mvp->step() == matvec_prod_infos_base::compute){
+                            extract_to_list(&mvp->lhs(), args,pred);
+                            extract_to_list(&mvp->rhs(),args,pred);
+                        }
+                    }
                     else{
                         extract_to_list(&p->lhs(), args,pred);
                         extract_to_list(&p->rhs(),args,pred);
@@ -143,6 +149,9 @@ namespace viennacl{
                     }
                     else if(inner_product::profile* p = dynamic_cast<inner_product::profile*>(kernel_infos_.profile())){
                         gen = new inner_product::generator(scal_exprs,p);
+                    }
+                    else if(gemv::profile * p = dynamic_cast<gemv::profile*>(kernel_infos_.profile())){
+                        gen = new gemv::generator(vec_exprs,p);
                     }
                     assert(gen && "KERNEL TYPE NOT RECOGNIZED");
                     (*gen)(kss_);
@@ -218,7 +227,12 @@ namespace viennacl{
                             else add_operation<saxpy::profile>(p);
                         }
                         else if(vector_expression_infos_base* p = dynamic_cast<vector_expression_infos_base*>(ptr)){
-                            add_operation<saxpy::profile>(p);
+                            if(count_type<matvec_prod_infos_base>(p)){
+                                add_operation<gemv::profile>(p);
+                                kernels_list_.push_back(kernel_infos_t(p, new gemv::profile()));
+
+                            }
+                            else add_operation<saxpy::profile>(p);
                         }
                         else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
                             if(count_type<inprod_infos_base>(p)){

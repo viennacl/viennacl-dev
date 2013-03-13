@@ -140,6 +140,17 @@ private:
 
 
 template<class LHS, class RHS, class OP_REDUCE,  bool deep_copy>
+class vector_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public compile_time_beast<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
+public:
+    vector_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "#1*#2") : compile_time_beast<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
+
+    std::string expr() const { return f_.expr(); }
+private:
+    function_wrapper f_;
+};
+
+
+template<class LHS, class RHS, class OP_REDUCE,  bool deep_copy>
 class scalar_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public compile_time_beast<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
 public:
     scalar_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "#1*#2") : compile_time_beast<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
@@ -386,6 +397,16 @@ prod(LHS const & lhs, RHS const & rhs)
 {
     return matrix_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
 }
+
+
+template<class LHS, class RHS>
+typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_vector_expression_t<RHS>::value
+                            ,vector_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
+prod(LHS const & lhs, RHS const & rhs)
+{
+    return vector_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
+}
+
 
 template<class OP_TYPE, class LHS, class RHS>
 typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value
