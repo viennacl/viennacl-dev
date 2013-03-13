@@ -67,8 +67,8 @@ namespace viennacl{
 
             unsigned int size2() const{ return size2_; }
 
-            std::string offset(std::string const & i, std::string const & j) const{
-                return '('+i+')' + '*' + to_string(size2_) + '(' + j + ')';
+            std::string access(std::string const & i, std::string const & j) const{
+                return name() + "[" + '('+i+')' + '*' + to_string(size2_) + "+ (" + j + ") ]";
             }
 
         private:

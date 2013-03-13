@@ -231,7 +231,7 @@ namespace viennacl{
                             }
                             else add_operation<saxpy::profile>(p);
                         }
-                        else{
+                         else{
                             assert(false && "UNRECOGNIZED SCALARTYPE");
                         }
                     }
