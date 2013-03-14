@@ -123,7 +123,7 @@ void benchmark_blas3(timings_t & timings, OpT const & op, ConfigT const & config
                             for(unsigned int alignment = config.alignment_min ; alignment <= config.alignment_max; alignment *=2){
                                 for(std::vector<bool>::const_iterator lhs_storage = config.LHS_storages.begin(); lhs_storage!=config.LHS_storages.end(); ++lhs_storage){
                                     for(std::vector<bool>::const_iterator rhs_storage = config.RHS_storages.begin(); rhs_storage!=config.RHS_storages.end(); ++rhs_storage){
-                                        for(unsigned int unroll = config.min_unroll; unroll < config.max_unroll ; unroll *= 2){
+                                        for(unsigned int unroll = config.min_unroll; unroll <= config.max_unroll ; unroll *= 2){
                                             std::cout << '.' << std::flush;
                                             prev_perc=perc;
                                             perc += (float)100/total;
