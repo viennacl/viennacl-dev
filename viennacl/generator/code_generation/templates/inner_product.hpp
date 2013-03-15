@@ -17,6 +17,7 @@ public:
     profile(){
         group_size_=128;
         num_groups_=256;
+        vectorization_=4;
     }
 
     profile(unsigned int vectorization, unsigned int group_size, unsigned int num_groups) : optimization_profile(vectorization){
@@ -87,7 +88,8 @@ public:
             kss << "for(unsigned int i = get_global_id(0) ; i < " << size << "; i += get_global_size(0)){" << std::endl;
             kss.inc_tab();
             vector_cache.fetch_entries(0, "i");
-            for(std::set<inprod_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it) kss << (*it)->generate(0) << ";" << std::endl;
+            for(std::set<inprod_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it)
+                kss << (*it)->update_val(0) << ";" << std::endl;
             kss.dec_tab();
             kss << "}" << std::endl;
             std::list<local_memory<1> > local_mems;
@@ -106,7 +108,7 @@ public:
         else{
             std::list<gpu_scal_infos_base *> assigned_scal;
             for(std::list<infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
-                if(scalar_expression_infos_base* p=dynamic_cast<scalar_expression_infos_base*>(*it)){
+                if(binary_scalar_expression_infos_base* p=dynamic_cast<binary_scalar_expression_infos_base*>(*it)){
                     if(p->op().is_assignment()==true){
                         assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&p->lhs()));
                     }

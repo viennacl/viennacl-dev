@@ -78,20 +78,20 @@ public:
 
         std::list<vec_infos_base *> assigned_vec;
         for(std::list<infos_base*>::iterator it=vector_expressions_.begin(); it!= vector_expressions_.end();++it){
-            vector_expression_infos_base* p=dynamic_cast<vector_expression_infos_base*>(*it);
+            binary_vector_expression_infos_base* p=dynamic_cast<binary_vector_expression_infos_base*>(*it);
             if(p->op().is_assignment()==true) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&p->lhs()));
         }
 
         std::list<mat_infos_base *> assigned_mat;
         for(std::list<infos_base*>::iterator it=matrix_expressions_.begin(); it!= matrix_expressions_.end();++it){
-            matrix_expression_infos_base* p=dynamic_cast<matrix_expression_infos_base*>(*it);
+            binary_matrix_expression_infos_base* p=dynamic_cast<binary_matrix_expression_infos_base*>(*it);
             if(p->op().is_assignment()==true) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&p->lhs()));
         }
 
 
         std::list<gpu_scal_infos_base *> assigned_scal;
         for(std::list<infos_base*>::iterator it=scalar_expressions_.begin(); it!= scalar_expressions_.end();++it){
-            if(scalar_expression_infos_base* p=dynamic_cast<scalar_expression_infos_base*>(*it)){
+            if(binary_scalar_expression_infos_base* p=dynamic_cast<binary_scalar_expression_infos_base*>(*it)){
                 if(p->op().is_assignment()==true){
                     assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&p->lhs()));
                 }
@@ -113,8 +113,8 @@ public:
 
 private:
     std::list<infos_base* >  vector_expressions_;
-    std::list<infos_base* >  scalar_expressions_;
     std::list<infos_base* >  matrix_expressions_;
+    std::list<infos_base* >  scalar_expressions_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;

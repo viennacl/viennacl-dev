@@ -108,7 +108,7 @@ namespace viennacl{
                         FILTER_T::do_on_new_res(resrhs,res);
                     }
                     else if(unary_tree_infos_base * p = dynamic_cast<unary_tree_infos_base *>(tree)){
-                        res_t ressub(filter<FILTER_T,Pred>(&p->sub(),pred));
+                        res_t  ressub(filter<FILTER_T,Pred>(&p->sub(),pred));
                         FILTER_T::do_on_new_res(ressub,res);
                     }
                     else if(function_base * p = dynamic_cast<function_base*>(tree)){

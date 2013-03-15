@@ -23,13 +23,9 @@ struct member_storage<T,true>{
     typedef T type;
 };
 
-template<class LHS, class OP, class RHS, bool deep_copy>
-struct member_storage<matrix_expression_wrapper<LHS,OP,RHS,deep_copy>, false>{
-    typedef matrix_expression_wrapper<LHS,OP,RHS,deep_copy> type;
-};
 
-template<class LHS, class OP, class RHS, bool deep_copy>
-class compile_time_beast{
+template<class LHS, class OP, class RHS, bool deep_copy=false>
+class binary_tree{
 private:
     typedef typename member_storage<LHS, deep_copy>::type LhsStorage;
     typedef typename member_storage<RHS, deep_copy>::type RhsStorage;
@@ -41,28 +37,68 @@ public:
     RHS const & rhs() const{return rhs_;}
     OP const & op() const{ return op_; }
 protected:
-    compile_time_beast(LHS const & lhs, RHS const & rhs) : lhs_(lhs), rhs_(rhs){}
+    binary_tree(LHS const & lhs, RHS const & rhs) : lhs_(lhs), rhs_(rhs){}
 private:
     LhsStorage lhs_;
     RhsStorage rhs_;
     OP  op_;
 };
 
-struct matmat_prod_type_wrapper{ };
 
+template<class LHS, class OP, class RHS, bool deep_copy=false>
+class binary_vector_expression_wrapper : public binary_tree<LHS,OP,RHS, deep_copy>{
+public: binary_vector_expression_wrapper(LHS const & lhs, RHS const & rhs) : binary_tree<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+};
+
+template<class LHS, class OP, class RHS, bool deep_copy=false>
+class binary_scalar_expression_wrapper : public binary_tree<LHS,OP,RHS, deep_copy>{
+public: binary_scalar_expression_wrapper(LHS const & lhs, RHS const & rhs) : binary_tree<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+};
+template<class LHS, class OP, class RHS,  bool deep_copy=false>
+class binary_matrix_expression_wrapper : public binary_tree<LHS,OP,RHS, deep_copy>{
+public: binary_matrix_expression_wrapper(LHS const & lhs, RHS const & rhs) : binary_tree<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+};
 
 template<class LHS, class OP, class RHS, bool deep_copy>
-class vector_expression_wrapper : public compile_time_beast<LHS,OP,RHS, deep_copy>{
-public: vector_expression_wrapper(LHS const & lhs, RHS const & rhs) : compile_time_beast<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+struct member_storage<binary_matrix_expression_wrapper<LHS,OP,RHS,deep_copy>, false>{
+    typedef binary_matrix_expression_wrapper<LHS,OP,RHS,deep_copy> type;
 };
-template<class LHS, class OP, class RHS, bool deep_copy>
-class scalar_expression_wrapper : public compile_time_beast<LHS,OP,RHS, deep_copy>{
-public: scalar_expression_wrapper(LHS const & lhs, RHS const & rhs) : compile_time_beast<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+
+
+//////////////////////////////////////
+
+template<class SUB, class OP, bool deep_copy=false>
+class unary_tree{
+private:
+    typedef typename member_storage<SUB, deep_copy>::type SubStorage;
+public:
+    typedef SUB Sub;
+    typedef OP Op;
+    SUB const & sub() const{return sub_;}
+    OP const & op() const{ return op_; }
+protected:
+    unary_tree(Sub const & sub) : sub_(sub){ }
+private:
+    SubStorage sub_;
+    OP  op_;
 };
-template<class LHS, class OP, class RHS,  bool deep_copy>
-class matrix_expression_wrapper : public compile_time_beast<LHS,OP,RHS, deep_copy>{
-public: matrix_expression_wrapper(LHS const & lhs, RHS const & rhs) : compile_time_beast<LHS,OP,RHS, deep_copy>(lhs,rhs){ }
+
+template<class SUB, class OP, bool deep_copy=false>
+class unary_vector_expression_wrapper : public unary_tree<SUB,OP, deep_copy>{
+public: unary_vector_expression_wrapper(SUB const & sub) : unary_tree<SUB,OP,deep_copy>(sub){ }
 };
+
+template<class SUB, class OP, bool deep_copy=false>
+class unary_scalar_expression_wrapper : public unary_tree<SUB,OP, deep_copy>{
+public: unary_scalar_expression_wrapper(SUB const & sub) : unary_tree<SUB,OP,deep_copy>(sub){ }
+};
+
+template<class SUB, class OP, bool deep_copy=false>
+class unary_matrix_expression_wrapper : public unary_tree<SUB,OP, deep_copy>{
+public: unary_matrix_expression_wrapper(SUB const & sub) : unary_tree<SUB,OP,deep_copy>(sub){ }
+};
+
+/////////////////////////////////////
 
 template<class T1, class T2=void, class T3=void>
 struct function_wrapper_impl{
@@ -129,9 +165,9 @@ private:
 };
 
 template<class LHS, class RHS, class OP_REDUCE,  bool deep_copy>
-class matrix_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public compile_time_beast<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
+class binary_matrix_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public binary_tree<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
 public:
-    matrix_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "#1*#2") : compile_time_beast<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
+    binary_matrix_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "dot(#1,#2)") : binary_tree<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
 
     std::string expr() const { return f_.expr(); }
 private:
@@ -140,9 +176,9 @@ private:
 
 
 template<class LHS, class RHS, class OP_REDUCE,  bool deep_copy>
-class vector_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public compile_time_beast<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
+class binary_vector_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public binary_tree<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
 public:
-    vector_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "#1*#2") : compile_time_beast<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
+    binary_vector_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "dot(#1,#2)") : binary_tree<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
 
     std::string expr() const { return f_.expr(); }
 private:
@@ -151,9 +187,9 @@ private:
 
 
 template<class LHS, class RHS, class OP_REDUCE,  bool deep_copy>
-class scalar_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public compile_time_beast<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
+class binary_scalar_expression_wrapper<LHS,prod_type<OP_REDUCE>,RHS, deep_copy> : public binary_tree<LHS,prod_type<OP_REDUCE>,RHS, deep_copy>{
 public:
-    scalar_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "#1*#2") : compile_time_beast<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
+    binary_scalar_expression_wrapper(LHS const & lhs, RHS const & rhs, std::string expr = "dot(#1,#2)") : binary_tree<LHS,prod_type<OP_REDUCE>, RHS, deep_copy>(lhs,rhs) ,f_("",expr){ }
 
     std::string expr() const { return f_.expr(); }
 private:
@@ -174,33 +210,33 @@ public:
     vcl_vec_t const & vec() const{ return vec_; }
 
     template<typename RHS_TYPE>
-    vector_expression_wrapper<self_type, assign_type, RHS_TYPE >
+    binary_vector_expression_wrapper<self_type, assign_type, RHS_TYPE >
     operator= ( RHS_TYPE const & rhs ){
-      return vector_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
+      return binary_vector_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    vector_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
+    binary_vector_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
     operator*= ( RHS_TYPE const & rhs ){
-      return vector_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
+      return binary_vector_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    vector_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
+    binary_vector_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
     operator/= ( RHS_TYPE const & rhs ){
-      return vector_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
+      return binary_vector_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    vector_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
+    binary_vector_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
     operator+= ( RHS_TYPE const & rhs ){
-      return vector_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
+      return binary_vector_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    vector_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
+    binary_vector_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
     operator-= ( RHS_TYPE const & rhs ){
-      return vector_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
+      return binary_vector_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
     }
 };
 
@@ -216,33 +252,33 @@ public:
     vcl_scal_t const & scal() const{ return scal_; }
 
     template<typename RHS_TYPE>
-    scalar_expression_wrapper<self_type, assign_type, RHS_TYPE >
+    binary_scalar_expression_wrapper<self_type, assign_type, RHS_TYPE >
     operator= ( RHS_TYPE const & rhs ){
-      return scalar_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    scalar_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
+    binary_scalar_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
     operator*= ( RHS_TYPE const & rhs ){
-      return scalar_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    scalar_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
+    binary_scalar_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
     operator/= ( RHS_TYPE const & rhs ){
-      return scalar_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    scalar_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
+    binary_scalar_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
     operator+= ( RHS_TYPE const & rhs ){
-      return scalar_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    scalar_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
+    binary_scalar_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
     operator-= ( RHS_TYPE const & rhs ){
-      return scalar_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
     }
 };
 
@@ -261,38 +297,38 @@ public:
     }
 
     template<typename RHS_TYPE>
-    matrix_expression_wrapper<self_type, assign_type, RHS_TYPE >
+    binary_matrix_expression_wrapper<self_type, assign_type, RHS_TYPE >
     operator= ( RHS_TYPE const & rhs ){
-      return matrix_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,assign_type,RHS_TYPE >(*this,rhs);
     }
 
-    matrix_expression_wrapper<self_type, assign_type, self_type>
+    binary_matrix_expression_wrapper<self_type, assign_type, self_type>
     operator= ( self_type const & rhs ){
-      return matrix_expression_wrapper<self_type,assign_type, self_type >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,assign_type, self_type >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    matrix_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
+    binary_matrix_expression_wrapper<self_type, inplace_scal_mul_type, RHS_TYPE >
     operator*= ( RHS_TYPE const & rhs ){
-      return matrix_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    matrix_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
+    binary_matrix_expression_wrapper<self_type, inplace_scal_div_type, RHS_TYPE >
     operator/= ( RHS_TYPE const & rhs ){
-      return matrix_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    matrix_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
+    binary_matrix_expression_wrapper<self_type, inplace_add_type, RHS_TYPE >
     operator+= ( RHS_TYPE const & rhs ){
-      return matrix_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
     }
 
     template<typename RHS_TYPE>
-    matrix_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
+    binary_matrix_expression_wrapper<self_type, inplace_sub_type, RHS_TYPE >
     operator-= ( RHS_TYPE const & rhs ){
-      return matrix_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression_wrapper<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
     }
 private:
     VCL_MATRIX & mat_;
@@ -304,16 +340,21 @@ struct is_vector_expression_t{ enum { value = 0 }; };
 template<typename ScalarType>
 struct is_vector_expression_t<dummy_vector<ScalarType> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
-struct is_vector_expression_t<vector_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
+struct is_vector_expression_t<binary_vector_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
+template<class SUB, class OP>
+struct is_vector_expression_t<unary_vector_expression_wrapper<SUB,OP> >{ enum { value = 1}; };
+
 
 template<class T>
 struct is_scalar_expression_t{ enum { value = 0 }; };
 template<class ScalarType>
 struct is_scalar_expression_t<dummy_scalar<ScalarType> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
-struct is_scalar_expression_t<scalar_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
+struct is_scalar_expression_t<binary_scalar_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class T1, class T2, class T3>
 struct is_scalar_expression_t<function_wrapper_impl<T1,T2,T3> >{ enum { value = 1}; };
+template<class SUB, class OP>
+struct is_scalar_expression_t<unary_scalar_expression_wrapper<SUB,OP> >{ enum { value = 1}; };
 
 
 template<class T>
@@ -323,21 +364,31 @@ struct is_matrix_expression_t<dummy_matrix<VCL_MATRIX> >{ enum { value = 1}; };
 //template<class Scalartype, class F>
 //struct is_matrix_expression_t<viennacl::distributed::multi_matrix<Scalartype, F> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
-struct is_matrix_expression_t<matrix_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
+struct is_matrix_expression_t<binary_matrix_expression_wrapper<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class T>
 struct is_matrix_expression_t<viennacl::distributed::utils::gpu_wrapper<T> > { enum { value = 1 }; };
+template<class SUB, class OP>
+struct is_matrix_expression_t<unary_matrix_expression_wrapper<SUB,OP> >{ enum { value = 1}; };
 
-//template<class LHS, class RHS, class OP_REDUCE>
-//struct is_matrix_expression_t<matmat_prod_wrapper<LHS,RHS, OP_REDUCE> >{ enum { value = 1}; };
 
 template<class LHS, class OP, class RHS, bool create_vector, bool create_scalar, bool create_matrix>
-struct convert_to_expr;
+struct convert_to_binary_expr;
 template<class LHS, class OP, class RHS>
-struct convert_to_expr<LHS,OP,RHS,true,false,false>{ typedef vector_expression_wrapper<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,true,false,false>{ typedef binary_vector_expression_wrapper<LHS,OP,RHS> type; };
 template<class LHS, class OP, class RHS>
-struct convert_to_expr<LHS,OP,RHS,false,true,false>{ typedef scalar_expression_wrapper<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,false,true,false>{ typedef binary_scalar_expression_wrapper<LHS,OP,RHS> type; };
 template<class LHS, class OP, class RHS>
-struct convert_to_expr<LHS,OP,RHS,false,false,true>{ typedef matrix_expression_wrapper<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,false,false,true>{ typedef binary_matrix_expression_wrapper<LHS,OP,RHS> type; };
+
+template<class SUB, class OP, bool create_vector, bool create_scalar, bool create_matrix>
+struct convert_to_unary_expr;
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,true,false,false>{ typedef unary_vector_expression_wrapper<SUB,OP> type; };
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,false,true,false>{ typedef unary_scalar_expression_wrapper<SUB,OP> type; };
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression_wrapper<SUB,OP> type; };
+
 
 template<class T>
 struct is_operator{ enum{ value = 0}; };
@@ -384,54 +435,54 @@ template<class LHS, class RHS> struct create_matrix{
 
 template<class LHS, class RHS>
 typename viennacl::enable_if<is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value
-                            ,scalar_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
+                            ,binary_scalar_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
 inner_prod(LHS const & lhs, RHS const & rhs)
 {
-    return scalar_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
+    return binary_scalar_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
 }
 
 template<class LHS, class RHS>
 typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value
-                            ,matrix_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
+                            ,binary_matrix_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
 prod(LHS const & lhs, RHS const & rhs)
 {
-    return matrix_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
+    return binary_matrix_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
 }
 
 
 template<class LHS, class RHS>
 typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_vector_expression_t<RHS>::value
-                            ,vector_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
+                            ,binary_vector_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
 prod(LHS const & lhs, RHS const & rhs)
 {
-    return vector_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
+    return binary_vector_expression_wrapper<LHS,prod_type<add_type>,RHS>(lhs,rhs);
 }
 
 
 template<class OP_TYPE, class LHS, class RHS>
 typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value
-                            ,matrix_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
+                            ,binary_matrix_expression_wrapper<LHS,prod_type<add_type>,RHS> >::type
 prod_based(LHS const & lhs, RHS const & rhs, std::string const & expression)
 {
-    return matrix_expression_wrapper<LHS,prod_type<OP_TYPE>,RHS>(lhs,rhs,expression);
+    return binary_matrix_expression_wrapper<LHS,prod_type<OP_TYPE>,RHS>(lhs,rhs,expression);
 }
 
 template<class T>
-typename viennacl::enable_if<is_matrix_expression_t<T>::value, matrix_expression_wrapper<T,trans_type,T> >::type
+typename viennacl::enable_if<is_matrix_expression_t<T>::value, binary_matrix_expression_wrapper<T,trans_type,T> >::type
 trans(T const & mat){
-    return matrix_expression_wrapper<T,trans_type,T>(mat,mat);
+    return binary_matrix_expression_wrapper<T,trans_type,T>(mat,mat);
 }
 
 template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
                              ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
                              ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_expr<LHS,elementwise_prod_type,RHS
+                            ,typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
                                                     ,create_vector<LHS,RHS>::value
                                                     ,create_scalar<LHS,RHS>::value
                                                     ,create_matrix<LHS,RHS>::value>::type>::type
 element_prod(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_expr<LHS,elementwise_prod_type,RHS
+    return typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
             ,create_vector<LHS,RHS>::value
             ,create_scalar<LHS,RHS>::value
             ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
@@ -441,12 +492,12 @@ template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
                              ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
                              ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_expr<LHS,add_type,RHS
+                            ,typename convert_to_binary_expr<LHS,add_type,RHS
                                                     ,create_vector<LHS,RHS>::value
                                                     ,create_scalar<LHS,RHS>::value
                                                     ,create_matrix<LHS,RHS>::value>::type>::type
 operator+(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_expr<LHS,add_type,RHS
+    return typename convert_to_binary_expr<LHS,add_type,RHS
             ,create_vector<LHS,RHS>::value
             ,create_scalar<LHS,RHS>::value
             ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
@@ -456,24 +507,24 @@ template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
                              ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
                              ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_expr<LHS,sub_type,RHS
+                            ,typename convert_to_binary_expr<LHS,sub_type,RHS
                                                     ,create_vector<LHS,RHS>::value
                                                     ,create_scalar<LHS,RHS>::value
                                                     ,create_matrix<LHS,RHS>::value>::type>::type
 operator-(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_expr<LHS,sub_type,RHS
+    return typename convert_to_binary_expr<LHS,sub_type,RHS
             ,create_vector<LHS,RHS>::value
             ,create_scalar<LHS,RHS>::value
             ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
 }
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-                            ,typename convert_to_expr<LHS,scal_mul_type,RHS
+                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
                             ,create_vector<LHS,RHS>::value
                             ,create_scalar<LHS,RHS>::value
                             ,create_matrix<LHS,RHS>::value>::type>::type
 operator*(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_expr<LHS,scal_mul_type,RHS
+    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
                                     ,create_vector<LHS,RHS>::value
                                     ,create_scalar<LHS,RHS>::value
                                     ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
@@ -481,17 +532,34 @@ operator*(LHS const & lhs, RHS const & rhs){
 
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-                            ,typename convert_to_expr<LHS,scal_div_type,RHS
+                            ,typename convert_to_binary_expr<LHS,scal_div_type,RHS
                                                     ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
                                                     ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
                                                     ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type>::type
 operator/(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_expr<LHS,scal_div_type,RHS
+    return typename convert_to_binary_expr<LHS,scal_div_type,RHS
             ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
             ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
             ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type(lhs,rhs);
 }
 
+
+///////////////////////////////////////////
+/////// UNARY OPERATORS
+//////////////////////////////////////////
+
+template<class T>
+typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value
+                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value
+                                                            ,is_scalar_expression_t<T>::value
+                                                            ,is_matrix_expression_t<T>::value>::type>::type
+operator-(T const & t)
+{
+    return typename convert_to_unary_expr<T,unary_sub_type
+            ,is_vector_expression_t<T>::value
+            ,is_scalar_expression_t<T>::value
+            ,is_matrix_expression_t<T>::value>::type(t);
+}
 
 /*
 template<> static unsigned long get_operation_id<assign_type>(assign_type const &){ return 0; }

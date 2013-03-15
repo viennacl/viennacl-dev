@@ -68,7 +68,7 @@ public:
             mat_infos_base* first_matrix = *matrices_.begin();
             vec_infos_base* first_vector = *vectors_.begin();
             matvec_prod_infos_base * first_prod = *prods_.begin();
-            vector_expression_infos_base * first_vec_expr = dynamic_cast<vector_expression_infos_base*>(expressions_.front());
+            binary_vector_expression_infos_base * first_vec_expr = dynamic_cast<binary_vector_expression_infos_base*>(expressions_.front());
             vec_infos_base * assigned = dynamic_cast<vec_infos_base*>(&first_vec_expr->lhs());
             unsigned int m = profile_->m();
             unsigned int k = profile_->k();

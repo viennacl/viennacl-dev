@@ -28,7 +28,7 @@ public:
             extract_as(*it,kernel_arguments,utils::is_type<kernel_argument>());
         }
         for(std::set<kernel_argument*,viennacl::generator::deref_less>::iterator it=kernel_arguments.begin() ; it!= kernel_arguments.end() ; ++it){
-            (*it)->alignment(vectorization_);
+            if(dynamic_cast<gpu_scal_infos_base*>(*it)==0) (*it)->alignment(vectorization_);
         }
     }
 
@@ -44,6 +44,7 @@ protected:
 class generator{
 public:
     virtual void operator()(utils::kernel_generation_stream& kss) = 0;
+    virtual ~generator(){ }
 };
 
 

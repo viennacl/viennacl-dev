@@ -22,20 +22,7 @@ class trans_type;
 template<class REDUCE_TYPE>
 class prod_type;
 
-template<class LHS, class OP, class RHS, bool deep_copy=false>
-class compile_time_beast;
-
-template<class LHS, class OP, class RHS, bool deep_copy=false>
-class matrix_expression_wrapper;
-
-template<class LHS, class OP, class RHS, bool deep_copy=false>
-class vector_expression_wrapper;
-
-template<class LHS, class OP, class RHS, bool deep_copy=false>
-class scalar_expression_wrapper;
-
-template<class LHS, class RHS,  bool deep_copy=false>
-class inner_prod_wrapper;
+class unary_sub_type;
 
 template<typename ScalarType>
 class dummy_vector;

@@ -60,7 +60,7 @@ namespace viennacl{
                 code_generation::optimization_profile* profile() { return optimization_profile_.get(); }
 
                 void config_nd_range(viennacl::ocl::kernel & k) const{
-                    optimization_profile_->config_nd_range(k, &dynamic_cast<arithmetic_tree_infos_base*>(trees_.front())->lhs());
+                    optimization_profile_->config_nd_range(k, &dynamic_cast<binary_arithmetic_tree_infos_base*>(trees_.front())->lhs());
                 }
 
             private:
@@ -78,7 +78,7 @@ namespace viennacl{
 
             template<class T, class Pred>
             static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
-                if(arithmetic_tree_infos_base* p = dynamic_cast<arithmetic_tree_infos_base*>(root)){
+                if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
                     if(inprod_infos_base* ip = dynamic_cast<inprod_infos_base*>(root)){
                         if(ip->step() == inprod_infos_base::compute){
                             extract_to_list(&ip->lhs(), args,pred);
@@ -89,6 +89,9 @@ namespace viennacl{
                         extract_to_list(&p->lhs(), args,pred);
                         extract_to_list(&p->rhs(),args,pred);
                     }
+                }
+                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
+                    extract_to_list(&p->sub(),args,pred);
                 }
                 else if(function_base* p = dynamic_cast<function_base*>(root)){
                     std::list<infos_base*> func_args(p->args());
@@ -127,9 +130,9 @@ namespace viennacl{
                     std::list<infos_base *> scal_exprs;
                     std::list<infos_base *> mat_exprs;
                     for(std::list<infos_base*>::const_iterator it = kernel_infos_.trees().begin(); it!=kernel_infos_.trees().end();++it){
-                        if(utils::is_type<vector_expression_infos_base>()(*it))
+                        if(utils::is_type<binary_vector_expression_infos_base>()(*it))
                             vec_exprs.push_back(*it);
-                        else if(utils::is_type<scalar_expression_infos_base>()(*it))
+                        else if(utils::is_type<binary_scalar_expression_infos_base>()(*it))
                             scal_exprs.push_back(*it);
                         else
                             mat_exprs.push_back(*it);
@@ -216,15 +219,15 @@ namespace viennacl{
                     if(!kernels_list_.empty()) return;
                     for(typename operations_t::const_iterator it = operations_.begin() ; it!=operations_.end() ; ++it){
                         infos_base* ptr = it->get();
-                        if(matrix_expression_infos_base* p = dynamic_cast<matrix_expression_infos_base*>(ptr)){
+                        if(binary_matrix_expression_infos_base* p = dynamic_cast<binary_matrix_expression_infos_base*>(ptr)){
                             if(count_type<matmat_prod_infos_base>(p)) add_operation<gemm::profile>(p);
                             else add_operation<saxpy::profile>(p);
                         }
-                        else if(vector_expression_infos_base* p = dynamic_cast<vector_expression_infos_base*>(ptr)){
+                        else if(binary_vector_expression_infos_base* p = dynamic_cast<binary_vector_expression_infos_base*>(ptr)){
                             if(count_type<matvec_prod_infos_base>(p)) add_operation<gemv::profile>(p);
                             else add_operation<saxpy::profile>(p);
                         }
-                        else if(scalar_expression_infos_base* p = dynamic_cast<scalar_expression_infos_base*>(ptr)){
+                        else if(binary_scalar_expression_infos_base* p = dynamic_cast<binary_scalar_expression_infos_base*>(ptr)){
                             if(count_type<inprod_infos_base>(p)){
                                 inner_product::profile const & prof =add_operation<inner_product::profile>(p);
                                 kernels_list_.push_back(kernel_infos_t(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));

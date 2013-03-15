@@ -19,7 +19,6 @@
 
 
 
-#include "viennacl/generator/dummy_types.hpp"
 #include "viennacl/generator/symbolic_types_base.hpp"
 #include "viennacl/generator/functions.hpp"
 
@@ -31,8 +30,8 @@ namespace viennacl
 
 
       template<class T> struct repr_of;
-      template<> struct repr_of<float>{ static const infos_base::repr_t value(){ return "f"; } };
-      template<> struct repr_of<double>{ static const infos_base::repr_t value(){ return "d"; } };
+      template<> struct repr_of<float>{ static const std::string value(){ return "f"; } };
+      template<> struct repr_of<double>{ static const std::string value(){ return "d"; } };
 
 
       template<class LHS, class RHS, class OP_REDUCE>
@@ -62,7 +61,7 @@ namespace viennacl
                        TemporariesMapT & temporaries_map,
                        LHS const & lhs, RHS const & rhs,
                        std::string const & f_expr):
-              inprod_infos_base(new LHS(lhs), new RHS(rhs), f_expr
+              inprod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>, new RHS(rhs), f_expr
                                 ,new step_t(inprod_infos_base::compute)), tmp_(1024){
               temporaries_map.insert(std::make_pair(this,tmp_.handle())).first;
               infos_= &shared_infos.insert(std::make_pair(tmp_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
@@ -79,35 +78,55 @@ namespace viennacl
       };
 
       template<class LHS, class OP, class RHS>
-      class vector_expression : public vector_expression_infos_base{
+      class binary_vector_expression : public binary_vector_expression_infos_base{
       public:
           typedef typename LHS::ScalarType ScalarType;
-          vector_expression(LHS const & lhs, RHS const & rhs) :vector_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+          binary_vector_expression(LHS const & lhs, RHS const & rhs) :binary_vector_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+      };
+
+
+
+
+      template<class LHS, class OP, class RHS>
+      class binary_scalar_expression : public binary_scalar_expression_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          typedef LHS Lhs;
+          typedef RHS Rhs;
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs) :binary_scalar_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
       };
 
       template<class LHS, class OP, class RHS>
-      class scalar_expression : public scalar_expression_infos_base{
+      class binary_matrix_expression : public binary_matrix_expression_infos_base{
       public:
           typedef typename LHS::ScalarType ScalarType;
-          scalar_expression(LHS const & lhs, RHS const & rhs) :scalar_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+          typedef LHS Lhs;
+          typedef RHS Rhs;
+          binary_matrix_expression(LHS const & lhs, RHS const & rhs) :binary_matrix_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
       };
 
-      template<class LHS, class OP, class RHS>
-      class matrix_expression : public matrix_expression_infos_base{
+
+
+      template<class SUB, class OP>
+      class unary_vector_expression : public unary_vector_expression_infos_base{
       public:
-          typedef typename LHS::ScalarType ScalarType;
-          matrix_expression(LHS const & lhs, RHS const & rhs) :matrix_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+          typedef typename SUB::ScalarType ScalarType;
+          unary_vector_expression(SUB const & sub) :unary_vector_expression_infos_base(new SUB(sub), new OP()){ }
       };
 
-
-
-      template<class SUB_>
-      class unary_minus : public infos_base, public unary_tree_infos_base{
+      template<class SUB, class OP>
+      class unary_scalar_expression : public unary_scalar_expression_infos_base{
       public:
-          unary_minus(SUB_ sub) : unary_tree_infos_base(new SUB_(sub)){ }
-
+          typedef typename SUB::ScalarType ScalarType;
+          unary_scalar_expression(SUB const & sub) :unary_scalar_expression_infos_base(new SUB(sub), new OP()){ }
       };
 
+      template<class SUB, class OP>
+      class unary_matrix_expression : public unary_matrix_expression_infos_base{
+      public:
+          typedef typename SUB::ScalarType ScalarType;
+          unary_matrix_expression(SUB const & sub) :unary_matrix_expression_infos_base(new SUB(sub), new OP()){ }
+      };
 
 
 
@@ -155,14 +174,13 @@ namespace viennacl
             k.arg(n_arg++,vcl_scal_);
         }
 
-        repr_t repr() const{
+        std::string repr() const{
             return "gs"+repr_of<SCALARTYPE>::value();
         }
 
 
     private:
         vcl_t const & vcl_scal_;
-
     };
 
 
@@ -192,7 +210,7 @@ namespace viennacl
               k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()/infos_->alignment()));
           }
 
-          repr_t repr() const{
+          std::string repr() const{
               return "v"+repr_of<SCALARTYPE>::value();
           }
 
@@ -254,7 +272,7 @@ namespace viennacl
 
           viennacl::backend::mem_handle const & handle() const{ return vcl_mat_.handle(); }
 
-          repr_t repr() const{
+          std::string repr() const{
               return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_)+'_'+to_string((int)is_transposed_);
           }
       private:

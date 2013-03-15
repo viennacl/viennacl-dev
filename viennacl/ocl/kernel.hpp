@@ -34,6 +34,7 @@
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/local_mem.hpp"
+#include "viennacl/ocl/infos.hpp"
 
 namespace viennacl
 {
@@ -711,6 +712,20 @@ namespace viennacl
       std::string const & name() const { return name_; }
 
       viennacl::ocl::handle<cl_kernel> const & handle() const { return handle_; }
+
+      template<cl_kernel_info param>
+      static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k){
+          k.init();
+          typedef typename detail::return_type<cl_kernel, param>::Result res_t;
+          return detail::get_info_impl<res_t>()(k.handle_.get(),param);
+      }
+
+      template<cl_kernel_info param>
+      static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d){
+          k.init();
+          typedef typename detail::return_type<cl_kernel, param>::Result res_t;
+          return detail::get_info_impl<res_t>()(k.handle_.get(),d.id(),param);
+      }
 
 
     private:
