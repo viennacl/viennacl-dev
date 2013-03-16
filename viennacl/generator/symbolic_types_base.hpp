@@ -110,6 +110,7 @@ namespace viennacl{
             virtual std::string generate(unsigned int i) const { return ""; }
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
+            virtual void bind(std::map<viennacl::backend::mem_handle, shared_infos_t> & , std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> &) = 0;
             virtual ~infos_base(){ }
         };
 
@@ -125,6 +126,10 @@ namespace viennacl{
             binary_op_infos_base & op() { return *op_; }
             std::string repr() const { return "p_"+lhs_->repr() + op_->name() + rhs_->repr()+"_p"; }
             std::string simplified_repr() const { return "p_"+lhs_->simplified_repr() + op_->name() + rhs_->simplified_repr()+"_p"; }
+            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+                lhs_->bind(shared_infos,temporaries_map);
+                rhs_->bind(shared_infos,temporaries_map);
+            }
 
         protected:
             binary_tree_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
@@ -172,6 +177,10 @@ namespace viennacl{
             unary_op_infos_base & op() { return *op_; }
             std::string repr() const { return "p_"+ op_->name() + sub_->repr()+"_p"; }
             std::string simplified_repr() const { return "p_" + op_->name() + sub_->simplified_repr()+"_p"; }
+            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+                sub_->bind(shared_infos,temporaries_map);
+            }
+
             std::string generate(unsigned int i) const { return "(" +  op_->generate(sub_->generate(i)) + ")"; }
         protected:
             viennacl::tools::shared_ptr<infos_base> sub_;
@@ -324,6 +333,10 @@ namespace viennacl{
             }
             std::string repr() const{
                 return binary_scalar_expression_infos_base::repr();
+            }
+
+            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+                binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
             }
 
             std::string simplified_repr() const {

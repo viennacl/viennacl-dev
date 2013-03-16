@@ -14,215 +14,214 @@ namespace viennacl
 
 
 
-      typedef std::map<viennacl::backend::mem_handle, shared_infos_t> shared_infos_map_t;
-      typedef std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> temporaries_map_t;
-
-      template<class Model, class LHS, class RHS>
-      struct get_binary_symbolic_type;
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_binary_symbolic_type<binary_vector_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_vector_expression<LHS2,OP,RHS2> type;};
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_binary_symbolic_type<binary_scalar_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_scalar_expression<LHS2,OP,RHS2> type;};
-      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
-      struct get_binary_symbolic_type<binary_matrix_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_matrix_expression<LHS2,OP,RHS2> type;};
-
-      template<class Model, class SUB>
-      struct get_unary_symbolic_type;
-      template<class OP, class SUB1, class SUB2>
-      struct get_unary_symbolic_type<unary_vector_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_vector_expression<SUB2,OP> type;};
-      template<class OP, class SUB1, class SUB2>
-      struct get_unary_symbolic_type<unary_scalar_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_scalar_expression<SUB2,OP> type;};
-      template<class OP, class SUB1, class SUB2>
-      struct get_unary_symbolic_type<unary_matrix_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_matrix_expression<SUB2,OP> type;};
-
-      template<class T>
-      struct is_binary_tree{ enum{value = 0}; };
-      template<class LHS, class OP, class RHS>
-      struct is_binary_tree<binary_vector_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
-      template<class LHS, class OP, class RHS>
-      struct is_binary_tree<binary_scalar_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
-      template<class LHS, class OP, class RHS>
-      struct is_binary_tree<binary_matrix_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
-
-      template<class T>
-      struct is_unary_tree{ enum{value = 0}; };
-      template<class SUB, class OP>
-      struct is_unary_tree<unary_vector_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
-      template<class SUB, class OP>
-      struct is_unary_tree<unary_scalar_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
-      template<class SUB, class OP>
-      struct is_unary_tree<unary_matrix_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
 
 
-      template<class T, class Enable=void>
-      struct dummy2exptree_impl;
+//      template<class Model, class LHS, class RHS>
+//      struct get_binary_symbolic_type;
+//      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+//      struct get_binary_symbolic_type<binary_vector_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_vector_expression<LHS2,OP,RHS2> type;};
+//      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+//      struct get_binary_symbolic_type<binary_scalar_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_scalar_expression<LHS2,OP,RHS2> type;};
+//      template<class OP, class LHS1, class RHS1, class LHS2, class RHS2>
+//      struct get_binary_symbolic_type<binary_matrix_expression_wrapper<LHS1,OP,RHS1>,LHS2,RHS2 >{ typedef binary_matrix_expression<LHS2,OP,RHS2> type;};
 
-      template<class T>
-      struct dummy2exptree_impl<T, typename viennacl::enable_if<is_binary_tree<T>::value>::type>
-      {
-      private:
-        typedef typename T::Lhs Lhs;
-        typedef typename T::Rhs Rhs;
-        typedef typename dummy2exptree_impl<Lhs>::result_type LhsResult;
-        typedef typename dummy2exptree_impl<Rhs>::result_type RhsResult;
-      public:
-        typedef typename get_binary_symbolic_type<T,LhsResult,RhsResult>::type result_type;
+//      template<class Model, class SUB>
+//      struct get_unary_symbolic_type;
+//      template<class OP, class SUB1, class SUB2>
+//      struct get_unary_symbolic_type<unary_vector_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_vector_expression<SUB2,OP> type;};
+//      template<class OP, class SUB1, class SUB2>
+//      struct get_unary_symbolic_type<unary_scalar_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_scalar_expression<SUB2,OP> type;};
+//      template<class OP, class SUB1, class SUB2>
+//      struct get_unary_symbolic_type<unary_matrix_expression_wrapper<SUB1,OP>, SUB2 >{ typedef unary_matrix_expression<SUB2,OP> type;};
 
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     T const & t){
-              return result_type(dummy2exptree_impl<Lhs>::execute(shared_infos, temporaries, t.lhs())
-                                 ,dummy2exptree_impl<Rhs>::execute(shared_infos, temporaries, t.rhs()));
-          }
-      };
+//      template<class T>
+//      struct is_binary_tree{ enum{value = 0}; };
+//      template<class LHS, class OP, class RHS>
+//      struct is_binary_tree<binary_vector_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
+//      template<class LHS, class OP, class RHS>
+//      struct is_binary_tree<binary_scalar_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
+//      template<class LHS, class OP, class RHS>
+//      struct is_binary_tree<binary_matrix_expression_wrapper<LHS, OP, RHS> >{ enum { value = 1}; };
 
-      template<class T>
-      struct dummy2exptree_impl<T, typename viennacl::enable_if<is_unary_tree<T>::value>::type>
-      {
-      private:
-        typedef typename T::Sub Sub;
-        typedef typename dummy2exptree_impl<Sub>::result_type SubResult;
-      public:
-        typedef typename get_unary_symbolic_type<T,SubResult>::type result_type;
+//      template<class T>
+//      struct is_unary_tree{ enum{value = 0}; };
+//      template<class SUB, class OP>
+//      struct is_unary_tree<unary_vector_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
+//      template<class SUB, class OP>
+//      struct is_unary_tree<unary_scalar_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
+//      template<class SUB, class OP>
+//      struct is_unary_tree<unary_matrix_expression_wrapper<SUB, OP> >{ enum { value = 1}; };
 
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     T const & t){
-              return result_type(dummy2exptree_impl<Sub>::execute(shared_infos, temporaries, t.sub()));
-          }
-      };
 
-      template<class T>
-      struct dummy2exptree_impl<binary_matrix_expression_wrapper<T,trans_type,T> >{
-          typedef typename dummy2exptree_impl<T>::result_type result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries_,
-                                     binary_matrix_expression_wrapper<T,trans_type,T> const & m){
-              return result_type(shared_infos, m.lhs().mat(),true);
-          }
-      };
+//      template<class T, class Enable=void>
+//      struct dummy2exptree_impl;
 
-      template<class ScalarType>
-      struct dummy2exptree_impl<dummy_vector<ScalarType> >{
-          typedef symbolic_vector<ScalarType> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries_,
-                                     dummy_vector<ScalarType> const & v){
-              return result_type(shared_infos, v.vec());
-          }
-      };
+//      template<class T>
+//      struct dummy2exptree_impl<T, typename viennacl::enable_if<is_binary_tree<T>::value>::type>
+//      {
+//      private:
+//        typedef typename T::Lhs Lhs;
+//        typedef typename T::Rhs Rhs;
+//        typedef typename dummy2exptree_impl<Lhs>::result_type LhsResult;
+//        typedef typename dummy2exptree_impl<Rhs>::result_type RhsResult;
+//      public:
+//        typedef typename get_binary_symbolic_type<T,LhsResult,RhsResult>::type result_type;
 
-      template<class VCL_MATRIX>
-      struct dummy2exptree_impl<dummy_matrix<VCL_MATRIX> >{
-          typedef symbolic_matrix<VCL_MATRIX> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries_,
-                                     dummy_matrix<VCL_MATRIX> const & m){
-              return result_type(shared_infos, m.mat(),false);
-          }
-      };
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries,
+//                                     T const & t){
+//              return result_type(dummy2exptree_impl<Lhs>::execute(shared_infos, temporaries, t.lhs())
+//                                 ,dummy2exptree_impl<Rhs>::execute(shared_infos, temporaries, t.rhs()));
+//          }
+//      };
 
-      template<class ScalarType>
-      struct dummy2exptree_impl<dummy_scalar<ScalarType> >{
-          typedef gpu_symbolic_scalar<ScalarType> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries_,
-                                     dummy_scalar<ScalarType> const & s){
-              return result_type(shared_infos, s.scal());
-          }
-      };
+//      template<class T>
+//      struct dummy2exptree_impl<T, typename viennacl::enable_if<is_unary_tree<T>::value>::type>
+//      {
+//      private:
+//        typedef typename T::Sub Sub;
+//        typedef typename dummy2exptree_impl<Sub>::result_type SubResult;
+//      public:
+//        typedef typename get_unary_symbolic_type<T,SubResult>::type result_type;
 
-      template<class LHS, class RHS, class OP_REDUCE>
-      struct dummy2exptree_impl<binary_matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
-      private:
-          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
-          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
-      public:
-          typedef matmat_prod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     binary_matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
-              return result_type(dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
-                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
-                                 v.expr());
-          }
-      };
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries,
+//                                     T const & t){
+//              return result_type(dummy2exptree_impl<Sub>::execute(shared_infos, temporaries, t.sub()));
+//          }
+//      };
 
-      template<class LHS, class RHS, class OP_REDUCE>
-      struct dummy2exptree_impl<binary_vector_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
-      private:
-          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
-          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
-      public:
-          typedef matvec_prod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     binary_vector_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
-              return result_type(dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
-                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
-                                 v.expr());
-          }
-      };
+//      template<class T>
+//      struct dummy2exptree_impl<binary_matrix_expression_wrapper<T,trans_type,T> >{
+//          typedef typename dummy2exptree_impl<T>::result_type result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries_,
+//                                     binary_matrix_expression_wrapper<T,trans_type,T> const & m){
+//              return result_type(shared_infos, m.lhs().mat(),true);
+//          }
+//      };
 
-      template<class LHS, class RHS, class OP_REDUCE>
-      struct dummy2exptree_impl<binary_scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
-      private:
-          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
-          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
-      public:
-          typedef inprod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
-          static result_type execute(shared_infos_map_t & shared_infos,
-                                     temporaries_map_t & temporaries,
-                                     binary_scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
-              return result_type(shared_infos, temporaries,
-                                 dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
-                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
-                                 v.expr());
-          }
-      };
+//      template<class ScalarType>
+//      struct dummy2exptree_impl<dummy_vector<ScalarType> >{
+//          typedef symbolic_vector<ScalarType> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries_,
+//                                     dummy_vector<ScalarType> const & v){
+//              return result_type(shared_infos, v.vec());
+//          }
+//      };
 
-      template<class T1>
-      struct dummy2exptree_impl<function_wrapper_impl<T1> >{
-      private:
-          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type> result_type;
-      public:
-          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1> func){
-              result_type res(func.name,func.expr);
-              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
-              return res;
-          }
-      };
+//      template<class VCL_MATRIX>
+//      struct dummy2exptree_impl<dummy_matrix<VCL_MATRIX> >{
+//          typedef symbolic_matrix<VCL_MATRIX> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries_,
+//                                     dummy_matrix<VCL_MATRIX> const & m){
+//              return result_type(shared_infos, m.mat(),false);
+//          }
+//      };
 
-      template<class T1, class T2>
-      struct dummy2exptree_impl<function_wrapper_impl<T1,T2> >{
-      private:
-          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type
-                                    ,typename dummy2exptree_impl<T2>::result_type> result_type;
-      public:
-          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1,T2> func){
-              result_type res(func.name,func.expr);
-              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
-              res.add_arg("#2", dummy2exptree_impl<T2>::execute(shared_infos,temporaries,*func.t2));
-              return res;
-          }
-      };
+//      template<class ScalarType>
+//      struct dummy2exptree_impl<dummy_scalar<ScalarType> >{
+//          typedef gpu_symbolic_scalar<ScalarType> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries_,
+//                                     dummy_scalar<ScalarType> const & s){
+//              return result_type(shared_infos, s.scal());
+//          }
+//      };
 
-      template<class T1, class T2, class T3>
-      struct dummy2exptree_impl<function_wrapper_impl<T1,T2, T3> >{
-      private:
-          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type
-                                    ,typename dummy2exptree_impl<T2>::result_type
-                                    ,typename dummy2exptree_impl<T3>::result_type> result_type;
+//      template<class LHS, class RHS, class OP_REDUCE>
+//      struct dummy2exptree_impl<binary_matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
+//      private:
+//          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
+//          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
+//      public:
+//          typedef matmat_prod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries,
+//                                     binary_matrix_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
+//              return result_type(dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
+//                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
+//                                 v.expr());
+//          }
+//      };
 
-      public:
-          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1,T2,T3> func){
-              result_type res(func.name,func.expr);
-              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
-              res.add_arg("#2", dummy2exptree_impl<T2>::execute(shared_infos,temporaries,*func.t2));
-              res.add_arg("#3", dummy2exptree_impl<T3>::execute(shared_infos,temporaries,*func.t3));
-              return res;
-          }
-      };
+//      template<class LHS, class RHS, class OP_REDUCE>
+//      struct dummy2exptree_impl<binary_vector_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
+//      private:
+//          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
+//          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
+//      public:
+//          typedef matvec_prod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries,
+//                                     binary_vector_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
+//              return result_type(dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
+//                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
+//                                 v.expr());
+//          }
+//      };
+
+//      template<class LHS, class RHS, class OP_REDUCE>
+//      struct dummy2exptree_impl<binary_scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> >{
+//      private:
+//          typedef typename dummy2exptree_impl<LHS>::result_type LhsResult;
+//          typedef typename dummy2exptree_impl<RHS>::result_type RhsResult;
+//      public:
+//          typedef inprod_infos<LhsResult,RhsResult, OP_REDUCE> result_type;
+//          static result_type execute(shared_infos_map_t & shared_infos,
+//                                     temporaries_map_t & temporaries,
+//                                     binary_scalar_expression_wrapper<LHS, prod_type<OP_REDUCE>, RHS> const & v){
+//              return result_type(shared_infos, temporaries,
+//                                 dummy2exptree_impl<LHS>::execute(shared_infos,temporaries,v.lhs()),
+//                                 dummy2exptree_impl<RHS>::execute(shared_infos,temporaries,v.rhs()),
+//                                 v.expr());
+//          }
+//      };
+
+//      template<class T1>
+//      struct dummy2exptree_impl<function_wrapper_impl<T1> >{
+//      private:
+//          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type> result_type;
+//      public:
+//          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1> func){
+//              result_type res(func.name,func.expr);
+//              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
+//              return res;
+//          }
+//      };
+
+//      template<class T1, class T2>
+//      struct dummy2exptree_impl<function_wrapper_impl<T1,T2> >{
+//      private:
+//          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type
+//                                    ,typename dummy2exptree_impl<T2>::result_type> result_type;
+//      public:
+//          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1,T2> func){
+//              result_type res(func.name,func.expr);
+//              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
+//              res.add_arg("#2", dummy2exptree_impl<T2>::execute(shared_infos,temporaries,*func.t2));
+//              return res;
+//          }
+//      };
+
+//      template<class T1, class T2, class T3>
+//      struct dummy2exptree_impl<function_wrapper_impl<T1,T2, T3> >{
+//      private:
+//          typedef symbolic_function<typename dummy2exptree_impl<T1>::result_type
+//                                    ,typename dummy2exptree_impl<T2>::result_type
+//                                    ,typename dummy2exptree_impl<T3>::result_type> result_type;
+
+//      public:
+//          static result_type execute(shared_infos_map_t & shared_infos,temporaries_map_t & temporaries,function_wrapper_impl<T1,T2,T3> func){
+//              result_type res(func.name,func.expr);
+//              res.add_arg("#1", dummy2exptree_impl<T1>::execute(shared_infos,temporaries,*func.t1));
+//              res.add_arg("#2", dummy2exptree_impl<T2>::execute(shared_infos,temporaries,*func.t2));
+//              res.add_arg("#3", dummy2exptree_impl<T3>::execute(shared_infos,temporaries,*func.t3));
+//              return res;
+//          }
+//      };
 
 
 
@@ -251,12 +250,14 @@ namespace viennacl
 
           template<class T0>
           custom_operation(T0 const & op0){
-              operations_manager_.add(dummy2exptree_impl<T0>::execute(shared_infos_,temporaries_,op0));
+              add(op0);
           }
 
           template<class T>
           void add(T const & op){
-              operations_manager_.add(dummy2exptree_impl<T>::execute(shared_infos_,temporaries_,op));
+              T copy(op);
+              copy.bind(shared_infos_,temporaries_);
+              operations_manager_.add(copy);
           }
 
           std::list<code_generation::kernel_infos_t> kernels_list(){
