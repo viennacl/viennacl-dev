@@ -79,7 +79,7 @@ public:
 
     void operator()(utils::kernel_generation_stream& kss){
         kss << "unsigned int lid = get_local_id(0);" << std::endl;
-
+        unsigned int alignment = (*vectors_.begin())->alignment();
         inprod_infos_base::step_t step = (*inner_prods_.begin())->step();
         if(step==inprod_infos_base::compute){
             code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,std::list<vec_infos_base *>(),kss);
@@ -88,8 +88,13 @@ public:
             kss << "for(unsigned int i = get_global_id(0) ; i < " << size << "; i += get_global_size(0)){" << std::endl;
             kss.inc_tab();
             vector_cache.fetch_entries(0, "i");
-            for(std::set<inprod_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it)
-                kss << (*it)->update_val(0) << ";" << std::endl;
+            for(std::set<inprod_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+                for(unsigned int a = 0 ; a < alignment; ++a){
+                    std::string sub_expr = (*it)->sub().generate(0);
+                    if(alignment>1) sub_expr+=".s"+to_string(a);
+                    kss << (*it)->sum_name() << " = " << (*it)->op_reduce().generate((*it)->sum_name(), sub_expr) << ";" << std::endl;
+                }
+            }
             kss.dec_tab();
             kss << "}" << std::endl;
             std::list<local_memory<1> > local_mems;

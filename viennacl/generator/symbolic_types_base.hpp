@@ -286,14 +286,13 @@ namespace viennacl{
             std::string val_name_;
         };
 
-        class inprod_infos_base : public binary_scalar_expression_infos_base, public kernel_argument{
+        class inprod_infos_base : public unary_scalar_expression_infos_base, public kernel_argument{
         public:
             enum step_t{compute,reduce};
 
-            inprod_infos_base(infos_base * lhs
-                              , binary_op_infos_base * op
-                              , infos_base * rhs
-                              ,step_t * step): binary_scalar_expression_infos_base(lhs,op,rhs), step_(step){
+            inprod_infos_base(infos_base * sub
+                              ,binary_op_infos_base * op
+                              ,step_t * step): unary_scalar_expression_infos_base(sub,new identity_type), op_reduce_(op), step_(step){
 
             }
 
@@ -305,24 +304,22 @@ namespace viennacl{
                 return local_memory<1>(name()+"_local",size,scalartype());
             }
             std::string repr() const{
-                return binary_scalar_expression_infos_base::repr();
+                return unary_scalar_expression_infos_base::repr();
             }
 
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-                binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
+                unary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
             }
 
             std::string simplified_repr() const {
-                return binary_scalar_expression_infos_base::simplified_repr();
+                return unary_scalar_expression_infos_base::simplified_repr();
             }
 
             std::string arguments_string() const{
                 return "__global " + scalartype() + "*" + " " + name();
             }
 
-            std::string update_val(unsigned int i){
-                return sum_name() + " = " + op_->generate(sum_name(), "dot("+lhs_->generate(i)+","+rhs_->generate(i)+")");
-            }
+            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
 
             std::string generate(unsigned int i) const{
                 return infos_->access_name(0);
@@ -333,6 +330,7 @@ namespace viennacl{
 
         private:
             viennacl::tools::shared_ptr<step_t> step_;
+            viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
 
 
@@ -413,12 +411,6 @@ namespace viennacl{
             else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                 extract_as(&p->sub(), args,pred);
             }
-            else if(inprod_infos_base* p = dynamic_cast<inprod_infos_base*>(root)){
-                if(p->step() == inprod_infos_base::compute){
-                    extract_as(&p->lhs(), args,pred);
-                    extract_as(&p->rhs(),args,pred);
-                }
-            }
             if(T* t = dynamic_cast<T*>(root))
                 if(pred(t)) args.insert(t);
         }
@@ -432,12 +424,6 @@ namespace viennacl{
             }
             else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                 res += count_type<T>(&p->sub());
-            }
-            else if(inprod_infos_base* p = dynamic_cast<inprod_infos_base*>(root)){
-                if(p->step() == inprod_infos_base::compute){
-                    res += count_type<T>(&p->lhs());
-                    res += count_type<T>(&p->rhs());
-                }
             }
             if(dynamic_cast<T*>(root)) return res+1;
             else return res;

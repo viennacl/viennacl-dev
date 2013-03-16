@@ -79,21 +79,19 @@ namespace viennacl{
             template<class T, class Pred>
             static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
                 if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
+                        extract_to_list(&p->lhs(), args,pred);
+                        extract_to_list(&p->rhs(),args,pred);
+                }
+                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                     if(inprod_infos_base* ip = dynamic_cast<inprod_infos_base*>(root)){
                         if(ip->step() == inprod_infos_base::compute){
-                            extract_to_list(&ip->lhs(), args,pred);
-                            extract_to_list(&ip->rhs(),args,pred);
+                            extract_to_list(&ip->sub(), args,pred);
                         }
                     }
                     else{
-                        extract_to_list(&p->lhs(), args,pred);
-                        extract_to_list(&p->rhs(),args,pred);
+                     extract_to_list(&p->sub(),args,pred);
                     }
                 }
-                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
-                    extract_to_list(&p->sub(),args,pred);
-                }
-
                 if(T* t = dynamic_cast<T*>(root)){
                     if(pred(t)){
                         typename std::list<T*>::iterator it = std::find_if(args.begin(),args.end(),std::bind2nd(std::ptr_fun(find_pred<T>),t));
