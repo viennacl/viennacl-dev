@@ -20,7 +20,7 @@
 
 
 #include "viennacl/generator/symbolic_types_base.hpp"
-#include "viennacl/generator/functions.hpp"
+#include "viennacl/generator/operators.hpp"
 
 
 namespace viennacl
@@ -147,8 +147,7 @@ namespace viennacl
             infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
         void const * handle() const { return static_cast<void const *>(&val_); }
-        std::string generate(unsigned int i) const{
-            return infos_->name();
+        std::string generate(unsigned int i) const{  return infos_->name();
         }
     private:
         ScalarType const & val_;

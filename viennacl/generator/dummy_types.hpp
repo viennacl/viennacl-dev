@@ -14,70 +14,6 @@ namespace viennacl{
 
 namespace generator{
 
-template<class T1, class T2=void, class T3=void>
-struct function_wrapper_impl{
-    function_wrapper_impl(std::string const & _name, std::string const & _expr) : name(_name), expr(_expr), t1(NULL), t2(NULL), t3(NULL){ }
-    std::string name;
-    std::string expr;
-    T1 const * t1;
-    T2 const * t2;
-    T3 const * t3;
-};
-
-
-
-
-class function_wrapper{
-public:
-    function_wrapper(std::string const & name
-                     ,std::string const & expr) : name_(name), expr_(expr){
-        n_args_ = 0;
-        bool keep_going = true;
-        while(keep_going){
-            std::string current_arg = "#"+to_string(n_args_+1);
-            if(expr_.find(current_arg)!=std::string::npos)
-                ++n_args_;
-            else
-                keep_going=false;
-        }
-        assert(n_args_>0 && "\nNo argument specified for the function\n"
-                            "\nRecall : 1st arg : #1\n"
-                            "\n         2nd arg : #2\n"
-                                      "...");
-    }
-
-    template<class T1>
-    function_wrapper_impl<T1> operator()(T1 const & t1){
-        assert(n_args_==1);
-        function_wrapper_impl<T1> res(name_,expr_);
-        res.t1 = &t1;
-        return res;
-    }
-
-    template<class T1, class T2>
-    function_wrapper_impl<T1,T2> operator()(T1 const & t1, T2 const & t2){
-        assert(n_args_==2);
-        function_wrapper_impl<T1, T2> res(name_,expr_);
-        res.t1 = &t1; res.t2 = &t2;
-        return res;
-    }
-
-    template<class T1, class T2, class T3>
-    function_wrapper_impl<T1,T2, T3> operator()(T1 const & t1, T2 const & t2, T3 const & t3){
-        assert(n_args_==3);
-        function_wrapper_impl<T1, T2,T3> res(name_,expr_);
-        res.t1 = &t1; res.t2 = &t2; res.t3 = &t3;
-        return res;
-    }
-
-    std::string expr() const { return expr_; }
-
-private:
-    std::string name_;
-    std::string expr_;
-    unsigned int n_args_;
-};
-
 template<class T>
 struct to_sym{
     typedef T type;
@@ -266,8 +202,6 @@ template<>
 struct is_scalar_expression_t<float> { enum { value = 1 }; };
 template<class LHS, class OP, class RHS>
 struct is_scalar_expression_t<binary_scalar_expression<LHS,OP,RHS> >{ enum { value = 1}; };
-template<class T1, class T2, class T3>
-struct is_scalar_expression_t<function_wrapper_impl<T1,T2,T3> >{ enum { value = 1}; };
 template<class SUB, class OP>
 struct is_scalar_expression_t<unary_scalar_expression<SUB,OP> >{ enum { value = 1}; };
 
@@ -315,12 +249,6 @@ template<class ScalarType> struct is_leaf<dummy_vector<ScalarType> >{ enum { val
 template<class ScalarType> struct is_leaf<dummy_scalar<ScalarType> >{ enum { value = 1 }; };
 template<class VCL_MATRIX> struct is_leaf<dummy_matrix<VCL_MATRIX> >{ enum { value = 1 }; };
 
-//template<class T>
-//unary_minus<T> operator -(T const &)
-//{
-//  return unary_minus<T>();
-//}
-
 
 template<class LHS, class RHS> struct create_vector{
     enum{  value= (is_vector_expression_t<LHS>::value && is_scalar_expression_t<RHS>::value)
@@ -364,15 +292,6 @@ prod(LHS const & lhs, RHS const & rhs)
 {
     return binary_vector_expression<typename to_sym<LHS>::type,prod_type<add_type>,typename to_sym<RHS>::type>(make_sym(lhs),make_sym(rhs));
 }
-
-
-//template<class OP_TYPE, class LHS, class RHS>
-//typename viennacl::enable_if<is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value
-//                            ,binary_matrix_expression<LHS,prod_type<add_type>,RHS> >::type
-//prod_based(LHS const & lhs, RHS const & rhs, std::string const & expression)
-//{
-//    return binary_matrix_expression<LHS,prod_type<OP_TYPE>,RHS>(lhs,rhs,expression);
-//}
 
 template<class T>
 typename viennacl::enable_if<is_matrix_expression_t<T>::value, symbolic_matrix<typename T::vcl_t> >::type
@@ -478,22 +397,36 @@ operator-(T const & t)
             ,is_matrix_expression_t<T>::value>::type(make_sym(t));
 }
 
-/*
-template<> static unsigned long get_operation_id<assign_type>(assign_type const &){ return 0; }
-template<> static unsigned long get_operation_id<add_type>(add_type const &){ return 1; }
 
 
-template<> static unsigned long get_operation_id<dummy_vector<float> >(dummy_vector<float> const &){ return 0; }
-template<> static unsigned long get_operation_id<dummy_matrix<float> >(dummy_matrix<float> const &){ return 1; }
-template<> static unsigned long get_operation_id<dummy_scalar<float> >(dummy_scalar<float> const &){ return 2; }
-template<class T1> static unsigned long get_operation_id<function_wrapper_impl<T1> >(function_wrapper_impl<T1> const &){ return 3; }
-*/
+#define MAKE_BUILTIN_FUNCTION1(namefun) \
+template<class T>\
+typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\
+                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value\
+                                                            ,is_scalar_expression_t<T>::value\
+                                                            ,is_matrix_expression_t<T>::value>::type>::type namefun (T const & t)\
+{\
+    return typename convert_to_unary_expr<T,namefun##_type\
+            ,is_vector_expression_t<T>::value\
+            ,is_scalar_expression_t<T>::value\
+            ,is_matrix_expression_t<T>::value>::type(make_sym(t));\
+}
 
+MAKE_BUILTIN_FUNCTION1(exp)
 
+//template<class T>
+//typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value
+//                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value
+//                                                            ,is_scalar_expression_t<T>::value
+//                                                            ,is_matrix_expression_t<T>::value>::type>::type
+//exp(T const & t)
+//{
+//    return typename convert_to_unary_expr<T,exp_type
+//            ,is_vector_expression_t<T>::value
+//            ,is_scalar_expression_t<T>::value
+//            ,is_matrix_expression_t<T>::value>::type(make_sym(t));
+//}
 
-//#define MAKE_BUILTIN_FUNCTION1(name) static function_wrapper name = function_wrapper(#name,#name "(#1)")
-//#define MAKE_BUILTIN_FUNCTION2(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2)")
-//#define MAKE_BUILTIN_FUNCTION3(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2,#3)")
 
 //MAKE_BUILTIN_FUNCTION1(acos);
 //MAKE_BUILTIN_FUNCTION1(acosh);
@@ -514,7 +447,6 @@ template<class T1> static unsigned long get_operation_id<function_wrapper_impl<T
 //MAKE_BUILTIN_FUNCTION1(cospi);
 //MAKE_BUILTIN_FUNCTION1(erfc);
 //MAKE_BUILTIN_FUNCTION1(erf);
-//MAKE_BUILTIN_FUNCTION1(exp);
 //MAKE_BUILTIN_FUNCTION1(exp2);
 //MAKE_BUILTIN_FUNCTION1(exp10);
 //MAKE_BUILTIN_FUNCTION1(expm1);

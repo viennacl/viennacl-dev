@@ -387,72 +387,6 @@ namespace viennacl{
             bool is_transposed_;
         };
 
-        class function_base : public infos_base{
-        protected:
-            typedef std::map<std::string,viennacl::tools::shared_ptr<infos_base> > args_map_t;
-        public:
-            function_base(std::string const & name) : name_(name){ }
-            virtual std::string name() const {
-                return name_;
-            }
-
-            std::string repr() const{
-                std::string res;
-                for(args_map_t::const_iterator it = args_map_.begin() ; it != args_map_.end() ; ++it){
-                    res += it->second->repr();
-
-                }
-                return res;
-            }
-
-            std::string simplified_repr() const{
-                    std::string res;
-                    for(args_map_t::const_iterator it = args_map_.begin() ; it != args_map_.end() ; ++it){
-                        res += it->second->simplified_repr();
-
-                    }
-                    return res;
-            }
-
-            std::list<infos_base*> args() const{
-                std::list<infos_base*> res;
-                for(args_map_t::const_iterator it = args_map_.begin() ; it!= args_map_.end() ; ++it)
-                    res.push_back(it->second.get());
-                return res;
-            }
-
-        protected:
-            std::string name_;
-            args_map_t args_map_;
-        };
-
-        template<class T1, class T2=void, class T3=void>
-        class symbolic_function : public function_base{
-        public:
-            typedef typename T1::ScalarType ScalarType;
-
-            symbolic_function(std::string const & name,std::string const & expr) : function_base(name), expr_(expr){
-            }
-
-
-            template<class T>
-            void add_arg(std::string const & arg_name, T const & t){
-                args_map_.insert(std::make_pair(arg_name, new T(t)));
-            }
-
-
-            virtual std::string generate(unsigned int i) const {
-                std::string res(expr_);
-                for(args_map_t::const_iterator it = args_map_.begin() ; it!= args_map_.end() ; ++it)
-                    replace_all_occurences(res,it->first,it->second->generate(i));
-                return res;
-            }
-
-
-        private:
-            std::string expr_;
-        };
-
 
         static bool operator<(infos_base const & first, infos_base const & other){
             if(binary_tree_infos_base const * t = dynamic_cast<binary_tree_infos_base const *>(&first)){
@@ -479,12 +413,6 @@ namespace viennacl{
             else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                 extract_as(&p->sub(), args,pred);
             }
-            else if(function_base* p = dynamic_cast<function_base*>(root)){
-                std::list<infos_base*> func_args(p->args());
-                for(std::list<infos_base*>::const_iterator it = func_args.begin(); it!= func_args.end(); ++it){
-                    extract_as(*it,args,pred);
-                }
-            }
             else if(inprod_infos_base* p = dynamic_cast<inprod_infos_base*>(root)){
                 if(p->step() == inprod_infos_base::compute){
                     extract_as(&p->lhs(), args,pred);
@@ -504,12 +432,6 @@ namespace viennacl{
             }
             else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                 res += count_type<T>(&p->sub());
-            }
-            else if(function_base* p = dynamic_cast<function_base*>(root)){
-                std::list<infos_base*> func_args(p->args());
-                for(std::list<infos_base*>::const_iterator it = func_args.begin(); it!= func_args.end(); ++it){
-                    res += count_type<T>(*it);
-                }
             }
             else if(inprod_infos_base* p = dynamic_cast<inprod_infos_base*>(root)){
                 if(p->step() == inprod_infos_base::compute){

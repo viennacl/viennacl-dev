@@ -111,13 +111,6 @@ namespace viennacl{
                         res_t  ressub(filter<FILTER_T,Pred>(&p->sub(),pred));
                         FILTER_T::do_on_new_res(ressub,res);
                     }
-                    else if(function_base * p = dynamic_cast<function_base*>(tree)){
-                        std::list<infos_base*> args = p->args();
-                        for(std::list<infos_base*>::iterator it = args.begin() ; it!= args.end() ; ++it){
-                            res_t newres(filter<FILTER_T,Pred>(*it,pred));
-                            FILTER_T::do_on_new_res(newres,res);
-                        }
-                    }
                     if(pred(tree)){
                         FILTER_T::do_on_pred_true(tree,res);
                     }

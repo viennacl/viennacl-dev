@@ -4,6 +4,7 @@
 #include <string>
 
 #include "viennacl/tools/shared_ptr.hpp"
+
 namespace viennacl{
 
 namespace generator{
@@ -12,7 +13,7 @@ class op_infos_base {
 public:
     op_infos_base(std::string const & name) : name_(name){ }
     std::string const & name() const { return name_; }
-private:
+protected:
     std::string name_;
 };
 
@@ -23,6 +24,13 @@ public:
     binary_op_infos_base(std::string const & name, bool is_assignment) : op_infos_base(name), is_assignment_(is_assignment){ }
 private:
     bool is_assignment_;
+};
+
+class binary_fun_op_infos_base : public binary_op_infos_base{
+public:
+    std::string generate(std::string const  & lhs, std::string const & rhs) const{
+        return name_+"("+lhs+","+rhs+")";
+    }
 };
 
 class nonarithmetic_op_infos_base : public binary_op_infos_base{
@@ -41,63 +49,27 @@ private:
     std::string expr_;
 };
 
-class assign_type : public arithmetic_op_infos_base{
+
+class unary_op_infos_base : public op_infos_base {
 public:
-    assign_type() : arithmetic_op_infos_base(" = ", "eq",true){ }
+    virtual std::string generate(std::string const & sub) const = 0;
+    unary_op_infos_base(std::string const & name) : op_infos_base(name) { }
 };
 
-class elementwise_prod_type : public arithmetic_op_infos_base{
+class unary_arithmetic_op_infos_base : public unary_op_infos_base{
 public:
-  elementwise_prod_type() : arithmetic_op_infos_base(" * ", "elementwise_prod",false){ }
+    std::string generate(std::string const &  sub) const{ return expr_+sub; }
+    unary_arithmetic_op_infos_base(std::string const & name, std::string const & expr) : unary_op_infos_base(name), expr_(expr){ }
+private:
+    std::string expr_;
 };
 
-class elementwise_div_type : public arithmetic_op_infos_base{
+class unary_fun_op_infos_base : public unary_op_infos_base{
 public:
-    elementwise_div_type() : arithmetic_op_infos_base(" +/ ", "elementwise_div",false){ }
-};
-
-
-class add_type : public arithmetic_op_infos_base{
-public:
-  add_type() : arithmetic_op_infos_base(" + ", "p",false){ }
-};
-
-class inplace_add_type : public arithmetic_op_infos_base{
-public:
-  inplace_add_type() : arithmetic_op_infos_base(" += ", "p_eq",true){ }
-};
-
-class sub_type : public arithmetic_op_infos_base{
-public:
-  sub_type() : arithmetic_op_infos_base(" - ", "m",false){ }
-};
-
-class inplace_sub_type : public arithmetic_op_infos_base{
-public:
-  inplace_sub_type() : arithmetic_op_infos_base(" -= ", "m_eq",true){ }
-};
-
-class scal_mul_type : public arithmetic_op_infos_base{
-public:
-  scal_mul_type() : arithmetic_op_infos_base(" * ", "mu",false){ }
-};
-
-class inplace_scal_mul_type : public arithmetic_op_infos_base{
-    inplace_scal_mul_type() : arithmetic_op_infos_base(" *= ", "mu_eq",true){ }
-};
-
-
-class scal_div_type : public arithmetic_op_infos_base{
-  scal_div_type() : arithmetic_op_infos_base(" / ", "div", false){ }
-};
-
-class inplace_scal_div_type :  public arithmetic_op_infos_base{
-    inplace_scal_div_type() : arithmetic_op_infos_base(" /= ", "div_eq", true){ }
-};
-
-class inner_prod_type : public nonarithmetic_op_infos_base{
-public:
-    inner_prod_type() : nonarithmetic_op_infos_base("inprod"){ }
+    unary_fun_op_infos_base(std::string const & name) : unary_op_infos_base(name){ }
+    std::string generate(std::string const & sub) const {
+        return name_+"("+sub+")";
+    }
 };
 
 template<class REDUCE_TYPE>
@@ -113,28 +85,48 @@ private:
     viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
 };
 
-class trans_type : public nonarithmetic_op_infos_base{
-public:
-    trans_type() : nonarithmetic_op_infos_base("trans"){ }
+#define MAKE_BINARY_ARITHMETIC_OP(name,expression,is_assignment) \
+class name##_type : public arithmetic_op_infos_base{\
+    public:\
+    name##_type() : arithmetic_op_infos_base(#expression,#name,is_assignment){ }\
 };
 
+MAKE_BINARY_ARITHMETIC_OP(assign,=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_add,+=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_sub,-=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_mul,*=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_div,/=,true)
+
+MAKE_BINARY_ARITHMETIC_OP(add,+,false)
+MAKE_BINARY_ARITHMETIC_OP(sub,-,false)
+MAKE_BINARY_ARITHMETIC_OP(mul,*,false)
+MAKE_BINARY_ARITHMETIC_OP(div,/,false)
+MAKE_BINARY_ARITHMETIC_OP(elementwise_prod,*,false)
+MAKE_BINARY_ARITHMETIC_OP(elementwise_div,/,false)
+#undef MAKE_BINARY_ARITHMETIC_OP
 
 
-class unary_op_infos_base : public op_infos_base{
-public:
-    std::string generate(std::string const &  sub) const{
-        return expr_+sub;
-    }
-protected:
-    unary_op_infos_base(std::string const & name, std::string const & expr) : op_infos_base(name), expr_(expr){ }
-private:
-    std::string expr_;
+
+#define MAKE_UNARY_ARITHMETIC_OP(name,expression) \
+class name##_type : public unary_arithmetic_op_infos_base{\
+    public:\
+    name##_type() : unary_arithmetic_op_infos_base(#expression,#name){ }\
 };
 
-class unary_sub_type : public unary_op_infos_base{
-public:
-    unary_sub_type() : unary_op_infos_base("unasub", "-"){ }
+MAKE_UNARY_ARITHMETIC_OP(unary_sub,-)
+#undef MAKE_UNARY_ARITHMETIC_OP
+
+
+#define MAKE_UNARY_FUN_OP(name) \
+class name##_type : public unary_fun_op_infos_base{\
+    public:\
+    name##_type() : unary_fun_op_infos_base(#name){ }\
 };
+
+MAKE_UNARY_FUN_OP(exp)
+#undef MAKE_UNARY_FUN_OP
+
+
 
 }
 

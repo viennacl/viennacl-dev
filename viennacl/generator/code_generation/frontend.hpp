@@ -93,12 +93,7 @@ namespace viennacl{
                 else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                     extract_to_list(&p->sub(),args,pred);
                 }
-                else if(function_base* p = dynamic_cast<function_base*>(root)){
-                    std::list<infos_base*> func_args(p->args());
-                    for(std::list<infos_base*>::const_iterator it = func_args.begin(); it!= func_args.end(); ++it){
-                        extract_to_list(*it,args,pred);
-                    }
-                }
+
                 if(T* t = dynamic_cast<T*>(root)){
                     if(pred(t)){
                         typename std::list<T*>::iterator it = std::find_if(args.begin(),args.end(),std::bind2nd(std::ptr_fun(find_pred<T>),t));
