@@ -2,12 +2,9 @@
 #define VIENNACL_GENERATOR_SYMBOLIC_TYPES_BASE_HPP
 
 
-#include "viennacl/forwards.h"
 #include "viennacl/ocl/utils.hpp"
-#include "viennacl/backend/mem_handle.hpp"
 
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/forwards.h"
 #include "viennacl/generator/operators.hpp"
 
 #include <map>
@@ -116,6 +113,7 @@ namespace viennacl{
         protected:
             unsigned int current_kernel_;
         };
+
 
 
         class binary_tree_infos_base : public virtual infos_base{
@@ -289,29 +287,31 @@ namespace viennacl{
             std::string val_name_;
         };
 
-        class vector_reduction_infos_base : public unary_scalar_expression_infos_base, public kernel_argument{
+        class inner_product_infos_base : public binary_scalar_expression_infos_base, public kernel_argument{
         public:
-            vector_reduction_infos_base(infos_base * sub, binary_op_infos_base * op): unary_scalar_expression_infos_base(sub,new identity_type), op_reduce_(op){ }
+            inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new scal_mul_type,rhs)
+                                                                                                    , op_reduce_(op){ }
 
             bool is_computed(){ return current_kernel_; }
 
             void set_computed(){ current_kernel_ = 1; }
 
             std::string repr() const{
-                return unary_scalar_expression_infos_base::repr();
+                return binary_scalar_expression_infos_base::repr();
             }
 
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-                unary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
+                binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
             }
 
             std::string simplified_repr() const {
-                return unary_scalar_expression_infos_base::simplified_repr();
+                return binary_scalar_expression_infos_base::simplified_repr();
             }
 
             std::string arguments_string() const{
                 return "__global " + scalartype() + "*" + " " + name();
             }
+
 
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
 

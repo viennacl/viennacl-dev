@@ -96,12 +96,12 @@ namespace viennacl
           unary_scalar_expression(SUB const & sub) :unary_scalar_expression_infos_base(new SUB(sub), new OP()){ }
       };
 
-      template<class SUB, class OP_REDUCE>
-      class unary_scalar_expression<SUB, reduce_type<OP_REDUCE> > : public vector_reduction_infos_base{
-          typedef typename SUB::ScalarType ScalarType;
+      template<class LHS, class OP_REDUCE, class RHS>
+      class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public inner_product_infos_base{
+          typedef typename LHS::ScalarType ScalarType;
       public:
-          unary_scalar_expression(SUB const & sub):
-              vector_reduction_infos_base(new SUB(sub), new OP_REDUCE), tmp_(1024){
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs):
+              inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs)), tmp_(1024){
           }
 
            void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
@@ -111,7 +111,8 @@ namespace viennacl
            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                temporaries_map.insert(std::make_pair(this,handle())).first;
                infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
-               sub_->bind(shared_infos,temporaries_map);
+               lhs_->bind(shared_infos,temporaries_map);
+               rhs_->bind(shared_infos,temporaries_map);
            }
 
            void const * handle() const{ return static_cast<void const *>(&tmp_.handle()); }
@@ -148,12 +149,19 @@ namespace viennacl
             infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
         void const * handle() const { return static_cast<void const *>(&val_); }
-        std::string generate(unsigned int i) const{  return infos_->name();
-        }
+        std::string generate(unsigned int i) const{  return infos_->name(); }
     private:
         ScalarType val_;
     };
 
+    template<unsigned int N>
+    class symbolic_constant : public infos_base{
+    public:
+        virtual std::string generate(unsigned int i) const { return to_string(N); }
+        virtual std::string repr() const { return "cst"+to_string(N); }
+        virtual std::string simplified_repr() const { return repr(); }
+        virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &){ }
+    };
 
     /**
     * @brief Symbolic scalar type. Will be passed by pointer.

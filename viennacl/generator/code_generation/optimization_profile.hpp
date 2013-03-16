@@ -1,7 +1,7 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
 #define VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
 
-#include "viennacl/generator/symbolic_types_base.hpp"
+#include "viennacl/generator/forwards.h"
 
 namespace viennacl{
 
@@ -43,7 +43,7 @@ protected:
 
 class generator{
 public:
-    virtual void operator()(utils::kernel_generation_stream& kss) = 0;
+    virtual void operator()(kernel_generation_stream& kss) = 0;
     virtual ~generator(){ }
 };
 

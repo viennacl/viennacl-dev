@@ -172,6 +172,40 @@ namespace viennacl{
 			  static const std::string value() { return "double"; }
 			};
 
+            class kernel_generation_stream : public std::ostream{
+            private:
+                class kgenstream : public std::stringbuf{
+                public:
+                    kgenstream(std::ostream& final_destination
+                               ,unsigned int const & tab_count) : final_destination_(final_destination)
+                                                                  ,tab_count_(tab_count){ }
+                    ~kgenstream() {  pubsync(); }
+                    int sync() {
+                        for(unsigned int i=0 ; i<tab_count_;++i)
+                            final_destination_ << '\t';
+                        final_destination_ << str();
+                        str("");
+                        return !final_destination_;
+                    }
+                private:
+                    std::ostream& final_destination_;
+                    unsigned int const & tab_count_;
+                };
+
+            public:
+                kernel_generation_stream(std::ostream& final_destination) : std::ostream(new kgenstream(final_destination,tab_count_))
+                                                                            , tab_count_(0){ }
+                ~kernel_generation_stream(){ delete rdbuf(); }
+                std::string str(){
+                    return static_cast<std::stringbuf*>(rdbuf())->str();
+                }
+
+                void inc_tab(){ ++tab_count_; }
+                void dec_tab(){ --tab_count_; }
+
+            private:
+                unsigned int tab_count_;
+            };
 
     }
 }

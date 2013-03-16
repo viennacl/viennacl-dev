@@ -100,13 +100,27 @@ MAKE_BINARY_ARITHMETIC_OP(inplace_scal_div,/=,true)
 
 MAKE_BINARY_ARITHMETIC_OP(add,+,false)
 MAKE_BINARY_ARITHMETIC_OP(sub,-,false)
-MAKE_BINARY_ARITHMETIC_OP(scal_mul,*,false)
-MAKE_BINARY_ARITHMETIC_OP(scal_div,/,false)
-MAKE_BINARY_ARITHMETIC_OP(elementwise_prod,*,false)
-MAKE_BINARY_ARITHMETIC_OP(elementwise_div,/,false)
 #undef MAKE_BINARY_ARITHMETIC_OP
 
+class scal_mul_type : public arithmetic_op_infos_base{
+public:
+    scal_mul_type() : arithmetic_op_infos_base("scal_mul_type","*",false){ }
+    std::string generate(std::string const & lhs, std::string const & rhs) const{
+        if(lhs=="1" && rhs=="1") return "1";
+        else if(rhs=="1") return lhs;
+        else if(lhs=="1") return rhs;
+        else return lhs + "*" + rhs;
+    }
+};
 
+class scal_div_type : public arithmetic_op_infos_base{
+public:
+    scal_div_type() : arithmetic_op_infos_base("scal_div_type","/",false){ }
+    std::string generate(std::string const & lhs, std::string const & rhs) const{
+        if(rhs=="1") return lhs;
+        else return lhs + "/" + rhs;
+    }
+};
 
 #define MAKE_UNARY_ARITHMETIC_OP(name,expression) \
 class name##_type : public unary_arithmetic_op_infos_base{\
@@ -115,7 +129,7 @@ class name##_type : public unary_arithmetic_op_infos_base{\
 };
 
 MAKE_UNARY_ARITHMETIC_OP(unary_sub,-)
-MAKE_UNARY_ARITHMETIC_OP(identity, )
+MAKE_UNARY_ARITHMETIC_OP(identity,-)
 
 #undef MAKE_UNARY_ARITHMETIC_OP
 

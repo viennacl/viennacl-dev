@@ -72,7 +72,7 @@ public:
     }
 
 
-    void operator()(utils::kernel_generation_stream& kss){
+    void operator()(kernel_generation_stream& kss){
 
         unsigned int n_unroll = profile_->loop_unroll();
 

@@ -126,7 +126,7 @@ class generator : public code_generation::generator{
 
     struct declare_rhs_global_ptr{
 
-        declare_rhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks_rhs,unsigned int _ns_rhs,
+        declare_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks_rhs,unsigned int _ns_rhs,
                                unsigned int _nl_rhs, std::string const & _offset_n ) : kss(_kss), ks_rhs(_ks_rhs), ns_rhs(_ns_rhs)
                                                                                         , nl_rhs(_nl_rhs), offset_n(_offset_n)
 
@@ -154,7 +154,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        utils::kernel_generation_stream & kss;
+        kernel_generation_stream & kss;
         unsigned int ks_rhs;
         unsigned int ns_rhs;
         unsigned int nl_rhs;
@@ -164,7 +164,7 @@ class generator : public code_generation::generator{
 
     struct declare_lhs_global_ptr{
 
-        declare_lhs_global_ptr(utils::kernel_generation_stream & _kss,
+        declare_lhs_global_ptr(kernel_generation_stream & _kss,
                                unsigned int _ms_lhs, unsigned int _ks_lhs,
                                unsigned int _ml_lhs, std::string const & _offset_m) : kss(_kss), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), ml_lhs(_ml_lhs), offset_m(_offset_m)
         { }
@@ -193,7 +193,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        utils::kernel_generation_stream & kss;
+        kernel_generation_stream & kss;
         unsigned int ms_lhs;
         unsigned int ks_lhs;
         unsigned int ml_lhs;
@@ -202,7 +202,7 @@ class generator : public code_generation::generator{
 
     struct update_rhs_global_ptr{
 
-        update_rhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ns_rhs, unsigned int _ks_rhs
+        update_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ns_rhs, unsigned int _ks_rhs
                               ,std::string const & _internal_size1_rhs,
                               std::string const & _internal_size2_rhs) : kss(_kss), ks(_ks), ns_rhs(_ns_rhs), ks_rhs(_ks_rhs), internal_size1_rhs(_internal_size1_rhs), internal_size2_rhs(_internal_size2_rhs){ }
 
@@ -216,7 +216,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        utils::kernel_generation_stream & kss;
+        kernel_generation_stream & kss;
         unsigned int ks;
         unsigned int ns_rhs;
         unsigned int ks_rhs;
@@ -226,7 +226,7 @@ class generator : public code_generation::generator{
 
     struct update_lhs_global_ptr{
 
-        update_lhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ms_lhs, unsigned int _ks_lhs
+        update_lhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ms_lhs, unsigned int _ks_lhs
                               ,std::string const & _internal_size1_lhs,
                               std::string const & _internal_size2_lhs) : kss(_kss), ks(_ks), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), internal_size1_lhs(_internal_size1_lhs), internal_size2_lhs(_internal_size2_lhs){ }
 
@@ -241,7 +241,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        utils::kernel_generation_stream & kss;
+        kernel_generation_stream & kss;
         unsigned int ks;
         unsigned int ms_lhs;
         unsigned int ks_lhs;
@@ -251,7 +251,7 @@ class generator : public code_generation::generator{
 
 
 
-    static std::string helper_variable(utils::kernel_generation_stream & kss
+    static std::string helper_variable(kernel_generation_stream & kss
                                         , bool store_in_register
                                         , std::string const & type
                                         , std::string const & name
@@ -263,7 +263,7 @@ class generator : public code_generation::generator{
     }
 
     template<class MatContainerT>
-    static void fetch_to_local_mem(utils::kernel_generation_stream & kss,
+    static void fetch_to_local_mem(kernel_generation_stream & kss,
                                    local_memory<2> const & lmem,
                                    std::string const & offset,
                                    unsigned int bound1,
@@ -327,7 +327,7 @@ public:
         }
     }
 
-    void operator()(utils::kernel_generation_stream& kss){
+    void operator()(kernel_generation_stream& kss){
 
 
         std::list<mat_infos_base*> assigned;

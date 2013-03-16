@@ -64,7 +64,7 @@ public:
         }
     }
 
-    void operator()(utils::kernel_generation_stream& kss){
+    void operator()(kernel_generation_stream& kss){
             mat_infos_base* first_matrix = *matrices_.begin();
             vec_infos_base* first_vector = *vectors_.begin();
             matvec_prod_infos_base * first_prod = *prods_.begin();

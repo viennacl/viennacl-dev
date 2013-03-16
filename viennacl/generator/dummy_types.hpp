@@ -69,13 +69,10 @@ private:
     vcl_t const & vec_;
 };
 
-template<class T>
-class scalar_vector{
+template<unsigned int N>
+class constant_vector{
 public:
-    scalar_vector(T const & val) : val_(val){ }
-    T get() const { return val_; }
-private:
-    T val_;
+    static const unsigned int val = N;
 };
 
 template<class ScalarType>
@@ -84,10 +81,10 @@ struct to_sym<dummy_vector<ScalarType> >{
     static type result(dummy_vector<ScalarType> const & t) { return t.get(); }
 };
 
-template<class ScalarType>
-struct to_sym<scalar_vector<ScalarType> >{
-    typedef cpu_symbolic_scalar<ScalarType> type;
-    static type result(scalar_vector<ScalarType> const & t) { return t.get(); }
+template<unsigned int N>
+struct to_sym<constant_vector<N> >{
+    typedef symbolic_constant<N> type;
+    static type result(constant_vector<N> const &) { return type(); }
 };
 
 
@@ -205,8 +202,8 @@ template<class T>
 struct is_vector_expression_t{ enum { value = 0 }; };
 template<typename ScalarType>
 struct is_vector_expression_t<dummy_vector<ScalarType> >{ enum { value = 1}; };
-template<typename ScalarType>
-struct is_vector_expression_t<scalar_vector<ScalarType> >{ enum { value = 1}; };
+template<unsigned int N>
+struct is_vector_expression_t<constant_vector<N> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
 struct is_vector_expression_t<binary_vector_expression<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class SUB, class OP>
@@ -287,41 +284,6 @@ template<class LHS, class RHS> struct create_matrix{
 };
 
 
-///////////////////////////////////////////
-/////// UNARY OPERATORS
-//////////////////////////////////////////
-
-template<class SUB, class OP, bool create_vector, bool create_scalar, bool create_matrix>
-struct convert_to_unary_expr;
-template<class SUB, class OP>
-struct convert_to_unary_expr<SUB,OP,true,false,false>{ typedef unary_vector_expression<typename to_sym<SUB>::type, OP> type; };
-template<class SUB, class OP>
-struct convert_to_unary_expr<SUB,OP,false,true,false>{ typedef unary_scalar_expression<typename to_sym<SUB>::type, OP> type; };
-template<class SUB, class OP>
-struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression<typename to_sym<SUB>::type, OP> type; };
-
-
-template<class T>
-typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value
-                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value
-                                                            ,is_scalar_expression_t<T>::value
-                                                            ,is_matrix_expression_t<T>::value>::type>::type
-operator-(T const & t)
-{
-    return typename convert_to_unary_expr<T,unary_sub_type
-            ,is_vector_expression_t<T>::value
-            ,is_scalar_expression_t<T>::value
-            ,is_matrix_expression_t<T>::value>::type(make_sym(t));
-}
-
-template<class OP_REDUCE, class T>
-typename viennacl::enable_if<is_scalar_expression_t<T>::value
-                                ||is_vector_expression_t<T>::value
-                                ||is_matrix_expression_t<T>::value
-                            ,unary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE> > >::type
-reduce(T const & t){
-    return unary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE> >(make_sym(t));
-}
 
 
 /////////////////////////////////////////
@@ -338,12 +300,12 @@ template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
                              ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
                              ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
+                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
                                                     ,create_vector<LHS,RHS>::value
                                                     ,create_scalar<LHS,RHS>::value
                                                     ,create_matrix<LHS,RHS>::value>::type>::type
 element_prod(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
+    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
             ,create_vector<LHS,RHS>::value
             ,create_scalar<LHS,RHS>::value
             ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
@@ -406,12 +368,10 @@ operator/(LHS const & lhs, RHS const & rhs){
 
 template<class LHS, class RHS>
 typename viennacl::enable_if<is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value
-                            ,unary_scalar_expression<binary_vector_expression<
-                                                        typename to_sym<LHS>::type,elementwise_prod_type, typename to_sym<RHS>::type>
-                                                     ,reduce_type<add_type> > >::type
+                            ,binary_scalar_expression<typename to_sym<LHS>::type,reduce_type<add_type>, typename to_sym<RHS>::type> >::type
 inner_prod(LHS const & lhs, RHS const & rhs)
 {
-    return reduce<add_type>(element_prod(lhs,rhs));
+    return binary_scalar_expression<typename to_sym<LHS>::type,reduce_type<add_type>, typename to_sym<RHS>::type>(make_sym(lhs),make_sym(rhs));
 }
 
 
@@ -433,6 +393,39 @@ prod(LHS const & lhs, RHS const & rhs)
 }
 
 
+///////////////////////////////////////////
+/////// UNARY OPERATORS
+//////////////////////////////////////////
+
+template<class SUB, class OP, bool create_vector, bool create_scalar, bool create_matrix>
+struct convert_to_unary_expr;
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,true,false,false>{ typedef unary_vector_expression<typename to_sym<SUB>::type, OP> type; };
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,false,true,false>{ typedef unary_scalar_expression<typename to_sym<SUB>::type, OP> type; };
+template<class SUB, class OP>
+struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression<typename to_sym<SUB>::type, OP> type; };
+
+
+template<class T>
+typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value
+                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value
+                                                            ,is_scalar_expression_t<T>::value
+                                                            ,is_matrix_expression_t<T>::value>::type>::type
+operator-(T const & t)
+{
+    return typename convert_to_unary_expr<T,unary_sub_type
+            ,is_vector_expression_t<T>::value
+            ,is_scalar_expression_t<T>::value
+            ,is_matrix_expression_t<T>::value>::type(make_sym(t));
+}
+
+template<class OP_REDUCE, class T>
+typename viennacl::enable_if<is_vector_expression_t<T>::value
+                            ,binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> > >::type
+reduce(T const & t){
+    return inner_prod(t,constant_vector<1>());
+}
 
 
 

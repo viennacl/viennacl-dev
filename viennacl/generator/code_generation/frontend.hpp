@@ -11,16 +11,9 @@
 
 #include "viennacl/generator/symbolic_types_base.hpp"
 #include "viennacl/generator/code_generation/utils.hpp"
-
 #include "viennacl/generator/code_generation/templates.hpp"
-
 #include "viennacl/generator/code_generation/builtin_database.hpp"
-
 #include "viennacl/tools/shared_ptr.hpp"
-
-#ifdef VIENNACL_ENABLE_AUTOTUNE
-#include "viennacl/io/kernel_parameters.hpp"
-#endif
 
 namespace viennacl{
 
@@ -130,8 +123,8 @@ namespace viennacl{
                     else if(gemm::profile* p = dynamic_cast<gemm::profile*>(kernel_infos_.profile())){
                         gen = new gemm::generator(mat_exprs,p);
                     }
-                    else if(reduce_vector::profile* p = dynamic_cast<reduce_vector::profile*>(kernel_infos_.profile())){
-                        gen = new reduce_vector::generator(scal_exprs,p);
+                    else if(inner_product::profile* p = dynamic_cast<inner_product::profile*>(kernel_infos_.profile())){
+                        gen = new inner_product::generator(scal_exprs,p);
                     }
                     else if(gemv::profile * p = dynamic_cast<gemv::profile*>(kernel_infos_.profile())){
                         gen = new gemv::generator(vec_exprs,p);
@@ -146,7 +139,7 @@ namespace viennacl{
             public:
                 kernel_generator(kernel_infos_t & kernel_infos
                                  , std::string const & kernel_name
-                                 , code_generation::utils::kernel_generation_stream & kss) : kernel_infos_(kernel_infos)
+                                 , kernel_generation_stream & kss) : kernel_infos_(kernel_infos)
                                                                      , kernel_name_(kernel_name)
                                                                      , kss_(kss){
                     kernel_infos_.profile()->apply(kernel_infos_.trees());
@@ -161,7 +154,7 @@ namespace viennacl{
             private:
                 kernel_infos_t & kernel_infos_;
                 std::string kernel_name_;
-                utils::kernel_generation_stream & kss_;
+                kernel_generation_stream & kss_;
             };
 
 
@@ -214,9 +207,9 @@ namespace viennacl{
                             else add_operation<saxpy::profile>(p);
                         }
                         else if(binary_scalar_expression_infos_base* p = dynamic_cast<binary_scalar_expression_infos_base*>(ptr)){
-                            if(count_type<vector_reduction_infos_base>(p)){
-                                reduce_vector::profile const & prof =add_operation<reduce_vector::profile>(p);
-                                kernels_list_.push_back(kernel_infos_t(p, new reduce_vector::profile(prof.vectorization(),prof.num_groups(),1)));
+                            if(count_type<inner_product_infos_base>(p)){
+                                inner_product::profile const & prof =add_operation<inner_product::profile>(p);
+                                kernels_list_.push_back(kernel_infos_t(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
                             }
                             else add_operation<saxpy::profile>(p);
                         }
@@ -267,7 +260,7 @@ namespace viennacl{
                     init();
 
                     std::ostringstream oss;
-                    code_generation::utils::kernel_generation_stream kss(oss);
+                    kernel_generation_stream kss(oss);
                     kss << "#if defined(cl_khr_fp64)\n";
                     kss <<  "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n";
                     kss <<  "#elif defined(cl_amd_fp64)\n";
