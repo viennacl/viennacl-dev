@@ -125,8 +125,9 @@ int test_vector ( Epsilon const& epsilon) {
 
     {
         std::cout << "testing addition..." << std::endl;
-        vec     = ( vec2 + vec3 );
-        generator::custom_operation op((dv_t(w) = -dv_t(x)));
+        vec     =  vec2;
+        generator::custom_operation op;
+        op.add(dv_t(w) = 0.0f + dv_t(x) );
         op.execute();
         viennacl::ocl::get_queue().finish();
         if ( fabs ( diff ( vec, w) ) > epsilon ) {

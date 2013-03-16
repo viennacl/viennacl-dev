@@ -110,7 +110,7 @@ namespace viennacl{
             virtual std::string generate(unsigned int i) const { return ""; }
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
-            virtual void bind(std::map<viennacl::backend::mem_handle, shared_infos_t> & , std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> &) = 0;
+            virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &) = 0;
             virtual ~infos_base(){ }
         };
 
@@ -122,7 +122,7 @@ namespace viennacl{
             binary_op_infos_base & op() { return *op_; }
             std::string repr() const { return "p_"+lhs_->repr() + op_->name() + rhs_->repr()+"_p"; }
             std::string simplified_repr() const { return "p_"+lhs_->simplified_repr() + op_->name() + rhs_->simplified_repr()+"_p"; }
-            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 lhs_->bind(shared_infos,temporaries_map);
                 rhs_->bind(shared_infos,temporaries_map);
             }
@@ -173,7 +173,7 @@ namespace viennacl{
             unary_op_infos_base & op() { return *op_; }
             std::string repr() const { return "p_"+ op_->name() + sub_->repr()+"_p"; }
             std::string simplified_repr() const { return "p_" + op_->name() + sub_->simplified_repr()+"_p"; }
-            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 sub_->bind(shared_infos,temporaries_map);
             }
 
@@ -200,7 +200,6 @@ namespace viennacl{
 
         class kernel_argument : public virtual infos_base{
         public:
-            virtual viennacl::backend::mem_handle const & handle() const = 0;
             kernel_argument( ) { }
             void access_name(unsigned int i, std::string const & new_name) { infos_->access_name(i,new_name); }
             virtual ~kernel_argument(){ }
@@ -224,10 +223,10 @@ namespace viennacl{
             void alignment(unsigned int val) { infos_->alignment(val); }
             virtual std::string arguments_string() const = 0;
             virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
+            virtual void const * handle() const = 0;
         protected:
             shared_infos_t* infos_;
         };
-
 
         class cpu_scal_infos_base : public kernel_argument{
         public:
@@ -245,8 +244,8 @@ namespace viennacl{
 
         class matmat_prod_infos_base : public binary_matrix_expression_infos_base{
         public:
-            matmat_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs, std::string const & f_expr) :
-                binary_matrix_expression_infos_base(lhs,op,rhs),f_expr_(f_expr){
+            matmat_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
+                binary_matrix_expression_infos_base(lhs,op,rhs){
                 val_name_ = repr() + "_val";
             }
 
@@ -257,29 +256,18 @@ namespace viennacl{
             }
 
             std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){
-                std::string expr(f_expr_);
-                replace_all_occurences(expr,"#1",lhs);
-                replace_all_occurences(expr,"#2",rhs);
-                return res + " = " + op_->generate(res ,"(" + expr + ")");
+                return res + " = " + op_->generate(res , lhs + "*" + rhs);
 
-            }
-
-            std::string make_expr(std::string const & lhs, std::string const & rhs){
-                std::string res(f_expr_);
-                replace_all_occurences(res,"#1",lhs);
-                replace_all_occurences(res,"#2",rhs);
-                return res;
             }
         private:
-            std::string f_expr_;
             std::string val_name_;
         };
 
 
         class matvec_prod_infos_base : public binary_vector_expression_infos_base{
         public:
-            matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs, std::string const & f_expr) :
-                binary_vector_expression_infos_base(lhs,op,rhs),f_expr_(f_expr){
+            matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
+                binary_vector_expression_infos_base(lhs,op,rhs){
                 val_name_ = repr() + "_val";
             }
 
@@ -290,21 +278,11 @@ namespace viennacl{
             }
 
             std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){
-                std::string expr(f_expr_);
-                replace_all_occurences(expr,"#1",lhs);
-                replace_all_occurences(expr,"#2",rhs);
-                return res + " = " + op_->generate(res ,"("+expr+")");
+                return res + " = " + op_->generate(res , lhs + "*" + rhs);
 
             }
 
-            std::string make_expr(std::string const & lhs, std::string const & rhs){
-                std::string res(f_expr_);
-                replace_all_occurences(res,"#1",lhs);
-                replace_all_occurences(res,"#2",rhs);
-                return res;
-            }
         private:
-            std::string f_expr_;
             std::string val_name_;
         };
 
@@ -315,8 +293,7 @@ namespace viennacl{
             inprod_infos_base(infos_base * lhs
                               , binary_op_infos_base * op
                               , infos_base * rhs
-                              , std::string const & f_expr
-                              ,step_t * step): binary_scalar_expression_infos_base(lhs,op,rhs), f_expr_(f_expr), step_(step){
+                              ,step_t * step): binary_scalar_expression_infos_base(lhs,op,rhs), step_(step){
 
             }
 
@@ -331,7 +308,7 @@ namespace viennacl{
                 return binary_scalar_expression_infos_base::repr();
             }
 
-            void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
             }
 
@@ -344,11 +321,7 @@ namespace viennacl{
             }
 
             std::string update_val(unsigned int i){
-                std::string expr(f_expr_);
-                replace_all_occurences(expr,"#1",lhs_->generate(i));
-                replace_all_occurences(expr,"#2",rhs_->generate(i));
-                return sum_name() + " = " + op_->generate(sum_name(), "(" + expr + ")");
-
+                return sum_name() + " = " + op_->generate(sum_name(), "dot("+lhs_->generate(i)+","+rhs_->generate(i)+")");
             }
 
             std::string generate(unsigned int i) const{
@@ -359,7 +332,6 @@ namespace viennacl{
             }
 
         private:
-            std::string f_expr_;
             viennacl::tools::shared_ptr<step_t> step_;
         };
 
@@ -375,8 +347,6 @@ namespace viennacl{
                                                 }
             virtual size_t real_size() const = 0;
             virtual ~vec_infos_base(){ }
-        protected:
-            vec_infos_base() : kernel_argument() { }
         };
 
 
@@ -409,10 +379,8 @@ namespace viennacl{
             virtual size_t real_size1() const = 0;
             virtual size_t real_size2() const = 0;
             virtual ~mat_infos_base() { }
-        protected:
             mat_infos_base(bool is_rowmajor
-                           ,bool is_transposed) : kernel_argument()
-                                                  ,is_rowmajor_(is_rowmajor)
+                           ,bool is_transposed) : is_rowmajor_(is_rowmajor)
                                                   ,is_transposed_(is_transposed){ }
         protected:
             bool is_rowmajor_;

@@ -150,33 +150,33 @@ public:
     vcl_t const & get() const{ return scal_; }
 
     template<typename RHS_TYPE>
-    binary_scalar_expression<self_type, assign_type, typename to_sym<RHS_TYPE>::type  >
+    binary_scalar_expression<typename to_sym<self_type>::type, assign_type, typename to_sym<RHS_TYPE>::type  >
     operator= ( RHS_TYPE const & rhs ){
-      return binary_scalar_expression<self_type,assign_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression<typename to_sym<self_type>::type,assign_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),make_sym(rhs));
     }
 
     template<typename RHS_TYPE>
-    binary_scalar_expression<self_type, inplace_scal_mul_type, typename to_sym<RHS_TYPE>::type  >
+    binary_scalar_expression<typename to_sym<self_type>::type, inplace_scal_mul_type, typename to_sym<RHS_TYPE>::type  >
     operator*= ( RHS_TYPE const & rhs ){
-      return binary_scalar_expression<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression<typename to_sym<self_type>::type,inplace_scal_mul_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),make_sym(rhs));
     }
 
     template<typename RHS_TYPE>
-    binary_scalar_expression<self_type, inplace_scal_div_type, typename to_sym<RHS_TYPE>::type  >
+    binary_scalar_expression<typename to_sym<self_type>::type, inplace_scal_div_type, typename to_sym<RHS_TYPE>::type  >
     operator/= ( RHS_TYPE const & rhs ){
-      return binary_scalar_expression<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression<typename to_sym<self_type>::type,inplace_scal_div_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),make_sym(rhs));
     }
 
     template<typename RHS_TYPE>
-    binary_scalar_expression<self_type, inplace_add_type, typename to_sym<RHS_TYPE>::type  >
+    binary_scalar_expression<typename to_sym<self_type>::type, inplace_add_type, typename to_sym<RHS_TYPE>::type  >
     operator+= ( RHS_TYPE const & rhs ){
-      return binary_scalar_expression<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression<typename to_sym<self_type>::type,inplace_add_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),make_sym(rhs));
     }
 
     template<typename RHS_TYPE>
-    binary_scalar_expression<self_type, inplace_sub_type, typename to_sym<RHS_TYPE>::type  >
+    binary_scalar_expression<typename to_sym<self_type>::type, inplace_sub_type, typename to_sym<RHS_TYPE>::type  >
     operator-= ( RHS_TYPE const & rhs ){
-      return binary_scalar_expression<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
+      return binary_scalar_expression<typename to_sym<self_type>::type,inplace_sub_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),make_sym(rhs));
     }
 private:
     vcl_t const & scal_;
@@ -189,6 +189,12 @@ struct to_sym<dummy_scalar<ScalarType> >{
     static type result(dummy_scalar<ScalarType> const & t) { return t.get(); }
 };
 
+template<>
+struct to_sym<float>{
+    typedef cpu_symbolic_scalar<float> type;
+    static type result(float const & t){ return t; }
+};
+
 template<class VCL_MATRIX>
 class dummy_matrix{
     typedef dummy_matrix<VCL_MATRIX> self_type;
@@ -198,52 +204,47 @@ public:
 
     dummy_matrix(VCL_MATRIX & mat) : mat_(mat){ }
 
-    VCL_MATRIX & get() const{
+    vcl_t const & get() const{
         return mat_;
     }
 
     template<typename RHS_TYPE>
-    binary_matrix_expression<self_type, assign_type, typename to_sym<RHS_TYPE>::type  >
+    binary_matrix_expression<typename to_sym<self_type>::type, assign_type, typename to_sym<RHS_TYPE>::type  >
     operator= ( RHS_TYPE const & rhs ){
-      return binary_matrix_expression<self_type,assign_type,RHS_TYPE >(*this,rhs);
-    }
-
-    binary_matrix_expression<self_type, assign_type, self_type>
-    operator= ( self_type const & rhs ){
-      return binary_matrix_expression<self_type,assign_type, self_type >(*this,rhs);
+      return binary_matrix_expression<typename to_sym<self_type>::type,assign_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),rhs);
     }
 
     template<typename RHS_TYPE>
-    binary_matrix_expression<self_type, inplace_scal_mul_type, typename to_sym<RHS_TYPE>::type  >
+    binary_matrix_expression<typename to_sym<self_type>::type, inplace_scal_mul_type, typename to_sym<RHS_TYPE>::type  >
     operator*= ( RHS_TYPE const & rhs ){
-      return binary_matrix_expression<self_type,inplace_scal_mul_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression<typename to_sym<self_type>::type,inplace_scal_mul_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),rhs);
     }
 
     template<typename RHS_TYPE>
-    binary_matrix_expression<self_type, inplace_scal_div_type, typename to_sym<RHS_TYPE>::type  >
+    binary_matrix_expression<typename to_sym<self_type>::type, inplace_scal_div_type, typename to_sym<RHS_TYPE>::type  >
     operator/= ( RHS_TYPE const & rhs ){
-      return binary_matrix_expression<self_type,inplace_scal_div_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression<typename to_sym<self_type>::type,inplace_scal_div_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),rhs);
     }
 
     template<typename RHS_TYPE>
-    binary_matrix_expression<self_type, inplace_add_type, typename to_sym<RHS_TYPE>::type  >
+    binary_matrix_expression<typename to_sym<self_type>::type, inplace_add_type, typename to_sym<RHS_TYPE>::type  >
     operator+= ( RHS_TYPE const & rhs ){
-      return binary_matrix_expression<self_type,inplace_add_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression<typename to_sym<self_type>::type,inplace_add_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),rhs);
     }
 
     template<typename RHS_TYPE>
-    binary_matrix_expression<self_type, inplace_sub_type, typename to_sym<RHS_TYPE>::type  >
+    binary_matrix_expression<typename to_sym<self_type>::type, inplace_sub_type, typename to_sym<RHS_TYPE>::type  >
     operator-= ( RHS_TYPE const & rhs ){
-      return binary_matrix_expression<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
+      return binary_matrix_expression<typename to_sym<self_type>::type,inplace_sub_type,typename to_sym<RHS_TYPE>::type>(make_sym(*this),rhs);
     }
 private:
-    VCL_MATRIX & mat_;
+    VCL_MATRIX const & mat_;
 };
 
 template<class VCL_MATRIX_T>
 struct to_sym<dummy_matrix<VCL_MATRIX_T> >{
     typedef symbolic_matrix<VCL_MATRIX_T> type;
-    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return t.get(); }
+    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return type(t.get(),false); }
 };
 
 
@@ -261,6 +262,8 @@ template<class T>
 struct is_scalar_expression_t{ enum { value = 0 }; };
 template<class ScalarType>
 struct is_scalar_expression_t<dummy_scalar<ScalarType> >{ enum { value = 1}; };
+template<>
+struct is_scalar_expression_t<float> { enum { value = 1 }; };
 template<class LHS, class OP, class RHS>
 struct is_scalar_expression_t<binary_scalar_expression<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class T1, class T2, class T3>
@@ -286,11 +289,11 @@ struct is_matrix_expression_t<unary_matrix_expression<SUB,OP> >{ enum { value = 
 template<class LHS, class OP, class RHS, bool create_vector, bool create_scalar, bool create_matrix>
 struct convert_to_binary_expr;
 template<class LHS, class OP, class RHS>
-struct convert_to_binary_expr<LHS,OP,RHS,true,false,false>{ typedef binary_vector_expression<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,true,false,false>{ typedef binary_vector_expression<typename to_sym<LHS>::type, OP, typename to_sym<RHS>::type> type; };
 template<class LHS, class OP, class RHS>
-struct convert_to_binary_expr<LHS,OP,RHS,false,true,false>{ typedef binary_scalar_expression<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,false,true,false>{ typedef binary_scalar_expression<typename to_sym<LHS>::type, OP, typename to_sym<RHS>::type> type; };
 template<class LHS, class OP, class RHS>
-struct convert_to_binary_expr<LHS,OP,RHS,false,false,true>{ typedef binary_matrix_expression<LHS,OP,RHS> type; };
+struct convert_to_binary_expr<LHS,OP,RHS,false,false,true>{ typedef binary_matrix_expression<typename to_sym<LHS>::type, OP, typename to_sym<RHS>::type> type; };
 
 
 
@@ -377,75 +380,75 @@ trans(T const & mat){
     return make_sym(mat);
 }
 
-//template<class LHS, class RHS>
-//typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
-//                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
-//                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-//                            ,typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
-//                                                    ,create_vector<LHS,RHS>::value
-//                                                    ,create_scalar<LHS,RHS>::value
-//                                                    ,create_matrix<LHS,RHS>::value>::type>::type
-//element_prod(LHS const & lhs, RHS const & rhs){
-//    return typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
-//            ,create_vector<LHS,RHS>::value
-//            ,create_scalar<LHS,RHS>::value
-//            ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
-//}
+template<class LHS, class RHS>
+typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
+                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
+                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
+                            ,typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
+                                                    ,create_vector<LHS,RHS>::value
+                                                    ,create_scalar<LHS,RHS>::value
+                                                    ,create_matrix<LHS,RHS>::value>::type>::type
+element_prod(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,elementwise_prod_type,RHS
+            ,create_vector<LHS,RHS>::value
+            ,create_scalar<LHS,RHS>::value
+            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
 
-//template<class LHS, class RHS>
-//typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
-//                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
-//                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-//                            ,typename convert_to_binary_expr<LHS,add_type,RHS
-//                                                    ,create_vector<LHS,RHS>::value
-//                                                    ,create_scalar<LHS,RHS>::value
-//                                                    ,create_matrix<LHS,RHS>::value>::type>::type
-//operator+(LHS const & lhs, RHS const & rhs){
-//    return typename convert_to_binary_expr<LHS,add_type,RHS
-//            ,create_vector<LHS,RHS>::value
-//            ,create_scalar<LHS,RHS>::value
-//            ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
-//}
+template<class LHS, class RHS>
+typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
+                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
+                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
+                            ,typename convert_to_binary_expr<LHS,add_type,RHS
+                                                    ,create_vector<LHS,RHS>::value
+                                                    ,create_scalar<LHS,RHS>::value
+                                                    ,create_matrix<LHS,RHS>::value>::type>::type
+operator+(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,add_type,RHS
+            ,create_vector<LHS,RHS>::value
+            ,create_scalar<LHS,RHS>::value
+            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
 
-//template<class LHS, class RHS>
-//typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
-//                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
-//                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-//                            ,typename convert_to_binary_expr<LHS,sub_type,RHS
-//                                                    ,create_vector<LHS,RHS>::value
-//                                                    ,create_scalar<LHS,RHS>::value
-//                                                    ,create_matrix<LHS,RHS>::value>::type>::type
-//operator-(LHS const & lhs, RHS const & rhs){
-//    return typename convert_to_binary_expr<LHS,sub_type,RHS
-//            ,create_vector<LHS,RHS>::value
-//            ,create_scalar<LHS,RHS>::value
-//            ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
-//}
-//template<class LHS, class RHS>
-//typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-//                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
-//                            ,create_vector<LHS,RHS>::value
-//                            ,create_scalar<LHS,RHS>::value
-//                            ,create_matrix<LHS,RHS>::value>::type>::type
-//operator*(LHS const & lhs, RHS const & rhs){
-//    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
-//                                    ,create_vector<LHS,RHS>::value
-//                                    ,create_scalar<LHS,RHS>::value
-//                                    ,create_matrix<LHS,RHS>::value>::type(lhs,rhs);
-//}
+template<class LHS, class RHS>
+typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
+                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
+                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
+                            ,typename convert_to_binary_expr<LHS,sub_type,RHS
+                                                    ,create_vector<LHS,RHS>::value
+                                                    ,create_scalar<LHS,RHS>::value
+                                                    ,create_matrix<LHS,RHS>::value>::type>::type
+operator-(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,sub_type,RHS
+            ,create_vector<LHS,RHS>::value
+            ,create_scalar<LHS,RHS>::value
+            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
+template<class LHS, class RHS>
+typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
+                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+                            ,create_vector<LHS,RHS>::value
+                            ,create_scalar<LHS,RHS>::value
+                            ,create_matrix<LHS,RHS>::value>::type>::type
+operator*(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+                                    ,create_vector<LHS,RHS>::value
+                                    ,create_scalar<LHS,RHS>::value
+                                    ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
 
-//template<class LHS, class RHS>
-//typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-//                            ,typename convert_to_binary_expr<LHS,scal_div_type,RHS
-//                                                    ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
-//                                                    ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-//                                                    ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type>::type
-//operator/(LHS const & lhs, RHS const & rhs){
-//    return typename convert_to_binary_expr<LHS,scal_div_type,RHS
-//            ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
-//            ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-//            ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type(lhs,rhs);
-//}
+template<class LHS, class RHS>
+typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
+                            ,typename convert_to_binary_expr<LHS,scal_div_type,RHS
+                                                    ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
+                                                    ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
+                                                    ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type>::type
+operator/(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,scal_div_type,RHS
+            ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
+            ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
+            ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
 
 
 ///////////////////////////////////////////
@@ -488,75 +491,75 @@ template<class T1> static unsigned long get_operation_id<function_wrapper_impl<T
 
 
 
-#define MAKE_BUILTIN_FUNCTION1(name) static function_wrapper name = function_wrapper(#name,#name "(#1)")
-#define MAKE_BUILTIN_FUNCTION2(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2)")
-#define MAKE_BUILTIN_FUNCTION3(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2,#3)")
+//#define MAKE_BUILTIN_FUNCTION1(name) static function_wrapper name = function_wrapper(#name,#name "(#1)")
+//#define MAKE_BUILTIN_FUNCTION2(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2)")
+//#define MAKE_BUILTIN_FUNCTION3(name) static function_wrapper name = function_wrapper(#name,#name "(#1,#2,#3)")
 
-MAKE_BUILTIN_FUNCTION1(acos);
-MAKE_BUILTIN_FUNCTION1(acosh);
-MAKE_BUILTIN_FUNCTION1(acospi);
-MAKE_BUILTIN_FUNCTION1(asin);
-MAKE_BUILTIN_FUNCTION1(asinh);
-MAKE_BUILTIN_FUNCTION1(asinpi);
-MAKE_BUILTIN_FUNCTION1(atan);
-MAKE_BUILTIN_FUNCTION2(atan2);
-MAKE_BUILTIN_FUNCTION1(atanh);
-MAKE_BUILTIN_FUNCTION1(atanpi);
-MAKE_BUILTIN_FUNCTION2(atan2pi);
-MAKE_BUILTIN_FUNCTION1(cbrt);
-MAKE_BUILTIN_FUNCTION1(ceil);
-MAKE_BUILTIN_FUNCTION2(copysign);
-MAKE_BUILTIN_FUNCTION1(cos);
-MAKE_BUILTIN_FUNCTION1(cosh);
-MAKE_BUILTIN_FUNCTION1(cospi);
-MAKE_BUILTIN_FUNCTION1(erfc);
-MAKE_BUILTIN_FUNCTION1(erf);
-MAKE_BUILTIN_FUNCTION1(exp);
-MAKE_BUILTIN_FUNCTION1(exp2);
-MAKE_BUILTIN_FUNCTION1(exp10);
-MAKE_BUILTIN_FUNCTION1(expm1);
-MAKE_BUILTIN_FUNCTION1(fabs);
-MAKE_BUILTIN_FUNCTION2(fdim);
-MAKE_BUILTIN_FUNCTION1(floor);
-MAKE_BUILTIN_FUNCTION3(fma);
-MAKE_BUILTIN_FUNCTION2(fmax);
-MAKE_BUILTIN_FUNCTION2(fmin);
-MAKE_BUILTIN_FUNCTION2(fmod);
-//    MAKE_BUILTIN_FUNCTION1(fract);
-//    MAKE_BUILTIN_FUNCTION1(frexp);
-MAKE_BUILTIN_FUNCTION2(hypot);
-MAKE_BUILTIN_FUNCTION1(ilogb);
-MAKE_BUILTIN_FUNCTION2(ldexp);
-MAKE_BUILTIN_FUNCTION1(lgamma);
-//    MAKE_BUILTIN_FUNCTION1(lgamma_r);
-MAKE_BUILTIN_FUNCTION1(log);
-MAKE_BUILTIN_FUNCTION1(log2);
-MAKE_BUILTIN_FUNCTION1(log10);
-MAKE_BUILTIN_FUNCTION1(log1p);
-MAKE_BUILTIN_FUNCTION1(logb);
-MAKE_BUILTIN_FUNCTION3(mad);
-//    MAKE_BUILTIN_FUNCTION1(modf);
-MAKE_BUILTIN_FUNCTION1(nan);
-MAKE_BUILTIN_FUNCTION2(nextafter);
-MAKE_BUILTIN_FUNCTION2(pow);
-MAKE_BUILTIN_FUNCTION2(pown);
-MAKE_BUILTIN_FUNCTION2(powr);
-MAKE_BUILTIN_FUNCTION2(remainder);
-//    MAKE_BUILTIN_FUNCTION1(remquo);
-MAKE_BUILTIN_FUNCTION1(rint);
-MAKE_BUILTIN_FUNCTION1(rootn);
-MAKE_BUILTIN_FUNCTION1(round);
-MAKE_BUILTIN_FUNCTION1(rsqrt);
-MAKE_BUILTIN_FUNCTION1(sin);
-//    MAKE_BUILTIN_FUNCTION1(sincos);
-MAKE_BUILTIN_FUNCTION1(sinh);
-MAKE_BUILTIN_FUNCTION1(sinpi);
-MAKE_BUILTIN_FUNCTION1(sqrt);
-MAKE_BUILTIN_FUNCTION1(tan);
-MAKE_BUILTIN_FUNCTION1(tanh);
-MAKE_BUILTIN_FUNCTION1(tanpi);
-MAKE_BUILTIN_FUNCTION1(tgamma);
-MAKE_BUILTIN_FUNCTION1(trunc);
+//MAKE_BUILTIN_FUNCTION1(acos);
+//MAKE_BUILTIN_FUNCTION1(acosh);
+//MAKE_BUILTIN_FUNCTION1(acospi);
+//MAKE_BUILTIN_FUNCTION1(asin);
+//MAKE_BUILTIN_FUNCTION1(asinh);
+//MAKE_BUILTIN_FUNCTION1(asinpi);
+//MAKE_BUILTIN_FUNCTION1(atan);
+//MAKE_BUILTIN_FUNCTION2(atan2);
+//MAKE_BUILTIN_FUNCTION1(atanh);
+//MAKE_BUILTIN_FUNCTION1(atanpi);
+//MAKE_BUILTIN_FUNCTION2(atan2pi);
+//MAKE_BUILTIN_FUNCTION1(cbrt);
+//MAKE_BUILTIN_FUNCTION1(ceil);
+//MAKE_BUILTIN_FUNCTION2(copysign);
+//MAKE_BUILTIN_FUNCTION1(cos);
+//MAKE_BUILTIN_FUNCTION1(cosh);
+//MAKE_BUILTIN_FUNCTION1(cospi);
+//MAKE_BUILTIN_FUNCTION1(erfc);
+//MAKE_BUILTIN_FUNCTION1(erf);
+//MAKE_BUILTIN_FUNCTION1(exp);
+//MAKE_BUILTIN_FUNCTION1(exp2);
+//MAKE_BUILTIN_FUNCTION1(exp10);
+//MAKE_BUILTIN_FUNCTION1(expm1);
+//MAKE_BUILTIN_FUNCTION1(fabs);
+//MAKE_BUILTIN_FUNCTION2(fdim);
+//MAKE_BUILTIN_FUNCTION1(floor);
+//MAKE_BUILTIN_FUNCTION3(fma);
+//MAKE_BUILTIN_FUNCTION2(fmax);
+//MAKE_BUILTIN_FUNCTION2(fmin);
+//MAKE_BUILTIN_FUNCTION2(fmod);
+////    MAKE_BUILTIN_FUNCTION1(fract);
+////    MAKE_BUILTIN_FUNCTION1(frexp);
+//MAKE_BUILTIN_FUNCTION2(hypot);
+//MAKE_BUILTIN_FUNCTION1(ilogb);
+//MAKE_BUILTIN_FUNCTION2(ldexp);
+//MAKE_BUILTIN_FUNCTION1(lgamma);
+////    MAKE_BUILTIN_FUNCTION1(lgamma_r);
+//MAKE_BUILTIN_FUNCTION1(log);
+//MAKE_BUILTIN_FUNCTION1(log2);
+//MAKE_BUILTIN_FUNCTION1(log10);
+//MAKE_BUILTIN_FUNCTION1(log1p);
+//MAKE_BUILTIN_FUNCTION1(logb);
+//MAKE_BUILTIN_FUNCTION3(mad);
+////    MAKE_BUILTIN_FUNCTION1(modf);
+//MAKE_BUILTIN_FUNCTION1(nan);
+//MAKE_BUILTIN_FUNCTION2(nextafter);
+//MAKE_BUILTIN_FUNCTION2(pow);
+//MAKE_BUILTIN_FUNCTION2(pown);
+//MAKE_BUILTIN_FUNCTION2(powr);
+//MAKE_BUILTIN_FUNCTION2(remainder);
+////    MAKE_BUILTIN_FUNCTION1(remquo);
+//MAKE_BUILTIN_FUNCTION1(rint);
+//MAKE_BUILTIN_FUNCTION1(rootn);
+//MAKE_BUILTIN_FUNCTION1(round);
+//MAKE_BUILTIN_FUNCTION1(rsqrt);
+//MAKE_BUILTIN_FUNCTION1(sin);
+////    MAKE_BUILTIN_FUNCTION1(sincos);
+//MAKE_BUILTIN_FUNCTION1(sinh);
+//MAKE_BUILTIN_FUNCTION1(sinpi);
+//MAKE_BUILTIN_FUNCTION1(sqrt);
+//MAKE_BUILTIN_FUNCTION1(tan);
+//MAKE_BUILTIN_FUNCTION1(tanh);
+//MAKE_BUILTIN_FUNCTION1(tanpi);
+//MAKE_BUILTIN_FUNCTION1(tgamma);
+//MAKE_BUILTIN_FUNCTION1(trunc);
 
 
 

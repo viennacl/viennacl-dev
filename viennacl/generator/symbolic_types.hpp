@@ -28,56 +28,13 @@ namespace viennacl
   namespace generator
   {
 
-  typedef std::map<viennacl::backend::mem_handle, shared_infos_t> shared_infos_map_t;
-  typedef std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> temporaries_map_t;
+  typedef std::map<void const *, shared_infos_t> shared_infos_map_t;
+  typedef std::map<kernel_argument*,void const *,deref_less> temporaries_map_t;
 
       template<class T> struct repr_of;
       template<> struct repr_of<float>{ static const std::string value(){ return "f"; } };
       template<> struct repr_of<double>{ static const std::string value(){ return "d"; } };
 
-
-      template<class LHS, class RHS, class OP_REDUCE>
-      class matmat_prod_infos : public matmat_prod_infos_base{
-      public:
-          typedef typename LHS::ScalarType ScalarType;
-          matmat_prod_infos(LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matmat_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs), f_expr){ }
-      private:
-
-      };
-
-      template<class LHS, class RHS, class OP_REDUCE>
-      class matvec_prod_infos : public matvec_prod_infos_base{
-      public:
-          typedef typename LHS::ScalarType ScalarType;
-          matvec_prod_infos(LHS const & lhs, RHS const & rhs, std::string const & f_expr) : matvec_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs), f_expr){ }
-      private:
-
-      };
-
-      template<class LHS, class RHS, class OP_REDUCE>
-      class inprod_infos : public inprod_infos_base{
-          typedef typename LHS::ScalarType ScalarType;
-      public:
-          inprod_infos(LHS const & lhs, RHS const & rhs,
-                       std::string const & f_expr):
-              inprod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>, new RHS(rhs), f_expr
-                                ,new step_t(inprod_infos_base::compute)), tmp_(1024){
-          }
-
-           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
-               k.arg(arg++,tmp_.handle().opencl_handle());
-           }
-
-           void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
-               temporaries_map.insert(std::make_pair(this,tmp_.handle())).first;
-               infos_= &shared_infos.insert(std::make_pair(tmp_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
-           }
-
-           viennacl::backend::mem_handle const & handle() const{ return tmp_.handle(); }
-
-      private:
-          viennacl::vector<ScalarType> tmp_;
-      };
 
       template<class LHS, class OP, class RHS>
       class binary_vector_expression : public binary_vector_expression_infos_base{
@@ -87,6 +44,13 @@ namespace viennacl
       };
 
 
+
+      template<class LHS, class RHS, class OP_REDUCE>
+      class binary_vector_expression<LHS,prod_type<OP_REDUCE>,RHS> : public matvec_prod_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          binary_vector_expression(LHS const & lhs, RHS const & rhs) : matvec_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs)){ }
+      };
 
 
       template<class LHS, class OP, class RHS>
@@ -98,6 +62,31 @@ namespace viennacl
           binary_scalar_expression(LHS const & lhs, RHS const & rhs) :binary_scalar_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
       };
 
+      template<class LHS, class RHS, class OP_REDUCE>
+      class binary_scalar_expression<LHS, prod_type<OP_REDUCE>, RHS> : public inprod_infos_base{
+          typedef typename LHS::ScalarType ScalarType;
+      public:
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs):
+              inprod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>, new RHS(rhs), new step_t(inprod_infos_base::compute)), tmp_(1024){
+          }
+
+           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
+               k.arg(arg++,tmp_.handle().opencl_handle());
+           }
+
+           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+               temporaries_map.insert(std::make_pair(this,tmp_.handle())).first;
+               infos_= &shared_infos.insert(std::make_pair(tmp_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+               lhs_->bind(shared_infos,temporaries_map);
+               rhs_->bind(shared_infos,temporaries_map);
+           }
+
+           void const * handle() const{ return tmp_.handle(); }
+
+      private:
+          viennacl::vector<ScalarType> tmp_;
+      };
+
       template<class LHS, class OP, class RHS>
       class binary_matrix_expression : public binary_matrix_expression_infos_base{
       public:
@@ -107,7 +96,14 @@ namespace viennacl
           binary_matrix_expression(LHS const & lhs, RHS const & rhs) :binary_matrix_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
       };
 
+      template<class LHS, class RHS, class OP_REDUCE>
+      class binary_matrix_expression<LHS,prod_type<OP_REDUCE>,RHS> : public matmat_prod_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          binary_matrix_expression(LHS const & lhs, RHS const & rhs) : matmat_prod_infos_base(new LHS(lhs), new prod_type<OP_REDUCE>(), new RHS(rhs)){ }
+      private:
 
+      };
 
       template<class SUB, class OP>
       class unary_vector_expression : public unary_vector_expression_infos_base{
@@ -143,9 +139,19 @@ namespace viennacl
     {
     public:
         typedef SCALARTYPE ScalarType;
-        cpu_symbolic_scalar(ScalarType val) : cpu_scal_infos_base(print_type<SCALARTYPE>::value()), val_(val){ }
+        cpu_symbolic_scalar(ScalarType val) :  val_(val){}
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ k.arg(n_arg++,val_); }
+        std::string repr() const{ return "cs"+repr_of<SCALARTYPE>::value(); }
+        void bind(std::map<void const *, shared_infos_t>  & shared_infos
+                  ,std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+            infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+        }
+        void const * handle() const { return static_cast<void const *>(&val_); }
+        std::string generate(unsigned int i) const{
+            return infos_->name();
+        }
     private:
-        ScalarType val_;
+        ScalarType const & val_;
     };
 
 
@@ -169,13 +175,13 @@ namespace viennacl
 
         }
 
-        viennacl::backend::mem_handle const & handle() const{ return vcl_scal_.handle(); }
+        void const * handle() const{ return vcl_scal_.handle(); }
 
         void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
             k.arg(n_arg++,vcl_scal_);
         }
 
-        void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+        void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
              infos_= &shared_infos.insert(std::make_pair(vcl_scal_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
 
@@ -205,15 +211,15 @@ namespace viennacl
 
           symbolic_vector(vcl_vec_t const & vcl_vec) : vcl_vec_(vcl_vec){ }
 
-          virtual viennacl::backend::mem_handle const & handle() const{ return vcl_vec_.handle(); }
+          virtual void const * handle() const{ return static_cast<void const *>(&vcl_vec_.handle()); }
 
           void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
               k.arg(n_arg++,vcl_vec_);
               k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()/infos_->alignment()));
           }
 
-          void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
-              infos_= &shared_infos.insert(std::make_pair(vcl_vec_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+              infos_= &shared_infos.insert(std::make_pair((void const *)&vcl_vec_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
 
           std::string repr() const{
@@ -271,11 +277,11 @@ namespace viennacl
               k.arg(n_arg++,size2_arg);
           }
 
-          void bind(std::map<viennacl::backend::mem_handle, shared_infos_t>  & shared_infos, std::map<kernel_argument*,viennacl::backend::mem_handle,deref_less> & temporaries_map){
+          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
               infos_= &shared_infos.insert(std::make_pair(vcl_mat_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
 
-          viennacl::backend::mem_handle const & handle() const{ return vcl_mat_.handle(); }
+          void const * handle() const{ return vcl_mat_.handle(); }
 
           std::string repr() const{
               return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_)+'_'+to_string((int)is_transposed_);
