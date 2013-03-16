@@ -56,7 +56,7 @@ private:
        for(unsigned int stride = size/2 ; stride>0 ; stride /=2){
            kss << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
            for(std::map<binary_op_infos_base const *, local_memory<1> >::const_iterator it = lmems.begin(); it != lmems.end() ; ++it){
-               kss <<  it->second.access("lid") <<  " = " << it->first->generate(it->second.access("lid"), "((lid < " + to_string(stride) + ")?" + it->second.access("lid+" + to_string(stride)) + " : 0);" ) << std::endl;
+               kss <<  it->second.access("lid") <<  " = " << it->first->generate(it->second.access("lid"), "((lid < " + to_string(stride) + ")?" + it->second.access("lid+" + to_string(stride)) + " : 0)" ) << ";" << std::endl;
            }
        }
     }

@@ -144,8 +144,8 @@ int test_vector ( Epsilon const& epsilon) {
 
     {
         std::cout << "testing inner product..." << std::endl;
-        s = ublas::inner_prod(vec2,vec3);
-        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::add_type>(dv_t(x))));
+        s = *std::max_element(vec2.begin(),vec2.end());
+        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         if ( fabs (s - gs) > epsilon ) {

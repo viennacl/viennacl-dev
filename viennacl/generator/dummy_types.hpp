@@ -424,7 +424,7 @@ template<class OP_REDUCE, class T>
 typename viennacl::enable_if<is_vector_expression_t<T>::value
                             ,binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> > >::type
 reduce(T const & t){
-    return inner_prod(t,constant_vector<1>());
+    return binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> >(make_sym(t), symbolic_constant<1>());
 }
 
 
