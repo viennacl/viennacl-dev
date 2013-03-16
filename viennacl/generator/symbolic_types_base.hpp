@@ -294,11 +294,9 @@ namespace viennacl{
             vector_reduction_infos_base(infos_base * sub, binary_op_infos_base * op): unary_scalar_expression_infos_base(sub,new identity_type), op_reduce_(op){ }
 
             bool is_computed(){ return current_kernel_; }
+
             void set_computed(){ current_kernel_ = 1; }
 
-            local_memory<1> make_local_memory(unsigned int size){
-                return local_memory<1>(name()+"_local",size,scalartype());
-            }
             std::string repr() const{
                 return unary_scalar_expression_infos_base::repr();
             }
@@ -317,12 +315,7 @@ namespace viennacl{
 
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
 
-            std::string generate(unsigned int i) const{
-                return infos_->access_name(0);
-            }
-            std::string sum_name() const{
-                return name()+"_sum";
-            }
+            std::string generate(unsigned int i) const{ return infos_->access_name(0); }
 
         private:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
