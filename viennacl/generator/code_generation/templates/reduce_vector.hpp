@@ -10,7 +10,7 @@ namespace generator{
 
 namespace code_generation{
 
-namespace inner_product{
+namespace reduce_vector{
 
 class profile : public optimization_profile{
 public:
@@ -72,7 +72,7 @@ public:
         for(std::list<infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
             extract_as(*it,vectors_,utils::is_type<vec_infos_base>());
             extract_as(*it,gpu_scalars_,utils::is_type<gpu_scal_infos_base>());
-            extract_as(*it,inner_prods_,utils::is_type<inprod_infos_base>());
+            extract_as(*it,inner_prods_,utils::is_type<vector_reduction_infos_base>());
         }
     }
 
@@ -80,37 +80,8 @@ public:
     void operator()(utils::kernel_generation_stream& kss){
         kss << "unsigned int lid = get_local_id(0);" << std::endl;
         unsigned int alignment = (*vectors_.begin())->alignment();
-        inprod_infos_base::step_t step = (*inner_prods_.begin())->step();
-        if(step==inprod_infos_base::compute){
-            code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,std::list<vec_infos_base *>(),kss);
-            for(std::set<inprod_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it)  kss << (*it)->scalartype() << " " << (*it)->sum_name() << " = 0;" << std::endl;
-            std::string size = (*vectors_.begin())->size();
-            kss << "for(unsigned int i = get_global_id(0) ; i < " << size << "; i += get_global_size(0)){" << std::endl;
-            kss.inc_tab();
-            vector_cache.fetch_entries(0, "i");
-            for(std::set<inprod_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
-                for(unsigned int a = 0 ; a < alignment; ++a){
-                    std::string sub_expr = (*it)->sub().generate(0);
-                    if(alignment>1) sub_expr+=".s"+to_string(a);
-                    kss << (*it)->sum_name() << " = " << (*it)->op_reduce().generate((*it)->sum_name(), sub_expr) << ";" << std::endl;
-                }
-            }
-            kss.dec_tab();
-            kss << "}" << std::endl;
-            std::list<local_memory<1> > local_mems;
-            for( std::set<inprod_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
-                local_mems.push_back((*it)->make_local_memory(profile_->group_size()));
-                kss << local_mems.back().declare() << ";" << std::endl;
-                kss << local_mems.back().access("lid") << " = " <<  (*it)->sum_name() << ";" << std::endl;
-            }
-            compute_reductions_samesize(kss,local_mems);
-            kss << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-            for(std::set<inprod_infos_base *, viennacl::generator::deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
-                (*it)->step(inprod_infos_base::reduce);
-                kss << "if(lid==0) " << (*it)->name() << "[get_group_id(0)]" << "=" << (*it)->make_local_memory(profile_->group_size()).access("0") << ";" << std::endl;
-            }
-        }
-        else{
+        bool is_computed = (*inner_prods_.begin())->is_computed();
+        if(is_computed){
             std::list<gpu_scal_infos_base *> assigned_scal;
             for(std::list<infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
                 if(binary_scalar_expression_infos_base* p=dynamic_cast<binary_scalar_expression_infos_base*>(*it)){
@@ -124,28 +95,55 @@ public:
             scalar_cache.fetch_entries(0,"0");
 
             std::list<local_memory<1> > local_mems;
-            for( std::set<inprod_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
+            for( std::set<vector_reduction_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 local_mems.push_back((*it)->make_local_memory(profile_->group_size()));
                 kss << local_mems.back().declare() << ";" << std::endl;
                 kss << local_mems.back().access("get_local_id(0)") << " = " << (*it)->name() << "[lid];" << ";" << std::endl;
             }
             compute_reductions_samesize(kss,local_mems);
             kss << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-            for( std::set<inprod_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
+            for( std::set<vector_reduction_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 (*it)->access_name(0,(*it)->make_local_memory(profile_->group_size()).access("0"));
             }
             for(std::list<infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
                 kss << (*it)->generate(0) << ";" << std::endl;
             }
-
             scalar_cache.writeback_entries(0,"0");
-
+        }
+        else{
+            code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,std::list<vec_infos_base *>(),kss);
+            for(std::set<vector_reduction_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it)  kss << (*it)->scalartype() << " " << (*it)->sum_name() << " = 0;" << std::endl;
+            std::string size = (*vectors_.begin())->size();
+            kss << "for(unsigned int i = get_global_id(0) ; i < " << size << "; i += get_global_size(0)){" << std::endl;
+            kss.inc_tab();
+            vector_cache.fetch_entries(0, "i");
+            for(std::set<vector_reduction_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+                for(unsigned int a = 0 ; a < alignment; ++a){
+                    std::string sub_expr = (*it)->sub().generate(0);
+                    if(alignment>1) sub_expr+=".s"+to_string(a);
+                    kss << (*it)->sum_name() << " = " << (*it)->op_reduce().generate((*it)->sum_name(), sub_expr) << ";" << std::endl;
+                }
+            }
+            kss.dec_tab();
+            kss << "}" << std::endl;
+            std::list<local_memory<1> > local_mems;
+            for( std::set<vector_reduction_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
+                local_mems.push_back((*it)->make_local_memory(profile_->group_size()));
+                kss << local_mems.back().declare() << ";" << std::endl;
+                kss << local_mems.back().access("lid") << " = " <<  (*it)->sum_name() << ";" << std::endl;
+            }
+            compute_reductions_samesize(kss,local_mems);
+            kss << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+            for(std::set<vector_reduction_infos_base *, viennacl::generator::deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+                (*it)->set_computed();
+                kss << "if(lid==0) " << (*it)->name() << "[get_group_id(0)]" << "=" << (*it)->make_local_memory(profile_->group_size()).access("0") << ";" << std::endl;
+            }
         }
     }
 
 private:
     std::list<infos_base* >  expressions_;
-    std::set<inprod_infos_base*, deref_less>  inner_prods_;
+    std::set<vector_reduction_infos_base*, deref_less>  inner_prods_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
     profile * profile_;

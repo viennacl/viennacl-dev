@@ -112,6 +112,9 @@ namespace viennacl{
             virtual std::string simplified_repr() const = 0;
             virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &) = 0;
             virtual ~infos_base(){ }
+            infos_base() : current_kernel_(0) { }
+        protected:
+            unsigned int current_kernel_;
         };
 
 
@@ -286,19 +289,12 @@ namespace viennacl{
             std::string val_name_;
         };
 
-        class inprod_infos_base : public unary_scalar_expression_infos_base, public kernel_argument{
+        class vector_reduction_infos_base : public unary_scalar_expression_infos_base, public kernel_argument{
         public:
-            enum step_t{compute,reduce};
+            vector_reduction_infos_base(infos_base * sub, binary_op_infos_base * op): unary_scalar_expression_infos_base(sub,new identity_type), op_reduce_(op){ }
 
-            inprod_infos_base(infos_base * sub
-                              ,binary_op_infos_base * op
-                              ,step_t * step): unary_scalar_expression_infos_base(sub,new identity_type), op_reduce_(op), step_(step){
-
-            }
-
-            step_t step(){ return *step_; }
-
-            void step(step_t s){ *step_ = s; }
+            bool is_computed(){ return current_kernel_; }
+            void set_computed(){ current_kernel_ = 1; }
 
             local_memory<1> make_local_memory(unsigned int size){
                 return local_memory<1>(name()+"_local",size,scalartype());
@@ -329,7 +325,6 @@ namespace viennacl{
             }
 
         private:
-            viennacl::tools::shared_ptr<step_t> step_;
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
 

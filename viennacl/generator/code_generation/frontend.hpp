@@ -83,14 +83,7 @@ namespace viennacl{
                         extract_to_list(&p->rhs(),args,pred);
                 }
                 else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
-                    if(inprod_infos_base* ip = dynamic_cast<inprod_infos_base*>(root)){
-                        if(ip->step() == inprod_infos_base::compute){
-                            extract_to_list(&ip->sub(), args,pred);
-                        }
-                    }
-                    else{
                      extract_to_list(&p->sub(),args,pred);
-                    }
                 }
                 if(T* t = dynamic_cast<T*>(root)){
                     if(pred(t)){
@@ -137,8 +130,8 @@ namespace viennacl{
                     else if(gemm::profile* p = dynamic_cast<gemm::profile*>(kernel_infos_.profile())){
                         gen = new gemm::generator(mat_exprs,p);
                     }
-                    else if(inner_product::profile* p = dynamic_cast<inner_product::profile*>(kernel_infos_.profile())){
-                        gen = new inner_product::generator(scal_exprs,p);
+                    else if(reduce_vector::profile* p = dynamic_cast<reduce_vector::profile*>(kernel_infos_.profile())){
+                        gen = new reduce_vector::generator(scal_exprs,p);
                     }
                     else if(gemv::profile * p = dynamic_cast<gemv::profile*>(kernel_infos_.profile())){
                         gen = new gemv::generator(vec_exprs,p);
@@ -221,9 +214,9 @@ namespace viennacl{
                             else add_operation<saxpy::profile>(p);
                         }
                         else if(binary_scalar_expression_infos_base* p = dynamic_cast<binary_scalar_expression_infos_base*>(ptr)){
-                            if(count_type<inprod_infos_base>(p)){
-                                inner_product::profile const & prof =add_operation<inner_product::profile>(p);
-                                kernels_list_.push_back(kernel_infos_t(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
+                            if(count_type<vector_reduction_infos_base>(p)){
+                                reduce_vector::profile const & prof =add_operation<reduce_vector::profile>(p);
+                                kernels_list_.push_back(kernel_infos_t(p, new reduce_vector::profile(prof.vectorization(),prof.num_groups(),1)));
                             }
                             else add_operation<saxpy::profile>(p);
                         }

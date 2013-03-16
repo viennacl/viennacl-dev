@@ -4,6 +4,6 @@
 #include "viennacl/generator/code_generation/templates/gemm.hpp"
 #include "viennacl/generator/code_generation/templates/gemv.hpp"
 #include "viennacl/generator/code_generation/templates/saxpy.hpp"
-#include "viennacl/generator/code_generation/templates/inner_product.hpp"
+#include "viennacl/generator/code_generation/templates/reduce_vector.hpp"
 
 #endif

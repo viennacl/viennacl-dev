@@ -97,11 +97,11 @@ namespace viennacl
       };
 
       template<class SUB, class OP_REDUCE>
-      class unary_scalar_expression<SUB, reduce_type<OP_REDUCE> > : public inprod_infos_base{
+      class unary_scalar_expression<SUB, reduce_type<OP_REDUCE> > : public vector_reduction_infos_base{
           typedef typename SUB::ScalarType ScalarType;
       public:
           unary_scalar_expression(SUB const & sub):
-              inprod_infos_base(new SUB(sub), new OP_REDUCE, new step_t(inprod_infos_base::compute)), tmp_(1024){
+              vector_reduction_infos_base(new SUB(sub), new OP_REDUCE), tmp_(1024){
           }
 
            void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
