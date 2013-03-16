@@ -264,13 +264,12 @@ struct to_sym<dummy_vector<ScalarType> >{
 template<class ScalarType>
 class dummy_scalar{
     typedef dummy_scalar<ScalarType> self_type;
-    typedef viennacl::scalar<ScalarType> vcl_scal_t;
-    vcl_scal_t const & scal_;
 public:
+    typedef viennacl::scalar<ScalarType> vcl_t;
 
-    dummy_scalar(vcl_scal_t const & scal): scal_(scal){ }
+    dummy_scalar(vcl_t const & scal): scal_(scal){ }
 
-    vcl_scal_t const & scal() const{ return scal_; }
+    vcl_t const & get() const{ return scal_; }
 
     template<typename RHS_TYPE>
     binary_scalar_expression<self_type, assign_type, typename to_sym<RHS_TYPE>::type  >
@@ -301,19 +300,27 @@ public:
     operator-= ( RHS_TYPE const & rhs ){
       return binary_scalar_expression<self_type,inplace_sub_type,RHS_TYPE >(*this,rhs);
     }
+private:
+    vcl_t const & scal_;
 };
 
+
+template<class ScalarType>
+struct to_sym<dummy_scalar<ScalarType> >{
+    typedef gpu_symbolic_scalar<ScalarType> type;
+    static type result(dummy_scalar<ScalarType> const & t) { return t.get(); }
+};
 
 template<class VCL_MATRIX>
 class dummy_matrix{
     typedef dummy_matrix<VCL_MATRIX> self_type;
 public:
 
-    typedef VCL_MATRIX gpu_type;
+    typedef VCL_MATRIX vcl_t;
 
     dummy_matrix(VCL_MATRIX & mat) : mat_(mat){ }
 
-    VCL_MATRIX & mat() const{
+    VCL_MATRIX & get() const{
         return mat_;
     }
 
@@ -353,6 +360,12 @@ public:
     }
 private:
     VCL_MATRIX & mat_;
+};
+
+template<class VCL_MATRIX_T>
+struct to_sym<dummy_matrix<VCL_MATRIX_T> >{
+    typedef symbolic_matrix<VCL_MATRIX_T> type;
+    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return t.get(); }
 };
 
 

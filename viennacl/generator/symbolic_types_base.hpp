@@ -115,10 +115,6 @@ namespace viennacl{
         };
 
 
-
-
-
-
         class binary_tree_infos_base : public virtual infos_base{
         public:
             infos_base & lhs() const{ return *lhs_; }
