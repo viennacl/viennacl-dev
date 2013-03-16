@@ -7,22 +7,6 @@ namespace generator{
 
 class custom_operation;
 class infos_base;
-//class assign_type;
-class add_type;
-class inplace_add_type;
-class sub_type;
-class inplace_sub_type;
-class scal_mul_type;
-class inplace_scal_mul_type;
-class scal_div_type;
-class inplace_scal_div_type;
-class elementwise_prod_type;
-class elementwise_div_type;
-class trans_type;
-template<class REDUCE_TYPE>
-class prod_type;
-
-class unary_sub_type;
 
 template<typename ScalarType>
 class dummy_vector;

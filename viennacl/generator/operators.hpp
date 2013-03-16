@@ -44,7 +44,7 @@ public:
         return lhs + expr_ + rhs;
     }
 protected:
-    arithmetic_op_infos_base( std::string const & expr, std::string const & name, bool is_assignment) :  binary_op_infos_base(name,is_assignment), expr_(expr){ }
+    arithmetic_op_infos_base(std::string const & name, std::string const & expr, bool is_assignment) :  binary_op_infos_base(name,is_assignment), expr_(expr){ }
 private:
     std::string expr_;
 };
@@ -88,19 +88,19 @@ private:
 #define MAKE_BINARY_ARITHMETIC_OP(name,expression,is_assignment) \
 class name##_type : public arithmetic_op_infos_base{\
     public:\
-    name##_type() : arithmetic_op_infos_base(#expression,#name,is_assignment){ }\
+    name##_type() : arithmetic_op_infos_base(#name,#expression,is_assignment){ }\
 };
 
 MAKE_BINARY_ARITHMETIC_OP(assign,=,true)
 MAKE_BINARY_ARITHMETIC_OP(inplace_add,+=,true)
 MAKE_BINARY_ARITHMETIC_OP(inplace_sub,-=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_mul,*=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_div,/=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_scal_mul,*=,true)
+MAKE_BINARY_ARITHMETIC_OP(inplace_scal_div,/=,true)
 
 MAKE_BINARY_ARITHMETIC_OP(add,+,false)
 MAKE_BINARY_ARITHMETIC_OP(sub,-,false)
-MAKE_BINARY_ARITHMETIC_OP(mul,*,false)
-MAKE_BINARY_ARITHMETIC_OP(div,/,false)
+MAKE_BINARY_ARITHMETIC_OP(scal_mul,*,false)
+MAKE_BINARY_ARITHMETIC_OP(scal_div,/,false)
 MAKE_BINARY_ARITHMETIC_OP(elementwise_prod,*,false)
 MAKE_BINARY_ARITHMETIC_OP(elementwise_div,/,false)
 #undef MAKE_BINARY_ARITHMETIC_OP
@@ -110,7 +110,7 @@ MAKE_BINARY_ARITHMETIC_OP(elementwise_div,/,false)
 #define MAKE_UNARY_ARITHMETIC_OP(name,expression) \
 class name##_type : public unary_arithmetic_op_infos_base{\
     public:\
-    name##_type() : unary_arithmetic_op_infos_base(#expression,#name){ }\
+    name##_type() : unary_arithmetic_op_infos_base(#name,#expression){ }\
 };
 
 MAKE_UNARY_ARITHMETIC_OP(unary_sub,-)

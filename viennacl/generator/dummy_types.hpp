@@ -5,6 +5,7 @@
 #include "viennacl/generator/forwards.h"
 //#include "viennacl/forwards.h"
 #include "viennacl/generator/symbolic_types.hpp"
+#include "viennacl/generator/operators.hpp"
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/distributed/forwards.hpp"
 #include "viennacl/vector.hpp"
@@ -359,14 +360,14 @@ operator*(LHS const & lhs, RHS const & rhs){
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
                             ,typename convert_to_binary_expr<LHS,scal_div_type,RHS
-                                                    ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
-                                                    ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-                                                    ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type>::type
+                            ,create_vector<LHS,RHS>::value
+                            ,create_scalar<LHS,RHS>::value
+                            ,create_matrix<LHS,RHS>::value>::type>::type
 operator/(LHS const & lhs, RHS const & rhs){
     return typename convert_to_binary_expr<LHS,scal_div_type,RHS
-            ,is_vector_expression_t<LHS>::value || is_vector_expression_t<RHS>::value
-            ,is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-            ,is_matrix_expression_t<LHS>::value || is_matrix_expression_t<RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+                                    ,create_vector<LHS,RHS>::value
+                                    ,create_scalar<LHS,RHS>::value
+                                    ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
 }
 
 
@@ -402,7 +403,7 @@ operator-(T const & t)
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
 template<class T>\
 typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\
-                            ,typename convert_to_unary_expr<T,unary_sub_type,is_vector_expression_t<T>::value\
+                            ,typename convert_to_unary_expr<T,namefun##_type,is_vector_expression_t<T>::value\
                                                             ,is_scalar_expression_t<T>::value\
                                                             ,is_matrix_expression_t<T>::value>::type>::type namefun (T const & t)\
 {\
