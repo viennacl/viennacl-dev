@@ -75,6 +75,7 @@ public:
             unsigned int k = profile_->k();
 
             bool is_lhs_transposed = (*matrices_.begin())->is_transposed();
+            bool is_lhs_row_major = first_matrix->is_rowmajor();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
             for(std::list<infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);
@@ -113,12 +114,13 @@ public:
                     kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
                 kss.inc_tab();
 
+                if(is_lhs_row_major) prod->lhs().access_index(0,"c + r*" + internal_size2);
+                else prod->lhs().access_index(0,"c*" + internal_size1 + "+ r");
+
                 if(is_lhs_transposed){
-                    prod->lhs().access_index(0,"c + r*" + internal_size2);
                     prod->rhs().access_index(0,"r");
                 }
                 else{
-                    prod->lhs().access_index(0,"c + r*" + internal_size2);
                     prod->rhs().access_index(0,"c");
                 }
 

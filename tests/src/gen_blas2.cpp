@@ -32,8 +32,8 @@
 //
 #define VIENNACL_WITH_UBLAS 1
 
-#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -81,17 +81,17 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
 }
 
 
-template< typename NumericT, typename Epsilon >
+template< typename NumericT, class Layout, typename Epsilon >
 int test( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
     ublas::vector<NumericT> cx;
     ublas::vector<NumericT> cy;
 
-    ublas::matrix<NumericT,ublas::row_major> cA;
-    ublas::matrix<NumericT,ublas::row_major> cB;
-    ublas::matrix<NumericT,ublas::row_major> cC;
-    ublas::matrix<NumericT,ublas::row_major> cD;
+    ublas::matrix<NumericT> cA;
+    ublas::matrix<NumericT> cB;
+    ublas::matrix<NumericT> cC;
+    ublas::matrix<NumericT> cD;
 
     unsigned int size1 = 128;
     unsigned int size2 = 128;
@@ -99,7 +99,7 @@ int test( Epsilon const& epsilon) {
     NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
     viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
 
-    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,viennacl::row_major> > dm_t;
+    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,Layout> > dm_t;
     typedef viennacl::generator::dummy_vector<NumericT> dv_t;
 
     cA.resize(size1,size2);
@@ -118,10 +118,10 @@ int test( Epsilon const& epsilon) {
 
     std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
 
-    viennacl::matrix<NumericT,viennacl::row_major> A (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> B (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> C (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> D (size1, size2);
+    viennacl::matrix<NumericT,Layout> A (size1, size2);
+    viennacl::matrix<NumericT,Layout> B (size1, size2);
+    viennacl::matrix<NumericT,Layout> C (size1, size2);
+    viennacl::matrix<NumericT,Layout> D (size1, size2);
 
     viennacl::vector<NumericT> x(size2);
     viennacl::vector<NumericT> y(size1);
@@ -152,8 +152,6 @@ int test( Epsilon const& epsilon) {
             std::cout << op.source_code() << std::endl;
             retval = EXIT_FAILURE;
         }
-        std::cout << cy << std::endl;
-        std::cout << y << std::endl;
     }
     return retval;
 }
@@ -178,7 +176,7 @@ int main() {
         std::cout << "# Testing setup:" << std::endl;
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: float" << std::endl;
-        retval = test<double> (epsilon);
+        retval = test<double, viennacl::column_major> (epsilon);
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
