@@ -54,7 +54,7 @@ private:
     void compute_reductions_samesize(kernel_generation_stream& kss, std::map<binary_op_infos_base const *, local_memory<1> > const & lmems){
        unsigned int size = lmems.begin()->second.size();
        for(unsigned int stride = size/2 ; stride>0 ; stride /=2){
-           kss << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
+           kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
            for(std::map<binary_op_infos_base const *, local_memory<1> >::const_iterator it = lmems.begin(); it != lmems.end() ; ++it){
                kss <<  it->second.access("lid") <<  " = " << it->first->generate(it->second.access("lid"), "((lid < " + to_string(stride) + ")?" + it->second.access("lid+" + to_string(stride)) + " : 0)" ) << ";" << std::endl;
            }
@@ -96,7 +96,6 @@ public:
                 kss << lmem.access("get_local_id(0)") << " = " << (*it)->name() << "[lid];" << ";" << std::endl;
             }
             compute_reductions_samesize(kss,local_mems);
-            kss << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
             for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 (*it)->access_name(0,(*it)->name()+"_local"+"[0]");
             }
@@ -108,7 +107,7 @@ public:
         else{
             code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,std::list<vec_infos_base *>(),kss);
             for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
-                std::string sum_name = (*it)->name() + "_sum";
+                std::string sum_name = (*it)->name() + "_reduced";
                 kss << (*it)->scalartype() << " " << sum_name << " = 0;" << std::endl;
             }
             std::string size = (*vectors_.begin())->size();
@@ -116,7 +115,7 @@ public:
             kss.inc_tab();
             vector_cache.fetch_entries(0, "i");
             for(std::set<inner_product_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
-                    std::string sum_name = (*it)->name() + "_sum";
+                    std::string sum_name = (*it)->name() + "_reduced";
                     for(unsigned int a=0; a<alignment;++a){
                         if(alignment>1){
                             for(std::set<vec_infos_base *, viennacl::generator::deref_less >::iterator itv = vectors_.begin(); itv!=vectors_.end();++itv){
@@ -130,14 +129,13 @@ public:
             kss << "}" << std::endl;
             std::map<binary_op_infos_base const *, local_memory<1> > local_mems;
             for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
-                std::string sum_name = (*it)->name() + "_sum";
+                std::string sum_name = (*it)->name() + "_reduced";
                 local_memory<1> lmem = local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());
                 local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
                 kss << lmem.declare() << ";" << std::endl;
                 kss << lmem.access("lid") << " = " << sum_name << ";" << std::endl;
             }
             compute_reductions_samesize(kss,local_mems);
-            kss << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
             for(std::set<inner_product_infos_base *, viennacl::generator::deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
                 (*it)->set_computed();
                 kss << "if(lid==0) " << (*it)->name() << "[get_group_id(0)]" << "=" << (*it)->name()+"_local" << "[0]" << ";" << std::endl;
