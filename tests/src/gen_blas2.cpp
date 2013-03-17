@@ -32,7 +32,7 @@
 //
 #define VIENNACL_WITH_UBLAS 1
 
-//#define VIENNACL_DEBUG_ALL
+#define VIENNACL_DEBUG_ALL
 #define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
@@ -93,8 +93,8 @@ int test( Epsilon const& epsilon) {
     ublas::matrix<NumericT,ublas::row_major> cC;
     ublas::matrix<NumericT,ublas::row_major> cD;
 
-    unsigned int size1 = 4096;
-    unsigned int size2 = 4096;
+    unsigned int size1 = 128;
+    unsigned int size2 = 128;
 
     NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
     viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
@@ -108,7 +108,7 @@ int test( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size1; ++i){
         for(unsigned int j=0 ; j<size2; ++j){
-            cA(i,j)=(double)(3*i+j)/1000;
+            cA(i,j)=(double)rand()/RAND_MAX;
         }
     }
 
@@ -146,12 +146,14 @@ int test( Epsilon const& epsilon) {
         generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        if ( double delta = fabs ( diff ( cx, x) ) > epsilon ) {
+        if ( double delta = fabs ( diff ( cy, y) ) > epsilon ) {
             std::cout << "# Error at operation: gemv" << std::endl;
             std::cout << "  diff: " << delta << std::endl;
             std::cout << op.source_code() << std::endl;
             retval = EXIT_FAILURE;
         }
+        std::cout << cy << std::endl;
+        std::cout << y << std::endl;
     }
     return retval;
 }

@@ -228,6 +228,8 @@ template<class VCL_MATRIX>
 struct is_matrix_expression_t<dummy_matrix<VCL_MATRIX> >{ enum { value = 1}; };
 //template<class Scalartype, class F>
 //struct is_matrix_expression_t<viennacl::distributed::multi_matrix<Scalartype, F> >{ enum { value = 1}; };
+template<class T>
+struct is_matrix_expression_t<symbolic_matrix<T> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
 struct is_matrix_expression_t<binary_matrix_expression<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class T>
@@ -290,11 +292,7 @@ template<class LHS, class RHS> struct create_matrix{
 ///// BINARY OPERATORS
 ////////////////////////////////////////
 
-template<class T>
-typename viennacl::enable_if<is_matrix_expression_t<T>::value, symbolic_matrix<typename T::vcl_t> >::type
-trans(T const & mat){
-    return make_sym(mat);
-}
+
 
 template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
@@ -405,6 +403,11 @@ template<class SUB, class OP>
 struct convert_to_unary_expr<SUB,OP,false,true,false>{ typedef unary_scalar_expression<typename to_sym<SUB>::type, OP> type; };
 template<class SUB, class OP>
 struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression<typename to_sym<SUB>::type, OP> type; };
+
+template<class T>
+symbolic_matrix<T> trans(dummy_matrix<T> const & mat){
+    return symbolic_matrix<T>(mat.get(),true);
+}
 
 
 template<class T>

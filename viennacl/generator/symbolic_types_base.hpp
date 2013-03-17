@@ -277,23 +277,14 @@ namespace viennacl{
         class matvec_prod_infos_base : public binary_vector_expression_infos_base{
         public:
             matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
-                binary_vector_expression_infos_base(lhs,op,rhs){
-                val_name_ = repr() + "_val";
-            }
+                binary_vector_expression_infos_base(lhs,new scal_mul_type,rhs), op_reduce_(op){            }
 
             std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
 
-            std::string val_name(unsigned int m, unsigned int n){
-                return val_name_ +  '_' + to_string(m) + '_' + to_string(n);
-            }
-
-            std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){
-                return res + " = " + op_->generate(res , lhs + "*" + rhs);
-
-            }
+            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
 
         private:
-            std::string val_name_;
+            viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
 
         class inner_product_infos_base : public binary_scalar_expression_infos_base, public kernel_argument{

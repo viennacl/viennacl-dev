@@ -160,6 +160,7 @@ namespace viennacl
         virtual std::string generate(unsigned int i) const { return to_string(N); }
         virtual std::string repr() const { return "cst"+to_string(N); }
         virtual std::string simplified_repr() const { return repr(); }
+        virtual void access_index(unsigned int i, std::string const & str){ }
         virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &){ }
     };
 

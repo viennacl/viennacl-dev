@@ -57,6 +57,12 @@ public:
     unary_op_infos_base(std::string const & name) : op_infos_base(name) { }
 };
 
+class trans_type : public unary_op_infos_base{
+public:
+    trans_type() : unary_op_infos_base("trans"){ }
+    std::string generate(const std::string &sub) const { return sub; }
+};
+
 class unary_arithmetic_op_infos_base : public unary_op_infos_base{
 public:
     std::string generate(std::string const &  sub) const{ return expr_+sub; }

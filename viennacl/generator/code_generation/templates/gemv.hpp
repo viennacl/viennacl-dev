@@ -16,8 +16,8 @@ class profile : public optimization_profile{
 public:
 
     profile(){
-        m_ = 2;
-        k_ = 128;
+        m_ = 32;
+        k_ = 32;
         num_groups_0_ = 1024;
     }
 
@@ -74,6 +74,7 @@ public:
             unsigned int m = profile_->m();
             unsigned int k = profile_->k();
 
+            bool is_lhs_transposed = (*matrices_.begin())->is_transposed();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
             for(std::list<infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);
@@ -92,23 +93,36 @@ public:
                 kss << it->second.second.first.declare() << ";" << std::endl;
             }
 
-            kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size1 << " ; r += get_global_size(0)){" << std::endl;
+
+            if(is_lhs_transposed)
+                kss << "for(unsigned int c = get_global_id(0) ; c < " << internal_size2 << " ; c += get_global_size(0)){" << std::endl;
+            else
+                kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size1 << " ; r += get_global_size(0)){" << std::endl;
             kss.inc_tab();
 
             for(std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
                 matvec_prod_infos_base* prod = it->first;
+                binary_op_infos_base const & op_reduce = prod->op_reduce();
                 std::string const & sum_name = it->second.first;
                 local_memory<2> const & lmem = it->second.second.first;
                 vec_infos_base * assigned = it->second.second.second;
                 kss << scalartype << " " << sum_name << " = 0;" << std::endl;
-                kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
+                if(is_lhs_transposed)
+                    kss << "for(unsigned int r = get_global_id(1) ; r < " << internal_size1 << " ; r += get_global_size(1)){" << std::endl;
+                else
+                    kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
                 kss.inc_tab();
 
+                if(is_lhs_transposed){
+                    prod->lhs().access_index(0,"c + r*" + internal_size2);
+                    prod->rhs().access_index(0,"r");
+                }
+                else{
+                    prod->lhs().access_index(0,"c + r*" + internal_size2);
+                    prod->rhs().access_index(0,"c");
+                }
 
-                prod->lhs().access_index(0,"c + r*" + internal_size2);
-                prod->rhs().access_index(0,"c");
-
-                kss << sum_name << " = " << sum_name << " + " << prod->generate(0) << ";" << std::endl;
+                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->generate(0)) << ";" << std::endl;
 
                 kss.dec_tab();
                 kss << "}" << std::endl;
@@ -117,15 +131,20 @@ public:
 
                 for(unsigned int stride = k/2 ; stride>0 ; stride /=2){
                     kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
-                    kss <<  "if(lid1 < " << to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " += " <<   lmem.access("lid0", "lid1+" + to_string(stride)) << ";" << std::endl;
+                    kss <<  "if(lid1 < " << to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + to_string(stride))) << ";" << std::endl;
                 }
-                kss << "if(lid1==0)" << assigned->name() << "[r] = " << lmem.access("lid0","0") << ";" << std::endl;
+                kss << "if(lid1==0)" << assigned->name() ;
+                if(is_lhs_transposed) kss << "[c]" ;
+                else kss << "[r]" ;
+                kss << " = " << lmem.access("lid0","0") << ";" << std::endl;
             }
 
 
             kss.dec_tab();
             kss << "}" << std::endl;
     }
+
+
 
 private:
     std::list<infos_base* >  expressions_;
