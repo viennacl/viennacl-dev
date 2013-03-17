@@ -126,6 +126,7 @@ int test( Epsilon const& epsilon) {
     viennacl::vector<NumericT> x(size2);
     viennacl::vector<NumericT> y(size1);
 
+
     cB = cA;
     cC = cA;
     cD = cA;
@@ -145,10 +146,6 @@ int test( Epsilon const& epsilon) {
         generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
-
-//        std::cout << cx << std::endl;
-//        std::cout << x << std::endl;
-
         if ( double delta = fabs ( diff ( cx, x) ) > epsilon ) {
             std::cout << "# Error at operation: gemv" << std::endl;
             std::cout << "  diff: " << delta << std::endl;
@@ -186,7 +183,4 @@ int main() {
         else
             return retval;
     }
-
-
-
 }

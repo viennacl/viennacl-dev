@@ -108,6 +108,7 @@ namespace viennacl{
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
             virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &) = 0;
+            virtual void access_index(unsigned int i, std::string const & str) = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
         protected:
@@ -126,6 +127,10 @@ namespace viennacl{
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 lhs_->bind(shared_infos,temporaries_map);
                 rhs_->bind(shared_infos,temporaries_map);
+            }
+            virtual void access_index(unsigned int i, std::string const & str){
+                lhs_->access_index(i,str);
+                rhs_->access_index(i,str);
             }
 
         protected:
@@ -177,6 +182,9 @@ namespace viennacl{
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 sub_->bind(shared_infos,temporaries_map);
             }
+            virtual void access_index(unsigned int i, std::string const & str){
+                sub_->access_index(i,str);
+            }
 
             std::string generate(unsigned int i) const { return "(" +  op_->generate(sub_->generate(i)) + ")"; }
         protected:
@@ -203,6 +211,7 @@ namespace viennacl{
         public:
             kernel_argument( ) { }
             void access_name(unsigned int i, std::string const & new_name) { infos_->access_name(i,new_name); }
+            void access_index(unsigned int i, std::string const & str) { access_name(i,infos_->name()+"["+str+"]"); }
             virtual ~kernel_argument(){ }
             virtual std::string generate(unsigned int i) const { return infos_->access_name(i); }
             std::string name() const { return infos_->name(); }
@@ -312,6 +321,9 @@ namespace viennacl{
                 return "__global " + scalartype() + "*" + " " + name();
             }
 
+            void access_index(unsigned int i, std::string const & str){
+                binary_scalar_expression_infos_base::access_index(i,str);
+            }
 
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
 

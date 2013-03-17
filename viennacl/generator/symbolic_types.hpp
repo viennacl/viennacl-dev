@@ -286,10 +286,10 @@ namespace viennacl
           }
 
           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-              infos_= &shared_infos.insert(std::make_pair(vcl_mat_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+              infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
 
-          void const * handle() const{ return vcl_mat_.handle(); }
+          void const * handle() const{ return static_cast<void const *>(&vcl_mat_.handle()); }
 
           std::string repr() const{
               return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_)+'_'+to_string((int)is_transposed_);
