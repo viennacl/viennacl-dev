@@ -9,6 +9,11 @@ namespace viennacl{
 
 namespace generator{
 
+
+//////////////////////////////////////
+///// OPERATOR BASE
+//////////////////////////////////////
+
 class op_infos_base {
 public:
     op_infos_base(std::string const & name) : name_(name){ }
@@ -19,16 +24,13 @@ protected:
 
 class binary_op_infos_base : public op_infos_base {
 public:
-    bool is_assignment() const { return is_assignment_; }
     virtual std::string generate(std::string const & lhs, std::string const & rhs) const = 0;
-    binary_op_infos_base(std::string const & name, bool is_assignment) : op_infos_base(name), is_assignment_(is_assignment){ }
-private:
-    bool is_assignment_;
+    binary_op_infos_base(std::string const & name) : op_infos_base(name){ }
 };
 
 class binary_fun_op_infos_base : public binary_op_infos_base{
 public:
-    binary_fun_op_infos_base(std::string const & name) : binary_op_infos_base(name,false){ }
+    binary_fun_op_infos_base(std::string const & name) : binary_op_infos_base(name){ }
     std::string generate(std::string const  & lhs, std::string const & rhs) const{
         return name_+"("+lhs+","+rhs+")";
     }
@@ -36,7 +38,7 @@ public:
 
 class nonarithmetic_op_infos_base : public binary_op_infos_base{
 public:
-    nonarithmetic_op_infos_base(std::string name) : binary_op_infos_base(name,false){ }
+    nonarithmetic_op_infos_base(std::string name) : binary_op_infos_base(name){ }
 };
 
 class arithmetic_op_infos_base : public binary_op_infos_base{
@@ -45,11 +47,15 @@ public:
         return lhs + expr_ + rhs;
     }
 protected:
-    arithmetic_op_infos_base(std::string const & name, std::string const & expr, bool is_assignment) :  binary_op_infos_base(name,is_assignment), expr_(expr){ }
+    arithmetic_op_infos_base(std::string const & name, std::string const & expr) :  binary_op_infos_base(name), expr_(expr){ }
 private:
     std::string expr_;
 };
 
+class assignment_op_infos_base : public arithmetic_op_infos_base{
+public:
+    assignment_op_infos_base(std::string const & name, std::string const & expr) : arithmetic_op_infos_base(name,expr){ }
+};
 
 class unary_op_infos_base : public op_infos_base {
 public:
@@ -57,11 +63,7 @@ public:
     unary_op_infos_base(std::string const & name) : op_infos_base(name) { }
 };
 
-class trans_type : public unary_op_infos_base{
-public:
-    trans_type() : unary_op_infos_base("trans"){ }
-    std::string generate(const std::string &sub) const { return sub; }
-};
+
 
 class unary_arithmetic_op_infos_base : public unary_op_infos_base{
 public:
@@ -92,25 +94,37 @@ private:
     viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
 };
 
-#define MAKE_BINARY_ARITHMETIC_OP(name,expression,is_assignment) \
-class name##_type : public arithmetic_op_infos_base{\
+////////////////////////////
+//// BINARY AND UNARY OPERATORS
+///////////////////////////
+
+#define MAKE_OP(name,expression,base) \
+class name##_type : public base{\
     public:\
-    name##_type() : arithmetic_op_infos_base(#name,#expression,is_assignment){ }\
+    name##_type() : base(#name,#expression){ }\
 };
 
-MAKE_BINARY_ARITHMETIC_OP(assign,=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_add,+=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_sub,-=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_scal_mul,*=,true)
-MAKE_BINARY_ARITHMETIC_OP(inplace_scal_div,/=,true)
+MAKE_OP(assign,=,assignment_op_infos_base)
+MAKE_OP(inplace_add,+=,assignment_op_infos_base)
+MAKE_OP(inplace_sub,-=,assignment_op_infos_base)
+MAKE_OP(inplace_scal_mul,*=,assignment_op_infos_base)
+MAKE_OP(inplace_scal_div,/=,assignment_op_infos_base)
 
-MAKE_BINARY_ARITHMETIC_OP(add,+,false)
-MAKE_BINARY_ARITHMETIC_OP(sub,-,false)
-#undef MAKE_BINARY_ARITHMETIC_OP
+MAKE_OP(add,+,arithmetic_op_infos_base)
+MAKE_OP(sub,-,arithmetic_op_infos_base)
 
-class scal_mul_type : public arithmetic_op_infos_base{
+MAKE_OP(unary_sub,-,unary_arithmetic_op_infos_base)
+MAKE_OP(identity, ,unary_arithmetic_op_infos_base)
+
+class trans_type : public unary_op_infos_base{
 public:
-    scal_mul_type() : arithmetic_op_infos_base("scal_mul_type","*",false){ }
+    trans_type() : unary_op_infos_base("trans"){ }
+    std::string generate(const std::string &sub) const { return sub; }
+};
+
+class mul_type : public arithmetic_op_infos_base{
+public:
+    mul_type() : arithmetic_op_infos_base("scal_mul_type","*"){ }
     std::string generate(std::string const & lhs, std::string const & rhs) const{
         if(lhs=="1" && rhs=="1") return "1";
         else if(rhs=="1") return lhs;
@@ -119,25 +133,18 @@ public:
     }
 };
 
-class scal_div_type : public arithmetic_op_infos_base{
+class div_type : public arithmetic_op_infos_base{
 public:
-    scal_div_type() : arithmetic_op_infos_base("scal_div_type","/",false){ }
+    div_type() : arithmetic_op_infos_base("scal_div_type","/"){ }
     std::string generate(std::string const & lhs, std::string const & rhs) const{
         if(rhs=="1") return lhs;
         else return lhs + "/" + rhs;
     }
 };
 
-#define MAKE_UNARY_ARITHMETIC_OP(name,expression) \
-class name##_type : public unary_arithmetic_op_infos_base{\
-    public:\
-    name##_type() : unary_arithmetic_op_infos_base(#name,#expression){ }\
-};
 
-MAKE_UNARY_ARITHMETIC_OP(unary_sub,-)
-MAKE_UNARY_ARITHMETIC_OP(identity,-)
 
-#undef MAKE_UNARY_ARITHMETIC_OP
+#undef MAKE_OP
 
 /////////////////////////////////////////
 /////////////// BUILTIN FUNCTIONS

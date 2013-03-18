@@ -349,7 +349,7 @@ public:
 
         //Fills assigned matrices set
         for(std::list<binary_matrix_expression_infos_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
-            if((*it)->op().is_assignment()) assigned.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
+            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
         }
 
         //Fills lhs's

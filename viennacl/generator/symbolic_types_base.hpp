@@ -102,7 +102,7 @@ namespace viennacl{
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
             virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &) = 0;
-            virtual void access_index(unsigned int i, std::string const & str) = 0;
+            virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
         protected:
@@ -122,9 +122,9 @@ namespace viennacl{
                 lhs_->bind(shared_infos,temporaries_map);
                 rhs_->bind(shared_infos,temporaries_map);
             }
-            virtual void access_index(unsigned int i, std::string const & str){
-                lhs_->access_index(i,str);
-                rhs_->access_index(i,str);
+            virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                lhs_->access_index(i,ind0,ind1);
+                rhs_->access_index(i,ind0,ind1);
             }
 
         protected:
@@ -139,8 +139,8 @@ namespace viennacl{
         public:
             std::string generate(unsigned int i) const { return "(" +  op_->generate(lhs_->generate(i), rhs_->generate(i) ) + ")"; }
             std::string simplified_repr() const{
-                if(op_->is_assignment()){
-                    return "p_"+lhs_->simplified_repr() + assign_type().name() + rhs_->simplified_repr()+"_p";
+                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa)){
+                    return "("+lhs_->simplified_repr() + "=" + rhs_->simplified_repr()+"";
                 }
                 else{
                     return lhs_->repr();
@@ -176,10 +176,10 @@ namespace viennacl{
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 sub_->bind(shared_infos,temporaries_map);
             }
-            virtual void access_index(unsigned int i, std::string const & str){
-                sub_->access_index(i,str);
+            virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                if(dynamic_cast<trans_type *>(op_.get())) sub_->access_index(i,ind1,ind0);
+                else  sub_->access_index(i,ind0,ind1);
             }
-
             std::string generate(unsigned int i) const { return "(" +  op_->generate(sub_->generate(i)) + ")"; }
         protected:
             viennacl::tools::shared_ptr<infos_base> sub_;
@@ -205,7 +205,6 @@ namespace viennacl{
         public:
             kernel_argument( ) { }
             void access_name(unsigned int i, std::string const & new_name) { infos_->access_name(i,new_name); }
-            void access_index(unsigned int i, std::string const & str) { access_name(i,infos_->name()+"["+str+"]"); }
             virtual ~kernel_argument(){ }
             virtual std::string generate(unsigned int i) const { return infos_->access_name(i); }
             std::string name() const { return infos_->name(); }
@@ -237,6 +236,7 @@ namespace viennacl{
             virtual std::string arguments_string() const{
                 return scalartype() + " " + name();
             }
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         };
 
         class gpu_scal_infos_base : public kernel_argument{
@@ -244,6 +244,7 @@ namespace viennacl{
             virtual std::string arguments_string() const{
                 return  "__global " + scalartype() + "*"  + " " + name();
             }
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         };
 
         class matmat_prod_infos_base : public binary_matrix_expression_infos_base{
@@ -271,7 +272,7 @@ namespace viennacl{
         class matvec_prod_infos_base : public binary_vector_expression_infos_base{
         public:
             matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
-                binary_vector_expression_infos_base(lhs,new scal_mul_type,rhs), op_reduce_(op){            }
+                binary_vector_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){            }
 
             std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
 
@@ -283,7 +284,7 @@ namespace viennacl{
 
         class inner_product_infos_base : public binary_scalar_expression_infos_base, public kernel_argument{
         public:
-            inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new scal_mul_type,rhs)
+            inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new mul_type,rhs)
                                                                                                     , op_reduce_(op){ }
             bool is_computed(){ return current_kernel_; }
             void set_computed(){ current_kernel_ = 1; }
@@ -299,8 +300,8 @@ namespace viennacl{
             std::string arguments_string() const{
                 return "__global " + scalartype() + "*" + " " + name();
             }
-            void access_index(unsigned int i, std::string const & str){
-                binary_scalar_expression_infos_base::access_index(i,str);
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                binary_scalar_expression_infos_base::access_index(i,ind0,ind1);
             }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             std::string generate(unsigned int i) const{ return infos_->access_name(0); }
@@ -316,8 +317,11 @@ namespace viennacl{
             std::string  start() const{ return name() + "_start";}
             std::string  inc() const{ return name() + "_inc";}
             std::string arguments_string() const{ return  " __global " + aligned_scalartype() + "*"  + " " + name()
-                                                                     + ", unsigned int " + size();                                                                     ;
-                                                }
+                                                                     + ", unsigned int " + size();}
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                assert(ind1=="0");
+                infos_->access_name(i,infos_->name()+"["+ind0+"]");
+            }
             virtual size_t real_size() const = 0;
             virtual ~vec_infos_base(){ }
         };
@@ -346,6 +350,14 @@ namespace viennacl{
                     return '(' + offset_i + ')' + '*' + internal_size2() + "+ (" + offset_j + ')';
                 }
                 return '(' + offset_i + ')' + "+ (" + offset_j + ')' + '*' + internal_size1();
+            }
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                std::string str;
+                if(is_rowmajor_)
+                    str = ind0+"*"+internal_size2()+"+"+ind1;
+                else
+                    ind1+"*"+internal_size1()+"+"+ind0;
+                infos_->access_name(i,infos_->name()+'['+str+']');
             }
             virtual size_t real_size1() const = 0;
             virtual size_t real_size2() const = 0;

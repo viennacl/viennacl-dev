@@ -78,9 +78,7 @@ public:
         if(is_computed){
             std::list<gpu_scal_infos_base *> assigned_scal;
             for(std::list<binary_scalar_expression_infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
-                    if((*it)->op().is_assignment()==true){
-                        assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
-                    }
+                if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op()))  assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
             }
             code_generation::utils::cache_manager<gpu_scal_infos_base> scalar_cache(gpu_scalars_,assigned_scal,kss);
 
@@ -114,7 +112,7 @@ public:
 
             //Set access index
             for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
-                (*it)->access_index(0,"i");
+                (*it)->access_index(0,"i","0");
             }
 
             vector_cache.fetch_entries(0);

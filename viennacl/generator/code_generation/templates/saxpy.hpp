@@ -79,18 +79,18 @@ public:
 
         std::list<vec_infos_base *> assigned_vec;
         for(std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin(); it!= vector_expressions_.end();++it){
-            if((*it)->op().is_assignment()==true) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&(*it)->lhs()));
+            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&(*it)->lhs()));
         }
 
         std::list<mat_infos_base *> assigned_mat;
         for(std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin(); it!= matrix_expressions_.end();++it){
-            if((*it)->op().is_assignment()==true) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
+            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
         }
 
 
         std::list<gpu_scal_infos_base*> assigned_scal;
         for(std::list<binary_scalar_expression_infos_base*>::iterator it=scalar_expressions_.begin(); it!= scalar_expressions_.end();++it){
-            if((*it)->op().is_assignment()==true) assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
+            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
         }
 
         code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,assigned_vec,kss);
@@ -109,7 +109,7 @@ public:
             //Set access indices
             for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
-                    (*it)->access_index(j,"i" + to_string(j));
+                    (*it)->access_index(j,"i" + to_string(j),"0");
                 }
             }
 
@@ -140,7 +140,7 @@ public:
 
             //Set access indices
             for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
-                (*it)->access_index(0,"r*" + first_matrix->internal_size2() + " + c");
+                (*it)->access_index(0,"r","c");
 
 
             //Loads into private memory

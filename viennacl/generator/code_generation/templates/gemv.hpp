@@ -114,16 +114,8 @@ public:
                     kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
                 kss.inc_tab();
 
-                if(is_lhs_transposed){
-                    if(is_lhs_row_major) prod->lhs().access_index(0,"r + c*" + internal_size2);
-                    else prod->lhs().access_index(0,"r*" + internal_size1 + "+ c");
-                }
-                else{
-                    if(is_lhs_row_major) prod->lhs().access_index(0,"c + r*" + internal_size2);
-                    else prod->lhs().access_index(0,"c*" + internal_size1 + "+ r");
-                }
-
-                prod->rhs().access_index(0,"c");
+                prod->lhs().access_index(0,"r","c");
+                prod->rhs().access_index(0,"c","0");
 
 
                 kss << sum_name << " = " << op_reduce.generate(sum_name,prod->generate(0)) << ";" << std::endl;

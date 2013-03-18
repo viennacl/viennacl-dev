@@ -256,9 +256,9 @@ template<> struct is_operator<add_type>{ enum { value = 1}; };
 template<> struct is_operator<inplace_add_type>{ enum { value = 1}; };
 template<> struct is_operator<sub_type>{ enum { value = 1}; };
 template<> struct is_operator<inplace_sub_type>{ enum { value = 1}; };
-template<> struct is_operator<scal_mul_type>{ enum { value = 1}; };
+template<> struct is_operator<mul_type>{ enum { value = 1}; };
 template<> struct is_operator<inplace_scal_mul_type>{ enum { value = 1}; };
-template<> struct is_operator<scal_div_type>{ enum { value = 1}; };
+template<> struct is_operator<div_type>{ enum { value = 1}; };
 template<> struct is_operator<inplace_scal_div_type>{ enum { value = 1}; };
 
 template<class T>
@@ -298,12 +298,12 @@ template<class LHS, class RHS>
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
                              ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
                              ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+                            ,typename convert_to_binary_expr<LHS,mul_type,RHS
                                                     ,create_vector<LHS,RHS>::value
                                                     ,create_scalar<LHS,RHS>::value
                                                     ,create_matrix<LHS,RHS>::value>::type>::type
 element_prod(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+    return typename convert_to_binary_expr<LHS,mul_type,RHS
             ,create_vector<LHS,RHS>::value
             ,create_scalar<LHS,RHS>::value
             ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
@@ -340,12 +340,12 @@ operator-(LHS const & lhs, RHS const & rhs){
 }
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-                            ,typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+                            ,typename convert_to_binary_expr<LHS,mul_type,RHS
                             ,create_vector<LHS,RHS>::value
                             ,create_scalar<LHS,RHS>::value
                             ,create_matrix<LHS,RHS>::value>::type>::type
 operator*(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,scal_mul_type,RHS
+    return typename convert_to_binary_expr<LHS,mul_type,RHS
                                     ,create_vector<LHS,RHS>::value
                                     ,create_scalar<LHS,RHS>::value
                                     ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
@@ -353,12 +353,12 @@ operator*(LHS const & lhs, RHS const & rhs){
 
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
-                            ,typename convert_to_binary_expr<LHS,scal_div_type,RHS
+                            ,typename convert_to_binary_expr<LHS,div_type,RHS
                             ,create_vector<LHS,RHS>::value
                             ,create_scalar<LHS,RHS>::value
                             ,create_matrix<LHS,RHS>::value>::type>::type
 operator/(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,scal_div_type,RHS
+    return typename convert_to_binary_expr<LHS,div_type,RHS
                                     ,create_vector<LHS,RHS>::value
                                     ,create_scalar<LHS,RHS>::value
                                     ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
