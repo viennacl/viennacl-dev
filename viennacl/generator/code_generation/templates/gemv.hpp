@@ -75,9 +75,7 @@ public:
             unsigned int m = profile_->m();
             unsigned int k = profile_->k();
 
-
             bool is_lhs_transposed = is_transposed(&first_prod->lhs());
-            std::cout << "trans " << is_lhs_transposed << std::endl;
             bool is_lhs_row_major = first_matrix->is_rowmajor();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
             for(std::list<binary_vector_expression_infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
@@ -98,7 +96,7 @@ public:
 
 
             if(is_lhs_transposed)
-                kss << "for(unsigned int c = get_global_id(0) ; c < " << internal_size2 << " ; c += get_global_size(0)){" << std::endl;
+                kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size2 << " ; r += get_global_size(0)){" << std::endl;
             else
                 kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size1 << " ; r += get_global_size(0)){" << std::endl;
             kss.inc_tab();
@@ -111,20 +109,22 @@ public:
                 vec_infos_base * assigned = it->second.second.second;
                 kss << scalartype << " " << sum_name << " = 0;" << std::endl;
                 if(is_lhs_transposed)
-                    kss << "for(unsigned int r = get_global_id(1) ; r < " << internal_size1 << " ; r += get_global_size(1)){" << std::endl;
+                    kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size1 << " ; c += get_global_size(1)){" << std::endl;
                 else
                     kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
                 kss.inc_tab();
 
-                if(is_lhs_row_major) prod->lhs().access_index(0,"c + r*" + internal_size2);
-                else prod->lhs().access_index(0,"c*" + internal_size1 + "+ r");
-
                 if(is_lhs_transposed){
-                    prod->rhs().access_index(0,"r");
+                    if(is_lhs_row_major) prod->lhs().access_index(0,"r + c*" + internal_size2);
+                    else prod->lhs().access_index(0,"r*" + internal_size1 + "+ c");
                 }
                 else{
-                    prod->rhs().access_index(0,"c");
+                    if(is_lhs_row_major) prod->lhs().access_index(0,"c + r*" + internal_size2);
+                    else prod->lhs().access_index(0,"c*" + internal_size1 + "+ r");
                 }
+
+                prod->rhs().access_index(0,"c");
+
 
                 kss << sum_name << " = " << op_reduce.generate(sum_name,prod->generate(0)) << ";" << std::endl;
 
@@ -138,8 +138,7 @@ public:
                     kss <<  "if(lid1 < " << to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + to_string(stride))) << ";" << std::endl;
                 }
                 kss << "if(lid1==0)" << assigned->name() ;
-                if(is_lhs_transposed) kss << "[c]" ;
-                else kss << "[r]" ;
+                kss << "[r]" ;
                 kss << " = " << lmem.access("lid0","0") << ";" << std::endl;
             }
 

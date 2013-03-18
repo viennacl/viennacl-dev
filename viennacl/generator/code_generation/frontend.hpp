@@ -53,7 +53,7 @@ namespace viennacl{
                 code_generation::optimization_profile* profile() { return optimization_profile_.get(); }
 
                 void config_nd_range(viennacl::ocl::kernel & k) const{
-                    optimization_profile_->config_nd_range(k, &dynamic_cast<binary_arithmetic_tree_infos_base*>(trees_.front())->lhs());
+                    optimization_profile_->config_nd_range(k,trees_.front());
                 }
 
             private:
