@@ -260,28 +260,28 @@ int main() {
             return retval;
     }
 
-//    std::cout << std::endl;
-//    std::cout << "----------------------------------------------" << std::endl;
-//    std::cout << "----------------------------------------------" << std::endl;
-//    std::cout << "## Test :: Matrix" << std::endl;
-//    std::cout << "----------------------------------------------" << std::endl;
-//    std::cout << "----------------------------------------------" << std::endl;
-//    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << "## Test :: Matrix" << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << std::endl;
 
-//    std::cout << std::endl;
-//    std::cout << "----------------------------------------------" << std::endl;
-//    std::cout << std::endl;
-//    {
-//        double epsilon = 1.0E-4;
-//        std::cout << "# Testing setup:" << std::endl;
-//        std::cout << "  eps:     " << epsilon << std::endl;
-//        std::cout << "  numeric: float" << std::endl;
-//        retval = test_matrix<double> (epsilon);
-//        if ( retval == EXIT_SUCCESS )
-//            std::cout << "# Test passed" << std::endl;
-//        else
-//            return retval;
-//    }
+    std::cout << std::endl;
+    std::cout << "----------------------------------------------" << std::endl;
+    std::cout << std::endl;
+    {
+        double epsilon = 1.0E-4;
+        std::cout << "# Testing setup:" << std::endl;
+        std::cout << "  eps:     " << epsilon << std::endl;
+        std::cout << "  numeric: float" << std::endl;
+        retval = test_matrix<double> (epsilon);
+        if ( retval == EXIT_SUCCESS )
+            std::cout << "# Test passed" << std::endl;
+        else
+            return retval;
+    }
 
 
 

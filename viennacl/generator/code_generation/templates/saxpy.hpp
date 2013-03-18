@@ -107,7 +107,14 @@ public:
         if(matrices_.size()) first_matrix = *matrices_.begin();
         scalar_cache.fetch_entries(0,"0");
         if(first_vector) utils::unroll_loop(kss,n_unroll,vector_expressions_,vector_cache, first_vector->size());
-        if(first_matrix) utils::unroll_loop(kss,n_unroll,matrix_expressions_,matrix_cache, first_matrix->internal_size1()+'*'+first_matrix->internal_size2());
+        if(first_matrix){
+            kss << "unsigned int r = get_global_id(0)/" << first_matrix->internal_size2() << ";" << std::endl;
+            kss << "unsigned int c = get_global_id(0)%" << first_matrix->internal_size2() << ";" << std::endl;
+            matrix_cache.fetch_entries(0,"r*" + first_matrix->internal_size2() + " + c");
+            for(std::list<infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
+                kss << (*it)->generate(0) << ";" << std::endl;
+            matrix_cache.writeback_entries(0,"r*" + first_matrix->internal_size2() + " + c");
+        }
         scalar_cache.writeback_entries(0,"0");
     }
 
