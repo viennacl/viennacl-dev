@@ -257,8 +257,7 @@ namespace viennacl
         public:
           typedef typename VCL_MATRIX::value_type::value_type ScalarType;
 
-          symbolic_matrix(VCL_MATRIX const & vcl_mat, bool is_transposed) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value
-                                                                       ,is_transposed), vcl_mat_(vcl_mat){
+          symbolic_matrix(VCL_MATRIX const & vcl_mat) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value), vcl_mat_(vcl_mat){
 
           }
 
@@ -293,11 +292,10 @@ namespace viennacl
           void const * handle() const{ return static_cast<void const *>(&vcl_mat_.handle()); }
 
           std::string repr() const{
-              return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_)+'_'+to_string((int)is_transposed_);
+              return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_);
           }
       private:
           VCL_MATRIX const & vcl_mat_;
-
       };
 
 

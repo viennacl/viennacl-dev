@@ -194,7 +194,7 @@ private:
 template<class VCL_MATRIX_T>
 struct to_sym<dummy_matrix<VCL_MATRIX_T> >{
     typedef symbolic_matrix<VCL_MATRIX_T> type;
-    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return type(t.get(),false); }
+    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return type(t.get()); }
 };
 
 
@@ -405,9 +405,17 @@ template<class SUB, class OP>
 struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression<typename to_sym<SUB>::type, OP> type; };
 
 template<class T>
-symbolic_matrix<T> trans(dummy_matrix<T> const & mat){
-    return symbolic_matrix<T>(mat.get(),true);
+typename viennacl::enable_if<is_vector_expression_t<T>::value
+                             ||is_matrix_expression_t<T>::value
+                            ,typename convert_to_unary_expr<T,trans_type,is_vector_expression_t<T>::value
+                                                            ,false
+                                                            ,is_matrix_expression_t<T>::value>::type>::type
+trans(T const & t){
+    return typename convert_to_unary_expr<T,trans_type,is_vector_expression_t<T>::value
+                                           ,false
+                                           ,is_matrix_expression_t<T>::value>::type(make_sym(t));
 }
+
 
 
 template<class T>

@@ -94,12 +94,6 @@ namespace viennacl{
             unsigned int alignment_;
         };
 
-
-
-
-
-
-
         class kernel_argument;
 
         class infos_base{
@@ -176,7 +170,7 @@ namespace viennacl{
         public:
             unary_tree_infos_base(infos_base * sub, unary_op_infos_base * op) : sub_(sub), op_(op) { }
             infos_base & sub() const{ return *sub_; }
-            unary_op_infos_base & op() { return *op_; }
+            unary_op_infos_base const & op() const{ return *op_; }
             std::string repr() const { return "p_"+ op_->name() + sub_->repr()+"_p"; }
             std::string simplified_repr() const { return "p_" + op_->name() + sub_->simplified_repr()+"_p"; }
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
@@ -291,35 +285,25 @@ namespace viennacl{
         public:
             inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new scal_mul_type,rhs)
                                                                                                     , op_reduce_(op){ }
-
             bool is_computed(){ return current_kernel_; }
-
             void set_computed(){ current_kernel_ = 1; }
-
             std::string repr() const{
                 return binary_scalar_expression_infos_base::repr();
             }
-
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map);
             }
-
             std::string simplified_repr() const {
                 return binary_scalar_expression_infos_base::simplified_repr();
             }
-
             std::string arguments_string() const{
                 return "__global " + scalartype() + "*" + " " + name();
             }
-
             void access_index(unsigned int i, std::string const & str){
                 binary_scalar_expression_infos_base::access_index(i,str);
             }
-
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
-
             std::string generate(unsigned int i) const{ return infos_->access_name(0); }
-
         private:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
@@ -357,23 +341,18 @@ namespace viennacl{
                                                             + ", unsigned int " + internal_size2();
             }
             bool const is_rowmajor() const { return is_rowmajor_; }
-            bool const is_transposed() const { return is_transposed_; }
             std::string offset(std::string const & offset_i, std::string const & offset_j){
                 if(is_rowmajor_){
                     return '(' + offset_i + ')' + '*' + internal_size2() + "+ (" + offset_j + ')';
                 }
                 return '(' + offset_i + ')' + "+ (" + offset_j + ')' + '*' + internal_size1();
             }
-
             virtual size_t real_size1() const = 0;
             virtual size_t real_size2() const = 0;
             virtual ~mat_infos_base() { }
-            mat_infos_base(bool is_rowmajor
-                           ,bool is_transposed) : is_rowmajor_(is_rowmajor)
-                                                  ,is_transposed_(is_transposed){ }
+            mat_infos_base(bool is_rowmajor) : is_rowmajor_(is_rowmajor){ }
         protected:
             bool is_rowmajor_;
-            bool is_transposed_;
         };
 
 
@@ -420,6 +399,15 @@ namespace viennacl{
             else return res;
         }
 
+        template<class T>
+        bool is_transposed(T const * t){
+            if(unary_matrix_expression_infos_base const * m = dynamic_cast<unary_matrix_expression_infos_base const *>(t)){
+                return static_cast<bool>(dynamic_cast<trans_type const *>(&m->op()));
+            }
+            if(unary_vector_expression_infos_base const * v = dynamic_cast<unary_vector_expression_infos_base const *>(t))
+                return static_cast<bool>(dynamic_cast<trans_type const *>(&v->op()));
+            return false;
+        }
     }
 
 }

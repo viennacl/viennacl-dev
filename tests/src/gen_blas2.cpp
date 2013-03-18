@@ -142,8 +142,8 @@ int test( Epsilon const& epsilon) {
     // --------------------------------------------------------------------------
     {
         std::cout << "testing gemv..." << std::endl;
-        cy     =  ublas::prod(cA,cx);
-        generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
+        cy     =  ublas::prod(trans(cA),cx);
+        generator::custom_operation op((dv_t(y) = generator::prod(trans(dm_t(A)),dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         if ( double delta = fabs ( diff ( cy, y) ) > epsilon ) {
@@ -176,7 +176,7 @@ int main() {
         std::cout << "# Testing setup:" << std::endl;
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: float" << std::endl;
-        retval = test<double, viennacl::column_major> (epsilon);
+        retval = test<double, viennacl::row_major> (epsilon);
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;

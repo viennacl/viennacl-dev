@@ -61,12 +61,13 @@ public:
             extract_as(*it, gpu_scalars_,  utils::is_type<gpu_scal_infos_base>());
             extract_as(*it, matrices_, utils::is_type<mat_infos_base>());
             extract_as(*it, vectors_, utils::is_type<vec_infos_base>());
+            extract_as(*it, prods_, utils::is_type<matvec_prod_infos_base>());
         }
     }
 
     void operator()(kernel_generation_stream& kss){
             mat_infos_base* first_matrix = *matrices_.begin();
-
+            matvec_prod_infos_base * first_prod = *prods_.begin();
             std::string scalartype = first_matrix->scalartype();
             std::string internal_size1 = first_matrix->internal_size1();
             std::string internal_size2 = first_matrix->internal_size2();
@@ -74,7 +75,9 @@ public:
             unsigned int m = profile_->m();
             unsigned int k = profile_->k();
 
-            bool is_lhs_transposed = (*matrices_.begin())->is_transposed();
+
+            bool is_lhs_transposed = is_transposed(&first_prod->lhs());
+            std::cout << "trans " << is_lhs_transposed << std::endl;
             bool is_lhs_row_major = first_matrix->is_rowmajor();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
             for(std::list<infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
@@ -150,6 +153,7 @@ public:
 
 private:
     std::list<infos_base* >  expressions_;
+    std::set<matvec_prod_infos_base *, viennacl::generator::deref_less >  prods_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;

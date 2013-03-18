@@ -2,6 +2,7 @@
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
 
 #include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/symbolic_types_base.hpp"
 
 namespace viennacl{
 
@@ -98,23 +99,23 @@ private:
 class generator : public code_generation::generator{
     typedef std::set<matmat_prod_infos_base*,viennacl::generator::deref_less> matmat_prods_t;
 
-    static void transform_block(mat_infos_base const & mat_infos, bool store_shared
+    static void transform_block(mat_infos_base const & mat_infos, bool is_transposed, bool store_shared
                                 , unsigned int & large_block_1, unsigned int & large_block_2
                                 , unsigned int & small_block_1, unsigned int & small_block_2){
         unsigned int vectorization = mat_infos.alignment();
         if(mat_infos.is_rowmajor()){
-            if(mat_infos.is_transposed()) large_block_1 /= vectorization;
+            if(is_transposed) large_block_1 /= vectorization;
             else large_block_2/=vectorization;
             if(!store_shared){
-                if(mat_infos.is_transposed()) small_block_1/=vectorization;
+                if(is_transposed) small_block_1/=vectorization;
                 else small_block_2/=vectorization;
             }
         }
         else{
-            if(mat_infos.is_transposed()) large_block_2 /= vectorization;
+            if(is_transposed) large_block_2 /= vectorization;
             else large_block_1/=vectorization;
             if(!store_shared){
-                if(mat_infos.is_transposed())  small_block_2/=vectorization;
+                if(is_transposed)  small_block_2/=vectorization;
                 else    small_block_1/=vectorization;
             }
         }
@@ -127,8 +128,10 @@ class generator : public code_generation::generator{
     struct declare_rhs_global_ptr{
 
         declare_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks_rhs,unsigned int _ns_rhs,
-                               unsigned int _nl_rhs, std::string const & _offset_n ) : kss(_kss), ks_rhs(_ks_rhs), ns_rhs(_ns_rhs)
+                               unsigned int _nl_rhs, std::string const & _offset_n,
+                               bool _is_transposed) : kss(_kss), ks_rhs(_ks_rhs), ns_rhs(_ns_rhs)
                                                                                         , nl_rhs(_nl_rhs), offset_n(_offset_n)
+                                                                                        , is_transposed(_is_transposed)
 
         { }
 
@@ -137,7 +140,7 @@ class generator : public code_generation::generator{
                 for(unsigned int k = 0 ; k < ks_rhs ; ++k){
                     std::string ptr_name = mat->name() + "_ptr_" + to_string(k);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + " ;
-                    if(mat->is_transposed()) kss<< mat->offset(to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + to_string(nl_rhs),"0");
+                    if(is_transposed) kss<< mat->offset(to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + to_string(nl_rhs),"0");
                     else kss << mat->offset(to_string(k),offset_n + " +  get_group_id(1)*" + to_string(nl_rhs));
                     kss << ";" << std::endl;
                     mat->access_name(k,"*" + ptr_name);
@@ -146,7 +149,7 @@ class generator : public code_generation::generator{
                 for(unsigned int n = 0 ; n < ns_rhs ; ++n){
                     std::string ptr_name = mat->name() + "_ptr_" + to_string(n);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " +  " ;
-                    if(mat->is_transposed())  kss << mat->offset(offset_n + " +  get_group_id(1)*" + to_string(nl_rhs), to_string(n));
+                    if(is_transposed)  kss << mat->offset(offset_n + " +  get_group_id(1)*" + to_string(nl_rhs), to_string(n));
                     else kss << mat->offset("0",offset_n + " +  get_group_id(1)*" + to_string(nl_rhs) + " + " + to_string(n));
                     kss << ";" << std::endl;
                     mat->access_name(n,"*" + ptr_name);
@@ -159,6 +162,7 @@ class generator : public code_generation::generator{
         unsigned int ns_rhs;
         unsigned int nl_rhs;
         std::string const & offset_n;
+        bool is_transposed;
     };
 
 
@@ -166,7 +170,9 @@ class generator : public code_generation::generator{
 
         declare_lhs_global_ptr(kernel_generation_stream & _kss,
                                unsigned int _ms_lhs, unsigned int _ks_lhs,
-                               unsigned int _ml_lhs, std::string const & _offset_m) : kss(_kss), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), ml_lhs(_ml_lhs), offset_m(_offset_m)
+                               unsigned int _ml_lhs, std::string const & _offset_m
+                               ,bool _is_transposed) : kss(_kss), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), ml_lhs(_ml_lhs), offset_m(_offset_m),
+                                                         is_transposed(_is_transposed)
         { }
 
         void operator()( mat_infos_base * mat) {
@@ -174,7 +180,7 @@ class generator : public code_generation::generator{
                 for(unsigned int m=0; m<ms_lhs; ++m){
                     std::string ptr_name = mat->name() + "_ptr_" + to_string(m);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + ";
-                    if(mat->is_transposed()) kss << mat->offset(to_string(m),"get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
+                    if(is_transposed) kss << mat->offset(to_string(m),"get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                     else kss << mat->offset("get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m + "+" + to_string(m),"0");
                     kss << ";" << std::endl;
                     mat->access_name(m,"*" + ptr_name);
@@ -184,7 +190,7 @@ class generator : public code_generation::generator{
                 for(unsigned int k=0; k<ks_lhs; ++k){
                     std::string ptr_name = mat->name() + "_ptr_" + to_string(k);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + " ;
-                    if(mat->is_transposed()) kss << mat->offset("0", to_string(k) + "+" + "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
+                    if(is_transposed) kss << mat->offset("0", to_string(k) + "+" + "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                     else kss << mat->offset( "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m, to_string(k));
                     kss << ";" << std::endl;
                     mat->access_name(k,"*" + ptr_name);
@@ -198,19 +204,22 @@ class generator : public code_generation::generator{
         unsigned int ks_lhs;
         unsigned int ml_lhs;
         std::string const & offset_m;
+        bool is_transposed;
     };
 
     struct update_rhs_global_ptr{
 
         update_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ns_rhs, unsigned int _ks_rhs
                               ,std::string const & _internal_size1_rhs,
-                              std::string const & _internal_size2_rhs) : kss(_kss), ks(_ks), ns_rhs(_ns_rhs), ks_rhs(_ks_rhs), internal_size1_rhs(_internal_size1_rhs), internal_size2_rhs(_internal_size2_rhs){ }
+                              std::string const & _internal_size2_rhs
+                              ,bool _is_transposed) : kss(_kss), ks(_ks), ns_rhs(_ns_rhs), ks_rhs(_ks_rhs), internal_size1_rhs(_internal_size1_rhs), internal_size2_rhs(_internal_size2_rhs)
+                                                    , is_transposed(_is_transposed){ }
 
         void operator()(mat_infos_base * mat){
-            if(mat->is_rowmajor() && !mat->is_transposed())
+            if(mat->is_rowmajor() && !is_transposed)
                 for(unsigned int k=0 ; k<ks ; ++k)
                     kss << mat->name() << "_ptr_" << k << " += " << ks_rhs << "*" << internal_size2_rhs << " - " << ns_rhs << ";" << std::endl;
-            else if(mat->is_transposed() && !mat->is_rowmajor())
+            else if(is_transposed && !mat->is_rowmajor())
                 for(unsigned int n=0 ; n<ns_rhs ; ++n)
                     kss << mat->name() << "_ptr_" << n << " += " << ns_rhs << "*" << internal_size1_rhs << " - " << ks_rhs << ";" << std::endl;
         }
@@ -222,20 +231,23 @@ class generator : public code_generation::generator{
         unsigned int ks_rhs;
         std::string const & internal_size1_rhs;
         std::string const & internal_size2_rhs;
+        bool is_transposed;
     };
 
     struct update_lhs_global_ptr{
 
         update_lhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ms_lhs, unsigned int _ks_lhs
                               ,std::string const & _internal_size1_lhs,
-                              std::string const & _internal_size2_lhs) : kss(_kss), ks(_ks), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), internal_size1_lhs(_internal_size1_lhs), internal_size2_lhs(_internal_size2_lhs){ }
+                              std::string const & _internal_size2_lhs
+                              ,bool _is_transposed) : kss(_kss), ks(_ks), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), internal_size1_lhs(_internal_size1_lhs), internal_size2_lhs(_internal_size2_lhs)
+                                                    ,is_transposed(_is_transposed){ }
 
 
         void operator()(mat_infos_base * mat){
-            if(mat->is_transposed() && mat->is_rowmajor())
+            if(is_transposed && mat->is_rowmajor())
                 for(unsigned int m=0 ; m<ms_lhs ; ++m)
                     kss << mat->name() << "_ptr_" << m << " += " << ks << "*" << internal_size2_lhs << " - " <<  ks_lhs << ";" << std::endl;
-            else if(!mat->is_transposed() && !mat->is_rowmajor())
+            else if(!is_transposed && !mat->is_rowmajor())
                 for(unsigned int k=0 ; k<ks_lhs ; ++k)
                     kss << mat->name() << "_ptr_" << k << " += " << ks_lhs << "*" << internal_size1_lhs << " - " << ms_lhs << ";" << std::endl;
         }
@@ -247,6 +259,7 @@ class generator : public code_generation::generator{
         unsigned int ks_lhs;
         std::string const & internal_size1_lhs;
         std::string const & internal_size2_lhs;
+        bool is_transposed;
     };
 
 
@@ -366,8 +379,8 @@ public:
         bool is_rhs_rowmajor = first_rhs->is_rowmajor();
         bool is_result_rowmajor = first_assigned->is_rowmajor();
 
-        bool is_lhs_transposed = first_lhs->is_transposed();
-        bool is_rhs_transposed = first_rhs->is_transposed();
+        bool is_lhs_transposed = is_transposed(&first_prod->lhs());
+        bool is_rhs_transposed = is_transposed(&first_prod->rhs());
 
         std::string lhs_value_scalartype;
         if(use_LHS_shared) lhs_value_scalartype = first_lhs->scalartype();
@@ -381,9 +394,9 @@ public:
         unsigned int ml_lhs = ml, kl_lhs = kl, ms_lhs = ms, ks_lhs = ks;
         unsigned int kl_rhs = kl, nl_rhs = nl, ks_rhs = ks, ns_rhs = ns;
 
-        transform_block(*first_assigned,false,ml_res,nl_res,ms_res,ns_res);
-        transform_block(*first_lhs,use_LHS_shared,ml_lhs,kl_lhs,ms_lhs,ks_lhs);
-        transform_block(*first_rhs,use_RHS_shared,kl_rhs,nl_rhs,ks_rhs,ns_rhs);
+        transform_block(*first_assigned,false,false,ml_res,nl_res,ms_res,ns_res);
+        transform_block(*first_lhs,is_lhs_transposed,use_LHS_shared,ml_lhs,kl_lhs,ms_lhs,ks_lhs);
+        transform_block(*first_rhs,is_rhs_transposed,use_RHS_shared,kl_rhs,nl_rhs,ks_rhs,ns_rhs);
 
 
 
@@ -428,9 +441,9 @@ public:
         }
         else{
             if(is_rhs_transposed)
-                std::for_each(rhss.begin(),rhss.end(),declare_rhs_global_ptr(kss,ns_rhs,ks_rhs,nl_rhs,offset_n));
+                std::for_each(rhss.begin(),rhss.end(),declare_rhs_global_ptr(kss,ns_rhs,ks_rhs,nl_rhs,offset_n,is_rhs_transposed));
             else
-                std::for_each(rhss.begin(),rhss.end(),declare_rhs_global_ptr(kss,ks_rhs,ns_rhs,nl_rhs,offset_n));
+                std::for_each(rhss.begin(),rhss.end(),declare_rhs_global_ptr(kss,ks_rhs,ns_rhs,nl_rhs,offset_n,is_rhs_transposed));
         }
 
         if(use_LHS_shared){
@@ -439,9 +452,9 @@ public:
         }
         else{
             if(is_lhs_transposed)
-                std::for_each(lhss.begin(),lhss.end(),declare_lhs_global_ptr(kss,ks_lhs,ms_lhs,ml_lhs,offset_m));
+                std::for_each(lhss.begin(),lhss.end(),declare_lhs_global_ptr(kss,ks_lhs,ms_lhs,ml_lhs,offset_m, is_lhs_transposed));
             else
-                std::for_each(lhss.begin(),lhss.end(),declare_lhs_global_ptr(kss,ms_lhs,ks_lhs,ml_lhs,offset_m));
+                std::for_each(lhss.begin(),lhss.end(),declare_lhs_global_ptr(kss,ms_lhs,ks_lhs,ml_lhs,offset_m, is_lhs_transposed));
         }
 
 
@@ -635,9 +648,9 @@ public:
         }
         else{
             if(is_rhs_transposed)
-                std::for_each(rhss.begin(),rhss.end(),update_rhs_global_ptr(kss,ks,ks_rhs,ns_rhs,internal_size1_rhs,internal_size2_rhs));
+                std::for_each(rhss.begin(),rhss.end(),update_rhs_global_ptr(kss,ks,ks_rhs,ns_rhs,internal_size1_rhs,internal_size2_rhs, is_rhs_transposed));
             else
-                std::for_each(rhss.begin(),rhss.end(),update_rhs_global_ptr(kss,ks,ns_rhs,ks_rhs,internal_size1_rhs,internal_size2_rhs));
+                std::for_each(rhss.begin(),rhss.end(),update_rhs_global_ptr(kss,ks,ns_rhs,ks_rhs,internal_size1_rhs,internal_size2_rhs, is_rhs_transposed));
         }
 
 
@@ -648,9 +661,9 @@ public:
         }
         else{
             if(is_lhs_transposed)
-                std::for_each(lhss.begin(),lhss.end(),update_lhs_global_ptr(kss,ks,ks_lhs,ms_lhs,internal_size1_lhs,internal_size2_lhs));
+                std::for_each(lhss.begin(),lhss.end(),update_lhs_global_ptr(kss,ks,ks_lhs,ms_lhs,internal_size1_lhs,internal_size2_lhs, is_lhs_transposed));
             else
-                std::for_each(lhss.begin(),lhss.end(),update_lhs_global_ptr(kss,ks,ms_lhs,ks_lhs,internal_size1_lhs,internal_size2_lhs));
+                std::for_each(lhss.begin(),lhss.end(),update_lhs_global_ptr(kss,ks,ms_lhs,ks_lhs,internal_size1_lhs,internal_size2_lhs, is_lhs_transposed));
         }
 
 

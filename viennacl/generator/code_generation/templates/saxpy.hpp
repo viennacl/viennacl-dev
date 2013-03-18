@@ -105,17 +105,62 @@ public:
         mat_infos_base * first_matrix = NULL;
         if(vectors_.size()) first_vector = *vectors_.begin();
         if(matrices_.size()) first_matrix = *matrices_.begin();
-        scalar_cache.fetch_entries(0,"0");
-        if(first_vector) utils::unroll_loop(kss,n_unroll,vector_expressions_,vector_cache, first_vector->size());
+        scalar_cache.fetch_entries(0);
+        if(first_vector){
+            kss << "unsigned int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
+            kss << "if(i < " << first_vector->size() << "){" << std::endl;
+            kss.inc_tab();
+
+            //Set access indices
+            for(typename std::list<infos_base *>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+                for(unsigned int j=0 ; j < n_unroll ; ++j){
+                    (*it)->access_index(j,"i" + to_string(j));
+                }
+            }
+
+            //Loads into private memory
+            for(unsigned int j=0 ; j<n_unroll  ; ++j){
+                vector_cache.fetch_entries(j);
+            }
+
+            //Compute expressions
+            for(typename std::list<infos_base *>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+                for(unsigned int j=0 ; j < n_unroll ; ++j){
+                    kss << (*it)->generate(j) << ";" << std::endl;
+                }
+            }
+
+            //Write back to global memory
+            for(unsigned int j=0 ; j<n_unroll  ; ++j){
+                vector_cache.writeback_entries(j);
+            }
+            kss.dec_tab();
+            kss << "}" << std::endl;
+        }
         if(first_matrix){
             kss << "unsigned int r = get_global_id(0)/" << first_matrix->internal_size2() << ";" << std::endl;
             kss << "unsigned int c = get_global_id(0)%" << first_matrix->internal_size2() << ";" << std::endl;
-            matrix_cache.fetch_entries(0,"r*" + first_matrix->internal_size2() + " + c");
+            kss << "if(r < " << first_matrix->internal_size1() << "){" << std::endl;
+            kss.inc_tab();
+
+            //Set access indices
+            for(typename std::list<infos_base *>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+                (*it)->access_index(0,"r*" + first_matrix->internal_size2() + " + c");
+            }
+
+            //Loads into private memory
+            matrix_cache.fetch_entries(0);
+
+            //Compute expressions
             for(std::list<infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
-            matrix_cache.writeback_entries(0,"r*" + first_matrix->internal_size2() + " + c");
+
+            //Write back to global memory
+            matrix_cache.writeback_entries(0);
+            kss.dec_tab();
+            kss << "}" << std::endl;
         }
-        scalar_cache.writeback_entries(0,"0");
+        scalar_cache.writeback_entries(0);
     }
 
 private:

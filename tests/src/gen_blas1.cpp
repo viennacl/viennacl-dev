@@ -142,19 +142,19 @@ int test_vector ( Epsilon const& epsilon) {
 //        }
 //    }
 
-    {
-        std::cout << "testing inner product..." << std::endl;
-        s = *std::max_element(vec2.begin(),vec2.end());
-        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        if ( fabs (s - gs) > epsilon ) {
-            std::cout << "# Error at operation: inner product" << std::endl;
-            std::cout << "  diff: " << fabs (s - gs) << std::endl;
-            std::cout << op.source_code() << std::endl;
-            retval = EXIT_FAILURE;
-        }
-    }
+//    {
+//        std::cout << "testing inner product..." << std::endl;
+//        s = *std::max_element(vec2.begin(),vec2.end());
+//        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        if ( fabs (s - gs) > epsilon ) {
+//            std::cout << "# Error at operation: inner product" << std::endl;
+//            std::cout << "  diff: " << fabs (s - gs) << std::endl;
+//            std::cout << op.source_code() << std::endl;
+//            retval = EXIT_FAILURE;
+//        }
+//    }
     return retval;
 }
 

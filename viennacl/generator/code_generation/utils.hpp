@@ -125,31 +125,20 @@ namespace viennacl{
                                                                               ,kss_(kss){
                     }
 
-                    void fetch_entries(unsigned int i, std::string const & idx){
+                    void fetch_entries(unsigned int i){
                         for(typename expressions_read_t::iterator it = expressions_read_.begin() ; it != expressions_read_.end() ; ++it){
                             T * p = *it;
-                            p->access_name(i,p->name()+"_val_"+to_string(i));
-                            kss_ << p->aligned_scalartype() << " " << p->generate(i) << " = " << p->name() << "[" << idx << "];" << std::endl;
+                            std::string val_name = p->name()+"_val_"+to_string(i);
+                            kss_ << p->aligned_scalartype() << " " << val_name << " = " << p->generate(i) << ";" << std::endl;
+                            old_access_names_[i] = p->generate(i);
+                            p->access_name(i,val_name);
                         }
                     }
 
-                    void fetch_entries( std::list<std::string> const & indices){
-                        for(typename expressions_read_t::iterator it = expressions_read_.begin() ; it != expressions_read_.end() ; ++it){
-                            T * p = *it;
-                            unsigned int i=0;
-                            for(std::list<std::string>::const_iterator iit = indices.begin() ; iit!= indices.end() ; ++iit){
-                                p->access_name(i,p->name()+"_val_"+to_string(i));
-                                kss_ << p->aligned_scalartype() << " " << p->generate(i) << " = " << p->name() << "[" << *iit << "];" << std::endl;
-                                ++i;
-                            }
-
-                        }
-                    }
-
-                    void writeback_entries(unsigned int i, std::string const & idx){
+                    void writeback_entries(unsigned int i){
                         for(typename expressions_write_t::iterator it = expressions_write_.begin() ; it != expressions_write_.end() ; ++it){
                             T * p = *it;
-                            kss_<< p->name() << "[" << idx << "]"<< " = "  << p->generate(i) << ";" << std::endl;
+                            kss_<< old_access_names_[i] << " = "  << p->generate(i) << ";" << std::endl;
                         }
                     }
 
@@ -166,57 +155,58 @@ namespace viennacl{
                     }
 
                 private:
+                    std::map<unsigned int, std::string> old_access_names_;
                     expressions_read_t & expressions_read_;
                     expressions_write_t expressions_write_;
                     kernel_generation_stream & kss_;
 
                 };
 
-                class loop_unroller{
-                public:
-                    loop_unroller(unsigned int n_unroll) : n_unroll_(n_unroll){
+//                class loop_unroller{
+//                public:
+//                    loop_unroller(unsigned int n_unroll) : n_unroll_(n_unroll){
 
-                    }
-
-
-
-                private:
-                    unsigned int n_unroll_;
-
-                };
-
-                template<class ExprT, class CacheExpr>
-                static void unroll_loop(kernel_generation_stream & kss
-                                                       ,unsigned int n_unroll
-                                                   ,ExprT & expressions
-                                                   , CacheExpr & cache
-                                                   , std::string const & upper_bound){
-                        kss << "unsigned int i = get_global_id(0)" ;
-                        if(n_unroll>1) kss << "*" << n_unroll;
-                        kss << ";" << std::endl;
-
-                        kss << "if(i < " << upper_bound << "){" << std::endl;
-                        kss.inc_tab();
-                        cache.fetch_entries(0, "i");
-                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
-                            cache.fetch_entries(j, "i + " + to_string(j));
-                        }
+//                    }
 
 
-                        for(typename ExprT::iterator it=expressions.begin() ; it!=expressions.end();++it){
-                            for(unsigned int j=0 ; j < n_unroll ; ++j){
-                                kss << (*it)->generate(j) << ";" << std::endl;
-                            }
-                        }
 
-                        cache.writeback_entries(0,"i");
-                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
-                            cache.writeback_entries(j,"i + " + to_string(j));
-                        }
-                        kss.dec_tab();
-                        kss << "}" << std::endl;
+//                private:
+//                    unsigned int n_unroll_;
 
-                }
+//                };
+
+//                template<class ExprT, class CacheExpr>
+//                static void unroll_loop(kernel_generation_stream & kss
+//                                                       ,unsigned int n_unroll
+//                                                   ,ExprT & expressions
+//                                                   , CacheExpr & cache
+//                                                   , std::string const & upper_bound){
+//                        kss << "unsigned int i = get_global_id(0)" ;
+//                        if(n_unroll>1) kss << "*" << n_unroll;
+//                        kss << ";" << std::endl;
+
+//                        kss << "if(i < " << upper_bound << "){" << std::endl;
+//                        kss.inc_tab();
+//                        cache.fetch_entries(0, "i");
+//                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
+//                            cache.fetch_entries(j, "i + " + to_string(j));
+//                        }
+
+
+//                        for(typename ExprT::iterator it=expressions.begin() ; it!=expressions.end();++it){
+//                            for(unsigned int j=0 ; j < n_unroll ; ++j){
+//                                kss << (*it)->generate(j) << ";" << std::endl;
+//                            }
+//                        }
+
+//                        cache.writeback_entries(0,"i");
+//                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
+//                            cache.writeback_entries(j,"i + " + to_string(j));
+//                        }
+//                        kss.dec_tab();
+//                        kss << "}" << std::endl;
+
+//                }
 
             }
 
