@@ -105,17 +105,9 @@ namespace viennacl{
                 void generate_sources(){
                     kss_<<"{"<< std::endl;
                     kss_.inc_tab();
-                    std::list<infos_base *> vec_exprs;
-                    std::list<infos_base *> scal_exprs;
-                    std::list<infos_base *> mat_exprs;
-                    for(std::list<infos_base*>::const_iterator it = kernel_infos_.trees().begin(); it!=kernel_infos_.trees().end();++it){
-                        if(utils::is_type<binary_vector_expression_infos_base>()(*it))
-                            vec_exprs.push_back(*it);
-                        else if(utils::is_type<binary_scalar_expression_infos_base>()(*it))
-                            scal_exprs.push_back(*it);
-                        else
-                            mat_exprs.push_back(*it);
-                    }
+                    std::list<binary_vector_expression_infos_base *> vec_exprs = utils::cast<binary_vector_expression_infos_base>(kernel_infos_.trees());
+                    std::list<binary_matrix_expression_infos_base *> mat_exprs = utils::cast<binary_matrix_expression_infos_base>(kernel_infos_.trees());
+                    std::list<binary_scalar_expression_infos_base *> scal_exprs = utils::cast<binary_scalar_expression_infos_base>(kernel_infos_.trees());
                     code_generation::generator * gen;
                     if(saxpy::profile* p = dynamic_cast<saxpy::profile*>(kernel_infos_.profile())){
                         gen = new saxpy::generator(vec_exprs,scal_exprs,mat_exprs,p);

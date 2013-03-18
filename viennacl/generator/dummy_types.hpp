@@ -405,15 +405,9 @@ template<class SUB, class OP>
 struct convert_to_unary_expr<SUB,OP,false,false,true>{ typedef unary_matrix_expression<typename to_sym<SUB>::type, OP> type; };
 
 template<class T>
-typename viennacl::enable_if<is_vector_expression_t<T>::value
-                             ||is_matrix_expression_t<T>::value
-                            ,typename convert_to_unary_expr<T,trans_type,is_vector_expression_t<T>::value
-                                                            ,false
-                                                            ,is_matrix_expression_t<T>::value>::type>::type
+typename viennacl::enable_if<is_matrix_expression_t<T>::value, unary_matrix_expression<typename to_sym<T>::type,trans_type> >::type
 trans(T const & t){
-    return typename convert_to_unary_expr<T,trans_type,is_vector_expression_t<T>::value
-                                           ,false
-                                           ,is_matrix_expression_t<T>::value>::type(make_sym(t));
+    return unary_matrix_expression<typename to_sym<T>::type,trans_type>(make_sym(t));
 }
 
 

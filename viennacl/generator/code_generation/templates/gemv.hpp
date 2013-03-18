@@ -54,10 +54,10 @@ private:
 
 class generator : public code_generation::generator{
 public:
-    generator(std::list<infos_base * > const & expressions
+    generator(std::list<binary_vector_expression_infos_base * > const & expressions
               , profile * prof): expressions_(expressions), profile_(prof)
     {
-        for(std::list<infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
+        for(std::list<binary_vector_expression_infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
             extract_as(*it, gpu_scalars_,  utils::is_type<gpu_scal_infos_base>());
             extract_as(*it, matrices_, utils::is_type<mat_infos_base>());
             extract_as(*it, vectors_, utils::is_type<vec_infos_base>());
@@ -80,10 +80,9 @@ public:
             std::cout << "trans " << is_lhs_transposed << std::endl;
             bool is_lhs_row_major = first_matrix->is_rowmajor();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
-            for(std::list<infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
+            for(std::list<binary_vector_expression_infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);
-                binary_vector_expression_infos_base * vec_expr = dynamic_cast<binary_vector_expression_infos_base*>(*it);
-                vec_infos_base* assigned = dynamic_cast<vec_infos_base*>(&vec_expr->lhs());
+                vec_infos_base* assigned = dynamic_cast<vec_infos_base*>(&(*it)->lhs());
                 local_memory<2> lmem("block_"+to_string(id),m,k+1,scalartype);
                 std::set<matvec_prod_infos_base *, viennacl::generator::deref_less >  prods;
                 extract_as(*it, prods, utils::is_type<matvec_prod_infos_base>());
@@ -152,7 +151,7 @@ public:
 
 
 private:
-    std::list<infos_base* >  expressions_;
+    std::list<binary_vector_expression_infos_base* >  expressions_;
     std::set<matvec_prod_infos_base *, viennacl::generator::deref_less >  prods_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;

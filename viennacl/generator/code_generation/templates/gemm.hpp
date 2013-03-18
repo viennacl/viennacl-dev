@@ -330,10 +330,10 @@ class generator : public code_generation::generator{
     }
 
 public:
-    generator(std::list<infos_base * > const & blas3_expressions
+    generator(std::list<binary_matrix_expression_infos_base * > const & blas3_expressions
                     , profile * kernel_config): blas3_expressions_(blas3_expressions), optimization_profile_(kernel_config)
     {
-        for(std::list<infos_base*>::const_iterator it=blas3_expressions_.begin() ; it!= blas3_expressions_.end() ; ++it){
+        for(std::list<binary_matrix_expression_infos_base*>::const_iterator it=blas3_expressions_.begin() ; it!= blas3_expressions_.end() ; ++it){
             extract_as(*it, matmat_prods_, utils::is_type<matmat_prod_infos_base>());
             extract_as(*it ,gpu_scalars_,  utils::is_type<gpu_scal_infos_base>());
             extract_as(*it,matrices_, utils::is_type<mat_infos_base>());
@@ -348,9 +348,8 @@ public:
         std::set<mat_infos_base*,viennacl::generator::deref_less> rhss;
 
         //Fills assigned matrices set
-        for(std::list<infos_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
-            binary_matrix_expression_infos_base* p=dynamic_cast<binary_matrix_expression_infos_base*>(*it);
-            if(p->op().is_assignment()) assigned.push_back(dynamic_cast<mat_infos_base*>(&p->lhs()));
+        for(std::list<binary_matrix_expression_infos_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
+            if((*it)->op().is_assignment()) assigned.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
         }
 
         //Fills lhs's
@@ -726,7 +725,7 @@ public:
     }
 
 private:
-    std::list<infos_base*>  blas3_expressions_;
+    std::list<binary_matrix_expression_infos_base*>  blas3_expressions_;
     matmat_prods_t matmat_prods_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;

@@ -4,6 +4,7 @@
 #include "viennacl/tools/tools.hpp"
 
 #include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/symbolic_types_base.hpp"
 
 namespace viennacl{
 
@@ -58,16 +59,16 @@ private:
 
 class generator : public code_generation::generator{
 public:
-    generator(std::list<infos_base * > const & vector_expressions
-              ,std::list<infos_base *> const & scalar_expressions
-              ,std::list<infos_base * > const & matrix_expressions
+    generator(std::list<binary_vector_expression_infos_base* > const & vector_expressions
+              ,std::list<binary_scalar_expression_infos_base *> const & scalar_expressions
+              ,std::list<binary_matrix_expression_infos_base * > const & matrix_expressions
               ,profile * kernel_config): vector_expressions_(vector_expressions), matrix_expressions_(matrix_expressions), scalar_expressions_(scalar_expressions), profile_(kernel_config)
     {
-        for(std::list<infos_base*>::const_iterator it=vector_expressions.begin() ; it!= vector_expressions.end() ; ++it)
+        for(std::list<binary_vector_expression_infos_base*>::const_iterator it=vector_expressions.begin() ; it!= vector_expressions.end() ; ++it)
             extract_as(*it,vectors_,utils::is_type<vec_infos_base>());
-        for(std::list<infos_base*>::const_iterator it=scalar_expressions.begin() ; it!= scalar_expressions.end() ; ++it)
+        for(std::list<binary_scalar_expression_infos_base*>::const_iterator it=scalar_expressions.begin() ; it!= scalar_expressions.end() ; ++it)
             extract_as(*it,gpu_scalars_,utils::is_type<gpu_scal_infos_base>());
-        for(std::list<infos_base*>::const_iterator it=matrix_expressions.begin() ; it!= matrix_expressions.end() ; ++it)
+        for(std::list<binary_matrix_expression_infos_base*>::const_iterator it=matrix_expressions.begin() ; it!= matrix_expressions.end() ; ++it)
             extract_as(*it,matrices_,utils::is_type<mat_infos_base>());
     }
 
@@ -77,25 +78,19 @@ public:
         unsigned int n_unroll = profile_->loop_unroll();
 
         std::list<vec_infos_base *> assigned_vec;
-        for(std::list<infos_base*>::iterator it=vector_expressions_.begin(); it!= vector_expressions_.end();++it){
-            binary_vector_expression_infos_base* p=dynamic_cast<binary_vector_expression_infos_base*>(*it);
-            if(p->op().is_assignment()==true) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&p->lhs()));
+        for(std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin(); it!= vector_expressions_.end();++it){
+            if((*it)->op().is_assignment()==true) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&(*it)->lhs()));
         }
 
         std::list<mat_infos_base *> assigned_mat;
-        for(std::list<infos_base*>::iterator it=matrix_expressions_.begin(); it!= matrix_expressions_.end();++it){
-            binary_matrix_expression_infos_base* p=dynamic_cast<binary_matrix_expression_infos_base*>(*it);
-            if(p->op().is_assignment()==true) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&p->lhs()));
+        for(std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin(); it!= matrix_expressions_.end();++it){
+            if((*it)->op().is_assignment()==true) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
         }
 
 
-        std::list<gpu_scal_infos_base *> assigned_scal;
-        for(std::list<infos_base*>::iterator it=scalar_expressions_.begin(); it!= scalar_expressions_.end();++it){
-            if(binary_scalar_expression_infos_base* p=dynamic_cast<binary_scalar_expression_infos_base*>(*it)){
-                if(p->op().is_assignment()==true){
-                    assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&p->lhs()));
-                }
-            }
+        std::list<gpu_scal_infos_base*> assigned_scal;
+        for(std::list<binary_scalar_expression_infos_base*>::iterator it=scalar_expressions_.begin(); it!= scalar_expressions_.end();++it){
+            if((*it)->op().is_assignment()==true) assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
         }
 
         code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,assigned_vec,kss);
@@ -112,7 +107,7 @@ public:
             kss.inc_tab();
 
             //Set access indices
-            for(typename std::list<infos_base *>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+            for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                     (*it)->access_index(j,"i" + to_string(j));
                 }
@@ -124,7 +119,7 @@ public:
             }
 
             //Compute expressions
-            for(typename std::list<infos_base *>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+            for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                     kss << (*it)->generate(j) << ";" << std::endl;
                 }
@@ -144,15 +139,15 @@ public:
             kss.inc_tab();
 
             //Set access indices
-            for(typename std::list<infos_base *>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
                 (*it)->access_index(0,"r*" + first_matrix->internal_size2() + " + c");
-            }
+
 
             //Loads into private memory
             matrix_cache.fetch_entries(0);
 
             //Compute expressions
-            for(std::list<infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
+            for(std::list<binary_matrix_expression_infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
 
             //Write back to global memory
@@ -164,9 +159,9 @@ public:
     }
 
 private:
-    std::list<infos_base* >  vector_expressions_;
-    std::list<infos_base* >  matrix_expressions_;
-    std::list<infos_base* >  scalar_expressions_;
+    std::list<binary_vector_expression_infos_base* >  vector_expressions_;
+    std::list<binary_matrix_expression_infos_base* >  matrix_expressions_;
+    std::list<binary_scalar_expression_infos_base* >  scalar_expressions_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;

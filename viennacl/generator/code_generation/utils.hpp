@@ -103,8 +103,13 @@ namespace viennacl{
 
                 template<class T, class B>
                 static std::list<T *> cast(std::list<B *> const & in){
-                    std::list<T*> res(in.size());
-                    std::transform(in.begin(), in.end(), res.begin(),Base2Target<B,T>());
+                    std::list<T*> res;
+                    for(typename std::list<B *>::const_iterator it = in.begin(); it!= in.end() ; ++it){
+                        if(T* p = dynamic_cast<T*>(*it)){
+                            res.push_back(p);
+                            std::cout << p->repr() << std::endl;
+                        }
+                    }
                     return res;
                 }
 

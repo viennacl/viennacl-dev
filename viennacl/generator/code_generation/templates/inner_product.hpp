@@ -61,9 +61,9 @@ private:
        }
     }
 public:
-    generator(std::list<infos_base *> const & expressions, profile * kernel_config): expressions_(expressions), profile_(kernel_config)
+    generator(std::list<binary_scalar_expression_infos_base *> const & expressions, profile * kernel_config): expressions_(expressions), profile_(kernel_config)
     {
-        for(std::list<infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
+        for(std::list<binary_scalar_expression_infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
             extract_as(*it,vectors_,utils::is_type<vec_infos_base>());
             extract_as(*it,gpu_scalars_,utils::is_type<gpu_scal_infos_base>());
             extract_as(*it,inner_prods_,utils::is_type<inner_product_infos_base>());
@@ -77,12 +77,10 @@ public:
         bool is_computed = (*inner_prods_.begin())->is_computed();
         if(is_computed){
             std::list<gpu_scal_infos_base *> assigned_scal;
-            for(std::list<infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
-                if(binary_scalar_expression_infos_base* p=dynamic_cast<binary_scalar_expression_infos_base*>(*it)){
-                    if(p->op().is_assignment()==true){
-                        assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&p->lhs()));
+            for(std::list<binary_scalar_expression_infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
+                    if((*it)->op().is_assignment()==true){
+                        assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
                     }
-                }
             }
             code_generation::utils::cache_manager<gpu_scal_infos_base> scalar_cache(gpu_scalars_,assigned_scal,kss);
 
@@ -99,7 +97,7 @@ public:
             for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 (*it)->access_name(0,(*it)->name()+"_local"+"[0]");
             }
-            for(std::list<infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
+            for(std::list<binary_scalar_expression_infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
                 kss << (*it)->generate(0) << ";" << std::endl;
             }
             scalar_cache.writeback_entries(0);
@@ -151,7 +149,7 @@ public:
     }
 
 private:
-    std::list<infos_base* >  expressions_;
+    std::list<binary_scalar_expression_infos_base* >  expressions_;
     std::set<inner_product_infos_base*, deref_less>  inner_prods_;
     std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
