@@ -223,14 +223,17 @@ namespace viennacl{
             std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
         public:
             void fetch(unsigned int i, kernel_generation_stream & kss){
-                std::string val = infos_->name + "_private";
-                std::string aligned_scalartype = infos_->scalartype;
-                if(infos_->alignment > 1) aligned_scalartype += to_string(infos_->alignment);
-                kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
-                infos_->private_values[i] = val;
+                if(infos_->private_values.empty()){
+                    std::string val = infos_->name + "_private";
+                    std::string aligned_scalartype = infos_->scalartype;
+                    if(infos_->alignment > 1) aligned_scalartype += to_string(infos_->alignment);
+                    kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
+                    infos_->private_values[i] = val;
+                }
             }
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){
                 kss << access_buffer(i) << " = " << infos_->private_values[i] << ";" << std::endl;
+                infos_->private_values[i] = "";
             }
             std::string generate(unsigned int i, int vector_element = -1) const {
                 std::string res;

@@ -33,7 +33,7 @@
 #define VIENNACL_WITH_UBLAS 1
 
 //#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -49,7 +49,7 @@ template <typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
-   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
+   viennacl::backend::finish();
    viennacl::copy(mat2, mat2_cpu);
    double ret = 0;
    double act = 0;
@@ -127,9 +127,9 @@ int test_vector ( Epsilon const& epsilon) {
 
     {
         std::cout << "testing addition..." << std::endl;
-        vec = vec2 + vec3;
+        vec = -vec;
         generator::custom_operation op;
-        op.add(dv_t(w) = dv_t(x) + dv_t(y));
+        op.add(dv_t(w) = -dv_t(w));
         op.execute();
         viennacl::ocl::get_queue().finish();
         if ( fabs ( diff ( vec, w) ) > epsilon ) {
