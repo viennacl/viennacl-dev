@@ -122,9 +122,15 @@ public:
     std::string generate(const std::string &sub) const { return sub; }
 };
 
+class replicate_type : public unary_op_infos_base{
+public:
+    replicate_type() : unary_op_infos_base("replicate"){ }
+    std::string generate(const std::string &sub) const { return sub; }
+};
+
 class mul_type : public arithmetic_op_infos_base{
 public:
-    mul_type() : arithmetic_op_infos_base("scal_mul_type","*"){ }
+    mul_type() : arithmetic_op_infos_base("mul_type","*"){ }
     std::string generate(std::string const & lhs, std::string const & rhs) const{
         if(lhs=="1" && rhs=="1") return "1";
         else if(rhs=="1") return lhs;
@@ -135,7 +141,7 @@ public:
 
 class div_type : public arithmetic_op_infos_base{
 public:
-    div_type() : arithmetic_op_infos_base("scal_div_type","/"){ }
+    div_type() : arithmetic_op_infos_base("div_type","/"){ }
     std::string generate(std::string const & lhs, std::string const & rhs) const{
         if(rhs=="1") return lhs;
         else return lhs + "/" + rhs;

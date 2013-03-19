@@ -434,7 +434,12 @@ reduce(T const & t){
 
 
 
-
+template<class T>
+typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,
+                             unary_matrix_expression<typename to_sym<T>::type, replicate_type> >::type
+repmat(T const & t){
+    return unary_matrix_expression<typename to_sym<T>::type, replicate_type>(make_sym(t));
+}
 
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
 template<class T>\

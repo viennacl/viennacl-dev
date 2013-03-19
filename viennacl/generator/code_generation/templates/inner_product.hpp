@@ -76,14 +76,6 @@ public:
         unsigned int alignment = (*vectors_.begin())->alignment();
         bool is_computed = (*inner_prods_.begin())->is_computed();
         if(is_computed){
-            std::list<gpu_scal_infos_base *> assigned_scal;
-            for(std::list<binary_scalar_expression_infos_base*>::iterator it=expressions_.begin(); it!=expressions_.end();++it){
-                if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op()))  assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
-            }
-            code_generation::utils::cache_manager<gpu_scal_infos_base> scalar_cache(gpu_scalars_,assigned_scal,kss);
-
-            scalar_cache.fetch_entries(0);
-
             std::map<binary_op_infos_base const *, local_memory<1> > local_mems;
             for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 local_memory<1> lmem = local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());
@@ -98,10 +90,8 @@ public:
             for(std::list<binary_scalar_expression_infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
                 kss << (*it)->generate(0) << ";" << std::endl;
             }
-            scalar_cache.writeback_entries(0);
         }
         else{
-            code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,std::list<vec_infos_base *>(),kss);
             for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
                 std::string sum_name = (*it)->name() + "_reduced";
                 kss << (*it)->scalartype() << " " << sum_name << " = 0;" << std::endl;
@@ -113,19 +103,12 @@ public:
             //Set access index
             for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
                 (*it)->access_index(0,"i","0");
+                (*it)->fetch(0,kss);
             }
-
-            vector_cache.fetch_entries(0);
-
             for(std::set<inner_product_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
                     std::string sum_name = (*it)->name() + "_reduced";
                     for(unsigned int a=0; a<alignment;++a){
-                        if(alignment>1){
-                            for(std::set<vec_infos_base *, viennacl::generator::deref_less >::iterator itv = vectors_.begin(); itv!=vectors_.end();++itv){
-                                (*itv)->access_name(0,(*itv)->name()+"_val_0.s"+to_string(a));
-                            }
-                        }
-                        kss << sum_name << " = " << (*it)->op_reduce().generate(sum_name, (*it)->binary_scalar_expression_infos_base::generate(0)) << ";" << std::endl;
+                        kss << sum_name << " = " << (*it)->op_reduce().generate(sum_name, (*it)->binary_scalar_expression_infos_base::generate(0,a)) << ";" << std::endl;
                     }
             }
             kss.dec_tab();

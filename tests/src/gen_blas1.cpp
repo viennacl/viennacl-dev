@@ -32,7 +32,7 @@
 //
 #define VIENNACL_WITH_UBLAS 1
 
-#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_ALL
 #define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
@@ -125,36 +125,34 @@ int test_vector ( Epsilon const& epsilon) {
 
     // --------------------------------------------------------------------------
 
-//    {
-//        std::cout << "testing addition..." << std::endl;
-//        for(unsigned int i = 0 ; i < size ; ++i){
-//            vec[i] = 1.0f/(1.0f+vec2[i]);
-//        }
-//        generator::custom_operation op;
-//        op.add(dv_t(w) = 1.0f/(1.0f+dv_t(x)));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        if ( fabs ( diff ( vec, w) ) > epsilon ) {
-//            std::cout << "# Error at operation: addition" << std::endl;
-//            std::cout << "  diff: " << fabs ( diff ( vec, x ) ) << std::endl;
-//            std::cout << op.source_code() << std::endl;
-//            retval = EXIT_FAILURE;
-//        }
-//    }
+    {
+        std::cout << "testing addition..." << std::endl;
+        vec = vec2 + vec3;
+        generator::custom_operation op;
+        op.add(dv_t(w) = dv_t(x) + dv_t(y));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        if ( fabs ( diff ( vec, w) ) > epsilon ) {
+            std::cout << "# Error at operation: addition" << std::endl;
+            std::cout << "  diff: " << fabs ( diff ( vec, x ) ) << std::endl;
+            std::cout << op.source_code() << std::endl;
+            retval = EXIT_FAILURE;
+        }
+    }
 
-//    {
-//        std::cout << "testing inner product..." << std::endl;
-//        s = *std::max_element(vec2.begin(),vec2.end());
-//        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        if ( fabs (s - gs) > epsilon ) {
-//            std::cout << "# Error at operation: inner product" << std::endl;
-//            std::cout << "  diff: " << fabs (s - gs) << std::endl;
-//            std::cout << op.source_code() << std::endl;
-//            retval = EXIT_FAILURE;
-//        }
-//    }
+    {
+        std::cout << "testing inner product..." << std::endl;
+        s = *std::max_element(vec2.begin(),vec2.end());
+        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        if ( fabs (s - gs) > epsilon ) {
+            std::cout << "# Error at operation: inner product" << std::endl;
+            std::cout << "  diff: " << fabs (s - gs) << std::endl;
+            std::cout << op.source_code() << std::endl;
+            retval = EXIT_FAILURE;
+        }
+    }
     return retval;
 }
 

@@ -77,30 +77,10 @@ public:
 
         unsigned int n_unroll = profile_->loop_unroll();
 
-        std::list<vec_infos_base *> assigned_vec;
-        for(std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin(); it!= vector_expressions_.end();++it){
-            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_vec.push_back(dynamic_cast<vec_infos_base*>(&(*it)->lhs()));
-        }
-
-        std::list<mat_infos_base *> assigned_mat;
-        for(std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin(); it!= matrix_expressions_.end();++it){
-            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_mat.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
-        }
-
-
-        std::list<gpu_scal_infos_base*> assigned_scal;
-        for(std::list<binary_scalar_expression_infos_base*>::iterator it=scalar_expressions_.begin(); it!= scalar_expressions_.end();++it){
-            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned_scal.push_back(dynamic_cast<gpu_scal_infos_base*>(&(*it)->lhs()));
-        }
-
-        code_generation::utils::cache_manager<vec_infos_base> vector_cache(vectors_,assigned_vec,kss);
-        code_generation::utils::cache_manager<mat_infos_base> matrix_cache(matrices_,assigned_mat,kss);
-        code_generation::utils::cache_manager<gpu_scal_infos_base> scalar_cache(gpu_scalars_,assigned_scal,kss);
         vec_infos_base * first_vector =  NULL;
         mat_infos_base * first_matrix = NULL;
         if(vectors_.size()) first_vector = *vectors_.begin();
         if(matrices_.size()) first_matrix = *matrices_.begin();
-        scalar_cache.fetch_entries(0);
         if(first_vector){
             kss << "unsigned int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
             kss << "if(i < " << first_vector->size() << "){" << std::endl;
@@ -109,13 +89,9 @@ public:
             //Set access indices
             for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
-                    (*it)->access_index(j,"i" + to_string(j),"0");
+                    (*it)->access_index(j,"i + " + to_string(j),"0");
+                    (*it)->fetch(j,kss);
                 }
-            }
-
-            //Loads into private memory
-            for(unsigned int j=0 ; j<n_unroll  ; ++j){
-                vector_cache.fetch_entries(j);
             }
 
             //Compute expressions
@@ -125,10 +101,12 @@ public:
                 }
             }
 
-            //Write back to global memory
-            for(unsigned int j=0 ; j<n_unroll  ; ++j){
-                vector_cache.writeback_entries(j);
+            for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+                for(unsigned int j=0 ; j < n_unroll ; ++j){
+                    (*it)->write_back(j,kss);
+                }
             }
+
             kss.dec_tab();
             kss << "}" << std::endl;
         }
@@ -139,23 +117,22 @@ public:
             kss.inc_tab();
 
             //Set access indices
-            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
-                (*it)->access_index(0,"r","c");
-
-
-            //Loads into private memory
-            matrix_cache.fetch_entries(0);
+            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+                    (*it)->access_index(0,"r","c");
+                    (*it)->fetch(0,kss);
+            }
 
             //Compute expressions
             for(std::list<binary_matrix_expression_infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
 
-            //Write back to global memory
-            matrix_cache.writeback_entries(0);
+            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+                    (*it)->write_back(0,kss);
+            }
+
             kss.dec_tab();
             kss << "}" << std::endl;
         }
-        scalar_cache.writeback_entries(0);
     }
 
 private:

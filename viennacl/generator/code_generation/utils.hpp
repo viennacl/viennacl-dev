@@ -119,53 +119,41 @@ namespace viennacl{
                 }
 
 
-                template<class T>
-                class cache_manager{
-                public:
-                    typedef std::set<T *, viennacl::generator::deref_less> expressions_read_t;
-                    typedef std::list<T *> expressions_write_t;
-                    cache_manager( expressions_read_t & expressions_read
-                                  ,expressions_write_t const & expressions_write
-                                  ,kernel_generation_stream & kss) : expressions_read_(expressions_read), expressions_write_(expressions_write)
-                                                                              ,kss_(kss){
-                    }
+//                template<class T>
+//                class cache_manager{
+//                public:
+//                    typedef std::set<T *, viennacl::generator::deref_less> expressions_read_t;
+//                    typedef std::list<T *> expressions_write_t;
+//                    cache_manager( expressions_read_t & expressions_read
+//                                  ,expressions_write_t const & expressions_write
+//                                  ,kernel_generation_stream & kss) : expressions_read_(expressions_read), expressions_write_(expressions_write)
+//                                                                              ,kss_(kss){
+//                    }
 
-                    void fetch_entries(unsigned int i){
-                        for(typename expressions_read_t::iterator it = expressions_read_.begin() ; it != expressions_read_.end() ; ++it){
-                            T * p = *it;
-                            std::string val_name = p->name()+"_val_"+to_string(i);
-                            kss_ << p->aligned_scalartype() << " " << val_name << " = " << p->generate(i) << ";" << std::endl;
-                            old_access_names_[i] = p->generate(i);
-                            p->access_name(i,val_name);
-                        }
-                    }
+//                    void fetch(unsigned int i){
+//                        for(typename expressions_read_t::iterator it = expressions_read_.begin() ; it != expressions_read_.end() ; ++it){
+//                            T * p = *it;
+//                            std::string val_name = p->name()+"_val_"+to_string(i);
+//                            old_access_names_[i] = p->generate(i);
+//                            kss_ << p->aligned_scalartype() << " " << val_name << " = " << old_access_names_[i] << ";" << std::endl;
+//                            p->access_name(i,val_name);
+//                        }
+//                    }
 
-                    void writeback_entries(unsigned int i){
-                        for(typename expressions_write_t::iterator it = expressions_write_.begin() ; it != expressions_write_.end() ; ++it){
-                            T * p = *it;
-                            kss_<< old_access_names_[i] << " = "  << p->generate(i) << ";" << std::endl;
-                        }
-                    }
+//                    void writeback(unsigned int i){
+//                        for(typename expressions_write_t::iterator it = expressions_write_.begin() ; it != expressions_write_.end() ; ++it){
+//                            T * p = *it;
+//                            kss_<< old_access_names_[i] << " = "  << p->generate(i) << ";" << std::endl;
+//                        }
+//                    }
 
-                    void writeback_entries( std::list<std::string> const & indices){
-                        for(typename expressions_write_t::iterator it = expressions_write_.begin() ; it != expressions_write_.end() ; ++it){
-                            T * p = *it;
-                            unsigned int i=0;
-                            for(std::list<std::string>::const_iterator iit = indices.begin() ; iit!= indices.end() ; ++iit){
-                               kss_<< p->name() << "[" << *iit << "]"<< " = "  << p->generate(i) << ";" << std::endl;
-                                ++i;
-                            }
+//                private:
+//                    std::map<unsigned int, std::string> old_access_names_;
+//                    expressions_read_t & expressions_read_;
+//                    expressions_write_t expressions_write_;
+//                    kernel_generation_stream & kss_;
 
-                        }
-                    }
-
-                private:
-                    std::map<unsigned int, std::string> old_access_names_;
-                    expressions_read_t & expressions_read_;
-                    expressions_write_t expressions_write_;
-                    kernel_generation_stream & kss_;
-
-                };
+//                };
 
 //                class loop_unroller{
 //                public:
