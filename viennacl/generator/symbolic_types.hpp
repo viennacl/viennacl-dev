@@ -100,23 +100,15 @@ namespace viennacl
       class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public inner_product_infos_base{
           typedef typename LHS::ScalarType ScalarType;
       public:
-          binary_scalar_expression(LHS const & lhs, RHS const & rhs):
-              inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs)), tmp_(1024){
-          }
-
-           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{
-               k.arg(arg++,tmp_.handle().opencl_handle());
-           }
-
+           binary_scalar_expression(LHS const & lhs, RHS const & rhs):  inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs)), tmp_(1024){ }
+           void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const{ k.arg(arg++,tmp_.handle().opencl_handle()); }
            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                temporaries_map.insert(std::make_pair(this,handle())).first;
                infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
                lhs_->bind(shared_infos,temporaries_map);
                rhs_->bind(shared_infos,temporaries_map);
            }
-
            void const * handle() const{ return static_cast<void const *>(&tmp_.handle()); }
-
       private:
           viennacl::vector<ScalarType> tmp_;
       };
@@ -132,10 +124,13 @@ namespace viennacl
       class unary_matrix_expression<SUB, replicate_type> : public unary_matrix_expression_infos_base{
       public:
           typedef typename SUB::ScalarType ScalarType;
-          unary_matrix_expression(SUB const & sub) :unary_matrix_expression_infos_base(new SUB(sub), new replicate_type()){ }
+          unary_matrix_expression(SUB const & sub, unsigned int m, unsigned int k) :unary_matrix_expression_infos_base(new SUB(sub), new replicate_type()), m_(m), k_(k){ }
           virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
               sub_->access_index(i,ind0,"0");
           }
+      private:
+          unsigned int m_;
+          unsigned int k_;
       };
 
 
@@ -174,6 +169,7 @@ namespace viennacl
         void fetch(unsigned int i, kernel_generation_stream & kss){ }
         void write_back(unsigned int i, kernel_generation_stream & kss){ }
         virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &){ }
+        virtual void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const { }
     };
 
     /**

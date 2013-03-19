@@ -71,7 +71,7 @@ namespace viennacl
               viennacl::ocl::program & pgm = program();
               for(std::map<std::string, generator::code_generation::kernel_infos_t>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
                   viennacl::ocl::kernel& k = pgm.get_kernel(it->first);
-                  set_arguments(k,it->second.arguments());
+                  it->second.enqueue(k);
                   it->second.config_nd_range(k);
                   viennacl::ocl::enqueue(k);
               }

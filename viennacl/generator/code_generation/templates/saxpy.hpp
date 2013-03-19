@@ -37,7 +37,6 @@ public:
     void config_nd_range(viennacl::ocl::kernel & k, infos_base* p){
         k.local_work_size(0,group_size0_);
         if(vec_infos_base* vec = dynamic_cast<vec_infos_base*>(p)){
-            std::cout << "OH NOEZ" << std::endl;
             k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(vec->real_size()/(vectorization_*loop_unroll_),group_size0_));
         }
         else if(mat_infos_base * mat = dynamic_cast<mat_infos_base*>(p)){

@@ -35,31 +35,35 @@ namespace viennacl{
 
             class kernel_infos_t{
             public:
-                typedef std::list<kernel_argument*> arguments_t;
-
-
-                kernel_infos_t(infos_base *op, optimization_profile* prof) : optimization_profile_(prof){
-                    trees_.push_back(op);
-                }
-
-                kernel_infos_t(infos_base *op, viennacl::tools::shared_ptr<optimization_profile> prof) : optimization_profile_(prof){
-                    trees_.push_back(op);
-                }
-
+                kernel_infos_t(infos_base *op, optimization_profile* prof) : optimization_profile_(prof){ trees_.push_back(op); }
+                kernel_infos_t(infos_base *op, viennacl::tools::shared_ptr<optimization_profile> prof) : optimization_profile_(prof){ trees_.push_back(op); }
                 std::list<infos_base*> & trees(){ return trees_; }
-
-                arguments_t & arguments(){ return arguments_; }
-
                 code_generation::optimization_profile* profile() { return optimization_profile_.get(); }
-
                 void config_nd_range(viennacl::ocl::kernel & k) const{
                     binary_arithmetic_tree_infos_base * t = dynamic_cast<binary_arithmetic_tree_infos_base *>(trees_.front());
                     optimization_profile_->config_nd_range(k,&t->lhs());
                 }
+                void enqueue(viennacl::ocl::kernel & k){
+                    unsigned int garbage;
+                    for(std::map<kernel_argument const *, std::string, deref_less>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                        it->first->enqueue(garbage,k);
+                    }
+                }
+                void init_arguments(){
+                    for(std::list<infos_base*>::iterator it = trees_.begin() ; it!= trees_.end() ; ++it){
+                        (*it)->get_kernel_arguments(arguments_);
+                    }
+                }
+                void fill_arguments(kernel_generation_stream & kss){
+                    for(std::map<kernel_argument const *, std::string, deref_less>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                        if(it!=arguments_.begin()) kss << ',';
+                        kss << it->second << std::endl ;
+                    }
+                }
 
             private:
-                arguments_t arguments_;
                 std::list<infos_base*> trees_;
+                std::map<kernel_argument const *, std::string, deref_less> arguments_;
                 viennacl::tools::shared_ptr<code_generation::optimization_profile> optimization_profile_;
             };
 
@@ -93,13 +97,8 @@ namespace viennacl{
 
                 void generate_headers(){
                     kss_ << "__kernel void " + kernel_name_ + "(";
-                    for(std::list<infos_base*>::iterator it = kernel_infos_.trees().begin() ; it!= kernel_infos_.trees().end() ; ++it){
-                        extract_to_list(*it,kernel_infos_.arguments(),utils::is_type<kernel_argument>());
-                    }
-                    for(std::list<kernel_argument*>::iterator it=kernel_infos_.arguments().begin(); it!=kernel_infos_.arguments().end();++it){
-                        if(it!=kernel_infos_.arguments().begin()) kss_ << ',';
-                        kss_ << (*it)->arguments_string() << std::endl ;
-                    }
+                    kernel_infos_.init_arguments();
+                    kernel_infos_.fill_arguments(kss_);
                     kss_ << ")" << std::endl;
                 }
 
