@@ -104,14 +104,32 @@ class name##_type : public base{\
     name##_type() : base(#name,#expression){ }\
 };
 
+//Assignment
 MAKE_OP(assign,=,assignment_op_infos_base)
 MAKE_OP(inplace_add,+=,assignment_op_infos_base)
 MAKE_OP(inplace_sub,-=,assignment_op_infos_base)
 MAKE_OP(inplace_scal_mul,*=,assignment_op_infos_base)
 MAKE_OP(inplace_scal_div,/=,assignment_op_infos_base)
 
+//Arithmetic
 MAKE_OP(add,+,arithmetic_op_infos_base)
 MAKE_OP(sub,-,arithmetic_op_infos_base)
+
+
+//Comparison
+MAKE_OP(sup,>,arithmetic_op_infos_base)
+MAKE_OP(supeq,>=,arithmetic_op_infos_base)
+MAKE_OP(inf,<,arithmetic_op_infos_base)
+MAKE_OP(infeq,<=,arithmetic_op_infos_base)
+MAKE_OP(eqto,==,arithmetic_op_infos_base)
+MAKE_OP(neqto,!=,arithmetic_op_infos_base)
+
+//Bitwise
+MAKE_OP(and,&,arithmetic_op_infos_base)
+MAKE_OP(or,|,arithmetic_op_infos_base)
+MAKE_OP(xor,^,arithmetic_op_infos_base)
+
+
 
 MAKE_OP(unary_sub,-,unary_arithmetic_op_infos_base)
 MAKE_OP(identity, ,unary_arithmetic_op_infos_base)

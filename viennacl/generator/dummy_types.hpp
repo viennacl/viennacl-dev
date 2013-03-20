@@ -15,7 +15,7 @@ namespace viennacl{
 
 namespace generator{
 
-template<class T>
+template<class T, class Enable=void>
 struct to_sym{
     typedef T type;
     static type result(T const & t){ return t; }
@@ -139,10 +139,10 @@ struct to_sym<dummy_scalar<ScalarType> >{
     static type result(dummy_scalar<ScalarType> const & t) { return t.get(); }
 };
 
-template<>
-struct to_sym<float>{
-    typedef cpu_symbolic_scalar<float> type;
-    static type result(float const & t){ return t; }
+template<typename ScalarType>
+struct to_sym<ScalarType, typename viennacl::enable_if<is_primitive_type<ScalarType>::value >::type>{
+    typedef cpu_symbolic_scalar<ScalarType> type;
+    static type result(ScalarType const & t){ return t; }
 };
 
 template<class VCL_MATRIX>
@@ -211,7 +211,7 @@ struct is_vector_expression_t<unary_vector_expression<SUB,OP> >{ enum { value = 
 
 
 template<class T>
-struct is_scalar_expression_t{ enum { value = 0 }; };
+struct is_scalar_expression_t{ enum { value = is_primitive_type<T>::value }; };
 template<class ScalarType>
 struct is_scalar_expression_t<dummy_scalar<ScalarType> >{ enum { value = 1}; };
 template<>
@@ -309,35 +309,34 @@ element_prod(LHS const & lhs, RHS const & rhs){
             ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
 }
 
-template<class LHS, class RHS>
-typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
-                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
-                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_binary_expr<LHS,add_type,RHS
-                                                    ,create_vector<LHS,RHS>::value
-                                                    ,create_scalar<LHS,RHS>::value
-                                                    ,create_matrix<LHS,RHS>::value>::type>::type
-operator+(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,add_type,RHS
-            ,create_vector<LHS,RHS>::value
-            ,create_scalar<LHS,RHS>::value
-            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
-}
+#define CREATE_ELEMENTWISE_OPERATOR(function_name, symbolic_type) \
+template<class LHS, class RHS>\
+typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)\
+                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)\
+                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)\
+                            ,typename convert_to_binary_expr<LHS,symbolic_type,RHS\
+                                                    ,create_vector<LHS,RHS>::value\
+                                                    ,create_scalar<LHS,RHS>::value\
+                                                    ,create_matrix<LHS,RHS>::value>::type>::type function_name(LHS const & lhs, RHS const & rhs){\
+    return typename convert_to_binary_expr<LHS,symbolic_type,RHS\
+            ,create_vector<LHS,RHS>::value\
+            ,create_scalar<LHS,RHS>::value\
+            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));\
+}\
 
-template<class LHS, class RHS>
-typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
-                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
-                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
-                            ,typename convert_to_binary_expr<LHS,sub_type,RHS
-                                                    ,create_vector<LHS,RHS>::value
-                                                    ,create_scalar<LHS,RHS>::value
-                                                    ,create_matrix<LHS,RHS>::value>::type>::type
-operator-(LHS const & lhs, RHS const & rhs){
-    return typename convert_to_binary_expr<LHS,sub_type,RHS
-            ,create_vector<LHS,RHS>::value
-            ,create_scalar<LHS,RHS>::value
-            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
-}
+CREATE_ELEMENTWISE_OPERATOR(operator+,add_type)
+CREATE_ELEMENTWISE_OPERATOR(operator-,sub_type)
+CREATE_ELEMENTWISE_OPERATOR(operator>,sup_type)
+CREATE_ELEMENTWISE_OPERATOR(operator>=,supeq_type)
+CREATE_ELEMENTWISE_OPERATOR(operator<,inf_type)
+CREATE_ELEMENTWISE_OPERATOR(operator<=,infeq_type)
+CREATE_ELEMENTWISE_OPERATOR(operator==,eqto_type)
+CREATE_ELEMENTWISE_OPERATOR(operator!=,neqto_type)
+
+
+#undef CREATE_ELEMENTWISE_OPERATOR
+
+//Prod needs a special treatment to avoid ambiguities
 template<class LHS, class RHS>
 typename viennacl::enable_if< is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value
                             ,typename convert_to_binary_expr<LHS,mul_type,RHS

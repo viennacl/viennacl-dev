@@ -426,6 +426,65 @@ namespace viennacl
       {
         typedef const double    type;
       };
+
+
+      //OpenCL equivalent type
+      template<typename T>
+      struct cl_type
+      {
+          typedef T type;
+      };
+
+      template<>
+      struct cl_type<float>{
+          typedef cl_float type;
+      };
+
+      template<>
+      struct cl_type<double>{
+          typedef cl_double type;
+      };
+
+      template<>
+      struct cl_type<int>{
+          typedef cl_int type;
+      };
+
+      template<>
+      struct cl_type<unsigned int>{
+          typedef cl_uint type;
+      };
+
+      template<>
+      struct cl_type<long>{
+          typedef cl_long type;
+      };
+
+      template<>
+      struct cl_type<unsigned long>{
+          typedef cl_ulong type;
+      };
+
+      template<>
+      struct cl_type<short>{
+          typedef cl_short type;
+      };
+
+      template<>
+      struct cl_type<unsigned short>{
+          typedef cl_ushort type;
+      };
+
+      template<>
+      struct cl_type<char>{
+          typedef cl_char type;
+      };
+
+      template<>
+      struct cl_type<unsigned char>{
+          typedef cl_uchar type;
+      };
+
       
     } //namespace result_of
 } //namespace viennacl

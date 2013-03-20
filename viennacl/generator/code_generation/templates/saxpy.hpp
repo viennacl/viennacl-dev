@@ -132,9 +132,9 @@ public:
             for(std::list<binary_matrix_expression_infos_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
 
-            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
-                    (*it)->write_back(0,kss);
-            }
+            for(typename std::list<binary_matrix_expression_infos_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
+                (*it)->write_back(0,kss);
+
 
             kss.dec_tab();
             kss << "}" << std::endl;

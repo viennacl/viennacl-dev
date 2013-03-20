@@ -145,6 +145,18 @@ int test_vector ( Epsilon const& epsilon) {
     }
 
     {
+        std::cout << "w = x > 1" << std::endl;
+        for(unsigned int i=0 ; i < size ; ++i){
+            cw(i) = cx(i) > 1.0f;
+        }
+        generator::custom_operation op;
+        op.add(dv_t(w) = dv_t(x) > 1.0f);
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cw, w, w = x > 1)
+    }
+
+    {
         std::cout << "w = -w ..." << std::endl;
         cw = -cw;
         generator::custom_operation op;

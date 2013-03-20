@@ -126,7 +126,7 @@ namespace viennacl
         cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(packed_cl_uint), (void*)&val);
         VIENNACL_ERR_CHECK(err);
       }
-      
+
       /** @brief Sets a single precision floating point argument at the provided position */
       void arg(unsigned int pos, float val)
       {
