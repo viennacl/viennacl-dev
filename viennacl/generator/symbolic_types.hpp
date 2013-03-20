@@ -138,7 +138,7 @@ namespace viennacl
         typedef SCALARTYPE ScalarType;
         cpu_symbolic_scalar(ScalarType const & val) :  val_(val){}
         void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ k.arg(n_arg++,cl_float(val_)); }
-        std::string repr() const{ return "cs"+repr_of<SCALARTYPE>::value(); }
+        std::string repr() const{ return "vscal"+repr_of<SCALARTYPE>::value(); }
         void bind(std::map<void const *, shared_infos_t>  & shared_infos
                   ,std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
             infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
@@ -183,7 +183,7 @@ namespace viennacl
         void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
             infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
-        std::string repr() const{ return "gs"+repr_of<SCALARTYPE>::value(); }
+        std::string repr() const{ return "pscal"+repr_of<SCALARTYPE>::value(); }
     private:
         vcl_t const & vcl_scal_;
     };
@@ -212,7 +212,7 @@ namespace viennacl
               infos_= &shared_infos.insert(std::make_pair((void const *)&vcl_vec_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
           std::string repr() const{
-              return "v"+repr_of<SCALARTYPE>::value();
+              return "vec"+repr_of<SCALARTYPE>::value();
           }
           size_t real_size() const{ return vcl_vec_.size(); }
         private:
@@ -256,7 +256,9 @@ namespace viennacl
               infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
           void const * handle() const{ return static_cast<void const *>(&vcl_mat_.handle()); }
-          std::string repr() const{ return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_); }
+          std::string repr() const{
+              return "mat"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+(is_rowmajor_?'R':'C');
+          }
       private:
           VCL_MATRIX const & vcl_mat_;
       };

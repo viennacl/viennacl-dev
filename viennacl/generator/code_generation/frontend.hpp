@@ -243,7 +243,7 @@ namespace viennacl{
                         for(std::list<infos_base*>::iterator iit = it->trees().begin() ; iit != it->trees().end() ; ++iit){
                             res += (*iit)->repr();
                         }
-                        res+=it->profile()->repr();
+                        res+=' ' + it->profile()->repr();
                     }
                     return res;
                 }
@@ -270,6 +270,7 @@ namespace viennacl{
                     }
 
 
+                    std::cout << repr() << std::endl;
                     return oss.str();
                 }
 

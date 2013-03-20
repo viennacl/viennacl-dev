@@ -96,8 +96,13 @@ namespace viennacl{
             infos_base & lhs() const{ return *lhs_; }
             infos_base & rhs() const{ return *rhs_; }
             binary_op_infos_base & op() { return *op_; }
-            std::string repr() const { return "p_"+lhs_->repr() + op_->name() + rhs_->repr()+"_p"; }
-            std::string simplified_repr() const { return "p_"+lhs_->simplified_repr() + op_->name() + rhs_->simplified_repr()+"_p"; }
+            std::string repr() const { return op_->name() + "("+lhs_->repr() + "," + rhs_->repr() +")"; }
+            std::string simplified_repr() const {
+                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa))
+                    return "assign(" + lhs_->repr() + "," + rhs_->repr() + ")";
+                else
+                    return lhs_->repr();
+            }
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 lhs_->bind(shared_infos,temporaries_map);
                 rhs_->bind(shared_infos,temporaries_map);
@@ -129,14 +134,6 @@ namespace viennacl{
         class binary_arithmetic_tree_infos_base : public binary_tree_infos_base{
         public:
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")"; }
-            std::string simplified_repr() const{
-                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa)){
-                    return "("+lhs_->simplified_repr() + "=" + rhs_->simplified_repr()+"";
-                }
-                else{
-                    return lhs_->repr();
-                }
-            }
             binary_arithmetic_tree_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :  binary_tree_infos_base(lhs,op,rhs){        }
         private:
         };
@@ -162,8 +159,8 @@ namespace viennacl{
             unary_tree_infos_base(infos_base * sub, unary_op_infos_base * op) : sub_(sub), op_(op) { }
             infos_base & sub() const{ return *sub_; }
             unary_op_infos_base const & op() const{ return *op_; }
-            std::string repr() const { return "p_"+ op_->name() + sub_->repr()+"_p"; }
-            std::string simplified_repr() const { return "p_" + op_->name() + sub_->simplified_repr()+"_p"; }
+            std::string repr() const { return op_->name() + "("+ sub_->repr()+")"; }
+            std::string simplified_repr() const { return repr(); }
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 sub_->bind(shared_infos,temporaries_map);
             }
@@ -359,8 +356,7 @@ namespace viennacl{
 
         class matvec_prod_infos_base : public binary_vector_expression_infos_base{
         public:
-            matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
-                binary_vector_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){            }
+            matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) : binary_vector_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){            }
             std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
         private:
