@@ -116,7 +116,7 @@ int test_vector ( Epsilon const& epsilon) {
         cw[i]=rand()/(NumericT)RAND_MAX;
     }
 
-    std::cout << "Running tests for vector of size " << cw.size() << std::endl;
+//    std::cout << "Running tests for vector of size " << cw.size() << std::endl;
 
     viennacl::vector<NumericT> w (size);
     viennacl::vector<NumericT> x (size);
@@ -176,7 +176,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 
 
-template< typename NumericT, typename Epsilon >
+template< typename NumericT, class Layout, typename Epsilon >
 int test_matrix ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
@@ -193,14 +193,14 @@ int test_matrix ( Epsilon const& epsilon) {
     unsigned int n_rep1 = 4;
     unsigned int n_rep2 = 8;
 
-    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,viennacl::row_major> > dm_t;
+    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,Layout> > dm_t;
     typedef viennacl::generator::dummy_vector<NumericT> dv_t;
 
-    ublas::matrix<NumericT,ublas::row_major> cA(size1,size2);
-    ublas::matrix<NumericT,ublas::row_major> cB(size1,size2);
-    ublas::matrix<NumericT,ublas::row_major> cC(size1,size2);
+    ublas::matrix<NumericT> cA(size1,size2);
+    ublas::matrix<NumericT> cB(size1,size2);
+    ublas::matrix<NumericT> cC(size1,size2);
 
-    ublas::matrix<NumericT, ublas::row_major> cPattern(pattern_size1,pattern_size2);
+    ublas::matrix<NumericT> cPattern(pattern_size1,pattern_size2);
 
     ublas::vector<NumericT> cx(size1);
 
@@ -218,13 +218,13 @@ int test_matrix ( Epsilon const& epsilon) {
         cx(i) = rand()/(double)RAND_MAX;
     }
 
-    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
+//    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
 
-    viennacl::matrix<NumericT,viennacl::row_major> A (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> B (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> C (size1, size2);
+    viennacl::matrix<NumericT,Layout> A (size1, size2);
+    viennacl::matrix<NumericT,Layout> B (size1, size2);
+    viennacl::matrix<NumericT,Layout> C (size1, size2);
 
-    viennacl::matrix<NumericT, viennacl::row_major> pattern(pattern_size1, pattern_size2);
+    viennacl::matrix<NumericT, Layout> pattern(pattern_size1, pattern_size2);
 
     viennacl::vector<NumericT> x(size1);
 
@@ -264,6 +264,17 @@ int test_matrix ( Epsilon const& epsilon) {
             for(unsigned int j = 0 ; j < size2 ; ++j)
                 cC(i,j) = cx(i);
         generator::custom_operation op((dm_t(C) = generator::repmat(dv_t(x),1,C.size2())));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+    }
+
+    {
+        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cx(j);
+        generator::custom_operation op((dm_t(C) = generator::trans(generator::repmat(dv_t(x),1,C.size2()))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cC, C, C = repmat(x, 1, N))
@@ -326,9 +337,15 @@ int main() {
     {
         double epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  eps:     " << epsilon << std::endl;
-        std::cout << "  numeric: float" << std::endl;
-        retval = test_matrix<double> (epsilon);
+        std::cout << "  numeric: double" << std::endl;
+        std::cout << "  --------------" << std::endl;
+        std::cout << "  Row-Major"      << std::endl;
+        std::cout << "  --------------" << std::endl;
+        retval = test_matrix<double, viennacl::row_major> (epsilon);
+        std::cout << "  --------------" << std::endl;
+        std::cout << "  Column-Major"      << std::endl;
+        std::cout << "  --------------" << std::endl;
+        retval &= test_matrix<double, viennacl::column_major> (epsilon);
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
         else

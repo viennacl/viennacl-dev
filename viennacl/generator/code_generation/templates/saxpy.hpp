@@ -111,8 +111,14 @@ public:
             kss << "}" << std::endl;
         }
         if(first_matrix){
-            kss << "unsigned int r = get_global_id(0)/" << first_matrix->internal_size2() << ";" << std::endl;
-            kss << "unsigned int c = get_global_id(0)%" << first_matrix->internal_size2() << ";" << std::endl;
+            if(first_matrix->is_rowmajor()){
+                kss << "unsigned int r = get_global_id(0)/" << first_matrix->internal_size2() << ";" << std::endl;
+                kss << "unsigned int c = get_global_id(0)%" << first_matrix->internal_size2() << ";" << std::endl;
+            }
+            else{
+                kss << "unsigned int r = get_global_id(0)%" << first_matrix->internal_size1() << ";" << std::endl;
+                kss << "unsigned int c = get_global_id(0)/" << first_matrix->internal_size1() << ";" << std::endl;
+            }
             kss << "if(r < " << first_matrix->internal_size1() << "){" << std::endl;
             kss.inc_tab();
 

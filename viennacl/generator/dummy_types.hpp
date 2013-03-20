@@ -433,6 +433,25 @@ reduce(T const & t){
 }
 
 
+template<class OP_REDUCE, class T>
+typename viennacl::enable_if<is_matrix_expression_t<T>::value
+                            ,binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> > >::type
+reduce_rows(T const & t){
+    return binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> >(make_sym(t), symbolic_constant<1>());
+}
+
+template<class OP_REDUCE, class T>
+typename viennacl::enable_if<is_matrix_expression_t<T>::value
+                            ,binary_vector_expression<
+                                unary_matrix_expression<typename to_sym<T>::type,trans_type>
+                                ,reduce_type<OP_REDUCE>
+                                ,symbolic_constant<1> > >::type
+reduce_cols(T const & t){
+    return binary_vector_expression<
+            unary_matrix_expression<typename to_sym<T>::type,trans_type>
+            ,reduce_type<OP_REDUCE>
+            ,symbolic_constant<1> >(trans(t), symbolic_constant<1>());
+}
 
 template<class T>
 typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,

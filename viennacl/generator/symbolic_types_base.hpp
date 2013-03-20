@@ -332,7 +332,7 @@ namespace viennacl{
                 if(is_rowmajor_)
                     str = ind0+"*"+internal_size2()+"+"+ind1;
                 else
-                    ind1+"*"+internal_size1()+"+"+ind0;
+                    str = ind1+"*"+internal_size1()+"+"+ind0;
                 infos_->access_index[i] = str;
             }
             virtual size_t real_size1() const = 0;

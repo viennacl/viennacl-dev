@@ -33,7 +33,7 @@
 #define VIENNACL_WITH_UBLAS 1
 
 //#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -41,6 +41,14 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/generator/custom_operation.hpp"
+
+#define CHECK_RESULT(cpu,gpu, op) \
+    if ( double delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
+        std::cout << "# Error at operation: " #op << std::endl;\
+        std::cout << "  diff: " << delta << std::endl;\
+        retval = EXIT_FAILURE;\
+    }\
+
 
 using namespace boost::numeric;
 using namespace viennacl;
@@ -113,10 +121,14 @@ int test( Epsilon const& epsilon) {
     }
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = rand()/(double)RAND_MAX;
+        cx(i) = (double)rand()/RAND_MAX;
     }
 
-    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
+    for(unsigned int i=0; i<size1; ++i){
+        cy(i) = (double)rand()/RAND_MAX;
+    }
+
+//    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
 
     viennacl::matrix<NumericT,Layout> A (size1, size2);
     viennacl::matrix<NumericT,Layout> B (size1, size2);
@@ -141,18 +153,55 @@ int test( Epsilon const& epsilon) {
 
     // --------------------------------------------------------------------------
     {
-        std::cout << "testing gemv..." << std::endl;
-        cy     =  ublas::prod(trans(cA),cx);
-        generator::custom_operation op((dv_t(y) = generator::prod(trans(dm_t(A)),dv_t(x))));
+        std::cout << "y = A*x..." << std::endl;
+        cy     =  ublas::prod(cA,cx);
+        generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        if ( double delta = fabs ( diff ( cy, y) ) > epsilon ) {
-            std::cout << "# Error at operation: gemv" << std::endl;
-            std::cout << "  diff: " << delta << std::endl;
-            std::cout << op.source_code() << std::endl;
-            retval = EXIT_FAILURE;
-        }
+        CHECK_RESULT(cy,y,y=A*x)
     }
+
+    {
+        std::cout << "x = trans(A)*y..." << std::endl;
+        cx     =  ublas::prod(trans(cA),cy);
+        generator::custom_operation op((dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cx,x,x=trans(A)*y)
+    }
+
+    {
+        std::cout << "y = reduce_rows<max>(A)..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i){
+            NumericT current_max = -INFINITY;
+            for(unsigned int j = 0 ; j < size2 ; ++j){
+                current_max = std::max(current_max,cA(i,j));
+            }
+            cy(i) = current_max;
+        }
+        generator::custom_operation op((dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
+    }
+
+
+    {
+        std::cout << "x = reduce_cols<max>(A)..." << std::endl;
+        for(unsigned int j = 0 ; j < size2 ; ++j){
+            NumericT current_max = -INFINITY;
+            for(unsigned int i = 0 ; i < size1 ; ++i){
+                current_max = std::max(current_max,cA(i,j));
+            }
+            cx(j) = current_max;
+        }
+        generator::custom_operation op((dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cx,x,x = reduce_cols<max>(A))
+    }
+
+
     return retval;
 }
 
@@ -174,9 +223,15 @@ int main() {
     {
         double epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  eps:     " << epsilon << std::endl;
-        std::cout << "  numeric: float" << std::endl;
+        std::cout << "  numeric: double" << std::endl;
+        std::cout << "  --------------" << std::endl;
+        std::cout << "  Row-Major"      << std::endl;
+        std::cout << "  --------------" << std::endl;
         retval = test<double, viennacl::row_major> (epsilon);
+        std::cout << "  --------------" << std::endl;
+        std::cout << "  Column-Major"   << std::endl;
+        std::cout << "  --------------" << std::endl;
+        retval &= test<double, viennacl::column_major> (epsilon);
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
