@@ -97,7 +97,6 @@ private:
 
 
 class generator : public code_generation::generator{
-    typedef std::set<matmat_prod_infos_base*,viennacl::generator::deref_less> matmat_prods_t;
 
     static void transform_block(mat_infos_base const & mat_infos, bool is_transposed, bool store_shared
                                 , unsigned int & large_block_1, unsigned int & large_block_2
@@ -143,7 +142,7 @@ class generator : public code_generation::generator{
                     if(is_transposed) kss<< mat->offset(to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + to_string(nl_rhs),"0");
                     else kss << mat->offset(to_string(k),offset_n + " +  get_group_id(1)*" + to_string(nl_rhs));
                     kss << ";" << std::endl;
-                    mat->access_name(k,"*" + ptr_name);
+                    mat->private_value(k,"*" + ptr_name);
                 }
            else
                 for(unsigned int n = 0 ; n < ns_rhs ; ++n){
@@ -152,7 +151,7 @@ class generator : public code_generation::generator{
                     if(is_transposed)  kss << mat->offset(offset_n + " +  get_group_id(1)*" + to_string(nl_rhs), to_string(n));
                     else kss << mat->offset("0",offset_n + " +  get_group_id(1)*" + to_string(nl_rhs) + " + " + to_string(n));
                     kss << ";" << std::endl;
-                    mat->access_name(n,"*" + ptr_name);
+                    mat->private_value(n,"*" + ptr_name);
                 }
         }
 
@@ -183,7 +182,7 @@ class generator : public code_generation::generator{
                     if(is_transposed) kss << mat->offset(to_string(m),"get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                     else kss << mat->offset("get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m + "+" + to_string(m),"0");
                     kss << ";" << std::endl;
-                    mat->access_name(m,"*" + ptr_name);
+                    mat->private_value(m,"*" + ptr_name);
                 }
             }
             else{
@@ -193,7 +192,7 @@ class generator : public code_generation::generator{
                     if(is_transposed) kss << mat->offset("0", to_string(k) + "+" + "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                     else kss << mat->offset( "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m, to_string(k));
                     kss << ";" << std::endl;
-                    mat->access_name(k,"*" + ptr_name);
+                    mat->private_value(k,"*" + ptr_name);
                 }
             }
         }
@@ -295,7 +294,7 @@ class generator : public code_generation::generator{
         kss.inc_tab();
         if((*matrices.begin())->is_rowmajor()){
             for(typename MatContainerT::iterator it = matrices.begin() ; it!=matrices.end(); ++it){
-                 (*it)->access_name(0,(*it)->name() +  "[" + offset + " + j  + " + internal_size2 + "*i]");
+                 (*it)->private_value(0,(*it)->name() +  "[" + offset + " + j  + " + internal_size2 + "*i]");
             }
             kss << aligned_scalartype << " val = " << mat_expression.generate(0) << ";" << std::endl;
             kss << "__local " << scalartype << "* ptr = " << lmem.name() << " + i*" << lmem.size2() << "+j*" << vectorization<<";" <<std::endl;
@@ -308,7 +307,7 @@ class generator : public code_generation::generator{
         }
         else{
             for(typename MatContainerT::iterator it = matrices.begin() ; it!=matrices.end(); ++it){
-                 (*it)->access_name(0,(*it)->name() + "[" + offset + "+ j*" + internal_size1 + " + i]");
+                 (*it)->private_value(0,(*it)->name() + "[" + offset + "+ j*" + internal_size1 + " + i]");
             }
             kss << aligned_scalartype << " val = " << mat_expression.generate(0) << ";" << std::endl;
             kss << "__local " << scalartype << "* ptr = " << lmem.name() << " + i*" << vectorization * lmem.size2() << "+ j;" <<std::endl;
@@ -353,12 +352,16 @@ public:
         }
 
         //Fills lhs's
-        for(matmat_prods_t::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
+        for(std::set<matmat_prod_infos_base*,viennacl::generator::deref_less>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
             extract_as(&(*it)->lhs(),lhss,utils::is_type<mat_infos_base>());
             extract_as(&(*it)->rhs(),rhss,utils::is_type<mat_infos_base>());
         }
 
         matmat_prod_infos_base * first_prod = dynamic_cast<matmat_prod_infos_base*>(*matmat_prods_.begin());
+
+        for(std::set<matmat_prod_infos_base*,viennacl::generator::deref_less>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
+            (*it)->set_val_name("prod_val_" + to_string(std::distance(matmat_prods_.begin(),it)));
+        }
         mat_infos_base* first_lhs = *lhss.begin();
         mat_infos_base* first_rhs = *rhss.begin();
         mat_infos_base* first_assigned = assigned.front();
@@ -726,7 +729,7 @@ public:
 
 private:
     std::list<binary_matrix_expression_infos_base*>  blas3_expressions_;
-    matmat_prods_t matmat_prods_;
+    std::set<matmat_prod_infos_base*,viennacl::generator::deref_less> matmat_prods_;
     std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
     std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
     profile * optimization_profile_;

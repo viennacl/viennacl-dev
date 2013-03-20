@@ -197,7 +197,7 @@ namespace viennacl{
 
         class kernel_argument : public virtual infos_base{
         public:
-            void access_name(unsigned int i, std::string const & new_name) { infos_->access_index[i] = new_name; }
+            void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
             virtual ~kernel_argument(){ }
             std::string name() const { return infos_->name; }
             std::string const & scalartype() const { return infos_->scalartype; }
@@ -344,8 +344,8 @@ namespace viennacl{
         public:
             matmat_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :
                 binary_matrix_expression_infos_base(lhs,op,rhs){
-                val_name_ = repr() + "_val";
             }
+            void set_val_name(std::string const & val_name) { val_name_ = val_name; }
             std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
             std::string val_name(unsigned int m, unsigned int n){ return val_name_ +  '_' + to_string(m) + '_' + to_string(n); }
             std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){ return res + " = " + op_->generate(res , lhs + "*" + rhs); }

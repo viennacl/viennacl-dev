@@ -85,7 +85,7 @@ public:
             }
             compute_reductions_samesize(kss,local_mems);
             for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
-                (*it)->access_name(0,(*it)->name()+"_local"+"[0]");
+                (*it)->private_value(0,(*it)->name()+"_local"+"[0]");
             }
             for(std::list<binary_scalar_expression_infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
                 kss << (*it)->generate(0) << ";" << std::endl;

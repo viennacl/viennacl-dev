@@ -26,7 +26,7 @@
 #define NDEBUG
 #endif
 
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_BUILD
 
 //
 // include necessary system headers
