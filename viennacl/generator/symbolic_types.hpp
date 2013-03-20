@@ -35,6 +35,7 @@ namespace viennacl
       template<> struct repr_of<float>{ static const std::string value(){ return "f"; } };
       template<> struct repr_of<double>{ static const std::string value(){ return "d"; } };
       template<> struct repr_of<int>{ static const std::string value(){ return "i"; } };
+      template<> struct repr_of<unsigned int>{ static const std::string value(){ return "ui"; } };
 
       template<class LHS, class OP, class RHS>
       class binary_vector_expression : public binary_vector_expression_infos_base{
@@ -120,18 +121,7 @@ namespace viennacl
           unary_matrix_expression(SUB const & sub) :unary_matrix_expression_infos_base(new SUB(sub), new OP()){ }
       };
 
-      template<class SUB>
-      class unary_matrix_expression<SUB, replicate_type> : public unary_matrix_expression_infos_base{
-      public:
-          typedef typename SUB::ScalarType ScalarType;
-          unary_matrix_expression(SUB const & sub, unsigned int m, unsigned int k) :unary_matrix_expression_infos_base(new SUB(sub), new replicate_type()), m_(m), k_(k){ }
-          virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
-              sub_->access_index(i,ind0,"0");
-          }
-      private:
-          unsigned int m_;
-          unsigned int k_;
-      };
+
 
 
 
@@ -187,24 +177,13 @@ namespace viennacl
       public:
         typedef viennacl::scalar<SCALARTYPE> vcl_t;
         typedef SCALARTYPE ScalarType;
-        gpu_symbolic_scalar(vcl_t const & vcl_scal) : vcl_scal_(vcl_scal){
-        }
-
+        gpu_symbolic_scalar(vcl_t const & vcl_scal) : vcl_scal_(vcl_scal){ }
         void const * handle() const{ return static_cast<void const *>(&vcl_scal_.handle()); }
-
-        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
-            k.arg(n_arg++,vcl_scal_);
-        }
-
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{  k.arg(n_arg++,vcl_scal_); }
         void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
             infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
         }
-
-        std::string repr() const{
-            return "gs"+repr_of<SCALARTYPE>::value();
-        }
-
-
+        std::string repr() const{ return "gs"+repr_of<SCALARTYPE>::value(); }
     private:
         vcl_t const & vcl_scal_;
     };
@@ -223,26 +202,19 @@ namespace viennacl
         public:
           typedef viennacl::vector<SCALARTYPE> vcl_vec_t;
           typedef SCALARTYPE ScalarType;
-
           symbolic_vector(vcl_vec_t const & vcl_vec) : vcl_vec_(vcl_vec){ }
-
           virtual void const * handle() const{ return static_cast<void const *>(&vcl_vec_.handle()); }
-
           void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
               k.arg(n_arg++,vcl_vec_);
               k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()/infos_->alignment));
           }
-
           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
               infos_= &shared_infos.insert(std::make_pair((void const *)&vcl_vec_.handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
-
           std::string repr() const{
               return "v"+repr_of<SCALARTYPE>::value();
           }
-
           size_t real_size() const{ return vcl_vec_.size(); }
-
         private:
           vcl_vec_t const & vcl_vec_;
       };
@@ -262,19 +234,9 @@ namespace viennacl
 
         public:
           typedef typename VCL_MATRIX::value_type::value_type ScalarType;
-
-          symbolic_matrix(VCL_MATRIX const & vcl_mat) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value), vcl_mat_(vcl_mat){
-
-          }
-
-          size_t real_size1() const{
-              return vcl_mat_.size1();
-          }
-
-          size_t real_size2() const{
-              return vcl_mat_.size2();
-          }
-
+          symbolic_matrix(VCL_MATRIX const & vcl_mat) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value), vcl_mat_(vcl_mat){ }
+          size_t real_size1() const{ return vcl_mat_.size1(); }
+          size_t real_size2() const{ return vcl_mat_.size2(); }
           void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
               cl_uint size1_arg = cl_uint(vcl_mat_.internal_size1());
               cl_uint size2_arg = cl_uint(vcl_mat_.internal_size2());
@@ -290,20 +252,47 @@ namespace viennacl
               k.arg(n_arg++,size1_arg);
               k.arg(n_arg++,size2_arg);
           }
-
           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
               infos_= &shared_infos.insert(std::make_pair(handle(),shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
-
           void const * handle() const{ return static_cast<void const *>(&vcl_mat_.handle()); }
-
-          std::string repr() const{
-              return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_);
-          }
+          std::string repr() const{ return "m"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+'_'+to_string((int)is_rowmajor_); }
       private:
           VCL_MATRIX const & vcl_mat_;
       };
 
+      template<class SUB>
+      class unary_matrix_expression<SUB, replicate_type> : public unary_matrix_expression_infos_base{
+      private:
+          template<class ScalarType>
+          void access_index_impl(symbolic_vector<ScalarType>* sub, unsigned int i, std::string const & ind0, std::string const & ind1){
+              std::string new_ind0 = ind0;
+              std::string new_ind1 = "0";
+              if(m_>1) new_ind0+="%" + sub->size();
+              sub->access_index(i,new_ind0,new_ind1);
+          }
+
+          template<class MatrixType>
+          void access_index_impl(symbolic_matrix<MatrixType> * sub, unsigned int i, std::string const & ind0, std::string const & ind1){
+              std::string new_ind0 = ind0;
+              std::string new_ind1 = ind1;
+              if(m_>1) new_ind0 += "%" + sub->internal_size1();
+              if(k_>1) new_ind1 += "%" + sub->internal_size2();
+              sub->access_index(i,new_ind0,new_ind1);
+          }
+      public:
+          typedef typename SUB::ScalarType ScalarType;
+          unary_matrix_expression(SUB const & sub,unsigned int m,unsigned int k) :unary_matrix_expression_infos_base(new SUB(sub), new replicate_type())
+                                                                                    , m_(m)
+                                                                                    , k_(k){ }
+          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+              access_index_impl(dynamic_cast<SUB *>(sub_.get()),i,ind0,ind1);
+          }
+
+      private:
+          unsigned int m_;
+          unsigned int k_;
+      };
 
 
 

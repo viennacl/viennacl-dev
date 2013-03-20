@@ -107,7 +107,6 @@ namespace viennacl{
                     for(typename std::list<B *>::const_iterator it = in.begin(); it!= in.end() ; ++it){
                         if(T* p = dynamic_cast<T*>(*it)){
                             res.push_back(p);
-                            std::cout << p->repr() << std::endl;
                         }
                     }
                     return res;

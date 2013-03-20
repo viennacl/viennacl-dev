@@ -42,6 +42,14 @@
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/generator/custom_operation.hpp"
 
+#define CHECK_RESULT(cpu,gpu, op) \
+    if ( double delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
+        std::cout << "# Error at operation: " #op << std::endl;\
+        std::cout << "  diff: " << delta << std::endl;\
+        retval = EXIT_FAILURE;\
+    }\
+
+
 using namespace boost::numeric;
 using namespace viennacl;
 
@@ -80,78 +88,88 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
     return norm_inf ( v2_cpu );
 }
 
+template<typename ScalarType>
+double diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
+    return s - gs;
+}
 
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-	
-    ublas::vector<NumericT> vec;
-    ublas::vector<NumericT> vec2;
-    ublas::vector<NumericT> vec3;
-    ublas::vector<NumericT> vec4;
-
-    NumericT s;
-
-    NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
-    viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
-
     typedef viennacl::generator::dummy_vector<NumericT> dv_t;
     typedef viennacl::generator::dummy_scalar<NumericT> ds_t;
 
+
     unsigned int size = 123456;
 
-    vec.resize(size);
+    ublas::vector<NumericT> cw(size);
+    ublas::vector<NumericT> cx(size);
+    ublas::vector<NumericT> cy(size);
+    ublas::vector<NumericT> cz(size);
 
-    for(unsigned int i=0; i<vec.size(); ++i){
-        vec[i]=rand()/(NumericT)RAND_MAX;
+    NumericT s;
+
+
+
+    for(unsigned int i=0; i<cw.size(); ++i){
+        cw[i]=rand()/(NumericT)RAND_MAX;
     }
 
-    std::cout << "Running tests for vector of size " << vec.size() << std::endl;
+    std::cout << "Running tests for vector of size " << cw.size() << std::endl;
 
-    viennacl::vector<NumericT> w ( vec.size() );
-    viennacl::vector<NumericT> x ( vec.size() );
-    viennacl::vector<NumericT> y ( vec.size() );
-    viennacl::vector<NumericT> z ( vec.size() );
+    viennacl::vector<NumericT> w (size);
+    viennacl::vector<NumericT> x (size);
+    viennacl::vector<NumericT> y (size);
+    viennacl::vector<NumericT> z (size);
     viennacl::scalar<NumericT> gs(0);
 
-    vec2 = 2*vec;
-    vec3 = 3*vec;
-    vec4 = 4*vec;
-    viennacl::copy (vec, w);
-    viennacl::copy (vec2, x);
-    viennacl::copy (vec3, y);
-    viennacl::copy (vec4, z);
+    cx = 2*cw;
+    cy = 3*cw;
+    cz = 4*cw;
+    viennacl::copy (cw, w);
+    viennacl::copy (cx, x);
+    viennacl::copy (cy, y);
+    viennacl::copy (cz, z);
 
     // --------------------------------------------------------------------------
 
     {
-        std::cout << "testing addition..." << std::endl;
-        vec = -vec;
+        std::cout << "w = x + y ..." << std::endl;
+        cw = cx + cy;
+        generator::custom_operation op;
+        op.add(dv_t(w) = dv_t(x) + dv_t(y));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cw, w, w = x + y)
+    }
+
+    {
+        std::cout << "w = -w ..." << std::endl;
+        cw = -cw;
         generator::custom_operation op;
         op.add(dv_t(w) = -dv_t(w));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        if ( fabs ( diff ( vec, w) ) > epsilon ) {
-            std::cout << "# Error at operation: addition" << std::endl;
-            std::cout << "  diff: " << fabs ( diff ( vec, x ) ) << std::endl;
-            std::cout << op.source_code() << std::endl;
-            retval = EXIT_FAILURE;
-        }
+        CHECK_RESULT(cw,w, w=-w);
     }
 
     {
-        std::cout << "testing inner product..." << std::endl;
-        s = *std::max_element(vec2.begin(),vec2.end());
+        std::cout << "s = inner_prod(x,y)..." << std::endl;
+        s = ublas::inner_prod(cx,cy);
+        generator::custom_operation op((ds_t(gs)= generator::inner_prod(dv_t(x), dv_t(y))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(s,gs, s=inner_prod(x,y));
+    }
+
+    {
+        std::cout << "s = max(x)..." << std::endl;
+        s = *std::max_element(cx.begin(),cx.end());
         generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        if ( fabs (s - gs) > epsilon ) {
-            std::cout << "# Error at operation: inner product" << std::endl;
-            std::cout << "  diff: " << fabs (s - gs) << std::endl;
-            std::cout << op.source_code() << std::endl;
-            retval = EXIT_FAILURE;
-        }
+        CHECK_RESULT(s,gs, s=max(x));
     }
     return retval;
 }
@@ -162,31 +180,39 @@ template< typename NumericT, typename Epsilon >
 int test_matrix ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-    ublas::vector<NumericT> cx;
-    ublas::vector<NumericT> cy;
 
-    ublas::matrix<NumericT,ublas::row_major> cA;
-    ublas::matrix<NumericT,ublas::row_major> cB;
-    ublas::matrix<NumericT,ublas::row_major> cC;
-    ublas::matrix<NumericT,ublas::row_major> cD;
+
+
 
     unsigned int size1 = 1024;
     unsigned int size2 = 1024;
 
-    NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
-    viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
+    unsigned int pattern_size1 = 256;
+    unsigned int pattern_size2 = 128;
+
+    unsigned int n_rep1 = 4;
+    unsigned int n_rep2 = 8;
 
     typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,viennacl::row_major> > dm_t;
     typedef viennacl::generator::dummy_vector<NumericT> dv_t;
 
-    cA.resize(size1,size2);
-    cx.resize(size2);
+    ublas::matrix<NumericT,ublas::row_major> cA(size1,size2);
+    ublas::matrix<NumericT,ublas::row_major> cB(size1,size2);
+    ublas::matrix<NumericT,ublas::row_major> cC(size1,size2);
 
-    for(unsigned int i=0; i<size1; ++i){
-        for(unsigned int j=0 ; j<size2; ++j){
+    ublas::matrix<NumericT, ublas::row_major> cPattern(pattern_size1,pattern_size2);
+
+    ublas::vector<NumericT> cx(size1);
+
+
+    for(unsigned int i=0; i<size1; ++i)
+        for(unsigned int j=0 ; j<size2; ++j)
             cA(i,j)=(double)(3*i+j)/1000;
-        }
-    }
+
+    for(unsigned int i = 0 ; i < pattern_size1 ; ++i)
+        for(unsigned int j = 0 ; j < pattern_size2 ; ++j)
+            cPattern(i,j) = i+2*j;
+
 
     for(unsigned int i=0; i<size2; ++i){
         cx(i) = rand()/(double)RAND_MAX;
@@ -197,54 +223,87 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::matrix<NumericT,viennacl::row_major> A (size1, size2);
     viennacl::matrix<NumericT,viennacl::row_major> B (size1, size2);
     viennacl::matrix<NumericT,viennacl::row_major> C (size1, size2);
-    viennacl::matrix<NumericT,viennacl::row_major> D (size1, size2);
 
-    viennacl::vector<NumericT> x(size2);
-    viennacl::vector<NumericT> y(size2);
+    viennacl::matrix<NumericT, viennacl::row_major> pattern(pattern_size1, pattern_size2);
+
+    viennacl::vector<NumericT> x(size1);
 
     cB = cA;
     cC = cA;
-    cD = cA;
     viennacl::copy(cA,A);
     viennacl::copy(cB,B);
     viennacl::copy(cC,C);
-    viennacl::copy(cD,D);
 
-    cy=cx;
+    viennacl::copy(cPattern,pattern);
+
     viennacl::copy(cx,x);
-    viennacl::copy(cy,y);
 
     {
-        std::cout << "testing addition..." << std::endl;
+        std::cout << "C = A + B ..." << std::endl;
         cC     = ( cA + cB );
         generator::custom_operation op((dm_t(C) = dm_t(A) + dm_t(B)));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        if ( double delta = fabs ( diff ( cC, C) ) > epsilon ) {
-            std::cout << "# Error at operation: addition" << std::endl;
-            std::cout << "  diff: " << delta << std::endl;
-            std::cout << op.source_code() << std::endl;
-            retval = EXIT_FAILURE;
-        }
+        CHECK_RESULT(cC, C, C=A+B)
+    }
+
+    {
+        std::cout << "C = repmat(P, M, N) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
+        generator::custom_operation op((dm_t(C) = generator::repmat(dm_t(pattern),n_rep1,n_rep2)));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(P, M, N))
+    }
+
+    {
+        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cx(i);
+        generator::custom_operation op((dm_t(C) = generator::repmat(dv_t(x),1,C.size2())));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+    }
+
+
+    {
+        std::cout << "C = -A ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = -cA(i,j);
+        generator::custom_operation op((dm_t(C) = -dm_t(A)));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = -A)
+    }
+
+    {
+        std::cout << "C = 1/(1+EXP(-A)) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
+        generator::custom_operation op((dm_t(C) = 1.0f/(1.0f+generator::exp(-dm_t(A)))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = 1/(1+EXP(-A)))
     }
     return retval;
 }
 
 
 int main() {
+      int retval = EXIT_SUCCESS;
+
     std::cout << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "## Test :: Vector" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << std::endl;
 
-    int retval = EXIT_SUCCESS;
-
-    std::cout << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << std::endl;
     {
         double epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;
@@ -263,12 +322,7 @@ int main() {
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "## Test :: Matrix" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << std::endl;
 
-    std::cout << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << std::endl;
     {
         double epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;

@@ -197,6 +197,7 @@ namespace viennacl{
             unary_matrix_expression_infos_base( infos_base * sub, unary_op_infos_base* op) : unary_tree_infos_base( sub,op){ }
         };
 
+
         class kernel_argument : public virtual infos_base{
         public:
             void access_name(unsigned int i, std::string const & new_name) { infos_->access_index[i] = new_name; }
@@ -392,7 +393,7 @@ namespace viennacl{
         static bool operator<(infos_base const & first, infos_base const & other){
             if(kernel_argument const * t = dynamic_cast<kernel_argument const *>(&first)){
                   if(kernel_argument const * p = dynamic_cast<kernel_argument const*>(&other)){
-                     return t->name() < p->name();
+                      return t->handle() < p->handle();
                   }
             }
             return false;
