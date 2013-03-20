@@ -56,12 +56,11 @@ using namespace viennacl;
 template <typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
-   ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
-   viennacl::backend::finish();
-   viennacl::copy(mat2, mat2_cpu);
-   double ret = 0;
-   double act = 0;
-
+    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
+    viennacl::backend::finish();
+    viennacl::copy(mat2, mat2_cpu);
+    double ret = 0;
+    double act = 0;
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
@@ -71,8 +70,8 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
            ret = act;
       }
     }
-   //std::cout << ret << std::endl;
-   return ret;
+    //std::cout << ret << std::endl;
+    return ret;
 }
 
 template <typename ScalarType, unsigned int Alignment>
@@ -145,12 +144,12 @@ int test_vector ( Epsilon const& epsilon) {
     }
 
     {
-        std::cout << "w = x > 1" << std::endl;
+        std::cout << "w = x > 0.42" << std::endl;
         for(unsigned int i=0 ; i < size ; ++i){
-            cw(i) = cx(i) > 1.0f;
+            cw(i) = cx(i) > (float)0.42;
         }
         generator::custom_operation op;
-        op.add(dv_t(w) = dv_t(x) > 1.0f);
+        op.add(dv_t(w) = dv_t(x) > (float)0.42);
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cw, w, w = x > 1)
@@ -192,10 +191,6 @@ template< typename NumericT, class Layout, typename Epsilon >
 int test_matrix ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-
-
-
-
     unsigned int size1 = 1024;
     unsigned int size2 = 1024;
 
@@ -219,15 +214,15 @@ int test_matrix ( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size1; ++i)
         for(unsigned int j=0 ; j<size2; ++j)
-            cA(i,j)=(double)(3*i+j)/1000;
+            cA(i,j)=(double)rand()/RAND_MAX;
 
     for(unsigned int i = 0 ; i < pattern_size1 ; ++i)
         for(unsigned int j = 0 ; j < pattern_size2 ; ++j)
-            cPattern(i,j) = i+2*j;
+            cPattern(i,j) = (double)rand()/RAND_MAX;
 
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = rand()/(double)RAND_MAX;
+        cx(i) = (double)rand()/RAND_MAX;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
@@ -330,8 +325,7 @@ int main() {
     {
         double epsilon = 1.0E-4;
         std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  eps:     " << epsilon << std::endl;
-        std::cout << "  numeric: float" << std::endl;
+        std::cout << "  numeric: double" << std::endl;
         retval = test_vector<double> (epsilon);
 
         if ( retval == EXIT_SUCCESS )
