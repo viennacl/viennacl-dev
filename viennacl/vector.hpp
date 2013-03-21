@@ -31,10 +31,7 @@
 #include "viennacl/tools/entry_proxy.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
-<<<<<<< HEAD
-=======
 #include "viennacl/rand/utils.hpp"
->>>>>>> a347926... * Added entry to CMakeLists.txt to make files visible to qt-creator and other CMake-Based IDEs
 
 namespace viennacl
 {
@@ -448,19 +445,6 @@ namespace viennacl
       }
     }
 
-//#ifdef VIENNACL_WITH_STATCL
-//    template<class ScalarType, class Distribution>
-//    vector(statcl::rng::random_vector<ScalarType, Distribution> v) : size_(v.size())
-//    {
-//        if(size_ > 0)
-//        {
-//            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-//            statcl::rng::fill_random(*this, v.distribution);
-//        }
-//    }
-//#endif
-
-
     /** @brief Creates the vector from the supplied random vector. */
     template<class DISTRIBUTION>
     vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
@@ -824,18 +808,6 @@ namespace viennacl
       }
       return *this;
     }
-
-
-//#ifdef VIENNACL_WITH_STATCL
-//    template <typename M>
-//    typename viennacl::enable_if<viennacl::is_any_dense_nonstructured_matrix<M>::value>::type
-//    operator=(const viennacl::vector_expression< const M, const M, statcl::op_mean> & proxy)
-//    {
-//      assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
-//      statcl::compute_mean(proxy.lhs(),*this);
-//      return *this;
-//    }
-//#endif
     
     //transposed_matrix_proxy:
     /** @brief Operator overload for v1 = trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
