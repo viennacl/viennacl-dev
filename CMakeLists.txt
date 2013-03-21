@@ -20,6 +20,14 @@ SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosit
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
+# Add visibility of headers
+# Necessary for Qt-Creator usage.
+################
+file( GLOB_RECURSE MAKE_HEADERS_VISIBLE_SRC
+    *.hpp *.h)
+add_custom_target( MAKE_HEADERS_VISIBLE SOURCES ${MAKE_HEADERS_VISIBLE_SRC} )
+
+
 # Common options
 ################
 
@@ -233,6 +241,8 @@ if(ENABLE_DIST)
          "${PROJECT_SOURCE_DIR}/auxiliary/nmf" "${DIST_SOURCES_DIR}/auxiliary/nmf"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/auxiliary/ilu" "${DIST_SOURCES_DIR}/auxiliary/ilu"
+      COMMAND "${CMAKE_COMMAND}" -E copy
+         "${PROJECT_SOURCE_DIR}/auxiliary/dump_random" "${DIST_SOURCES_DIR}/auxiliary/random"
       COMMAND "${CMAKE_COMMAND}" -E copy
          "${PROJECT_SOURCE_DIR}/auxiliary/CMakeLists.txt" "${DIST_SOURCES_DIR}/auxiliary/CMakeLists.txt"
       COMMAND "${CMAKE_COMMAND}" -E copy

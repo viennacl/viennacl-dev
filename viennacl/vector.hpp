@@ -31,6 +31,10 @@
 #include "viennacl/tools/entry_proxy.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
+<<<<<<< HEAD
+=======
+#include "viennacl/rand/utils.hpp"
+>>>>>>> a347926... * Added entry to CMakeLists.txt to make files visible to qt-creator and other CMake-Based IDEs
 
 namespace viennacl
 {
@@ -95,7 +99,13 @@ namespace viennacl
       size_type size_;
       SCALARTYPE value_;
   };
-  
+
+
+  template<class SCALARTYPE, class DISTRIBUTION>
+  rand::random_vector_t<SCALARTYPE, DISTRIBUTION> random_vector(unsigned int size, DISTRIBUTION const & distribution){
+      return rand::random_vector_t<SCALARTYPE,DISTRIBUTION>(size,distribution);
+  }
+
   
   //
   // Vector expression
@@ -450,6 +460,17 @@ namespace viennacl
 //    }
 //#endif
 
+
+    /** @brief Creates the vector from the supplied random vector. */
+    template<class DISTRIBUTION>
+    vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
+    {
+      if(size_ > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,v.distribution,0,size_);
+      }
+    }
 
     // vector_range (implemented in vector_proyx.hpp)
     vector(vector_range<self_type> const & proxy);

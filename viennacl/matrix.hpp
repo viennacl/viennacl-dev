@@ -30,6 +30,7 @@
 #include "viennacl/tools/matrix_size_deducer.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
+#include "viennacl/rand/utils.hpp"
 
 namespace viennacl
 {
@@ -99,6 +100,13 @@ namespace viennacl
   };
   
   
+
+
+  template<class SCALARTYPE, class DISTRIBUTION>
+  rand::random_matrix_t<SCALARTYPE, DISTRIBUTION> random_matrix(unsigned int size1, unsigned int size2, DISTRIBUTION const & distribution){
+      return rand::random_matrix_t<SCALARTYPE,DISTRIBUTION>(size1,size2,distribution);
+  }
+
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
@@ -251,6 +259,7 @@ namespace viennacl
       }
     }
 
+<<<<<<< HEAD
 #ifdef VIENNACL_WITH_STATCL
     /** @brief Creates the vector from the supplied random matrix. */
     template<class DISTRIBUTION>
@@ -264,6 +273,21 @@ namespace viennacl
     }
 
 #endif
+=======
+    /** @brief Creates the matrix from the supplied random matrix. */
+    template<class DISTRIBUTION>
+    matrix(rand::random_matrix_t<SCALARTYPE, DISTRIBUTION> const & m) : rows_(m.size1), columns_(m.size2)
+    {
+      if (internal_size() > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+        rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,m.distribution,0,internal_size());
+      }
+    }
+
+
+
+>>>>>>> a347926... * Added entry to CMakeLists.txt to make files visible to qt-creator and other CMake-Based IDEs
     
     // matrix_range (implemented in matrix_proyx.hpp)
     matrix(matrix_range<self_type> const & proxy);

@@ -138,6 +138,8 @@ In order to initialize vectors, the following initializer types are provided, ag
  \hline
  \lstinline|scalar_vector<T>(s, v)| & Vector of size $s$ with all entries equal to $v$. \\
  \hline
+ \lstinline|random_vector<T>(s, d)| & Vector of size $s$ with all entries random according to the distribution specified by $d$. \\
+ \hline
 \end{tabular}
 \end{center}
 For example, to initialize a vector \lstinline|v1| with all $42$ entries being $42.0$, use
@@ -154,6 +156,8 @@ Similarly the following initializer types are available for matrices:
  \lstinline|zero_matrix<T>(s1, s2)| & Matrix of size $s_1 \times s_2$ with all entries being zero. \\
  \hline
  \lstinline|scalar_matrix<T>(s1, s2, v)| & Matrix of size $s_1 \times s_2$ with all entries equal to $v$. \\
+ \hline
+ \lstinline|random_matrix<T>(s1, s2, d)| & Vector of size $s$ with all entries random according to the distribution specified by $d$. \\
  \hline
 \end{tabular}
 \end{center}
