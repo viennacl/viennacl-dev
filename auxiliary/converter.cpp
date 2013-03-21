@@ -7,6 +7,8 @@
 #include <sstream>
 #include <string>
 
+#include <map>
+
 // uncomment the following if you are using Boost versions prior to 1.44
 //#define USE_OLD_BOOST_FILESYSTEM_VERSION
 
@@ -16,7 +18,7 @@
 
 namespace fs = boost::filesystem;
 
-void writeSourceFile(std::ofstream & out_file, std::string & filename, const char * dirname, const char * alignment)
+void writeSourceFile(std::ofstream & out_file, std::string const & filename, const char * dirname, const char * alignment)
 {
     std::string fullpath(dirname);
     fullpath += "/";
@@ -36,6 +38,16 @@ void writeSourceFile(std::ofstream & out_file, std::string & filename, const cha
         {
             if (tmp.size() > 0)
             {
+
+                //Replaces " by \" in the source file.
+                size_t start_pos = 0;
+                while((start_pos = tmp.find("\"", start_pos)) != std::string::npos) {
+                         tmp.replace(start_pos, 1,"\\\"");
+                         start_pos += 2;
+                }
+
+//              std::replace( tmp.begin(), tmp.end(), '"', '\"');
+
       	        //out_file << "\"" << tmp.replace(tmp.end()-1, tmp.end(), "\\n\"") << std::endl;
                 if ( *(tmp.end()-1) == '\r')  //Windows line delimiter, \r\n
                     out_file << "\"" << tmp.replace(tmp.end()-1, tmp.end(), "\\n\"") << std::endl;
@@ -52,6 +64,8 @@ void writeSourceFile(std::ofstream & out_file, std::string & filename, const cha
 
 void createSourceFile(const char * dirname)
 {
+    std::multimap<std::string, std::string> sorted_paths;
+
     //Step 1: Open source file
     std::string header_name(dirname);
     std::ofstream source_file(("@PROJECT_BINARY_DIR@/viennacl/linalg/kernels/" + header_name + "_source.h").c_str());
@@ -105,7 +119,7 @@ void createSourceFile(const char * dirname)
                       continue;
 
                     if (fname.substr(fname.size()-3, 3) == ".cl")
-                        writeSourceFile(source_file, fname, dirname, alignment.c_str());
+                        sorted_paths.insert(std::make_pair(fname,alignment));
                         //std::cout << alignment_itr->path().filename() << "/" << fname << std::endl;
                 } //for                
             } //if is_directory
@@ -114,6 +128,9 @@ void createSourceFile(const char * dirname)
     else
         std::cerr << "Cannot access directory " << dirname << std::endl;
 
+    for(std::multimap<std::string,std::string>::const_iterator it = sorted_paths.begin() ; it != sorted_paths.end() ; ++it){
+      writeSourceFile(source_file, it->first, dirname, it->second.c_str());
+    }
     //Final Step: Write file tail:
     source_file << "  }  //namespace kernels" << std::endl;
     source_file << " }  //namespace linalg" << std::endl;
@@ -412,6 +429,7 @@ int main(int , char **)
     createHeaders("scalar");
     createHeaders("vector");
     createHeaders("fft");
+    createHeaders("rand");
     createHeaders("svd");
     createHeaders("spai");
     createHeaders("nmf");

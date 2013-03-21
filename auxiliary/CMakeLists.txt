@@ -320,9 +320,16 @@ set(ILU_SRCS
    ilu/align1/level_scheduling_substitute.cl
    )
 
+set(RAND_SRCS
+    rand/align1/_mwc64x.cl
+    rand/align1/dump_gaussian.cl
+    rand/align1/dump_uniform.cl
+    )
+
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS)
+      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
    configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
@@ -362,12 +369,12 @@ foreach(d
       spai
       nmf
       ilu
+      rand
       )
    set(f "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels/${d}")
    list(APPEND KERNEL_HDRS "${f}_kernels.h")
    list(APPEND KERNEL_SRCS "${f}_source.h")
 endforeach()
-
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels")
 
 add_custom_command(OUTPUT ${KERNEL_HDRS} ${KERNEL_SRCS}
