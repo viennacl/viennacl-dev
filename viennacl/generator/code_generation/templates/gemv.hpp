@@ -129,9 +129,10 @@ public:
                     kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
                     kss <<  "if(lid1 < " << to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + to_string(stride))) << ";" << std::endl;
                 }
-                kss << "if(lid1==0)" << assigned->name() ;
-                kss << "[r]" ;
-                kss << " = " << lmem.access("lid0","0") << ";" << std::endl;
+
+                it->first->override_generation(0,lmem.access("lid0","0"));
+                assigned->access_index(0,"r","0");
+                kss << "if(lid1==0)" << expressions_.front()->generate(0) << ";" << std::endl;
             }
 
 

@@ -119,9 +119,11 @@ namespace viennacl{
                 lhs_->get_kernel_arguments(args);
                 rhs_->get_kernel_arguments(args);
             }
+
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){
                 if(dynamic_cast<assignment_op_infos_base*>(op_.get())) lhs_->write_back(i,kss);
             }
+
 
         protected:
             binary_tree_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
@@ -133,9 +135,17 @@ namespace viennacl{
 
         class binary_arithmetic_tree_infos_base : public binary_tree_infos_base{
         public:
-            std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")"; }
+            std::string generate(unsigned int i, int vector_element = -1) const {
+                std::map<unsigned int, std::string>::const_iterator it = override_generation_.find(i);
+                if(it==override_generation_.end())
+                    return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")";
+                else
+                    return it->second;
+            }
             binary_arithmetic_tree_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :  binary_tree_infos_base(lhs,op,rhs){        }
+            void override_generation(unsigned int i, std::string const & new_val){ override_generation_[i] = new_val; }
         private:
+            std::map<unsigned int, std::string> override_generation_;
         };
 
         class binary_vector_expression_infos_base : public binary_arithmetic_tree_infos_base{
@@ -227,7 +237,7 @@ namespace viennacl{
             std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
         public:
             void fetch(unsigned int i, kernel_generation_stream & kss){
-                if(infos_->private_values.empty()){
+                if(infos_->private_values[i].empty()){
                     std::string val = infos_->name + "_private";
                     std::string aligned_scalartype = infos_->scalartype;
                     if(infos_->alignment > 1) aligned_scalartype += to_string(infos_->alignment);
@@ -237,7 +247,7 @@ namespace viennacl{
             }
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){
                 kss << access_buffer(i) << " = " << infos_->private_values[i] << ";" << std::endl;
-                infos_->private_values[i] = "";
+                infos_->private_values[i].clear();
             }
             std::string generate(unsigned int i, int vector_element = -1) const {
                 std::string res;
