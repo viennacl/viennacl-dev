@@ -465,6 +465,12 @@ shift(dummy_vector<ScalarType> const & t, unsigned int k){
     return unary_vector_expression<symbolic_vector<ScalarType>, shift_type>(make_sym(t),k);
 }
 
+template<class VCL_T>
+unary_vector_expression<symbolic_matrix<VCL_T>, diag_type>
+diag(dummy_matrix<VCL_T> const & t){
+    return unary_vector_expression<symbolic_matrix<VCL_T>, diag_type>(make_sym(t));
+}
+
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
 template<class T>\
 typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\

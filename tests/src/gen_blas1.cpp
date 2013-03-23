@@ -261,6 +261,16 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cx,x);
 
     {
+        std::cout << "x = diag(A) ..." << std::endl;
+        for(unsigned int i = 0; i < size1 ; ++i){
+            cx(i) = cA(i,i);
+        }
+        generator::custom_operation op((dv_t(x) = generator::diag(dm_t(A))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cx,x, x = diag(A));
+    }
+    {
         std::cout << "C = A + B ..." << std::endl;
         cC     = ( cA + cB );
         generator::custom_operation op((dm_t(C) = dm_t(A) + dm_t(B)));

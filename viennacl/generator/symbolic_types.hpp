@@ -350,6 +350,57 @@ namespace viennacl
       };
 
 
+      template<class VCL_MAT_T>
+      class unary_vector_expression<symbolic_matrix<VCL_MAT_T>, diag_type> : public unary_vector_expression_infos_base{
+      private:
+          std::string access_buffer(unsigned int i) const {
+              return casted_sub_->name() + '[' + casted_sub_->get_access_index(i) + ']';
+          }
+      public:
+          unary_vector_expression(symbolic_matrix<VCL_MAT_T> const & sub) : unary_vector_expression_infos_base(new symbolic_matrix<VCL_MAT_T>(sub), new diag_type()){
+              casted_sub_ = dynamic_cast<mat_infos_base*>(sub_.get());
+          }
+
+          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+              casted_sub_->bind(shared_infos,temporaries_map);
+          }
+
+          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+              assert(ind1=="0");
+              casted_sub_->access_index(i,ind0,ind0);
+          }
+
+          void fetch(unsigned int i, kernel_generation_stream & kss){
+              if(private_values_[i].empty()){
+                  std::string val = casted_sub_->name() + "_diag_" + to_string(i);
+                  std::string aligned_scalartype = casted_sub_->scalartype();
+                  if(casted_sub_->alignment() > 1) aligned_scalartype += to_string(casted_sub_->alignment());
+                  kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
+                  private_values_[i] = val;
+              }
+          }
+
+          void write_back(unsigned int i, kernel_generation_stream & kss){ private_values_[i].clear(); }
+
+          std::string generate(unsigned int i, int vector_element = -1) const {
+              std::string res;
+              std::map<unsigned int, std::string>::const_iterator it = private_values_.find(i);
+              if(it==private_values_.end()) res = access_buffer(i);
+              else res = it->second;
+              if(vector_element >= 0 && casted_sub_->alignment() > 1) res += ".s" + to_string(vector_element);
+              return res;
+          }
+
+          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+              casted_sub_->get_kernel_arguments(args);
+          }
+
+      private:
+          std::map<unsigned int, std::string> private_values_;
+          mat_infos_base* casted_sub_;
+      };
+
+
 
   } // namespace generator
 } // namespace viennacl
