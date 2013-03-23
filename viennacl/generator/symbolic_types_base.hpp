@@ -179,8 +179,8 @@ namespace viennacl{
                 else  sub_->access_index(i,ind0,ind1);
             }
             void fetch(unsigned int i, kernel_generation_stream & kss){ sub_->fetch(i,kss); }
-            virtual void write_back(unsigned int i, kernel_generation_stream & kss){  }
-            virtual void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void write_back(unsigned int i, kernel_generation_stream & kss){  }
+            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
                 sub_->get_kernel_arguments(args);
             }
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(sub_->generate(i,vector_element)) + ")"; }
@@ -208,7 +208,6 @@ namespace viennacl{
         class kernel_argument : public virtual infos_base{
         public:
             void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
-            virtual ~kernel_argument(){ }
             std::string name() const { return infos_->name; }
             std::string const & scalartype() const { return infos_->scalartype; }
             unsigned int scalartype_size() const { return infos_->scalartype_size; }
@@ -228,6 +227,7 @@ namespace viennacl{
             void alignment(unsigned int val) { infos_->alignment = val; }
             virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
             virtual void const * handle() const = 0;
+            virtual ~kernel_argument(){ }
         protected:
             shared_infos_t* infos_;
         };
@@ -236,6 +236,8 @@ namespace viennacl{
         private:
             std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
         public:
+            std::string get_access_index(unsigned int i) const { return infos_->access_index[i]; }
+
             void fetch(unsigned int i, kernel_generation_stream & kss){
                 if(infos_->private_values[i].empty()){
                     std::string val = infos_->name + "_private";
@@ -292,7 +294,6 @@ namespace viennacl{
         class vec_infos_base : public buffered_kernel_argument{
         public:
             std::string  size() const{ return name() + "_size"; }
-//            std::string  internal_size() const{ return name() + "_internal_size";}
             std::string  start() const{ return name() + "_start";}
             std::string  inc() const{ return name() + "_inc";}
             void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
@@ -391,7 +392,7 @@ namespace viennacl{
                 if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args);
             }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
-            std::string generate(unsigned int i, int vector_element = -1) const{ return infos_->access_index[0]; }
+            std::string generate(unsigned int i, int vector_element = -1) const{ return binary_scalar_expression_infos_base::generate(i,vector_element); }
         private:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };

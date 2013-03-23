@@ -89,7 +89,8 @@ public:
             //Set access indices
             for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
-                    (*it)->access_index(j,"i + " + to_string(j),"0");
+                    if(j==0)  (*it)->access_index(j,"i","0");
+                    else (*it)->access_index(j,"i + " + to_string(j),"0");
                     (*it)->fetch(j,kss);
                 }
             }

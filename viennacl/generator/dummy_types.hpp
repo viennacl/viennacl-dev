@@ -459,6 +459,12 @@ repmat(T const & t, unsigned int m, unsigned int n){
     return unary_matrix_expression<typename to_sym<T>::type, replicate_type>(make_sym(t),m,n);
 }
 
+template<class ScalarType>
+unary_vector_expression<symbolic_vector<ScalarType>, shift_type>
+shift(dummy_vector<ScalarType> const & t, unsigned int k){
+    return unary_vector_expression<symbolic_vector<ScalarType>, shift_type>(make_sym(t),k);
+}
+
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
 template<class T>\
 typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\

@@ -100,7 +100,7 @@ int test_vector ( Epsilon const& epsilon) {
     typedef viennacl::generator::dummy_scalar<NumericT> ds_t;
 
 
-    unsigned int size = 123456;
+    unsigned int size = 256;
 
     ublas::vector<NumericT> cw(size);
     ublas::vector<NumericT> cx(size);
@@ -112,7 +112,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 
     for(unsigned int i=0; i<cw.size(); ++i){
-        cw[i]=rand()/(NumericT)RAND_MAX;
+        cw[i]=std::rand()/(NumericT)RAND_MAX;
     }
 
 //    std::cout << "Running tests for vector of size " << cw.size() << std::endl;
@@ -166,6 +166,20 @@ int test_vector ( Epsilon const& epsilon) {
     }
 
     {
+        std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
+        for(int i=0 ; i<size; ++i){
+            int ind1 = std::max(i - 5, 0);
+            int ind2 = std::min(i + 3, (int)size-1);
+            cw(i) = cx(i) + cx(ind1) + cx(ind2);
+        }
+        generator::custom_operation op;
+        op.add(dv_t(w) = dv_t(x) + generator::shift(dv_t(x),-5) + generator::shift(dv_t(x),3));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
+    }
+
+    {
         std::cout << "s = inner_prod(x,y)..." << std::endl;
         s = ublas::inner_prod(cx,cy);
         generator::custom_operation op((ds_t(gs)= generator::inner_prod(dv_t(x), dv_t(y))));
@@ -182,6 +196,7 @@ int test_vector ( Epsilon const& epsilon) {
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(s,gs, s=max(x));
     }
+
     return retval;
 }
 
@@ -214,15 +229,15 @@ int test_matrix ( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size1; ++i)
         for(unsigned int j=0 ; j<size2; ++j)
-            cA(i,j)=(double)rand()/RAND_MAX;
+            cA(i,j)=(double)std::rand()/RAND_MAX;
 
     for(unsigned int i = 0 ; i < pattern_size1 ; ++i)
         for(unsigned int j = 0 ; j < pattern_size2 ; ++j)
-            cPattern(i,j) = (double)rand()/RAND_MAX;
+            cPattern(i,j) = (double)std::rand()/RAND_MAX;
 
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = (double)rand()/RAND_MAX;
+        cx(i) = (double)std::rand()/RAND_MAX;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;

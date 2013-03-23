@@ -21,7 +21,7 @@
 
 #include "viennacl/generator/symbolic_types_base.hpp"
 #include "viennacl/generator/operators.hpp"
-
+#include "viennacl/meta/result_of.hpp"
 
 namespace viennacl
 {
@@ -137,7 +137,7 @@ namespace viennacl
     public:
         typedef SCALARTYPE ScalarType;
         cpu_symbolic_scalar(ScalarType const & val) :  val_(val){}
-        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ k.arg(n_arg++,cl_float(val_)); }
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ k.arg(n_arg++,typename viennacl::result_of::cl_type<SCALARTYPE>::type(val_)); }
         std::string repr() const{ return "vscal"+repr_of<SCALARTYPE>::value(); }
         void bind(std::map<void const *, shared_infos_t>  & shared_infos
                   ,std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
@@ -149,7 +149,7 @@ namespace viennacl
         ScalarType val_;
     };
 
-    template<unsigned int N>
+    template<int N>
     class symbolic_constant : public infos_base{
     public:
         virtual std::string generate(unsigned int i, int vector_element = -1) const { return to_string(N); }
@@ -263,6 +263,7 @@ namespace viennacl
           VCL_MATRIX const & vcl_mat_;
       };
 
+
       template<class SUB>
       class unary_matrix_expression<SUB, replicate_type> : public unary_matrix_expression_infos_base{
       private:
@@ -290,12 +291,63 @@ namespace viennacl
           void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
               access_index_impl(dynamic_cast<SUB *>(sub_.get()),i,ind0,ind1);
           }
-
       private:
           unsigned int m_;
           unsigned int k_;
       };
 
+      template<class SCALARTYPE>
+      class unary_vector_expression<symbolic_vector<SCALARTYPE>, shift_type> : public unary_vector_expression_infos_base{
+      private:
+          std::string access_buffer(unsigned int i) const {
+              std::string x = "(int)"+casted_sub_->get_access_index(i) + " + " + k_.name();
+              std::string min = "0";
+              std::string max = "(int)"+casted_sub_->size() + "-1";
+              std::string ind = "min(max("+x+","+min+"),"+max+")";
+              return casted_sub_->name() + '[' + ind + ']';
+          }
+      public:
+          typedef SCALARTYPE ScalarType;
+          unary_vector_expression(symbolic_vector<SCALARTYPE> const & sub,  unsigned int k) : unary_vector_expression_infos_base(new symbolic_vector<SCALARTYPE>(sub), new shift_type()), k_(k){
+              casted_sub_ = dynamic_cast<vec_infos_base*>(sub_.get());
+          }
+
+          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+              unary_vector_expression_infos_base::bind(shared_infos,temporaries_map);
+              k_.bind(shared_infos,temporaries_map);
+
+          }
+
+          void fetch(unsigned int i, kernel_generation_stream & kss){
+              if(private_values_[i].empty()){
+                  std::string val = casted_sub_->name() + "_shift_" + k_.name() + "_" + to_string(i);
+                  std::string aligned_scalartype = casted_sub_->scalartype();
+                  if(casted_sub_->alignment() > 1) aligned_scalartype += to_string(casted_sub_->alignment());
+                  kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
+                  private_values_[i] = val;
+              }
+          }
+
+          void write_back(unsigned int i, kernel_generation_stream & kss){ private_values_[i].clear(); }
+
+          std::string generate(unsigned int i, int vector_element = -1) const {
+              std::string res;
+              std::map<unsigned int, std::string>::const_iterator it = private_values_.find(i);
+              if(it==private_values_.end()) res = access_buffer(i);
+              else res = it->second;
+              if(vector_element >= 0 && casted_sub_->alignment() > 1) res += ".s" + to_string(vector_element);
+              return res;
+          }
+
+          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+              k_.get_kernel_arguments(args);
+              casted_sub_->get_kernel_arguments(args);
+          }
+      private:
+          cpu_symbolic_scalar<int> k_;
+          std::map<unsigned int, std::string> private_values_;
+          vec_infos_base* casted_sub_;
+      };
 
 
 

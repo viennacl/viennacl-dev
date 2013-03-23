@@ -149,6 +149,17 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
       }
 
+      /** @brief Sets a int precision floating point argument at the provided position */
+      void arg(unsigned int pos, cl_int val)
+      {
+        init();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting int precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_int), (void*)&val);
+        VIENNACL_ERR_CHECK(err);
+      }
+
       //generic handling: call .handle() member
       /** @brief Sets an OpenCL memory object at the provided position */
       template<class VCL_TYPE>

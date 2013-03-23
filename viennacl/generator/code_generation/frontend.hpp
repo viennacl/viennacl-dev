@@ -268,9 +268,6 @@ namespace viennacl{
                         code_generation::kernel_generator kg(infos,name,kss);
                         kg.generate() ;
                     }
-
-
-                    std::cout << repr() << std::endl;
                     return oss.str();
                 }
 
