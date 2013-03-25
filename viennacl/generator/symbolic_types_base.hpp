@@ -293,9 +293,9 @@ namespace viennacl{
 
         class vec_infos_base : public buffered_kernel_argument{
         public:
-            std::string  size() const{ return name() + "_size"; }
-            std::string  start() const{ return name() + "_start";}
-            std::string  inc() const{ return name() + "_inc";}
+            virtual std::string  size() const{ return name() + "_size"; }
+            virtual std::string  start() const{ return name() + "_start";}
+            virtual std::string  inc() const{ return name() + "_inc";}
             void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
                 std::string str = " __global " + aligned_scalartype() + "*"  + " " + name();
                 str += ", unsigned int " + size();

@@ -8,14 +8,9 @@ namespace generator{
 class custom_operation;
 class infos_base;
 
-template<typename ScalarType>
-class dummy_vector;
-
-template<typename ScalarType>
-class dummy_scalar;
-
-template<class VCL_MATRIX>
-class dummy_matrix;
+template<typename ScalarType> class dummy_vector;
+template<typename ScalarType> class dummy_scalar;
+template<class VCL_MATRIX> class dummy_matrix;
 
 }
 

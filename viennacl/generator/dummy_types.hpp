@@ -15,16 +15,7 @@ namespace viennacl{
 
 namespace generator{
 
-template<class T, class Enable=void>
-struct to_sym{
-    typedef T type;
-    static type result(T const & t){ return t; }
-};
 
-template<class T>
-static typename to_sym<T>::type make_sym(T const & t){
-    return to_sym<T>::result(t);
-}
 
 template<typename SCALARTYPE>
 class dummy_vector{
@@ -132,7 +123,6 @@ private:
 };
 
 
-
 template<class ScalarType>
 struct to_sym<dummy_scalar<ScalarType> >{
     typedef gpu_symbolic_scalar<ScalarType> type;
@@ -190,6 +180,8 @@ public:
 private:
     VCL_MATRIX const & mat_;
 };
+
+
 
 template<class VCL_MATRIX_T>
 struct to_sym<dummy_matrix<VCL_MATRIX_T> >{
@@ -482,9 +474,9 @@ shift(dummy_vector<ScalarType> const & t, unsigned int k){
 }
 
 template<class VCL_T>
-unary_vector_expression<symbolic_matrix<VCL_T>, diag_type>
+symbolic_diag<VCL_T>
 diag(dummy_matrix<VCL_T> const & t){
-    return unary_vector_expression<symbolic_matrix<VCL_T>, diag_type>(make_sym(t));
+    return symbolic_diag<VCL_T>(t.get());
 }
 
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
