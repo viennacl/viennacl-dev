@@ -781,21 +781,21 @@ namespace viennacl
     
     s << "[" << gpu_matrix.size1() << "," << gpu_matrix.size2() << "]";
     
-    s << "(";
+    s << "[";
     for (size_type i = 0; i < gpu_matrix.size1(); ++i)
     {
-      s << "(";
+      s << "";
       for (size_type j = 0; j < gpu_matrix.size2(); ++j)
       {
         s << tmp[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
         if (j < gpu_matrix.size2() - 1)
           s << ",";
       }
-      s << ")";
+      s << "";
       if (i < gpu_matrix.size1() - 1)
-        s << ",";
+        s << ";";
     }
-    s << ")";
+    s << "]";
     return s;
   }
 

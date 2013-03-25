@@ -18,9 +18,10 @@ struct gaussian_tag{
 template<class ScalarType>
 struct buffer_dumper<ScalarType, gaussian_tag>{
     static void dump(viennacl::backend::mem_handle const & buff, gaussian_tag tag, cl_uint start, cl_uint size){
+      typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_type;
       viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::rand<ScalarType,1>::program_name(),"dump_gaussian");
       k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(size/2,k.local_work_size(0)));
-      viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_float(tag.mu), cl_float(tag.sigma) , cl_uint(time(0))));
+      viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_type(tag.mu), cl_type(tag.sigma) , cl_uint(time(0))));
     }
 };
 

@@ -357,6 +357,7 @@ namespace viennacl
               return casted_sub_->name() + '[' + casted_sub_->get_access_index(i) + ']';
           }
       public:
+          typedef typename VCL_MAT_T::value_type::value_type ScalarType;
           unary_vector_expression(symbolic_matrix<VCL_MAT_T> const & sub) : unary_vector_expression_infos_base(new symbolic_matrix<VCL_MAT_T>(sub), new diag_type()){
               casted_sub_ = dynamic_cast<mat_infos_base*>(sub_.get());
           }

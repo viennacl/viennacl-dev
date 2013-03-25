@@ -309,6 +309,22 @@ element_prod(LHS const & lhs, RHS const & rhs){
             ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
 }
 
+template<class LHS, class RHS>
+typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
+                             ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
+                             ||(is_matrix_expression_t<LHS>::value && is_matrix_expression_t<RHS>::value)
+                            ,typename convert_to_binary_expr<LHS,div_type,RHS
+                                                    ,create_vector<LHS,RHS>::value
+                                                    ,create_scalar<LHS,RHS>::value
+                                                    ,create_matrix<LHS,RHS>::value>::type>::type
+element_div(LHS const & lhs, RHS const & rhs){
+    return typename convert_to_binary_expr<LHS,div_type,RHS
+            ,create_vector<LHS,RHS>::value
+            ,create_scalar<LHS,RHS>::value
+            ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
+}
+
+
 #define CREATE_ELEMENTWISE_OPERATOR(function_name, symbolic_type) \
 template<class LHS, class RHS>\
 typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)\

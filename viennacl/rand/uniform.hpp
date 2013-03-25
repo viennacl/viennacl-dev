@@ -4,6 +4,7 @@
 #include "viennacl/backend/mem_handle.hpp"
 #include "viennacl/rand/utils.hpp"
 #include "viennacl/linalg/kernels/rand_kernels.h"
+#include "viennacl/meta/result_of.hpp"
 
 
 namespace viennacl{
@@ -19,9 +20,10 @@ struct uniform_tag{
 template<class ScalarType>
 struct buffer_dumper<ScalarType, uniform_tag>{
   static void dump(viennacl::backend::mem_handle const & buff, uniform_tag tag, cl_uint start, cl_uint size){
+    typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_type;
     viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::rand<ScalarType,1>::program_name(),"dump_uniform");
     k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(size ,k.local_work_size(0)));
-    viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_float(tag.a), cl_float(tag.b) , cl_uint(time(0))));
+    viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_type(tag.a), cl_type(tag.b) , cl_uint(time(0))));
   }
 };
 
