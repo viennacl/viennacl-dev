@@ -84,7 +84,7 @@ namespace viennacl{
             template<class Base,class Target>
             struct UnsafeBase2Target { Target* operator ()( Base* value ) const { return static_cast<Target*>(value); } };
 
-            static void replace_all_occurences(std::string& str, const std::string& oldstr, const std::string& newstr)
+            inline void replace_all_occurences(std::string& str, const std::string& oldstr, const std::string& newstr)
             {
               size_t pos = 0;
               while((pos = str.find(oldstr, pos)) != std::string::npos)

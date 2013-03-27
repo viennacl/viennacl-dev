@@ -18,6 +18,7 @@ class op_infos_base {
 public:
     op_infos_base(std::string const & name) : name_(name){ }
     std::string const & name() const { return name_; }
+    virtual ~op_infos_base(){ }
 protected:
     std::string name_;
 };

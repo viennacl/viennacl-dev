@@ -1,6 +1,7 @@
 #ifndef VIENNACL_RAND_GAUSSIAN_HPP_
 #define VIENNACL_RAND_GAUSSIAN_HPP_
 
+#include "viennacl/meta/result_of.hpp"
 #include "viennacl/backend/mem_handle.hpp"
 #include "viennacl/rand/utils.hpp"
 #include "viennacl/linalg/kernels/rand_kernels.h"

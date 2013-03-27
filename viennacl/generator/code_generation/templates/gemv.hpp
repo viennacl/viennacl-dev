@@ -76,7 +76,7 @@ public:
             unsigned int k = profile_->k();
 
             bool is_lhs_transposed = is_transposed(&first_prod->lhs());
-            bool is_lhs_row_major = first_matrix->is_rowmajor();
+//            bool is_lhs_row_major = first_matrix->is_rowmajor();
             std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
             for(std::list<binary_vector_expression_infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);

@@ -25,6 +25,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+
+#include "CL/cl.h"
+
 #include "viennacl/forwards.h"
 
 namespace viennacl

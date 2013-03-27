@@ -465,7 +465,7 @@ namespace viennacl
         size_t real_size() const{ return sub.real_size1(); }
         void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ sub.enqueue(n_arg,k); }
         void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){ sub.bind(shared_infos,temporaries_map); }
-        void const * handle() const{ sub.handle(); }
+        void const * handle() const{ return sub.handle(); }
         std::string repr() const{ return "diag"+sub.repr();  }
         void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const { sub.get_kernel_arguments(args); }
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ sub.access_index(i,ind0,ind0); }

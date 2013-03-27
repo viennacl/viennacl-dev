@@ -27,6 +27,7 @@
 #include <sstream>
 #include "viennacl/forwards.h"
 
+#include <CL/cl.h>
 
 #ifdef VIENNACL_WITH_UBLAS  
 #include <boost/numeric/ublas/matrix_sparse.hpp>

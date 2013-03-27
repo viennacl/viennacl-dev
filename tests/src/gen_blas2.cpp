@@ -116,16 +116,16 @@ int test( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size1; ++i){
         for(unsigned int j=0 ; j<size2; ++j){
-            cA(i,j)=(double)rand()/RAND_MAX;
+            cA(i,j)=(double)std::rand()/RAND_MAX;
         }
     }
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = (double)rand()/RAND_MAX;
+        cx(i) = (double)std::rand()/RAND_MAX;
     }
 
     for(unsigned int i=0; i<size1; ++i){
-        cy(i) = (double)rand()/RAND_MAX;
+        cy(i) = (double)std::rand()/RAND_MAX;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
