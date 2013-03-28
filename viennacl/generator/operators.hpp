@@ -141,17 +141,6 @@ public:
     std::string generate(const std::string &sub) const { return sub; }
 };
 
-class shift_type : public unary_op_infos_base{
-public:
-    shift_type() : unary_op_infos_base("shift"){ }
-    std::string generate(const std::string &sub) const { return sub; }
-};
-
-class diag_type : public unary_op_infos_base{
-public:
-    diag_type() : unary_op_infos_base("diag"){ }
-    std::string generate(const std::string &sub) const { return sub; }
-};
 
 class replicate_type : public unary_op_infos_base{
 public:

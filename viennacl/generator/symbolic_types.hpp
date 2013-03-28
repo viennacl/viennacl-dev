@@ -329,179 +329,69 @@ namespace viennacl
           unsigned int k_;
       };
 
-//      template<class SUB, class OP>
-//      class virtual_vector : public unary_vector_expression_infos_base{
-//      public:
-//          virtual_vector(SUB const & sub) : unary_vector_expression_infos_base<SUB, OP>(new SUB(sub), new OP()){
-//              casted_sub_ = dynamic_cast<SUB*>(sub_.get());
-//          }
-
-
-//      protected:
-//          std::map<unsigned int, std::string> private_values_;
-//          SUB* casted_sub_;
-
-//      };
-
-
-
-      template<class SCALARTYPE>
-      class unary_vector_expression<symbolic_vector<SCALARTYPE>, shift_type> : public unary_vector_expression_infos_base{
-      private:
-          std::string access_buffer(unsigned int i) const {
-              std::string x = "(int)"+casted_sub_->get_access_index(i) + " + " + k_.name();
-              std::string min = "0";
-              std::string max = "(int)"+casted_sub_->size() + "-1";
-              std::string ind = "min(max("+x+","+min+"),"+max+")";
-              return casted_sub_->name() + '[' + ind + ']';
+      template<class VCL_MATRIX>
+      class symbolic_diag : public vec_infos_base{
+        public:
+          typedef typename VCL_MATRIX::value_type::value_type ScalarType;
+          symbolic_diag(VCL_MATRIX const & vcl_mat) : vcl_mat_(vcl_mat){ }
+          virtual void const * handle() const{ return static_cast<void const *>(this); }
+          void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
+              k.arg(n_arg++,vcl_mat_);
+              k.arg(n_arg++,cl_uint(vcl_mat_.internal_size1()));
           }
-      public:
-          typedef SCALARTYPE ScalarType;
-          unary_vector_expression(symbolic_vector<SCALARTYPE> const & sub,  unsigned int k) : unary_vector_expression_infos_base(new symbolic_vector<SCALARTYPE>(sub), new shift_type()), k_(k){
-              casted_sub_ = dynamic_cast<vec_infos_base*>(sub_.get());
-          }
-
           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-              unary_vector_expression_infos_base::bind(shared_infos,temporaries_map);
-              k_.bind(shared_infos,temporaries_map);
-
+              infos_= &shared_infos.insert(std::make_pair((void const *)this,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
           }
-
-          void fetch(unsigned int i, kernel_generation_stream & kss){
-              if(private_values_[i].empty()){
-                  std::string val = casted_sub_->name() + "_shift_" + k_.name() + "_" + to_string(i);
-                  std::string aligned_scalartype = casted_sub_->scalartype();
-                  if(casted_sub_->alignment() > 1) aligned_scalartype += to_string(casted_sub_->alignment());
-                  kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
-                  private_values_[i] = val;
-              }
+          std::string repr() const{
+              bool is_rowmajor = are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value;
+              return "diag"+repr_of<ScalarType>::value() + (is_rowmajor?'R':'C');
           }
-
-          void write_back(unsigned int i, kernel_generation_stream & kss){ private_values_[i].clear(); }
-
-          std::string generate(unsigned int i, int vector_element = -1) const {
-              std::string res;
-              std::map<unsigned int, std::string>::const_iterator it = private_values_.find(i);
-              if(it==private_values_.end()) res = access_buffer(i);
-              else res = it->second;
-              if(vector_element >= 0 && casted_sub_->alignment() > 1) res += ".s" + to_string(vector_element);
-              return res;
+          size_t real_size() const{ return vcl_mat_.size1(); }
+          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+              infos_->access_index[i] = ind0+"*"+size()+"+"+ind0;
           }
-
-          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
-              k_.get_kernel_arguments(args);
-              casted_sub_->get_kernel_arguments(args);
+          template<typename RHS_TYPE>
+          binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >
+          operator+= ( RHS_TYPE const & rhs ){
+            return binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >(*this,make_sym(rhs));
           }
-      private:
-          cpu_symbolic_scalar<int> k_;
-          std::map<unsigned int, std::string> private_values_;
-          vec_infos_base* casted_sub_;
+        private:
+          VCL_MATRIX const & vcl_mat_;
       };
 
 
-//      template<class VCL_MAT_T>
-//      class unary_vector_expression<symbolic_matrix<VCL_MAT_T>, diag_type> : public unary_vector_expression_infos_base{
-//      private:
-//          std::string access_buffer(unsigned int i) const {
-//              return casted_sub_->name() + '[' + casted_sub_->get_access_index(i) + ']';
-//          }
-//      public:
-//          typedef typename VCL_MAT_T::value_type::value_type ScalarType;
-//          unary_vector_expression(symbolic_matrix<VCL_MAT_T> const & sub) : unary_vector_expression_infos_base(new symbolic_matrix<VCL_MAT_T>(sub), new diag_type()){
-//              casted_sub_ = dynamic_cast<mat_infos_base*>(sub_.get());
-//          }
-
-//          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-//              casted_sub_->bind(shared_infos,temporaries_map);
-//          }
-
-//          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
-//              assert(ind1=="0");
-//              casted_sub_->access_index(i,ind0,ind0);
-//          }
-
-//          void fetch(unsigned int i, kernel_generation_stream & kss){
-//              if(private_values_[i].empty()){
-//                  std::string val = casted_sub_->name() + "_diag_" + to_string(i);
-//                  std::string aligned_scalartype = casted_sub_->scalartype();
-//                  if(casted_sub_->alignment() > 1) aligned_scalartype += to_string(casted_sub_->alignment());
-//                  kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
-//                  private_values_[i] = val;
-//              }
-//          }
-
-//          void write_back(unsigned int i, kernel_generation_stream & kss){
-//              private_values_[i].clear();
-//          }
-
-//          std::string generate(unsigned int i, int vector_element = -1) const {
-//              std::string res;
-//              std::map<unsigned int, std::string>::const_iterator it = private_values_.find(i);
-//              if(it==private_values_.end()) res = access_buffer(i);
-//              else res = it->second;
-//              if(vector_element >= 0 && casted_sub_->alignment() > 1) res += ".s" + to_string(vector_element);
-//              return res;
-//          }
-
-//          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
-//              casted_sub_->get_kernel_arguments(args);
-//          }
-
-
-//      private:
-//          std::map<unsigned int, std::string> private_values_;
-//          mat_infos_base* casted_sub_;
-//      };
-
-      template<class VCL_MATRIX>
-      class symbolic_diag : public vec_infos_base{
-      private:
-          std::string access_buffer(unsigned int i) const { return sub.name() + '[' + sub.get_access_index(i) + ']'; }
-      public:
-        typedef typename VCL_MATRIX::value_type::value_type ScalarType;
-        symbolic_diag(VCL_MATRIX const & vcl_mat) : sub(vcl_mat){ }
-        size_t real_size() const{ return sub.real_size1(); }
-        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{ sub.enqueue(n_arg,k); }
-        void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){ sub.bind(shared_infos,temporaries_map); }
-        void const * handle() const{ return sub.handle(); }
-        std::string repr() const{ return "diag"+sub.repr();  }
-        void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const { sub.get_kernel_arguments(args); }
-        void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ sub.access_index(i,ind0,ind0); }
-        void fetch(unsigned int i, kernel_generation_stream & kss){
-            if(private_values_[i].empty()){
-                std::string val = sub.name() + "_diag_" + to_string(i);
-                std::string aligned_scalartype = sub.scalartype();
-                if(sub.alignment() > 1) aligned_scalartype += to_string(sub.alignment());
-                kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
-                private_values_[i] = val;
-            }
-        }
-        std::string  size() const{ return sub.internal_size1(); }
-        std::string  start() const{ return sub.row_start();}
-        std::string  inc() const{ return sub.row_inc();}
-        void write_back(unsigned int i, kernel_generation_stream & kss){
-            kss << access_buffer(i) << " = " << private_values_[i] << ";" << std::endl;
-            private_values_[i].clear();
-        }
-
-        std::string generate(unsigned int i, int vector_element = -1) const {
-            std::string res;
-            std::map<unsigned int, std::string>::const_iterator it = private_values_.find(i);
-            if(it==private_values_.end()) res = access_buffer(i);
-            else res = it->second;
-            if(vector_element >= 0 && sub.alignment() > 1) res += ".s" + to_string(vector_element);
-            return res;
-        }
-
-        template<typename RHS_TYPE>
-        binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >
-        operator+= ( RHS_TYPE const & rhs ){
-          return binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >(*this,make_sym(rhs));
-        }
-
-      private:
-          symbolic_matrix<VCL_MATRIX> sub;
-          std::map<unsigned int, std::string> private_values_;
+      template<class SCALARTYPE>
+      class symbolic_shift : public vec_infos_base{
+        public:
+          typedef SCALARTYPE ScalarType;
+          symbolic_shift(viennacl::vector<ScalarType> const & vcl_vec, int k) : vcl_vec_(vcl_vec), k_(k){ }
+          virtual void const * handle() const{ return static_cast<void const *>(this); }
+          void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
+              k.arg(n_arg++,vcl_vec_);
+              k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()));
+          }
+          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+              vec_infos_base::get_kernel_arguments(args);
+              k_.get_kernel_arguments(args);
+          }
+          void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
+              infos_= &shared_infos.insert(std::make_pair((void const *)this,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
+              k_.bind(shared_infos,temporaries_map);
+          }
+          std::string repr() const{
+              return "shift"+repr_of<ScalarType>::value();
+          }
+          size_t real_size() const{ return vcl_vec_.size(); }
+          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+              std::string x = "(int)"+ ind0 + " + " + k_.name();
+              std::string min = "0";
+              std::string max = "(int)"+size() + "-1";
+              std::string ind = "min(max("+x+","+min+"),"+max+")";
+              infos_->access_index[i] = ind;
+          }
+        private:
+          viennacl::vector<ScalarType> const & vcl_vec_;
+          cpu_symbolic_scalar<int> k_;
       };
 
 

@@ -196,6 +196,8 @@ template<typename ScalarType>
 struct is_vector_expression_t<dummy_vector<ScalarType> >{ enum { value = 1}; };
 template<typename VclT>
 struct is_vector_expression_t<symbolic_diag<VclT> >{ enum { value = 1}; };
+template<typename ScalarType>
+struct is_vector_expression_t<symbolic_shift<ScalarType> >{ enum { value = 1}; };
 template<unsigned int N>
 struct is_vector_expression_t<constant_vector<N> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
@@ -470,9 +472,9 @@ repmat(T const & t, unsigned int m, unsigned int n){
 }
 
 template<class ScalarType>
-unary_vector_expression<symbolic_vector<ScalarType>, shift_type>
+symbolic_shift<ScalarType>
 shift(dummy_vector<ScalarType> const & t, unsigned int k){
-    return unary_vector_expression<symbolic_vector<ScalarType>, shift_type>(make_sym(t),k);
+    return symbolic_shift<ScalarType>(t.get(),k);
 }
 
 template<class VCL_T>
