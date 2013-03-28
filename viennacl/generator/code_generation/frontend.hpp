@@ -44,7 +44,7 @@ namespace viennacl{
                     optimization_profile_->config_nd_range(k,&t->lhs());
                 }
                 void enqueue(viennacl::ocl::kernel & k){
-                    unsigned int garbage;
+                    unsigned int garbage = 0;
                     for(std::map<kernel_argument const *, std::string, deref_less>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         it->first->enqueue(garbage,k);
                     }

@@ -194,6 +194,8 @@ template<class T>
 struct is_vector_expression_t{ enum { value = 0 }; };
 template<typename ScalarType>
 struct is_vector_expression_t<dummy_vector<ScalarType> >{ enum { value = 1}; };
+template<typename VclT>
+struct is_vector_expression_t<symbolic_diag<VclT> >{ enum { value = 1}; };
 template<unsigned int N>
 struct is_vector_expression_t<constant_vector<N> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>

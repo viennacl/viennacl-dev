@@ -456,9 +456,7 @@ namespace viennacl
       template<class VCL_MATRIX>
       class symbolic_diag : public vec_infos_base{
       private:
-          std::string access_buffer(unsigned int i) const {
-              return sub.name() + '[' + sub.get_access_index(i) + ']';
-          }
+          std::string access_buffer(unsigned int i) const { return sub.name() + '[' + sub.get_access_index(i) + ']'; }
       public:
         typedef typename VCL_MATRIX::value_type::value_type ScalarType;
         symbolic_diag(VCL_MATRIX const & vcl_mat) : sub(vcl_mat){ }
@@ -478,11 +476,9 @@ namespace viennacl
                 private_values_[i] = val;
             }
         }
-
         std::string  size() const{ return sub.internal_size1(); }
         std::string  start() const{ return sub.row_start();}
         std::string  inc() const{ return sub.row_inc();}
-
         void write_back(unsigned int i, kernel_generation_stream & kss){
             kss << access_buffer(i) << " = " << private_values_[i] << ";" << std::endl;
             private_values_[i].clear();

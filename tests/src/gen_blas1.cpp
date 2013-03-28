@@ -352,51 +352,84 @@ int test_matrix ( Epsilon const& epsilon) {
 }
 
 
-int main() {
-      int retval = EXIT_SUCCESS;
-
-    std::cout << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "## Test :: Vector" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-
-    {
-        double epsilon = 1.0E-4;
-        std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  numeric: double" << std::endl;
-        retval = test_vector<double> (epsilon);
-
-        if ( retval == EXIT_SUCCESS )
-            std::cout << "# Test passed" << std::endl;
-        else
-            return retval;
+int main(int argc, char* argv[]){
+    std::vector<std::string> args(argv,argv+argc);
+    if(argc!=2){
+        std::cerr << "USAGE : PROGRAM_NAME DEVICE" << std::endl;
+        exit(1);
     }
+    int retval = EXIT_SUCCESS;
+    unsigned int requested_device = atoi(args[1].c_str());
 
-    std::cout << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << "## Test :: Matrix" << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
+    typedef std::vector< viennacl::ocl::platform > platforms_type;
+    typedef std::vector<viennacl::ocl::device> devices_type;
+    typedef std::vector<cl_device_id> cl_devices_type;
 
+    platforms_type platforms = viennacl::ocl::get_platforms();
+    size_t num_platforms = platforms.size();
+
+    unsigned int current_device = 0;
+
+    for(unsigned int k=0 ; k < num_platforms ; ++k)
     {
-        double epsilon = 1.0E-4;
-        std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  numeric: double" << std::endl;
-        std::cout << "  --------------" << std::endl;
-        std::cout << "  Row-Major"      << std::endl;
-        std::cout << "  --------------" << std::endl;
-        retval = test_matrix<double, viennacl::row_major> (epsilon);
-        std::cout << "  --------------" << std::endl;
-        std::cout << "  Column-Major"      << std::endl;
-        std::cout << "  --------------" << std::endl;
-        retval &= test_matrix<double, viennacl::column_major> (epsilon);
-        if ( retval == EXIT_SUCCESS )
-            std::cout << "# Test passed" << std::endl;
-        else
-            return retval;
+        viennacl::ocl::platform pf(k);
+        viennacl::ocl::set_context_device_type(k,CL_DEVICE_TYPE_ALL);
+        viennacl::ocl::set_context_platform_index(k,k);
+        viennacl::ocl::switch_context(k);
+        devices_type dev = viennacl::ocl::current_context().devices();
+        for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+
+            if(current_device++ == requested_device ){
+                viennacl::ocl::switch_device(*it);
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "               Device Info" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << viennacl::ocl::current_device().info() << std::endl;
+
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "## Test :: Vector" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+
+                {
+                    double epsilon = 1.0E-4;
+                    std::cout << "# Testing setup:" << std::endl;
+                    std::cout << "  numeric: double" << std::endl;
+                    retval = test_vector<double> (epsilon);
+
+                    if ( retval == EXIT_SUCCESS )
+                        std::cout << "# Test passed" << std::endl;
+                    else
+                        return retval;
+                }
+
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "## Test :: Matrix" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+
+                {
+                    double epsilon = 1.0E-4;
+                    std::cout << "# Testing setup:" << std::endl;
+                    std::cout << "  numeric: double" << std::endl;
+                    std::cout << "  --------------" << std::endl;
+                    std::cout << "  Row-Major"      << std::endl;
+                    std::cout << "  --------------" << std::endl;
+                    retval = test_matrix<double, viennacl::row_major> (epsilon);
+                    std::cout << "  --------------" << std::endl;
+                    std::cout << "  Column-Major"      << std::endl;
+                    std::cout << "  --------------" << std::endl;
+                    retval &= test_matrix<double, viennacl::column_major> (epsilon);
+                    if ( retval == EXIT_SUCCESS )
+                        std::cout << "# Test passed" << std::endl;
+                    else
+                        return retval;
+                }
+
+            }
+        }
     }
-
-
-
 }
