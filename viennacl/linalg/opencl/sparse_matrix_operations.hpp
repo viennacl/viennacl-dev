@@ -80,12 +80,6 @@ namespace viennacl
         viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
         viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
 
-        if (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_CPU)  // CPU-performance is better with this GPU-like configuration.
-        {
-          k.local_work_size(0, 128);
-          k.global_work_size(0, 128*128);
-        }
-        
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                 vec, result, static_cast<cl_uint>(mat.size1())));
       }
