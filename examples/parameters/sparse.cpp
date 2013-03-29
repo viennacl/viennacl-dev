@@ -47,7 +47,7 @@ void matrix_vec_mul(TestData & data)
 *   Auto-Tuning for dense matrix kernels
 */
 
-#define BENCHMARK_MATRIX_SIZE   32768
+#define BENCHMARK_MATRIX_SIZE   123456
 
 //a helper container that holds the objects used during benchmarking
 template <typename ScalarType, typename VectorType, typename MatrixType>
@@ -186,7 +186,7 @@ int main()
   else if (dev.type() == CL_DEVICE_TYPE_CPU)// CPU specific test setup
   {
     conf.min_work_groups(1);
-    conf.max_work_groups(2*dev.compute_units()); //reasonable upper limit on current CPUs - more experience needed here!
+    conf.max_work_groups(256); //CPUs don't behave much different from GPUs w.r.t. OpenCL, so test large work group ranges as well
     
     conf.min_local_size(1);
   }
