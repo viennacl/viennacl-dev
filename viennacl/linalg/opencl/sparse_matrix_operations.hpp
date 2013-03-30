@@ -78,8 +78,10 @@ namespace viennacl
                            viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
       {
         viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
-        
+        viennacl::ocl::kernel & k = (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_CPU)
+                                      ? viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul_cpu")
+                                      : viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                 vec, result, static_cast<cl_uint>(mat.size1())));
       }

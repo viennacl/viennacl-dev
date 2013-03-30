@@ -170,6 +170,7 @@ set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/unit_lu_backward.cl
    compressed_matrix/align1/unit_lu_forward.cl
    compressed_matrix/align1/vec_mul.cl
+   compressed_matrix/align1/vec_mul_cpu.cl
    compressed_matrix/align4/vec_mul.cl
    compressed_matrix/align8/vec_mul.cl)
 
