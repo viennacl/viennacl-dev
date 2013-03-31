@@ -261,7 +261,18 @@ namespace viennacl
           typedef typename tree_utils::extract_if<RequireGidOperations,result_of::is_symbolic_vector>::Result SymVecs;
           typedef typename result_of::expression_type<typename SymVecs::Head>::Result VecExpr;
           std::string bound = VecExpr::internal_size_expression();
-          res += "for(unsigned int gid=get_global_id(0) ; gid < " + bound + " ; gid+=get_global_size(0))\n";
+
+          if (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_CPU)
+          {
+            res += "uint work_per_item = max((uint) (" + bound + " / get_global_size(0)), (uint) 1);\n";
+            res += "uint row_start = get_global_id(0) * work_per_item;\n";
+            res += "uint row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) " + bound + ");\n";
+            res += "for (unsigned int gid = row_start; gid < row_stop; ++gid)\n";
+          } 
+          else
+          {
+            res += "for(unsigned int gid=get_global_id(0) ; gid < " + bound + " ; gid+=get_global_size(0))\n";
+          }
           res += "{\n";
           //For each unique symbolic vector or symbolic matrix in the tree, store the gid value in a local register
           declarations<result_of::or_is<result_of::is_symbolic_vector,result_of::is_symbolic_matrix>::Pred>::execute(res);
