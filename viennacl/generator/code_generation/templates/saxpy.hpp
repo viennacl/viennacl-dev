@@ -35,9 +35,9 @@ public:
     }
 
     void config_nd_range(viennacl::ocl::kernel & k, infos_base* p){
-        k.local_work_size(0,group_size0_);
+        //k.local_work_size(0,group_size0_);
         if(vec_infos_base* vec = dynamic_cast<vec_infos_base*>(p)){
-            k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(vec->real_size()/(vectorization_*loop_unroll_),group_size0_));
+            //k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(vec->real_size()/(vectorization_*loop_unroll_),group_size0_)); //Note: now using for-loop for good performance on CPU
         }
         else if(mat_infos_base * mat = dynamic_cast<mat_infos_base*>(p)){
             k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(mat->real_size1() * mat->real_size2()/(vectorization_*loop_unroll_),group_size0_));
@@ -82,8 +82,11 @@ public:
         if(vectors_.size()) first_vector = *vectors_.begin();
         if(matrices_.size()) first_matrix = *matrices_.begin();
         if(first_vector){
-            kss << "unsigned int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
-            kss << "if(i < " << first_vector->size() << "){" << std::endl;
+            kss << "uint work_per_item = max((uint) (" + first_vector->size() + " / get_global_size(0)), (uint) 1);" << std::endl;
+            kss << "uint row_start = get_global_id(0) * work_per_item;" << std::endl;
+            kss << "uint row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) " + first_vector->size() + ");" << std::endl;
+            kss << "for (unsigned int i = row_start; i < row_stop; ++i) {" << std::endl;
+            //kss << "unsigned int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
             kss.inc_tab();
 
             //Set access indices
