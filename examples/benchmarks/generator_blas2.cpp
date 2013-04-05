@@ -83,9 +83,9 @@ double run_benchmark(size_t matrix_size)
     viennacl::matrix<ScalarType,FB> vcl_B(matrix_size, matrix_size);
     viennacl::vector<ScalarType> vcl_C(matrix_size);
 
-    typedef viennacl::generator::dummy_vector< ScalarType > dva_t;
-    typedef viennacl::generator::dummy_matrix< viennacl::matrix<ScalarType,FB> > dmb_t;
-    typedef viennacl::generator::dummy_vector< ScalarType> dvc_t;
+    typedef viennacl::generator::vector< ScalarType > dva_t;
+    typedef viennacl::generator::matrix< viennacl::matrix<ScalarType,FB> > dmb_t;
+    typedef viennacl::generator::vector< ScalarType> dvc_t;
 
     viennacl::fast_copy(&(stl_B[0]),
                         &(stl_B[0]) + stl_B.size(),

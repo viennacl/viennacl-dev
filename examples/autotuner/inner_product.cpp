@@ -86,7 +86,7 @@ void autotune(){
     viennacl::copy(cpu_v4,v4);
 
 
-    typedef viennacl::generator::dummy_vector<ScalarType> dv;
+    typedef viennacl::generator::vector<ScalarType> dv;
     config conf(std::make_pair(1,1)
                 ,std::make_pair(64,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
                 ,std::make_pair(64,512));

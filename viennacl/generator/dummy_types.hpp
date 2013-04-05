@@ -18,12 +18,12 @@ namespace generator{
 
 
 template<typename SCALARTYPE>
-class dummy_vector{
-    typedef dummy_vector<SCALARTYPE> self_type;
+class vector{
+    typedef vector<SCALARTYPE> self_type;
     typedef viennacl::vector<SCALARTYPE> vcl_t;
 public:
 
-    dummy_vector(vcl_t const & vec): vec_(vec){ }
+    vector(vcl_t const & vec): vec_(vec){ }
 
     vcl_t const & get() const{ return vec_; }
 
@@ -67,9 +67,9 @@ public:
 };
 
 template<class ScalarType>
-struct to_sym<dummy_vector<ScalarType> >{
+struct to_sym<vector<ScalarType> >{
     typedef symbolic_vector<ScalarType> type;
-    static type result(dummy_vector<ScalarType> const & t) { return t.get(); }
+    static type result(vector<ScalarType> const & t) { return t.get(); }
 };
 
 template<unsigned int N>
@@ -136,13 +136,13 @@ struct to_sym<ScalarType, typename viennacl::enable_if<is_primitive_type<ScalarT
 };
 
 template<class VCL_MATRIX>
-class dummy_matrix{
-    typedef dummy_matrix<VCL_MATRIX> self_type;
+class matrix{
+    typedef matrix<VCL_MATRIX> self_type;
 public:
 
     typedef VCL_MATRIX vcl_t;
 
-    dummy_matrix(VCL_MATRIX & mat) : mat_(mat){ }
+    matrix(VCL_MATRIX & mat) : mat_(mat){ }
 
     vcl_t const & get() const{
         return mat_;
@@ -184,16 +184,16 @@ private:
 
 
 template<class VCL_MATRIX_T>
-struct to_sym<dummy_matrix<VCL_MATRIX_T> >{
+struct to_sym<matrix<VCL_MATRIX_T> >{
     typedef symbolic_matrix<VCL_MATRIX_T> type;
-    static type result(dummy_matrix<VCL_MATRIX_T> const & t) { return type(t.get()); }
+    static type result(matrix<VCL_MATRIX_T> const & t) { return type(t.get()); }
 };
 
 
 template<class T>
 struct is_vector_expression_t{ enum { value = 0 }; };
 template<typename ScalarType>
-struct is_vector_expression_t<dummy_vector<ScalarType> >{ enum { value = 1}; };
+struct is_vector_expression_t<vector<ScalarType> >{ enum { value = 1}; };
 template<typename VclT>
 struct is_vector_expression_t<symbolic_diag<VclT> >{ enum { value = 1}; };
 template<typename ScalarType>
@@ -221,7 +221,7 @@ struct is_scalar_expression_t<unary_scalar_expression<SUB,OP> >{ enum { value = 
 template<class T>
 struct is_matrix_expression_t{ enum { value = 0}; };
 template<class VCL_MATRIX>
-struct is_matrix_expression_t<dummy_matrix<VCL_MATRIX> >{ enum { value = 1}; };
+struct is_matrix_expression_t<matrix<VCL_MATRIX> >{ enum { value = 1}; };
 //template<class Scalartype, class F>
 //struct is_matrix_expression_t<viennacl::distributed::multi_matrix<Scalartype, F> >{ enum { value = 1}; };
 template<class T>
@@ -259,9 +259,9 @@ template<> struct is_operator<inplace_scal_div_type>{ enum { value = 1}; };
 
 template<class T>
 struct is_leaf{ enum{ value = 0}; };
-template<class ScalarType> struct is_leaf<dummy_vector<ScalarType> >{ enum { value = 1 }; };
+template<class ScalarType> struct is_leaf<vector<ScalarType> >{ enum { value = 1 }; };
 template<class ScalarType> struct is_leaf<dummy_scalar<ScalarType> >{ enum { value = 1 }; };
-template<class VCL_MATRIX> struct is_leaf<dummy_matrix<VCL_MATRIX> >{ enum { value = 1 }; };
+template<class VCL_MATRIX> struct is_leaf<matrix<VCL_MATRIX> >{ enum { value = 1 }; };
 
 
 template<class LHS, class RHS> struct create_vector{
@@ -473,13 +473,13 @@ repmat(T const & t, unsigned int m, unsigned int n){
 
 template<class ScalarType>
 symbolic_shift<ScalarType>
-shift(dummy_vector<ScalarType> const & t, unsigned int k){
+shift(vector<ScalarType> const & t, unsigned int k){
     return symbolic_shift<ScalarType>(t.get(),k);
 }
 
 template<class VCL_T>
 symbolic_diag<VCL_T>
-diag(dummy_matrix<VCL_T> const & t){
+diag(matrix<VCL_T> const & t){
     return symbolic_diag<VCL_T>(t.get());
 }
 

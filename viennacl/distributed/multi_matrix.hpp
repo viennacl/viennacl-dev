@@ -122,14 +122,14 @@ struct wrapper_to_matrix;
 
 template<class T>
 struct wrapper_to_matrix<utils::gpu_wrapper<T> >{
-    typedef generator::dummy_matrix<T> type;
+    typedef generator::matrix<T> type;
 };
 
 class wrapper_to_matrix_fun{
 public:
     template<class T>
-    generator::dummy_matrix<T> operator()(utils::gpu_wrapper<T> const & t) const{
-        return generator::dummy_matrix<T>(*t.gpu_structure_ptr());
+    generator::matrix<T> operator()(utils::gpu_wrapper<T> const & t) const{
+        return generator::matrix<T>(*t.gpu_structure_ptr());
     }
 };
 
@@ -220,7 +220,7 @@ static void enqueue_op_prod(A const & wrappers){
 //    std::cout << "Execution of the Product" << std::endl;
     //Allocates result
     utils::execute<ResT>()(wrappers.lhs(),alloc_fun());
-    generator::dummy_matrix<typename ResT::gpu_t> result(*wrappers.lhs().gpu_structure_ptr());
+    generator::matrix<typename ResT::gpu_t> result(*wrappers.lhs().gpu_structure_ptr());
     viennacl::generator::custom_operation op(result = generator::prod(FirstLhsT(*lhs_ptr),FirstRhsT(*rhs_ptr)));
     op.execute();
     viennacl::backend::finish();

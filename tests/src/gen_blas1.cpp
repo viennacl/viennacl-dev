@@ -96,7 +96,7 @@ template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-    typedef viennacl::generator::dummy_vector<NumericT> dv_t;
+    typedef viennacl::generator::vector<NumericT> dv_t;
     typedef viennacl::generator::dummy_scalar<NumericT> ds_t;
 
 
@@ -215,8 +215,8 @@ int test_matrix ( Epsilon const& epsilon) {
     unsigned int n_rep1 = 4;
     unsigned int n_rep2 = 8;
 
-    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,Layout> > dm_t;
-    typedef viennacl::generator::dummy_vector<NumericT> dv_t;
+    typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > dm_t;
+    typedef viennacl::generator::vector<NumericT> dv_t;
 
     ublas::matrix<NumericT> cA(size1,size2);
     ublas::matrix<NumericT> cB(size1,size2);

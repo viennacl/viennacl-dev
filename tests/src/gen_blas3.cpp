@@ -212,9 +212,9 @@ int test_prod(Epsilon const& epsilon)
   long matrix_size2 = 2*max_large_block_size;
   long matrix_size3 = 3*max_large_block_size;
 
-  typedef viennacl::generator::dummy_matrix< viennacl::matrix<NumericT, F_A> > DummyMatrixA;
-  typedef viennacl::generator::dummy_matrix< viennacl::matrix<NumericT, F_B> > DummyMatrixB;
-  typedef viennacl::generator::dummy_matrix< viennacl::matrix<NumericT, F_C> > DummyMatrixC;
+  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_A> > DummyMatrixA;
+  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_B> > DummyMatrixB;
+  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_C> > DummyMatrixC;
 
   // --------------------------------------------------------------------------
 

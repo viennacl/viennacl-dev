@@ -107,8 +107,8 @@ int test( Epsilon const& epsilon) {
     NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
     viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
 
-    typedef viennacl::generator::dummy_matrix<viennacl::matrix<NumericT,Layout> > dm_t;
-    typedef viennacl::generator::dummy_vector<NumericT> dv_t;
+    typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > dm_t;
+    typedef viennacl::generator::vector<NumericT> dv_t;
 
     cA.resize(size1,size2);
     cx.resize(size2);
