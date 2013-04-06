@@ -76,7 +76,6 @@ public:
     void operator()(kernel_generation_stream& kss){
 
         unsigned int n_unroll = profile_->loop_unroll();
-
         vec_infos_base * first_vector =  NULL;
         mat_infos_base * first_matrix = NULL;
         if(vectors_.size()) first_vector = *vectors_.begin();
@@ -143,6 +142,14 @@ public:
             kss.dec_tab();
             kss << "}" << std::endl;
         }
+            for(unsigned int i=0 ; i < n_unroll ; ++i){
+                for(std::set<vec_infos_base*, viennacl::generator::deref_less>::iterator it = vectors_.begin(); it != vectors_.end() ; ++it)
+                    (*it)->clear_private_value(i);
+                for(std::set<mat_infos_base*, viennacl::generator::deref_less>::iterator it = matrices_.begin(); it != matrices_.end() ; ++it)
+                    (*it)->clear_private_value(i);
+                for(std::set<gpu_scal_infos_base*, viennacl::generator::deref_less>::iterator it = gpu_scalars_.begin(); it != gpu_scalars_.end() ; ++it)
+                    (*it)->clear_private_value(i);
+            }
     }
 
 private:

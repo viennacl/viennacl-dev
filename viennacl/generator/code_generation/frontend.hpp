@@ -180,7 +180,7 @@ namespace viennacl{
                 T const & add_operation(infos_base* p){
                     if(kernels_list_.empty()) kernels_list_.push_back(create_infos<T>(p));
                     else{
-                        if(typeid(kernels_list_.back().profile())==typeid(T*)) kernels_list_.back().trees().push_back(p);
+                        if(dynamic_cast<T*>(kernels_list_.back().profile())) kernels_list_.back().trees().push_back(p);
                         else kernels_list_.push_back(create_infos<T>(p));
                     }
                     return * static_cast<T*>(kernels_list_.back().profile());
@@ -203,7 +203,9 @@ namespace viennacl{
                                 inner_product::profile const & prof =add_operation<inner_product::profile>(p);
                                 kernels_list_.push_back(kernel_infos_t(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
                             }
-                            else add_operation<saxpy::profile>(p);
+                            else{
+                                add_operation<saxpy::profile>(p);
+                            }
                         }
                          else{
                             assert(false && "UNRECOGNIZED SCALARTYPE");

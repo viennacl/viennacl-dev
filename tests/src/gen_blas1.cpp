@@ -96,7 +96,7 @@ template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-    typedef viennacl::generator::vector<NumericT> dv_t;
+    typedef viennacl::generator::vector<NumericT> vec;
     typedef viennacl::generator::dummy_scalar<NumericT> ds_t;
 
 
@@ -137,11 +137,13 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = x + y ..." << std::endl;
         cw = cx + cy;
         generator::custom_operation op;
-        op.add(dv_t(w) = dv_t(x) + dv_t(y));
+        op.add(vec(w) = vec(x) + vec(y));
         op.execute();
         viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw, w, w = x + y)
+        CHECK_RESULT(cw, w, w = x + y);
     }
+
+
 
     {
         std::cout << "w = x > 0.42" << std::endl;
@@ -149,7 +151,7 @@ int test_vector ( Epsilon const& epsilon) {
             cw(i) = cx(i) > (float)0.42;
         }
         generator::custom_operation op;
-        op.add(dv_t(w) = dv_t(x) > (float)0.42);
+        op.add(vec(w) = vec(x) > (float)0.42);
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cw, w, w = x > 1)
@@ -159,7 +161,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = -w ..." << std::endl;
         cw = -cw;
         generator::custom_operation op;
-        op.add(dv_t(w) = -dv_t(w));
+        op.add(vec(w) = -vec(w));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cw,w, w=-w);
@@ -173,7 +175,7 @@ int test_vector ( Epsilon const& epsilon) {
             cw(i) = cx(i) + cx(ind1) + cx(ind2);
         }
         generator::custom_operation op;
-        op.add(dv_t(w) = dv_t(x) + generator::shift(dv_t(x),-5) + generator::shift(dv_t(x),3));
+        op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
@@ -182,7 +184,7 @@ int test_vector ( Epsilon const& epsilon) {
     {
         std::cout << "s = inner_prod(x,y)..." << std::endl;
         s = ublas::inner_prod(cx,cy);
-        generator::custom_operation op((ds_t(gs)= generator::inner_prod(dv_t(x), dv_t(y))));
+        generator::custom_operation op((ds_t(gs)= generator::inner_prod(vec(x), vec(y))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(s,gs, s=inner_prod(x,y));
@@ -191,12 +193,31 @@ int test_vector ( Epsilon const& epsilon) {
     {
         std::cout << "s = max(x)..." << std::endl;
         s = *std::max_element(cx.begin(),cx.end());
-        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(dv_t(x))));
+        generator::custom_operation op((ds_t(gs)= generator::reduce<generator::fmax_type>(vec(x))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(s,gs, s=max(x));
     }
 
+    {
+        std::cout << "Multiline ..." << std::endl;
+        viennacl::generator::custom_operation op;
+        op.add(vec(w) = 0.42 * (vec(x) - vec(y)));
+        op.add(vec(y) = element_prod(vec(x), vec(x))
+                          - vec(y)
+                          - element_prod(vec(x), vec(z)));
+        op.add(vec(z) = element_prod(vec(x), vec(y)) - 0.2 * vec(z));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        for(unsigned int i=0 ; i < size ; ++i){
+            cw(i) = 0.42*(cx(i) - cy(i));
+            cy(i) = cx(i)*cx(i) - cy(i) - cx(i)*cz(i);
+            cz(i) = cx(i)*cy(i) - 0.2*cz(i);
+        }
+        CHECK_RESULT(cw, w, Multiline);
+        CHECK_RESULT(cy, y, Multiline);
+        CHECK_RESULT(cz, z, Multiline);
+    }
     return retval;
 }
 

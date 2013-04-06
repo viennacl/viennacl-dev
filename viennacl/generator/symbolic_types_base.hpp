@@ -98,9 +98,10 @@ namespace viennacl{
             binary_op_infos_base & op() { return *op_; }
             std::string repr() const { return op_->name() + "("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const {
-                assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(op_.get());
-                if(opa) return "assign(" + lhs_->repr() + "," + rhs_->repr() + ")";
-                else return lhs_->repr();
+                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa))
+                    return "assign(" + lhs_->repr() + "," + rhs_->repr() + ")";
+                else
+                    return lhs_->repr();
             }
             void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
                 lhs_->bind(shared_infos,temporaries_map);
@@ -207,6 +208,7 @@ namespace viennacl{
         class kernel_argument : public virtual infos_base{
         public:
             void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
+            void clear_private_value(unsigned int i) { infos_->private_values[i] = ""; }
             std::string name() const { return infos_->name; }
             std::string const & scalartype() const { return infos_->scalartype; }
             unsigned int scalartype_size() const { return infos_->scalartype_size; }
@@ -236,7 +238,6 @@ namespace viennacl{
             std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
         public:
             std::string get_access_index(unsigned int i) const { return infos_->access_index[i]; }
-
             void fetch(unsigned int i, kernel_generation_stream & kss){
                 if(infos_->private_values[i].empty()){
                     std::string val = infos_->name + "_private";
