@@ -82,7 +82,7 @@ namespace viennacl{
             virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
             virtual void fetch(unsigned int i, kernel_generation_stream & kss) = 0;
             virtual void write_back(unsigned int i, kernel_generation_stream & kss) = 0;
-            virtual void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const = 0;
+            virtual void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
         protected:
@@ -115,9 +115,9 @@ namespace viennacl{
                 lhs_->fetch(i,kss);
                 rhs_->fetch(i,kss);
             }
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
-                lhs_->get_kernel_arguments(args);
-                rhs_->get_kernel_arguments(args);
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                lhs_->get_kernel_arguments(args,dummy);
+                rhs_->get_kernel_arguments(args,dummy);
             }
 
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){
@@ -180,8 +180,8 @@ namespace viennacl{
             }
             void fetch(unsigned int i, kernel_generation_stream & kss){ sub_->fetch(i,kss); }
             void write_back(unsigned int i, kernel_generation_stream & kss){  }
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
-                sub_->get_kernel_arguments(args);
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                sub_->get_kernel_arguments(args,dummy);
             }
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(sub_->generate(i,vector_element)) + ")"; }
         protected:
@@ -269,9 +269,10 @@ namespace viennacl{
 
         class cpu_scal_infos_base : public non_buffered_kernel_argument{
         public:
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
                 std::string str = scalartype() + " " + name();
-                args.insert(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         };
@@ -284,9 +285,10 @@ namespace viennacl{
                 else
                     return infos_->private_values[i];
             }
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
                 std::string str = "__global " + scalartype() + "*"  + " " + name();
-                args.insert(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         };
@@ -296,10 +298,11 @@ namespace viennacl{
             virtual std::string  size() const{ return name() + "_size"; }
             virtual std::string  start() const{ return name() + "_start";}
             virtual std::string  inc() const{ return name() + "_inc";}
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
                 std::string str = " __global " + aligned_scalartype() + "*"  + " " + name();
                 str += ", unsigned int " + size();
-                args.insert(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 assert(ind1=="0");
@@ -318,7 +321,8 @@ namespace viennacl{
             std::string  col_inc() const{ return name() +"col_inc_";}
             std::string  row_start() const{ return name() +"row_start_";}
             std::string  col_start() const{ return name() +"col_start_";}
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
                 std::string str = " __global " + aligned_scalartype() + "*"  + " " + name();
                 str += ", unsigned int " + row_start();
                 str += ", unsigned int " + col_start();
@@ -326,7 +330,7 @@ namespace viennacl{
                 str += ", unsigned int " + col_inc();
                 str += ", unsigned int " + internal_size1();
                 str += ", unsigned int " + internal_size2();
-                args.insert(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
             }
             bool const is_rowmajor() const { return is_rowmajor_; }
             std::string offset(std::string const & offset_i, std::string const & offset_j){
@@ -386,10 +390,11 @@ namespace viennacl{
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){  binary_scalar_expression_infos_base::access_index(i,ind0,ind1); }
             void fetch(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::fetch(i,kss); }
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::write_back(i,kss); }
-            void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
+            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
                 std::string str = "__global " + scalartype() + "*" + " " + name();
-                args.insert(std::make_pair(static_cast<kernel_argument const *>(this),str));
-                if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args);
+                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args,dummy);
             }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return binary_scalar_expression_infos_base::generate(i,vector_element); }

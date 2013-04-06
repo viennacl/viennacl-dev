@@ -62,8 +62,8 @@ namespace viennacl
 
           viennacl::ocl::program & program(){
               std::string program_name_ = operations_manager_.repr();
+              init();
               if(!viennacl::ocl::current_context().has_program(program_name_)){
-                  init();
                   compile_program(program_name_);
               }
               return viennacl::ocl::current_context().get_program(program_name_);

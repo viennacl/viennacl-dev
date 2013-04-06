@@ -45,17 +45,18 @@ namespace viennacl{
                 }
                 void enqueue(viennacl::ocl::kernel & k){
                     unsigned int garbage = 0;
-                    for(std::map<kernel_argument const *, std::string, deref_less>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                    for(std::list<std::pair<kernel_argument const *, std::string> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         it->first->enqueue(garbage,k);
                     }
                 }
                 void init_arguments(){
+                    std::set<kernel_argument const *, deref_less> garbage;
                     for(std::list<infos_base*>::iterator it = trees_.begin() ; it!= trees_.end() ; ++it){
-                        (*it)->get_kernel_arguments(arguments_);
+                        (*it)->get_kernel_arguments(arguments_,garbage);
                     }
                 }
                 void fill_arguments(kernel_generation_stream & kss){
-                    for(std::map<kernel_argument const *, std::string, deref_less>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                    for(std::list<std::pair<kernel_argument const *, std::string> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         if(it!=arguments_.begin()) kss << ',';
                         kss << it->second << std::endl ;
                     }
@@ -63,33 +64,33 @@ namespace viennacl{
 
             private:
                 std::list<infos_base*> trees_;
-                std::map<kernel_argument const *, std::string, deref_less> arguments_;
+                std::list<std::pair<kernel_argument const *, std::string> > arguments_;
                 viennacl::tools::shared_ptr<code_generation::optimization_profile> optimization_profile_;
             };
 
 
 
-            template<class T>
-            static bool find_pred(T* t1, T* t2){
-                return t1->handle()==t2->handle();
-            }
+//            template<class T>
+//            static bool find_pred(T* t1, T* t2){
+//                return t1->handle()==t2->handle();
+//            }
 
-            template<class T, class Pred>
-            static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
-                if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
-                        extract_to_list(&p->lhs(), args,pred);
-                        extract_to_list(&p->rhs(),args,pred);
-                }
-                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
-                     extract_to_list(&p->sub(),args,pred);
-                }
-                if(T* t = dynamic_cast<T*>(root)){
-                    if(pred(t)){
-                        typename std::list<T*>::iterator it = std::find_if(args.begin(),args.end(),std::bind2nd(std::ptr_fun(find_pred<T>),t));
-                        if(it==args.end()) args.push_back(t);
-                    }
-                }
-            }
+//            template<class T, class Pred>
+//            static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
+//                if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
+//                        extract_to_list(&p->lhs(), args,pred);
+//                        extract_to_list(&p->rhs(),args,pred);
+//                }
+//                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
+//                     extract_to_list(&p->sub(),args,pred);
+//                }
+//                if(T* t = dynamic_cast<T*>(root)){
+//                    if(pred(t)){
+//                        typename std::list<T*>::iterator it = std::find_if(args.begin(),args.end(),std::bind2nd(std::ptr_fun(find_pred<T>),t));
+//                        if(it==args.end()) args.push_back(t);
+//                    }
+//                }
+//            }
 
 
             class kernel_generator{

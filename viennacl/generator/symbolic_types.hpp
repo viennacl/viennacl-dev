@@ -170,8 +170,8 @@ namespace viennacl
         virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         void fetch(unsigned int i, kernel_generation_stream & kss){ }
         void write_back(unsigned int i, kernel_generation_stream & kss){ }
-        virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &){ }
-        virtual void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const { }
+        void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &){ }
+        void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const { }
     };
 
 //    class identity_matrix : public infos_base{
@@ -186,7 +186,7 @@ namespace viennacl
 //        }
 //        virtual void fetch(unsigned int i, kernel_generation_stream & kss){ }
 //        virtual void write_back(unsigned int i, kernel_generation_stream & kss){ }
-//        virtual void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const { }
+//        virtual void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const { }
 //    private:
 //        std::string row_ind_;
 //        std::string col_ind_;
@@ -370,9 +370,9 @@ namespace viennacl
               k.arg(n_arg++,vcl_vec_);
               k.arg(n_arg++,cl_uint(vcl_vec_.internal_size()));
           }
-          void get_kernel_arguments(std::map<kernel_argument const *, std::string, deref_less> & args) const{
-              vec_infos_base::get_kernel_arguments(args);
-              k_.get_kernel_arguments(args);
+          void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
+              vec_infos_base::get_kernel_arguments(args,dummy);
+              k_.get_kernel_arguments(args,dummy);
           }
           void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
               infos_= &shared_infos.insert(std::make_pair((void const *)this,shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))).first->second;
