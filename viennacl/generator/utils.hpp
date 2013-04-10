@@ -19,30 +19,18 @@
 
 #include <sstream>
 #include "viennacl/tools/shared_ptr.hpp"
+#include <vector>
 
 namespace viennacl{
 	
 	namespace generator{
 		
 
-            struct less {
-              template<class T>
-              bool operator()(T &a, T &b) {
-                return std::less<T>()(a, b);
-              }
-            };
 
-            struct deref_less {
-              template<class T>
-              bool operator()(T a, T b) {
-                return less()(*a, *b);
-              }
-            };
-
-            struct double_deref_less {
-              template<class T>
-              bool operator()(T a, T b) {
-                return less()(**a, **b);
+            template<class T>
+            struct deref_eq : std::binary_function<T,T,bool>{
+              bool operator()(T a, T b) const {
+                return *a == *b;
               }
             };
 
@@ -193,6 +181,22 @@ namespace viennacl{
             private:
                 unsigned int tab_count_;
             };
+
+            template<class U, class T>
+            void unique_push_back(U & v, T* t){
+                if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T *>(),t))==v.end())
+                    v.push_back(t);
+            }
+
+            template<class T, class U>
+            typename std::vector<std::pair<T*, U> >::iterator unique_insert(std::vector<std::pair<T*, U> > & v, std::pair<T*, U> p){
+                typename std::vector<std::pair<T*, U> >::iterator res = v.begin();
+                while(res != v.end()){
+                    if(*res->first == *p.first) return res;
+                    ++res;
+                }
+                return v.insert(res,p);
+            }
 
     }
 }

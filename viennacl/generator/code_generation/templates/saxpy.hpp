@@ -65,11 +65,11 @@ public:
               ,profile * kernel_config): vector_expressions_(vector_expressions), matrix_expressions_(matrix_expressions), scalar_expressions_(scalar_expressions), profile_(kernel_config)
     {
         for(std::list<binary_vector_expression_infos_base*>::const_iterator it=vector_expressions.begin() ; it!= vector_expressions.end() ; ++it)
-            extract_as(*it,vectors_,utils::is_type<vec_infos_base>());
+            extract_as_unique(*it,vectors_,utils::is_type<vec_infos_base>());
         for(std::list<binary_scalar_expression_infos_base*>::const_iterator it=scalar_expressions.begin() ; it!= scalar_expressions.end() ; ++it)
-            extract_as(*it,gpu_scalars_,utils::is_type<gpu_scal_infos_base>());
+            extract_as_unique(*it,gpu_scalars_,utils::is_type<gpu_scal_infos_base>());
         for(std::list<binary_matrix_expression_infos_base*>::const_iterator it=matrix_expressions.begin() ; it!= matrix_expressions.end() ; ++it)
-            extract_as(*it,matrices_,utils::is_type<mat_infos_base>());
+            extract_as_unique(*it,matrices_,utils::is_type<mat_infos_base>());
     }
 
 
@@ -87,6 +87,7 @@ public:
             kss << "for (unsigned int i = row_start; i < row_stop; ++i) {" << std::endl;
             //kss << "unsigned int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
             kss.inc_tab();
+
 
             //Set access indices
             for(typename std::list<binary_vector_expression_infos_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
@@ -143,11 +144,11 @@ public:
             kss << "}" << std::endl;
         }
             for(unsigned int i=0 ; i < n_unroll ; ++i){
-                for(std::set<vec_infos_base*, viennacl::generator::deref_less>::iterator it = vectors_.begin(); it != vectors_.end() ; ++it)
+                for(std::list<vec_infos_base*>::iterator it = vectors_.begin(); it != vectors_.end() ; ++it)
                     (*it)->clear_private_value(i);
-                for(std::set<mat_infos_base*, viennacl::generator::deref_less>::iterator it = matrices_.begin(); it != matrices_.end() ; ++it)
+                for(std::list<mat_infos_base*>::iterator it = matrices_.begin(); it != matrices_.end() ; ++it)
                     (*it)->clear_private_value(i);
-                for(std::set<gpu_scal_infos_base*, viennacl::generator::deref_less>::iterator it = gpu_scalars_.begin(); it != gpu_scalars_.end() ; ++it)
+                for(std::list<gpu_scal_infos_base*>::iterator it = gpu_scalars_.begin(); it != gpu_scalars_.end() ; ++it)
                     (*it)->clear_private_value(i);
             }
     }
@@ -156,9 +157,9 @@ private:
     std::list<binary_vector_expression_infos_base* >  vector_expressions_;
     std::list<binary_matrix_expression_infos_base* >  matrix_expressions_;
     std::list<binary_scalar_expression_infos_base* >  scalar_expressions_;
-    std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
-    std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
-    std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
+    std::list<vec_infos_base *>  vectors_;
+    std::list<mat_infos_base *>  matrices_;
+    std::list<gpu_scal_infos_base *> gpu_scalars_;
     profile * profile_;
 };
 

@@ -343,8 +343,8 @@ public:
 
 
         std::list<mat_infos_base*> assigned;
-        std::set<mat_infos_base*,viennacl::generator::deref_less> lhss;
-        std::set<mat_infos_base*,viennacl::generator::deref_less> rhss;
+        std::list<mat_infos_base*> lhss;
+        std::list<mat_infos_base*> rhss;
 
         //Fills assigned matrices set
         for(std::list<binary_matrix_expression_infos_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
@@ -352,14 +352,14 @@ public:
         }
 
         //Fills lhs's
-        for(std::set<matmat_prod_infos_base*,viennacl::generator::deref_less>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
+        for(std::list<matmat_prod_infos_base*>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
             extract_as(&(*it)->lhs(),lhss,utils::is_type<mat_infos_base>());
             extract_as(&(*it)->rhs(),rhss,utils::is_type<mat_infos_base>());
         }
 
         matmat_prod_infos_base * first_prod = dynamic_cast<matmat_prod_infos_base*>(*matmat_prods_.begin());
 
-        for(std::set<matmat_prod_infos_base*,viennacl::generator::deref_less>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
+        for(std::list<matmat_prod_infos_base*>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
             (*it)->set_val_name("prod_val_" + to_string(std::distance(matmat_prods_.begin(),it)));
         }
         mat_infos_base* first_lhs = *lhss.begin();
@@ -508,7 +508,7 @@ public:
                 }
                 kss << ";";
                 if( !use_RHS_shared ){
-                    for(std::set<mat_infos_base*,viennacl::generator::deref_less>::iterator it = rhss.begin() ; it!=rhss.end() ; ++it){
+                    for(std::list<mat_infos_base*>::iterator it = rhss.begin() ; it!=rhss.end() ; ++it){
                         if(is_rhs_rowmajor)kss << "++" << (*it)->name() << "_ptr_" << k << ";" ;
                         else kss << "++" << (*it)->name() << "_ptr_" << n << ";" ;
                     }
@@ -529,7 +529,7 @@ public:
                 else kss << first_prod->lhs().generate(k);
                 kss << ";";
                 if( !use_LHS_shared ){
-                    for(std::set<mat_infos_base*,viennacl::generator::deref_less>::iterator it = lhss.begin() ; it!=lhss.end() ; ++it){
+                    for(std::list<mat_infos_base*>::iterator it = lhss.begin() ; it!=lhss.end() ; ++it){
                         if(is_lhs_rowmajor) kss << "++" << (*it)->name() << "_ptr_" << m << ";" ;
                         else kss << "++" << (*it)->name() << "_ptr_" << k << ";" ;
                     }
@@ -729,9 +729,9 @@ public:
 
 private:
     std::list<binary_matrix_expression_infos_base*>  blas3_expressions_;
-    std::set<matmat_prod_infos_base*,viennacl::generator::deref_less> matmat_prods_;
-    std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
-    std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
+    std::list<matmat_prod_infos_base*> matmat_prods_;
+    std::list<mat_infos_base *>  matrices_;
+    std::list<gpu_scal_infos_base *> gpu_scalars_;
     profile * optimization_profile_;
 };
 

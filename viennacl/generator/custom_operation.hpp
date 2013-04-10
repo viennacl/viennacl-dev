@@ -45,9 +45,7 @@ namespace viennacl
 
           template<class T>
           void add(T const & op){
-              T copy(op);
-              copy.bind(shared_infos_,temporaries_);
-              operations_manager_.add(copy);
+              operations_manager_.add(op);
           }
 
           std::list<code_generation::kernel_infos_t> kernels_list(){
@@ -62,7 +60,6 @@ namespace viennacl
 
           viennacl::ocl::program & program(){
               std::string program_name_ = operations_manager_.repr();
-              init();
               if(!viennacl::ocl::current_context().has_program(program_name_)){
                   compile_program(program_name_);
               }
@@ -70,6 +67,7 @@ namespace viennacl
           }
 
           void execute(){
+              init();
               viennacl::ocl::program & pgm = program();
               for(std::map<std::string, generator::code_generation::kernel_infos_t>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
                   viennacl::ocl::kernel& k = pgm.get_kernel(it->first);
@@ -86,8 +84,6 @@ namespace viennacl
 
         private:
           code_generation::operations_manager operations_manager_;
-          shared_infos_map_t shared_infos_;
-          temporaries_map_t temporaries_;
           std::map<std::string, generator::code_generation::kernel_infos_t> kernels_infos_;
           std::string source_code_;
           std::string program_name_;

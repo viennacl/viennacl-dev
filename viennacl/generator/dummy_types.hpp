@@ -80,12 +80,12 @@ struct to_sym<constant_vector<N> >{
 
 
 template<class ScalarType>
-class dummy_scalar{
-    typedef dummy_scalar<ScalarType> self_type;
+class scalar{
+    typedef scalar<ScalarType> self_type;
 public:
     typedef viennacl::scalar<ScalarType> vcl_t;
 
-    dummy_scalar(vcl_t const & scal): scal_(scal){ }
+    scalar(vcl_t const & scal): scal_(scal){ }
 
     vcl_t const & get() const{ return scal_; }
 
@@ -124,9 +124,9 @@ private:
 
 
 template<class ScalarType>
-struct to_sym<dummy_scalar<ScalarType> >{
+struct to_sym<scalar<ScalarType> >{
     typedef gpu_symbolic_scalar<ScalarType> type;
-    static type result(dummy_scalar<ScalarType> const & t) { return t.get(); }
+    static type result(scalar<ScalarType> const & t) { return t.get(); }
 };
 
 template<typename ScalarType>
@@ -209,7 +209,7 @@ struct is_vector_expression_t<unary_vector_expression<SUB,OP> >{ enum { value = 
 template<class T>
 struct is_scalar_expression_t{ enum { value = is_primitive_type<T>::value }; };
 template<class ScalarType>
-struct is_scalar_expression_t<dummy_scalar<ScalarType> >{ enum { value = 1}; };
+struct is_scalar_expression_t<scalar<ScalarType> >{ enum { value = 1}; };
 template<>
 struct is_scalar_expression_t<float> { enum { value = 1 }; };
 template<class LHS, class OP, class RHS>
@@ -260,7 +260,7 @@ template<> struct is_operator<inplace_scal_div_type>{ enum { value = 1}; };
 template<class T>
 struct is_leaf{ enum{ value = 0}; };
 template<class ScalarType> struct is_leaf<vector<ScalarType> >{ enum { value = 1 }; };
-template<class ScalarType> struct is_leaf<dummy_scalar<ScalarType> >{ enum { value = 1 }; };
+template<class ScalarType> struct is_leaf<scalar<ScalarType> >{ enum { value = 1 }; };
 template<class VCL_MATRIX> struct is_leaf<matrix<VCL_MATRIX> >{ enum { value = 1 }; };
 
 
@@ -342,7 +342,7 @@ CREATE_ELEMENTWISE_OPERATOR(operator>,sup_type)
 CREATE_ELEMENTWISE_OPERATOR(operator>=,supeq_type)
 CREATE_ELEMENTWISE_OPERATOR(operator<,inf_type)
 CREATE_ELEMENTWISE_OPERATOR(operator<=,infeq_type)
-CREATE_ELEMENTWISE_OPERATOR(operator==,eqto_type)
+//CREATE_ELEMENTWISE_OPERATOR(operator==,eqto_type)
 CREATE_ELEMENTWISE_OPERATOR(operator!=,neqto_type)
 
 
@@ -466,9 +466,9 @@ reduce_cols(T const & t){
 
 template<class T>
 typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,
-                             unary_matrix_expression<typename to_sym<T>::type, replicate_type> >::type
+                             replicate_matrix<typename T::vcl_t> >::type
 repmat(T const & t, unsigned int m, unsigned int n){
-    return unary_matrix_expression<typename to_sym<T>::type, replicate_type>(make_sym(t),m,n);
+    return replicate_matrix<typename T::vcl_t>(t.get(),m,n);
 }
 
 template<class ScalarType>

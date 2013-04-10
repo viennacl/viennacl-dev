@@ -82,19 +82,16 @@ public:
                 unsigned int id = std::distance(expressions_.begin(),it);
                 vec_infos_base* assigned = dynamic_cast<vec_infos_base*>(&(*it)->lhs());
                 local_memory<2> lmem("block_"+to_string(id),m,k+1,scalartype);
-                std::set<matvec_prod_infos_base *, viennacl::generator::deref_less >  prods;
+                std::list<matvec_prod_infos_base *>  prods;
                 extract_as(*it, prods, utils::is_type<matvec_prod_infos_base>());
                 assert(prods.size()==1 && "More than one product involved in the expression");
                 reductions.insert(std::make_pair(*prods.begin(),std::make_pair("reduction_"+to_string(id),std::make_pair(lmem,assigned))));
             }
             kss << "unsigned int lid0 = get_local_id(0);" << std::endl;
             kss << "unsigned int lid1 = get_local_id(1);" << std::endl;
-
             for(std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
                 kss << it->second.second.first.declare() << ";" << std::endl;
             }
-
-
             if(is_lhs_transposed)
                 kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size2 << " ; r += get_global_size(0)){" << std::endl;
             else
@@ -144,10 +141,10 @@ public:
 
 private:
     std::list<binary_vector_expression_infos_base* >  expressions_;
-    std::set<matvec_prod_infos_base *, viennacl::generator::deref_less >  prods_;
-    std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
-    std::set<mat_infos_base *, viennacl::generator::deref_less >  matrices_;
-    std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
+    std::list<matvec_prod_infos_base *>  prods_;
+    std::list<vec_infos_base *>  vectors_;
+    std::list<mat_infos_base *>  matrices_;
+    std::list<gpu_scal_infos_base *> gpu_scalars_;
     profile * profile_;
 };
 

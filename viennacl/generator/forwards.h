@@ -12,6 +12,11 @@ template<typename ScalarType> class vector;
 template<typename ScalarType> class scalar;
 template<class VCL_MATRIX> class matrix;
 
+
+namespace code_generation{
+class optimization_profile;
+}
+
 }
 
 }

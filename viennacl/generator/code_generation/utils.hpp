@@ -28,27 +28,6 @@ namespace viennacl{
                 };
 
 
-                template<class T>
-                struct deref_t{ typedef deref_less type; };
-
-                template<class T>
-                struct deref_t<T*>{ typedef double_deref_less type; };
-
-                template<class T>
-                void remove_unsorted_duplicates(std::list<T> &the_list) {
-                  std::set<typename std::list<T>::iterator, typename deref_t<T>::type> found;
-                  for (typename std::list<T>::iterator x = the_list.begin(); x != the_list.end();) {
-                    if (!found.insert(x).second) {
-                      x = the_list.erase(x);
-                    }
-                    else {
-                      ++x;
-                    }
-                  }
-                }
-
-
-
                 struct EXTRACT_IF{
                     typedef std::list<infos_base*> result_type_single;
                     typedef std::list<infos_base*> result_type_all;
@@ -116,89 +95,6 @@ namespace viennacl{
                 static std::list<T *> extract_cast(std::list<infos_base*> const & trees){
                     return cast<T,infos_base>(filter<EXTRACT_IF>(trees,is_type<T>()));
                 }
-
-
-//                template<class T>
-//                class cache_manager{
-//                public:
-//                    typedef std::set<T *, viennacl::generator::deref_less> expressions_read_t;
-//                    typedef std::list<T *> expressions_write_t;
-//                    cache_manager( expressions_read_t & expressions_read
-//                                  ,expressions_write_t const & expressions_write
-//                                  ,kernel_generation_stream & kss) : expressions_read_(expressions_read), expressions_write_(expressions_write)
-//                                                                              ,kss_(kss){
-//                    }
-
-//                    void fetch(unsigned int i){
-//                        for(typename expressions_read_t::iterator it = expressions_read_.begin() ; it != expressions_read_.end() ; ++it){
-//                            T * p = *it;
-//                            std::string val_name = p->name()+"_val_"+to_string(i);
-//                            old_access_names_[i] = p->generate(i);
-//                            kss_ << p->aligned_scalartype() << " " << val_name << " = " << old_access_names_[i] << ";" << std::endl;
-//                            p->access_name(i,val_name);
-//                        }
-//                    }
-
-//                    void writeback(unsigned int i){
-//                        for(typename expressions_write_t::iterator it = expressions_write_.begin() ; it != expressions_write_.end() ; ++it){
-//                            T * p = *it;
-//                            kss_<< old_access_names_[i] << " = "  << p->generate(i) << ";" << std::endl;
-//                        }
-//                    }
-
-//                private:
-//                    std::map<unsigned int, std::string> old_access_names_;
-//                    expressions_read_t & expressions_read_;
-//                    expressions_write_t expressions_write_;
-//                    kernel_generation_stream & kss_;
-
-//                };
-
-//                class loop_unroller{
-//                public:
-//                    loop_unroller(unsigned int n_unroll) : n_unroll_(n_unroll){
-
-//                    }
-
-
-
-//                private:
-//                    unsigned int n_unroll_;
-
-//                };
-
-//                template<class ExprT, class CacheExpr>
-//                static void unroll_loop(kernel_generation_stream & kss
-//                                                       ,unsigned int n_unroll
-//                                                   ,ExprT & expressions
-//                                                   , CacheExpr & cache
-//                                                   , std::string const & upper_bound){
-//                        kss << "unsigned int i = get_global_id(0)" ;
-//                        if(n_unroll>1) kss << "*" << n_unroll;
-//                        kss << ";" << std::endl;
-
-//                        kss << "if(i < " << upper_bound << "){" << std::endl;
-//                        kss.inc_tab();
-//                        cache.fetch_entries(0, "i");
-//                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
-//                            cache.fetch_entries(j, "i + " + to_string(j));
-//                        }
-
-
-//                        for(typename ExprT::iterator it=expressions.begin() ; it!=expressions.end();++it){
-//                            for(unsigned int j=0 ; j < n_unroll ; ++j){
-//                                kss << (*it)->generate(j) << ";" << std::endl;
-//                            }
-//                        }
-
-//                        cache.writeback_entries(0,"i");
-//                        for(unsigned int j=1 ; j<n_unroll  ; ++j){
-//                            cache.writeback_entries(j,"i + " + to_string(j));
-//                        }
-//                        kss.dec_tab();
-//                        kss << "}" << std::endl;
-
-//                }
 
             }
 

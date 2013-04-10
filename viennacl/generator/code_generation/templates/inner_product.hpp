@@ -77,7 +77,7 @@ public:
         bool is_computed = (*inner_prods_.begin())->is_computed();
         if(is_computed){
             std::map<binary_op_infos_base const *, local_memory<1> > local_mems;
-            for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
+            for( std::list<inner_product_infos_base *>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 local_memory<1> lmem = local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());
                 local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
                 kss << lmem.declare() << ";" << std::endl;
@@ -90,7 +90,7 @@ public:
             }
         }
         else{
-            for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
+            for(std::list<inner_product_infos_base*>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
                 std::string sum_name = (*it)->name() + "_reduced";
                 kss << (*it)->scalartype() << " " << sum_name << " = 0;" << std::endl;
             }
@@ -99,11 +99,11 @@ public:
             kss.inc_tab();
 
             //Set access index
-            for(std::set<inner_product_infos_base*,deref_less>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
+            for(std::list<inner_product_infos_base*>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){
                 (*it)->access_index(0,"i","0");
                 (*it)->fetch(0,kss);
             }
-            for(std::set<inner_product_infos_base*,deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+            for(std::list<inner_product_infos_base*>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
                     std::string sum_name = (*it)->name() + "_reduced";
                     for(unsigned int a=0; a<alignment;++a){
                         kss << sum_name << " = " << (*it)->op_reduce().generate(sum_name, (*it)->binary_scalar_expression_infos_base::generate(0,a)) << ";" << std::endl;
@@ -112,7 +112,7 @@ public:
             kss.dec_tab();
             kss << "}" << std::endl;
             std::map<binary_op_infos_base const *, local_memory<1> > local_mems;
-            for( std::set<inner_product_infos_base *, viennacl::generator::deref_less>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
+            for( std::list<inner_product_infos_base *>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 std::string sum_name = (*it)->name() + "_reduced";
                 local_memory<1> lmem = local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());
                 local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
@@ -120,7 +120,7 @@ public:
                 kss << lmem.access("lid") << " = " << sum_name << ";" << std::endl;
             }
             compute_reductions_samesize(kss,local_mems);
-            for(std::set<inner_product_infos_base *, viennacl::generator::deref_less>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+            for(std::list<inner_product_infos_base *>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
                 (*it)->set_computed();
                 kss << "if(lid==0) " << (*it)->name() << "[get_group_id(0)]" << "=" << (*it)->name()+"_local" << "[0]" << ";" << std::endl;
             }
@@ -129,9 +129,9 @@ public:
 
 private:
     std::list<binary_scalar_expression_infos_base* >  expressions_;
-    std::set<inner_product_infos_base*, deref_less>  inner_prods_;
-    std::set<vec_infos_base *, viennacl::generator::deref_less >  vectors_;
-    std::set<gpu_scal_infos_base *, viennacl::generator::deref_less > gpu_scalars_;
+    std::list<inner_product_infos_base*>  inner_prods_;
+    std::list<vec_infos_base *>  vectors_;
+    std::list<gpu_scal_infos_base *> gpu_scalars_;
     profile * profile_;
 };
 

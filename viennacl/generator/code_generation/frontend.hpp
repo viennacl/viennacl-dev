@@ -45,52 +45,28 @@ namespace viennacl{
                 }
                 void enqueue(viennacl::ocl::kernel & k){
                     unsigned int garbage = 0;
-                    for(std::list<std::pair<kernel_argument const *, std::string> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
-                        it->first->enqueue(garbage,k);
+                    for(std::vector<kernel_argument const *>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                        (*it)->enqueue(garbage,k);
                     }
                 }
                 void init_arguments(){
-                    std::set<kernel_argument const *, deref_less> garbage;
                     for(std::list<infos_base*>::iterator it = trees_.begin() ; it!= trees_.end() ; ++it){
-                        (*it)->get_kernel_arguments(arguments_,garbage);
+                        (*it)->get_kernel_arguments(arguments_);
                     }
                 }
                 void fill_arguments(kernel_generation_stream & kss){
-                    for(std::list<std::pair<kernel_argument const *, std::string> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                    for(std::vector<kernel_argument const *>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         if(it!=arguments_.begin()) kss << ',';
-                        kss << it->second << std::endl ;
+                        kss << (*it)->repr() << std::endl ;
                     }
                 }
 
             private:
                 std::list<infos_base*> trees_;
-                std::list<std::pair<kernel_argument const *, std::string> > arguments_;
+                std::vector<kernel_argument const *> arguments_;
                 viennacl::tools::shared_ptr<code_generation::optimization_profile> optimization_profile_;
             };
 
-
-
-//            template<class T>
-//            static bool find_pred(T* t1, T* t2){
-//                return t1->handle()==t2->handle();
-//            }
-
-//            template<class T, class Pred>
-//            static void extract_to_list(infos_base* root, std::list<T*> & args, Pred pred){
-//                if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
-//                        extract_to_list(&p->lhs(), args,pred);
-//                        extract_to_list(&p->rhs(),args,pred);
-//                }
-//                else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
-//                     extract_to_list(&p->sub(),args,pred);
-//                }
-//                if(T* t = dynamic_cast<T*>(root)){
-//                    if(pred(t)){
-//                        typename std::list<T*>::iterator it = std::find_if(args.begin(),args.end(),std::bind2nd(std::ptr_fun(find_pred<T>),t));
-//                        if(it==args.end()) args.push_back(t);
-//                    }
-//                }
-//            }
 
 
             class kernel_generator{
@@ -135,7 +111,7 @@ namespace viennacl{
                                  , kernel_generation_stream & kss) : kernel_infos_(kernel_infos)
                                                                      , kernel_name_(kernel_name)
                                                                      , kss_(kss){
-                    kernel_infos_.profile()->apply(kernel_infos_.trees());
+
                 }
 
                 void generate(){
@@ -211,6 +187,7 @@ namespace viennacl{
                          else{
                             assert(false && "UNRECOGNIZED SCALARTYPE");
                         }
+                        ptr->bind(shared_infos_, kernels_list_.back().profile());
                     }
                 }
 
@@ -278,7 +255,7 @@ namespace viennacl{
                 operations_t operations_;
                 std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> > overriden_models_;
                 std::list<kernel_infos_t> kernels_list_;
-
+                std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > shared_infos_;
             };
 
         }

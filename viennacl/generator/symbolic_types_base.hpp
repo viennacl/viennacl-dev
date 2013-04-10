@@ -6,6 +6,9 @@
 
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/generator/operators.hpp"
+#include "viennacl/meta/result_of.hpp"
+#include "viennacl/backend/memory.hpp"
+#include "viennacl/generator/forwards.h"
 
 #include <map>
 #include <set>
@@ -55,7 +58,7 @@ namespace viennacl{
 
         struct shared_infos_t{
         public:
-            shared_infos_t(unsigned int _id, std::string _scalartype, unsigned int _scalartype_size, unsigned int _alignment = 1){
+            shared_infos_t(unsigned int _id, std::string const & _scalartype, unsigned int _scalartype_size, unsigned int _alignment = 1) {
                 id = _id;
                 name = "arg" + to_string(id);
                 scalartype = _scalartype;
@@ -72,17 +75,18 @@ namespace viennacl{
         };
 
         class kernel_argument;
+        class symbolic_datastructure;
 
         class infos_base{
         public:
             virtual std::string generate(unsigned int i, int vector_element = -1) const { return ""; }
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
-            virtual void bind(std::map<void const *, shared_infos_t> & , std::map<kernel_argument*,void const *,deref_less> &) = 0;
+            virtual void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof)= 0;
             virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
             virtual void fetch(unsigned int i, kernel_generation_stream & kss) = 0;
             virtual void write_back(unsigned int i, kernel_generation_stream & kss) = 0;
-            virtual void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const = 0;
+            virtual void get_kernel_arguments(std::vector<kernel_argument const *> & args) const = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
         protected:
@@ -103,9 +107,9 @@ namespace viennacl{
                 else
                     return lhs_->repr();
             }
-            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-                lhs_->bind(shared_infos,temporaries_map);
-                rhs_->bind(shared_infos,temporaries_map);
+            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
+                lhs_->bind(shared_infos,prof);
+                rhs_->bind(shared_infos,prof);
             }
             virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 lhs_->access_index(i,ind0,ind1);
@@ -115,9 +119,9 @@ namespace viennacl{
                 lhs_->fetch(i,kss);
                 rhs_->fetch(i,kss);
             }
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                lhs_->get_kernel_arguments(args,dummy);
-                rhs_->get_kernel_arguments(args,dummy);
+            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+                lhs_->get_kernel_arguments(args);
+                rhs_->get_kernel_arguments(args);
             }
 
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){
@@ -171,8 +175,8 @@ namespace viennacl{
             unary_op_infos_base const & op() const{ return *op_; }
             std::string repr() const { return op_->name() + "("+ sub_->repr()+")"; }
             std::string simplified_repr() const { return repr(); }
-            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){
-                sub_->bind(shared_infos,temporaries_map);
+            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
+                sub_->bind(shared_infos,prof);
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 if(dynamic_cast<trans_type *>(op_.get())) sub_->access_index(i,ind1,ind0);
@@ -180,8 +184,8 @@ namespace viennacl{
             }
             void fetch(unsigned int i, kernel_generation_stream & kss){ sub_->fetch(i,kss); }
             void write_back(unsigned int i, kernel_generation_stream & kss){  }
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                sub_->get_kernel_arguments(args,dummy);
+            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+                sub_->get_kernel_arguments(args);
             }
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(sub_->generate(i,vector_element)) + ")"; }
         protected:
@@ -205,7 +209,61 @@ namespace viennacl{
         };
 
 
-        class kernel_argument : public virtual infos_base{
+        class kernel_argument{
+        protected:
+            virtual void const * handle() const = 0;
+        public:
+            kernel_argument(std::string const & address_space, std::string const & scalartype_name, std::string const & name) : address_space_(address_space), scalartype_name_(scalartype_name), name_(name){ }
+            virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
+            bool operator<(kernel_argument const & other) const{ return handle() < other.handle(); }
+            bool operator==(kernel_argument const & other) const{ return name_ == other.name_; }
+            virtual std::string repr() const = 0;
+            std::string const & name() const { return name_; }
+            void scalartype_name(std::string const & str) { scalartype_name_ = str; }
+        protected:
+            std::string address_space_;
+            std::string scalartype_name_;
+            std::string name_;
+        };
+
+        class value_argument_base: public kernel_argument{
+        public:
+            value_argument_base(std::string const & scalartype_name, std::string const & name) : kernel_argument("",scalartype_name,name){ }
+            std::string repr() const{ return address_space_ + " " + scalartype_name_ + " " + name_; }
+        };
+
+        template<class ScalarType>
+        class value_argument : public value_argument_base{
+        public:
+            typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_type;
+        private:
+            void const * handle() const { return static_cast<void const *>(&handle_); }
+        public:
+            value_argument(std::string const & name, ScalarType const & val) : value_argument_base(print_type<ScalarType>::value(), name), handle_(val){ }
+            void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const { k.arg(n_arg++,handle_); }
+        private:
+            cl_type handle_;
+        };
+
+
+        class pointer_argument_base : public kernel_argument{
+        public:
+            pointer_argument_base(std::string const & address_space, std::string const & scalartype_name, std::string const & name) : kernel_argument(address_space,scalartype_name,name){ }
+            std::string repr() const{ return address_space_ + " " + scalartype_name_ + "* " + name_; }
+        };
+
+        template<class ScalarType>
+        class pointer_argument : public pointer_argument_base{
+        private:
+            void const * handle() const { return static_cast<void const *>(&handle_); }
+        public:
+            pointer_argument(std::string const & name, viennacl::backend::mem_handle const & handle, unsigned int alignment=1) : pointer_argument_base("__global", print_type<ScalarType>::value() + ((alignment>1)?to_string(alignment):""), name), handle_(handle){ }
+            void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const { k.arg(n_arg++,handle_.opencl_handle()); }
+        private:
+            viennacl::backend::mem_handle const & handle_;
+        };
+
+        class symbolic_datastructure : public virtual infos_base{
         public:
             void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
             void clear_private_value(unsigned int i) { infos_->private_values[i] = ""; }
@@ -224,18 +282,23 @@ namespace viennacl{
                     return scalartype + to_string(alignment);
                 }
             }
+            virtual bool operator==(symbolic_datastructure const & other) const = 0;
             unsigned int alignment() const { return infos_->alignment; }
             void alignment(unsigned int val) { infos_->alignment = val; }
-            virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
-            virtual void const * handle() const = 0;
-            virtual ~kernel_argument(){ }
+            void get_kernel_arguments(std::vector<kernel_argument const *>& args) const{
+                for(std::vector<tools::shared_ptr<kernel_argument> >::const_iterator it = other_arguments_.begin() ; it != other_arguments_.end() ; ++it){
+                    unique_push_back(args,(kernel_argument const *)it->get());
+                }
+            }
+            virtual ~symbolic_datastructure(){ }
         protected:
             shared_infos_t* infos_;
+            std::vector<tools::shared_ptr<kernel_argument> > other_arguments_;
         };
 
-        class buffered_kernel_argument : public kernel_argument{
-        private:
-            std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
+        class buffered_datastructure : public symbolic_datastructure{
+        protected:
+            virtual std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
         public:
             std::string get_access_index(unsigned int i) const { return infos_->access_index[i]; }
             void fetch(unsigned int i, kernel_generation_stream & kss){
@@ -260,78 +323,42 @@ namespace viennacl{
             }
         };
 
-        class non_buffered_kernel_argument : public kernel_argument{
+        class cpu_scal_infos_base : public symbolic_datastructure{
         public:
-            std::string generate(unsigned int i, int vector_element = -1) const { return infos_->name; }
-            virtual void fetch(unsigned int i, kernel_generation_stream & kss){ }
-            virtual void write_back(unsigned int i, kernel_generation_stream & kss){ }
-        };
-
-        class cpu_scal_infos_base : public non_buffered_kernel_argument{
-        public:
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
-                std::string str = scalartype() + " " + name();
-                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
-            }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
+            std::string generate(unsigned int i, int vector_element = -1) const { return infos_->name; }
+            void fetch(unsigned int i, kernel_generation_stream & kss){ }
+            void write_back(unsigned int i, kernel_generation_stream & kss){ }
         };
 
-        class gpu_scal_infos_base : public buffered_kernel_argument{
+        class gpu_scal_infos_base : public buffered_datastructure{
         public:
             std::string generate(unsigned int i, int vector_element = -1) const {
-                if(infos_->private_values[i].empty())
-                    return "*"+infos_->name;
-                else
-                    return infos_->private_values[i];
-            }
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
-                std::string str = "__global " + scalartype() + "*"  + " " + name();
-                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
+                if(infos_->private_values[i].empty()) return "*"+infos_->name;
+                else  return infos_->private_values[i];
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         };
 
-        class vec_infos_base : public buffered_kernel_argument{
+        class vec_infos_base : public buffered_datastructure{
         public:
-            virtual std::string  size() const{ return name() + "_size"; }
-            virtual std::string  start() const{ return name() + "_start";}
-            virtual std::string  inc() const{ return name() + "_inc";}
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
-                std::string str = " __global " + aligned_scalartype() + "*"  + " " + name();
-                str += ", unsigned int " + size();
-                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
-            }
+            std::string  size() const{ return name() + "_size"; }
+            virtual size_t real_size() const = 0;
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 assert(ind1=="0");
                 infos_->access_index[i] = ind0;
             }
-            virtual size_t real_size() const = 0;
             virtual ~vec_infos_base(){ }
         };
 
 
-        class mat_infos_base : public buffered_kernel_argument{
+        class mat_infos_base : public buffered_datastructure{
         public:
+            mat_infos_base(bool is_rowmajor) : is_rowmajor_(is_rowmajor){ }
+            virtual size_t real_size1() const = 0;
+            virtual size_t real_size2() const = 0;
             std::string  internal_size1() const{ return name() +"internal_size1_"; }
             std::string  internal_size2() const{ return name() +"internal_size2_"; }
-            std::string  row_inc() const{ return name() +"row_inc_"; }
-            std::string  col_inc() const{ return name() +"col_inc_";}
-            std::string  row_start() const{ return name() +"row_start_";}
-            std::string  col_start() const{ return name() +"col_start_";}
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
-                std::string str = " __global " + aligned_scalartype() + "*"  + " " + name();
-                str += ", unsigned int " + row_start();
-                str += ", unsigned int " + col_start();
-                str += ", unsigned int " + row_inc();
-                str += ", unsigned int " + col_inc();
-                str += ", unsigned int " + internal_size1();
-                str += ", unsigned int " + internal_size2();
-                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
-            }
             bool const is_rowmajor() const { return is_rowmajor_; }
             std::string offset(std::string const & offset_i, std::string const & offset_j){
                 if(is_rowmajor_){
@@ -347,10 +374,6 @@ namespace viennacl{
                     str = ind1+"*"+internal_size1()+"+"+ind0;
                 infos_->access_index[i] = str;
             }
-            virtual size_t real_size1() const = 0;
-            virtual size_t real_size2() const = 0;
-            virtual ~mat_infos_base() { }
-            mat_infos_base(bool is_rowmajor) : is_rowmajor_(is_rowmajor){ }
         protected:
             bool is_rowmajor_;
         };
@@ -378,42 +401,43 @@ namespace viennacl{
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
 
-        class inner_product_infos_base : public binary_scalar_expression_infos_base, public buffered_kernel_argument{
+        class inner_product_infos_base : public binary_scalar_expression_infos_base, public buffered_datastructure{
         public:
             inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new mul_type,rhs)
                                                                                                     , op_reduce_(op){ }
             bool is_computed(){ return current_kernel_; }
             void set_computed(){ current_kernel_ = 1; }
             std::string repr() const{ return binary_scalar_expression_infos_base::repr(); }
-            void bind(std::map<void const *, shared_infos_t>  & shared_infos, std::map<kernel_argument*,void const *,deref_less> & temporaries_map){ binary_scalar_expression_infos_base::bind(shared_infos,temporaries_map); }
+            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){ binary_scalar_expression_infos_base::bind(shared_infos,prof); }
             std::string simplified_repr() const { return binary_scalar_expression_infos_base::simplified_repr(); }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){  binary_scalar_expression_infos_base::access_index(i,ind0,ind1); }
             void fetch(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::fetch(i,kss); }
             virtual void write_back(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::write_back(i,kss); }
-            void get_kernel_arguments(std::list<std::pair<kernel_argument const *, std::string> > & args, std::set<kernel_argument const *, deref_less> & dummy) const{
-                if(dummy.insert(static_cast<kernel_argument const *>(this)).second==false) return;
-                std::string str = "__global " + scalartype() + "*" + " " + name();
-                args.push_back(std::make_pair(static_cast<kernel_argument const *>(this),str));
-                if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args,dummy);
-            }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+                buffered_datastructure::get_kernel_arguments(args);
+                if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args);
+            }
             std::string generate(unsigned int i, int vector_element = -1) const{ return binary_scalar_expression_infos_base::generate(i,vector_element); }
         private:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
         };
 
-        static bool operator<(infos_base const & first, infos_base const & other){
-            if(kernel_argument const * t = dynamic_cast<kernel_argument const *>(&first)){
-                  if(kernel_argument const * p = dynamic_cast<kernel_argument const*>(&other)){
-                      return t->handle() < p->handle();
-                  }
-            }
-            return false;
-       }
-
+//        template<class T, class Pred>
+//        static void extract_as(infos_base* root, std::set<T*, deref_less> & args, Pred pred){
+//            if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
+//                extract_as(&p->lhs(), args,pred);
+//                extract_as(&p->rhs(),args,pred);
+//            }
+//            else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
+//                extract_as(&p->sub(), args,pred);
+//            }
+//            if(T* t = dynamic_cast<T*>(root))
+//                if(pred(t)) args.insert(t);
+//        }
 
         template<class T, class Pred>
-        static void extract_as(infos_base* root, std::set<T*, deref_less> & args, Pred pred){
+        static void extract_as(infos_base* root, std::list<T*> & args, Pred pred){
             if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
                 extract_as(&p->lhs(), args,pred);
                 extract_as(&p->rhs(),args,pred);
@@ -421,8 +445,23 @@ namespace viennacl{
             else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
                 extract_as(&p->sub(), args,pred);
             }
-            if(T* t = dynamic_cast<T*>(root))
-                if(pred(t)) args.insert(t);
+            if(T* t = dynamic_cast<T*>(root)){
+                if(pred(t)) args.push_back(t);
+            }
+        }
+
+        template<class T, class Pred>
+        static void extract_as_unique(infos_base* root, std::list<T*> & args, Pred pred){
+            if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
+                extract_as(&p->lhs(), args,pred);
+                extract_as(&p->rhs(),args,pred);
+            }
+            else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
+                extract_as(&p->sub(), args,pred);
+            }
+            if(T* t = dynamic_cast<T*>(root)){
+                if(pred(t)) unique_push_back(args,t);
+            }
         }
 
         template<class T>
