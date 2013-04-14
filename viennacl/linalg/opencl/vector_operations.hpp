@@ -49,24 +49,19 @@ namespace viennacl
       //
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename T, typename ScalarType1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
-      av(V1 & vec1, 
-         V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+      av(vector_base<T> & vec1, 
+         vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
                                 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(),
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(),
                                                               (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
@@ -87,7 +82,7 @@ namespace viennacl
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  size_vec1,
                                 
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
+                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
                                  size_vec2 )
@@ -95,22 +90,15 @@ namespace viennacl
       }
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1,
-                typename V3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename T, typename ScalarType1, typename ScalarType2>
+      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
-      avbv(V1 & vec1, 
-          V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-          V3 const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
+      avbv(vector_base<T> & vec1, 
+           vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           vector_base<T> const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -129,7 +117,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         
@@ -154,12 +142,12 @@ namespace viennacl
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  size_vec1,
                                 
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
+                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
                                  size_vec2,
                                 
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(beta)),
+                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(beta)),
                                  options_beta,
                                  viennacl::traits::opencl_handle(vec3),
                                  size_vec3 )
@@ -167,22 +155,15 @@ namespace viennacl
       }
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1,
-                typename V3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename T, typename ScalarType1, typename ScalarType2>
+      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
-      avbv_v(V1 & vec1,
-            V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-            V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      avbv_v(vector_base<T> & vec1,
+             vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+             vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -201,7 +182,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         
@@ -226,12 +207,12 @@ namespace viennacl
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  size_vec1,
                                 
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
+                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(alpha)),
                                  options_alpha,
                                  viennacl::traits::opencl_handle(vec2),
                                  size_vec2,
                                 
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(beta)),
+                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(beta)),
                                  options_beta,
                                  viennacl::traits::opencl_handle(vec3),
                                  size_vec3 )
@@ -244,17 +225,13 @@ namespace viennacl
       * @param vec1   The vector to which the value should be assigned
       * @param alpha  The value to be assigned
       */
-      template <typename V1, typename S1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_cpu_scalar<S1>::value
-                                  >::type
-      vector_assign(V1 & vec1, const S1 & alpha)
+      template <typename T, typename S1>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value >::type
+      vector_assign(vector_base<T> & vec1, const S1 & alpha)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "assign_cpu");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
@@ -262,7 +239,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::stride(vec1)),
                                  cl_uint(viennacl::traits::size(vec1)),
                                  cl_uint(vec1.internal_size()),     //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
-                                 viennacl::traits::opencl_handle(value_type(alpha)) )
+                                 viennacl::traits::opencl_handle(T(alpha)) )
                               );
       }
 
@@ -272,17 +249,12 @@ namespace viennacl
       * @param vec1   The first vector (or -range, or -slice)
       * @param vec2   The second vector (or -range, or -slice)
       */
-      template <typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  >::type
-      vector_swap(V1 & vec1, V2 & vec2)
+      template <typename T>
+      void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "swap");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "swap");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -302,19 +274,13 @@ namespace viennacl
       * @param vec1   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename V1, typename V2, typename V3, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                  >::type
-      element_op(V1 & vec1,
-                vector_expression<const V2, const V3, OP> const & proxy)
+      template <typename T, typename OP>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "element_op");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "element_op");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -341,23 +307,17 @@ namespace viennacl
       * @param vec2 The second vector
       * @param partial_result The results of each group
       */
-      template <typename V1, typename V2, typename V3>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                  >::type
-      inner_prod_impl(V1 const & vec1,
-                      V2 const & vec2,
-                      V3 & partial_result)
+      template <typename T>
+      void inner_prod_impl(vector_base<T> const & vec1,
+                           vector_base<T> const & vec2,
+                           vector_base<T> & partial_result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
       
         assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
               && bool("Incompatible vector sizes in inner_prod_impl()!"));
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "inner_prod");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "inner_prod");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
                 
@@ -369,7 +329,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(vec2)),
                                  cl_uint(viennacl::traits::stride(vec2)),
                                  cl_uint(viennacl::traits::size(vec2)),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(partial_result)
                                 )
                               );        
@@ -384,26 +344,21 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename V1, typename V2, typename S3>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_scalar<S3>::value
+      template <typename T, typename S3>
+      typename viennacl::enable_if< viennacl::is_scalar<S3>::value
                                   >::type
-      inner_prod_impl(V1 const & vec1,
-                      V2 const & vec2,
+      inner_prod_impl(vector_base<T> const & vec1,
+                      vector_base<T> const & vec2,
                       S3 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
         
         // Step 2: Sum partial results:
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -412,7 +367,7 @@ namespace viennacl
                                     cl_uint(viennacl::traits::stride(temp)),
                                     cl_uint(viennacl::traits::size(temp)),
                                     cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                    viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result) )
                               );
       }
@@ -426,19 +381,14 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename V1, typename V2, typename S3>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_cpu_scalar<S3>::value
-                                  >::type
-      inner_prod_cpu(V1 const & vec1,
-                     V2 const & vec2,
+      template <typename T, typename S3>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
+      inner_prod_cpu(vector_base<T> const & vec1,
+                     vector_base<T> const & vec2,
                      S3 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -446,11 +396,11 @@ namespace viennacl
         // Step 2: Sum partial results:
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        static std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
         
         result = 0;
-        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
       }
       
@@ -463,19 +413,14 @@ namespace viennacl
       * @param partial_result The result scalar
       * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
       */
-      template <typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  >::type
-      norm_reduction_impl(V1 const & vec,
-                          V2 & partial_result,
-                          cl_uint norm_id)
+      template <typename T>
+      void norm_reduction_impl(vector_base<T> const & vec,
+                               vector_base<T> & partial_result,
+                                cl_uint norm_id)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "norm");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "norm");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
         
@@ -484,7 +429,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::stride(vec)),
                                  cl_uint(viennacl::traits::size(vec)),
                                  cl_uint(norm_id),
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(partial_result) )
                               );        
       }
@@ -497,24 +442,20 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_scalar<S2>::value
                                   >::type
-      norm_1_impl(V1 const & vec,
+      norm_1_impl(vector_base<T> const & vec,
                   S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
         
         // Step 2: Compute the partial reduction using OpenCL
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -523,7 +464,7 @@ namespace viennacl
                                     cl_uint(viennacl::traits::stride(temp)),
                                     cl_uint(viennacl::traits::size(temp)),
                                     cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                    viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
                                     result)
                               );
       }
@@ -533,27 +474,24 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_cpu_scalar<S2>::value
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
                                   >::type
-      norm_1_cpu(V1 const & vec,
+      norm_1_cpu(vector_base<T> const & vec,
                  S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
         
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        static std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
         
         result = 0;
-        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
       }
       
@@ -567,24 +505,19 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
-                                  >::type
-      norm_2_impl(V1 const & vec,
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
+      norm_2_impl(vector_base<T> const & vec,
                   S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
 
         // Step 2: Reduction via OpenCL
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -593,7 +526,7 @@ namespace viennacl
                                       cl_uint(viennacl::traits::stride(temp)),
                                       cl_uint(viennacl::traits::size(temp)),
                                       cl_uint(2),
-                                      viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                      viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
                                       result)
                               );
       }
@@ -603,27 +536,23 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_cpu_scalar<S2>::value
-                                  >::type
-      norm_2_cpu(V1 const & vec,
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
+      norm_2_cpu(vector_base<T> const & vec,
                  S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
         
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        static std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
         
         result = 0;
-        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
         result = std::sqrt(result);
       }
@@ -637,24 +566,19 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_scalar<S2>::value
-                                  >::type
-      norm_inf_impl(V1 const & vec,
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
+      norm_inf_impl(vector_base<T> const & vec,
                     S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
         
         //part 2: parallel reduction of reduced kernel:
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
         
@@ -663,7 +587,7 @@ namespace viennacl
                                      cl_uint(viennacl::traits::stride(temp)),
                                      cl_uint(viennacl::traits::size(temp)),
                                      cl_uint(0),
-                                     viennacl::ocl::local_mem(sizeof(value_type) * ksum.local_work_size()),
+                                     viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
                                      result)
                               );
       }
@@ -673,27 +597,23 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_cpu_scalar<S2>::value
-                                  >::type
-      norm_inf_cpu(V1 const & vec,
+      template <typename T, typename S2>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
+      norm_inf_cpu(vector_base<T> const & vec,
                    S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
         
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        static std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
         
         result = 0;
-        for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result = std::max(result, *it);
       }
       
@@ -708,19 +628,14 @@ namespace viennacl
       * @param vec The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    cl_uint
-                                  >::type
-      index_norm_inf(V1 const & vec)
+      template <typename T>
+      cl_uint index_norm_inf(vector_base<T> const & vec)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
         viennacl::ocl::handle<cl_mem> h = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::program_name(), "index_norm_inf");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "index_norm_inf");
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
 
         //TODO: Use multi-group kernel for large vector sizes
@@ -730,7 +645,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(vec)),
                                  cl_uint(viennacl::traits::stride(vec)),
                                  cl_uint(viennacl::traits::size(vec)),                                 
-                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
                                  viennacl::ocl::local_mem(sizeof(cl_uint) * k.local_work_size()), h));
         
         //read value:
@@ -750,22 +665,15 @@ namespace viennacl
       * @param alpha  The first transformation coefficient
       * @param beta   The second transformation coefficient
       */
-      template <typename V1, typename V2, typename SCALARTYPE>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_cpu_scalar<SCALARTYPE>::value
-                                  >::type
-      plane_rotation(V1 & vec1,
-                    V2 & vec2,
-                    SCALARTYPE alpha,
-                    SCALARTYPE beta)
+      template <typename T>
+      void plane_rotation(vector_base<T> & vec1,
+                          vector_base<T> & vec2,
+                          T alpha, T beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
-        const unsigned int ALIGNMENT = V1::alignment;
-        viennacl::linalg::kernels::vector<value_type, ALIGNMENT>::init();
+        viennacl::linalg::kernels::vector<T, 1>::init();
         
         assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<SCALARTYPE, ALIGNMENT>::program_name(), "plane_rotation");
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "plane_rotation");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),

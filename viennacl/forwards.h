@@ -106,6 +106,10 @@ namespace viennacl
   
   template <typename SCALARTYPE>
   class zero_vector;
+
+  template<class SCALARTYPE, typename SizeType = std::size_t, typename DistanceType = std::ptrdiff_t>
+  class vector_base;
+  
   
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class vector;
@@ -381,86 +385,65 @@ namespace viennacl
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& input2,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& output);
     
-    template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::vector_expression<const V1, const V2, op_prod>
-                                >::type
-    element_prod(V1 const & v1, V2 const & v2);
+    template <typename T>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_prod>
+    element_prod(vector_base<T> const & v1, vector_base<T> const & v2);
     
-    template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::vector_expression<const V1, const V2, op_div>
-                                >::type
-    element_div(V1 const & v1, V2 const & v2);
+    template <typename T>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_div>
+    element_div(vector_base<T> const & v1, vector_base<T> const & v2);
     
     
 
-    template <typename V1, typename V2, typename S3>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(V1 const & vec1,
-                    V2 const & vec2,
+    template <typename T, typename S3>
+    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
+    inner_prod_impl(vector_base<T> const & vec1,
+                    vector_base<T> const & vec2,
                     S3 & result);
     
-    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
+    template <typename LHS, typename RHS, typename OP, typename T, typename S3>
+    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
     inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                    V2 const & vec2,
+                    vector_base<T> const & vec2,
                     S3 & result);
     
-    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(V1 const & vec1,
+    template <typename T, typename LHS, typename RHS, typename OP, typename S3>
+    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
+    inner_prod_impl(vector_base<T> const & vec1,
                     viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                     S3 & result);
     
     template <typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
     inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
                     viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
                     S3 & result);
         
     ///////////////////////////
     
-    template <typename V1, typename V2, typename S3>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
+    template <typename T, typename S3>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value
                                 >::type
-    inner_prod_cpu(V1 const & vec1,
-                   V2 const & vec2,
+    inner_prod_cpu(vector_base<T> const & vec1,
+                   vector_base<T> const & vec2,
                    S3 & result);
     
-    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
-                                >::type
+    template <typename LHS, typename RHS, typename OP, typename T, typename S3>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
     inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                    V2 const & vec2,
-                    S3 & result);
+                   vector_base<T> const & vec2,
+                   S3 & result);
     
-    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(V1 const & vec1,
+    template <typename T, typename LHS, typename RHS, typename OP, typename S3>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
+    inner_prod_cpu(vector_base<T> const & vec1,
                    viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                    S3 & result);
 
     template <typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
     inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
                    viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
                    S3 & result);
@@ -468,91 +451,71 @@ namespace viennacl
     
     
     //forward definition of norm_1_impl function
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_1_impl(V1 const & vec, S2 & result);
+    template <typename T, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
+    norm_1_impl(vector_base<T> const & vec, S2 & result);
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
     norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                 S2 & result);
     
 
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_1_cpu(V1 const & vec,
+    template <typename T, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
+    norm_1_cpu(vector_base<T> const & vec,
                S2 & result);
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
     norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                S2 & result);
     
     //forward definition of norm_2_impl function
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_2_impl(V1 const & vec, S2 & result);
+    template <typename T, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
+    norm_2_impl(vector_base<T> const & vec, S2 & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
     norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                 S2 & result);
     
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_2_cpu(V1 const & vec, S2 & result);
-    
-    template <typename LHS, typename RHS, typename OP, typename S2>
+    template <typename T, typename S2>
     typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
                                 >::type
+    norm_2_cpu(vector_base<T> const & vec, S2 & result);
+    
+    template <typename LHS, typename RHS, typename OP, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
     norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                S2 & result);
     
     
     //forward definition of norm_inf_impl function
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_inf_impl(V1 const & vec, S2 & result);
+    template <typename T, typename S2>
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
+    norm_inf_impl(vector_base<T> const & vec, S2 & result);
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
     norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                   S2 & result);
     
     
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_inf_cpu(V1 const & vec, S2 & result);
+    template <typename T, typename S2>
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
+    norm_inf_cpu(vector_base<T> const & vec, S2 & result);
     
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
+    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
     norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                  S2 & result);
     
     
-    template <typename V1>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                  std::size_t
-                                >::type
-    index_norm_inf(V1 const & vec);
+    template <typename T>
+    std::size_t index_norm_inf(vector_base<T> const & vec);
     
     template <typename LHS, typename RHS, typename OP>
     std::size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec);

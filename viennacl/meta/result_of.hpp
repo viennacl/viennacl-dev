@@ -267,12 +267,18 @@ namespace viennacl
         typedef T    type; 
       };
 
+      template <typename T>
+      struct cpu_value_type<viennacl::vector_base<T> >
+      {
+        typedef T    type; 
+      };
+      
       template <typename T, unsigned int ALIGNMENT>
       struct cpu_value_type<viennacl::vector<T, ALIGNMENT> >
       {
         typedef T    type; 
       };
-
+      
       template <typename T>
       struct cpu_value_type<viennacl::vector_range<T> >
       {
