@@ -1235,7 +1235,8 @@ namespace viennacl
                                           static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                           static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                          detail::cuda_arg<unsigned int>(h.cuda_handle())
+                                          //detail::cuda_arg<unsigned int>(h.cuda_handle())
+                                          reinterpret_cast<unsigned int *>(h.cuda_handle().get())
                                         );
         VIENNACL_CUDA_LAST_ERROR_CHECK("index_norm_inf_kernel");
         

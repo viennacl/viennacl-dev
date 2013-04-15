@@ -320,6 +320,7 @@ namespace viennacl
       
     public:
       typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      typedef SCALARTYPE                                        cpu_value_type;
       typedef backend::mem_handle                               handle_type;
       typedef vcl_size_t                                        size_type;
       typedef vcl_ptrdiff_t                                     difference_type;
@@ -372,26 +373,18 @@ namespace viennacl
       {
         assert( ( (vec.size() == size()) || (size() == 0) )
                 && bool("Incompatible vector sizes!"));
-  
-        if (size() != 0)
+
+        if (vec.size() > 0)
         {
-          if (stride_ == 1 && vec.stride() == 1)
-            viennacl::backend::memory_copy(vec.handle(), elements_, vec.start(), start_, sizeof(SCALARTYPE)*internal_size());
-          else
-            throw "not implemented";
-        }
-        else
-        {
-          if (vec.size() > 0) //Note: Corner case of vec.size() == 0 leads to no effect of operator=()
+          if (size_ == 0)
           {
             size_ = vec.size();
             elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-            if (stride_ == 1 && vec.stride() == 1)
-              viennacl::backend::memory_copy(vec.handle(), elements_, vec.start(), 0, sizeof(SCALARTYPE)*internal_size());
-            else
-              throw "not implemented!";
           }
+            
+          viennacl::linalg::av(*this,
+                               vec, cpu_value_type(1.0), 1, false, false);
         }
         
         return *this;
@@ -556,7 +549,7 @@ namespace viennacl
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename T, typename V2, typename OP>
+      template <typename T, typename OP>
       typename viennacl::enable_if< (viennacl::is_product<OP>::value || viennacl::is_division<OP>::value),
                                     self_type &>::type
       operator = (const vector_expression< const vector_base<T>,
@@ -1284,10 +1277,15 @@ namespace viennacl
     self_type operator-(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                                   const self_type,
                                                   op_prod> & proxy);
-
-    
     
     ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
+    
+    /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
+    vector_expression<const vector_base<SCALARTYPE>, const SCALARTYPE, op_prod> operator-() const
+    {
+      return vector_expression<const vector_base<SCALARTYPE>, const SCALARTYPE, op_prod>(*this, SCALARTYPE(-1.0));
+    }
+    
 
     //enlarge or reduce allocated memory and set unused memory to zero
     /** @brief Resizes the allocated memory for the vector. Pads the memory to be a multiple of 'ALIGNMENT'

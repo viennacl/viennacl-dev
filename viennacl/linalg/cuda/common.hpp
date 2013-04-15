@@ -59,7 +59,6 @@ namespace viennacl
         
         template <typename ScalarType, typename T>
         typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
                                       || viennacl::is_any_dense_nonstructured_matrix<T>::value,
                                       ScalarType *>::type
         cuda_arg(T & obj)
@@ -69,7 +68,6 @@ namespace viennacl
 
         template <typename ScalarType, typename T>
         typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
                                       || viennacl::is_any_dense_nonstructured_matrix<T>::value,
                                       const ScalarType *>::type
         cuda_arg(T const & obj)
@@ -92,6 +90,7 @@ namespace viennacl
         template <typename ScalarType>
         ScalarType cuda_arg(ScalarType const & val)  { return val; }
         
+        unsigned int cuda_arg(unsigned int val)  { return val; }
         
         
         template <typename T, typename U>

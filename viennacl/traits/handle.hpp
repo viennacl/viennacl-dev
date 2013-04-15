@@ -64,28 +64,15 @@ namespace viennacl
 
     // proxy objects require extra care (at the moment)
     template <typename T>
-    viennacl::backend::mem_handle       & handle(viennacl::vector_range<T>       & obj)
+    viennacl::backend::mem_handle       & handle(viennacl::vector_base<T>       & obj)
     {
-      return obj.get().handle();
+      return obj.handle();
     }
     
     template <typename T>
-    viennacl::backend::mem_handle const & handle(viennacl::vector_range<T> const & obj)
+    viennacl::backend::mem_handle const & handle(viennacl::vector_base<T> const & obj)
     {
-      return obj.get().handle();
-    }
-
-
-    template <typename T>
-    viennacl::backend::mem_handle       & handle(viennacl::vector_slice<T>       & obj)
-    {
-      return obj.get().handle();
-    }
-
-    template <typename T>
-    viennacl::backend::mem_handle const & handle(viennacl::vector_slice<T> const & obj)
-    {
-      return obj.get().handle();
+      return obj.handle();
     }
 
 

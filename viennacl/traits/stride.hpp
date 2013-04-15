@@ -41,13 +41,9 @@ namespace viennacl
     //
     // inc: Increment for vectors. Defaults to 1
     //
-    template <typename VectorType>
-    typename result_of::size_type<VectorType>::type
-    stride(VectorType const &) { return 1; }
-
-    template <typename VectorType>
-    typename result_of::size_type<VectorType>::type
-    stride(viennacl::vector_slice<VectorType> const & s) { return s.stride(); }
+    template <typename T>
+    typename result_of::size_type< viennacl::vector_base<T> >::type
+    stride(viennacl::vector_base<T> const & s) { return s.stride(); }
 
     //
     // inc1: Row increment for matrices. Defaults to 1
