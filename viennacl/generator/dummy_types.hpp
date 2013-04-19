@@ -72,10 +72,11 @@ struct to_sym<vector<ScalarType> >{
     static type result(vector<ScalarType> const & t) { return type(t.get().size(),t.get(), index_set()); }
 };
 
+//TODO: clean
 template<unsigned int N>
 struct to_sym<constant_vector<N> >{
-    typedef symbolic_constant<N> type;
-    static type result(constant_vector<N> const &) { return type(); }
+    typedef symbolic_constant type;
+    static type result(constant_vector<N> const &) { return type(to_string(N)); }
 };
 
 
@@ -440,17 +441,17 @@ operator-(T const & t)
 
 template<class OP_REDUCE, class T>
 typename viennacl::enable_if<is_vector_expression_t<T>::value
-                            ,binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> > >::type
+                            ,binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant > >::type
 reduce(T const & t){
-    return binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> >(make_sym(t), symbolic_constant<1>());
+    return binary_scalar_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant >(make_sym(t), symbolic_constant("1"));
 }
 
 
 template<class OP_REDUCE, class T>
 typename viennacl::enable_if<is_matrix_expression_t<T>::value
-                            ,binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> > >::type
+                            ,binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant > >::type
 reduce_rows(T const & t){
-    return binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant<1> >(make_sym(t), symbolic_constant<1>());
+    return binary_vector_expression<typename to_sym<T>::type,reduce_type<OP_REDUCE>,symbolic_constant >(make_sym(t), symbolic_constant("1"));
 }
 
 template<class OP_REDUCE, class T>
@@ -458,12 +459,12 @@ typename viennacl::enable_if<is_matrix_expression_t<T>::value
                             ,binary_vector_expression<
                                 unary_matrix_expression<typename to_sym<T>::type,trans_type>
                                 ,reduce_type<OP_REDUCE>
-                                ,symbolic_constant<1> > >::type
+                                ,symbolic_constant > >::type
 reduce_cols(T const & t){
     return binary_vector_expression<
             unary_matrix_expression<typename to_sym<T>::type,trans_type>
             ,reduce_type<OP_REDUCE>
-            ,symbolic_constant<1> >(trans(t), symbolic_constant<1>());
+            ,symbolic_constant >(trans(t), symbolic_constant("1"));
 }
 
 template<class T>
@@ -587,7 +588,7 @@ template<class ScalarType>
 symbolic_vector<ScalarType,
                     binary_vector_expression<
                          binary_vector_expression<
-                            binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, cpu_symbolic_scalar<int>
+                            binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, symbolic_constant
                          >
                         ,min_type
                         ,cpu_symbolic_scalar<size_t> > >
@@ -595,12 +596,12 @@ shift(vector<ScalarType> const & t, int k){
     return symbolic_vector<ScalarType,
             binary_vector_expression<
                  binary_vector_expression<
-                    binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, cpu_symbolic_scalar<int>
+                    binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, symbolic_constant
                  >
                 ,min_type
                 ,cpu_symbolic_scalar<size_t> > >(t.get().size()
                                                          ,t.get()
-                                                         ,generator::min(generator::max(k+index_set(),0),t.get().size()));
+                                                 ,generator::min(generator::max(k+index_set(),constant_vector<0>()),t.get().size()));
 }
 
 

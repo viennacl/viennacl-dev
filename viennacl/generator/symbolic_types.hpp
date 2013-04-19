@@ -175,18 +175,20 @@ namespace viennacl
         ScalarType val_;
     };
 
-    template<int N>
     class symbolic_constant : public infos_base{
     public:
-        virtual std::string generate(unsigned int i, int vector_element = -1) const { return to_string(N); }
-        virtual std::string repr() const { return "cst"+to_string(N); }
-        virtual std::string simplified_repr() const { return repr(); }
-        virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
+        symbolic_constant(std::string const & expr) : expr_(expr){ }
+        std::string generate(unsigned int i, int vector_element = -1) const { return expr_; }
+        std::string repr() const { return "cst"+expr_; }
+        std::string simplified_repr() const { return "cst"+expr_; }
+        void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         void fetch(unsigned int i, kernel_generation_stream & kss){ }
         void write_back(unsigned int i, kernel_generation_stream & kss){ }
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >& , code_generation::optimization_profile*){ }
-        bool operator==(infos_base const & other) const{ return dynamic_cast<symbolic_constant *>(&other); }
+        bool operator==(infos_base const & other) const{ return dynamic_cast<symbolic_constant const *>(&other); }
         void get_kernel_arguments(std::vector<kernel_argument const * > & args) const { }
+    private:
+        std::string expr_;
     };
 
 
