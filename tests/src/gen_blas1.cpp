@@ -133,58 +133,58 @@ int test_vector ( Epsilon const& epsilon) {
 
     // --------------------------------------------------------------------------
 
-    {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + vec(y));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
+//    {
+//        std::cout << "w = x + y ..." << std::endl;
+//        cw = cx + cy;
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) + vec(y));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cw, w, w = x + y);
+//    }
 
-    {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + vec(y));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
+//    {
+//        std::cout << "w = x + y ..." << std::endl;
+//        cw = cx + cy;
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) + vec(y));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cw, w, w = x + y);
+//    }
 
-    {
-        std::cout << "x = w + y ..." << std::endl;
-        cx = cw + cy;
-        generator::custom_operation op;
-        op.add(vec(x) = vec(w) + vec(y));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cx, x, x = w + y);
-    }
+//    {
+//        std::cout << "x = w + y ..." << std::endl;
+//        cx = cw + cy;
+//        generator::custom_operation op;
+//        op.add(vec(x) = vec(w) + vec(y));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cx, x, x = w + y);
+//    }
 
 
-    {
-        std::cout << "w = x > 0.42" << std::endl;
-        for(unsigned int i=0 ; i < size ; ++i){
-            cw(i) = cx(i) > (float)0.42;
-        }
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) > (float)0.42);
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw, w, w = x > 1)
-    }
+//    {
+//        std::cout << "w = x > 0.42" << std::endl;
+//        for(unsigned int i=0 ; i < size ; ++i){
+//            cw(i) = cx(i) > (float)0.42;
+//        }
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) > (float)0.42);
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cw, w, w = x > 1)
+//    }
 
-    {
-        std::cout << "w = -w ..." << std::endl;
-        cw = -cw;
-        generator::custom_operation op;
-        op.add(vec(w) = -vec(w));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw,w, w=-w);
-    }
+//    {
+//        std::cout << "w = -w ..." << std::endl;
+//        cw = -cw;
+//        generator::custom_operation op;
+//        op.add(vec(w) = -vec(w));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cw,w, w=-w);
+//    }
 
     {
         std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
@@ -200,43 +200,43 @@ int test_vector ( Epsilon const& epsilon) {
         CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
     }
 
-    {
-        std::cout << "s = inner_prod(x,y)..." << std::endl;
-        s = ublas::inner_prod(cx,cy);
-        generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(s,gs, s=inner_prod(x,y));
-    }
+//    {
+//        std::cout << "s = inner_prod(x,y)..." << std::endl;
+//        s = ublas::inner_prod(cx,cy);
+//        generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(s,gs, s=inner_prod(x,y));
+//    }
 
-    {
-        std::cout << "s = max(x)..." << std::endl;
-        s = *std::max_element(cx.begin(),cx.end());
-        generator::custom_operation op((scal(gs)= generator::reduce<generator::fmax_type>(vec(x))));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(s,gs, s=max(x));
-    }
+//    {
+//        std::cout << "s = max(x)..." << std::endl;
+//        s = *std::max_element(cx.begin(),cx.end());
+//        generator::custom_operation op((scal(gs)= generator::reduce<generator::fmax_type>(vec(x))));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(s,gs, s=max(x));
+//    }
 
-    {
-        std::cout << "Multiline ..." << std::endl;
-        viennacl::generator::custom_operation op;
-        op.add(vec(w) = 0.42 * (vec(x) - vec(y)));
-        op.add(vec(y) = element_prod(vec(x), vec(x))
-                          - vec(y)
-                          - element_prod(vec(x), vec(z)));
-        op.add(vec(z) = element_prod(vec(x), vec(y)) - 0.2 * vec(z));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        for(unsigned int i=0 ; i < size ; ++i){
-            cw(i) = 0.42*(cx(i) - cy(i));
-            cy(i) = cx(i)*cx(i) - cy(i) - cx(i)*cz(i);
-            cz(i) = cx(i)*cy(i) - 0.2*cz(i);
-        }
-        CHECK_RESULT(cw, w, Multiline);
-        CHECK_RESULT(cy, y, Multiline);
-        CHECK_RESULT(cz, z, Multiline);
-    }
+//    {
+//        std::cout << "Multiline ..." << std::endl;
+//        viennacl::generator::custom_operation op;
+//        op.add(vec(w) = 0.42 * (vec(x) - vec(y)));
+//        op.add(vec(y) = element_prod(vec(x), vec(x))
+//                          - vec(y)
+//                          - element_prod(vec(x), vec(z)));
+//        op.add(vec(z) = element_prod(vec(x), vec(y)) - 0.2 * vec(z));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        for(unsigned int i=0 ; i < size ; ++i){
+//            cw(i) = 0.42*(cx(i) - cy(i));
+//            cy(i) = cx(i)*cx(i) - cy(i) - cx(i)*cz(i);
+//            cz(i) = cx(i)*cy(i) - 0.2*cz(i);
+//        }
+//        CHECK_RESULT(cw, w, Multiline);
+//        CHECK_RESULT(cy, y, Multiline);
+//        CHECK_RESULT(cz, z, Multiline);
+//    }
     return retval;
 }
 
@@ -428,23 +428,23 @@ int main(int argc, char* argv[]){
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-//                std::cout << std::endl;
-//                std::cout << "----------------------------------------------" << std::endl;
-//                std::cout << "----------------------------------------------" << std::endl;
-//                std::cout << "## Test :: Vector" << std::endl;
-//                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "## Test :: Vector" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
 
-//                {
-//                    double epsilon = 1.0E-4;
-//                    std::cout << "# Testing setup:" << std::endl;
-//                    std::cout << "  numeric: double" << std::endl;
-//                    retval = test_vector<double> (epsilon);
+                {
+                    double epsilon = 1.0E-4;
+                    std::cout << "# Testing setup:" << std::endl;
+                    std::cout << "  numeric: double" << std::endl;
+                    retval = test_vector<double> (epsilon);
 
-//                    if ( retval == EXIT_SUCCESS )
-//                        std::cout << "# Test passed" << std::endl;
-//                    else
-//                        return retval;
-//                }
+                    if ( retval == EXIT_SUCCESS )
+                        std::cout << "# Test passed" << std::endl;
+                    else
+                        return retval;
+                }
 
                 std::cout << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
@@ -452,23 +452,23 @@ int main(int argc, char* argv[]){
                 std::cout << "## Test :: Matrix" << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
 
-                {
-                    double epsilon = 1.0E-4;
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: double" << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    std::cout << "  Row-Major"      << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    retval = test_matrix<double, viennacl::row_major> (epsilon);
+//                {
+//                    double epsilon = 1.0E-4;
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: double" << std::endl;
+//                    std::cout << "  --------------" << std::endl;
+//                    std::cout << "  Row-Major"      << std::endl;
+//                    std::cout << "  --------------" << std::endl;
+//                    retval = test_matrix<double, viennacl::row_major> (epsilon);
 //                    std::cout << "  --------------" << std::endl;
 //                    std::cout << "  Column-Major"      << std::endl;
 //                    std::cout << "  --------------" << std::endl;
 //                    retval &= test_matrix<double, viennacl::column_major> (epsilon);
-                    if ( retval == EXIT_SUCCESS )
-                        std::cout << "# Test passed" << std::endl;
-                    else
-                        return retval;
-                }
+//                    if ( retval == EXIT_SUCCESS )
+//                        std::cout << "# Test passed" << std::endl;
+//                    else
+//                        return retval;
+//                }
 
             }
         }

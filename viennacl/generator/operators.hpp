@@ -257,6 +257,11 @@ MAKE_UNARY_FUN_OP(tanpi)
 MAKE_UNARY_FUN_OP(tgamma)
 MAKE_UNARY_FUN_OP(trunc)
 
+
+//Integer functions
+MAKE_BINARY_FUN_OP(max)
+MAKE_BINARY_FUN_OP(min)
+
 #undef MAKE_UNARY_FUN_OP
 #undef MAKE_BINARY_FUN_OP
 }

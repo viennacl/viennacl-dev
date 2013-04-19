@@ -68,8 +68,8 @@ public:
 
 template<class ScalarType>
 struct to_sym<vector<ScalarType> >{
-    typedef symbolic_vector<ScalarType> type;
-    static type result(vector<ScalarType> const & t) { return t.get(); }
+    typedef symbolic_vector<ScalarType, index_set> type;
+    static type result(vector<ScalarType> const & t) { return type(t.get().size(),t.get(), index_set()); }
 };
 
 template<unsigned int N>
@@ -194,10 +194,12 @@ template<class T>
 struct is_vector_expression_t{ enum { value = 0 }; };
 template<typename ScalarType>
 struct is_vector_expression_t<vector<ScalarType> >{ enum { value = 1}; };
+template<typename ScalarType, class Accessor>
+struct is_vector_expression_t<symbolic_vector<ScalarType, Accessor> >{ enum { value = 1}; };
+template<>
+struct is_vector_expression_t<index_set>{ enum { value = 1}; };
 template<typename VclT>
 struct is_vector_expression_t<symbolic_diag<VclT> >{ enum { value = 1}; };
-template<typename ScalarType>
-struct is_vector_expression_t<symbolic_shift<ScalarType> >{ enum { value = 1}; };
 template<unsigned int N>
 struct is_vector_expression_t<constant_vector<N> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
@@ -471,11 +473,7 @@ repmat(T const & t, unsigned int m, unsigned int n){
     return replicate_matrix<typename T::vcl_t>(t.get(),m,n);
 }
 
-template<class ScalarType>
-symbolic_shift<ScalarType>
-shift(vector<ScalarType> const & t, unsigned int k){
-    return symbolic_shift<ScalarType>(t.get(),k);
-}
+
 
 template<class VCL_T>
 symbolic_diag<VCL_T>
@@ -580,6 +578,30 @@ MAKE_BUILTIN_FUNCTION1(tanpi)
 MAKE_BUILTIN_FUNCTION1(tgamma)
 MAKE_BUILTIN_FUNCTION1(trunc)
 
+
+//Integer functions
+MAKE_BUILTIN_FUNCTION2(max)
+MAKE_BUILTIN_FUNCTION2(min)
+
+template<class ScalarType>
+symbolic_vector<ScalarType,
+                    binary_vector_expression<
+                         binary_vector_expression<
+                            binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, cpu_symbolic_scalar<int>
+                         >
+                        ,min_type
+                        ,cpu_symbolic_scalar<size_t> > >
+shift(vector<ScalarType> const & t, int k){
+    return symbolic_vector<ScalarType,
+            binary_vector_expression<
+                 binary_vector_expression<
+                    binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, cpu_symbolic_scalar<int>
+                 >
+                ,min_type
+                ,cpu_symbolic_scalar<size_t> > >(t.get().size()
+                                                         ,t.get()
+                                                         ,generator::min(generator::max(k+index_set(),0),t.get().size()));
+}
 
 
 }

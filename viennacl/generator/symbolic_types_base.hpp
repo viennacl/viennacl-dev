@@ -87,6 +87,7 @@ namespace viennacl{
             virtual void fetch(unsigned int i, kernel_generation_stream & kss) = 0;
             virtual void write_back(unsigned int i, kernel_generation_stream & kss) = 0;
             virtual void get_kernel_arguments(std::vector<kernel_argument const *> & args) const = 0;
+            virtual bool operator==(infos_base const & other) const = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
         protected:
@@ -111,7 +112,7 @@ namespace viennacl{
                 lhs_->bind(shared_infos,prof);
                 rhs_->bind(shared_infos,prof);
             }
-            virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 lhs_->access_index(i,ind0,ind1);
                 rhs_->access_index(i,ind0,ind1);
             }
@@ -124,11 +125,16 @@ namespace viennacl{
                 rhs_->get_kernel_arguments(args);
             }
 
-            virtual void write_back(unsigned int i, kernel_generation_stream & kss){
+            void write_back(unsigned int i, kernel_generation_stream & kss){
                 if(dynamic_cast<assignment_op_infos_base*>(op_.get())) lhs_->write_back(i,kss);
             }
 
-
+            bool operator==(infos_base const & other) const{
+                if(binary_tree_infos_base const * p = dynamic_cast<binary_tree_infos_base const *>(&other)){
+                    return *lhs_==*p->lhs_ && op_->name()==p->op_->name() && *rhs_==*p->rhs_;
+                }
+                return false;
+            }
         protected:
             binary_tree_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
             viennacl::tools::shared_ptr<infos_base> lhs_;
@@ -215,7 +221,6 @@ namespace viennacl{
         public:
             kernel_argument(std::string const & address_space, std::string const & scalartype_name, std::string const & name) : address_space_(address_space), scalartype_name_(scalartype_name), name_(name){ }
             virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
-            bool operator<(kernel_argument const & other) const{ return handle() < other.handle(); }
             bool operator==(kernel_argument const & other) const{ return name_ == other.name_; }
             virtual std::string repr() const = 0;
             std::string const & name() const { return name_; }
@@ -282,7 +287,6 @@ namespace viennacl{
                     return scalartype + to_string(alignment);
                 }
             }
-            virtual bool operator==(symbolic_datastructure const & other) const = 0;
             unsigned int alignment() const { return infos_->alignment; }
             void alignment(unsigned int val) { infos_->alignment = val; }
             void get_kernel_arguments(std::vector<kernel_argument const *>& args) const{
@@ -298,7 +302,7 @@ namespace viennacl{
 
         class buffered_datastructure : public symbolic_datastructure{
         protected:
-            virtual std::string access_buffer(unsigned int i) const { return infos_->name + '[' + infos_->access_index[i] + ']'; }
+            virtual std::string access_buffer(unsigned int i) const = 0;
         public:
             std::string get_access_index(unsigned int i) const { return infos_->access_index[i]; }
             void fetch(unsigned int i, kernel_generation_stream & kss){
@@ -342,13 +346,12 @@ namespace viennacl{
 
         class vec_infos_base : public buffered_datastructure{
         public:
+            vec_infos_base(size_t size) : size_(size) { }
             std::string  size() const{ return name() + "_size"; }
-            virtual size_t real_size() const = 0;
-            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
-                assert(ind1=="0");
-                infos_->access_index[i] = ind0;
-            }
+            size_t real_size() const { return size_; }
             virtual ~vec_infos_base(){ }
+        protected:
+            size_t size_;
         };
 
 
