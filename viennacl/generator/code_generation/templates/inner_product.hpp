@@ -82,7 +82,7 @@ public:
                 local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
                 kss << lmem.declare() << ";" << std::endl;
                 kss << lmem.access("get_local_id(0)") << " = " << (*it)->name() << "[lid];" << ";" << std::endl;
-                (*it)->override_generation(0,lmem.access("0"));
+                (*it)->access_name(lmem.access("0"));
             }
             compute_reductions_samesize(kss,local_mems);
             for(std::list<binary_scalar_expression_infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){

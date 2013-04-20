@@ -186,28 +186,28 @@ int test_vector ( Epsilon const& epsilon) {
 //        CHECK_RESULT(cw,w, w=-w);
 //    }
 
-    {
-        std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
-        for(int i=0 ; i<size; ++i){
-            int ind1 = std::max(i - 5, 0);
-            int ind2 = std::min(i + 3, (int)size-1);
-            cw(i) = cx(i) + cx(ind1) + cx(ind2);
-        }
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
-    }
-
 //    {
-//        std::cout << "s = inner_prod(x,y)..." << std::endl;
-//        s = ublas::inner_prod(cx,cy);
-//        generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
+//        std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
+//        for(int i=0 ; i<size; ++i){
+//            int ind1 = std::max(i - 5, 0);
+//            int ind2 = std::min(i + 3, (int)size-1);
+//            cw(i) = cx(i) + cx(ind1) + cx(ind2);
+//        }
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
 //        op.execute();
 //        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(s,gs, s=inner_prod(x,y));
+//        CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
 //    }
+
+    {
+        std::cout << "s = inner_prod(x,y)..." << std::endl;
+        s = ublas::inner_prod(cx,cy);
+        generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(s,gs, s=inner_prod(x,y));
+    }
 
 //    {
 //        std::cout << "s = max(x)..." << std::endl;
@@ -332,16 +332,16 @@ int test_matrix ( Epsilon const& epsilon) {
         CHECK_RESULT(cC, C, C=A+B)
     }
 
-    {
-        std::cout << "C = repmat(P, M, N) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
-        generator::custom_operation op((dm_t(C) = generator::repmat(dm_t(pattern),n_rep1,n_rep2)));
-        op.execute();
-        viennacl::ocl::get_queue().finish();
-        CHECK_RESULT(cC, C, C = repmat(P, M, N))
-    }
+//    {
+//        std::cout << "C = repmat(P, M, N) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
+//        generator::custom_operation op((dm_t(C) = generator::repmat(dm_t(pattern),n_rep1,n_rep2)));
+//        op.execute();
+//        viennacl::ocl::get_queue().finish();
+//        CHECK_RESULT(cC, C, C = repmat(P, M, N))
+//    }
 
 //    {
 //        std::cout << "C = repmat(x, 1, N) ..." << std::endl;

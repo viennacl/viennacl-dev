@@ -199,8 +199,6 @@ template<typename ScalarType, class Accessor>
 struct is_vector_expression_t<symbolic_vector<ScalarType, Accessor> >{ enum { value = 1}; };
 template<>
 struct is_vector_expression_t<index_set>{ enum { value = 1}; };
-template<typename VclT>
-struct is_vector_expression_t<symbolic_diag<VclT> >{ enum { value = 1}; };
 template<unsigned int N>
 struct is_vector_expression_t<constant_vector<N> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
@@ -467,20 +465,12 @@ reduce_cols(T const & t){
             ,symbolic_constant >(trans(t), symbolic_constant("1"));
 }
 
-template<class T>
-typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,
-                             replicate_matrix<typename T::vcl_t> >::type
-repmat(T const & t, unsigned int m, unsigned int n){
-    return replicate_matrix<typename T::vcl_t>(t.get(),m,n);
-}
-
-
-
-template<class VCL_T>
-symbolic_diag<VCL_T>
-diag(matrix<VCL_T> const & t){
-    return symbolic_diag<VCL_T>(t.get());
-}
+//template<class T>
+//typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,
+//                             replicate_matrix<typename T::vcl_t> >::type
+//repmat(T const & t, unsigned int m, unsigned int n){
+//    return replicate_matrix<typename T::vcl_t>(t.get(),m,n);
+//}
 
 template<class ScalarType, class T>\
 typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\

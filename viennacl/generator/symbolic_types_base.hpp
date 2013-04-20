@@ -65,7 +65,6 @@ namespace viennacl{
                 scalartype_size = _scalartype_size;
                 alignment = _alignment;
             }
-            std::map<unsigned int,std::string> access_index;
             std::map<unsigned int,std::string> private_values;
             unsigned int id;
             std::string name;
@@ -82,6 +81,7 @@ namespace viennacl{
             virtual std::string generate(unsigned int i, int vector_element = -1) const { return ""; }
             virtual std::string repr() const = 0;
             virtual std::string simplified_repr() const = 0;
+            virtual std::string name() const = 0;
             virtual void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof)= 0;
             virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
             virtual void fetch(unsigned int i, kernel_generation_stream & kss) = 0;
@@ -101,6 +101,7 @@ namespace viennacl{
             infos_base & lhs() const{ return *lhs_; }
             infos_base & rhs() const{ return *rhs_; }
             binary_op_infos_base & op() { return *op_; }
+            std::string name() const { return lhs_->name() + op_->name() + rhs_->name(); }
             std::string repr() const { return op_->name() + "("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const {
                 if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa))
@@ -146,16 +147,9 @@ namespace viennacl{
         class binary_arithmetic_tree_infos_base : public binary_tree_infos_base{
         public:
             std::string generate(unsigned int i, int vector_element = -1) const {
-                std::map<unsigned int, std::string>::const_iterator it = override_generation_.find(i);
-                if(it==override_generation_.end())
-                    return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")";
-                else
-                    return it->second;
+                return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")";
             }
             binary_arithmetic_tree_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) :  binary_tree_infos_base(lhs,op,rhs){        }
-            void override_generation(unsigned int i, std::string const & new_val){ override_generation_[i] = new_val; }
-        private:
-            std::map<unsigned int, std::string> override_generation_;
         };
 
         class binary_vector_expression_infos_base : public binary_arithmetic_tree_infos_base{
@@ -179,6 +173,7 @@ namespace viennacl{
             unary_tree_infos_base(infos_base * sub, unary_op_infos_base * op) : sub_(sub), op_(op) { }
             infos_base & sub() const{ return *sub_; }
             unary_op_infos_base const & op() const{ return *op_; }
+            std::string name() const { return op_->name() + sub_->name(); }
             std::string repr() const { return op_->name() + "("+ sub_->repr()+")"; }
             std::string simplified_repr() const { return repr(); }
             void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
@@ -231,6 +226,7 @@ namespace viennacl{
             virtual std::string repr() const = 0;
             std::string const & name() const { return name_; }
             void scalartype_name(std::string const & str) { scalartype_name_ = str; }
+            std::string const & scalartype_name() const { return scalartype_name_; }
         protected:
             std::string address_space_;
             std::string scalartype_name_;
@@ -274,7 +270,7 @@ namespace viennacl{
             viennacl::backend::mem_handle const & handle_;
         };
 
-        class symbolic_datastructure : public virtual infos_base{
+        class symbolic_datastructure : public infos_base{
         public:
             void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
             void clear_private_value(unsigned int i) { infos_->private_values[i] = ""; }
@@ -310,7 +306,6 @@ namespace viennacl{
         protected:
             virtual std::string access_buffer(unsigned int i) const = 0;
         public:
-            std::string get_access_index(unsigned int i) const { return infos_->access_index[i]; }
             void fetch(unsigned int i, kernel_generation_stream & kss){
                 if(infos_->private_values[i].empty()){
                     std::string val = infos_->name + "_private";
@@ -375,14 +370,6 @@ namespace viennacl{
                 }
                 return '(' + offset_i + ')' + "+ (" + offset_j + ')' + '*' + internal_size1();
             }
-            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
-                std::string str;
-                if(is_rowmajor_)
-                    str = ind0+"*"+internal_size2()+"+"+ind1;
-                else
-                    str = ind1+"*"+internal_size1()+"+"+ind0;
-                infos_->access_index[i] = str;
-            }
         protected:
             bool is_rowmajor_;
         };
@@ -406,44 +393,32 @@ namespace viennacl{
             matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) : binary_vector_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){            }
             std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            void access_name(std::string const & str) { access_name_ = str; }
+            std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
         private:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
+            std::string access_name_;
         };
 
-        class inner_product_infos_base : public binary_scalar_expression_infos_base, public buffered_datastructure{
+        class inner_product_infos_base : public binary_scalar_expression_infos_base {
         public:
-            inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new mul_type,rhs)
-                                                                                                    , op_reduce_(op){ }
+            inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){ }
             bool is_computed(){ return current_kernel_; }
             void set_computed(){ current_kernel_ = 1; }
-            std::string repr() const{ return binary_scalar_expression_infos_base::repr(); }
-            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){ binary_scalar_expression_infos_base::bind(shared_infos,prof); }
-            std::string simplified_repr() const { return binary_scalar_expression_infos_base::simplified_repr(); }
-            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){  binary_scalar_expression_infos_base::access_index(i,ind0,ind1); }
-            void fetch(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::fetch(i,kss); }
-            virtual void write_back(unsigned int i, kernel_generation_stream & kss){ binary_scalar_expression_infos_base::write_back(i,kss); }
-            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            std::string const & scalartype() const { return handle_->scalartype_name(); }
             void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
-                buffered_datastructure::get_kernel_arguments(args);
-                if(current_kernel_==0) binary_scalar_expression_infos_base::get_kernel_arguments(args);
+                binary_scalar_expression_infos_base::get_kernel_arguments(args);
+                args.push_back(handle_.get());
             }
-            std::string generate(unsigned int i, int vector_element = -1) const{ return binary_scalar_expression_infos_base::generate(i,vector_element); }
-        private:
+            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            void access_name(std::string const & str) { access_name_ = str; }
+            std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
+        protected:
             viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
+            viennacl::tools::shared_ptr<pointer_argument_base> handle_;
+            std::string access_name_;
         };
 
-//        template<class T, class Pred>
-//        static void extract_as(infos_base* root, std::set<T*, deref_less> & args, Pred pred){
-//            if(binary_arithmetic_tree_infos_base* p = dynamic_cast<binary_arithmetic_tree_infos_base*>(root)){
-//                extract_as(&p->lhs(), args,pred);
-//                extract_as(&p->rhs(),args,pred);
-//            }
-//            else if(unary_tree_infos_base* p = dynamic_cast<unary_tree_infos_base*>(root)){
-//                extract_as(&p->sub(), args,pred);
-//            }
-//            if(T* t = dynamic_cast<T*>(root))
-//                if(pred(t)) args.insert(t);
-//        }
 
         template<class T, class Pred>
         static void extract_as(infos_base* root, std::list<T*> & args, Pred pred){
