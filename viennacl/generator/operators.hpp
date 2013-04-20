@@ -64,7 +64,12 @@ public:
     unary_op_infos_base(std::string const & name) : op_infos_base(name) { }
 };
 
-
+template<class ScalarType>
+class cast_type : public unary_op_infos_base{
+public:
+    cast_type() : unary_op_infos_base("cast_"+print_type<ScalarType>::value()){ }
+    std::string generate(const std::string &sub) const { return "("+print_type<ScalarType>::value()+")(" + sub + ")"; }
+};
 
 class unary_arithmetic_op_infos_base : public unary_op_infos_base{
 public:
@@ -167,6 +172,7 @@ public:
         else return lhs + "/" + rhs;
     }
 };
+
 
 
 

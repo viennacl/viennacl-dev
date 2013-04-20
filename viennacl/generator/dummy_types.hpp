@@ -482,6 +482,18 @@ diag(matrix<VCL_T> const & t){
     return symbolic_diag<VCL_T>(t.get());
 }
 
+template<class ScalarType, class T>\
+typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\
+                            ,typename convert_to_unary_expr<T,cast_type<ScalarType>,is_vector_expression_t<T>::value\
+                                                            ,is_scalar_expression_t<T>::value\
+                                                            ,is_matrix_expression_t<T>::value>::type>::type cast(T const & t)\
+{\
+    return typename convert_to_unary_expr<T,cast_type<ScalarType>
+            ,is_vector_expression_t<T>::value\
+            ,is_scalar_expression_t<T>::value\
+            ,is_matrix_expression_t<T>::value>::type(make_sym(t));\
+}
+
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
 template<class T>\
 typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\
@@ -510,7 +522,6 @@ typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_e
             ,create_scalar<LHS,RHS>::value\
             ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));\
 }
-
 
 
 MAKE_BUILTIN_FUNCTION1(acos)
@@ -588,20 +599,19 @@ template<class ScalarType>
 symbolic_vector<ScalarType,
                     binary_vector_expression<
                          binary_vector_expression<
-                            binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, symbolic_constant
+                            unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
                          >
                         ,min_type
-                        ,cpu_symbolic_scalar<size_t> > >
+                        ,cpu_symbolic_scalar<int> > >
 shift(vector<ScalarType> const & t, int k){
     return symbolic_vector<ScalarType,
             binary_vector_expression<
                  binary_vector_expression<
-                    binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set> , max_type, symbolic_constant
+                    unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
                  >
                 ,min_type
-                ,cpu_symbolic_scalar<size_t> > >(t.get().size()
-                                                         ,t.get()
-                                                 ,generator::min(generator::max(k+index_set(),constant_vector<0>()),t.get().size()));
+                ,cpu_symbolic_scalar<int> > >(t.get().size(), t.get()
+                                                 ,generator::min(generator::max(cast<int>(k+index_set()),constant_vector<0>()),(int)t.get().size() - 1));
 }
 
 

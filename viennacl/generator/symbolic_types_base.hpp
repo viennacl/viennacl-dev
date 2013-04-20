@@ -194,6 +194,12 @@ namespace viennacl{
                 sub_->get_kernel_arguments(args);
             }
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(sub_->generate(i,vector_element)) + ")"; }
+            bool operator==(infos_base const & other) const{
+                if(unary_tree_infos_base const * p = dynamic_cast<unary_tree_infos_base const *>(&other)){
+                    return *sub_==*p->sub_ && op_->name()==p->op_->name();
+                }
+                return false;
+            }
         protected:
             viennacl::tools::shared_ptr<infos_base> sub_;
             viennacl::tools::shared_ptr<unary_op_infos_base> op_;
