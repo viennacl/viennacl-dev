@@ -40,14 +40,21 @@ For building the examples, proceed as follows:
 Unix-based clients:
  * change to the build directory:
    $> cd build
+
  * call cmake
    $> cmake ..
+
  * If CMake cannot find the OpenCL files, e.g. 'Could NOT find OPENCL (missing:  OPENCL_INCLUDE_DIR)', please set the paths manually, e.g.
    $> cmake -DOPENCL_INCLUDE_DIR=../CL ..
-   or use the CMake GUI.
+   Or, use the CMake GUI.
+   $> cmake-gui
+   Or, disable openCL if you are not planning to use parallel programming components
+   $> cmake .. -DENABLE_OPENCL=0
+ 
  * Use 'make' to build all examples:
    $> make
    (alternatively, you can build them individually via 'make blas1', 'make viennacl-info', etc.
+
  * Start the tutorials (optional)
    $> examples/blas1
    $> examples/custom-kernels
