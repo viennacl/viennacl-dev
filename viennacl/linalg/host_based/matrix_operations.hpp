@@ -47,16 +47,14 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
       
-      template <typename M1,
-                typename M2, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename NumericT, typename F,
+                typename ScalarType1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
-      am(M1 & mat1, 
-         M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
+      am(matrix_base<NumericT, F> & mat1, 
+         matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         
         value_type       * data_A = detail::extract_raw_pointer<value_type>(mat1);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(mat2);
@@ -83,12 +81,12 @@ namespace viennacl
         std::size_t B_internal_size1  = viennacl::traits::internal_size1(mat2);
         std::size_t B_internal_size2  = viennacl::traits::internal_size2(mat2);
         
-        detail::matrix_array_wrapper<value_type,       typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename M2::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
         //typedef typename detail::majority_struct_for_orientation<typename M1::orientation_category>::type index_generator_A;
         //typedef typename detail::majority_struct_for_orientation<typename M2::orientation_category>::type index_generator_B;
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
@@ -113,20 +111,16 @@ namespace viennacl
       }
       
       
-      template <typename M1,
-                typename M2, typename ScalarType1,
-                typename M3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename NumericT, typename F,
+                typename ScalarType1, typename ScalarType2>
+      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
-      ambm(M1 & mat1, 
-           M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-           M3 const & mat3, ScalarType2 const & beta, std::size_t /*len_beta*/, bool reciprocal_beta, bool flip_sign_beta) 
+      ambm(matrix_base<NumericT, F> & mat1, 
+           matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type       * data_A = detail::extract_raw_pointer<value_type>(mat1);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(mat2);
@@ -167,11 +161,11 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(mat3);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(mat3);
         
-        detail::matrix_array_wrapper<value_type,       typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename M2::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename M3::orientation_category, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
@@ -200,20 +194,16 @@ namespace viennacl
       }
       
       
-      template <typename M1,
-                typename M2, typename ScalarType1,
-                typename M3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
+      template <typename NumericT, typename F, 
+                typename ScalarType1, typename ScalarType2>
+      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
-      ambm_m(M1 & mat1,
-             M2 const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-             M3 const & mat3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
+      ambm_m(matrix_base<NumericT, F> & mat1,
+             matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+             matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type       * data_A = detail::extract_raw_pointer<value_type>(mat1);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(mat2);
@@ -254,15 +244,15 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(mat3);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(mat3);
         
-        detail::matrix_array_wrapper<value_type,       typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename M2::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename M3::orientation_category, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
         //typedef typename detail::majority_struct_for_orientation<typename M1::orientation_category>::type index_generator_A;
         //typedef typename detail::majority_struct_for_orientation<typename M2::orientation_category>::type index_generator_B;
         //typedef typename detail::majority_struct_for_orientation<typename M3::orientation_category>::type index_generator_C;
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
@@ -292,13 +282,12 @@ namespace viennacl
 
       
       
-      template <typename M1, typename ScalarType>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_cpu_scalar<ScalarType>::value
+      template <typename NumericT, typename F, typename ScalarType>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<ScalarType>::value
                                   >::type    
-      matrix_assign(M1 & mat, ScalarType s)
+      matrix_assign(matrix_base<NumericT, F> & mat, ScalarType s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         
         value_type       * data_A = detail::extract_raw_pointer<value_type>(mat);
         value_type alpha = static_cast<value_type>(s);
@@ -312,9 +301,9 @@ namespace viennacl
         std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
         std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
         
-        detail::matrix_array_wrapper<value_type,       typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
@@ -340,13 +329,12 @@ namespace viennacl
       
       
       
-      template <typename M1, typename ScalarType>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_cpu_scalar<ScalarType>::value
+      template <typename NumericT, typename F, typename ScalarType>
+      typename viennacl::enable_if< viennacl::is_cpu_scalar<ScalarType>::value
                                   >::type    
-      matrix_diagonal_assign(M1 & mat, ScalarType s)
+      matrix_diagonal_assign(matrix_base<NumericT, F> & mat, ScalarType s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         
         value_type       * data_A = detail::extract_raw_pointer<value_type>(mat);
         value_type alpha = static_cast<value_type>(s);
@@ -360,7 +348,7 @@ namespace viennacl
         std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
         std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
         
-        detail::matrix_array_wrapper<value_type, typename M1::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
         
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -386,15 +374,12 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename MatrixType, typename VectorType1, typename VectorType2>
-      typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<VectorType1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<VectorType2>::value >::type
-      prod_impl(const MatrixType & mat, 
-                const VectorType1 & vec, 
-                      VectorType2 & result)
+      template <typename NumericT, typename F>
+      void prod_impl(const matrix_base<NumericT, F> & mat, 
+                     const vector_base<NumericT> & vec, 
+                           vector_base<NumericT> & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+        typedef NumericT        value_type;
         
         value_type const * data_A = detail::extract_raw_pointer<value_type>(mat);
         value_type const * data_x = detail::extract_raw_pointer<value_type>(vec);
@@ -415,7 +400,7 @@ namespace viennacl
         std::size_t start2 = viennacl::traits::start(result);
         std::size_t inc2   = viennacl::traits::stride(result);
         
-        if (detail::is_row_major(typename MatrixType::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
@@ -456,18 +441,12 @@ namespace viennacl
       * @param vec        The vector
       * @param result     The result vector
       */
-      template <typename M1, typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value 
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const M1,
-                                                   const M1,
-                                                   op_trans> & mat_trans,
-                const V1 & vec, 
-                      V2 & result)
+      template <typename NumericT, typename F>
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
+                     const vector_base<NumericT> & vec, 
+                           vector_base<NumericT> & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef NumericT        value_type;
         
         value_type const * data_A = detail::extract_raw_pointer<value_type>(mat_trans.lhs());
         value_type const * data_x = detail::extract_raw_pointer<value_type>(vec);
@@ -488,7 +467,7 @@ namespace viennacl
         std::size_t start2 = viennacl::traits::start(result);
         std::size_t inc2   = viennacl::traits::stride(result);
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
           {
             value_type temp = data_x[start1];
@@ -554,18 +533,14 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const T1 & A, 
-                const T2 & B, 
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT, F1> & A, 
+                     const matrix_base<NumericT, F2> & B, 
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<T1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
@@ -595,9 +570,9 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(C);
         
-        detail::matrix_array_wrapper<value_type const, typename T1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename T2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename T3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
         detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
@@ -609,20 +584,16 @@ namespace viennacl
       * Implementation of C = prod(trans(A), B);
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const T1,
-                                                  const T1,
-                                                  op_trans> & A, 
-                const T2 & B, 
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>,
+                                                        const matrix_base<NumericT, F1>,
+                                                        op_trans> & A, 
+                     const matrix_base<NumericT, F2> & B, 
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<T1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
@@ -652,9 +623,9 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(C);
         
-        detail::matrix_array_wrapper<value_type const, typename T1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename T2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename T3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
         detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
@@ -667,20 +638,14 @@ namespace viennacl
       * Implementation of C = prod(A, trans(B));
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const T1 & A, 
-                const viennacl::matrix_expression< const T2,
-                                                  const T2,
-                                                  op_trans> & B,
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT, F1> & A, 
+                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<T1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
@@ -710,9 +675,9 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(C);
         
-        detail::matrix_array_wrapper<value_type const, typename T1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename T2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename T3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
         detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
@@ -724,18 +689,14 @@ namespace viennacl
       * Implementation of C = prod(trans(A), trans(B));
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const T1, const T1, op_trans> & A,
-                const viennacl::matrix_expression< const T2, const T2, op_trans> & B,
-                T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & A,
+                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
+                     matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<T1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
@@ -765,9 +726,9 @@ namespace viennacl
         std::size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         std::size_t C_internal_size2  = viennacl::traits::internal_size2(C);
         
-        detail::matrix_array_wrapper<value_type const, typename T1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename T2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename T3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
         
         detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
@@ -791,18 +752,14 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename M1, typename S1, typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_scalar<S1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  >::type
-      scaled_rank_1_update(M1 & mat1,
-                    S1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-                    const V1 & vec1, 
-                    const V2 & vec2)
+      template <typename NumericT, typename F, typename S1>
+      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value >::type
+      scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
+                           S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                           const vector_base<NumericT> & vec1, 
+                           const vector_base<NumericT> & vec2)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type       * data_A  = detail::extract_raw_pointer<value_type>(mat1);
         value_type const * data_v1 = detail::extract_raw_pointer<value_type>(vec1);
@@ -829,7 +786,7 @@ namespace viennacl
         if (reciprocal_alpha)
           data_alpha = static_cast<value_type>(1) / data_alpha;
         
-        if (detail::is_row_major(typename M1::orientation_category()))
+        if (detail::is_row_major(typename F::orientation_category()))
         {
           for (std::size_t row = 0; row < A_size1; ++row)
           {

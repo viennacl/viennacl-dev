@@ -107,9 +107,8 @@ namespace viennacl
   template <typename SCALARTYPE>
   class zero_vector;
 
-  template<class SCALARTYPE, typename SizeType = std::size_t, typename DistanceType = std::ptrdiff_t>
+  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
-  
   
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class vector;
@@ -186,6 +185,9 @@ namespace viennacl
   //
   // Matrix types:
   //  
+  template<class SCALARTYPE, typename F = row_major, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  class matrix_base;
+  
   template <class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
   class matrix;
   
@@ -522,22 +524,15 @@ namespace viennacl
     
     //forward definition of prod_impl functions
 
-    template <typename MatrixType, typename VectorType1, typename VectorType2>
-    typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
-                                  && viennacl::is_any_dense_nonstructured_vector<VectorType1>::value 
-                                  && viennacl::is_any_dense_nonstructured_vector<VectorType2>::value >::type
-    prod_impl(const MatrixType & mat, 
-              const VectorType1 & vec, 
-                    VectorType2 & result);
+    template <typename NumericT, typename F>
+    void prod_impl(const matrix_base<NumericT, F> & mat, 
+                   const vector_base<NumericT> & vec, 
+                         vector_base<NumericT> & result);
 
-    template <typename M1, typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                >::type
-    prod_impl(const viennacl::matrix_expression< const M1, const M1, op_trans> & mat_trans,
-              const V1 & vec, 
-                    V2 & result);
+    template <typename NumericT, typename F>
+    void prod_impl(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
+                   const vector_base<NumericT> & vec, 
+                         vector_base<NumericT> & result);
     
     template<typename SparseMatrixType, class SCALARTYPE, unsigned int ALIGNMENT>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,

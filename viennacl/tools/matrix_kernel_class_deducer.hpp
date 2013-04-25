@@ -39,34 +39,23 @@ namespace viennacl
     /**     @brief Implementation of a helper meta class for deducing the correct kernels for the supplied matrix */
     template <typename MatrixType1>
     struct MATRIX_KERNEL_CLASS_DEDUCER
-    {};
+    {
+      typedef typename MatrixType1::ERROR_INVALID_ARGUMENT_FOR_KERNEL_CLASS_DEDUCER    ResultType;
+    };
     
     /** \cond */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_row<SCALARTYPE, 1>     ResultType;
     };
     
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_col<SCALARTYPE, 1>     ResultType;
     };
 
-    //support for matrix range:
-    template <typename T>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<T> >
-    {
-      typedef typename MATRIX_KERNEL_CLASS_DEDUCER<T>::ResultType    ResultType;
-    };
-    
-    //support for matrix slice:
-    template <typename T>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<T> >
-    {
-      typedef typename MATRIX_KERNEL_CLASS_DEDUCER<T>::ResultType    ResultType;
-    };
     /** \endcond */
   }
 

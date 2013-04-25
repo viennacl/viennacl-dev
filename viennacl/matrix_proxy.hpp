@@ -31,9 +31,10 @@ namespace viennacl
 {
 
   template <typename MatrixType>
-  class matrix_range
+  class matrix_range : public matrix_base<typename MatrixType::cpu_value_type>
   {
-      typedef matrix_range<MatrixType>            self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+      typedef matrix_range<MatrixType>                            self_type;
     
     public:
       typedef typename MatrixType::orientation_category       orientation_category;
@@ -47,131 +48,9 @@ namespace viennacl
       
       matrix_range(MatrixType & A, 
                    range const & row_range,
-                   range const & col_range) : A_(&A), row_range_(row_range), col_range_(col_range) {}
-                   
-      size_type start1() const { return row_range_.start(); }
-      size_type size1() const { return row_range_.size(); }
-
-      size_type start2() const { return col_range_.start(); }
-      size_type size2() const { return col_range_.size(); }
-      
-      ////////// operator= //////////////////////////
-      
-      self_type & operator = (const self_type & other) 
-      {
-        viennacl::linalg::am(*this,
-                             other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
-      
-      /** @brief Generic 'catch-all' overload for all operations which are not covered by the other specializations below */
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator=(const matrix_expression< LHS,
-                                                     RHS,
-                                                     OP > & proxy) 
-      {
-        MatrixType temp = proxy;
-        *this = temp;
-        return *this;
-      }      
-      
-      template <typename M1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &>::type
-      operator = (const M1 & other) 
-      {
-        viennacl::linalg::am(*this,
-                             other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
-
-      
-      template <typename M1, typename M2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const M2, op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-      
-      
-      template <typename M1, typename M2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const M2, OP > & proxy) 
-      {
-        viennacl::linalg::ambm(*this,
-                               proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, viennacl::is_subtraction<OP>::value ? true : false);
-        return *this;
-      }
-
-      
-      /** @brief Assignment of a scaled matrix (or -range or -slice), i.e. m1 = m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-      */
-      template <typename M1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const S1, OP> & proxy)
-      {
-        viennacl::linalg::am(*this, 
-                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
-        return *this;
-      }
-
-      /** @brief Assigns the supplied identity matrix to the matrix. */
-      self_type & operator = (identity_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(1,0));          //set everything to zero
-        viennacl::linalg::matrix_diagonal_assign(*this, m(0,0)); //set unit diagonal
-        return *this;
-      }
-      
-      /** @brief Assigns the supplied zero matrix to the matrix. */
-      self_type & operator = (zero_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(0,0));
-        return *this;
-      }
-
-      /** @brief Assigns the supplied scalar vector to the matrix. */
-      self_type & operator = (scalar_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(0,0));
-        return *this;
-      }
-
-
-      ////////// operator*= //////////////////////////
-
-      self_type & operator *= (cpu_value_type val) // Enabling implicit conversions
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, false, false);
-        return *this;
-      }
-      
-      ////////// operator/= //////////////////////////
-
-      self_type & operator /= (cpu_value_type val) // Enabling implicit conversions
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, true, false);
-        return *this;
-      }
+                   range const & col_range) : base_type(A.handle(),
+                                                        row_range.size(), row_range.start(), 1,
+                                                        col_range.size(), col_range.start(), 1) {}
 
 
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
@@ -179,55 +58,10 @@ namespace viennacl
       {
         return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
       }
-      
-      
 
-      //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
-      //reference operator()(size_type i, size_type j) { return A_(start1() + i, start2() + i); }
-
-      MatrixType & get() { return *A_; }
-      const MatrixType & get() const { return *A_; }
-
-    private:
-      MatrixType * A_;
-      range row_range_;
-      range col_range_;
   };
 
 
-  // implement copy-CTOR for matrix:
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::matrix(matrix_range<viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > const & proxy) : rows_(proxy.size1()), columns_(proxy.size2())
-  {
-    this->elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
-    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-    *this = proxy;
-  }
-
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::matrix(matrix_range<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > const & proxy) : rows_(proxy.size1()), columns_(proxy.size2())
-  {
-    this->elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
-    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-    *this = proxy;
-  }
-  
-  
-  
-  /** @brief Returns an expression template class representing a transposed matrix */
-  template <typename MatrixType>
-  matrix_expression< const matrix_range<MatrixType>,
-                     const matrix_range<MatrixType>,
-                     op_trans> trans(const matrix_range<MatrixType> & mat)
-  {
-    return matrix_expression< const matrix_range<MatrixType>,
-                              const matrix_range<MatrixType>,
-                              op_trans>(mat, mat);
-  }
-  
-  
-  
-  
   /////////////////////////////////////////////////////////////
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
@@ -466,153 +300,27 @@ namespace viennacl
 
 
 
-
-
-
   template <typename MatrixType>
-  class matrix_slice
+  class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type>
   {
-      typedef matrix_slice<MatrixType>            self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+      typedef matrix_slice<MatrixType>                            self_type;
     
     public:
       typedef typename MatrixType::orientation_category       orientation_category;
       
       typedef typename MatrixType::value_type     value_type;
       typedef typename viennacl::result_of::cpu_value_type<value_type>::type    cpu_value_type;
-      typedef slice::size_type                    size_type;
-      typedef slice::difference_type              difference_type;
+      typedef range::size_type                    size_type;
+      typedef range::difference_type              difference_type;
       typedef value_type                          reference;
       typedef const value_type &                  const_reference;
       
       matrix_slice(MatrixType & A, 
                    slice const & row_slice,
-                   slice const & col_slice) : A_(&A), row_slice_(row_slice), col_slice_(col_slice) {}
-                   
-      size_type start1() const { return row_slice_.start(); }
-      size_type stride1() const { return row_slice_.stride(); }
-      size_type size1() const { return row_slice_.size(); }
-
-      size_type start2() const { return col_slice_.start(); }
-      size_type stride2() const { return col_slice_.stride(); }
-      size_type size2() const { return col_slice_.size(); }
-      
-      ////////// operator= //////////////////////////
-
-      self_type & operator = (const self_type & other) 
-      {
-        viennacl::linalg::am(*this,
-                             other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
-
-      /** @brief Generic 'catch-all' overload for all operations which are not covered by the other specializations below */
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator=(const matrix_expression< LHS,
-                                                     RHS,
-                                                     OP > & proxy) 
-      {
-        MatrixType temp = proxy;
-        *this = temp;
-        return *this;
-      }      
-      
-      template <typename M1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &>::type
-      operator = (const M1 & other) 
-      {
-        viennacl::linalg::am(*this,
-                             other, cpu_value_type(1.0), 1, false, false);
-        return *this;
-      }
-
-      
-      template <typename M1, typename M2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value, 
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const M2, op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-      
-      
-      template <typename M1, typename M2, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const M2, OP > & proxy) 
-      {
-        viennacl::linalg::ambm(*this,
-                               proxy.lhs(), cpu_value_type(1.0), 1, false, false,
-                               proxy.rhs(), cpu_value_type(1.0), 1, false, viennacl::is_subtraction<OP>::value ? true : false);
-        return *this;
-      }
-
-      
-      /** @brief Assignment of a scaled matrix (or -range or -slice), i.e. m1 = m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-      */
-      template <typename M1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value && viennacl::is_any_scalar<S1>::value,
-                                    self_type &>::type
-      operator = (const matrix_expression< const M1, const S1, OP> & proxy)
-      {
-        viennacl::linalg::am(*this, 
-                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false) );
-        return *this;
-      }
-
-      /** @brief Assigns the supplied identity matrix to the matrix. */
-      self_type & operator = (identity_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(1,0));          //set everything to zero
-        viennacl::linalg::matrix_diagonal_assign(*this, m(0,0)); //set unit diagonal
-        return *this;
-      }
-      
-      /** @brief Assigns the supplied zero matrix to the matrix. */
-      self_type & operator = (zero_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(0,0));
-        return *this;
-      }
-
-      /** @brief Assigns the supplied scalar vector to the matrix. */
-      self_type & operator = (scalar_matrix<cpu_value_type> const & m)
-      {
-        assert( (m.size1() == size1()) && bool("Size mismatch!") );
-        assert( (m.size2() == size2()) && bool("Size mismatch!") );
-
-        viennacl::linalg::matrix_assign(*this, m(0,0));
-        return *this;
-      }
-
-      
-      ////////// operator*= //////////////////////////
-      
-      self_type & operator *= (cpu_value_type val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, false, false);
-        return *this;
-      }
-      
-      ////////// operator/= //////////////////////////
-
-      self_type & operator /= (cpu_value_type val)
-      {
-        viennacl::linalg::am(*this,
-                             *this, val, 1, true, false);
-        return *this;
-      }
+                   slice const & col_slice) : base_type(A.handle(),
+                                                        row_slice.size(), row_slice.start(), row_slice.stride(),
+                                                        col_slice.size(), col_slice.start(), col_slice.stride()) {}
 
 
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
@@ -620,51 +328,11 @@ namespace viennacl
       {
         return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
       }
-      
 
-      //const_reference operator()(size_type i, size_type j) const { return A_(start1() + i, start2() + i); }
-      //reference operator()(size_type i, size_type j) { return A_(start1() + i, start2() + i); }
-
-      MatrixType & get() { return *A_; }
-      const MatrixType & get() const { return *A_; }
-
-    private:
-      MatrixType * A_;
-      slice row_slice_;
-      slice col_slice_;
   };
 
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::matrix(matrix_slice<viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > const & proxy) : rows_(proxy.size1()), columns_(proxy.size2())
-  {
-    this->elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
-    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-    *this = proxy;
-  }
 
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  viennacl::matrix<SCALARTYPE, F, ALIGNMENT>::matrix(matrix_slice<const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> > const & proxy) : rows_(proxy.size1()), columns_(proxy.size2())
-  {
-    this->elements_.switch_active_handle_id(viennacl::traits::handle(proxy).get_active_handle_id());
-    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-    *this = proxy;
-  }
-  
-  
-  /** @brief Returns an expression template class representing a transposed matrix */
-  template <typename MatrixType>
-  matrix_expression< const matrix_slice<MatrixType>,
-                     const matrix_slice<MatrixType>,
-                     op_trans> trans(const matrix_slice<MatrixType> & mat)
-  {
-    return matrix_expression< const matrix_slice<MatrixType>,
-                              const matrix_slice<MatrixType>,
-                              op_trans>(mat, mat);
-  }
-  
-  
-  
-  
+
   /////////////////////////////////////////////////////////////
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
@@ -793,23 +461,6 @@ namespace viennacl
       }
     }
     
-  }
-
-
-  template<typename MatrixType>
-  std::ostream & operator<<(std::ostream & s, matrix_slice<MatrixType> const & proxy)
-  {
-    MatrixType temp = proxy;
-    s << temp;
-    return s;
-  }
-
-  template<typename MatrixType>
-  std::ostream & operator<<(std::ostream & s, matrix_slice<const MatrixType> const & proxy)
-  {
-    MatrixType temp = proxy;
-    s << temp;
-    return s;
   }
 
 

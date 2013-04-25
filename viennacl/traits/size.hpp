@@ -147,21 +147,16 @@ namespace viennacl
       return size(proxy.lhs());
     }
     
-    template <typename LHS, typename RHS>
-    typename viennacl::enable_if<    viennacl::is_any_matrix<LHS>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<RHS>::value,
-                                  vcl_size_t >::type
-    size(vector_expression<const LHS, const RHS, op_prod> const & proxy)  //matrix-vector product
+    template <typename NumericT, typename F>
+    vcl_size_t size(vector_expression<const matrix_base<NumericT, F>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
     {
       return proxy.lhs().size1();
     }
 
-    template <typename M1, typename RHS>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<RHS>::value,
-                                  vcl_size_t >::type
-    size(vector_expression<const matrix_expression<M1, M1, op_trans>,
-                           const RHS,
-                           op_prod> const & proxy)  //transposed matrix-vector product
+    template <typename NumericT, typename F>
+    vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>,
+                                      const vector_base<NumericT>,
+                                      op_prod> const & proxy)  //transposed matrix-vector product
     {
       return proxy.lhs().lhs().size2();
     }
@@ -212,60 +207,26 @@ namespace viennacl
     //
     // internal_size: Returns the internal (padded) length of vectors
     //
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(VectorType const & vec)
+    template <typename NumericT>
+    vcl_size_t internal_size(vector_base<NumericT> const & vec)
     {
       return vec.internal_size(); 
-    }
-
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(viennacl::vector_range<VectorType> const & vec)
-    {
-      return vec.get().internal_size(); 
-    }
-    
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(viennacl::vector_slice<VectorType> const & vec)
-    {
-      return vec.get().internal_size(); 
     }
 
 
     //
     // internal_size1: No. of internal (padded) rows for matrices
     //
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(MatrixType const & mat) { return mat.internal_size1(); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(viennacl::matrix_range<MatrixType> const & mat) { return internal_size1(mat.get()); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size1(mat.get()); }
-
-    
+    template <typename NumericT, typename F>
+    vcl_size_t internal_size1(matrix_base<NumericT, F> const & mat) { return mat.internal_size1(); }
     
 
     //
     // internal_size2: No. of internal (padded) columns for matrices
     //
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(MatrixType const & mat) { return mat.internal_size2(); }
+    template <typename NumericT, typename F>
+    vcl_size_t internal_size2(matrix_base<NumericT, F> const & mat) { return mat.internal_size2(); }
  
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(viennacl::matrix_range<MatrixType> const & mat) { return internal_size2(mat.get()); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size2(mat.get()); }
  
   } //namespace traits
 } //namespace viennacl

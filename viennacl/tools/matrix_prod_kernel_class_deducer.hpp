@@ -42,128 +42,78 @@ namespace viennacl
 {
   namespace tools
   {
-    namespace detail
-    {
-      template <typename MatrixType>
-      struct extract_matrix
-      {
-        typedef typename MatrixType::ERROR_UNKNOWN_MATRIX_TYPE_PROVIDED   error_type;
-      };
-      
-      template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      struct extract_matrix < viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
-      {
-        typedef viennacl::matrix<SCALARTYPE, F, ALIGNMENT>   type;
-      };
-
-      template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      struct extract_matrix < const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
-      {
-        typedef viennacl::matrix<SCALARTYPE, F, ALIGNMENT>   type;
-      };
-
-      
-      template <typename MatrixType>
-      struct extract_matrix < viennacl::matrix_range<MatrixType> >
-      {
-        typedef typename extract_matrix<MatrixType>::type   type;
-      };
-
-      template <typename MatrixType>
-      struct extract_matrix < const viennacl::matrix_range<MatrixType> >
-      {
-        typedef typename extract_matrix<MatrixType>::type   type;
-      };
-      
-      template <typename MatrixType>
-      struct extract_matrix < viennacl::matrix_slice<MatrixType> >
-      {
-        typedef typename extract_matrix<MatrixType>::type   type;
-      };
-
-      template <typename MatrixType>
-      struct extract_matrix < const viennacl::matrix_slice<MatrixType> >
-      {
-        typedef typename extract_matrix<MatrixType>::type   type;
-      };
-      
-    }
-    
-    
     
     /** @brief deduces kernel type for C=A*B, where A, B, C are MatrixType1, MatrixType2 and MatrixType3 respectively */
     template <typename MatrixType1, typename MatrixType2, typename MatrixType3>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER
     {
-      typedef typename MATRIX_PROD_KERNEL_CLASS_DEDUCER< typename detail::extract_matrix<MatrixType1>::type,
-                                                         typename detail::extract_matrix<MatrixType2>::type,
-                                                         typename detail::extract_matrix<MatrixType3>::type>::ResultType   ResultType;
+      typedef typename MatrixType1::ERROR_INVALID_TEMPLATE_ARGUMENTS_PROVIDED   ResultType;
     };
     
     /** \cond */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_row_row_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_row_row_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_row_row_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_row_row_col<SCALARTYPE, 1>     ResultType;
     };
     
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_row_col_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_row_col_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_row_col_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_row_col_col<SCALARTYPE, 1>     ResultType;
     };
 
     
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_col_row_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_col_row_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_col_row_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_col_row_col<SCALARTYPE, 1>     ResultType;
     };
     
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_col_col_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_col_col_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                             viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                             viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_prod_col_col_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_prod_col_col_col<SCALARTYPE, 1>     ResultType;
     };
     /** \endcond */
   }

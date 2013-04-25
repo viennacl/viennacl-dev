@@ -322,8 +322,8 @@ namespace viennacl
       typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
       typedef SCALARTYPE                                        cpu_value_type;
       typedef backend::mem_handle                               handle_type;
-      typedef vcl_size_t                                        size_type;
-      typedef vcl_ptrdiff_t                                     difference_type;
+      typedef SizeType                                        size_type;
+      typedef DistanceType                                     difference_type;
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
       
@@ -668,11 +668,8 @@ namespace viennacl
       *
       * @param proxy An expression template proxy class
       */
-      template <typename M1, typename T>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type & 
-                                  >::type
-      operator=(const viennacl::vector_expression< const M1, const vector_base<T>, viennacl::op_prod> & proxy)
+      template <typename F>
+      self_type & operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE, F>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
       {
         assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
         
@@ -696,13 +693,10 @@ namespace viennacl
       *
       * @param proxy An expression template proxy class
       */
-      template <typename M1, typename T>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value,
-                                    self_type &
-                                  >::type
-      operator=(const vector_expression< const matrix_expression< const M1, const M1, op_trans >,
-                                         const vector_base<T>,
-                                         op_prod> & proxy)
+      template <typename F>
+      self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE, F>, const matrix_base<SCALARTYPE, F>, op_trans >,
+                                                     const vector_base<SCALARTYPE>,
+                                                     op_prod> & proxy)
       {
         assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
   
@@ -1053,14 +1047,18 @@ namespace viennacl
     }
 
     /** @brief Creates the vector from the supplied unit vector. */
-    vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size())
+    vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size(), v.handle().get_active_handle_id())
     {
       if (v.size() > 0)
         this->operator()(v.index()) = 1;
     }
     
     /** @brief Creates the vector from the supplied zero vector. */
-    vector(zero_vector<SCALARTYPE> const & v) : base_type(v.size()) {}
+    vector(zero_vector<SCALARTYPE> const & v) : base_type(v.size()) 
+    {
+      if (v.size() > 0)
+        viennacl::linalg::vector_assign(*this, SCALARTYPE(0.0));
+    }
 
     /** @brief Creates the vector from the supplied scalar vector. */
     vector(scalar_vector<SCALARTYPE> const & v) : base_type(v.size())
@@ -1364,9 +1362,8 @@ namespace viennacl
   * @param gpu_vec    A gpu vector.
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
   */
-  template <typename V1, typename CPUVECTOR>
-  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
-  fast_copy(V1 const & gpu_vec, CPUVECTOR & cpu_vec )
+  template <typename NumericT, typename CPUVECTOR>
+  void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   }
@@ -1416,9 +1413,8 @@ namespace viennacl
   * @param gpu_vec    A gpu vector
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
   */
-  template <typename V1, typename CPUVECTOR>
-  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
-  copy(V1 const & gpu_vec, CPUVECTOR & cpu_vec )
+  template <typename NumericT, typename CPUVECTOR>
+  void copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   }
@@ -1491,9 +1487,8 @@ namespace viennacl
   * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
   * @param gpu_vec    The gpu vector.
   */
-  template <typename CPUVECTOR, typename V1>
-  typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value>::type
-  fast_copy(const CPUVECTOR & cpu_vec, V1 & gpu_vec)
+  template <typename CPUVECTOR, typename NumericT>
+  void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
   {
     viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
   }

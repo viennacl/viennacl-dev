@@ -216,7 +216,7 @@ namespace viennacl
     struct VECTOR_EXTRACTOR
     {
       typedef typename VECTOR_EXTRACTOR_IMPL<typename CONST_REMOVER<LHS>::ResultType,
-                                              typename CONST_REMOVER<RHS>::ResultType>::ResultType      ResultType;
+                                             typename CONST_REMOVER<RHS>::ResultType>::ResultType      ResultType;
     };
 
     /////// Same for matrices: matrix_extractor ///////////////
@@ -234,11 +234,6 @@ namespace viennacl
     };
     
     /** \cond */
-    template <typename LHS, typename ScalarType, typename F, unsigned int A>
-    struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix<ScalarType, F, A> >
-    {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
-    };
 
     template <typename LHS, typename ScalarType, unsigned int A>
     struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::compressed_matrix<ScalarType, A> >
@@ -246,23 +241,18 @@ namespace viennacl
       typedef viennacl::compressed_matrix<ScalarType, A>   ResultType;
     };
     
-    template <typename LHS, typename MatrixType>
-    struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix_range<MatrixType> >
+    template <typename LHS, typename NumericT, typename F>
+    struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix_base<NumericT, F> >
     {
-      typedef MatrixType   ResultType;
+      typedef viennacl::matrix_base<NumericT>   ResultType;
     };
 
-    template <typename LHS, typename MatrixType>
-    struct MATRIX_EXTRACTOR_IMPL<LHS, viennacl::matrix_slice<MatrixType> >
-    {
-      typedef MatrixType   ResultType;
-    };
 
     
-    template <typename RHS, typename ScalarType, typename F, unsigned int A>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, RHS>
+    template <typename NumericT, typename F, typename RHS>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_base<NumericT, F>, RHS>
     {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
+      typedef viennacl::matrix_base<NumericT>   ResultType;
     };
 
     template <typename RHS, typename ScalarType, unsigned int A>
@@ -270,79 +260,17 @@ namespace viennacl
     {
       typedef viennacl::compressed_matrix<ScalarType, A>   ResultType;
     };
-    
-    template <typename MatrixType, typename RHS>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType>, RHS>
-    {
-      typedef MatrixType   ResultType;
-    };
 
-    template <typename MatrixType, typename RHS>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_slice<MatrixType>, RHS>
+    template <typename NumericT, typename F>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_base<NumericT, F>, viennacl::matrix_base<NumericT, F> >
     {
-      typedef MatrixType   ResultType;
-    };
-
-    template <typename ScalarType, typename F1, typename F2, unsigned int A1, unsigned int A2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F1, A1>, viennacl::matrix<ScalarType, F2, A2> >
-    {
-      typedef viennacl::matrix<ScalarType, F1, A1>   ResultType;
+      typedef viennacl::matrix_base<NumericT, F>   ResultType;
     };
 
     template <typename ScalarType, unsigned int A1, unsigned int A2>
     struct MATRIX_EXTRACTOR_IMPL<viennacl::compressed_matrix<ScalarType, A1>, viennacl::compressed_matrix<ScalarType, A2> >
     {
       typedef viennacl::compressed_matrix<ScalarType, A1>   ResultType;
-    };
-    
-    template <typename ScalarType, typename F, unsigned int A, typename MatrixType>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, viennacl::matrix_range<MatrixType> >
-    {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
-    };
-
-    template <typename ScalarType, typename F, unsigned int A, typename MatrixType>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, viennacl::matrix_slice<MatrixType> >
-    {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
-    };
-    
-    
-    template <typename MatrixType, typename F, typename ScalarType, unsigned int A>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType>, viennacl::matrix<ScalarType, F, A> >
-    {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
-    };
-    
-    template <typename MatrixType1, typename MatrixType2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType1>, viennacl::matrix_range<MatrixType2> >
-    {
-      typedef MatrixType1   ResultType;
-    };
-
-    template <typename MatrixType1, typename MatrixType2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType1>, viennacl::matrix_slice<MatrixType2> >
-    {
-      typedef MatrixType1   ResultType;
-    };
-
-    
-    template <typename MatrixType, typename ScalarType, typename F, unsigned int A>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_slice<MatrixType>, viennacl::matrix<ScalarType, F, A> >
-    {
-      typedef viennacl::matrix<ScalarType, F, A>   ResultType;
-    };
-    
-    template <typename MatrixType1, typename MatrixType2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_slice<MatrixType1>, viennacl::matrix_range<MatrixType2> >
-    {
-      typedef MatrixType1   ResultType;
-    };
-    
-    template <typename MatrixType1, typename MatrixType2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_slice<MatrixType1>, viennacl::matrix_slice<MatrixType2> >
-    {
-      typedef MatrixType1   ResultType;
     };
     
     
@@ -357,23 +285,12 @@ namespace viennacl
     };
     
     //resolve ambiguities for previous cases:
-    template <typename ScalarType, typename F, unsigned int A, typename V2, typename S2, typename OP2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix<ScalarType, F, A>, viennacl::matrix_expression<const V2, const S2, OP2> >
+    template <typename NumericT, typename F, typename V2, typename S2, typename OP2>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_base<NumericT, F>, viennacl::matrix_expression<const V2, const S2, OP2> >
     {
-      typedef viennacl::matrix<ScalarType, F, A>      ResultType;
+      typedef viennacl::matrix_base<NumericT>      ResultType;
     };
 
-    template <typename MatrixType, typename V2, typename S2, typename OP2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_range<MatrixType>, viennacl::matrix_expression<const V2, const S2, OP2> >
-    {
-      typedef MatrixType   ResultType;
-    };
-
-    template <typename MatrixType, typename V2, typename S2, typename OP2>
-    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_slice<MatrixType>, viennacl::matrix_expression<const V2, const S2, OP2> >
-    {
-      typedef MatrixType   ResultType;
-    };
 
     //special case: outer vector product
     template <typename ScalarType, unsigned int A, typename T>
