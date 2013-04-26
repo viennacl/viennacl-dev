@@ -822,8 +822,12 @@ namespace viennacl
   
         for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
           for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-            temp_trans[F::mem_index(j,i, base_type::internal_size1(), base_type::internal_size2())] 
-              = temp[F::mem_index(i,j, proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+            temp_trans[F::mem_index(base_type::start2() + base_type::stride2() * j,
+                                    base_type::start1() + base_type::stride1() * i,
+                                    base_type::internal_size1(), base_type::internal_size2())] 
+              = temp[F::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
+                                  proxy.lhs().start2() + proxy.lhs().stride2() * j,
+                                  proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
   
         // write back
         viennacl::backend::memory_write(base_type::handle(), 0, sizeof(SCALARTYPE)*base_type::internal_size(), &(temp_trans[0]));
@@ -831,13 +835,13 @@ namespace viennacl
         return *this;
       }
       
-      template <typename M1>
+      /*template <typename M1>
       self_type & operator=(const matrix_expression< const M1, const M1, op_trans> & proxy)
       {
         self_type temp(proxy.lhs());
         *this = trans(temp);
         return *this;
-      }
+      }*/
 
       using base_type::operator=;
       
@@ -1681,7 +1685,7 @@ namespace viennacl
 
     if (m1.size1() > 0 && m1.size2() > 0)
       viennacl::linalg::ambm(m1, 
-                             m1,          NumericT(1.0), 1, false,                                             true,
+                             m1,          NumericT(1.0), 1, false,                                             false,
                              proxy.lhs(),   proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true) );
     return m1;
   }

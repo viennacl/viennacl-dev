@@ -1001,7 +1001,7 @@ namespace viennacl
 
     /** @brief Default constructor in order to be compatible with various containers.
     */
-    vector() : base_type() { /* Note: One must not call ::init() here because the vector might have been created globally before the backend has become available */ }
+    explicit vector() : base_type() { /* Note: One must not call ::init() here because the vector might have been created globally before the backend has become available */ }
 
     /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT')
     *
@@ -1031,21 +1031,23 @@ namespace viennacl
 #endif
     
     template <typename LHS, typename RHS, typename OP>
-    vector(vector_expression<LHS, RHS, OP> const & proxy) : base_type(proxy.size(), viennacl::traits::active_handle_id(proxy))
+    vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(proxy.size(), viennacl::traits::active_handle_id(proxy))
     {
       self_type::operator=(proxy);
     }
-    
-    /** @brief The copy constructor
-    *
-    * Entries of 'vec' are directly copied to this vector.
-    */
+
     vector(const base_type & v) : base_type(v.size(), v.handle().get_active_handle_id())
     {
       if (v.size() > 0)
         base_type::operator=(v);
     }
 
+    vector(const self_type & v) : base_type(v.size(), v.handle().get_active_handle_id())
+    {
+      if (v.size() > 0)
+        base_type::operator=(v);
+    }
+    
     /** @brief Creates the vector from the supplied unit vector. */
     vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size())
     {
@@ -1067,6 +1069,7 @@ namespace viennacl
         viennacl::linalg::vector_assign(*this, v[0]);
     }
 
+    using base_type::operator=;
     
     ///////////////////////////// Matrix Vector interaction start ///////////////////////////////////
 
