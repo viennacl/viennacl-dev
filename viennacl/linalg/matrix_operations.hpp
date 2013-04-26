@@ -717,7 +717,7 @@ namespace viennacl
   template <typename NumericT, typename F>
   vector<NumericT>
   operator+(const vector_base<NumericT> & v1,
-            const vector_expression< const matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>,
+            const vector_expression< const matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>,
                                      const vector_base<NumericT>,
                                      op_prod> & proxy) 
   {
@@ -737,7 +737,7 @@ namespace viennacl
   template <typename NumericT, typename F>
   vector<NumericT>
   operator-(const vector_base<NumericT> & v1,
-            const vector_expression< const matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>,
+            const vector_expression< const matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>,
                                      const vector_base<NumericT>,
                                      op_prod> & proxy) 
   {

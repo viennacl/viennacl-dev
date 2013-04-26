@@ -59,7 +59,7 @@ namespace viennacl
       am(matrix_base<NumericT, F> & mat1, 
          matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
 
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -69,7 +69,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           am_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                       static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -115,7 +115,7 @@ namespace viennacl
            matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
            matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
           
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -135,7 +135,7 @@ namespace viennacl
           temporary_beta = beta;
                                 
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           ambm_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                         static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -196,7 +196,7 @@ namespace viennacl
              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
              matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -216,7 +216,7 @@ namespace viennacl
           temporary_beta = beta;
                                 
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           ambm_m_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                           static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -275,10 +275,10 @@ namespace viennacl
                                   >::type    
       matrix_assign(matrix_base<NumericT, F> & mat, ScalarType s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         value_type alpha = s;                             
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           matrix_row_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                  static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -305,10 +305,10 @@ namespace viennacl
                                   >::type    
       matrix_diagonal_assign(matrix_base<NumericT, F> & mat, ScalarType s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         value_type alpha = s;                             
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           matrix_row_diagonal_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                           static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -349,11 +349,11 @@ namespace viennacl
                      const vector_base<NumericT> & vec, 
                            vector_base<NumericT> & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+        typedef NumericT        value_type;
 
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
 
-        if (viennacl::is_row_major<MatrixType>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                            static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)), 
@@ -414,13 +414,13 @@ namespace viennacl
         assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && bool("Size check failed for transposed matrix-vector product: size1(A^T) == size(result)"));
         assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && bool("Size check failed for transposed matrix-vector product: size2(A^T) == size(x)"));  //remember: mat is transposed!
         
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type    value_type;
+        typedef NumericT    value_type;
 
         
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           trans_vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat_trans.lhs()),
                                                  static_cast<unsigned int>(viennacl::traits::start1(mat_trans.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(mat_trans.lhs())), 
@@ -1460,7 +1460,7 @@ namespace viennacl
         assert( (viennacl::traits::size1(mat1) == viennacl::traits::size(vec1)) && bool("Size mismatch in scaled_rank_1_update: size1(A) != size(v1)"));
         assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef NumericT        value_type;
         
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -1470,7 +1470,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           scaled_rank1_update_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1), 
                                                        static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)), 

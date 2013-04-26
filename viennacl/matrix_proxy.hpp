@@ -31,10 +31,11 @@ namespace viennacl
 {
 
   template <typename MatrixType>
-  class matrix_range : public matrix_base<typename MatrixType::cpu_value_type>
+  class matrix_range : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
   {
-      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
-      typedef matrix_range<MatrixType>                            self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type,
+                          typename MatrixType::orientation_functor>    base_type;
+      typedef matrix_range<MatrixType>                                 self_type;
     
     public:
       typedef typename MatrixType::orientation_category       orientation_category;
@@ -49,14 +50,15 @@ namespace viennacl
       matrix_range(MatrixType & A, 
                    range const & row_range,
                    range const & col_range) : base_type(A.handle(),
-                                                        row_range.size(), row_range.start(), 1,
-                                                        col_range.size(), col_range.start(), 1) {}
+                                                        row_range.size(), row_range.start(), 1, A.internal_size1(),
+                                                        col_range.size(), col_range.start(), 1, A.internal_size2()) {}
 
+      using base_type::operator=;
 
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      matrix_expression<const base_type, const cpu_value_type, op_prod> operator-() const
       {
-        return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
+        return matrix_expression<const base_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
       }
 
   };
@@ -75,7 +77,7 @@ namespace viennacl
            && (cpu_matrix.size2() == gpu_matrix_range.size2())
            && bool("Matrix size mismatch!"));
     
-    if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() != gpu_matrix_range.get().size2())
+    if ( gpu_matrix_range.start2() != 0)
     {
       std::vector<SCALARTYPE> entries(gpu_matrix_range.size2());
       
@@ -85,9 +87,9 @@ namespace viennacl
         for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
           entries[j] = cpu_matrix(i,j);
         
-        std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.get().internal_size2() + gpu_matrix_range.start2();
+        std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.internal_size2() + gpu_matrix_range.start2();
         std::size_t num_entries = gpu_matrix_range.size2();
-        viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+        viennacl::backend::memory_write(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
       //std::cout << "Strided copy worked!" << std::endl;
       }
     }
@@ -99,11 +101,11 @@ namespace viennacl
       //copy each stride separately:
       for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
         for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-          entries[i*gpu_matrix_range.get().internal_size2() + j] = cpu_matrix(i,j);
+          entries[i*gpu_matrix_range.internal_size2() + j] = cpu_matrix(i,j);
       
-      std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.get().internal_size2();
+      std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.internal_size2();
       std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-      viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+      viennacl::backend::memory_write(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
       //std::cout << "Block copy worked!" << std::endl;
     }
   }
@@ -117,7 +119,7 @@ namespace viennacl
            && (cpu_matrix.size2() == gpu_matrix_range.size2())
            && bool("Matrix size mismatch!"));
     
-     if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() != gpu_matrix_range.get().size1())
+     if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() != gpu_matrix_range.size1())
      {
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size1());
        
@@ -127,9 +129,9 @@ namespace viennacl
          for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
            entries[i] = cpu_matrix(i,j);
          
-         std::size_t start_offset = (gpu_matrix_range.start2() + j) * gpu_matrix_range.get().internal_size1() + gpu_matrix_range.start1();
+         std::size_t start_offset = (gpu_matrix_range.start2() + j) * gpu_matrix_range.internal_size1() + gpu_matrix_range.start1();
          std::size_t num_entries = gpu_matrix_range.size1();
-         viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_write(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
         //std::cout << "Strided copy worked!" << std::endl;
        }
      }
@@ -141,11 +143,11 @@ namespace viennacl
        //copy each stride separately:
        for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
          for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-           entries[i + j*gpu_matrix_range.get().internal_size1()] = cpu_matrix(i,j);
+           entries[i + j*gpu_matrix_range.internal_size1()] = cpu_matrix(i,j);
        
-       std::size_t start_offset = gpu_matrix_range.start2() * gpu_matrix_range.get().internal_size1();
+       std::size_t start_offset = gpu_matrix_range.start2() * gpu_matrix_range.internal_size1();
        std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-       viennacl::backend::memory_write(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+       viennacl::backend::memory_write(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
        //std::cout << "Block copy worked!" << std::endl;
      }
     
@@ -166,16 +168,16 @@ namespace viennacl
            && (cpu_matrix.size2() == gpu_matrix_range.size2())
            && bool("Matrix size mismatch!"));
     
-     if ( gpu_matrix_range.start2() != 0 ||  gpu_matrix_range.size2() !=  gpu_matrix_range.get().size2())
+     if ( gpu_matrix_range.start2() != 0)
      {
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size2());
        
        //copy each stride separately:
        for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
        {
-         std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.get().internal_size2() + gpu_matrix_range.start2();
+         std::size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.internal_size2() + gpu_matrix_range.start2();
          std::size_t num_entries = gpu_matrix_range.size2();
-         viennacl::backend::memory_read(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
         //std::cout << "Strided copy worked!" << std::endl;
         
         for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
@@ -187,14 +189,14 @@ namespace viennacl
        //full block can be copied: 
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size1()*gpu_matrix_range.size2());
        
-       std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.get().internal_size2();
+       std::size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.internal_size2();
        std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-         viennacl::backend::memory_read(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
        //std::cout << "Block copy worked!" << std::endl;
 
        for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
          for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-           cpu_matrix(i,j) = entries[i*gpu_matrix_range.get().internal_size2() + j];
+           cpu_matrix(i,j) = entries[i*gpu_matrix_range.internal_size2() + j];
     }
     
   }
@@ -209,16 +211,16 @@ namespace viennacl
            && (cpu_matrix.size2() == gpu_matrix_range.size2())
            && bool("Matrix size mismatch!"));
     
-     if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() !=  gpu_matrix_range.get().size1())
+     if ( gpu_matrix_range.start1() != 0)
      {
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size1());
        
        //copy each stride separately:
        for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
        {
-         std::size_t start_offset = (gpu_matrix_range.start2() + j) * gpu_matrix_range.get().internal_size1() + gpu_matrix_range.start1();
+         std::size_t start_offset = (gpu_matrix_range.start2() + j) * gpu_matrix_range.internal_size1() + gpu_matrix_range.start1();
          std::size_t num_entries = gpu_matrix_range.size1();
-         viennacl::backend::memory_read(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
         //std::cout << "Strided copy worked!" << std::endl;
         
         for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
@@ -231,14 +233,14 @@ namespace viennacl
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size1()*gpu_matrix_range.size2());
        
        //copy each stride separately:
-       std::size_t start_offset = gpu_matrix_range.start2() * gpu_matrix_range.get().internal_size1();
+       std::size_t start_offset = gpu_matrix_range.start2() * gpu_matrix_range.internal_size1();
        std::size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-       viennacl::backend::memory_read(gpu_matrix_range.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+       viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
        //std::cout << "Block copy worked!" << std::endl;
        
        for (std::size_t i=0; i < gpu_matrix_range.size1(); ++i)
          for (std::size_t j=0; j < gpu_matrix_range.size2(); ++j)
-           cpu_matrix(i,j) = entries[i + j*gpu_matrix_range.get().internal_size1()];
+           cpu_matrix(i,j) = entries[i + j*gpu_matrix_range.internal_size1()];
      }
     
   }
@@ -278,7 +280,7 @@ namespace viennacl
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
     
-    return matrix_range<MatrixType>(A.get(),
+    return matrix_range<MatrixType>(A,
                                     viennacl::range(A.start1() + r1.start(), A.start1() + r1.start() + r1.size()),
                                     viennacl::range(A.start2() + r2.start(), A.start2() + r2.start() + r2.size())
                                    );
@@ -301,10 +303,11 @@ namespace viennacl
 
 
   template <typename MatrixType>
-  class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type>
+  class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
   {
-      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
-      typedef matrix_slice<MatrixType>                            self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type,
+                          typename MatrixType::orientation_functor>    base_type;
+      typedef matrix_slice<MatrixType>                                 self_type;
     
     public:
       typedef typename MatrixType::orientation_category       orientation_category;
@@ -319,14 +322,16 @@ namespace viennacl
       matrix_slice(MatrixType & A, 
                    slice const & row_slice,
                    slice const & col_slice) : base_type(A.handle(),
-                                                        row_slice.size(), row_slice.start(), row_slice.stride(),
-                                                        col_slice.size(), col_slice.start(), col_slice.stride()) {}
+                                                        row_slice.size(), row_slice.start(), row_slice.stride(), A.internal_size1(), 
+                                                        col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2()) {}
+      
+      using base_type::operator=;
 
 
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const self_type, const cpu_value_type, op_prod> operator-() const
+      matrix_expression<const base_type, const cpu_value_type, op_prod> operator-() const
       {
-        return matrix_expression<const self_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
+        return matrix_expression<const base_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
       }
 
   };
@@ -355,13 +360,13 @@ namespace viennacl
        //copy each stride separately:
        for (std::size_t i=0; i < gpu_matrix_slice.size1(); ++i)
        {
-         std::size_t start_offset = (gpu_matrix_slice.start1() + i * gpu_matrix_slice.stride1()) * gpu_matrix_slice.get().internal_size2() + gpu_matrix_slice.start2();
-         viennacl::backend::memory_read(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         std::size_t start_offset = (gpu_matrix_slice.start1() + i * gpu_matrix_slice.stride1()) * gpu_matrix_slice.internal_size2() + gpu_matrix_slice.start2();
+         viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
          
          for (std::size_t j=0; j < gpu_matrix_slice.size2(); ++j)
            entries[j * gpu_matrix_slice.stride2()] = cpu_matrix(i,j);
          
-         viennacl::backend::memory_write(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_write(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
        }
      }
   }
@@ -385,14 +390,14 @@ namespace viennacl
       //copy each column stride separately:
       for (std::size_t j=0; j < gpu_matrix_slice.size2(); ++j)
       {
-        std::size_t start_offset = gpu_matrix_slice.start1() + (gpu_matrix_slice.start2() + j * gpu_matrix_slice.stride2()) * gpu_matrix_slice.get().internal_size1();
+        std::size_t start_offset = gpu_matrix_slice.start1() + (gpu_matrix_slice.start2() + j * gpu_matrix_slice.stride2()) * gpu_matrix_slice.internal_size1();
         
-        viennacl::backend::memory_read(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+        viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
         
         for (std::size_t i=0; i < gpu_matrix_slice.size1(); ++i)
           entries[i * gpu_matrix_slice.stride1()] = cpu_matrix(i,j);
         
-        viennacl::backend::memory_write(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+        viennacl::backend::memory_write(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
       }
     }
     
@@ -422,9 +427,9 @@ namespace viennacl
        //copy each stride separately:
        for (std::size_t i=0; i < gpu_matrix_slice.size1(); ++i)
        {
-         std::size_t start_offset = (gpu_matrix_slice.start1() + i * gpu_matrix_slice.stride1()) * gpu_matrix_slice.get().internal_size2() + gpu_matrix_slice.start2();
+         std::size_t start_offset = (gpu_matrix_slice.start1() + i * gpu_matrix_slice.stride1()) * gpu_matrix_slice.internal_size2() + gpu_matrix_slice.start2();
          
-         viennacl::backend::memory_read(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+         viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
          
          for (std::size_t j=0; j < gpu_matrix_slice.size2(); ++j)
            cpu_matrix(i,j) = entries[j * gpu_matrix_slice.stride2()];
@@ -452,9 +457,9 @@ namespace viennacl
       //copy each column stride separately:
       for (std::size_t j=0; j < gpu_matrix_slice.size2(); ++j)
       {
-        std::size_t start_offset = gpu_matrix_slice.start1() + (gpu_matrix_slice.start2() + j * gpu_matrix_slice.stride2()) * gpu_matrix_slice.get().internal_size1();
+        std::size_t start_offset = gpu_matrix_slice.start1() + (gpu_matrix_slice.start2() + j * gpu_matrix_slice.stride2()) * gpu_matrix_slice.internal_size1();
         
-        viennacl::backend::memory_read(gpu_matrix_slice.get().handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+        viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
         
         for (std::size_t i=0; i < gpu_matrix_slice.size1(); ++i)
           cpu_matrix(i,j) = entries[i * gpu_matrix_slice.stride1()];

@@ -304,6 +304,12 @@ namespace viennacl
       };
       
       
+      template <typename T, typename F>
+      struct cpu_value_type<viennacl::matrix_base<T, F> >
+      {
+        typedef T    type; 
+      };
+      
       template <typename T, typename F, unsigned int ALIGNMENT>
       struct cpu_value_type<viennacl::matrix<T, F, ALIGNMENT> >
       {

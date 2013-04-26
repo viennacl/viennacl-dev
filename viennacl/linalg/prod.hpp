@@ -251,7 +251,34 @@ namespace viennacl
                                           viennacl::op_prod >(matrix, vector);
     }
 
-    // TODO: Sparse matrix-vector product
+
+    template<typename SparseMatrixType, class SCALARTYPE>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
+                                  vector_expression<const SparseMatrixType,
+                                                    const vector_base<SCALARTYPE>, 
+                                                    op_prod >
+                                 >::type
+    prod(const SparseMatrixType & mat, 
+         const vector_base<SCALARTYPE> & vec)
+    {
+      return vector_expression<const SparseMatrixType,
+                               const vector_base<SCALARTYPE>, 
+                               op_prod >(mat, vec);
+    }
+
+    template<typename StructuredMatrixType, class SCALARTYPE>
+    typename viennacl::enable_if< viennacl::is_any_dense_structured_matrix<StructuredMatrixType>::value,
+                                  vector_expression<const StructuredMatrixType,
+                                                    const vector_base<SCALARTYPE>, 
+                                                    op_prod >
+                                 >::type
+    prod(const StructuredMatrixType & mat,
+         const vector_base<SCALARTYPE> & vec)
+    {
+      return vector_expression<const StructuredMatrixType,
+                               const vector_base<SCALARTYPE>, 
+                               op_prod >(mat, vec);
+    }
 
   } // end namespace linalg
 } // end namespace viennacl

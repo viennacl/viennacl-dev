@@ -38,23 +38,6 @@ namespace viennacl
     
     
     // A * x
-    /** @brief Returns a proxy class that represents matrix-vector multiplication with a toeplitz_matrix
-    *
-    * This is used for the convenience expression result = prod(mat, vec);
-    *
-    * @param mat    The matrix
-    * @param vec    The vector
-    */
-    template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-    viennacl::vector_expression<const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT>,
-                                const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                                viennacl::op_prod > prod_impl(const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                                                              const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec)
-    {
-      return viennacl::vector_expression<const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT>,
-                               const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT>, 
-                               viennacl::op_prod >(mat, vec);
-    }
     
     /** @brief Carries out matrix-vector multiplication with a toeplitz_matrix
     *
@@ -64,28 +47,28 @@ namespace viennacl
     * @param vec    The vector
     * @param result The result vector
     */
-      template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
-      void prod_impl(const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                     const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
-      {
-        assert(mat.size1() == result.size());
-        assert(mat.size2() == vec.size());
-        
-        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp(vec.size() * 4); tmp.clear();
-        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tmp2(vec.size() * 4);
-        
-        viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> tep(mat.elements().size() * 2);
-        viennacl::detail::fft::real_to_complex(mat.elements(), tep, mat.elements().size());
+    template<class SCALARTYPE, unsigned int ALIGNMENT>
+    void prod_impl(const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT> & mat, 
+                   const viennacl::vector_base<SCALARTYPE> & vec,
+                         viennacl::vector_base<SCALARTYPE> & result)
+    {
+      assert(mat.size1() == result.size());
+      assert(mat.size2() == vec.size());
+      
+      viennacl::vector<SCALARTYPE> tmp(vec.size() * 4); tmp.clear();
+      viennacl::vector<SCALARTYPE> tmp2(vec.size() * 4);
+      
+      viennacl::vector<SCALARTYPE> tep(mat.elements().size() * 2);
+      viennacl::detail::fft::real_to_complex(mat.elements(), tep, mat.elements().size());
 
 
-        
-        copy(vec, tmp);
-        viennacl::detail::fft::real_to_complex(tmp, tmp2, vec.size() * 2);
-        viennacl::linalg::convolve(tep, tmp2, tmp);
-        viennacl::detail::fft::complex_to_real(tmp, tmp2, vec.size() * 2);
-        copy(tmp2.begin(), tmp2.begin() + vec.size(), result.begin());
-      }
+      
+      copy(vec, tmp);
+      viennacl::detail::fft::real_to_complex(tmp, tmp2, vec.size() * 2);
+      viennacl::linalg::convolve(tep, tmp2, tmp);
+      viennacl::detail::fft::complex_to_real(tmp, tmp2, vec.size() * 2);
+      copy(tmp2.begin(), tmp2.begin() + vec.size(), result.begin());
+    }
 
   } //namespace linalg
 
@@ -99,7 +82,7 @@ namespace viennacl
     template <unsigned int MAT_ALIGNMENT>
     viennacl::vector<SCALARTYPE, ALIGNMENT> & 
     viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                          const viennacl::vector<SCALARTYPE, ALIGNMENT>,
+                                                                                          const viennacl::vector_base<SCALARTYPE>,
                                                                                           viennacl::op_prod> & proxy) 
     {
       // check for the special case x = A * x
@@ -125,7 +108,7 @@ namespace viennacl
     template <unsigned int MAT_ALIGNMENT>
     viennacl::vector<SCALARTYPE, ALIGNMENT> & 
     viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+=(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                 const vector<SCALARTYPE, ALIGNMENT>,
+                                                                                 const vector_base<SCALARTYPE>,
                                                                                  op_prod> & proxy) 
     {
       vector<SCALARTYPE, ALIGNMENT> result(proxy.lhs().size1());
@@ -142,7 +125,7 @@ namespace viennacl
     template <unsigned int MAT_ALIGNMENT>
     viennacl::vector<SCALARTYPE, ALIGNMENT> & 
     viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-=(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                 const vector<SCALARTYPE, ALIGNMENT>,
+                                                                                 const vector_base<SCALARTYPE>,
                                                                                  op_prod> & proxy) 
     {
       vector<SCALARTYPE, ALIGNMENT> result(proxy.get_lhs().size1());
@@ -161,11 +144,11 @@ namespace viennacl
     template <unsigned int MAT_ALIGNMENT>
     viennacl::vector<SCALARTYPE, ALIGNMENT> 
     viennacl::vector<SCALARTYPE, ALIGNMENT>::operator+(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
+                                                                                const vector_base<SCALARTYPE>,
                                                                                 op_prod> & proxy) 
     {
-      assert(proxy.get_lhs().size1() == size());
-      vector<SCALARTYPE, ALIGNMENT> result(size());
+      assert(proxy.get_lhs().size1() == base_type::size());
+      vector<SCALARTYPE, ALIGNMENT> result(base_type::size());
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
       result += *this;
       return result;
@@ -179,11 +162,11 @@ namespace viennacl
     template <unsigned int MAT_ALIGNMENT>
     viennacl::vector<SCALARTYPE, ALIGNMENT> 
     viennacl::vector<SCALARTYPE, ALIGNMENT>::operator-(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                                                const vector<SCALARTYPE, ALIGNMENT>,
+                                                                                const vector_base<SCALARTYPE>,
                                                                                 op_prod> & proxy) 
     {
-      assert(proxy.get_lhs().size1() == size());
-      vector<SCALARTYPE, ALIGNMENT> result(size());
+      assert(proxy.get_lhs().size1() == base_type::size());
+      vector<SCALARTYPE, ALIGNMENT> result(base_type::size());
       viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
       result = *this - result;
       return result;

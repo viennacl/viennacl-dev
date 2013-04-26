@@ -186,10 +186,11 @@ namespace viennacl
       typedef SizeType                                                            size_type;
       typedef DistanceType                                                        difference_type;
       typedef backend::mem_handle                                                 handle_type;
+      typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
       
       /** @brief The default constructor. Does not allocate any memory. */
-      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1) {};
+      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0) {};
       
       /** @brief Creates the matrix with the given dimensions
       *
@@ -197,7 +198,7 @@ namespace viennacl
       * @param columns  Number of columns
       */
       explicit matrix_base(size_type rows, size_type columns)
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1)
+          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
       {
         if (rows > 0 && columns > 0)
         {
@@ -207,7 +208,7 @@ namespace viennacl
       }
   
       explicit matrix_base(size_type rows, size_type columns, viennacl::memory_types mem_type)
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1)
+          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
       {
         elements_.switch_active_handle_id(mem_type);
         if (rows > 0 && columns > 0)
@@ -218,9 +219,13 @@ namespace viennacl
       }
         
       explicit matrix_base(viennacl::backend::mem_handle & h,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2) 
-        : size1_(mat_size1), size2_(mat_size2), start1_(mat_start1), start2_(mat_start2), stride1_(mat_stride1), stride2_(mat_stride2), elements_(h) {}
+                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
+                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2) 
+        : size1_(mat_size1), size2_(mat_size2),
+          start1_(mat_start1), start2_(mat_start2),
+          stride1_(mat_stride1), stride2_(mat_stride2),
+          internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
+          elements_(h) {}
   
       self_type & operator=(const self_type & other)  //enables implicit conversions
       {
@@ -250,6 +255,8 @@ namespace viennacl
         {
           size1_ = proxy.lhs().size1();
           size2_ = proxy.lhs().size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
@@ -279,6 +286,8 @@ namespace viennacl
         {
           size1_ = proxy.lhs().size1();
           size2_ = proxy.lhs().size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
@@ -310,6 +319,8 @@ namespace viennacl
         {
           size1_ = proxy.lhs().size1();
           size2_ = proxy.lhs().size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
@@ -342,10 +353,12 @@ namespace viennacl
               && (proxy.lhs().size2() == size2() || size2() == 0)
               && bool("Incompatible matrix sizes!"));
         
-        if (internal_size() == 0 && proxy.lhs().internal_size() > 0)
+        if (internal_size() == 0 && proxy.rhs().internal_size() > 0)
         {
           size1_ = proxy.lhs().size1();
           size2_ = proxy.lhs().size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
@@ -376,10 +389,12 @@ namespace viennacl
               && (proxy.lhs().size2() == size2() || size2() == 0)
               && bool("Incompatible matrix sizes!"));
         
-        if (internal_size() == 0 && proxy.lhs().internal_size() > 0)
+        if (internal_size() == 0 && proxy.lhs().lhs().internal_size() > 0)
         {
           size1_ = proxy.lhs().size1();
           size2_ = proxy.lhs().size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
@@ -399,13 +414,15 @@ namespace viennacl
       /** @brief Assigns the supplied identity matrix to the matrix. */
       self_type & operator = (identity_matrix<SCALARTYPE> const & m)
       {
-        assert( (m.size1() == size1_    || size1_    == 0) && bool("Size mismatch!") );
+        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
         assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
   
         if (internal_size() == 0)
         {
-          size1_    = m.size1();
+          size1_ = m.size1();
           size2_ = m.size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());  
         }
@@ -422,13 +439,15 @@ namespace viennacl
       /** @brief Assigns the supplied zero matrix to the matrix. */
       self_type & operator = (zero_matrix<SCALARTYPE> const & m)
       {
-        assert( (m.size1() == size1_    || size1_    == 0) && bool("Size mismatch!") );
+        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
         assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
   
         if (internal_size() == 0)
         {
-          size1_    = m.size1();
+          size1_ = m.size1();
           size2_ = m.size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());  
         }
@@ -442,13 +461,15 @@ namespace viennacl
       /** @brief Assigns the supplied scalar vector to the matrix. */
       self_type & operator = (scalar_matrix<SCALARTYPE> const & m)
       {
-        assert( (m.size1() == size1_    || size1_    == 0) && bool("Size mismatch!") );
+        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
         assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
   
         if (internal_size() == 0)
         {
-          size1_    = m.size1();
+          size1_ = m.size1();
           size2_ = m.size2();
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());  
         }
@@ -531,27 +552,64 @@ namespace viennacl
       
       //this = A * B and related (with trans())
       template <typename T, typename F1, typename F2>
-      self_type & operator = (const matrix_expression< const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod > & proxy) 
+      self_type & operator = (const matrix_expression< const matrix_base<T, F1>,
+                                                       const matrix_base<T, F2>,
+                                                       op_prod > & proxy) 
       {
         viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
         return *this;
       }
-  
+      
+      template <typename T, typename F1, typename F2>
+      self_type & operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>,
+                                                                               const matrix_base<T, F1>,
+                                                                               op_trans>,
+                                                      const matrix_base<T, F2>,
+                                                      op_prod > & proxy) 
+      {
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
+        return *this;
+      }
+      
+      template <typename T, typename F1, typename F2>
+      self_type & operator = (const matrix_expression< const matrix_base<T, F1>,
+                                                       const matrix_expression<const matrix_base<T, F2>,
+                                                                               const matrix_base<T, F2>,
+                                                                               op_trans>,
+                                                      op_prod > & proxy) 
+      {
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
+        return *this;
+      }
+
+      template <typename T, typename F1, typename F2>
+      self_type & operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>,
+                                                                               const matrix_base<T, F1>,
+                                                                               op_trans>,
+                                                       const matrix_expression<const matrix_base<T, F2>,
+                                                                               const matrix_base<T, F2>,
+                                                                               op_trans>,
+                                                      op_prod > & proxy) 
+      {
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
+        return *this;
+      }
+
   
       /** @brief Returns the number of rows */
-      const size_type & size1() const { return size1_;}
+      size_type size1() const { return size1_;}
       /** @brief Returns the number of columns */
-      const size_type & size2() const { return size2_; }
+      size_type size2() const { return size2_; }
   
       /** @brief Returns the number of rows */
-      const size_type & start1() const { return start1_;}
+      size_type start1() const { return start1_;}
       /** @brief Returns the number of columns */
-      const size_type & start2() const { return start2_; }
+      size_type start2() const { return start2_; }
   
       /** @brief Returns the number of rows */
-      const size_type & stride1() const { return stride1_;}
+      size_type stride1() const { return stride1_;}
       /** @brief Returns the number of columns */
-      const size_type & stride2() const { return stride2_; }
+      size_type stride2() const { return stride2_; }
       
       /** @brief Resets all entries to zero */
       void clear()
@@ -562,9 +620,9 @@ namespace viennacl
       
       //const unsigned int row_stride() const { return roundUpToNextMultiple<unsigned int>(columns(), ALIGNMENT); }
       /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
-      size_type internal_size1() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(size1_, 1); }
+      size_type internal_size1() const { return internal_size1_; }
       /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
-      size_type internal_size2() const { return viennacl::tools::roundUpToNextMultiple<vcl_size_t>(size2_, 1); }
+      size_type internal_size2() const { return internal_size2_; }
       /** @brief Returns the total amount of allocated memory in multiples of sizeof(SCALARTYPE) */
       size_type internal_size() const { return internal_size1() * internal_size2(); }
       
@@ -629,12 +687,16 @@ namespace viennacl
           //copy new entries to GPU:
           size1_ = rows;
           size2_ = columns;
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), &(new_entries[0]));
         }
         else //discard old entries:
         {
           size1_ = rows;
           size2_ = columns;
+          internal_size1_ = size1_;
+          internal_size2_ = size2_;
           
           std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1) 
                                                 * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
@@ -649,6 +711,8 @@ namespace viennacl
       size_type start2_;
       difference_type stride1_;
       difference_type stride2_;
+      size_type internal_size1_;
+      size_type internal_size2_;
       handle_type elements_;
   }; //matrix
   
@@ -696,6 +760,12 @@ namespace viennacl
       {
         base_type::operator=(proxy);
       }
+
+      template <typename MatrixType>
+      matrix(matrix_expression<MatrixType, MatrixType, op_trans> const & proxy) : base_type(proxy.size1(), proxy.size2(), viennacl::traits::active_handle_id(proxy))
+      {
+        self_type::operator=(proxy);
+      }
       
       /** @brief Creates the matrix from the supplied identity matrix. */
       matrix(identity_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2())
@@ -716,6 +786,11 @@ namespace viennacl
       {
         if (base_type::internal_size() > 0)
           base_type::operator=(m);
+      }
+      
+      matrix(const base_type & other) : base_type(other.size1(), other.size2(), viennacl::traits::active_handle_id(other))
+      {
+        base_type::operator=(other);
       }
   
   
@@ -1145,28 +1220,28 @@ namespace viennacl
   
   template <typename LHS1, typename RHS1, typename OP1,
             typename NumericT, typename F>
-  matrix_base<NumericT, F>
+  matrix<NumericT, F>
   operator + (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
               matrix_base<NumericT, F> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix_base<NumericT, F> result = proxy1;
+    matrix<NumericT, F> result = proxy1;
     result += proxy2;
     return result;
   }
   
   template <typename NumericT, typename F,
             typename LHS2, typename RHS2, typename OP2>
-  matrix_base<NumericT, F>
+  matrix<NumericT, F>
   operator + (matrix_base<NumericT, F> const & proxy1,
               matrix_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix_base<NumericT, F> result = proxy1;
+    matrix<NumericT, F> result = proxy1;
     result += proxy2;
     return result;
   }
@@ -1417,13 +1492,55 @@ namespace viennacl
   template <typename NumericT, typename F1, typename F2, typename F3>
   matrix_base<NumericT, F1> &
   operator += (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F3>, op_prod > & proxy) 
+               const matrix_expression< const matrix_base<NumericT, F2>,
+                                        const matrix_base<NumericT, F3>,
+                                        op_prod > & proxy) 
   {
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
     return m1;
   }
 
-  // Todo: add more overloads here
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator += (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_base<NumericT, F2>,
+                                        const matrix_expression< const matrix_base<NumericT, F3>,
+                                                                 const matrix_base<NumericT, F3>,
+                                                                 op_trans>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
+    return m1;
+  }
+
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator += (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
+                                                                 const matrix_base<NumericT, F2>,
+                                                                 op_trans>,
+                                        const matrix_base<NumericT, F3>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
+    return m1;
+  }
+
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator += (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
+                                                                 const matrix_base<NumericT, F2>,
+                                                                 op_trans>,
+                                        const matrix_expression< const matrix_base<NumericT, F3>,
+                                                                 const matrix_base<NumericT, F3>,
+                                                                 op_trans>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
+    return m1;
+  }
+
   
     
   
@@ -1446,28 +1563,28 @@ namespace viennacl
   
   template <typename LHS1, typename RHS1, typename OP1,
             typename NumericT, typename F>
-  matrix_base<NumericT, F>
+  matrix<NumericT, F>
   operator - (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
               matrix_base<NumericT, F> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix_base<NumericT, F> result = proxy1;
+    matrix<NumericT, F> result = proxy1;
     result -= proxy2;
     return result;
   }
   
   template <typename NumericT, typename F,
             typename LHS2, typename RHS2, typename OP2>
-  matrix_base<NumericT, F>
+  matrix<NumericT, F>
   operator - (matrix_base<NumericT, F> const & proxy1,
               matrix_expression< LHS2, RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix_base<NumericT, F> result = proxy1;
+    matrix<NumericT, F> result = proxy1;
     result -= proxy2;
     return result;
   }
@@ -1714,17 +1831,56 @@ namespace viennacl
     return m1;
   }
   
-  //C += A * B 
+  //C -= A * B 
   template <typename NumericT, typename F1, typename F2, typename F3>
   matrix_base<NumericT, F1> &
   operator -= (matrix_base<NumericT, F1> & m1,
                const matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F3>, op_prod > & proxy) 
   {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, -1.0);
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
     return m1;
   }
 
-  // Todo: add more overloads here
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator -= (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_base<NumericT, F2>,
+                                        const matrix_expression< const matrix_base<NumericT, F3>,
+                                                                 const matrix_base<NumericT, F3>,
+                                                                 op_trans>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
+    return m1;
+  }
+
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator -= (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
+                                                                 const matrix_base<NumericT, F2>,
+                                                                 op_trans>,
+                                        const matrix_base<NumericT, F3>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
+    return m1;
+  }
+
+  template <typename NumericT, typename F1, typename F2, typename F3>
+  matrix_base<NumericT, F1> &
+  operator -= (matrix_base<NumericT, F1> & m1,
+               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
+                                                                 const matrix_base<NumericT, F2>,
+                                                                 op_trans>,
+                                        const matrix_expression< const matrix_base<NumericT, F3>,
+                                                                 const matrix_base<NumericT, F3>,
+                                                                 op_trans>,
+                                        op_prod > & proxy) 
+  {
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
+    return m1;
+  }
   
   
 
@@ -1915,7 +2071,7 @@ namespace viennacl
   {
     return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                         const NumericT,
-                                        op_prod>(proxy, cpu_value_type(val));
+                                        op_prod>(proxy, NumericT(val));
   }
   
   

@@ -251,12 +251,12 @@ namespace viennacl
     * @param tag    Dispatch tag
     */
     template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-    matrix<NumericT, F1> solve(const matrix_base<NumericT, F1> & A,
+    matrix<NumericT, F2> solve(const matrix_base<NumericT, F1> & A,
                                const matrix_base<NumericT, F2> & B,
                                SOLVERTAG tag)
     {
       // do an inplace solve on the result vector:
-      matrix<NumericT, F1> result(B);
+      matrix<NumericT, F2> result(B);
     
       inplace_solve(A, result, tag);
     
@@ -273,12 +273,12 @@ namespace viennacl
     * @param tag    Dispatch tag
     */
     template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-    matrix<NumericT, F1> solve(const matrix_base<NumericT, F1> & A,
+    matrix<NumericT, F2> solve(const matrix_base<NumericT, F1> & A,
                                const matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & proxy,
                                SOLVERTAG tag)
     {
       // do an inplace solve on the result vector:
-      matrix<NumericT, F1> result(proxy);
+      matrix<NumericT, F2> result(proxy);
     
       inplace_solve(A, result, tag);
     
@@ -313,12 +313,12 @@ namespace viennacl
     * @param tag    Dispatch tag
     */
     template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-    matrix<NumericT, F1> solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy,
+    matrix<NumericT, F2> solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy,
                                const matrix_base<NumericT, F2> & B,
                                SOLVERTAG tag)
     {
       // do an inplace solve on the result vector:
-      matrix<NumericT, F1> result(B);
+      matrix<NumericT, F2> result(B);
     
       inplace_solve(proxy, result, tag);
     
@@ -333,12 +333,12 @@ namespace viennacl
     * @param tag    Dispatch tag
     */
     template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-    matrix<NumericT, F1> solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
+    matrix<NumericT, F2> solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
                                const matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & proxy_B,
                                SOLVERTAG tag)
     {
       // do an inplace solve on the result vector:
-      matrix<NumericT, F1> result(proxy_B);
+      matrix<NumericT, F2> result(proxy_B);
     
       inplace_solve(proxy_A, result, tag);
     
@@ -351,7 +351,7 @@ namespace viennacl
     * @param vec    The load vector, where the solution is directly written to
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+    template <typename NumericT, typename F1, typename SOLVERTAG>
     vector<NumericT> solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy,
                            const vector_base<NumericT> & vec,
                            SOLVERTAG const & tag)

@@ -203,22 +203,16 @@ namespace viennacl
     //  enum { value = false };
     //};
 
-    template <typename ScalarType, unsigned int A>
-    struct is_row_major<viennacl::matrix<ScalarType, viennacl::row_major, A> >
+    template <typename ScalarType>
+    struct is_row_major<viennacl::matrix_base<ScalarType, viennacl::row_major> >
     {
       enum { value = true };
     };
-    
-    template <typename T>
-    struct is_row_major<viennacl::matrix_range<T> >
-    {
-      enum { value = is_row_major<T>::value };
-    };
 
-    template <typename T>
-    struct is_row_major<viennacl::matrix_slice<T> >
+    template <>
+    struct is_row_major< viennacl::row_major >
     {
-      enum { value = is_row_major<T>::value };
+      enum { value = true };
     };
 
     template <typename T>

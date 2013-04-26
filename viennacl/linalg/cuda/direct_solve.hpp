@@ -294,7 +294,7 @@ namespace viennacl
       * @param tag    Solver tag for identifying the respective triangular solver
       */
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
+      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG tag)
       {
         detail::inplace_solve_impl(A, false,
                                    B, false, tag);
@@ -309,10 +309,10 @@ namespace viennacl
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT, F1> & A,
                          matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
-                         SOLVERTAG)
+                         SOLVERTAG tag)
       {
         detail::inplace_solve_impl(A, false,
-                                   const_cast<M2 &>(proxy_B.lhs()), true, tag);
+                                   const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, tag);
       }
       
       //upper triangular solver for transposed lower triangular matrices
@@ -325,9 +325,9 @@ namespace viennacl
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
       void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
                          matrix_base<NumericT, F2> & B,
-                         SOLVERTAG)
+                         SOLVERTAG tag)
       {
-        detail::inplace_solve_impl(const_cast<M1 &>(proxy_A.lhs()), true,
+        detail::inplace_solve_impl(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
                                    B, false, tag);
       }
 
@@ -340,10 +340,10 @@ namespace viennacl
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
       void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
                                matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
-                         SOLVERTAG)
+                         SOLVERTAG tag)
       {
-        detail::inplace_solve_impl(const_cast<M1 &>(proxy_A.lhs()), true,
-                                   const_cast<M2 &>(proxy_B.lhs()), true, tag);
+        detail::inplace_solve_impl(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
+                                   const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, tag);
       }
       
       

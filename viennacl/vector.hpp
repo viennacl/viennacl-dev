@@ -811,7 +811,7 @@ namespace viennacl
       vector_expression< const self_type, const SCALARTYPE, op_prod> 
       operator * (SCALARTYPE value) const
       {
-        return vector_expression< const vector<SCALARTYPE>, const SCALARTYPE, op_prod>(*this, value);
+        return vector_expression< const self_type, const SCALARTYPE, op_prod>(*this, value);
       }
   
   
@@ -1033,7 +1033,7 @@ namespace viennacl
     template <typename LHS, typename RHS, typename OP>
     vector(vector_expression<LHS, RHS, OP> const & proxy) : base_type(proxy.size(), viennacl::traits::active_handle_id(proxy))
     {
-      base_type::operator=(proxy);
+      self_type::operator=(proxy);
     }
     
     /** @brief The copy constructor
@@ -1047,7 +1047,7 @@ namespace viennacl
     }
 
     /** @brief Creates the vector from the supplied unit vector. */
-    vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size(), v.handle().get_active_handle_id())
+    vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size())
     {
       if (v.size() > 0)
         this->operator()(v.index()) = 1;
@@ -1079,8 +1079,8 @@ namespace viennacl
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   self_type & >::type
     operator=(const viennacl::vector_expression< const SparseMatrixType,
-                                                  const viennacl::vector<SCALARTYPE, ALIGNMENT>,
-                                                  viennacl::op_prod> & proxy) ;
+                                                 const base_type,
+                                                 viennacl::op_prod> & proxy) ;
     
     //
     // circulant_matrix<>
@@ -1091,8 +1091,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator=(const vector_expression< const circulant_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
-                                                    op_prod> & proxy);
+                                                   const base_type,
+                                                   op_prod> & proxy);
 
     /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1100,7 +1100,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator+=(const vector_expression< const circulant_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
                                               
     /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1109,7 +1109,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator-=(const vector_expression< const circulant_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
 
     /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1118,8 +1118,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator+(const vector_expression< const circulant_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
 
     /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1127,8 +1127,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator-(const vector_expression< const circulant_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
 
 
     //
@@ -1140,8 +1140,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator=(const vector_expression< const hankel_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
-                                                    op_prod> & proxy);
+                                                   const base_type,
+                                                   op_prod> & proxy);
 
     /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1149,7 +1149,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator+=(const vector_expression< const hankel_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
                                               
     /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1158,7 +1158,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator-=(const vector_expression< const hankel_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
 
     /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1167,8 +1167,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator+(const vector_expression< const hankel_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
 
     /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1176,8 +1176,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator-(const vector_expression< const hankel_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
 
     //
     // toeplitz_matrix<>
@@ -1188,8 +1188,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator=(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
-                                                    op_prod> & proxy);
+                                                   const base_type,
+                                                   op_prod> & proxy);
 
     /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1197,7 +1197,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator+=(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
                                               
     /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1206,7 +1206,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator-=(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
 
     /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1215,7 +1215,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator+(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
+                                                  const base_type,
                                                   op_prod> & proxy);
 
     /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1224,7 +1224,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator-(const vector_expression< const toeplitz_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
+                                                  const base_type,
                                                   op_prod> & proxy);
 
     
@@ -1237,7 +1237,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator=(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
 
     /** @brief Operator overload for v1 += A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1246,7 +1246,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator+=(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
                                               
     /** @brief Operator overload for v1 -= A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1255,7 +1255,7 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type & operator-=(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                    const self_type,
+                                                    const base_type,
                                                     op_prod> & proxy);
 
     /** @brief Operator overload for v1 + A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
@@ -1264,8 +1264,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator+(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
 
     /** @brief Operator overload for v1 - A * v2, where v1, v2 are vectors and A is a sparse matrix of type circulant_matrix.
     *
@@ -1273,8 +1273,8 @@ namespace viennacl
     */
     template <unsigned int MAT_ALIGNMENT>
     self_type operator-(const vector_expression< const vandermonde_matrix<SCALARTYPE, MAT_ALIGNMENT>,
-                                                  const self_type,
-                                                  op_prod> & proxy);
+                                                 const base_type,
+                                                 op_prod> & proxy);
     
     ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
     
@@ -2268,7 +2268,7 @@ namespace viennacl
   * @param vec     A ViennaCL vector
   */
   template <typename S1, typename T>
-  typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value,
+  typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_expression< const vector_base<T>, const S1, op_prod> >::type 
   operator * (S1 const & value, vector_base<T> const & vec)
   {

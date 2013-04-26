@@ -140,11 +140,19 @@ namespace viennacl
     {
       return vec.size(); 
     }
-    
+
     template <typename LHS, typename RHS, typename OP>
     vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
     {
       return size(proxy.lhs());
+    }
+
+    template <typename SparseMatrixType, typename VectorType>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
+                                  vcl_size_t >::type
+    size(vector_expression<const SparseMatrixType, const VectorType, op_prod> const & proxy)
+    {
+      return proxy.lhs().size1(); 
     }
     
     template <typename NumericT, typename F>

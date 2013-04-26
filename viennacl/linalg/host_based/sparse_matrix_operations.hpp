@@ -42,9 +42,9 @@ namespace viennacl
       
       namespace detail
       {
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void row_info(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
-                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      vector_base<ScalarType> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           ScalarType         * result_buf = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -103,10 +103,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         ScalarType         * result_buf = detail::extract_raw_pointer<ScalarType>(result.handle());
         ScalarType   const * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -252,9 +252,9 @@ namespace viennacl
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       * @param tag  The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::unit_lower_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -271,9 +271,9 @@ namespace viennacl
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       * @param tag  The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & L,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::lower_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -291,9 +291,9 @@ namespace viennacl
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       * @param tag  The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::unit_upper_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -310,9 +310,9 @@ namespace viennacl
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       * @param tag  The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & U,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::upper_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -463,13 +463,13 @@ namespace viennacl
         //
         // block solves
         //
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & L, 
                                  viennacl::backend::mem_handle const & /* block_indices */, std::size_t /* num_blocks */,
-                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::unit_lower_tag)
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
@@ -494,13 +494,13 @@ namespace viennacl
           }
         }
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & L, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
-                                 vector<ScalarType> const & L_diagonal,
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & L_diagonal,
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::lower_tag)
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
@@ -530,13 +530,13 @@ namespace viennacl
         
         
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & U, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t /* num_blocks */,
-                                 vector<ScalarType> const & /* U_diagonal */, //ignored
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & /* U_diagonal */, //ignored
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::unit_upper_tag)
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
@@ -563,13 +563,13 @@ namespace viennacl
           }
         }
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & U, 
                                  viennacl::backend::mem_handle const & /* block_indices */, std::size_t /* num_blocks */,
-                                 vector<ScalarType> const & U_diagonal,
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & U_diagonal,
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::upper_tag)
         {
           // Note: The following could be implemented more efficiently using the block structure and possibly OpenMP.
@@ -607,11 +607,11 @@ namespace viennacl
       * @param vec    The right hand side vector
       * @param tag    The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             op_trans> const & proxy,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::unit_lower_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -628,11 +628,11 @@ namespace viennacl
       * @param vec    The right hand side vector
       * @param tag    The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             op_trans> const & proxy,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::lower_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -650,11 +650,11 @@ namespace viennacl
       * @param vec    The right hand side vector
       * @param tag    The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             op_trans> const & proxy,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::unit_upper_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -672,11 +672,11 @@ namespace viennacl
       * @param vec    The right hand side vector
       * @param tag    The solver tag identifying the respective triangular solver
       */
-      template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename ScalarType, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                             op_trans> const & proxy,
-                         vector<ScalarType, VEC_ALIGNMENT> & vec,
+                         vector_base<ScalarType> & vec,
                          viennacl::linalg::upper_tag tag)
       {
         ScalarType         * vec_buf    = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -699,9 +699,9 @@ namespace viennacl
       
       namespace detail
       {
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void row_info(coordinate_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
-                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      vector_base<ScalarType> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           ScalarType         * result_buf   = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -764,10 +764,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         ScalarType         * result_buf   = detail::extract_raw_pointer<ScalarType>(result.handle());
         ScalarType   const * vec_buf      = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -793,10 +793,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         ScalarType         * result_buf   = detail::extract_raw_pointer<ScalarType>(result.handle());
         ScalarType   const * vec_buf      = detail::extract_raw_pointer<ScalarType>(vec.handle());
@@ -835,10 +835,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         ScalarType         * result_buf     = detail::extract_raw_pointer<ScalarType>(result.handle());
         ScalarType   const * vec_buf        = detail::extract_raw_pointer<ScalarType>(vec.handle());

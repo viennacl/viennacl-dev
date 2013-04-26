@@ -96,7 +96,7 @@ namespace viennacl
       //we require that the size of the gpu_vector is larger or equal to the cpu-size
       std::vector<SCALARTYPE> temp_buffer(cpu_vector.end() - cpu_vector.begin());
       std::copy(cpu_vector.begin(), cpu_vector.end(), temp_buffer.begin());
-      viennacl::backend::memory_write(gpu_vector_range.get().handle(), sizeof(SCALARTYPE)*gpu_vector_range.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
+      viennacl::backend::memory_write(gpu_vector_range.handle(), sizeof(SCALARTYPE)*gpu_vector_range.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
     }
   }
 
