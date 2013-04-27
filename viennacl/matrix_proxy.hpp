@@ -55,12 +55,6 @@ namespace viennacl
 
       using base_type::operator=;
 
-      /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const base_type, const cpu_value_type, op_prod> operator-() const
-      {
-        return matrix_expression<const base_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
-      }
-
   };
 
 
@@ -326,13 +320,6 @@ namespace viennacl
                                                         col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2()) {}
       
       using base_type::operator=;
-
-
-      /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const base_type, const cpu_value_type, op_prod> operator-() const
-      {
-        return matrix_expression<const base_type, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
-      }
 
   };
 

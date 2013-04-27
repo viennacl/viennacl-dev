@@ -897,7 +897,7 @@ namespace viennacl
       */
       void clear()
       {
-        viennacl::linalg::vector_assign(*this, 0.0);
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0));
       }
       
       viennacl::memory_types memory_domain() const

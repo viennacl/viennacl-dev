@@ -50,10 +50,8 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<ScalarType1>::value
-                                  >::type
-      av(vector_base<T> & vec1, 
-         vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+      void av(vector_base<T> & vec1, 
+              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         viennacl::linalg::kernels::vector<T, 1>::init();
         
@@ -91,12 +89,9 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1, typename ScalarType2>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv(vector_base<T> & vec1, 
-           vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           vector_base<T> const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
+      void avbv(vector_base<T> & vec1, 
+                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         viennacl::linalg::kernels::vector<T, 1>::init();
         
@@ -156,12 +151,9 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1, typename ScalarType2>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv_v(vector_base<T> & vec1,
-             vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      void avbv_v(vector_base<T> & vec1,
+                  vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         viennacl::linalg::kernels::vector<T, 1>::init();
         
@@ -225,9 +217,8 @@ namespace viennacl
       * @param vec1   The vector to which the value should be assigned
       * @param alpha  The value to be assigned
       */
-      template <typename T, typename S1>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value >::type
-      vector_assign(vector_base<T> & vec1, const S1 & alpha)
+      template <typename T>
+      void vector_assign(vector_base<T> & vec1, const T & alpha)
       {
         viennacl::linalg::kernels::vector<T, 1>::init();
         
@@ -344,12 +335,10 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename T, typename S3>
-      typename viennacl::enable_if< viennacl::is_scalar<S3>::value
-                                  >::type
-      inner_prod_impl(vector_base<T> const & vec1,
-                      vector_base<T> const & vec2,
-                      S3 & result)
+      template <typename T>
+      void inner_prod_impl(vector_base<T> const & vec1,
+                           vector_base<T> const & vec2,
+                           scalar<T> & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -381,11 +370,10 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename T, typename S3>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
-      inner_prod_cpu(vector_base<T> const & vec1,
-                     vector_base<T> const & vec2,
-                     S3 & result)
+      template <typename T>
+      void inner_prod_cpu(vector_base<T> const & vec1,
+                          vector_base<T> const & vec2,
+                          T & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -442,11 +430,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                  >::type
-      norm_1_impl(vector_base<T> const & vec,
-                  S2 & result)
+      template <typename T>
+      void norm_1_impl(vector_base<T> const & vec,
+                       scalar<T> & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -474,11 +460,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                  >::type
-      norm_1_cpu(vector_base<T> const & vec,
-                 S2 & result)
+      template <typename T>
+      void norm_1_cpu(vector_base<T> const & vec,
+                      T & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -505,10 +489,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-      norm_2_impl(vector_base<T> const & vec,
-                  S2 & result)
+      template <typename T>
+      void norm_2_impl(vector_base<T> const & vec,
+                       scalar<T> & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -536,10 +519,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-      norm_2_cpu(vector_base<T> const & vec,
-                 S2 & result)
+      template <typename T>
+      void norm_2_cpu(vector_base<T> const & vec,
+                      T & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -566,10 +548,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-      norm_inf_impl(vector_base<T> const & vec,
-                    S2 & result)
+      template <typename T>
+      void norm_inf_impl(vector_base<T> const & vec,
+                         scalar<T> & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
@@ -597,10 +578,9 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-      norm_inf_cpu(vector_base<T> const & vec,
-                   S2 & result)
+      template <typename T>
+      void norm_inf_cpu(vector_base<T> const & vec,
+                        T & result)
       {
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);

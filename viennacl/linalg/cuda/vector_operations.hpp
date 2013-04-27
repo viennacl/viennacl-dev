@@ -44,7 +44,7 @@ namespace viennacl
       //
       
       
-      //////////////////////// as /////////////////////////////
+      //////////////////////// av /////////////////////////////
       
       // gpu scalar
       template <typename T>
@@ -99,10 +99,8 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_scalar<ScalarType1>::value
-                                  >::type
-      av(vector_base<T> & vec1, 
-         vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+      void av(vector_base<T> & vec1, 
+              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef T        value_type;
         
@@ -288,12 +286,9 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1, typename ScalarType2>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv(vector_base<T> & vec1, 
-           vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      void avbv(vector_base<T> & vec1, 
+                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef T        value_type;
 
@@ -493,12 +488,9 @@ namespace viennacl
       
       
       template <typename T, typename ScalarType1, typename ScalarType2>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv_v(vector_base<T> & vec1,
-             vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      void avbv_v(vector_base<T> & vec1,
+                  vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef T        value_type;
 
@@ -567,8 +559,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T, typename S1>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value >::type
-      vector_assign(vector_base<T> & vec1, const S1 & alpha)
+      void vector_assign(vector_base<T> & vec1, const S1 & alpha)
       {
         typedef T        value_type;
         
@@ -797,10 +788,9 @@ namespace viennacl
       * @param result The result scalar (on the gpu)
       */
       template <typename T, typename S3>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S3>::value >::type
-      inner_prod_impl(vector_base<T> const & vec1,
-                      vector_base<T> const & vec2,
-                      S3 & result)
+      void inner_prod_impl(vector_base<T> const & vec1,
+                           vector_base<T> const & vec2,
+                           S3 & result)
       {
         typedef T        value_type;
         
@@ -835,11 +825,10 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the host)
       */
-      template <typename T, typename S3>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
-      inner_prod_cpu(vector_base<T> const & vec1,
-                     vector_base<T> const & vec2,
-                     S3 & result)
+      template <typename T>
+      void inner_prod_cpu(vector_base<T> const & vec1,
+                          vector_base<T> const & vec2,
+                          T & result)
       {
         typedef T        value_type;
         
@@ -951,10 +940,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-      norm_1_impl(vector_base<T> const & vec1,
-                  S2 & result)
+      template <typename T>
+      void norm_1_impl(vector_base<T> const & vec1,
+                       scalar<T> & result)
       {
         typedef T        value_type;
         
@@ -984,11 +972,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                  >::type
-      norm_1_cpu(vector_base<T> const & vec1,
-                 S2 & result)
+      template <typename T>
+      void norm_1_cpu(vector_base<T> const & vec1,
+                      T & result)
       {
         typedef T        value_type;
         
@@ -1020,11 +1006,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                  >::type
-      norm_2_impl(vector_base<T> const & vec1,
-                  S2 & result)
+      template <typename T>
+      void norm_2_impl(vector_base<T> const & vec1,
+                       scalar<T> & result)
       {
         typedef T       value_type;
         
@@ -1054,11 +1038,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                  >::type
-      norm_2_cpu(vector_base<T> const & vec1,
-                 S2 & result)
+      template <typename T>
+      void norm_2_cpu(vector_base<T> const & vec1,
+                      T & result)
       {
         typedef T        value_type;
         
@@ -1091,10 +1073,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-      norm_inf_impl(vector_base<T> const & vec1,
-                    S2 & result)
+      template <typename T>
+      void norm_inf_impl(vector_base<T> const & vec1,
+                         scalar<T> & result)
       {
         typedef T      value_type;
         
@@ -1126,10 +1107,9 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
-      typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-      norm_inf_cpu(vector_base<T> const & vec1,
-                   S2 & result)
+      template <typename T>
+      void norm_inf_cpu(vector_base<T> const & vec1,
+                        T & result)
       {
         typedef T        value_type;
         

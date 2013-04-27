@@ -351,123 +351,101 @@ namespace viennacl
     
     
 
-    template <typename T, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
-    inner_prod_impl(vector_base<T> const & vec1,
-                    vector_base<T> const & vec2,
-                    S3 & result);
+    template <typename T>
+    void inner_prod_impl(vector_base<T> const & vec1,
+                         vector_base<T> const & vec2,
+                         scalar<T> & result);
     
-    template <typename LHS, typename RHS, typename OP, typename T, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
-    inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                    vector_base<T> const & vec2,
-                    S3 & result);
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                         vector_base<T> const & vec2,
+                         scalar<T> & result);
     
-    template <typename T, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
-    inner_prod_impl(vector_base<T> const & vec1,
-                    viennacl::vector_expression<LHS, RHS, OP> const & vec2,
-                    S3 & result);
+    template <typename T, typename LHS, typename RHS, typename OP>
+    void inner_prod_impl(vector_base<T> const & vec1,
+                         viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                         scalar<T> & result);
     
     template <typename LHS1, typename RHS1, typename OP1,
-              typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value >::type
-    inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
-                    viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
-                    S3 & result);
+              typename LHS2, typename RHS2, typename OP2, typename T>
+    void inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                         viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                         scalar<T> & result);
         
     ///////////////////////////
     
-    template <typename T, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(vector_base<T> const & vec1,
-                   vector_base<T> const & vec2,
-                   S3 & result);
+    template <typename T>
+    void inner_prod_cpu(vector_base<T> const & vec1,
+                        vector_base<T> const & vec2,
+                        T & result);
     
-    template <typename LHS, typename RHS, typename OP, typename T, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
-    inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                   vector_base<T> const & vec2,
-                   S3 & result);
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                        vector_base<T> const & vec2,
+                        T & result);
     
-    template <typename T, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
-    inner_prod_cpu(vector_base<T> const & vec1,
-                   viennacl::vector_expression<LHS, RHS, OP> const & vec2,
-                   S3 & result);
+    template <typename T, typename LHS, typename RHS, typename OP>
+    void inner_prod_cpu(vector_base<T> const & vec1,
+                        viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                        T & result);
 
     template <typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value >::type
-    inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
-                   viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
-                   S3 & result);
+    void inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                        viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                        S3 & result);
     
     
     
     //forward definition of norm_1_impl function
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_1_impl(vector_base<T> const & vec, S2 & result);
+    template <typename T>
+    void norm_1_impl(vector_base<T> const & vec, scalar<T> & result);
     
-    template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                S2 & result);
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                     scalar<T> & result);
     
 
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-    norm_1_cpu(vector_base<T> const & vec,
-               S2 & result);
+    template <typename T>
+    void norm_1_cpu(vector_base<T> const & vec,
+                    T & result);
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-    norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-               S2 & result);
+    void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                    S2 & result);
     
     //forward definition of norm_2_impl function
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_2_impl(vector_base<T> const & vec, S2 & result);
+    template <typename T>
+    void norm_2_impl(vector_base<T> const & vec, scalar<T> & result);
 
-    template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                S2 & result);
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                     scalar<T> & result);
     
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_2_cpu(vector_base<T> const & vec, S2 & result);
+    template <typename T>
+    void norm_2_cpu(vector_base<T> const & vec, T & result);
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-    norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-               S2 & result);
+    void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                    S2 & result);
     
     
     //forward definition of norm_inf_impl function
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_inf_impl(vector_base<T> const & vec, S2 & result);
+    template <typename T>
+    void norm_inf_impl(vector_base<T> const & vec, scalar<T> & result);
     
-    template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value >::type
-    norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                  S2 & result);
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                      scalar<T> & result);
     
     
-    template <typename T, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-    norm_inf_cpu(vector_base<T> const & vec, S2 & result);
+    template <typename T>
+    void norm_inf_cpu(vector_base<T> const & vec, T & result);
     
     
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value >::type
-    norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                 S2 & result);
+    void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                      S2 & result);
     
     
     template <typename T>
