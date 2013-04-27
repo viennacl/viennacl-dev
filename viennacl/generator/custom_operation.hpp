@@ -20,6 +20,7 @@ namespace viennacl
       private:
           void compile_program(std::string const & pgm_name) const{
 #ifdef VIENNACL_DEBUG_BUILD
+              std::cout << "Building " << pgm_name << "..." << std::endl;
               std::cout << source_code_ << std::endl;
 #endif
               assert(!source_code_.empty() && " Custom Operation not initialized ");
@@ -59,6 +60,7 @@ namespace viennacl
 
 
           viennacl::ocl::program & program(){
+              init();
               std::string program_name_ = operations_manager_.repr();
               if(!viennacl::ocl::current_context().has_program(program_name_)){
                   compile_program(program_name_);

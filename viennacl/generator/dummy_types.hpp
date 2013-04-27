@@ -186,8 +186,8 @@ private:
 
 template<class VCL_MATRIX_T>
 struct to_sym<matrix<VCL_MATRIX_T> >{
-    typedef symbolic_matrix<VCL_MATRIX_T> type;
-    static type result(matrix<VCL_MATRIX_T> const & t) { return type(t.get()); }
+    typedef symbolic_matrix<VCL_MATRIX_T, index_set, index_set> type;
+    static type result(matrix<VCL_MATRIX_T> const & t) { return type(t.get(), index_set(), index_set()); }
 };
 
 
@@ -223,10 +223,10 @@ template<class T>
 struct is_matrix_expression_t{ enum { value = 0}; };
 template<class VCL_MATRIX>
 struct is_matrix_expression_t<matrix<VCL_MATRIX> >{ enum { value = 1}; };
+template<class VCL_MATRIX, class ACCESS_ROW, class ACCESS_COL>
+struct is_matrix_expression_t<symbolic_matrix<VCL_MATRIX, ACCESS_ROW, ACCESS_COL> >{ enum { value = 1}; };
 //template<class Scalartype, class F>
 //struct is_matrix_expression_t<viennacl::distributed::multi_matrix<Scalartype, F> >{ enum { value = 1}; };
-template<class T>
-struct is_matrix_expression_t<symbolic_matrix<T> >{ enum { value = 1}; };
 template<class LHS, class OP, class RHS>
 struct is_matrix_expression_t<binary_matrix_expression<LHS,OP,RHS> >{ enum { value = 1}; };
 template<class T>

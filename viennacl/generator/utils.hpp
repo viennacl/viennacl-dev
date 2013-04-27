@@ -183,8 +183,8 @@ namespace viennacl{
             };
 
             template<class U, class T>
-            void unique_push_back(U & v, T* t){
-                if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T *>(),t))==v.end())
+            void unique_push_back(U & v, T t){
+                if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T>(),t))==v.end())
                     v.push_back(t);
             }
 

@@ -1,4 +1,4 @@
-//~ #define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_OPENCL
 //#define VIENNACL_DEBUG_ALL
 
@@ -91,13 +91,19 @@ void autotune(){
     viennacl::copy(cpu_v4,v4);
 
 
-    typedef viennacl::generator::dummy_vector<ScalarType> dv;
-    config conf(std::make_pair(1,4)
-                ,std::make_pair(1,16)
-                ,std::make_pair(64,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
-    viennacl::generator::autotune::benchmark(timings,dv(v1) = dv(v2) + dv(v3),conf);
+    typedef viennacl::generator::vector<ScalarType> vec;
+    config conf(std::make_pair(1,4) ,std::make_pair(1,16),std::make_pair(64,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
+    viennacl::generator::autotune::benchmark(timings,vec(v1) = vec(v2) + vec(v3),conf);
     std::cout << std::endl;
     std::cout << "Best Profile: " << timings.begin()->first << " <=> " << timings.begin()->second << std::endl;
+
+//    v1 = v2 + v3;
+//    viennacl::backend::finish();
+//    viennacl::generator::autotune::Timer t; t.start();
+//    v1 = v2 + v3;
+//    viennacl::backend::finish();
+//    double time = t.get();
+//    std::cout << "ViennaCL time : " << time << std::endl;
 }
 
 int main(){

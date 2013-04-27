@@ -45,7 +45,7 @@ namespace viennacl{
                 }
                 void enqueue(viennacl::ocl::kernel & k){
                     unsigned int garbage = 0;
-                    for(std::vector<kernel_argument const *>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                    for(std::vector<tools::shared_ptr<kernel_argument> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         (*it)->enqueue(garbage,k);
                     }
                 }
@@ -55,7 +55,7 @@ namespace viennacl{
                     }
                 }
                 void fill_arguments(kernel_generation_stream & kss){
-                    for(std::vector<kernel_argument const *>::iterator it=arguments_.begin(); it!=arguments_.end();++it){
+                    for(std::vector<tools::shared_ptr<kernel_argument> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
                         if(it!=arguments_.begin()) kss << ',';
                         kss << (*it)->repr() << std::endl ;
                     }
@@ -63,7 +63,7 @@ namespace viennacl{
 
             private:
                 std::list<infos_base*> trees_;
-                std::vector<kernel_argument const *> arguments_;
+                std::vector<tools::shared_ptr<kernel_argument> > arguments_;
                 viennacl::tools::shared_ptr<code_generation::optimization_profile> optimization_profile_;
             };
 
@@ -141,7 +141,6 @@ namespace viennacl{
                 kernel_infos_t create_infos(infos_base* op){
                     std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> >::iterator ito = overriden_models_.find(typeid(T).name());
                     if(ito!=overriden_models_.end()) return kernel_infos_t(op,ito->second);
-
                     //Lookup in the built-in database
                     cl_device_id id = viennacl::ocl::current_device().id();
                     builtin_database_t::iterator it = builtin_dabase.find(std::make_pair(ocl::info<CL_DEVICE_VENDOR_ID>(id), ocl::info<CL_DEVICE_TYPE>(id)));
@@ -242,9 +241,9 @@ namespace viennacl{
                     for(std::list<kernel_infos_t>::iterator it = kernels_list_.begin() ; it !=kernels_list_.end() ; ++it){
                         std::string name("_k"+to_string(std::distance(kernels_list_.begin(),it)));
                         kernel_infos_t & infos = kernels_infos.insert(std::make_pair(name,*it)).first->second;
-                        //kss <<  "__attribute__((reqd_work_group_size(" << infos.profile()->local_work_size().first
-                        //                                                << "," << infos.profile()->local_work_size().second
-                        //                                                << ",1)))" << std::endl;
+                        kss <<  "__attribute__((reqd_work_group_size(" << infos.profile()->local_work_size().first
+                                                                        << "," << infos.profile()->local_work_size().second
+                                                                        << ",1)))" << std::endl;
                         code_generation::kernel_generator kg(infos,name,kss);
                         kg.generate() ;
                     }

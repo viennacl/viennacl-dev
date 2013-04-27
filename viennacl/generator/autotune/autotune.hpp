@@ -22,7 +22,7 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
 
     Timer t;
 
-    unsigned int n_runs = 2;
+    unsigned int n_runs = 5;
 
     viennacl::generator::custom_operation op(operation);
     op.operations_manager().override_model(prof);
@@ -39,16 +39,16 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
     if( (prof.local_work_size().first*prof.local_work_size().second) % prefered_workgroup_size_multiple > 0) return;
 
     op.execute();
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
 
     double exec_time = 0;
+    t.start();
     for(unsigned int n=0; n<n_runs ; ++n){
-        t.start();
         op.execute();
-        viennacl::ocl::get_queue().finish();
-        exec_time+=t.get();
+        viennacl::backend::finish();
     }
-    exec_time = exec_time/n_runs;
+    exec_time = t.get()/(float)n_runs;
+    std::cout << exec_time << " <= " << prof << std::endl;
     timings.insert(std::make_pair(exec_time, ProfileT(prof)));
 }
 

@@ -86,7 +86,7 @@ namespace viennacl{
             virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
             virtual void fetch(unsigned int i, kernel_generation_stream & kss) = 0;
             virtual void write_back(unsigned int i, kernel_generation_stream & kss) = 0;
-            virtual void get_kernel_arguments(std::vector<kernel_argument const *> & args) const = 0;
+            virtual void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const = 0;
             virtual bool operator==(infos_base const & other) const = 0;
             virtual ~infos_base(){ }
             infos_base() : current_kernel_(0) { }
@@ -121,7 +121,7 @@ namespace viennacl{
                 lhs_->fetch(i,kss);
                 rhs_->fetch(i,kss);
             }
-            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+            void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const{
                 lhs_->get_kernel_arguments(args);
                 rhs_->get_kernel_arguments(args);
             }
@@ -185,7 +185,7 @@ namespace viennacl{
             }
             void fetch(unsigned int i, kernel_generation_stream & kss){ sub_->fetch(i,kss); }
             void write_back(unsigned int i, kernel_generation_stream & kss){  }
-            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+            void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const{
                 sub_->get_kernel_arguments(args);
             }
             std::string generate(unsigned int i, int vector_element = -1) const { return "(" +  op_->generate(sub_->generate(i,vector_element)) + ")"; }
@@ -227,6 +227,7 @@ namespace viennacl{
             std::string const & name() const { return name_; }
             void scalartype_name(std::string const & str) { scalartype_name_ = str; }
             std::string const & scalartype_name() const { return scalartype_name_; }
+            virtual ~kernel_argument(){ }
         protected:
             std::string address_space_;
             std::string scalartype_name_;
@@ -264,7 +265,7 @@ namespace viennacl{
         private:
             void const * handle() const { return static_cast<void const *>(&handle_); }
         public:
-            pointer_argument(std::string const & name, viennacl::backend::mem_handle const & handle, unsigned int alignment=1) : pointer_argument_base("__global", print_type<ScalarType>::value() + ((alignment>1)?to_string(alignment):""), name), handle_(handle){ }
+            pointer_argument(std::string const & name, viennacl::backend::mem_handle const & handle, unsigned int alignment) : pointer_argument_base("__global", print_type<ScalarType>::value() + ((alignment>1)?to_string(alignment):""), name), handle_(handle){ }
             void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const { k.arg(n_arg++,handle_.opencl_handle()); }
         private:
             viennacl::backend::mem_handle const & handle_;
@@ -291,15 +292,9 @@ namespace viennacl{
             }
             unsigned int alignment() const { return infos_->alignment; }
             void alignment(unsigned int val) { infos_->alignment = val; }
-            void get_kernel_arguments(std::vector<kernel_argument const *>& args) const{
-                for(std::vector<tools::shared_ptr<kernel_argument> >::const_iterator it = other_arguments_.begin() ; it != other_arguments_.end() ; ++it){
-                    unique_push_back(args,(kernel_argument const *)it->get());
-                }
-            }
             virtual ~symbolic_datastructure(){ }
         protected:
             shared_infos_t* infos_;
-            std::vector<tools::shared_ptr<kernel_argument> > other_arguments_;
         };
 
         class buffered_datastructure : public symbolic_datastructure{
@@ -308,7 +303,7 @@ namespace viennacl{
         public:
             void fetch(unsigned int i, kernel_generation_stream & kss){
                 if(infos_->private_values[i].empty()){
-                    std::string val = infos_->name + "_private";
+                    std::string val = infos_->name + "_private" + to_string(i);
                     std::string aligned_scalartype = infos_->scalartype;
                     if(infos_->alignment > 1) aligned_scalartype += to_string(infos_->alignment);
                     kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
@@ -358,19 +353,22 @@ namespace viennacl{
 
         class mat_infos_base : public buffered_datastructure{
         public:
-            mat_infos_base(bool is_rowmajor) : is_rowmajor_(is_rowmajor){ }
-            virtual size_t real_size1() const = 0;
-            virtual size_t real_size2() const = 0;
+            mat_infos_base(size_t size1, size_t size2, bool is_rowmajor) : size1_(size1), size2_(size2), is_rowmajor_(is_rowmajor){ }
             std::string  internal_size1() const{ return name() +"internal_size1_"; }
             std::string  internal_size2() const{ return name() +"internal_size2_"; }
+            size_t real_size1() const{ return size1_; }
+            size_t real_size2() const{ return size2_; }
             bool const is_rowmajor() const { return is_rowmajor_; }
-            std::string offset(std::string const & offset_i, std::string const & offset_j){
+            std::string offset(std::string const & offset_i, std::string const & offset_j) const {
                 if(is_rowmajor_){
                     return '(' + offset_i + ')' + '*' + internal_size2() + "+ (" + offset_j + ')';
                 }
                 return '(' + offset_i + ')' + "+ (" + offset_j + ')' + '*' + internal_size1();
             }
+
         protected:
+            size_t size1_;
+            size_t size2_;
             bool is_rowmajor_;
         };
 
@@ -405,10 +403,11 @@ namespace viennacl{
             inner_product_infos_base(infos_base * lhs, binary_op_infos_base * op, infos_base * rhs): binary_scalar_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){ }
             bool is_computed(){ return current_kernel_; }
             void set_computed(){ current_kernel_ = 1; }
+            void reset_state(){ current_kernel_ = 0; }
             std::string const & scalartype() const { return handle_->scalartype_name(); }
-            void get_kernel_arguments(std::vector<kernel_argument const *> & args) const{
+            void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const{
                 binary_scalar_expression_infos_base::get_kernel_arguments(args);
-                args.push_back(handle_.get());
+                args.push_back(handle_);
             }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }

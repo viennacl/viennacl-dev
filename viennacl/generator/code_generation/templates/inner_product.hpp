@@ -88,6 +88,9 @@ public:
             for(std::list<binary_scalar_expression_infos_base*>::iterator it = expressions_.begin() ; it!=expressions_.end() ; ++it){
                 kss << (*it)->generate(0) << ";" << std::endl;
             }
+            for(std::list<inner_product_infos_base *>::iterator it=inner_prods_.begin() ; it!=inner_prods_.end();++it){
+                (*it)->reset_state();
+            }
         }
         else{
             for(std::list<inner_product_infos_base*>::iterator it = inner_prods_.begin() ; it!=inner_prods_.end() ; ++it){

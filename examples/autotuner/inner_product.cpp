@@ -6,6 +6,7 @@
 #include "CL/cl.hpp"
 
 #include "viennacl/vector.hpp"
+#include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/generator/custom_operation.hpp"
 #include "viennacl/generator/dummy_types.hpp"
 #include "viennacl/generator/autotune/autotune.hpp"
@@ -73,26 +74,33 @@ void autotune(){
 
     std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size), cpu_v4(size);
     for(unsigned int i=0; i<size; ++i){
-        cpu_v1[i]=i;
-        cpu_v2[i]=2*i;
-        cpu_v3[i]=3*i;
-        cpu_v4[i]=4*i;
+        cpu_v1[i]=rand()/static_cast<ScalarType>(RAND_MAX);
+        cpu_v2[i]=rand()/static_cast<ScalarType>(RAND_MAX);
     }
 
-    viennacl::vector<ScalarType> v1(size), v2(size), v3(size), v4(size);
+    viennacl::vector<ScalarType> v1(size), v2(size);
+    viennacl::scalar<ScalarType> s(0);
     viennacl::copy(cpu_v1,v1);
     viennacl::copy(cpu_v2,v2);
-    viennacl::copy(cpu_v3,v3);
-    viennacl::copy(cpu_v4,v4);
 
 
-    typedef viennacl::generator::vector<ScalarType> dv;
-    config conf(std::make_pair(1,1)
-                ,std::make_pair(64,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
+    typedef viennacl::generator::vector<ScalarType> vec;
+    typedef viennacl::generator::scalar<ScalarType> scal;
+    config conf(std::make_pair(1,4)
+                ,std::make_pair(128,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
                 ,std::make_pair(64,512));
-    viennacl::generator::autotune::benchmark(timings,dv(v1) = dv(v2) + dv(v3),conf);
+    viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),conf);
     std::cout << std::endl;
     std::cout << "Best Profile: " << timings.begin()->first << " <=> " << timings.begin()->second << std::endl;
+
+
+    std::cout << "Testing result..." << std::endl;
+    viennacl::generator::autotune::Timer t;  t.start();
+    op_test.execute();
+    s = viennacl::linalg::inner_prod(v1,v2);
+    viennacl::backend::finish();
+    double time = t.get();
+    std::cout << time << std::endl;
 }
 
 int main(){

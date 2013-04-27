@@ -358,65 +358,96 @@ int test(Epsilon const& epsilon)
   return ret;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << "## Test :: Generated BLAS 3 routines" << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
+    std::vector<std::string> args(argv,argv+argc);
+    if(argc!=2){
+        std::cerr << "USAGE : PROGRAM_NAME DEVICE" << std::endl;
+        exit(1);
+    }
+    int retval = EXIT_SUCCESS;
+    unsigned int requested_device = atoi(args[1].c_str());
 
-   int retval = EXIT_SUCCESS;
+    typedef std::vector< viennacl::ocl::platform > platforms_type;
+    typedef std::vector<viennacl::ocl::device> devices_type;
+    typedef std::vector<cl_device_id> cl_devices_type;
 
-   srand(time(NULL));
+    platforms_type platforms = viennacl::ocl::get_platforms();
+    size_t num_platforms = platforms.size();
 
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
-   {
-      typedef float NumericT;
-      NumericT epsilon = NumericT(1.0E-3);
-      std::cout << "# Testing setup:" << std::endl;
+    unsigned int current_device = 0;
 
-      std::cout << viennacl::ocl::current_device().info() << std::endl;
+    for(unsigned int k=0 ; k < num_platforms ; ++k)
+    {
+        viennacl::ocl::platform pf(k);
+        viennacl::ocl::set_context_device_type(k,CL_DEVICE_TYPE_ALL);
+        viennacl::ocl::set_context_platform_index(k,k);
+        viennacl::ocl::switch_context(k);
+        devices_type dev = viennacl::ocl::current_context().devices();
+        for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
 
-      std::cout << "  eps:     " << epsilon << std::endl;
-      std::cout << "  numeric: float" << std::endl;
-      retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
-        std::cout << "# Test passed" << std::endl;
-      else
-        return retval;
-   }
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
-#ifdef VIENNACL_HAVE_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
-#endif
-   {
-      {
-        typedef double NumericT;
-        NumericT epsilon = 1.0E-11;
-        std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  eps:     " << epsilon << std::endl;
-        std::cout << "  numeric: double" << std::endl;
-        retval = test<NumericT>(epsilon);
-        if( retval == EXIT_SUCCESS )
-          std::cout << "# Test passed" << std::endl;
-        else
-          return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
-   }
+            if(current_device++ == requested_device ){
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "## Test :: Generated BLAS 3 routines" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "------- Test completed --------" << std::endl;
-   std::cout << std::endl;
+                int retval = EXIT_SUCCESS;
+
+                srand(time(NULL));
+
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << std::endl;
+                {
+                   typedef float NumericT;
+                   NumericT epsilon = NumericT(1.0E-3);
+                   std::cout << "# Testing setup:" << std::endl;
+
+                   std::cout << viennacl::ocl::current_device().info() << std::endl;
+
+                   std::cout << "  eps:     " << epsilon << std::endl;
+                   std::cout << "  numeric: float" << std::endl;
+                   retval = test<NumericT>(epsilon);
+                   if( retval == EXIT_SUCCESS )
+                     std::cout << "# Test passed" << std::endl;
+                   else
+                     return retval;
+                }
+                std::cout << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
+                std::cout << std::endl;
+             #ifdef VIENNACL_HAVE_OPENCL
+                if( viennacl::ocl::current_device().double_support() )
+             #endif
+                {
+                   {
+                     typedef double NumericT;
+                     NumericT epsilon = 1.0E-11;
+                     std::cout << "# Testing setup:" << std::endl;
+                     std::cout << "  eps:     " << epsilon << std::endl;
+                     std::cout << "  numeric: double" << std::endl;
+                     retval = test<NumericT>(epsilon);
+                     if( retval == EXIT_SUCCESS )
+                       std::cout << "# Test passed" << std::endl;
+                     else
+                       return retval;
+                   }
+                   std::cout << std::endl;
+                   std::cout << "----------------------------------------------" << std::endl;
+                   std::cout << std::endl;
+                }
+
+                std::cout << std::endl;
+                std::cout << "------- Test completed --------" << std::endl;
+                std::cout << std::endl;
+            }
+        }
+    }
+
 
 
    return retval;
