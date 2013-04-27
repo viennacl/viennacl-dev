@@ -51,10 +51,8 @@ namespace viennacl
     
     template <typename NumericT, typename F,
               typename ScalarType1>
-    typename viennacl::enable_if< viennacl::is_any_scalar<ScalarType1>::value
-                                >::type
-    am(matrix_base<NumericT, F> & mat1, 
-       matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+    void am(matrix_base<NumericT, F> & mat1, 
+            matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
     {
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
@@ -79,12 +77,9 @@ namespace viennacl
     
     template <typename NumericT, typename F,
               typename ScalarType1, typename ScalarType2>
-    typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                  && viennacl::is_any_scalar<ScalarType2>::value
-                                >::type
-    ambm(matrix_base<NumericT, F> & mat1, 
-         matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-         matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    void ambm(matrix_base<NumericT, F> & mat1, 
+              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+              matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
@@ -115,12 +110,9 @@ namespace viennacl
     
     template <typename NumericT, typename F, 
               typename ScalarType1, typename ScalarType2>
-    typename viennacl::enable_if<    viennacl::is_any_scalar<ScalarType1>::value
-                                  && viennacl::is_any_scalar<ScalarType2>::value
-                                >::type
-    ambm_m(matrix_base<NumericT, F> & mat1,
-           matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    void ambm_m(matrix_base<NumericT, F> & mat1,
+                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
@@ -149,10 +141,8 @@ namespace viennacl
     }
 
 
-    template <typename NumericT, typename F, typename ScalarType>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<ScalarType>::value
-                                >::type    
-    matrix_assign(matrix_base<NumericT, F> & mat, ScalarType s)
+    template <typename NumericT, typename F>
+    void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
     {
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -175,10 +165,8 @@ namespace viennacl
     }
 
     
-    template <typename NumericT, typename F, typename ScalarType>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<ScalarType>::value
-                                >::type    
-    matrix_diagonal_assign(matrix_base<NumericT, F> & mat, ScalarType s)
+    template <typename NumericT, typename F>
+    void matrix_diagonal_assign(matrix_base<NumericT, F> & mat, NumericT s)
     {
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
@@ -477,11 +465,10 @@ namespace viennacl
     * @param vec2             The second vector
     */
     template <typename NumericT, typename F, typename S1>
-    typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value >::type
-    scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
-                         S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                         const vector_base<NumericT> & vec1, 
-                         const vector_base<NumericT> & vec2)
+    void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
+                              S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                              const vector_base<NumericT> & vec1, 
+                              const vector_base<NumericT> & vec2)
     {
       switch (viennacl::traits::handle(mat1).get_active_handle_id())
       {
