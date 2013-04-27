@@ -73,7 +73,7 @@ private:
 
 
 struct matrix_descriptor{
-	matrix_descriptor(unsigned int _alignment, bool _use_shared, bool _is_rowmajor, bool _is_transposed, std::string const & _name, std::string const & _scalartype){
+	matrix_descriptor(unsigned int _alignment, bool /*_use_shared*/, bool _is_rowmajor, bool _is_transposed, std::string const & _name, std::string const & _scalartype){
 		alignment = _alignment;
 		is_rowmajor = _is_rowmajor;
 		is_transposed = _is_transposed;

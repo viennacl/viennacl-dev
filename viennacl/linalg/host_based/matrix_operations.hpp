@@ -49,7 +49,7 @@ namespace viennacl
       
       template <typename NumericT, typename F, typename ScalarType1>
       void am(matrix_base<NumericT, F> & mat1, 
-              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
         typedef NumericT        value_type;
         
@@ -111,8 +111,8 @@ namespace viennacl
       template <typename NumericT, typename F,
                 typename ScalarType1, typename ScalarType2>
       void ambm(matrix_base<NumericT, F> & mat1, 
-                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
         typedef NumericT        value_type;
        
@@ -741,7 +741,7 @@ namespace viennacl
       */
       template <typename NumericT, typename F, typename S1>
       void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
-                                S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                                S1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1, 
                                 const vector_base<NumericT> & vec2)
       {
