@@ -48,7 +48,6 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
         viennacl::backend::finish();
     }
     exec_time = t.get()/(float)n_runs;
-    std::cout << exec_time << " <= " << prof << std::endl;
     timings.insert(std::make_pair(exec_time, ProfileT(prof)));
 }
 
