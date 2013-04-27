@@ -5,6 +5,8 @@
 #include <iostream>
 #include "CL/cl.hpp"
 
+#include "viennacl/linalg/inner_prod.hpp"
+
 #include "viennacl/vector.hpp"
 #include "viennacl/generator/custom_operation.hpp"
 #include "viennacl/generator/dummy_types.hpp"
@@ -13,7 +15,7 @@
 
 #define N_RUNS 5
 
-typedef float ScalarType;
+typedef double ScalarType;
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
@@ -135,15 +137,16 @@ void autotune(){
     viennacl::copy(cpu_v1,v1);
     viennacl::copy(cpu_v2,v2);
     viennacl::copy(cpu_v3,v3);
+    viennacl::backend::finish();
 
-    viennacl::scalar<ScalarType> s(0);
+    viennacl::scalar<ScalarType> s = 0;
 
 
 
     {
         std::map<double, saxpy_config::profile_t> timings;
         std::cout << "* Tuning SAXPY" << std::endl;
-        saxpy_config conf(std::make_pair(1,4) ,std::make_pair(1,16),std::make_pair(64,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
+        saxpy_config conf(std::make_pair(1,8) ,std::make_pair(1,16),std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
         viennacl::generator::autotune::benchmark(timings,vec(v1) = vec(v2) + vec(v3),conf);
         std::cout << std::endl;
         std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
@@ -152,19 +155,32 @@ void autotune(){
     {
         std::map<double, inprod_config::profile_t> timings;
         std::cout << "* Tuning Inner Product" << std::endl;
-        inprod_config conf(std::make_pair(1,4)
-                    ,std::make_pair(128,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
-                    ,std::make_pair(64,512));
+        inprod_config conf(std::make_pair(1,8)
+                    ,std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
+                    ,std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
         viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),conf);
         std::cout << std::endl;
         std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
+
+
+        viennacl::generator::autotune::Timer t;
+        s=viennacl::linalg::inner_prod(v1,v2);
+        viennacl::backend::finish();
+
+        t.start();
+        s= viennacl::linalg::inner_prod(v1,v2);
+        viennacl::backend::finish();
+        double vcl_time = t.get();
+
+        std::cout << "ViennaCL : " << vcl_time << std::endl;
+
     }
 }
 
 int main(){
     platforms_type platforms = viennacl::ocl::get_platforms();
     size_t num_platforms = platforms.size();
-	for(unsigned int k=0 ; k < num_platforms ; ++k)
+    for(unsigned int k=0 ; k < num_platforms ; ++k)
 	{
 		viennacl::ocl::platform pf(k);
 		viennacl::ocl::set_context_platform_index(k,k);

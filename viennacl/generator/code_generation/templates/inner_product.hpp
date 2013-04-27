@@ -98,9 +98,9 @@ public:
                 kss << (*it)->scalartype() << " " << sum_name << " = 0;" << std::endl;
             }
             std::string size = (*vectors_.begin())->size();
-            kss << "unsigned int chunk_size = " << size << "/get_num_groups(0) ;" << std::endl;
+            kss << "unsigned int chunk_size = (" << size << "+get_num_groups(0)-1)/get_num_groups(0);" << std::endl;
             kss << "unsigned int chunk_start = get_group_id(0)*chunk_size;" << std::endl;
-            kss << "unsigned int chunk_end = min((int)((1+get_group_id(0))*chunk_size), (int)" << size << ");" << std::endl;
+            kss << "unsigned int chunk_end = min(chunk_start+chunk_size, " << size << ");" << std::endl;
             kss << "for(unsigned int i = chunk_start + get_local_id(0) ; i < chunk_end ; i += get_local_size(0)){" << std::endl;
             kss.inc_tab();
 

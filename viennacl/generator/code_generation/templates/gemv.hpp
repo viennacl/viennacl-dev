@@ -115,7 +115,7 @@ public:
                 prod->rhs().access_index(0,"c","0");
 
 
-                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->generate(0)) << ";" << std::endl;
+                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->binary_vector_expression_infos_base::generate(0)) << ";" << std::endl;
 
                 kss.dec_tab();
                 kss << "}" << std::endl;

@@ -397,7 +397,7 @@ namespace viennacl
         const unsigned int ALIGNMENT = viennacl::result_of::alignment<V1>::value;
         
         static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
+        viennacl::vector<value_type> temp = viennacl::zero_vector<value_type>(work_groups);
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);

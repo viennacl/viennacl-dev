@@ -308,7 +308,10 @@ namespace viennacl
                 accessor_.get_kernel_arguments(args);
             }
             std::string repr() const{
-                return "vec"+accessor_.repr();
+                return "vec"+repr_of<SCALARTYPE>::value()+accessor_.repr();
+            }
+            std::string simplified_repr() const{
+                return "vec"+repr_of<SCALARTYPE>::value();
             }
             void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
                 assert(ind1=="0");

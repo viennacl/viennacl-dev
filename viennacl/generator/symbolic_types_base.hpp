@@ -104,10 +104,10 @@ namespace viennacl{
             std::string name() const { return lhs_->name() + op_->name() + rhs_->name(); }
             std::string repr() const { return op_->name() + "("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const {
-                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(opa))
-                    return "assign(" + lhs_->repr() + "," + rhs_->repr() + ")";
+                if(assignment_op_infos_base* opa = dynamic_cast<assignment_op_infos_base*>(op_.get()))
+                    return "assign(" + lhs_->simplified_repr() + "," + rhs_->simplified_repr() + ")";
                 else
-                    return lhs_->repr();
+                    return lhs_->simplified_repr();
             }
             void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
                 lhs_->bind(shared_infos,prof);
@@ -409,6 +409,8 @@ namespace viennacl{
                 binary_scalar_expression_infos_base::get_kernel_arguments(args);
                 args.push_back(handle_);
             }
+            std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
+            std::string simplified_repr() const { return "inprod";  }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
