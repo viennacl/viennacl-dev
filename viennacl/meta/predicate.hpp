@@ -90,109 +90,6 @@ namespace viennacl
     //{
     //  enum { value = (is_scalar<T>::value || is_cpu_scalar<T>::value || is_flip_sign_scalar<T>::value )};
     //};
-  
-  
-    //
-    // is_vector
-    //
-    //template <typename T>
-    //struct is_vector
-    //{
-    //  enum { value = false };
-    //};
-    
-    template <typename ScalarType, unsigned int ALIGNMENT>
-    struct is_vector<viennacl::vector<ScalarType, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-    
-    //
-    // is_any_dense_nonstructured_vector
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_vector
-    //{
-    //  enum { value = false };
-    //};
-    
-    template <typename ScalarType, unsigned int ALIGNMENT>
-    struct is_any_dense_nonstructured_vector<viennacl::vector<ScalarType, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-    template <typename T>
-    struct is_any_dense_nonstructured_vector<viennacl::vector_range<T> >
-    {
-      enum { value = true };
-    };
-    
-    template <typename T>
-    struct is_any_dense_nonstructured_vector<viennacl::vector_slice<T> >
-    {
-      enum { value = true };
-    };
-    
-    
-    //
-    // is_matrix
-    //
-    //template <typename T>
-    //struct is_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename ScalarType, typename F, unsigned int ALIGNMENT>
-    struct is_matrix<viennacl::matrix<ScalarType, F, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-
-    //
-    // is_any_dense_nonstructured_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename ScalarType, typename F, unsigned int ALIGNMENT>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix<ScalarType, F, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-    template <typename T>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix_range<T> >
-    {
-      enum { value = true };
-    };
-    
-    template <typename T>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix_slice<T> >
-    {
-      enum { value = true };
-    };
-
-    //
-    // is_any_dense_nonstructured_transposed_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_transposed_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename T>
-    struct is_any_dense_nonstructured_transposed_matrix< viennacl::matrix_expression<const T, const T, op_trans> >
-    {
-      enum { value = is_any_dense_nonstructured_matrix<T>::value };
-    };
-    
 
     //
     // is_row_major
@@ -281,15 +178,6 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
-    //
-    // is_any_dense_structured_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_structured_matrix
-    //{
-    //  enum { value = viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value };
-    //};
     
     
     
@@ -387,26 +275,6 @@ namespace viennacl
       enum { value = true };
     };
 
-    
-    
-    
-    //
-    // is_any_matrix
-    //
-    //template <typename T>
-    //struct is_any_matrix
-    //{
-    //  enum { value =    viennacl::is_any_dense_nonstructured_matrix<T>::value
-    //                 || viennacl::is_any_sparse_matrix<T>::value
-    //                 || viennacl::is_any_dense_structured_matrix<T>::value 
-    //                 };
-    //};
-
-    //template <typename T>
-    //struct is_any_transposed_matrix
-    //{
-    //  enum { value = viennacl::is_any_dense_nonstructured_transposed_matrix<T>::value };
-    //};
     
     //////////////// Part 2: Operator predicates ////////////////////
     

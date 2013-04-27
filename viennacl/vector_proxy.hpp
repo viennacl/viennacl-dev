@@ -54,28 +54,7 @@ namespace viennacl
        : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
                    
       
-      /** @brief Operator overload for v1 = A * v2, where v1 and v2 are vector ranges and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type &>::type
-      operator=(const vector_expression< const M1, const V1, op_prod> & proxy)
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        return *this;
-      }
-      
       using base_type::operator=;
-      
-      
-      /** @brief Sign flip for the vector range. Emulated to be equivalent to -1.0 * vector */
-      vector_expression<const vector_base<cpu_value_type>, const cpu_value_type, op_prod> operator-() const
-      {
-        return vector_expression<const vector_base<cpu_value_type>, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
-      }
       
   };
   
@@ -197,31 +176,9 @@ namespace viennacl
       vector_slice(VectorType & v, slice const & entry_slice) 
           : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
                    
-      
-      /** @brief Operator overload for v1 = A * v2, where v1 and v2 are vector slices and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      template <typename M1, typename V1>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    self_type &>::type
-      operator=(const vector_expression< const M1,
-                                         const V1,
-                                         op_prod> & proxy)
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        return *this;
-      }
 
       using base_type::operator=;
 
-      /** @brief Sign flip for the vector range. Emulated to be equivalent to -1.0 * vector */
-      vector_expression<const vector_base<cpu_value_type>, const cpu_value_type, op_prod> operator-() const
-      {
-        return vector_expression<const vector_base<cpu_value_type>, const cpu_value_type, op_prod>(*this, cpu_value_type(-1.0));
-      }
-      
   };
   
   

@@ -266,36 +266,6 @@ namespace viennacl
   };
   
   template <typename T>
-  struct is_vector
-  {
-    enum { value = false };
-  };
-
-  template <typename T>
-  struct is_any_dense_nonstructured_vector
-  {
-    enum { value = false };
-  };
-  
-  template <typename T>
-  struct is_matrix
-  {
-    enum { value = false };
-  };
-
-  template <typename T>
-  struct is_any_dense_nonstructured_matrix
-  {
-    enum { value = false };
-  };
-  
-  template <typename T>
-  struct is_any_dense_nonstructured_transposed_matrix
-  {
-    enum { value = false };
-  };
-  
-  template <typename T>
   struct is_row_major
   {
     enum { value = false };
@@ -337,22 +307,6 @@ namespace viennacl
   {
     enum { value = viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value };
   };
-  
-  template <typename T>
-  struct is_any_matrix
-  {
-    enum { value =    viennacl::is_any_dense_nonstructured_matrix<T>::value
-                    || viennacl::is_any_sparse_matrix<T>::value
-                    || viennacl::is_any_dense_structured_matrix<T>::value 
-                    };
-  };
-
-  template <typename T>
-  struct is_any_transposed_matrix
-  {
-    enum { value = viennacl::is_any_dense_nonstructured_transposed_matrix<T>::value };
-  };
-  
   
   
   enum memory_types
