@@ -3,6 +3,19 @@
 
 \section*{Version 1.4.x}
 
+\subsection*{Version 1.4.2}
+This is a maintenance release, particularly resolving compilation problems with Visual Studio 2012.
+\begin{itemize}
+ \item Largely refactored the internal code base, unifying code for \lstinline|vector|, \lstinline|vector_range|, and \lstinline|vector_slice|.
+       Similar code refactoring was applied to \lstinline|matrix|, \lstinline|matrix_range|, and \lstinline|matrix_slice|.
+       This not only resolves the problems in VS 2012, but also leads to shorter compilation times and a smaller code base.
+ \item Improved performance of matrix-vector products of \lstinline|compressed_matrix| on CPUs using OpenCL.
+ \item Resolved a bug which shows up if certain rows and columns of a \lstinline|compressed_matrix| are empty and the matrix is copied back to host.
+ \item Fixed a bug and improved performance of GMRES. Thanks to Ivan Komarov for reporting via sourceforge.
+ \item Added additional Doxygen documentation.
+\end{itemize}
+
+
 \subsection*{Version 1.4.1}
 This release focuses on improved stability and performance on AMD devices rather than introducing new features:
 \begin{itemize}
