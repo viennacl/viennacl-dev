@@ -484,19 +484,19 @@ namespace viennacl
       }
       
       
-      //read-write access to an element of the vector
-      /** @brief Read-write access to a single element of the vector
+      //read-write access to an element of the matrix/matrix_range/matrix_slice
+      /** @brief Read-write access to a single element of the matrix/matrix_range/matrix_slice
       */
       entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index)
       {
-        return entry_proxy<SCALARTYPE>(F::mem_index(row_index, col_index, internal_size1(), internal_size2()), elements_);
+        return entry_proxy<SCALARTYPE>(F::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
       }
       
-      /** @brief Read access to a single element of the vector
+      /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
       */
-      entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index) const
+      const_entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index) const
       {
-        return entry_proxy<SCALARTYPE>(F::mem_index(row_index, col_index, internal_size1(), internal_size2()), elements_);
+        return const_entry_proxy<SCALARTYPE>(F::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
       }
       
       //

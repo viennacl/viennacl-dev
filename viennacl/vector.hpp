@@ -741,22 +741,22 @@ namespace viennacl
   
       /** @brief Read access to a single element of the vector
       */
-      const entry_proxy<SCALARTYPE> operator()(size_type index) const
+      const_entry_proxy<SCALARTYPE> operator()(size_type index) const
       {
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
         
-        return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
       }
       
       /** @brief Read access to a single element of the vector
       */
-      const entry_proxy<SCALARTYPE> operator[](size_type index) const
+      const_entry_proxy<SCALARTYPE> operator[](size_type index) const
       {
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
         
-        return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
       }
       
       //
