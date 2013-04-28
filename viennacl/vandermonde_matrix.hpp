@@ -63,6 +63,7 @@ namespace viennacl {
         explicit vandermonde_matrix(std::size_t rows, std::size_t cols) : elements_(rows)
         {
           assert(rows == cols && bool("Vandermonde matrix must be square in this release!"));
+          (void)cols;  // avoid 'unused parameter' warning in optimized builds
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
         }
 
