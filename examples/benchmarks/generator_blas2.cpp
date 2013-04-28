@@ -26,6 +26,7 @@
 #define NDEBUG
 #endif
 
+//#define VIENNACL_DEBUG_ALL
 //#define VIENNACL_DEBUG_BUILD
 
 //
@@ -93,19 +94,8 @@ double run_benchmark(size_t matrix_size)
     viennacl::fast_copy(stl_C,
                         vcl_C);
 
-    {
-    Timer timer;
-    vcl_A = viennacl::linalg::prod(vcl_B,vcl_C);
-    viennacl::backend::finish();
-    timer.start();
-    vcl_A = viennacl::linalg::prod(vcl_B,vcl_C);
-    viennacl::backend::finish();
-    std::cout << timer.get() << std::endl;
-    }
-
     viennacl::generator::custom_operation op;
     op.add(dva_t(vcl_A) = viennacl::generator::prod(dmb_t(vcl_B), dvc_t(vcl_C)));
-    op.program();
     op.execute();
     viennacl::backend::finish();
 

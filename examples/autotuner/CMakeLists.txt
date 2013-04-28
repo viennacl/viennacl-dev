@@ -2,7 +2,7 @@ include_directories(${PROJECT_SOURCE_DIR}/external)
 
 if (ENABLE_OPENCL)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  foreach(par blas1)
+  foreach(par blas1 blas2)
     set(n ${par}_tuning)
     if(par STREQUAL parameter_reader)
       set(n ${par})

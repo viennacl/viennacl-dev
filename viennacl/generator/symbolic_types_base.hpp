@@ -389,7 +389,8 @@ namespace viennacl{
         class matvec_prod_infos_base : public binary_vector_expression_infos_base{
         public:
             matvec_prod_infos_base( infos_base * lhs, binary_op_infos_base* op, infos_base * rhs) : binary_vector_expression_infos_base(lhs,new mul_type,rhs), op_reduce_(op){            }
-            std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
+            std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
+            std::string simplified_repr() const { return "prod("+lhs_->simplified_repr() + "," + rhs_->simplified_repr() +")"; }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
@@ -410,7 +411,7 @@ namespace viennacl{
                 args.push_back(handle_);
             }
             std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
-            std::string simplified_repr() const { return "inprod";  }
+            std::string simplified_repr() const { return "prod("+lhs_->simplified_repr() + "," + rhs_->simplified_repr() +")"; }
             binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }

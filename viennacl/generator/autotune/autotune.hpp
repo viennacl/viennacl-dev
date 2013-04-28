@@ -24,10 +24,12 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
 
     unsigned int n_runs = 5;
 
+    //Skips if use too much local memory.
     viennacl::generator::custom_operation op(operation);
     op.operations_manager().override_model(prof);
     viennacl::ocl::program & pgm = op.program();
     viennacl::ocl::kernel & k = pgm.get_kernel("_k0");
+
 
 
     //Anticipates kernel failure
@@ -55,12 +57,15 @@ template<class OpT, class ConfigT>
 void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, ConfigT & config){
 
     viennacl::ocl::device const & dev = viennacl::ocl::current_device();
+    size_t dev_lsize = viennacl::ocl::info<CL_DEVICE_LOCAL_MEM_SIZE>(viennacl::ocl::current_device().id());
     benchmark_impl(timings,dev,op,config.get_current());
     while(config.has_next()){
         std::cout << '.' << std::flush;
         config.update();
+        if(config.local_memory_used() > dev_lsize) continue;
         benchmark_impl(timings,dev,op,config.get_current());
     }
+    std::cout << "Done" << std::endl;
 }
 
 template<class OpT, class ProfT>

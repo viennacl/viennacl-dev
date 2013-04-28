@@ -59,6 +59,8 @@ public:
         }
     }
 
+    size_t local_memory_used(){ return 0; }
+
     profile_t get_current(){
         return profile_t(current_a_,current_u_,current_ls_);
     }
@@ -107,6 +109,8 @@ public:
             }
         }
     }
+
+    size_t local_memory_used(){ return 0; }
 
     profile_t get_current(){
         return profile_t(current_a_,current_groupsize_,current_numgroups_);

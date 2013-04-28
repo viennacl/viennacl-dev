@@ -16,10 +16,12 @@ class profile : public optimization_profile{
 public:
 
     profile(){
-        m_ = 32;
-        k_ = 32;
-        num_groups_0_ = 1024;
+        m_ = 64;
+        k_ = 16;
+        num_groups_0_ = 64;
     }
+
+    profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : m_(m), k_(k), num_groups_0_(num_groups_0){ }
 
     std::pair<size_t,size_t> local_work_size() const{
         return std::make_pair(m_,k_);
@@ -45,6 +47,7 @@ public:
         return oss.str();
     }
 
+
 private:
     unsigned int m_;
     unsigned int k_;
@@ -67,6 +70,7 @@ public:
 
     void operator()(kernel_generation_stream& kss){
             mat_infos_base* first_matrix = *matrices_.begin();
+            unsigned int alignment = first_matrix->alignment();
             matvec_prod_infos_base * first_prod = *prods_.begin();
             std::string scalartype = first_matrix->scalartype();
             std::string internal_size1 = first_matrix->internal_size1();
@@ -113,9 +117,12 @@ public:
 
                 prod->lhs().access_index(0,"r","c");
                 prod->rhs().access_index(0,"c","0");
+//                prod->fetch(0,kss);
 
 
-                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->binary_vector_expression_infos_base::generate(0)) << ";" << std::endl;
+//                for(unsigned int a=0; a<alignment;++a){
+                    kss << sum_name << " = " << op_reduce.generate(sum_name,prod->binary_vector_expression_infos_base::generate(0)) << ";" << std::endl;
+//                }
 
                 kss.dec_tab();
                 kss << "}" << std::endl;
