@@ -134,7 +134,7 @@ namespace viennacl
           
           ScalarType hh_vec_0 = (input_j <= 0) ? (input_j - mu) : (-sigma / (input_j + mu));
           
-          beta = 2.0 * hh_vec_0 * hh_vec_0 / (sigma + hh_vec_0 * hh_vec_0);
+          beta = ScalarType(2) * hh_vec_0 * hh_vec_0 / (sigma + hh_vec_0 * hh_vec_0);
           
           //divide hh_vec by its diagonal element hh_vec_0
           hh_vec /= hh_vec_0;
