@@ -76,6 +76,12 @@ namespace viennacl
         
       }
       
+      /** @brief Creates an array of the specified size on the CUDA device. If the second argument is provided, the buffer is initialized with data from that pointer.
+       * 
+       * @param size_in_bytes   Number of bytes to allocate
+       * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
+       * 
+       */
       inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         void * dev_ptr = NULL;
@@ -94,6 +100,15 @@ namespace viennacl
         return new_handle;
       }
     
+    
+      /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' on the CUDA device to memory starting at address 'dst_buffer + dst_offset' on the same CUDA device.
+       *  
+       *  @param src_buffer     A smart pointer to the begin of an allocated CUDA buffer
+       *  @param dst_buffer     A smart pointer to the end of an allocated CUDA buffer
+       *  @param src_offset     Offset of the first byte to be written from the address given by 'src_buffer' (in bytes)
+       *  @param dst_offset     Offset of the first byte to be written to the address given by 'dst_buffer' (in bytes)
+       *  @param bytes_to_copy  Number of bytes to be copied
+       */
       inline void memory_copy(handle_type const & src_buffer,
                               handle_type & dst_buffer,
                               std::size_t src_offset,
@@ -108,7 +123,15 @@ namespace viennacl
                    bytes_to_copy,
                    cudaMemcpyDeviceToDevice);
       }
-      
+
+
+      /** @brief Writes data from main RAM identified by 'ptr' to the CUDA buffer identified by 'dst_buffer'
+       * 
+       * @param dst_buffer    A smart pointer to the beginning of an allocated CUDA buffer
+       * @param dst_offset    Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
+       * @param bytes_to_copy Number of bytes to be copied
+       * @param ptr           Pointer to the first byte to be written
+       */
       inline void memory_write(handle_type & dst_buffer,
                                std::size_t dst_offset,
                                std::size_t bytes_to_copy,
@@ -123,6 +146,13 @@ namespace viennacl
       }
       
       
+      /** @brief Reads data from a CUDA buffer back to main RAM.
+       * 
+       * @param src_buffer         A smart pointer to the beginning of an allocated CUDA source buffer
+       * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
+       * @param bytes_to_copy      Number of bytes to be read
+       * @param ptr                Location in main RAM where to read data should be written to
+       */
       inline void memory_read(handle_type const & src_buffer,
                               std::size_t src_offset,
                               std::size_t bytes_to_copy,

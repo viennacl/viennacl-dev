@@ -52,6 +52,7 @@ namespace viennacl
       //
       // Retrieve alignment from vector
       //
+      /** @brief Retrieves the alignment from a vector. Deprecated - will be replaced by a pure runtime facility in the future. */
       template <typename T>
       struct alignment
       {
@@ -59,6 +60,7 @@ namespace viennacl
         enum { value = 1 };
       };
       
+      /** \cond */
       template <typename T>
       struct alignment<const T>
       {
@@ -115,16 +117,19 @@ namespace viennacl
       {
         enum { value = alignment<LHS>::value };
       };
+      /** \endcond */
       
       //
       // Majority specifier for matrices (row_major, column_major)
       //
+      /** @brief Returns the orientation functor tag (either row_major or column_major) of a matrix */
       template <typename T>
       struct orientation_functor
       {
         typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_MATRIX     type;
       };
 
+      /** \cond */
       template <typename T>
       struct orientation_functor<const T>
       {
@@ -154,17 +159,20 @@ namespace viennacl
       {
         typedef typename orientation_functor<LHS>::type  type;
       };
+      /** \endcond */
       
       
       //
       // Retrieve size_type 
       //
+      /** @brief Generic meta-function for retrieving the size_type associated with type T */
       template <typename T>
       struct size_type
       {
         typedef typename T::size_type   type;
       };
 
+      /** \cond */
       #ifdef VIENNACL_WITH_EIGEN
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >
@@ -190,16 +198,19 @@ namespace viennacl
         typedef std::size_t   type;
       };
       #endif
+      /** \endcond */
       
       //
       // Retrieve value_type:
       //
+      /** @brief Generic helper function for retrieving the value_type associated with type T */
       template <typename T>
       struct value_type
       {
         typedef typename T::value_type    type; 
       };
       
+      /** \cond */
 #ifdef VIENNACL_WITH_EIGEN  
       template <>
       struct value_type<Eigen::MatrixXf>
@@ -232,17 +243,20 @@ namespace viennacl
       };
       
 #endif
+      /** \endcond */
       
       
       //
       // Retrieve cpu value_type:
       //
+      /** @brief Helper meta function for retrieving the main RAM-based value type. Particularly important to obtain T from viennacl::scalar<T> in a generic way. */
       template <typename T>
       struct cpu_value_type
       {
         typedef typename T::ERROR_CANNOT_DEDUCE_CPU_SCALAR_TYPE_FOR_T    type; 
       };
 
+      /** \cond */
       template <typename T>
       struct cpu_value_type<const T>
       {
@@ -333,7 +347,6 @@ namespace viennacl
       {
         typedef typename cpu_value_type<T1>::type    type; 
       };
-      
       
       
       
@@ -438,6 +451,7 @@ namespace viennacl
       {
         typedef const double    type;
       };
+      /** \endcond */
       
     } //namespace result_of
 } //namespace viennacl

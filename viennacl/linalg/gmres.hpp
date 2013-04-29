@@ -110,6 +110,7 @@ namespace viennacl
         * @param hh_vec          The householder vector defining the relection (I - beta * hh_vec * hh_vec^T)
         * @param beta            The coefficient beta in (I - beta  * hh_vec * hh_vec^T)
         * @param mu              The norm of the input vector part relevant for the reflection: norm_2(input_vec[j:size])
+        * @param j               Index of the last nonzero index in 'input_vec' after applying the reflection
       */
       template <typename VectorType, typename ScalarType>
       void gmres_setup_householder_vector(VectorType const & input_vec, VectorType & hh_vec, ScalarType & beta, ScalarType & mu, std::size_t j)

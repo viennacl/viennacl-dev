@@ -46,7 +46,7 @@ namespace viennacl
       typedef typename OCL_TYPE::ERROR_TEMPLATE_ARGUMENT_FOR_CLASS_INVALID   ErrorType;
     };
     
-    
+    /** \cond */
     //cl_mem:
     template <>
     struct handle_inc_dec_helper<cl_mem>
@@ -141,6 +141,7 @@ namespace viennacl
         #endif
       }
     };
+    /** \endcond */
     
     /** @brief Handle class the effectively represents a smart pointer for OpenCL handles */
     template<class OCL_TYPE>

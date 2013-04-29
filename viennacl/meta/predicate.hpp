@@ -29,6 +29,8 @@
 
 namespace viennacl
 {
+    /** \cond */  //deactivate Doxygen parsing of the partial specializations
+
     //
     // is_cpu_scalar: checks for float or double
     //
@@ -275,68 +277,81 @@ namespace viennacl
       enum { value = true };
     };
 
+    /** \endcond */
     
     //////////////// Part 2: Operator predicates ////////////////////
     
     //
     // is_addition
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_add (for addition) */
     template <typename T>
     struct is_addition
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_addition<viennacl::op_add>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
     // is_subtraction
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_sub (for subtraction) */
     template <typename T>
     struct is_subtraction
     {
       enum { value = false };
     };
     
+    /** \cond */
     template <>
     struct is_subtraction<viennacl::op_sub>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
     // is_product
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_prod (for products/multiplication) */
     template <typename T>
     struct is_product
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_product<viennacl::op_prod>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
-    // is_subtraction
+    // is_division
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_div (for division) */
     template <typename T>
     struct is_division
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_division<viennacl::op_div>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     
 } //namespace viennacl

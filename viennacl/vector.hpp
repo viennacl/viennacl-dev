@@ -333,9 +333,14 @@ namespace viennacl
       */
       explicit vector_base() : size_(0), start_(0), stride_(1) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
   
-      /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT')
-      *
-      * @param vec_size   The length (i.e. size) of the vector.
+      /** @brief An explicit constructor for wrapping an existing vector into a vector_range or vector_slice.
+       * 
+       * 
+       *
+       * @param h          The existing memory handle from a vector/vector_range/vector_slice
+       * @param vec_size   The length (i.e. size) of the buffer
+       * @param vec_start  The offset from the beginning of the buffer identified by 'h'
+       * @param vec_stride Increment between two elements in the original buffer (in multiples of SCALARTYPE)
       */
       explicit vector_base(viennacl::backend::mem_handle & h,
                            size_type vec_size, size_type vec_start, difference_type vec_stride) : size_(vec_size), start_(vec_start), stride_(vec_stride), elements_(h) {}
@@ -351,6 +356,7 @@ namespace viennacl
         }
       }
   
+      /** @brief Creates a buffer of size 'vec_size' in the specified memory domain an uses this as the active domain */
       explicit vector_base(size_type vec_size, viennacl::memory_types mem_type) : size_(vec_size), start_(0), stride_(1)
       {
         elements_.switch_active_handle_id(mem_type);
