@@ -14,78 +14,27 @@
 
 #define N_RUNS 5
 
-typedef float ScalarType;
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
-static const unsigned int size = 4096;
+static const unsigned int size = 2048;
 
 
-class blas2_config{
-public:
+template<class ScalarType>
+struct blas2_config{
     typedef viennacl::generator::code_generation::gemv::profile profile_t;
-
-    blas2_config(std::pair<unsigned int, unsigned int> minmax_a
-             ,std::pair<unsigned int, unsigned int> minmax_k
-           ,std::pair<unsigned int, unsigned int> minmax_m
-           ,std::pair<unsigned int, unsigned int> minmax_numgroups): minmax_a_(minmax_a)
-                                                                    , minmax_k_(minmax_k)
-                                                                    , minmax_m_(minmax_m)
-                                                                  ,minmax_numgroups_(minmax_numgroups){
-        current_a_ = minmax_a_.first;
-        current_k_ = minmax_k_.first;
-        current_m_ = minmax_m_.first;
-        current_numgroups_ = minmax_numgroups_.first;
-
-        has_next_ = true;
+    static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
+        return profile_t(params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
     }
-
-
-    bool has_next() const{
-        return current_a_<minmax_a_.second ||
-                current_k_<minmax_k_.second ||
-                current_m_<minmax_m_.second ||
-                current_numgroups_<minmax_numgroups_.second;
-    }
-
-    void update(){
-        current_a_*=2;
-        if(current_a_>minmax_a_.second){
-            current_a_=minmax_a_.first;
-            current_k_*=2;
-            if(current_k_>minmax_k_.second){
-                current_k_=minmax_k_.first;
-                current_m_*=2;
-                if(current_m_>minmax_m_.second){
-                    current_m_=minmax_m_.first;
-                    current_numgroups_*=2;
-                    if(current_numgroups_>minmax_numgroups_.second){
-                        current_numgroups_=minmax_numgroups_.first;
-                    }
-                }
-            }
-        }
-    }
-
-    size_t local_memory_used(){ return current_m_*(current_k_+1)*sizeof(ScalarType); }
-    profile_t get_current(){ return profile_t(current_m_, current_k_, current_numgroups_); }
-
-private:
-    unsigned int current_a_;
-    unsigned int current_k_;
-    unsigned int current_m_;
-    unsigned int current_numgroups_;
-
-    std::pair<unsigned int, unsigned int> minmax_a_;
-    std::pair<unsigned int, unsigned int> minmax_k_;
-    std::pair<unsigned int, unsigned int> minmax_m_;
-    std::pair<unsigned int, unsigned int> minmax_numgroups_;
-
-    bool has_next_;
+    static size_t local_mem_requirements(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
+        return params.at("local_size1").current() * (params.at("local_size2").current() + 1) * sizeof(ScalarType);
+     }
 };
 
-template<class Layout, class BoostLayout>
+
+
+template<class ScalarType, class Layout, class BoostLayout>
 void autotune(){
     typedef viennacl::generator::vector<ScalarType> vec;
     typedef viennacl::generator::matrix<viennacl::matrix<ScalarType, Layout> > mat;
@@ -108,11 +57,13 @@ void autotune(){
     viennacl::backend::finish();
 
 
-    std::map<double, blas2_config::profile_t> timings;
-    blas2_config conf(std::make_pair(1,1)
-                      ,std::make_pair(2,128)
-                      ,std::make_pair(2,128)
-                      ,std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
+    size_t max_size = viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id());
+    std::map<double,typename blas2_config<ScalarType>::profile_t> timings;
+    viennacl::generator::autotune::tuning_config< blas2_config<ScalarType> > conf;
+    //conf.add_tuning_param("alignment",1,1);
+    conf.add_tuning_param("local_size1",1,max_size);
+    conf.add_tuning_param("local_size2",1,max_size);
+    conf.add_tuning_param("num_groups",4,1024);
     viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(mat(m2),vec(v3)),conf);
     std::cout << std::endl;
     std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
@@ -132,7 +83,18 @@ int main(){
             std::cout << "-------------------" << std::endl;
             std::cout << it->name()<< std::endl;
 			std::cout << "-------------------" << std::endl;
-            autotune<viennacl::column_major, boost::numeric::ublas::column_major>();
+
+            std::cout << "scalartype : float" << std::endl;
+            std::cout << "-- Layout : row-major" << std::endl;
+            autotune<float, viennacl::row_major, boost::numeric::ublas::row_major>();
+            std::cout << "-- Layout : column-major" << std::endl;
+            autotune<float, viennacl::column_major, boost::numeric::ublas::column_major>();
+
+            std::cout << "scalartype : double" << std::endl;
+            std::cout << "-- Layout : row-major" << std::endl;
+            autotune<double, viennacl::row_major, boost::numeric::ublas::row_major>();
+            std::cout << "-- Layout : column-major" << std::endl;
+            autotune<double, viennacl::column_major, boost::numeric::ublas::column_major>();
 		}
 	}
 	

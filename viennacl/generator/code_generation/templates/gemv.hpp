@@ -110,14 +110,14 @@ public:
                 vec_infos_base * assigned = it->second.second.second;
                 kss << scalartype << " " << sum_name << " = 0;" << std::endl;
                 if(is_lhs_transposed)
-                    kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size1 << " ; c += get_global_size(1)){" << std::endl;
+                    kss << "for(unsigned int c = get_local_id(1) ; c < " << internal_size1 << " ; c += get_local_size(1)){" << std::endl;
                 else
-                    kss << "for(unsigned int c = get_global_id(1) ; c < " << internal_size2 << " ; c += get_global_size(1)){" << std::endl;
+                    kss << "for(unsigned int c = get_local_id(1) ; c < " << internal_size2 << " ; c += get_local_size(1)){" << std::endl;
                 kss.inc_tab();
 
                 prod->lhs().access_index(0,"r","c");
                 prod->rhs().access_index(0,"c","0");
-//                prod->fetch(0,kss);
+                prod->fetch(0,kss);
 
 
 //                for(unsigned int a=0; a<alignment;++a){

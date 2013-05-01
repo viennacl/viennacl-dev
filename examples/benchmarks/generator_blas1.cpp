@@ -38,10 +38,7 @@
 //
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/matrix_proxy.hpp"
-#include "viennacl/linalg/lu.hpp"
+#include "viennacl/linalg/inner_prod.hpp"
 
 #include "viennacl/generator/custom_operation.hpp"
 
@@ -51,80 +48,48 @@
 
 #include "benchmark-utils.hpp"
 
-#define N_RUNS 5
-#define MAX_SIZE 1e7
+#define N_RUNS 100
+#define MAX_SIZE 1e8
 
 template<typename ScalarType>
-std::pair<double, double> run_benchmark(size_t size)
+float run_benchmark(size_t size)
 {
-    std::pair<double, double> res;
+    float res;
     viennacl::vector<ScalarType> vcl_A(size);
     viennacl::vector<ScalarType> vcl_B(size);
-    viennacl::vector<ScalarType> vcl_C(size);
 
     viennacl::scalar<ScalarType> s(0);
 
     typedef viennacl::generator::vector< ScalarType > vec;
     typedef viennacl::generator::scalar< ScalarType > scal;
 
+    std::vector<ScalarType> stl_A(size);
     std::vector<ScalarType> stl_B(size);
-    std::vector<ScalarType> stl_C(size);
 
-    for (unsigned int i = 0; i < size; ++i) stl_B[i] = random<ScalarType>();
-    for (unsigned int i = 0; i < size; ++i)  stl_C[i] = random<ScalarType>();
 
+    for (unsigned int i = 0; i < size; ++i) stl_A[i] = random<ScalarType>();
+    for (unsigned int i = 0; i < size; ++i)  stl_B[i] = random<ScalarType>();
+
+    viennacl::fast_copy(stl_A,vcl_A);
     viennacl::fast_copy(stl_B,vcl_B);
-    viennacl::fast_copy(stl_C,vcl_C);
 
-    //SAXPY
-    {
-        viennacl::generator::custom_operation saxpy;
-        saxpy.add(vec(vcl_A) = vec(vcl_B) + vec(vcl_C));
-        saxpy.execute();
-        viennacl::backend::finish();
 
-        double time = 0;
-        for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-            Timer timer;
-            timer.start();
-            saxpy.execute();
-            viennacl::backend::finish();
-            time += timer.get();
-        }
-        res.first = time/(double)N_RUNS;
-    }
+    viennacl::generator::custom_operation inprod;
+    inprod.add(scal(s) = inner_prod(vec(vcl_A),2*vec(vcl_A)+vec(vcl_B)));
+    inprod.execute();
+    viennacl::backend::finish();
 
-    //INNER PRODUCT
-    {
-        viennacl::generator::custom_operation inprod;
-        inprod.add(scal(s) = inner_prod(vec(vcl_B),vec(vcl_C)));
+    Timer timer;
+    timer.start();
+    for(unsigned int r = 0 ; r < N_RUNS ; ++r){
         inprod.execute();
-        viennacl::backend::finish();
-
-        double time = 0;
-        for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-            Timer timer;
-            timer.start();
-            inprod.execute();
-            viennacl::backend::finish();
-            time += timer.get();
-        }
-        res.second = time/(double)N_RUNS;
     }
-
+    viennacl::backend::finish();
+    res = timer.get()/(double)N_RUNS;
     return res;
 }
 
 int main(int argc, char* argv[]){
-    std::vector<std::string> args(argv,argv+argc);
-    if(argc!=3){
-        std::cerr << "USAGE : PROGRAM_NAME DEVICE SCALARTYPE" << std::endl;
-        exit(1);
-    }
-
-    unsigned int requested_device = atoi(args[1].c_str());
-    std::string scalartype = args[2];
-
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;
@@ -143,31 +108,25 @@ int main(int argc, char* argv[]){
         devices_type dev = viennacl::ocl::current_context().devices();
         for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
 
-            if(current_device++ == requested_device ){
                 viennacl::ocl::switch_device(*it);
                 std::cout << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << "               Device Info" << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
-                std::cout << "Running GEMV for : " << scalartype << std::endl;
-
-                std::cout << "#Size \t SAXPY  \t Inner Product" << std::endl;
+                std::cout << "float:" << std::endl;
+                std::cout << "#Size \t Time" << std::endl;
                 for(unsigned int size = 1024 ; size <= MAX_SIZE ; size *= 2){
-                    std::pair<double,double> exec_time;
-                    if(scalartype=="float"){
-                        exec_time = run_benchmark<float>(size);
-                    }
-                    else if(scalartype=="double"){
-                        exec_time = run_benchmark<double>(size);
-                    }
-                    else{
-                        std::cerr << "Unknown Scalartype ... Aborting" << std::endl;
-                        exit(EXIT_FAILURE);
-                    }
-                    std::cout << size << "\t" << exec_time.first << "\t" << exec_time.second << " #"  << std::endl;
+                     float exec_time = run_benchmark<float>(size);
+                    std::cout << size << "\t" << exec_time << std::endl;
                 }
-            }
+                std::cout << std::endl;
+                std::cout << "double:" << std::endl;
+                std::cout << "#Size \t Time" << std::endl;
+                for(unsigned int size = 1024 ; size <= MAX_SIZE ; size *= 2){
+                     float exec_time = run_benchmark<double>(size);
+                    std::cout << size << "\t" << exec_time << std::endl;
+                }
         }
     }
     return 0;

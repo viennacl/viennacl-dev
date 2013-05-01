@@ -378,7 +378,8 @@ namespace viennacl{
                 binary_matrix_expression_infos_base(lhs,op,rhs){
             }
             void set_val_name(std::string const & val_name) { val_name_ = val_name; }
-            std::string simplified_repr() const { return binary_tree_infos_base::simplified_repr(); }
+            std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
+            std::string simplified_repr() const { return "prod("+lhs_->simplified_repr() + "," + rhs_->simplified_repr() +")"; }
             std::string val_name(unsigned int m, unsigned int n){ return val_name_ +  '_' + to_string(m) + '_' + to_string(n); }
             std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){ return res + " = " + op_->generate(res , lhs + "*" + rhs); }
         private:

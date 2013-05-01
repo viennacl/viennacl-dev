@@ -27,18 +27,20 @@ static  builtin_database_t make_database(){
         std::map<std::string,viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
         //BLAS 1
-            tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,128))));
-            tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(4,128,32))));
-            tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,128))));
+            tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,4,64))));
+            tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(8,128,128))));
+            tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,4,64))));
 
-            tmp.insert(std::make_pair("assign(vecd,vecd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,2,256))));
-            tmp.insert(std::make_pair("assign(pscald,prod(vecd,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(8,64,64))));
-            tmp.insert(std::make_pair("assign(matd,matd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,2,256))));
+            tmp.insert(std::make_pair("assign(vecd,vecd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,64))));
+            tmp.insert(std::make_pair("assign(pscald,prod(vecd,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(2,256,64))));
+            tmp.insert(std::make_pair("assign(matd,matd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,64))));
 
         //BLAS2
-            tmp.insert(std::make_pair("assign(vecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile>(new gemv::profile(32,8,256))));
-            tmp.insert(std::make_pair("assign(vecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile>(new gemv::profile(32,8,256))));
+            tmp.insert(std::make_pair("assign(vecf,prod(matfR,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(1,256,1024))));
+            tmp.insert(std::make_pair("assign(vecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(32,8,256))));
 
+            tmp.insert(std::make_pair("assign(vecd,prod(matdR,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(1,256,1024))));
+            tmp.insert(std::make_pair("assign(vecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(64,4,256))));
 
         //BLAS 3
         //Row * Row and analogs
@@ -114,18 +116,20 @@ static  builtin_database_t make_database(){
             std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
         //BLAS1
-            tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(4,1,64))));
-            tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(4,64,64))));
-            tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,2,128))));
+            tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,1,256))));
+            tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(4,64,512))));
+            tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,1,256))));
 
             tmp.insert(std::make_pair("assign(vecd,vecd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,64))));
-            tmp.insert(std::make_pair("assign(pscald,prod(vecd,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(2,128,64))));
+            tmp.insert(std::make_pair("assign(pscald,prod(vecd,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(2,64,512))));
             tmp.insert(std::make_pair("assign(matd,matd)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(2,1,64))));
 
-        //BLAS2
-            tmp.insert(std::make_pair("assign(pvecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(16,32,1024))));
-            tmp.insert(std::make_pair("assign(pvecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(64,4,128))));
+         //BLAS2
+            tmp.insert(std::make_pair("assign(vecf,prod(matfR,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(1,256,1024))));
+            tmp.insert(std::make_pair("assign(vecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(64,4,64))));
 
+            tmp.insert(std::make_pair("assign(vecd,prod(matdR,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(1,128,1024))));
+            tmp.insert(std::make_pair("assign(vecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(16,32,1024))));
 
 
         //Row * Row and analogs
@@ -206,18 +210,21 @@ static  builtin_database_t make_database(){
         std::map<std::string, viennacl::tools::shared_ptr<optimization_profile> > tmp;
 
      //BLAS1
-        tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(1,1,256))));
-        tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(2,32,64))));
+        tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(8,16,256))));
+        tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(8,8,512))));
         tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(4,16,64))));
 
-        tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(4,16,512))));
-        tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(3,32,32))));
-        tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(4,16,64))));
+        tmp.insert(std::make_pair("assign(vecf,vecf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(8,16,32))));
+        tmp.insert(std::make_pair("assign(pscalf,prod(vecf,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new inner_product::profile(8,8,512))));
+        tmp.insert(std::make_pair("assign(matf,matf)", viennacl::tools::shared_ptr<optimization_profile> ( new saxpy::profile(8,16,32))));
 
 
      //BLAS2
-        tmp.insert(std::make_pair("assign(pvecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(16,8,32))));
-        tmp.insert(std::make_pair("assign(pvecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(32,4,32))));
+        tmp.insert(std::make_pair("assign(vecf,prod(matfR,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(2,1,8))));
+        tmp.insert(std::make_pair("assign(vecf,prod(matfC,vecf))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(16,8,8))));
+
+        tmp.insert(std::make_pair("assign(vecd,prod(matdR,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(1,1,8))));
+        tmp.insert(std::make_pair("assign(vecd,prod(matdC,vecd))", viennacl::tools::shared_ptr<optimization_profile> ( new gemv::profile(8,16,16))));
 
      //BLAS3
         //Row * Row and analogs

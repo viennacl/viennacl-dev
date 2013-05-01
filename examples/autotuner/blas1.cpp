@@ -15,12 +15,11 @@
 
 #define N_RUNS 5
 
-typedef double ScalarType;
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
-static const unsigned int size = 1024*1024;
+static const unsigned int size = 4096*4096;
 
 
 class saxpy_config{
@@ -61,9 +60,7 @@ public:
 
     size_t local_memory_used(){ return 0; }
 
-    profile_t get_current(){
-        return profile_t(current_a_,current_u_,current_ls_);
-    }
+    profile_t get_current(){ return profile_t(current_a_,current_u_,current_ls_); }
 
 private:
     unsigned int current_u_;
@@ -126,59 +123,36 @@ private:
     std::pair<unsigned int, unsigned int> minmax_numgroups_;
 };
 
+template<class ScalarType>
 void autotune(){
     typedef viennacl::generator::vector<ScalarType> vec;
     typedef viennacl::generator::scalar<ScalarType> scal;
 
-    std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size);
+    std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size), cpu_v4(size);
     for(unsigned int i=0; i<size; ++i){
         cpu_v1[i]=0;
         cpu_v2[i]=rand()/(ScalarType)RAND_MAX;
         cpu_v3[i]=rand()/(ScalarType)RAND_MAX;
+        cpu_v4[i]=rand()/(ScalarType)RAND_MAX;
     }
 
-    viennacl::vector<ScalarType> v1(size), v2(size), v3(size);
+    viennacl::vector<ScalarType> v1(size), v2(size), v3(size), v4(size);
     viennacl::copy(cpu_v1,v1);
     viennacl::copy(cpu_v2,v2);
     viennacl::copy(cpu_v3,v3);
+    viennacl::copy(cpu_v4,v3);
     viennacl::backend::finish();
 
     viennacl::scalar<ScalarType> s = 0;
 
-
-
-    {
-        std::map<double, saxpy_config::profile_t> timings;
-        std::cout << "* Tuning SAXPY" << std::endl;
-        saxpy_config conf(std::make_pair(1,8) ,std::make_pair(1,16),std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
-        viennacl::generator::autotune::benchmark(timings,vec(v1) = vec(v2) + vec(v3),conf);
-        std::cout << std::endl;
-        std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
-    }
-
-    {
-        std::map<double, inprod_config::profile_t> timings;
-        std::cout << "* Tuning Inner Product" << std::endl;
-        inprod_config conf(std::make_pair(1,8)
-                    ,std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
-                    ,std::make_pair(32,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
-        viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),conf);
-        std::cout << std::endl;
-        std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
-
-
-        viennacl::generator::autotune::Timer t;
-        s=viennacl::linalg::inner_prod(v1,v2);
-        viennacl::backend::finish();
-
-        t.start();
-        s= viennacl::linalg::inner_prod(v1,v2);
-        viennacl::backend::finish();
-        double vcl_time = t.get();
-
-        std::cout << "ViennaCL : " << vcl_time << std::endl;
-
-    }
+    std::map<double, inprod_config::profile_t> timings;
+    std::cout << "* Tuning DOT" << std::endl;
+    inprod_config conf(std::make_pair(1,8)
+                ,std::make_pair(8,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()))
+                ,std::make_pair(8,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id())));
+    viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),conf);
+    std::cout << std::endl;
+    std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
 }
 
 int main(){
@@ -195,7 +169,10 @@ int main(){
             std::cout << "-------------------" << std::endl;
             std::cout << it->name()<< std::endl;
 			std::cout << "-------------------" << std::endl;
-            autotune();
+            std::cout << "float:" << std::endl;
+            autotune<float>();
+            std::cout << "double:" << std::endl;
+            autotune<double>();
 		}
 	}
 	

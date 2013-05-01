@@ -102,13 +102,13 @@ double run_benchmark(size_t matrix_size)
     viennacl::backend::finish();
 
     double res = 0;
+    Timer timer;
+    timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-        Timer timer;
-        timer.start();
         op.execute();
-        viennacl::backend::finish();
-        res += timer.get();
     }
+    viennacl::backend::finish();
+    res = timer.get();
 
     return res/N_RUNS;
 }

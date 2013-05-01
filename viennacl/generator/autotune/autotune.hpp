@@ -16,13 +16,59 @@ namespace generator{
 
 namespace autotune{
 
+struct tuning_param{
+public:
+    tuning_param(unsigned int min, unsigned int max) : current_(min), min_max_(min,max){ }
+    bool is_max() const { return current_ >= min_max_.second; }
+    bool inc(){
+        current_*=2;
+        if(current_<=min_max_.second) return false;
+        current_=min_max_.first;
+        return true;
+    }
+    unsigned int current() const{
+        return current_;
+    }
+private:
+    unsigned int current_;
+    std::pair<unsigned int, unsigned int> min_max_;
+};
+
+template<class ConfigT>
+class tuning_config{
+private:
+    typedef std::map<std::string, viennacl::generator::autotune::tuning_param> params_t;
+public:
+    typedef typename ConfigT::profile_t profile_t;
+
+    tuning_config(){ }
+    void add_tuning_param(std::string const & name, int min, int max){
+        params_.insert(std::make_pair(name,viennacl::generator::autotune::tuning_param(min,max)));
+    }
+    bool has_next() const{
+        bool res = false;
+        for(typename params_t::const_iterator it = params_.begin() ; it != params_.end() ; ++it) res = res || !it->second.is_max();
+        return res;
+    }
+    void update(){
+        for(typename params_t::iterator it = params_.begin() ; it != params_.end() ; ++it) if(it->second.inc()==false) break;
+    }
+    size_t local_memory_used(){
+        return ConfigT::local_mem_requirements(params_);
+    }
+    typename ConfigT::profile_t get_current(){
+        return ConfigT::create_profile(params_);
+    }
+private:
+    params_t params_;
+};
 
 template<class OpT, class ProfileT>
 void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, OpT const & operation, ProfileT const & prof){
 
     Timer t;
 
-    unsigned int n_runs = 5;
+    unsigned int n_runs = 10;
 
     //Skips if use too much local memory.
     viennacl::generator::custom_operation op(operation);
@@ -47,8 +93,8 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
     t.start();
     for(unsigned int n=0; n<n_runs ; ++n){
         op.execute();
-        viennacl::backend::finish();
     }
+    viennacl::backend::finish();
     exec_time = t.get()/(float)n_runs;
     timings.insert(std::make_pair(exec_time, ProfileT(prof)));
 }
@@ -65,7 +111,6 @@ void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT cons
         if(config.local_memory_used() > dev_lsize) continue;
         benchmark_impl(timings,dev,op,config.get_current());
     }
-    std::cout << "Done" << std::endl;
 }
 
 template<class OpT, class ProfT>

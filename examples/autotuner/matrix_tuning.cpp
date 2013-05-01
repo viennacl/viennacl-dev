@@ -27,6 +27,93 @@ typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
+template<class ScalarType>
+class blas3_config{
+public:
+    typedef viennacl::generator::code_generation::gemm::profile profile_t;
+
+    blas2_config(std::pair<unsigned int, unsigned int> minmax_a_
+
+    std::pair<unsigned int, unsigned int> minmax_ml_
+    std::pair<unsigned int, unsigned int> minmax_kl_
+    std::pair<unsigned int, unsigned int> minmax_nl_
+
+    std::pair<unsigned int, unsigned int> minmax_ms_
+    std::pair<unsigned int, unsigned int> minmax_ks_
+    std::pair<unsigned int, unsigned int> minmax_ns_
+
+    std::pair<unsigned int, unsigned int> minmax_lhs_shared_
+    std::pair<unsigned int, unsigned int> minmax_lhs_shared_): minmax_a_(minmax_a)
+                                                                    , minmax_k_(minmax_k)
+                                                                    , minmax_m_(minmax_m)
+                                                                  ,minmax_numgroups_(minmax_numgroups){
+        current_a_ = minmax_a_.first;
+        current_k_ = minmax_k_.first;
+        current_m_ = minmax_m_.first;
+        current_numgroups_ = minmax_numgroups_.first;
+
+        has_next_ = true;
+    }
+
+
+    bool has_next() const{
+        return current_a_<minmax_a_.second ||
+                current_k_<minmax_k_.second ||
+                current_m_<minmax_m_.second ||
+                current_numgroups_<minmax_numgroups_.second;
+    }
+
+    void update(){
+        current_a_*=2;
+        if(current_a_>minmax_a_.second){
+            current_a_=minmax_a_.first;
+            current_k_*=2;
+            if(current_k_>minmax_k_.second){
+                current_k_=minmax_k_.first;
+                current_m_*=2;
+                if(current_m_>minmax_m_.second){
+                    current_m_=minmax_m_.first;
+                    current_numgroups_*=2;
+                    if(current_numgroups_>minmax_numgroups_.second){
+                        current_numgroups_=minmax_numgroups_.first;
+                    }
+                }
+            }
+        }
+    }
+
+    size_t local_memory_used(){ return current_m_*(current_k_+1)*sizeof(ScalarType); }
+    profile_t get_current(){ return profile_t(current_m_, current_k_, current_numgroups_); }
+
+private:
+    unsigned int current_a_;
+
+    unsigned int current_ml_;
+    unsigned int current_kl_;
+    unsigned int current_nl_;
+
+    unsigned int current_ms_;
+    unsigned int current_ks_;
+    unsigned int current_ns_;
+
+    unsigned int current_is_lhs_shared_;
+    unsigned int current_is_rhs_shared_;
+
+    std::pair<unsigned int, unsigned int> minmax_a_;
+
+    std::pair<unsigned int, unsigned int> minmax_ml_;
+    std::pair<unsigned int, unsigned int> minmax_kl_;
+    std::pair<unsigned int, unsigned int> minmax_nl_;
+
+    std::pair<unsigned int, unsigned int> minmax_ms_;
+    std::pair<unsigned int, unsigned int> minmax_ks_;
+    std::pair<unsigned int, unsigned int> minmax_ns_;
+
+    std::pair<unsigned int, unsigned int> minmax_lhs_shared_;
+    std::pair<unsigned int, unsigned int> minmax_lhs_shared_;
+
+    bool has_next_;
+};
 
 
 struct config{
@@ -58,44 +145,6 @@ struct config{
     std::vector<bool> RHS_storages;
 };
 
-template<class OpT>
-void add_profile(OpT const & OP, viennacl::generator::code_generation::blas3_optimization_profile const & prof, viennacl::io::parameter_database & paras){
-    viennacl::generator::custom_operation op;
-    op.add(OP);
-
-    paras.add_kernel();
-    paras.add_data_node(viennacl::io::tag::type, viennacl::io::val::blas3::blas3);
-    paras.add_data_node(viennacl::io::tag::name, op.operations_manager().get_kernels_list().front().trees().front()->repr());
-
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::ml);
-    paras.add_data_node(viennacl::io::tag::value, prof.ml());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::kl);
-    paras.add_data_node(viennacl::io::tag::value, prof.kl());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::nl);
-    paras.add_data_node(viennacl::io::tag::value, prof.nl());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::ms);
-    paras.add_data_node(viennacl::io::tag::value, prof.ms());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::ks);
-    paras.add_data_node(viennacl::io::tag::value, prof.ks());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::ns);
-    paras.add_data_node(viennacl::io::tag::value, prof.ns());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::lhs_storage);
-    paras.add_data_node(viennacl::io::tag::value, prof.use_LHS_shared());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::blas3::rhs_storage);
-    paras.add_data_node(viennacl::io::tag::value, prof.use_RHS_shared());
-    paras.add_parameter();
-    paras.add_data_node(viennacl::io::tag::name, viennacl::io::tag::alignment);
-    paras.add_data_node(viennacl::io::tag::value, prof.alignment());
-}
-
 template<class NumericT, class MatTypeA, class MatTypeB, class MatTypeC>
 void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
     typedef NumericT ScalarTypeA;
@@ -125,8 +174,9 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
 template<class NumericT, class OpT, class MatTypeA, class MatTypeB, class MatTypeC>
 
 void benchmark(OpT const & operation, config conf, MatTypeA & A, MatTypeB & B, MatTypeC & C,
-                    std::list<viennacl::generator::code_generation::blas3_optimization_profile> & fastest_firsts){
+                    std::list<viennacl::generator::code_generation::gemm::profile> & fastest_firsts){
     viennacl::generator::autotune::timings_t timings;
+    std::map<double, viennacl::generator::code_generation::gemm::profile> timings;
     unsigned int size;
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
@@ -185,28 +235,28 @@ void run_autotune(viennacl::io::parameter_database & paras){
     typedef viennacl::matrix<NumericT, viennacl::row_major> VclMatA1;
     typedef viennacl::matrix<NumericT, viennacl::column_major> VclMatA2;
 
-    typedef viennacl::generator::dummy_matrix<VclMatA1> dma1_t;
-    typedef viennacl::generator::dummy_matrix<VclMatB1> dmb1_t;
-    typedef viennacl::generator::dummy_matrix<VclMatC1> dmc1_t;
+    typedef viennacl::generator::matrix<VclMatA1> dma1_t;
+    typedef viennacl::generator::matrix<VclMatB1> dmb1_t;
+    typedef viennacl::generator::matrix<VclMatC1> dmc1_t;
 
-    typedef viennacl::generator::dummy_matrix<VclMatA2> dma2_t;
-    typedef viennacl::generator::dummy_matrix<VclMatB2> dmb2_t;
-    typedef viennacl::generator::dummy_matrix<VclMatC2> dmc2_t;
+    typedef viennacl::generator::matrix<VclMatA2> dma2_t;
+    typedef viennacl::generator::matrix<VclMatB2> dmb2_t;
+    typedef viennacl::generator::matrix<VclMatC2> dmc2_t;
 
     config conf;
 
     if(viennacl::ocl::info<CL_DEVICE_TYPE>(viennacl::ocl::current_device().id()) == CL_DEVICE_TYPE_CPU){
-        conf.n_runs = 2;
-        conf.ml_min = 32; conf.ml_max=256;
-        conf.kl_min = 32; conf.kl_max=256;
-        conf.nl_min = 32; conf.nl_max=256;
+        conf.n_runs = 5;
+        conf.ml_min = 16; conf.ml_max=256;
+        conf.kl_min = 16; conf.kl_max=256;
+        conf.nl_min = 16; conf.nl_max=256;
         conf.ms_min = 2; conf.ms_max=16;
-        conf.ks_min = 2; conf.ks_max=8;
+        conf.ks_min = 2; conf.ks_max=16;
         conf.ns_min = 2; conf.ns_max=16;
-        conf.alignment_min = 1 ; conf.alignment_max = 8 ;
-    //    conf.LHS_storages.push_back(true);
+        conf.alignment_min = 1 ; conf.alignment_max = 4 ;
+        conf.LHS_storages.push_back(true);
         conf.LHS_storages.push_back(false);
-    //    conf.RHS_storages.push_back(true);
+        conf.RHS_storages.push_back(true);
         conf.RHS_storages.push_back(false);
         conf.min_unroll = 1;
         conf.max_unroll = 1;
@@ -246,21 +296,6 @@ void run_autotune(viennacl::io::parameter_database & paras){
     std::cout << "Getting best parameters..." << std::endl;
     benchmark<NumericT>(dma1_t(A1) = prod(dmb1_t(B1),dmc1_t(C1)),conf,A1,B1,C1,fastest_firsts);
     //--------------------------
-
-    std::cout << "Saving..." << std::endl;
-    //-----------Saves best parameters-------------//
-    add_profile(dma1_t(A1) = prod(dmb1_t(B1),dmc1_t(C1)),fastest_firsts.front(),paras);
-    add_profile(dma2_t(A2) = prod(dmb1_t(B1),dmc1_t(C1)),fastest_firsts.front(),paras);
-
-    //-----------Changing layout and transposing is equivalent to doing nothing-------------//
-    add_profile(dma1_t(A1) = prod(trans(dmb2_t(B2)),dmc1_t(C1)),fastest_firsts.front(),paras);
-    add_profile(dma2_t(A2) = prod(trans(dmb2_t(B2)),dmc1_t(C1)),fastest_firsts.front(),paras);
-
-    add_profile(dma1_t(A1) = prod(trans(dmb2_t(B2)),trans(dmc2_t(C2))),fastest_firsts.front(),paras);
-    add_profile(dma2_t(A2) = prod(trans(dmb2_t(B2)),trans(dmc2_t(C2))),fastest_firsts.front(),paras);
-
-    add_profile(dma1_t(A1) = prod(dmb1_t(B1),trans(dmc2_t(C2))),fastest_firsts.front(),paras);
-    add_profile(dma2_t(A2) = prod(dmb1_t(B1),trans(dmc2_t(C2))),fastest_firsts.front(),paras);
 
 
 }

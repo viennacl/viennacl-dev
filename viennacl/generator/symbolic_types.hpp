@@ -109,11 +109,22 @@ namespace viennacl
           unary_scalar_expression(SUB const & sub) :unary_scalar_expression_infos_base(new SUB(sub), new OP()){ }
       };
 
+      template<class ScalarType>
+      struct inner_product_tempories{
+          static std::map<cl_context, viennacl::vector<ScalarType> > map;
+      };
+
+      template<class ScalarType>
+      std::map<cl_context, viennacl::vector<ScalarType> > inner_product_tempories<ScalarType>::map;
+
       template<class LHS, class OP_REDUCE, class RHS>
       class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public inner_product_infos_base{
           typedef typename LHS::ScalarType ScalarType;
       public:
-           binary_scalar_expression(LHS const & lhs, RHS const & rhs):  inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs)), tmp_(1024){ }
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs):  inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
+            , tmp_(inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()]){
+                tmp_.resize(1024);
+           }
            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
                lhs_->bind(shared_infos,prof);
                rhs_->bind(shared_infos,prof);
@@ -126,7 +137,7 @@ namespace viennacl
                return false;
            }
       private:
-          viennacl::vector<ScalarType> tmp_;
+          viennacl::vector<ScalarType> & tmp_;
       };
 
       template<class SUB, class OP>

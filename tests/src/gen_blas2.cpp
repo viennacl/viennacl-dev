@@ -32,8 +32,8 @@
 //
 #define VIENNACL_WITH_UBLAS 1
 
-#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -101,8 +101,8 @@ int test( Epsilon const& epsilon) {
     ublas::matrix<NumericT> cC;
     ublas::matrix<NumericT> cD;
 
-    unsigned int size1 = 128;
-    unsigned int size2 = 128;
+    unsigned int size1 = 4096;
+    unsigned int size2 = 4096;
 
     NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
     viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
@@ -161,45 +161,45 @@ int test( Epsilon const& epsilon) {
         CHECK_RESULT(cy,y,y=A*x)
     }
 
-//    {
-//        std::cout << "x = trans(A)*y..." << std::endl;
-//        cx     =  ublas::prod(trans(cA),cy);
-//        generator::custom_operation op((dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y))));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cx,x,x=trans(A)*y)
-//    }
+    {
+        std::cout << "x = trans(A)*y..." << std::endl;
+        cx     =  ublas::prod(trans(cA),cy);
+        generator::custom_operation op((dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cx,x,x=trans(A)*y)
+    }
 
-//    {
-//        std::cout << "y = reduce_rows<max>(A)..." << std::endl;
-//        for(unsigned int i = 0 ; i < size1 ; ++i){
-//            NumericT current_max = -INFINITY;
-//            for(unsigned int j = 0 ; j < size2 ; ++j){
-//                current_max = std::max(current_max,cA(i,j));
-//            }
-//            cy(i) = current_max;
-//        }
-//        generator::custom_operation op((dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A))));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
-//    }
+    {
+        std::cout << "y = reduce_rows<max>(A)..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i){
+            NumericT current_max = -INFINITY;
+            for(unsigned int j = 0 ; j < size2 ; ++j){
+                current_max = std::max(current_max,cA(i,j));
+            }
+            cy(i) = current_max;
+        }
+        generator::custom_operation op((dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
+    }
 
 
-//    {
-//        std::cout << "x = reduce_cols<max>(A)..." << std::endl;
-//        for(unsigned int j = 0 ; j < size2 ; ++j){
-//            NumericT current_max = -INFINITY;
-//            for(unsigned int i = 0 ; i < size1 ; ++i){
-//                current_max = std::max(current_max,cA(i,j));
-//            }
-//            cx(j) = current_max;
-//        }
-//        generator::custom_operation op((dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A))));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cx,x,x = reduce_cols<max>(A))
-//    }
+    {
+        std::cout << "x = reduce_cols<max>(A)..." << std::endl;
+        for(unsigned int j = 0 ; j < size2 ; ++j){
+            NumericT current_max = -INFINITY;
+            for(unsigned int i = 0 ; i < size1 ; ++i){
+                current_max = std::max(current_max,cA(i,j));
+            }
+            cx(j) = current_max;
+        }
+        generator::custom_operation op((dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A))));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cx,x,x = reduce_cols<max>(A))
+    }
 
 
     return retval;
@@ -228,10 +228,10 @@ int main() {
         std::cout << "  Row-Major"      << std::endl;
         std::cout << "  --------------" << std::endl;
         retval = test<double, viennacl::row_major> (epsilon);
-//        std::cout << "  --------------" << std::endl;
-//        std::cout << "  Column-Major"   << std::endl;
-//        std::cout << "  --------------" << std::endl;
-//        retval &= test<double, viennacl::column_major> (epsilon);
+        std::cout << "  --------------" << std::endl;
+        std::cout << "  Column-Major"   << std::endl;
+        std::cout << "  --------------" << std::endl;
+        retval &= test<double, viennacl::column_major> (epsilon);
 
         if ( retval == EXIT_SUCCESS )
             std::cout << "# Test passed" << std::endl;
