@@ -550,7 +550,7 @@ int run_benchmark()
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
   
   std::cout << "------- GMRES solver (no preconditioner) on GPU, coordinate_matrix ----------" << std::endl;
-  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), bicgstab_ops);
+  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
 
   
   std::cout << "------- GMRES solver (ILUT preconditioner) using ublas ----------" << std::endl;

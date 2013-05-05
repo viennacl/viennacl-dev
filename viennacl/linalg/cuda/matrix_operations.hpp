@@ -52,16 +52,12 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
       
-      template <typename M1,
-                typename M2, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                  >::type
-      am(M1 & mat1, 
-         M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+      template <typename NumericT, typename F,
+                typename ScalarType1>
+      void am(matrix_base<NumericT, F> & mat1, 
+              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
 
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -71,7 +67,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           am_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                       static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -108,20 +104,13 @@ namespace viennacl
       }
       
       
-      template <typename M1,
-                typename M2, typename ScalarType1,
-                typename M3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      ambm(M1 & mat1, 
-          M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-          M3 const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      template <typename NumericT, typename F,
+                typename ScalarType1, typename ScalarType2>
+      void ambm(matrix_base<NumericT, F> & mat1, 
+                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
           
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -141,7 +130,7 @@ namespace viennacl
           temporary_beta = beta;
                                 
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           ambm_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                         static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -193,20 +182,13 @@ namespace viennacl
       }
       
       
-      template <typename M1,
-                typename M2, typename ScalarType1,
-                typename M3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      ambm_m(M1 & mat1,
-             M2 const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             M3 const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      template <typename NumericT, typename F, 
+                typename ScalarType1, typename ScalarType2>
+      void ambm_m(matrix_base<NumericT, F> & mat1,
+                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -226,7 +208,7 @@ namespace viennacl
           temporary_beta = beta;
                                 
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           ambm_m_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                           static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -280,16 +262,13 @@ namespace viennacl
 
       
       
-      template <typename M1, typename ScalarType>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_cpu_scalar<ScalarType>::value
-                                  >::type    
-      matrix_assign(M1 & mat, ScalarType s)
+      template <typename NumericT, typename F>
+      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         value_type alpha = s;                             
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           matrix_row_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                  static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -311,16 +290,13 @@ namespace viennacl
         }
       }
       
-      template <typename M1, typename ScalarType>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_cpu_scalar<ScalarType>::value
-                                  >::type    
-      matrix_diagonal_assign(M1 & mat, ScalarType s)
+      template <typename NumericT, typename F>
+      void matrix_diagonal_assign(matrix_base<NumericT, F> & mat, NumericT s)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
         value_type alpha = s;                             
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           matrix_row_diagonal_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                           static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -356,19 +332,16 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename MatrixType, typename VectorType1, typename VectorType2>
-      typename viennacl::enable_if<   viennacl::is_any_dense_nonstructured_matrix<MatrixType>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<VectorType1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<VectorType2>::value >::type
-      prod_impl(const MatrixType & mat, 
-                const VectorType1 & vec, 
-                      VectorType2 & result)
+      template <typename NumericT, typename F>
+      void prod_impl(const matrix_base<NumericT, F> & mat, 
+                     const vector_base<NumericT> & vec, 
+                           vector_base<NumericT> & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<VectorType1>::type        value_type;
+        typedef NumericT        value_type;
 
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
 
-        if (viennacl::is_row_major<MatrixType>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                            static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)), 
@@ -421,27 +394,21 @@ namespace viennacl
       * @param vec        The vector
       * @param result     The result vector
       */
-      template <typename M1, typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value 
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value 
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const M1,
-                                                   const M1,
-                                                   op_trans> & mat_trans,
-                const V1 & vec, 
-                      V2 & result)
+      template <typename NumericT, typename F>
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
+                     const vector_base<NumericT> & vec, 
+                           vector_base<NumericT> & result)
       {
         assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && bool("Size check failed for transposed matrix-vector product: size1(A^T) == size(result)"));
         assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && bool("Size check failed for transposed matrix-vector product: size2(A^T) == size(x)"));  //remember: mat is transposed!
         
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type    value_type;
+        typedef NumericT    value_type;
 
         
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
         
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           trans_vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat_trans.lhs()),
                                                  static_cast<unsigned int>(viennacl::traits::start1(mat_trans.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(mat_trans.lhs())), 
@@ -1344,16 +1311,12 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const T1 & A, 
-                const T2 & B, 
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT, F1> & A, 
+                     const matrix_base<NumericT, F2> & B, 
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
         assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(A, B): size1(A) != size1(C)"));
         assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(A, B): size2(A) != size1(B)"));
@@ -1377,18 +1340,14 @@ namespace viennacl
       * Implementation of C = prod(trans(A), B);
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const T1,
-                                                  const T1,
-                                                  op_trans> & A, 
-                const T2 & B, 
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>,
+                                                        const matrix_base<NumericT, F1>,
+                                                        op_trans> & A, 
+                     const matrix_base<NumericT, F2> & B, 
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
         //std::cout << "size2(A): " << viennacl::traits::size2(A.lhs()) << std::endl;
         //std::cout << "size1(C): " << viennacl::traits::size1(C) << std::endl;
@@ -1414,18 +1373,12 @@ namespace viennacl
       * Implementation of C = prod(A, trans(B));
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const T1 & A, 
-                const viennacl::matrix_expression< const T2,
-                                                  const T2,
-                                                  op_trans> & B,
-                      T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT, F1> & A, 
+                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
+                           matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
         assert( (viennacl::traits::size1(A)       == viennacl::traits::size1(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(A) != size1(C)"));
         assert( (viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs())) && bool("Size mismatch in C = prod(A, trans(B)): size2(A) != size2(B)"));
@@ -1444,16 +1397,12 @@ namespace viennacl
       * Implementation of C = prod(trans(A), trans(B));
       *
       */
-      template <typename T1, typename T2, typename T3, typename ScalarType >
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<T1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T2>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<T3>::value
-                                  >::type
-      prod_impl(const viennacl::matrix_expression< const T1, const T1, op_trans> & A,
-                const viennacl::matrix_expression< const T2, const T2, op_trans> & B,
-                T3 & C,
-                ScalarType alpha,
-                ScalarType beta)
+      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
+      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & A,
+                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
+                     matrix_base<NumericT, F3> & C,
+                     ScalarType alpha,
+                     ScalarType beta)
       {
         assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size2(A) != size1(C)"));
         assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(A) != size2(B)"));
@@ -1489,21 +1438,16 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename M1, typename S1, typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_scalar<S1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  >::type
-      scaled_rank_1_update(M1 & mat1,
-                    S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                    const V1 & vec1, 
-                    const V2 & vec2)
+      template <typename NumericT, typename F, typename S1>
+      void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
+                                S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                                const vector_base<NumericT> & vec1, 
+                                const vector_base<NumericT> & vec2)
       {
         assert( (viennacl::traits::size1(mat1) == viennacl::traits::size(vec1)) && bool("Size mismatch in scaled_rank_1_update: size1(A) != size(v1)"));
         assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef NumericT        value_type;
         
         unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                     + (reciprocal_alpha ?                2 : 0)
@@ -1513,7 +1457,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<M1>::value)
+        if (viennacl::is_row_major<F>::value)
         {
           scaled_rank1_update_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1), 
                                                        static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)), 

@@ -328,9 +328,9 @@ namespace viennacl
                                   );
         }
         
-        template<class SCALARTYPE, unsigned int ALIGNMENT>
-        void real_to_complex(viennacl::vector<SCALARTYPE, ALIGNMENT> const & in,
-                             viennacl::vector<SCALARTYPE, ALIGNMENT> & out,
+        template<class SCALARTYPE>
+        void real_to_complex(viennacl::vector_base<SCALARTYPE> const & in,
+                             viennacl::vector_base<SCALARTYPE> & out,
                              std::size_t size) 
         {
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
@@ -340,9 +340,9 @@ namespace viennacl
             viennacl::ocl::enqueue(kernel(in, out, static_cast<cl_uint>(size)));
         }
 
-        template<class SCALARTYPE, unsigned int ALIGNMENT>
-        void complex_to_real(viennacl::vector<SCALARTYPE, ALIGNMENT> const & in,
-                             viennacl::vector<SCALARTYPE, ALIGNMENT>& out,
+        template<class SCALARTYPE>
+        void complex_to_real(viennacl::vector_base<SCALARTYPE> const & in,
+                             viennacl::vector_base<SCALARTYPE>& out,
                              std::size_t size)
         {
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
@@ -352,8 +352,8 @@ namespace viennacl
             viennacl::ocl::enqueue(kernel(in, out, static_cast<cl_uint>(size)));
         }
 
-        template<class SCALARTYPE, unsigned int ALIGNMENT>
-        void reverse(viennacl::vector<SCALARTYPE, ALIGNMENT>& in)
+        template<class SCALARTYPE>
+        void reverse(viennacl::vector_base<SCALARTYPE>& in)
         {
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
             std::size_t size = in.size();

@@ -41,9 +41,8 @@ namespace viennacl
 
   namespace traits
   {
-    //
-    // Resize: Change the size of vectors and matrices
-    //
+
+    /** @brief Generic filler routine for setting an entry of a matrix to a particular value */
     template <typename MatrixType, typename SCALARTYPE>
     void fill(MatrixType & matrix, std::size_t row_index, std::size_t col_index, SCALARTYPE value)
     {
@@ -51,6 +50,7 @@ namespace viennacl
     }
     
     #ifdef VIENNACL_WITH_EIGEN
+    /** @brief Generic filler routine for setting an entry of a matrix to a particular value. Special case for Eigen sparse matrices. */
     template <typename T, int options, typename SCALARTYPE>
     inline void fill(Eigen::SparseMatrix<T, options> & m,
                      std::size_t row_index,

@@ -47,9 +47,9 @@ namespace viennacl
       
       namespace detail
       {
-        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
         void row_info(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & mat,
-                      vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                      vector_base<SCALARTYPE> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -72,10 +72,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class TYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & mat, 
-                     const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<TYPE> & vec,
+                           viennacl::vector_base<TYPE> & result)
       {
         viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
         viennacl::ocl::kernel & k = (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_CPU)
@@ -96,9 +96,9 @@ namespace viennacl
       * @param L    The matrix
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -118,9 +118,9 @@ namespace viennacl
       * @param L    The matrix
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & L,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -142,9 +142,9 @@ namespace viennacl
       * @param U    The matrix
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -164,9 +164,9 @@ namespace viennacl
       * @param U    The matrix
       * @param vec  The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(compressed_matrix<SCALARTYPE, MAT_ALIGNMENT> const & U,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -193,13 +193,13 @@ namespace viennacl
         //
         // block solves
         //
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & L, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
-                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::unit_lower_tag)
         {
           viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
@@ -215,13 +215,13 @@ namespace viennacl
         }
         
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & U, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
-                                 vector<ScalarType> const & U_diagonal,
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & U_diagonal,
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::upper_tag)
         {
           viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
@@ -246,11 +246,11 @@ namespace viennacl
       * @param proxy_L  The transposed matrix proxy
       * @param vec      The vector
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             op_trans> const & proxy_L,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -271,11 +271,11 @@ namespace viennacl
       * @param proxy_L  The transposed matrix proxy
       * @param vec      The vector
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             op_trans> const & proxy_L,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::lower_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -300,11 +300,11 @@ namespace viennacl
       * @param proxy_U  The transposed matrix proxy
       * @param vec      The vector
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             op_trans> const & proxy_U,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -325,11 +325,11 @@ namespace viennacl
       * @param proxy_U  The transposed matrix proxy
       * @param vec      The vector
       */
-      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
       void inplace_solve(matrix_expression< const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             const compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>,
                                             op_trans> const & proxy_U,
-                         vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                         vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::upper_tag)
       {
         viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -357,9 +357,9 @@ namespace viennacl
       
       namespace detail
       {
-        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename SCALARTYPE, unsigned int MAT_ALIGNMENT>
         void row_info(coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT> const & mat,
-                      vector<SCALARTYPE, VEC_ALIGNMENT> & vec,
+                      vector_base<SCALARTYPE> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
@@ -385,10 +385,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class SCALARTYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                     const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<SCALARTYPE> & vec,
+                           viennacl::vector_base<SCALARTYPE> & result)
       {
         viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::init();
         
@@ -416,10 +416,10 @@ namespace viennacl
       // ELL Matrix
       //
       
-      template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class TYPE, unsigned int ALIGNMENT>
       void prod_impl( const viennacl::ell_matrix<TYPE, ALIGNMENT> & mat, 
-                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT> & vec,
-                      viennacl::vector<TYPE, VECTOR_ALIGNMENT> & result)
+                      const viennacl::vector_base<TYPE> & vec,
+                      viennacl::vector_base<TYPE> & result)
       {
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
@@ -456,10 +456,10 @@ namespace viennacl
       // Hybrid Matrix
       //
       
-      template<class TYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class TYPE, unsigned int ALIGNMENT>
       void prod_impl( const viennacl::hyb_matrix<TYPE, ALIGNMENT>& mat, 
-                      const viennacl::vector<TYPE, VECTOR_ALIGNMENT>& vec,
-                      viennacl::vector<TYPE, VECTOR_ALIGNMENT>& result)
+                      const viennacl::vector_base<TYPE>& vec,
+                      viennacl::vector_base<TYPE>& result)
       {
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());

@@ -129,14 +129,14 @@ namespace viennacl
     
     
     //adapted for std::vector< std::map < > > argument:
-    /** @brief Copies a sparse matrix in the std::vector< std::map < > > format to an OpenCL device.
+    /** @brief Copies a sparse square matrix in the std::vector< std::map < > > format to an OpenCL device. Use viennacl::tools::sparse_matrix_adapter for non-square matrices.
     *
     * @param cpu_matrix   A sparse square matrix on the host using STL types
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     */
     template <typename SizeType, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const std::vector< std::map<SizeType, SCALARTYPE> > & cpu_matrix,
-                             compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
+              compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
       std::size_t nonzeros = 0;
       std::size_t max_col = 0;
@@ -159,9 +159,9 @@ namespace viennacl
     {
       //we just need to copy the CSR arrays:
       viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), ublas_matrix.size1() + 1);
-      for (std::size_t i=0; i<ublas_matrix.size1() + 1; ++i)
+      for (std::size_t i=0; i<=ublas_matrix.size1(); ++i)
         row_buffer.set(i, ublas_matrix.index1_data()[i]);
-        
+
       viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), ublas_matrix.nnz());
       for (std::size_t i=0; i<ublas_matrix.nnz(); ++i)
         col_buffer.set(i, ublas_matrix.index2_data()[i]);
@@ -617,9 +617,10 @@ namespace viennacl
 
           // Element not found. Copying required. Very slow, but direct entry manipulation is painful anyway...
           std::vector< std::map<unsigned int, SCALARTYPE> > cpu_backup(rows_);
-          viennacl::copy(*this, cpu_backup);
+          tools::sparse_matrix_adapter<SCALARTYPE> adapted_cpu_backup(cpu_backup, rows_, cols_);
+          viennacl::copy(*this, adapted_cpu_backup);
           cpu_backup[i][j] = 0.0;
-          viennacl::copy(cpu_backup, *this);
+          viennacl::copy(adapted_cpu_backup, *this);
           
           index = element_index(i, j);
           

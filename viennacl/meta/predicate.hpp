@@ -29,6 +29,8 @@
 
 namespace viennacl
 {
+    /** \cond */  //deactivate Doxygen parsing of the partial specializations
+
     //
     // is_cpu_scalar: checks for float or double
     //
@@ -90,109 +92,6 @@ namespace viennacl
     //{
     //  enum { value = (is_scalar<T>::value || is_cpu_scalar<T>::value || is_flip_sign_scalar<T>::value )};
     //};
-  
-  
-    //
-    // is_vector
-    //
-    //template <typename T>
-    //struct is_vector
-    //{
-    //  enum { value = false };
-    //};
-    
-    template <typename ScalarType, unsigned int ALIGNMENT>
-    struct is_vector<viennacl::vector<ScalarType, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-    
-    //
-    // is_any_dense_nonstructured_vector
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_vector
-    //{
-    //  enum { value = false };
-    //};
-    
-    template <typename ScalarType, unsigned int ALIGNMENT>
-    struct is_any_dense_nonstructured_vector<viennacl::vector<ScalarType, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-    template <typename T>
-    struct is_any_dense_nonstructured_vector<viennacl::vector_range<T> >
-    {
-      enum { value = true };
-    };
-    
-    template <typename T>
-    struct is_any_dense_nonstructured_vector<viennacl::vector_slice<T> >
-    {
-      enum { value = true };
-    };
-    
-    
-    //
-    // is_matrix
-    //
-    //template <typename T>
-    //struct is_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename ScalarType, typename F, unsigned int ALIGNMENT>
-    struct is_matrix<viennacl::matrix<ScalarType, F, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-
-    //
-    // is_any_dense_nonstructured_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename ScalarType, typename F, unsigned int ALIGNMENT>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix<ScalarType, F, ALIGNMENT> >
-    {
-      enum { value = true };
-    };
-
-    template <typename T>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix_range<T> >
-    {
-      enum { value = true };
-    };
-    
-    template <typename T>
-    struct is_any_dense_nonstructured_matrix<viennacl::matrix_slice<T> >
-    {
-      enum { value = true };
-    };
-
-    //
-    // is_any_dense_nonstructured_transposed_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_nonstructured_transposed_matrix
-    //{
-    //  enum { value = false };
-    //};
-
-    template <typename T>
-    struct is_any_dense_nonstructured_transposed_matrix< viennacl::matrix_expression<const T, const T, op_trans> >
-    {
-      enum { value = is_any_dense_nonstructured_matrix<T>::value };
-    };
-    
 
     //
     // is_row_major
@@ -203,22 +102,16 @@ namespace viennacl
     //  enum { value = false };
     //};
 
-    template <typename ScalarType, unsigned int A>
-    struct is_row_major<viennacl::matrix<ScalarType, viennacl::row_major, A> >
+    template <typename ScalarType>
+    struct is_row_major<viennacl::matrix_base<ScalarType, viennacl::row_major> >
     {
       enum { value = true };
     };
-    
-    template <typename T>
-    struct is_row_major<viennacl::matrix_range<T> >
-    {
-      enum { value = is_row_major<T>::value };
-    };
 
-    template <typename T>
-    struct is_row_major<viennacl::matrix_slice<T> >
+    template <>
+    struct is_row_major< viennacl::row_major >
     {
-      enum { value = is_row_major<T>::value };
+      enum { value = true };
     };
 
     template <typename T>
@@ -287,15 +180,6 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
-    //
-    // is_any_dense_structured_matrix
-    //
-    //template <typename T>
-    //struct is_any_dense_structured_matrix
-    //{
-    //  enum { value = viennacl::is_circulant_matrix<T>::value || viennacl::is_hankel_matrix<T>::value || viennacl::is_toeplitz_matrix<T>::value || viennacl::is_vandermonde_matrix<T>::value };
-    //};
     
     
     
@@ -393,88 +277,81 @@ namespace viennacl
       enum { value = true };
     };
 
-    
-    
-    
-    //
-    // is_any_matrix
-    //
-    //template <typename T>
-    //struct is_any_matrix
-    //{
-    //  enum { value =    viennacl::is_any_dense_nonstructured_matrix<T>::value
-    //                 || viennacl::is_any_sparse_matrix<T>::value
-    //                 || viennacl::is_any_dense_structured_matrix<T>::value 
-    //                 };
-    //};
-
-    //template <typename T>
-    //struct is_any_transposed_matrix
-    //{
-    //  enum { value = viennacl::is_any_dense_nonstructured_transposed_matrix<T>::value };
-    //};
+    /** \endcond */
     
     //////////////// Part 2: Operator predicates ////////////////////
     
     //
     // is_addition
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_add (for addition) */
     template <typename T>
     struct is_addition
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_addition<viennacl::op_add>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
     // is_subtraction
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_sub (for subtraction) */
     template <typename T>
     struct is_subtraction
     {
       enum { value = false };
     };
     
+    /** \cond */
     template <>
     struct is_subtraction<viennacl::op_sub>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
     // is_product
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_prod (for products/multiplication) */
     template <typename T>
     struct is_product
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_product<viennacl::op_prod>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     //
-    // is_subtraction
+    // is_division
     //
+    /** @brief Helper metafunction for checking whether the provided type is viennacl::op_div (for division) */
     template <typename T>
     struct is_division
     {
       enum { value = false };
     };
-    
+
+    /** \cond */
     template <>
     struct is_division<viennacl::op_div>
     {
       enum { value = true };
     };
+    /** \endcond */
     
     
 } //namespace viennacl

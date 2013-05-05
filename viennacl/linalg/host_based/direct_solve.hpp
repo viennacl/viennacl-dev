@@ -126,14 +126,10 @@ namespace viennacl
       * @param A      The system matrix
       * @param B      The matrix of row vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const M1 & A, M2 & B, SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
         value_type       * data_B = detail::extract_raw_pointer<value_type>(B);
@@ -155,8 +151,8 @@ namespace viennacl
         std::size_t B_internal_size2  = viennacl::traits::internal_size2(B);
         
         
-        detail::matrix_array_wrapper<value_type const, typename M1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename M2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
         
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
       }
@@ -166,16 +162,12 @@ namespace viennacl
       * @param A       The system matrix
       * @param proxy_B The proxy for the transposed matrix of row vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const M1 & A,
-                    matrix_expression< const M2, const M2, op_trans> proxy_B,
-                    SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F1> & A,
+                         matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
         value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(proxy_B.lhs()));
@@ -197,8 +189,8 @@ namespace viennacl
         std::size_t B_internal_size2  = viennacl::traits::internal_size2(proxy_B.lhs());
         
         
-        detail::matrix_array_wrapper<value_type const, typename M1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename M2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
         
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SOLVERTAG());
       }
@@ -209,16 +201,12 @@ namespace viennacl
       * @param proxy_A  The transposed system matrix proxy
       * @param B        The matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
-                    M2 & B,
-                    SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
+                         matrix_base<NumericT, F2> & B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy_A.lhs());
         value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(B));
@@ -240,8 +228,8 @@ namespace viennacl
         std::size_t B_internal_size2  = viennacl::traits::internal_size2(B);
         
         
-        detail::matrix_array_wrapper<value_type const, typename M1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename M2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
         
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
       }
@@ -251,16 +239,12 @@ namespace viennacl
       * @param proxy_A    The transposed system matrix proxy
       * @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
-                          matrix_expression< const M2, const M2, op_trans>   proxy_B,
-                          SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
+                               matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<M1>::type        value_type;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy_A.lhs());
         value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(proxy_B.lhs()));
@@ -282,8 +266,8 @@ namespace viennacl
         std::size_t B_internal_size2  = viennacl::traits::internal_size2(proxy_B.lhs());
         
         
-        detail::matrix_array_wrapper<value_type const, typename M1::orientation_category, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename M2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
         
         detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SOLVERTAG());
       }
@@ -364,17 +348,12 @@ namespace viennacl
           
       }
 
-      template <typename M1,
-                typename V1, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  >::type
-      inplace_solve(const M1 & mat,
-                          V1 & vec,
-                    SOLVERTAG)
+      template <typename NumericT, typename F, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F> & mat,
+                               vector_base<NumericT> & vec,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type  value_type;
-        typedef typename viennacl::result_of::orientation_functor<M1>::type F;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(mat);
         value_type       * data_v = detail::extract_raw_pointer<value_type>(vec);
@@ -403,17 +382,12 @@ namespace viennacl
       * @param proxy    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template <typename M1,
-                typename V1, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
-                    V1 & vec,
-                    SOLVERTAG)
+      template <typename NumericT, typename F, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & proxy,
+                         vector_base<NumericT> & vec,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type  value_type;
-        typedef typename viennacl::result_of::orientation_functor<M1>::type F;
+        typedef NumericT        value_type;
        
         value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy.lhs());
         value_type       * data_v = detail::extract_raw_pointer<value_type>(vec);

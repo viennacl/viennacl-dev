@@ -96,18 +96,20 @@ namespace viennacl
         }
 
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void row_info(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
-                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      vector_base<ScalarType> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
-          csr_row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-                                                      detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
-                                                      detail::cuda_arg<ScalarType>(vec),
-                                                      static_cast<unsigned int>(mat.size1()),
-                                                      static_cast<unsigned int>(info_selector)
-                                                     );
+          ScalarType const * ptr1 = detail::cuda_arg<ScalarType>(mat.handle().cuda_handle());
+          ScalarType       * ptr2 = detail::cuda_arg<ScalarType>(vec);
+          //csr_row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+          //                                            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+          //                                            detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+          //                                            detail::cuda_arg<ScalarType>(vec),
+          //                                            static_cast<unsigned int>(mat.size1()),
+          //                                           static_cast<unsigned int>(info_selector)
+          //                                           );
           VIENNACL_CUDA_LAST_ERROR_CHECK("csr_row_info_extractor_kernel");
         }
       
@@ -147,10 +149,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         compressed_matrix_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
@@ -200,10 +202,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::unit_lower_tag)
       {
         csr_unit_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
@@ -221,10 +223,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::lower_tag)
       {
         csr_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
@@ -243,10 +245,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::unit_upper_tag)
       {
         csr_unit_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
@@ -264,10 +266,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const SparseMatrixType & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::upper_tag)
       {
         csr_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
@@ -288,10 +290,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::unit_lower_tag)
       {
         csr_trans_unit_lu_forward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
@@ -309,10 +311,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::lower_tag)
       {
         viennacl::vector<ScalarType> diagonal(vec.size());
@@ -340,10 +342,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::unit_upper_tag)
       {
         csr_trans_unit_lu_backward_kernel<<<1, 128>>>(detail::cuda_arg<unsigned int>(mat.lhs().handle1().cuda_handle()),
@@ -361,10 +363,10 @@ namespace viennacl
       * @param mat    The matrix
       * @param vec    The vector holding the right hand side. Is overwritten by the solution.
       */
-      template<typename SparseMatrixType, class ScalarType, unsigned int ALIGNMENT>
+      template<typename SparseMatrixType, class ScalarType>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
-                    viennacl::vector<ScalarType, ALIGNMENT> & vec,
+                    viennacl::vector_base<ScalarType> & vec,
                     viennacl::linalg::upper_tag)
       {
         viennacl::vector<ScalarType> diagonal(vec.size());
@@ -391,13 +393,13 @@ namespace viennacl
         //
         // block solves
         //
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & L, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
-                                 vector<ScalarType> const & /* L_diagonal */,  //ignored
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & /* L_diagonal */,  //ignored
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::unit_lower_tag)
         {
           csr_block_trans_unit_lu_forward<<<num_blocks, 128>>>(detail::cuda_arg<unsigned int>(L.lhs().handle1().cuda_handle()),
@@ -410,13 +412,13 @@ namespace viennacl
         }
         
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void block_inplace_solve(const matrix_expression<const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          const compressed_matrix<ScalarType, MAT_ALIGNMENT>,
                                                          op_trans> & U, 
                                  viennacl::backend::mem_handle const & block_indices, std::size_t num_blocks,
-                                 vector<ScalarType> const & U_diagonal,
-                                 vector<ScalarType, VEC_ALIGNMENT> & vec,
+                                 vector_base<ScalarType> const & U_diagonal,
+                                 vector_base<ScalarType> & vec,
                                  viennacl::linalg::upper_tag)
         {
           csr_block_trans_lu_backward<<<num_blocks, 128>>>(detail::cuda_arg<unsigned int>(U.lhs().handle1().cuda_handle()),
@@ -571,9 +573,9 @@ namespace viennacl
             result[tmp.x] = (option == 2) ? sqrt(inter_results[last_index]) : inter_results[last_index]; 
         }
         
-        template<typename ScalarType, unsigned int MAT_ALIGNMENT, unsigned int VEC_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void row_info(coordinate_matrix<ScalarType, MAT_ALIGNMENT> const & mat,
-                      vector<ScalarType, VEC_ALIGNMENT> & vec,
+                      vector_base<ScalarType> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           coo_row_info_extractor<<<64, 128>>>(detail::cuda_arg<unsigned int>(mat.handle12().cuda_handle()),
@@ -662,10 +664,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         result.clear();
         
@@ -730,10 +732,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         ell_matrix_vec_mul_kernel<<<256, 128>>>(detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
@@ -811,10 +813,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template<class ScalarType, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<class ScalarType, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<ScalarType, ALIGNMENT> & mat, 
-                     const viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & vec,
-                           viennacl::vector<ScalarType, VECTOR_ALIGNMENT> & result)
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
       {
         hyb_matrix_vec_mul_kernel<<<256, 128>>>(detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),

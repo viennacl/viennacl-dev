@@ -31,9 +31,13 @@ namespace viennacl
   namespace ocl
   {
     //device type tags (cf. OpenCL standard)
+    /** @brief A tag identifying OpenCL devices as GPUs. */
     struct gpu_tag {};
+    /** @brief A tag identifying OpenCL devices as CPUs. */
     struct cpu_tag {};
+    /** @brief A tag identifying OpenCL devices as accelerators (e.g. Intel Xeon Phi) */
     struct accelerator_tag {};
+    /** @brief A tag denoting the default OpenCL device type (SDK-specific) */
     struct default_tag {};
     
     

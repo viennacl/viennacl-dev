@@ -4,6 +4,16 @@
 
 *** Version 1.4.x ***
 
+-- Version 1.4.2 --
+This is a maintenance release, particularly resolving compilation problems with Visual Studio 2012.
+- Largely refactored the internal code base, unifying code for vector, vector_range, and vector_slice.
+  Similar code refactoring was applied to matrix, matrix_range, and matrix_slice.
+  This not only resolves the problems in VS 2012, but also leads to shorter compilation times and a smaller code base.
+- Improved performance of matrix-vector products of compressed_matrix on CPUs using OpenCL.
+- Resolved a bug which shows up if certain rows and columns of a compressed_matrix are empty and the matrix is copied back to host.
+- Fixed a bug and improved performance of GMRES. Thanks to Ivan Komarov for reporting via sourceforge.
+- Added additional Doxygen documentation.
+
 -- Version 1.4.1 --
 This release focuses on improved stability and performance on AMD devices rather than introducing new features:
 - Included fast matrix-matrix multiplication kernel for AMD's Tahiti GPUs if matrix dimensions are a multiple of 128.

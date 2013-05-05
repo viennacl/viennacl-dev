@@ -11,7 +11,7 @@ project(ViennaCL)
 
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 4)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosity

@@ -45,10 +45,33 @@ namespace viennacl
           }
         }
         
+        template <typename T, typename U>
+        T * cuda_arg(vector_base<U> & obj)
+        {
+          return reinterpret_cast<T *>(viennacl::traits::handle(obj).cuda_handle().get());
+        }
+
+        template <typename T, typename U>
+        const T * cuda_arg(vector_base<U> const & obj)
+        {
+          return reinterpret_cast<const T *>(viennacl::traits::handle(obj).cuda_handle().get());
+        }
+        
+        template <typename NumericT, typename F>
+        NumericT * cuda_arg(matrix_base<NumericT, F> & obj)
+        {
+          return reinterpret_cast<NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
+        }
+
+        template <typename NumericT, typename F>
+        const NumericT * cuda_arg(matrix_base<NumericT, F> const & obj)
+        {
+          return reinterpret_cast<const NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
+        }
+
+        
         template <typename ScalarType, typename T>
-        typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_matrix<T>::value,
+        typename viennacl::enable_if< viennacl::is_scalar<T>::value,
                                       ScalarType *>::type
         cuda_arg(T & obj)
         {
@@ -56,9 +79,7 @@ namespace viennacl
         }
 
         template <typename ScalarType, typename T>
-        typename viennacl::enable_if<    viennacl::is_scalar<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_vector<T>::value 
-                                      || viennacl::is_any_dense_nonstructured_matrix<T>::value,
+        typename viennacl::enable_if< viennacl::is_scalar<T>::value,
                                       const ScalarType *>::type
         cuda_arg(T const & obj)
         {
@@ -77,10 +98,16 @@ namespace viennacl
           return reinterpret_cast<const ScalarType *>(h.get());
         }
         
-        template <typename ScalarType>
-        ScalarType cuda_arg(ScalarType const & val)  { return val; }
+        //template <typename ScalarType>
+        //ScalarType cuda_arg(ScalarType const & val)  { return val; }
         
+        inline unsigned int cuda_arg(unsigned int val)  { return val; }
+
+        template <typename T>
+        float cuda_arg(float val)  { return val; }
         
+        template <typename T>
+        double cuda_arg(double val)  { return val; }
         
         template <typename T, typename U>
         typename viennacl::backend::mem_handle::cuda_handle_type & arg_reference(viennacl::scalar<T> & s, U) { return s.handle().cuda_handle(); }

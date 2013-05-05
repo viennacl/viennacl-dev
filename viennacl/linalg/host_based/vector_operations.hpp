@@ -51,16 +51,11 @@ namespace viennacl
       //
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                  >::type
-      av(V1 & vec1, 
-         V2 const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
+      template <typename T, typename ScalarType1>
+      void av(vector_base<T> & vec1, 
+              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);
@@ -86,20 +81,12 @@ namespace viennacl
       }
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1,
-                typename V3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv(V1 & vec1, 
-          V2 const & vec2, ScalarType1 const & alpha, std::size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
-          V3 const & vec3, ScalarType2 const & beta,  std::size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta) 
+      template <typename T, typename ScalarType1, typename ScalarType2>
+      void avbv(vector_base<T> & vec1, 
+                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
 
         value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);
@@ -135,20 +122,12 @@ namespace viennacl
       }
       
       
-      template <typename V1,
-                typename V2, typename ScalarType1,
-                typename V3, typename ScalarType2>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                    && viennacl::is_any_scalar<ScalarType1>::value
-                                    && viennacl::is_any_scalar<ScalarType2>::value
-                                  >::type
-      avbv_v(V1 & vec1,
-             V2 const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-             V3 const & vec3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
+      template <typename T, typename ScalarType1, typename ScalarType2>
+      void avbv_v(vector_base<T> & vec1,
+                  vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+                  vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
 
         value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);
@@ -191,13 +170,10 @@ namespace viennacl
       * @param vec1   The vector to which the value should be assigned
       * @param alpha  The value to be assigned
       */
-      template <typename V1, typename S1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_cpu_scalar<S1>::value
-                                  >::type
-      vector_assign(V1 & vec1, const S1 & alpha)
+      template <typename T>
+      void vector_assign(vector_base<T> & vec1, const T & alpha)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         
@@ -221,13 +197,10 @@ namespace viennacl
       * @param vec1   The first vector (or -range, or -slice)
       * @param vec2   The second vector (or -range, or -slice)
       */
-      template <typename V1, typename V2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  >::type
-      vector_swap(V1 & vec1, V2 & vec2)
+      template <typename T>
+      void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);
@@ -258,15 +231,11 @@ namespace viennacl
       * @param vec1   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename V1, typename V2, typename V3, typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                  >::type
-      element_op(V1 & vec1,
-                vector_expression<const V2, const V3, OP> const & proxy)
+      template <typename T, typename OP>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(proxy.lhs());
@@ -313,16 +282,12 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename V1, typename V2, typename S3>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<S3>::value
-                                  >::type
-      inner_prod_impl(V1 const & vec1,
-                      V2 const & vec2,
-                      S3 & result)
+      template <typename T, typename S3>
+      void inner_prod_impl(vector_base<T> const & vec1,
+                           vector_base<T> const & vec2,
+                           S3 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);
@@ -351,14 +316,11 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_scalar<S2>::value
-                                  >::type
-      norm_1_impl(V1 const & vec1,
-                  S2 & result)
+      template <typename T, typename S2>
+      void norm_1_impl(vector_base<T> const & vec1,
+                       S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         
@@ -382,14 +344,11 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_scalar<S2>::value
-                                  >::type
-      norm_2_impl(V1 const & vec1,
-                  S2 & result)
+      template <typename T, typename S2>
+      void norm_2_impl(vector_base<T> const & vec1,
+                       S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         
@@ -417,14 +376,11 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename V1, typename S2>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_scalar<S2>::value
-                                  >::type
-      norm_inf_impl(V1 const & vec1,
-                    S2 & result)
+      template <typename T, typename S2>
+      void norm_inf_impl(vector_base<T> const & vec1,
+                         S2 & result)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         
@@ -449,13 +405,10 @@ namespace viennacl
       * @param vec1 The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
-      template <typename V1>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                    std::size_t
-                                  >::type
-      index_norm_inf(V1 const & vec1)
+      template <typename T>
+      std::size_t index_norm_inf(vector_base<T> const & vec1)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T        value_type;
         
         value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         
@@ -491,17 +444,12 @@ namespace viennacl
       * @param alpha  The first transformation coefficient
       * @param beta   The second transformation coefficient
       */
-      template <typename V1, typename V2, typename SCALARTYPE>
-      typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                    && viennacl::is_any_scalar<SCALARTYPE>::value
-                                  >::type
-      plane_rotation(V1 & vec1,
-                     V2 & vec2,
-                     SCALARTYPE alpha,
-                     SCALARTYPE beta)
+      template <typename T>
+      void plane_rotation(vector_base<T> & vec1,
+                          vector_base<T> & vec2,
+                          T alpha, T beta)
       {
-        typedef typename viennacl::result_of::cpu_value_type<V1>::type        value_type;
+        typedef T   value_type;
         
         value_type * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type * data_vec2 = detail::extract_raw_pointer<value_type>(vec2);

@@ -348,6 +348,8 @@ namespace viennacl
       public:
         typedef sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, true>      iterator1;
         typedef sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, false>     iterator2;
+        typedef const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, true, true>      const_iterator1;
+        typedef const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, false, true>     const_iterator2;
         typedef SizeType                                              size_type;
         
         sparse_matrix_adapter(std::vector<std::map<SizeType, SCALARTYPE> > & mat) 
@@ -361,9 +363,15 @@ namespace viennacl
         iterator1 begin1() { return iterator1(mat_, 0, 0); }
         iterator1 end1() { return iterator1(mat_, mat_.size(), mat_.back().size()); }
 
+        const_iterator1 begin1() const { return const_iterator1(mat_, 0, 0); }
+        const_iterator1 end1() const   { return const_iterator1(mat_, size1(), size2()); }
+
         iterator2 begin2() { return iterator2(mat_, 0, 0); }
         iterator2 end2() { return iterator2(mat_, mat_.size(), mat_.back().size()); }
         
+        const_iterator2 begin2() const { return const_iterator2(mat_, 0, 0); }
+        const_iterator2 end2() const   { return const_iterator2(mat_, size1(), size2()); }
+
         SCALARTYPE & operator()(size_type i, size_type j) { return mat_[i][j]; }
         
         void resize(size_type i, size_type j, bool preserve = true)

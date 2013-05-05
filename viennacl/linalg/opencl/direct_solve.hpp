@@ -68,19 +68,15 @@ namespace viennacl
       //
       
       ////////////////// upper triangular solver (upper_tag) //////////////////////////////////////
-    /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
-    *
-    * @param A    The system matrix
-    * @param B    The matrix of row vectors, where the solution is directly written to
-    */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const M1 & A, M2 & B, SOLVERTAG)
+      /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
+      *
+      * @param A    The system matrix
+      * @param B    The matrix of row vectors, where the solution is directly written to
+      */
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init();
         
         std::stringstream ss;
@@ -96,16 +92,12 @@ namespace viennacl
       * @param A       The system matrix
       * @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const M1 & A,
-                    matrix_expression< const M2, const M2, op_trans> proxy_B,
-                    SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F1> & A,
+                         matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
@@ -122,16 +114,12 @@ namespace viennacl
       * @param proxy_A  The system matrix proxy
       * @param B        The matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
-                    M2 & B,
-                    SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
+                         matrix_base<NumericT, F2> & B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
@@ -147,16 +135,12 @@ namespace viennacl
       * @param proxy_A  The system matrix proxy
       * @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename M1,
-                typename M2, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_matrix<M2>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy_A,
-                          matrix_expression< const M2, const M2, op_trans>   proxy_B,
-                          SOLVERTAG)
+      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
+                               matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, M2 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init();
 
         std::stringstream ss;
@@ -173,16 +157,12 @@ namespace viennacl
       //  Solve on vector
       //
 
-      template <typename M1,
-                typename V1, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  >::type
-      inplace_solve(const M1 & mat,
-                          V1 & vec,
-                    SOLVERTAG)
+      template <typename NumericT, typename F, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT, F> & mat,
+                               vector_base<NumericT> & vec,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
         KernelClass::init();
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
@@ -208,16 +188,12 @@ namespace viennacl
       * @param proxy    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template <typename M1,
-                typename V1, typename SOLVERTAG>
-      typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_matrix<M1>::value
-                                    && viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  >::type
-      inplace_solve(const matrix_expression< const M1, const M1, op_trans> & proxy,
-                    V1 & vec,
-                    SOLVERTAG)
+      template <typename NumericT, typename F, typename SOLVERTAG>
+      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & proxy,
+                         vector_base<NumericT> & vec,
+                         SOLVERTAG)
       {
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< M1 >::ResultType    KernelClass;
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
         KernelClass::init();
         
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag

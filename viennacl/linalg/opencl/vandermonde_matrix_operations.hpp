@@ -47,10 +47,10 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-        template<class SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+        template<class SCALARTYPE, unsigned int ALIGNMENT>
         void prod_impl(const viennacl::vandermonde_matrix<SCALARTYPE, ALIGNMENT> & mat, 
-                      const viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & vec,
-                            viennacl::vector<SCALARTYPE, VECTOR_ALIGNMENT> & result)
+                      const viennacl::vector_base<SCALARTYPE> & vec,
+                            viennacl::vector_base<SCALARTYPE> & result)
         {
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
           

@@ -100,49 +100,42 @@ namespace viennacl
     // ----------------------------------------------------
     // VIENNACL
     //
-    template< typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::scalar_expression< const V1, const V2, viennacl::op_inner_prod >
-                                >::type
-    inner_prod(V1 const & vector1,
-               V2 const & vector2)
+    template< typename NumericT>
+    viennacl::scalar_expression< const vector_base<NumericT>, const vector_base<NumericT>, viennacl::op_inner_prod >
+    inner_prod(vector_base<NumericT> const & vector1,
+               vector_base<NumericT> const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const V1, 
-                                          const V2,
+      return viennacl::scalar_expression< const vector_base<NumericT>, 
+                                          const vector_base<NumericT>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
     
 
     // expression on lhs:
-    template< typename LHS, typename RHS, typename OP, typename V2>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
-                                                               const V2,
-                                                               viennacl::op_inner_prod >
-                                >::type
+    template< typename LHS, typename RHS, typename OP, typename NumericT>
+    viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
+                                 const vector_base<NumericT>,
+                                 viennacl::op_inner_prod >
     inner_prod(viennacl::vector_expression<LHS, RHS, OP> const & vector1,
-               V2 const & vector2)
+               vector_base<NumericT> const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
       return viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>, 
-                                          const V2,
+                                          const vector_base<NumericT>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
 
     // expression on rhs:
-    template <typename V1, typename LHS, typename RHS, typename OP>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                  viennacl::scalar_expression< const V1,
-                                                               const viennacl::vector_expression<LHS, RHS, OP>,
-                                                               viennacl::op_inner_prod >
-                                >::type
-    inner_prod(V1 const & vector1,
+    template <typename NumericT, typename LHS, typename RHS, typename OP>
+    viennacl::scalar_expression< const vector_base<NumericT>,
+                                 const viennacl::vector_expression<LHS, RHS, OP>,
+                                 viennacl::op_inner_prod >
+    inner_prod(vector_base<NumericT> const & vector1,
                viennacl::vector_expression<LHS, RHS, OP> const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const V1,
+      return viennacl::scalar_expression< const vector_base<NumericT>,
                                           const viennacl::vector_expression<LHS, RHS, OP>, 
                                           viennacl::op_inner_prod >(vector1, vector2);
     }

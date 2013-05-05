@@ -41,35 +41,31 @@ namespace viennacl
     //
     // inc: Increment for vectors. Defaults to 1
     //
-    template <typename VectorType>
-    typename result_of::size_type<VectorType>::type
-    stride(VectorType const &) { return 1; }
-
-    template <typename VectorType>
-    typename result_of::size_type<VectorType>::type
-    stride(viennacl::vector_slice<VectorType> const & s) { return s.stride(); }
+    template <typename T>
+    typename result_of::size_type< viennacl::vector_base<T> >::type
+    stride(viennacl::vector_base<T> const & s) { return s.stride(); }
 
     //
     // inc1: Row increment for matrices. Defaults to 1
     //
-    template <typename MatrixType>
-    typename result_of::size_type<MatrixType>::type
-    stride1(MatrixType const &) { return 1; }
+    //template <typename MatrixType>
+    //typename result_of::size_type<MatrixType>::type
+    //stride1(MatrixType const &) { return 1; }
 
-    template <typename MatrixType>
-    typename result_of::size_type<MatrixType>::type
-    stride1(matrix_slice<MatrixType> const & s) { return s.stride1(); }
+    template <typename NumericT, typename F>
+    typename result_of::size_type< matrix_base<NumericT, F> >::type
+    stride1(matrix_base<NumericT, F> const & s) { return s.stride1(); }
 
     //
     // inc2: Column increment for matrices. Defaults to 1
     //
-    template <typename MatrixType>
-    typename result_of::size_type<MatrixType>::type
-    stride2(MatrixType const &) { return 1; }
+    //template <typename MatrixType>
+    //typename result_of::size_type<MatrixType>::type
+    //stride2(MatrixType const &) { return 1; }
  
-    template <typename MatrixType>
-    typename result_of::size_type<MatrixType>::type
-    stride2(matrix_slice<MatrixType> const & s) { return s.stride2(); }
+    template <typename NumericT, typename F>
+    typename result_of::size_type< matrix_base<NumericT, F> >::type
+    stride2(matrix_base<NumericT, F> const & s) { return s.stride2(); }
 
  
   } //namespace traits

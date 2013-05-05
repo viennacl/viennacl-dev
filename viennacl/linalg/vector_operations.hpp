@@ -45,14 +45,9 @@ namespace viennacl
 {
   namespace linalg
   {
-    template <typename V1,
-              typename V2, typename ScalarType1>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_any_scalar<ScalarType1>::value
-                                >::type
-    av(V1 & vec1, 
-       V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+    template <typename T, typename ScalarType1>
+    void av(vector_base<T> & vec1, 
+            vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)"));
       
@@ -77,18 +72,10 @@ namespace viennacl
     }
     
     
-    template <typename V1,
-              typename V2, typename ScalarType1,
-              typename V3, typename ScalarType2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                  && viennacl::is_any_scalar<ScalarType1>::value
-                                  && viennacl::is_any_scalar<ScalarType2>::value
-                                >::type
-    avbv(V1 & vec1, 
-         V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-         V3 const & vec3, ScalarType2 const & beta, std::size_t len_beta, bool reciprocal_beta, bool flip_sign_beta) 
+    template <typename T, typename ScalarType1, typename ScalarType2>
+    void avbv(vector_base<T> & vec1, 
+              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+              vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -120,18 +107,10 @@ namespace viennacl
     }
     
     
-    template <typename V1,
-              typename V2, typename ScalarType1,
-              typename V3, typename ScalarType2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                  && viennacl::is_any_scalar<ScalarType1>::value
-                                  && viennacl::is_any_scalar<ScalarType2>::value
-                                >::type
-    avbv_v(V1 & vec1,
-           V2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           V3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+    template <typename T, typename ScalarType1, typename ScalarType2>
+    void avbv_v(vector_base<T> & vec1,
+                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -168,11 +147,8 @@ namespace viennacl
     * @param vec1   The vector to which the value should be assigned
     * @param alpha  The value to be assigned
     */
-    template <typename V1, typename S1>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S1>::value
-                                >::type
-    vector_assign(V1 & vec1, const S1 & alpha)
+    template <typename T>
+    void vector_assign(vector_base<T> & vec1, const T & alpha)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -200,11 +176,8 @@ namespace viennacl
     * @param vec1   The first vector (or -range, or -slice)
     * @param vec2   The second vector (or -range, or -slice)
     */
-    template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                >::type
-    vector_swap(V1 & vec1, V2 & vec2)
+    template <typename T>
+    void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in vector_swap()"));
 
@@ -238,13 +211,9 @@ namespace viennacl
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
     */
-    template <typename V1, typename V2, typename V3, typename OP>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V3>::value
-                                >::type
-    element_op(V1 & vec1,
-               vector_expression<const V2, const V3, OP> const & proxy)
+    template <typename T, typename OP>
+    void element_op(vector_base<T> & vec1,
+                    vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
 
@@ -271,43 +240,34 @@ namespace viennacl
 
 
     
-    template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::vector_expression<const V1, const V2, op_prod>
-                                >::type
-    element_prod(V1 const & v1, V2 const & v2)
+    template <typename T>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_prod>
+    element_prod(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const V1, const V2, op_prod>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_prod>(v1, v2);
     }
 
-    template <typename V1, typename V2, typename OP, typename V3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V3>::value,
-                                  vector<typename viennacl::result_of::cpu_value_type<V3>::type>
-                                >::type
-    element_prod(vector_expression<const V1, const V2, OP> const & proxy, V3 const & v2)
+    template <typename V1, typename V2, typename OP, typename T>
+    viennacl::vector<T>
+    element_prod(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
     {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V3>::type>  VectorType;
-      VectorType temp = proxy; 
+      viennacl::vector<T> temp = proxy; 
       temp = element_prod(temp, v2);
       return temp;
     }
     
-    template <typename V1, typename V2, typename V3, typename OP>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                  vector<typename viennacl::result_of::cpu_value_type<V1>::type>
-                                >::type
-    element_prod(V1 const & v1, vector_expression<const V2, const V3, OP> const & proxy)
+    template <typename T, typename V2, typename V3, typename OP>
+    viennacl::vector<T>
+    element_prod(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
     {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp = proxy; 
+      viennacl::vector<T> temp = proxy; 
       temp = element_prod(v1, temp);
       return temp;
     }
     
     template <typename V1, typename V2, typename OP1,
               typename V3, typename V4, typename OP2>
-    vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
     element_prod(vector_expression<const V1, const V2, OP1> const & proxy1,
                  vector_expression<const V3, const V4, OP2> const & proxy2)
     {
@@ -323,43 +283,34 @@ namespace viennacl
     
     
     
-    template <typename V1, typename V2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value,
-                                  viennacl::vector_expression<const V1, const V2, op_div>
-                                >::type
-    element_div(V1 const & v1, V2 const & v2)
+    template <typename T>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_div>
+    element_div(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const V1, const V2, op_div>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_div>(v1, v2);
     }
     
-    template <typename V1, typename V2, typename OP, typename V3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V3>::value,
-                                  vector<typename viennacl::result_of::cpu_value_type<V3>::type>
-                                >::type
-    element_div(vector_expression<const V1, const V2, OP> const & proxy, V3 const & v2)
+    template <typename V1, typename V2, typename OP, typename T>
+    viennacl::vector<T>
+    element_div(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
     {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V3>::type>  VectorType;
-      VectorType temp = proxy; 
+      viennacl::vector<T> temp = proxy;
       temp = element_div(temp, v2);
       return temp;
     }
     
-    template <typename V1, typename V2, typename V3, typename OP>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                  vector<typename viennacl::result_of::cpu_value_type<V1>::type>
-                                >::type
-    element_div(V1 const & v1, vector_expression<const V2, const V3, OP> const & proxy)
+    template <typename T, typename V2, typename V3, typename OP>
+    viennacl::vector<T>
+    element_div(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
     {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp = proxy; 
+      viennacl::vector<T> temp = proxy;
       temp = element_div(v1, temp);
       return temp;
     }
     
     template <typename V1, typename V2, typename OP1,
               typename V3, typename V4, typename OP2>
-    vector<typename viennacl::result_of::cpu_value_type<V1>::type>
+    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
     element_div(vector_expression<const V1, const V2, OP1> const & proxy1,
                 vector_expression<const V3, const V4, OP2> const & proxy2)
     {
@@ -383,14 +334,10 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template <typename V1, typename V2, typename S3>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(V1 const & vec1,
-                    V2 const & vec2,
-                    S3 & result)
+    template <typename T>
+    void inner_prod_impl(vector_base<T> const & vec1,
+                         vector_base<T> const & vec2,
+                         scalar<T> & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
       
@@ -415,44 +362,36 @@ namespace viennacl
     }
     
     // vector expression on lhs
-    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                    V2 const & vec2,
-                    S3 & result)
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                         vector_base<T> const & vec2,
+                         scalar<T> & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp = vec1;
+      viennacl::vector<T> temp = vec1;
       inner_prod_impl(temp, vec2, result);
     }
     
     
     // vector expression on rhs
-    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(V1 const & vec1,
-                    viennacl::vector_expression<LHS, RHS, OP> const & vec2,
-                    S3 & result)
+    template <typename T, typename LHS, typename RHS, typename OP>
+    void inner_prod_impl(vector_base<T> const & vec1,
+                         viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                         scalar<T> & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp = vec2;
+      viennacl::vector<T> temp = vec2;
       inner_prod_impl(vec1, temp, result);
     }
     
 
     // vector expression on lhs and rhs
     template <typename LHS1, typename RHS1, typename OP1,
-              typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_scalar<S3>::value
-                                >::type
-    inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
-                    viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
-                    S3 & result)
+              typename LHS2, typename RHS2, typename OP2, typename T>
+    void inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                         viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                         scalar<T> & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp1 = vec1;
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S3>::type> temp2 = vec2;
+      viennacl::vector<T> temp1 = vec1;
+      viennacl::vector<T> temp2 = vec2;
       inner_prod_impl(temp1, temp2, result);
     }
     
@@ -465,14 +404,10 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template <typename V1, typename V2, typename S3>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(V1 const & vec1,
-                   V2 const & vec2,
-                   S3 & result)
+    template <typename T>
+    void inner_prod_cpu(vector_base<T> const & vec1,
+                        vector_base<T> const & vec2,
+                        T & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
       
@@ -497,29 +432,23 @@ namespace viennacl
     }
     
     // vector expression on lhs
-    template <typename LHS, typename RHS, typename OP, typename V2, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                    V2 const & vec2,
-                    S3 & result)
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
+                        vector_base<T> const & vec2,
+                        T & result)
     {
-      viennacl::vector<S3> temp = vec1;
+      viennacl::vector<T> temp = vec1;
       inner_prod_cpu(temp, vec2, result);
     }
     
     
     // vector expression on rhs
-    template <typename V1, typename LHS, typename RHS, typename OP, typename S3>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(V1 const & vec1,
-                   viennacl::vector_expression<LHS, RHS, OP> const & vec2,
-                   S3 & result)
+    template <typename T, typename LHS, typename RHS, typename OP>
+    void inner_prod_cpu(vector_base<T> const & vec1,
+                        viennacl::vector_expression<LHS, RHS, OP> const & vec2,
+                        T & result)
     {
-      viennacl::vector<S3> temp = vec2;
+      viennacl::vector<T> temp = vec2;
       inner_prod_cpu(vec1, temp, result);
     }
     
@@ -527,11 +456,9 @@ namespace viennacl
     // vector expression on lhs and rhs
     template <typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename S3>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S3>::value
-                                >::type
-    inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
-                   viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
-                   S3 & result)
+    void inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
+                        viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
+                        S3 & result)
     {
       viennacl::vector<S3> temp1 = vec1;
       viennacl::vector<S3> temp2 = vec2;
@@ -547,12 +474,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_1_impl(V1 const & vec,
-                S2 & result)
+    template <typename T>
+    void norm_1_impl(vector_base<T> const & vec,
+                     scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -581,10 +505,8 @@ namespace viennacl
     * @param result The result scalar
     */
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
-    norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                S2 & result)
+    void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                     S2 & result)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_1_impl(temp, result);
@@ -597,12 +519,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_1_cpu(V1 const & vec,
-                S2 & result)
+    template <typename T>
+    void norm_1_cpu(vector_base<T> const & vec,
+                    T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -630,10 +549,8 @@ namespace viennacl
     * @param result The result scalar
     */
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-               S2 & result)
+    void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                    S2 & result)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_1_cpu(temp, result);
@@ -647,12 +564,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_2_impl(V1 const & vec,
-                S2 & result)
+    template <typename T>
+    void norm_2_impl(vector_base<T> const & vec,
+                     scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -679,13 +593,11 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
-    norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                S2 & result)
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                     scalar<T> & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      viennacl::vector<T> temp = vec;
       norm_2_impl(temp, result);
     }
     
@@ -695,12 +607,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_2_cpu(V1 const & vec,
-                S2 & result)
+    template <typename T>
+    void norm_2_cpu(vector_base<T> const & vec,
+                    T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -728,10 +637,8 @@ namespace viennacl
     * @param result The result scalar
     */
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-               S2 & result)
+    void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                    S2 & result)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_2_cpu(temp, result);
@@ -745,12 +652,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_scalar<S2>::value
-                                >::type
-    norm_inf_impl(V1 const & vec,
-                  S2 & result)
+    template <typename T>
+    void norm_inf_impl(vector_base<T> const & vec,
+                       scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -777,13 +681,11 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_scalar<S2>::value
-                                >::type
-    norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-                S2 & result)
+    template <typename LHS, typename RHS, typename OP, typename T>
+    void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                       scalar<T> & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      viennacl::vector<T> temp = vec;
       norm_inf_impl(temp, result);
     }
     
@@ -793,12 +695,9 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename V1, typename S2>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_inf_cpu(V1 const & vec,
-                 S2 & result)
+    template <typename T>
+    void norm_inf_cpu(vector_base<T> const & vec,
+                      T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -826,10 +725,8 @@ namespace viennacl
     * @param result The result scalar
     */
     template <typename LHS, typename RHS, typename OP, typename S2>
-    typename viennacl::enable_if< viennacl::is_cpu_scalar<S2>::value
-                                >::type
-    norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
-               S2 & result)
+    void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                      S2 & result)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_inf_cpu(temp, result);
@@ -844,11 +741,8 @@ namespace viennacl
     * @param vec The vector
     * @return The result. Note that the result must be a CPU scalar
     */
-    template <typename V1>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<V1>::value,
-                                  std::size_t
-                                >::type
-    index_norm_inf(V1 const & vec)
+    template <typename T>
+    std::size_t index_norm_inf(vector_base<T> const & vec)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -888,15 +782,10 @@ namespace viennacl
     * @param alpha  The first transformation coefficient (CPU scalar)
     * @param beta   The second transformation coefficient (CPU scalar)
     */
-    template <typename V1, typename V2, typename SCALARTYPE>
-    typename viennacl::enable_if<    viennacl::is_any_dense_nonstructured_vector<V1>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<V2>::value
-                                  && viennacl::is_cpu_scalar<SCALARTYPE>::value
-                                >::type
-    plane_rotation(V1 & vec1,
-                   V2 & vec2,
-                   SCALARTYPE alpha,
-                   SCALARTYPE beta)
+    template <typename T>
+    void plane_rotation(vector_base<T> & vec1,
+                        vector_base<T> & vec2,
+                        T alpha, T beta)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {

@@ -62,6 +62,7 @@ namespace viennacl {
         explicit toeplitz_matrix(std::size_t rows, std::size_t cols) : elements_(rows * 2)
         {
           assert(rows == cols && bool("Toeplitz matrix must be square!"));
+          (void)cols;  // avoid 'unused parameter' warning in optimized builds
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
         }
         

@@ -52,6 +52,7 @@ namespace viennacl
   {
     
     //clear:
+    /** @brief Generic routine for setting all entries of a vector to zero. This is the version for non-ViennaCL objects. */
     template <typename VectorType>
     void clear(VectorType & vec)
     {
@@ -61,6 +62,7 @@ namespace viennacl
         vec[i] = 0;  //TODO: Quantity access can also be wrapped...
     }
 
+    /** @brief Generic routine for setting all entries of a vector to zero. This is the version for ViennaCL objects. */
     template <typename ScalarType, unsigned int ALIGNMENT>
     void clear(viennacl::vector<ScalarType, ALIGNMENT> & vec)
     {

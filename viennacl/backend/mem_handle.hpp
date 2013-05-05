@@ -53,29 +53,44 @@ namespace viennacl
 #endif    
 
 
-
+    /** @brief Main abstraction class for multiple memory domains. Represents a buffer in either main RAM, an OpenCL context, or a CUDA device.
+     * 
+     * The idea is to wrap all possible handle types inside this class so that higher-level code does not need to be cluttered with preprocessor switches.
+     * Instead, this class collects all the necessary conditional compilations.
+     * 
+     */
     class mem_handle
     {
       public:
         typedef viennacl::tools::shared_ptr<char>      ram_handle_type;
         typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
         
+        /** @brief Default CTOR. No memory is allocated */
         mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
         
+        /** @brief Returns the handle to a buffer in CPU RAM. NULL is returned if no such buffer has been allocated. */
         ram_handle_type       & ram_handle()       { return ram_handle_; }
+        /** @brief Returns the handle to a buffer in CPU RAM. NULL is returned if no such buffer has been allocated. */
         ram_handle_type const & ram_handle() const { return ram_handle_; }
         
 #ifdef VIENNACL_WITH_OPENCL
+        /** @brief Returns the handle to an OpenCL buffer. The handle contains NULL if no such buffer has been allocated. */
         viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
+        /** @brief Returns the handle to an OpenCL buffer. The handle contains NULL if no such buffer has been allocated. */
         viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
 #endif        
 
 #ifdef VIENNACL_WITH_CUDA
+        /** @brief Returns the handle to a CUDA buffer. The handle contains NULL if no such buffer has been allocated. */
         cuda_handle_type       & cuda_handle()       { return cuda_handle_; }
+        /** @brief Returns the handle to a CUDA buffer. The handle contains NULL if no such buffer has been allocated. */
         cuda_handle_type const & cuda_handle() const { return cuda_handle_; }
 #endif        
 
+        /** @brief Returns an ID for the currently active memory buffer. Other memory buffers might contain old or no data. */
         memory_types get_active_handle_id() const { return active_handle_; }
+        
+        /** @brief Switches the currently active handle. If no support for that backend is provided, an exception is thrown. */ 
         void switch_active_handle_id(memory_types new_id)
         {
           if (new_id != active_handle_)
@@ -107,6 +122,7 @@ namespace viennacl
           }
         }
         
+        /** @brief Compares the two handles and returns true if the active memory handles in the two mem_handles point to the same buffer. */
         bool operator==(mem_handle const & other) const
         {
           if (active_handle_ != other.active_handle_)
@@ -132,6 +148,7 @@ namespace viennacl
         
         bool operator!=(mem_handle const & other) const { return !(*this == other); }
 
+        /** @brief Implements a fast swapping method. No data is copied, only the handles are exchanged. */
         void swap(mem_handle & other)
         {
           // swap handle type:
@@ -155,7 +172,10 @@ namespace viennacl
 #endif          
         }
         
+        /** @brief Returns the number of bytes of the currently active buffer */
         std::size_t raw_size() const               { return size_in_bytes_; }
+        
+        /** @brief Sets the size of the currently active buffer. Use with care! */
         void        raw_size(std::size_t new_size) { size_in_bytes_ = new_size; }
         
       private:

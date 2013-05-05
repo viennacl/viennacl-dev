@@ -47,6 +47,7 @@ namespace viennacl
     
 
 // if a user compiles with CUDA, it is reasonable to expect that CUDA should be the default
+    /** @brief Synchronizes the execution. finish() will only return after all compute kernels (CUDA, OpenCL) have completed. */
     inline void finish()
     {
 #ifdef VIENNACL_WITH_CUDA
@@ -70,6 +71,15 @@ namespace viennacl
     // * memory_read(src, offset, size, ptr)
     //
 
+    /** @brief Creates an array of the specified size. If the second argument is provided, the buffer is initialized with data from that pointer.
+    * 
+    * This is the generic version for CPU RAM, CUDA, and OpenCL. Creates the memory in the currently active memory domain.
+    * 
+    * @param handle          The generic wrapper handle for multiple memory domains which will hold the new buffer.
+    * @param size_in_bytes   Number of bytes to allocate
+    * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
+    * 
+    */
     inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
     {
       if (size_in_bytes > 0)
@@ -103,7 +113,17 @@ namespace viennacl
     
     
     
-    
+    /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' to memory starting at address 'dst_buffer + dst_offset'.
+    * 
+    * This is the generic version for CPU RAM, CUDA, and OpenCL. Copies the memory in the currently active memory domain.
+    * 
+    *  
+    *  @param src_buffer     A smart pointer to the begin of an allocated buffer
+    *  @param dst_buffer     A smart pointer to the end of an allocated buffer
+    *  @param src_offset     Offset of the first byte to be written from the address given by 'src_buffer' (in bytes)
+    *  @param dst_offset     Offset of the first byte to be written to the address given by 'dst_buffer' (in bytes)
+    *  @param bytes_to_copy  Number of bytes to be copied
+    */
     inline void memory_copy(mem_handle const & src_buffer,
                             mem_handle & dst_buffer,
                             std::size_t src_offset,
@@ -136,6 +156,9 @@ namespace viennacl
     }
 
     // TODO: Refine this concept. Maybe move to constructor?
+    /** @brief A 'shallow' copy operation from an initialized buffer to an uninitialized buffer. 
+     * The uninitialized buffer just copies the raw handle.
+     */
     inline void memory_shallow_copy(mem_handle const & src_buffer,
                                     mem_handle & dst_buffer)
     {
@@ -146,17 +169,20 @@ namespace viennacl
         case MAIN_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.ram_handle() = src_buffer.ram_handle();
+          dst_buffer.raw_size(src_buffer.raw_size());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case OPENCL_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.opencl_handle() = src_buffer.opencl_handle();
+          dst_buffer.raw_size(src_buffer.raw_size());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case CUDA_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
           dst_buffer.cuda_handle() = src_buffer.cuda_handle();
+          dst_buffer.raw_size(src_buffer.raw_size());
           break;
 #endif
         default:
@@ -164,6 +190,15 @@ namespace viennacl
       }
     }
     
+    /** @brief Writes data from main RAM identified by 'ptr' to the buffer identified by 'dst_buffer'
+    * 
+    * This is the generic version for CPU RAM, CUDA, and OpenCL. Writes the memory in the currently active memory domain.
+    * 
+    * @param dst_buffer     A smart pointer to the beginning of an allocated buffer
+    * @param dst_offset     Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
+    * @param bytes_to_write Number of bytes to be written
+    * @param ptr            Pointer to the first byte to be written
+    */
     inline void memory_write(mem_handle & dst_buffer,
                              std::size_t dst_offset,
                              std::size_t bytes_to_write,
@@ -192,6 +227,15 @@ namespace viennacl
       }
     }
     
+    /** @brief Reads data from a buffer back to main RAM.
+    * 
+    * This is the generic version for CPU RAM, CUDA, and OpenCL. Reads the memory from the currently active memory domain.
+    * 
+    * @param src_buffer         A smart pointer to the beginning of an allocated source buffer
+    * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
+    * @param bytes_to_read      Number of bytes to be read
+    * @param ptr                Location in main RAM where to read data should be written to
+    */
     inline void memory_read(mem_handle const & src_buffer,
                             std::size_t src_offset,
                             std::size_t bytes_to_read,
@@ -392,7 +436,7 @@ namespace viennacl
     
     
     
-    
+    /** @brief Copies data of the provided 'DataType' from 'handle_src' to 'handle_dst' and converts the data if the binary representation of 'DataType' among the memory domains differs. */
     template <typename DataType>
     void typesafe_memory_copy(mem_handle const & handle_src, mem_handle & handle_dst)
     {
@@ -546,12 +590,14 @@ namespace viennacl
   // Convenience layer:
   //
   
+  /** @brief Generic convenience routine for migrating data of an object to a new memory domain */
   template <typename T>
   void switch_memory_domain(T & obj, viennacl::memory_types new_mem_domain)
   {
     obj.switch_memory_domain(new_mem_domain);
   }
   
+  /** @brief Returns the currently active memory domain for an object */
   template <typename T>
   viennacl::memory_types memory_domain(T & obj)
   {

@@ -54,18 +54,21 @@ namespace viennacl
     //
     // Resize: Change the size of vectors and matrices
     //
+    /** @brief Generic resize routine for resizing a matrix (ViennaCL, uBLAS, etc.) to a new size/dimension */
     template <typename MatrixType>
     void resize(MatrixType & matrix, std::size_t rows, std::size_t cols)
     {
       matrix.resize(rows, cols); 
     }
     
+    /** @brief Generic resize routine for resizing a vector (ViennaCL, uBLAS, etc.) to a new size */
     template <typename VectorType>
     void resize(VectorType & vec, std::size_t new_size)
     {
       vec.resize(new_size); 
     }
     
+    /** \cond */
     #ifdef VIENNACL_WITH_UBLAS  
     //ublas needs separate treatment:
     template <typename ScalarType>
@@ -130,38 +133,44 @@ namespace viennacl
       v.resize(new_size);
     }
     #endif
+    /** \endcond */
 
 
     //
     // size: Returns the length of vectors
     //
+    /** @brief Generic routine for obtaining the size of a vector (ViennaCL, uBLAS, etc.) */
     template <typename VectorType>
     vcl_size_t size(VectorType const & vec)
     {
       return vec.size(); 
     }
-    
+
+    /** \cond */
     template <typename LHS, typename RHS, typename OP>
     vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
     {
       return size(proxy.lhs());
     }
-    
-    template <typename LHS, typename RHS>
-    typename viennacl::enable_if<    viennacl::is_any_matrix<LHS>::value
-                                  && viennacl::is_any_dense_nonstructured_vector<RHS>::value,
+
+    template <typename SparseMatrixType, typename VectorType>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vcl_size_t >::type
-    size(vector_expression<const LHS, const RHS, op_prod> const & proxy)  //matrix-vector product
+    size(vector_expression<const SparseMatrixType, const VectorType, op_prod> const & proxy)
+    {
+      return proxy.lhs().size1(); 
+    }
+    
+    template <typename NumericT, typename F>
+    vcl_size_t size(vector_expression<const matrix_base<NumericT, F>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
     {
       return proxy.lhs().size1();
     }
 
-    template <typename M1, typename RHS>
-    typename viennacl::enable_if< viennacl::is_any_dense_nonstructured_vector<RHS>::value,
-                                  vcl_size_t >::type
-    size(vector_expression<const matrix_expression<M1, M1, op_trans>,
-                           const RHS,
-                           op_prod> const & proxy)  //transposed matrix-vector product
+    template <typename NumericT, typename F>
+    vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>,
+                                      const vector_base<NumericT>,
+                                      op_prod> const & proxy)  //transposed matrix-vector product
     {
       return proxy.lhs().lhs().size2();
     }
@@ -176,14 +185,18 @@ namespace viennacl
     inline vcl_size_t size(Eigen::VectorXf const & v) { return v.rows(); }
     inline vcl_size_t size(Eigen::VectorXd const & v) { return v.rows(); }
     #endif
+    /** \endcond */
 
+    
     //
     // size1: No. of rows for matrices
     //
+    /** @brief Generic routine for obtaining the number of rows of a matrix (ViennaCL, uBLAS, etc.) */
     template <typename MatrixType>
     vcl_size_t
     size1(MatrixType const & mat) { return mat.size1(); }
 
+    /** \cond */
     template <typename RowType>
     vcl_size_t
     size1(std::vector< RowType > const & mat) { return mat.size(); }
@@ -194,78 +207,51 @@ namespace viennacl
     template <typename T, int options>
     inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return m.rows(); }    
     #endif
+    /** \endcond */
 
     //
     // size2: No. of columns for matrices
     //
+    /** @brief Generic routine for obtaining the number of columns of a matrix (ViennaCL, uBLAS, etc.) */
     template <typename MatrixType>
     typename result_of::size_type<MatrixType>::type
     size2(MatrixType const & mat) { return mat.size2(); }
  
+    /** \cond */
     #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
     inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
     template <typename T, int options>
     inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }    
     #endif
+    /** \endcond */
  
     //
     // internal_size: Returns the internal (padded) length of vectors
     //
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(VectorType const & vec)
+    /** @brief Helper routine for obtaining the buffer length of a ViennaCL vector  */
+    template <typename NumericT>
+    vcl_size_t internal_size(vector_base<NumericT> const & vec)
     {
       return vec.internal_size(); 
-    }
-
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(viennacl::vector_range<VectorType> const & vec)
-    {
-      return vec.get().internal_size(); 
-    }
-    
-    template <typename VectorType>
-    vcl_size_t
-    internal_size(viennacl::vector_slice<VectorType> const & vec)
-    {
-      return vec.get().internal_size(); 
     }
 
 
     //
     // internal_size1: No. of internal (padded) rows for matrices
     //
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(MatrixType const & mat) { return mat.internal_size1(); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(viennacl::matrix_range<MatrixType> const & mat) { return internal_size1(mat.get()); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size1(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size1(mat.get()); }
-
-    
+    /** @brief Helper routine for obtaining the internal number of entries per row of a ViennaCL matrix  */
+    template <typename NumericT, typename F>
+    vcl_size_t internal_size1(matrix_base<NumericT, F> const & mat) { return mat.internal_size1(); }
     
 
     //
     // internal_size2: No. of internal (padded) columns for matrices
     //
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(MatrixType const & mat) { return mat.internal_size2(); }
+    /** @brief Helper routine for obtaining the internal number of entries per column of a ViennaCL matrix  */
+    template <typename NumericT, typename F>
+    vcl_size_t internal_size2(matrix_base<NumericT, F> const & mat) { return mat.internal_size2(); }
  
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(viennacl::matrix_range<MatrixType> const & mat) { return internal_size2(mat.get()); }
-
-    template <typename MatrixType>
-    vcl_size_t
-    internal_size2(viennacl::matrix_slice<MatrixType> const & mat) { return internal_size2(mat.get()); }
  
   } //namespace traits
 } //namespace viennacl

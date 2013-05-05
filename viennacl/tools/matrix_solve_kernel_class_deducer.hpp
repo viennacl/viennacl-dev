@@ -41,91 +41,40 @@ namespace viennacl
     /** @brief deduces kernel type for A \ B, where A, B, C are MatrixType1 and MatrixType2 */
     template <typename MatrixType1, typename MatrixType2>
     struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER
-    {};
+    {
+      typedef typename MatrixType1::ERROR_INVALID_TEMPLATE_ARGUMENTS_PROVIDED   ResultType;
+    };
     
     
     /** \cond */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                              viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                              viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_solve_row_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_solve_row_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT>,
-                                              viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
+                                              viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_solve_row_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_solve_row_col<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                              viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                              viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_solve_col_row<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_solve_col_row<SCALARTYPE, 1>     ResultType;
     };
 
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT>,
-                                              viennacl::matrix<SCALARTYPE, viennacl::column_major, ALIGNMENT> >
+    template <typename SCALARTYPE>
+    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
+                                              viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {
-      typedef viennacl::linalg::kernels::matrix_solve_col_col<SCALARTYPE, ALIGNMENT>     ResultType;
+      typedef viennacl::linalg::kernels::matrix_solve_col_col<SCALARTYPE, 1>     ResultType;
     };
 
-    // handle matrix_range and matrix_slice:
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>, M2>
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>, M2>
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, viennacl::matrix_range<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< M1, viennacl::matrix_slice<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    // resolve ambiguities;
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>,
-                                              viennacl::matrix_slice<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>,
-                                              viennacl::matrix_range<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-    
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_range<M1>,
-                                              viennacl::matrix_range<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
-
-    template <typename M1, typename M2>
-    struct MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< viennacl::matrix_slice<M1>,
-                                              viennacl::matrix_slice<M2> >
-    {
-      typedef typename MATRIX_SOLVE_KERNEL_CLASS_DEDUCER<M1, M2>::ResultType     ResultType;
-    };
     
     /** \endcond */
   }
