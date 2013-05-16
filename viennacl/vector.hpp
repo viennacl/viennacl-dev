@@ -1852,7 +1852,30 @@ namespace viennacl
     return v1;
   }
   
-  
+
+  //v1 = v2 * / v3;
+  /** @brief Implementation of the operation v1 = v2 * / v3
+  *
+  * @param proxy  An expression template proxy class.
+  */
+  template <typename T, typename OP>
+  typename viennacl::enable_if< (viennacl::is_product<OP>::value || viennacl::is_division<OP>::value),
+                                vector_base<T> & >::type
+  operator += (vector_base<T> & v1,
+               const vector_expression< const vector_base<T>,
+                                        const vector_base<T>,
+                                        OP> & proxy)
+  {
+    assert( (proxy.lhs().size() == v1.size()) && bool("Incompatible vector sizes!"));
+
+    if (v1.size() > 0)
+    {
+      vector<T> tmp = proxy;
+      v1 += tmp;
+    }
+    return v1;
+  }
+
   //
   // operator -=
   //
@@ -1993,7 +2016,30 @@ namespace viennacl
     }
     return v1;
   }
-  
+
+  //v1 -= v2 * / v3;
+  /** @brief Implementation of the operation v1 = v2 * / v3
+  *
+  * @param proxy  An expression template proxy class.
+  */
+  template <typename T, typename OP>
+  typename viennacl::enable_if< (viennacl::is_product<OP>::value || viennacl::is_division<OP>::value),
+                                vector_base<T> & >::type
+  operator -= (vector_base<T> & v1,
+               const vector_expression< const vector_base<T>,
+                                        const vector_base<T>,
+                                        OP> & proxy)
+  {
+    assert( (proxy.lhs().size() == v1.size()) && bool("Incompatible vector sizes!"));
+
+    if (v1.size() > 0)
+    {
+      vector<T> tmp = proxy;
+      v1 -= tmp;
+    }
+    return v1;
+  }
+
   
   //
   // operator *=
