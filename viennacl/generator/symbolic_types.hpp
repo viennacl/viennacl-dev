@@ -2,10 +2,9 @@
 #define VIENNACL_GENERATOR_SYMBOLIC_TYPES_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2012, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
-   Portions of this software are copyright by UChicago Argonne, LLC.
 
                             -----------------
                   ViennaCL - The Vienna Computing Library
@@ -19,265 +18,224 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/symbolic_types.hpp
- *  @brief Definition of the symbolic types. Experimental.
- *
- *  Generator code contributed by Philippe Tillet
- */
 
-#include "viennacl/forwards.h"
-#include "viennacl/generator/result_of.hpp"
-#include "viennacl/generator/meta_tools/utils.hpp"
-
+#include "viennacl/generator/symbolic_types_base.hpp"
+#include "viennacl/generator/operators.hpp"
+#include "viennacl/generator/code_generation/optimization_profile.hpp"
 
 namespace viennacl
 {
   namespace generator
   {
 
-    /**
-    * @brief Symbolic constant. Used for elementwise operations.
 
-    * @tparam VAL value of the constant.
-    */
-    template<long VAL>
-    class symbolic_constant
-    {
-    public:
-        static const long value = VAL;
-        typedef long ScalarType;
-        static std::string name()
-        {
-            return "symcst"+to_string(value);
-        }
-    };
+          template<class T> struct repr_of;
+          template<> struct repr_of<float>{ static const std::string value(){ return "f"; } };
+          template<> struct repr_of<double>{ static const std::string value(){ return "d"; } };
+          template<> struct repr_of<int>{ static const std::string value(){ return "i"; } };
+          template<> struct repr_of<long int>{ static const std::string value(){ return "li"; } };
+          template<> struct repr_of<unsigned int>{ static const std::string value(){ return "ui"; } };
+          template<> struct repr_of<long unsigned int>{ static const std::string value(){ return "lui"; } };
+
+
+      template<class T, class Enable=void>
+      struct to_sym{
+          typedef T type;
+          static type result(T const & t){ return t; }
+      };
+
+      template<class T>
+      static typename to_sym<T>::type make_sym(T const & t){
+          return to_sym<T>::result(t);
+      }
+
+      template<class LHS, class OP, class RHS>
+      class binary_vector_expression : public binary_vector_expression_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          binary_vector_expression(LHS const & lhs, RHS const & rhs) :binary_vector_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+      };
+
+
+
+      template<class LHS, class RHS, class OP_REDUCE>
+      class binary_vector_expression<LHS,reduce_type<OP_REDUCE>,RHS> : public matvec_prod_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          binary_vector_expression(LHS const & lhs, RHS const & rhs) : matvec_prod_infos_base(new LHS(lhs), new reduce_type<OP_REDUCE>(), new RHS(rhs)){ }
+      };
+
+
+      template<class LHS, class OP, class RHS>
+      class binary_scalar_expression : public binary_scalar_expression_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          typedef LHS Lhs;
+          typedef RHS Rhs;
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs) :binary_scalar_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+      };
+
+
+
+      template<class LHS, class OP, class RHS>
+      class binary_matrix_expression : public binary_matrix_expression_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          typedef LHS Lhs;
+          typedef RHS Rhs;
+          binary_matrix_expression(LHS const & lhs, RHS const & rhs) :binary_matrix_expression_infos_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
+      };
+
+      template<class LHS, class RHS, class OP_REDUCE>
+      class binary_matrix_expression<LHS,reduce_type<OP_REDUCE>,RHS> : public matmat_prod_infos_base{
+      public:
+          typedef typename LHS::ScalarType ScalarType;
+          binary_matrix_expression(LHS const & lhs, RHS const & rhs) : matmat_prod_infos_base(new LHS(lhs), new reduce_type<OP_REDUCE>(), new RHS(rhs)){ }
+      private:
+
+      };
+
+      template<class SUB, class OP>
+      class unary_vector_expression : public unary_vector_expression_infos_base{
+      public:
+          typedef typename SUB::ScalarType ScalarType;
+          unary_vector_expression(SUB const & sub) :unary_vector_expression_infos_base(new SUB(sub), new OP()){ }
+      };
+
+      template<class SUB, class OP>
+      class unary_scalar_expression : public unary_scalar_expression_infos_base{
+      public:
+          typedef typename SUB::ScalarType ScalarType;
+          unary_scalar_expression(SUB const & sub) :unary_scalar_expression_infos_base(new SUB(sub), new OP()){ }
+      };
+
+      template<class ScalarType>
+      struct inner_product_tempories{
+          static std::map<cl_context, viennacl::vector<ScalarType> > map;
+      };
+
+      template<class ScalarType>
+      std::map<cl_context, viennacl::vector<ScalarType> > inner_product_tempories<ScalarType>::map;
+
+      template<class LHS, class OP_REDUCE, class RHS>
+      class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public inner_product_infos_base{
+          typedef typename LHS::ScalarType ScalarType;
+      public:
+          binary_scalar_expression(LHS const & lhs, RHS const & rhs):  inner_product_infos_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
+            , tmp_(inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()]){
+                tmp_.resize(1024);
+           }
+           void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+               lhs_->bind(shared_infos,prof);
+               rhs_->bind(shared_infos,prof);
+               handle_.reset((new pointer_argument<ScalarType>( name(), tmp_.handle(), 1)));
+           }
+           bool operator==(infos_base const & other) const{
+               if(binary_scalar_expression const * p = dynamic_cast<binary_scalar_expression const *>(&other)){
+                   return tmp_.handle() == p->tmp_.handle();
+               }
+               return false;
+           }
+      private:
+          viennacl::vector<ScalarType> & tmp_;
+      };
+
+      template<class SUB, class OP>
+      class unary_matrix_expression : public unary_matrix_expression_infos_base{
+      public:
+          typedef typename SUB::ScalarType ScalarType;
+          unary_matrix_expression(SUB const & sub) :unary_matrix_expression_infos_base(new SUB(sub), new OP()){ }
+      };
+
+
+
+
+
 
     /**
     * @brief Symbolic scalar type. Will be passed by value.
     *
-    * @tparam ID The argument ID of the scalar in the generated code
     * @tparam SCALARTYPE The Scalartype of the scalar in the generated code
     */
-    template <unsigned int ID, typename SCALARTYPE>
-    class cpu_symbolic_scalar
+    template <typename SCALARTYPE>
+    class cpu_symbolic_scalar : public cpu_scal_infos_base
     {
-      private:
-        typedef cpu_symbolic_scalar<ID,SCALARTYPE> self_type;
-
-      public:
-        static const unsigned int Alignment = 1;
+    public:
         typedef SCALARTYPE ScalarType;
-        typedef ScalarType runtime_type;
-        enum { id = ID };
-        static std::string name()
-        {
-          std::ostringstream oss;
-          oss << "c_s" << ID ;
-          return oss.str();
+        cpu_symbolic_scalar(ScalarType const & val) :  val_(val){}
+        std::string repr() const{ return "vscal"+repr_of<SCALARTYPE>::value(); }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos
+                  ,code_generation::optimization_profile * prof){
+            infos_= unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this,
+                                                              tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))))->second.get();
         }
-        static std::string kernel_arguments()
-        {
-          return print_type<SCALARTYPE,1>::value() + " " + name() + "\n";
+        void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> >& args) const{
+            unique_push_back(args,tools::shared_ptr<kernel_argument>(new value_argument<ScalarType>(name(), val_)));
         }
+        bool operator==(infos_base const & other) const{
+            if(cpu_symbolic_scalar const * p = dynamic_cast<cpu_symbolic_scalar const *>(&other)) return val_ == p->val_;
+            return false;
+        }
+        std::string generate(unsigned int i, int vector_element = -1) const{  return infos_->name; }
+    private:
+        ScalarType val_;
     };
+
+    class symbolic_constant : public infos_base{
+    public:
+        symbolic_constant(std::string const & expr) : expr_(expr){ }
+        std::string generate(unsigned int i, int vector_element = -1) const { return expr_; }
+        std::string repr() const { return "cst"+expr_; }
+        std::string name() const { return "cst"+expr_; }
+        std::string simplified_repr() const { return "cst"+expr_; }
+        void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
+        void fetch(unsigned int i, kernel_generation_stream & kss){ }
+        void write_back(unsigned int i, kernel_generation_stream & kss){ }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >& , code_generation::optimization_profile*){ }
+        bool operator==(infos_base const & other) const{ return dynamic_cast<symbolic_constant const *>(&other); }
+        void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const { }
+    private:
+        std::string expr_;
+    };
+
 
     /**
     * @brief Symbolic scalar type. Will be passed by pointer.
     *
     * @tparam ID The argument ID of the scalar in the generated code
-    * @tparam SCALARTYPE The Scalartype of the scalar in the generated code
+    * @tparam SCALARTYPE The SCALARTYPE of the scalar in the generated code
     */
-    template <unsigned int ID, typename SCALARTYPE>
-    class gpu_symbolic_scalar
+    template <typename SCALARTYPE>
+    class gpu_symbolic_scalar : public gpu_scal_infos_base
     {
       private:
-        typedef gpu_symbolic_scalar<ID,SCALARTYPE> self_type;
+        typedef gpu_symbolic_scalar<SCALARTYPE> self_type;
+        std::string access_buffer(unsigned int i) const { return "*"+infos_->name;  }
       public:
-        static const unsigned int Alignment = 1;
+        typedef viennacl::scalar<SCALARTYPE> vcl_t;
         typedef SCALARTYPE ScalarType;
-        typedef viennacl::scalar<ScalarType> runtime_type;
-        enum { id = ID };
-
-        static std::string val_name()
-        {
-            return "val_" + name();
+        gpu_symbolic_scalar(vcl_t const & vcl_scal) : vcl_scal_(vcl_scal){ }
+        void const * handle() const{ return static_cast<void const *>(&vcl_scal_.handle()); }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+            infos_= unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
+                                                               tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))))->second.get();
         }
-
-        static std::string declarations()
-        {
-            return print_type<ScalarType,1>::value() + " " +  val_name() + "= " "*"+name() + ";\n";
+        void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> >& args) const{
+            unique_push_back(args,tools::shared_ptr<kernel_argument>(new pointer_argument<ScalarType>(name(), vcl_scal_.handle(), 1)));
         }
-
-        static std::string assignements()
-        {
-            return "*"+name() + "="  +  val_name() + ";\n";
+        bool operator==(infos_base const & other) const{
+            if(gpu_symbolic_scalar const * p = dynamic_cast<gpu_symbolic_scalar const *>(&other)){
+                return vcl_scal_.handle().opencl_handle() == p->vcl_scal_.handle().opencl_handle();
+            }
+            return false;
         }
-
-        static std::string name()
-        {
-          std::ostringstream oss;
-          oss << "g_s" << ID ;
-          return oss.str();
-        }
-
-
-        static std::string kernel_arguments()
-        {
-          return "__global " + print_type<SCALARTYPE*,1>::value() + " " + name() + "\n" ;
-        }
-
-        template<typename RHS_TYPE>
-        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                          compound_node<self_type, assign_type, RHS_TYPE > >::type
-        operator= ( RHS_TYPE const & ) const
-        {
-          return compound_node<self_type,assign_type,RHS_TYPE >();
-        }
-
-        template<typename RHS_TYPE>
-        typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
-                          compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
-        operator*= ( RHS_TYPE const & ) const
-        {
-          return compound_node<self_type,inplace_scal_mul_type,RHS_TYPE >();
-        }
-
-        template<typename RHS_TYPE>
-        typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
-                          compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
-        operator/= ( RHS_TYPE const & ) const
-        {
-          return compound_node<self_type,inplace_scal_div_type,RHS_TYPE >();
-        }
-
-        template<typename RHS_TYPE>
-        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                          compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
-        operator+= ( RHS_TYPE const & ) const
-        {
-          return compound_node<self_type,inplace_add_type,RHS_TYPE >();
-        }
-
-        template<typename RHS_TYPE>
-        typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                          compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
-        operator-= ( RHS_TYPE const & ) const
-        {
-          return compound_node<self_type,inplace_sub_type,RHS_TYPE >();
-        }
-
+        std::string repr() const{ return "pscal"+repr_of<SCALARTYPE>::value(); }
+    private:
+        vcl_t const & vcl_scal_;
     };
 
 
-      /**
-      * @brief Symbolic vector type
-      *
-      * @tparam ID The argument ID of the vector in the generated code
-      * @tparam SCALARTYPE The Scalartype of the vector in the generated code
-      * @tparam ALIGNMENT The Alignment of the vector in the generated code
-      */
 
-      //TODO: Add start and inc...
-      template <unsigned int ID, typename SCALARTYPE, unsigned int ALIGNMENT>
-      class symbolic_vector
-      {
-        private:
-          typedef symbolic_vector<ID,SCALARTYPE,ALIGNMENT> self_type;
-
-        public:
-
-          typedef SCALARTYPE ScalarType;
-
-          static const unsigned int Alignment = ALIGNMENT;
-
-          typedef viennacl::vector<ScalarType,Alignment> runtime_type;
-
-          static const unsigned int id = ID;
-
-          static std::string gid_val_name(){
-              return "gid_val_"+name();
-          }
-
-          static std::string declarations(){
-              return print_type<ScalarType,Alignment>::value() + " " + gid_val_name() + "=" + name()+"[gid];\n";
-          }
-
-          static std::string assignements(){
-              return  name()+"[gid]" + " = "  + gid_val_name() + ";\n";
-          }
-
-          static std::string name()
-          {
-            return "v_a" + to_string(Alignment) + "_" + to_string(ID);
-          }
-
-          static std::string size2_name()
-          {
-            return "size_"+name();
-          }
-
-          static std::string internal_size2_name()
-          {
-            return "internal_size_"+name();
-          }
-
-          static std::string name_argument()
-          {
-            return " __global " + print_type<SCALARTYPE*,Alignment>::value() + " " + name();
-          }
-
-          static std::string kernel_arguments()
-          {
-            return " __global " + print_type<SCALARTYPE*,Alignment>::value() + " " + name()
-                + ", unsigned int " + size2_name()
-                + ", unsigned int " + internal_size2_name() + "\n" ;
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, assign_type, RHS_TYPE > >::type
-          operator= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,assign_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
-                            compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
-          operator*= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_scal_mul_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<result_of::is_scalar_expression<RHS_TYPE>,
-                            compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
-          operator/= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_scal_div_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
-          operator+= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_add_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
-          operator-= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_sub_type,RHS_TYPE >();
-          }
-
-          operator compound_node<self_type,assign_type,self_type>()
-          {
-            return compound_node<self_type,assign_type,self_type>();
-          }
-      };
 
 
 
@@ -285,241 +243,223 @@ namespace viennacl
       /**
       * @brief Symbolic matrix type
       *
-      * @tparam ID The argument ID of the matrix in the generated code
       * @tparam SCALARTYPE The Scalartype of the matrix in the generated code
       * @tparam F The Layout of the matrix in the generated code
       * @tparam ALIGNMENT The Alignment of the matrix in the generated code
       */
-      template<unsigned int ID, typename SCALARTYPE, class F, unsigned int ALIGNMENT>
-      class symbolic_matrix
+      template<class VCL_MATRIX, class ROW_ACCESSOR, class COL_ACCESSOR>
+      class symbolic_matrix : public mat_infos_base
       {
-
-          typedef symbolic_matrix<ID, SCALARTYPE, F, ALIGNMENT> self_type;
-
+          typedef symbolic_matrix<VCL_MATRIX, ROW_ACCESSOR, COL_ACCESSOR> self_type;
+          std::string access_buffer(unsigned int i) const {
+              return infos_->name + '[' +  offset(row_accessor_.generate(i), col_accessor_.generate(i)) + ']';
+          }
         public:
+          typedef VCL_MATRIX vcl_t;
+          typedef typename vcl_t::value_type::value_type ScalarType;
+          symbolic_matrix(VCL_MATRIX const & vcl_mat, ROW_ACCESSOR const & row_accessor, COL_ACCESSOR const & col_accessor) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value), vcl_mat_(vcl_mat)
+                                                                , row_accessor_(row_accessor), col_accessor_(col_accessor){ }
+          void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+              infos_= unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
+                                                                 tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
 
-          enum { id = ID };
-          typedef SCALARTYPE ScalarType;
-          typedef F Layout;
-          static const unsigned int Alignment = ALIGNMENT;
-
-          typedef viennacl::matrix<ScalarType,F,Alignment> runtime_type;
-          static std::string gid_val_name()
-          {
-              return "gid_val_"+name();
           }
+          void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> >& args) const{
+              unique_push_back(args,tools::shared_ptr<kernel_argument>(new pointer_argument<ScalarType>(name(), vcl_mat_.handle(), infos_->alignment)));
+              cl_uint size1_arg = cl_uint(vcl_mat_.internal_size1());
+              cl_uint size2_arg = cl_uint(vcl_mat_.internal_size2());
+              if(is_rowmajor_) size2_arg /= infos_->alignment;
+              else size1_arg /= infos_->alignment;
+              unique_push_back(args,tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(internal_size1(), size1_arg)));
+              unique_push_back(args,tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(internal_size2(), size2_arg)));
 
-          static std::string declarations()
-          {
-            return print_type<ScalarType,Alignment>::value() + " " + gid_val_name() + "=" + name()+"[gid];\n";
+
+              row_accessor_.get_kernel_arguments(args);
+              col_accessor_.get_kernel_arguments(args);
           }
-
-          static std::string assignements()
-          {
-            return  name()+"[gid]" + " = " + gid_val_name() + ";\n";
+          std::string repr() const{ return "mat"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+(is_rowmajor_?'R':'C'); }
+          bool operator==(infos_base const & other) const{
+              if(symbolic_matrix const * p = dynamic_cast<symbolic_matrix const *>(&other))
+                  return typeid(other)==typeid(*this) &&
+                          vcl_mat_.handle().opencl_handle() == p->vcl_mat_.handle().opencl_handle()
+                          &&row_accessor_==p->row_accessor_
+                          &&col_accessor_==p->col_accessor_;
+              return false;
           }
-
-          static std::string name()
-          {
-            F layout;
-            return "m_a_" + viennacl::generator::to_string(layout) + "_"
-                          + viennacl::generator::to_string(Alignment) + "_"
-                          + viennacl::generator::to_string<long>(id);
+          size_t real_size1() const { return vcl_mat_.internal_size1(); }
+          size_t real_size2() const { return vcl_mat_.internal_size2(); }
+          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+              row_accessor_.access_index(i, ind0, "0");
+              col_accessor_.access_index(i, ind1, "0");
           }
-
-
-          static std::string row_inc_name()
-          {
-            return name()+"_row_inc";
-          }
-
-          static std::string col_inc_name()
-          {
-            return name()+"_col_inc";
-          }
-
-          static std::string row_start_name()
-          {
-            return name()+"_row_start";
-          }
-
-          static std::string col_start_name()
-          {
-            return name()+"_col_start";
-          }
-
-          static std::string size1_name()
-          {
-            return "size1_" + name();
-          }
-
-          static std::string size2_name()
-          {
-            return "size2_" + name();
-          }
-
-          static std::string internal_size1_name()
-          {
-            return "internal_size1_" + name();
-          }
-
-          static std::string internal_size2_name()
-          {
-            return "internal_size2_" + name();
-          }
-
-          static std::string kernel_arguments()
-          {
-            return " __global " + generator::print_type<SCALARTYPE*,Alignment>::value() + " " + name()
-                  + ", unsigned int " + row_start_name()
-                  + ", unsigned int " + col_start_name()
-                  + ", unsigned int " + row_inc_name()
-                  + ", unsigned int " + col_inc_name()
-                  + ", unsigned int " + size1_name()
-                  + ", unsigned int " + size2_name()
-                  + ", unsigned int " + internal_size1_name()
-                  + ", unsigned int " + internal_size2_name()
-                  + "\n";
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, assign_type, RHS_TYPE > >::type
-          operator= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,assign_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<generator::result_of::is_scalar_expression<RHS_TYPE>,
-                            compound_node<self_type, inplace_scal_mul_type, RHS_TYPE > >::type
-          operator*= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_scal_mul_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<generator::result_of::is_scalar_expression<RHS_TYPE>,
-                            compound_node<self_type, inplace_scal_div_type, RHS_TYPE > >::type
-          operator/= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_scal_div_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, inplace_add_type, RHS_TYPE > >::type
-          operator+= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_add_type,RHS_TYPE >();
-          }
-
-          template<typename RHS_TYPE>
-          typename enable_if<generator::result_of::is_same_expression_type<self_type,RHS_TYPE>,
-                            compound_node<self_type, inplace_sub_type, RHS_TYPE > >::type
-          operator-= ( RHS_TYPE const & ) const
-          {
-            return compound_node<self_type,inplace_sub_type,RHS_TYPE >();
-          }
-
-          operator compound_node<self_type,assign_type,self_type>() 
-          {
-            return compound_node<self_type,assign_type,self_type>();
-          }
+      protected:
+          VCL_MATRIX const & vcl_mat_;
+          ROW_ACCESSOR row_accessor_;
+          COL_ACCESSOR col_accessor_;
       };
 
       /**
-      * @brief Binary node class for storing expression trees
-      *
-      * @tparam LHS_ LHS of the expression
-      * @tparam OP_ Operator of the expression
-      * @tparam RHS_ RHS of the expression
-      */
-      template<class LHS_, class OP_, class RHS_>
-      class compound_node
-      {
-        public:
-          typedef LHS_  LHS;
-          typedef RHS_  RHS;
-          typedef OP_   OP;
-
-          typedef typename result_of::expression_type<RHS>::Result IntermediateType;  //Note: Visual Studio does not allow to combine this line with the next one directly.
-          typedef typename IntermediateType::ScalarType ScalarType;
-
-          static std::string name()
-          {
-              return LHS::name() + "_" + OP::name() + "_" + RHS::name();
-          }
-      };
-
-      template<class LHS_, class RHS_>
-      class compound_node<LHS_,inner_prod_type,RHS_>
-      {
-        public:
-          /**
-          * @brief Specialization for the inner product
-          */
-          typedef LHS_ LHS;
-          typedef RHS_ RHS;
-          typedef inner_prod_type OP;
-          typedef typename result_of::expression_type<LHS>::Result IntermediateType;  //Note: Visual Studio does not allow to combine this line with the next one directly.
-          typedef typename IntermediateType::ScalarType ScalarType;
-          static const unsigned int Alignment = IntermediateType::Alignment;
-
-          enum { id = -2 };
-
-          static std::string kernel_arguments()
-          {
-              return  "__global " + print_type<ScalarType*,1>::value() + " " + name() + '\n';
-          }
-
-          static std::string name()
-          {
-              return  LHS::name() + "_inprod_" + RHS::name();
-          }
-
-          static std::string local_value()
-          {
-              return "local_"+name();
-          }
-
-          static std::string declarations()
-          {
-              return "__local " + print_type<ScalarType,1>::value() + " " + local_value() + ";\n";
-          }
-
-          static std::string scalar_name()
-          {
-            return name() +"_s";
-          }
-
-      };
-
-      /**
-      * @brief Specialization for the matrix-vector product.
-      */
-      template<class LHS_, class RHS_>
-      class compound_node<LHS_,prod_type,RHS_>
-      {
+        * @brief Symbolic vector type
+        *
+        * @tparam SCALARTYPE The Scalartype of the vector in the generated code
+        * @tparam ALIGNMENT The Alignment of the vector in the generated code
+        */
+        template <class SCALARTYPE, class ELEMENT_ACCESSOR>
+        class symbolic_vector : public vec_infos_base{
         private:
-          typedef compound_node<LHS_,prod_type,RHS_> self_type;
-
+            std::string access_buffer(unsigned int i) const { return infos_->name + '[' +  accessor_.generate(i) + ']';  }
         public:
-          typedef LHS_ LHS;
-          typedef RHS_ RHS;
+            typedef SCALARTYPE ScalarType;
+            symbolic_vector(size_t size, viennacl::vector<ScalarType> const & vec, ELEMENT_ACCESSOR const & accessor) : vec_infos_base(size), vec_(vec), accessor_(accessor){ }
+            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+                infos_= unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this, tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
+                accessor_.bind(shared_infos,prof);
+            }
+            void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> >& args) const{
+                unique_push_back(args,tools::shared_ptr<kernel_argument>(new pointer_argument<ScalarType>(infos_->name, vec_.handle(), infos_->alignment)));
+                unique_push_back(args,tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(size(), size_/infos_->alignment)));
+                accessor_.get_kernel_arguments(args);
+            }
+            std::string repr() const{
+                return "vec"+repr_of<SCALARTYPE>::value()+accessor_.repr();
+            }
+            std::string simplified_repr() const{
+                return "vec"+repr_of<SCALARTYPE>::value();
+            }
+            void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+                assert(ind1=="0");
+                accessor_.access_index(i, ind0, "0");
+            }
+            bool operator==(infos_base const & other) const{
+                if(symbolic_vector const * p = dynamic_cast<symbolic_vector const *>(&other)) return vec_.handle()==p->vec_.handle() && accessor_==p->accessor_;
+                return false;
+            }
+          protected:
+            viennacl::vector<ScalarType> const & vec_;
+            ELEMENT_ACCESSOR accessor_;
+        };
 
-          typedef prod_type OP;
-          enum { id = LHS::id };
+        class index_set : public infos_base{
+        public:
+            index_set() { }
+            std::string repr() const { return "i"; }
+            std::string name() const { return "i"; }
+            void access_index(unsigned int i, std::string const & ind0, std::string const &){ ind0s_[i] = ind0; }
+            std::string simplified_repr() const { return "i"; }
+            void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){ }
+            void fetch(unsigned int i, kernel_generation_stream & kss){ }
+            void write_back(unsigned int i, kernel_generation_stream & kss){ }
+            void get_kernel_arguments(std::vector<tools::shared_ptr<kernel_argument> > & args) const { }
+            std::string generate(unsigned int i, int vector_element = -1) const { return ind0s_.at(i); }
+            bool operator==(infos_base const & other) const{ return dynamic_cast<index_set const *>(&other); }
+        private:
+            std::map<unsigned int, std::string> ind0s_;
+        };
 
-          typedef typename result_of::expression_type<LHS>::Result IntermediateType;    //Note: Visual Studio does not allow to combine this line with the next one directly.
-          typedef typename IntermediateType::ScalarType ScalarType;
-          static const unsigned int Alignment = result_of::expression_type<LHS>::Result::Alignment;
 
-          static std::string name()
-          {
-            return LHS::name() + "_prod_" + RHS::name();
-          }
-      };
+//    template<class VCL_MATRIX>
+//    class replicate_matrix : public mat_infos_base{
+//    private:
+//        std::string access_buffer(unsigned int i) const { return name()+"_underlying" + '[' + infos_->access_index[i] + ']'; }
+//    public:
+//        typedef VCL_MATRIX vcl_t;
+//        typedef typename vcl_t::value_type::value_type ScalarType;
+//        replicate_matrix(VCL_MATRIX const & sub,unsigned int m,unsigned int k) : mat_infos_base(are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value)
+//                                                                                ,underlying_(sub)
+//                                                                                , m_(m) , k_(k){ }
+//        void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+//            std::string new_ind0 = ind0;
+//            std::string new_ind1 = ind1;
+//            std::string underlying_size1 = name() + "_underlying_size1";
+//            std::string underlying_size2 = name() + "_underlying_size2";
+//            if(m_>1) new_ind0 += "%" + underlying_size1;
+//            if(k_>1) new_ind1 += "%" + underlying_size2;
+//            std::string str;
+//            if(is_rowmajor_)
+//                str = new_ind0+"*"+underlying_size2+"+"+new_ind1;
+//            else
+//                str = new_ind1+"*"+underlying_size1+"+"+new_ind0;
+//            infos_->access_index[i] = str;
+//        }
+
+//        std::string repr() const{  return "repmat"+repr_of<typename VCL_MATRIX::value_type::value_type>::value()+(is_rowmajor_?'R':'C'); }
+//        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+//            infos_= unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
+//                                                               tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
+
+//            {
+//            other_arguments_.push_back(tools::shared_ptr<kernel_argument>(new pointer_argument<ScalarType>(name()+"_underlying", underlying_.handle(), infos_->alignment)));
+//            cl_uint size1_arg = cl_uint(underlying_.internal_size1());
+//            cl_uint size2_arg = cl_uint(underlying_.internal_size2());
+//            if(is_rowmajor_) size2_arg /= infos_->alignment;
+//            else size1_arg /= infos_->alignment;
+//            other_arguments_.push_back(tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(name()+"_underlying_size1", size1_arg)));
+//            other_arguments_.push_back(tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(name()+"_underlying_size2", size2_arg)));
+//            }
+
+//            {
+//                cl_uint size1_arg = cl_uint(real_size1());
+//                cl_uint size2_arg = cl_uint(real_size2());
+//                if(is_rowmajor_) size2_arg /= infos_->alignment;
+//                else size1_arg /= infos_->alignment;
+//                other_arguments_.push_back(tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(internal_size1(), size1_arg)));
+//                other_arguments_.push_back(tools::shared_ptr<kernel_argument>(new value_argument<unsigned int>(internal_size2(), size2_arg)));
+//            }
+
+//        }
+//        size_t real_size1() const{ return m_*underlying_.internal_size1(); }
+//        size_t real_size2() const{ return k_*underlying_.internal_size2(); }
+//        bool operator==(infos_base const & other) const{
+//            if(replicate_matrix const * p = dynamic_cast<replicate_matrix const *>(&other))
+//                return typeid(other)==typeid(*this)
+//                        && m_==p->m_
+//                        && k_==p->k_
+//                        && underlying_.handle()==p->underlying_.handle();
+//            return false;
+//        }
+//    private:
+//        VCL_MATRIX const & underlying_;
+//        unsigned int m_;
+//        unsigned int k_;
+//    };
+
+
+
+
+//      template<class VCL_MATRIX>
+//      class symbolic_diag : public vec_infos_base{
+//      public:
+//          typedef typename VCL_MATRIX::value_type::value_type ScalarType;
+//      public:
+//          symbolic_diag(VCL_MATRIX const & vcl_mat) : vcl_mat_(vcl_mat){ }
+//          virtual void const * handle() const{ return static_cast<void const *>(this); }
+//          void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const{
+//              k.arg(n_arg++,vcl_mat_);
+//              k.arg(n_arg++,cl_uint(vcl_mat_.internal_size1()));
+//          }
+//          void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+//              infos_= &unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this,
+//                                                                  tools::shared_ptr<shared_infos_t>(new shared_infos_t(shared_infos.size(),print_type<ScalarType>::value(),sizeof(ScalarType)))))->second;
+//          }
+//          std::string repr() const{
+//              bool is_rowmajor = are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value;
+//              return "diag"+repr_of<ScalarType>::value() + (is_rowmajor?'R':'C');
+//          }
+//          size_t real_size() const{ return vcl_mat_.size1(); }
+//          void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
+//              infos_->access_index[i] = ind0+"*"+size()+"+"+ind0;
+//          }
+//          template<typename RHS_TYPE>
+//          binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >
+//          operator+= ( RHS_TYPE const & rhs ){
+//            return binary_vector_expression<symbolic_diag<VCL_MATRIX>, inplace_add_type, typename to_sym<RHS_TYPE>::type >(*this,make_sym(rhs));
+//          }
+//        protected:
+//          VCL_MATRIX const & vcl_mat_;
+//      };
+
+      
+
 
 
   } // namespace generator
@@ -527,4 +467,3 @@ namespace viennacl
 
 
 #endif
-

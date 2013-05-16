@@ -1,336 +1,276 @@
 #ifndef VIENNACL_GENERATOR_OPERATORS_HPP
 #define VIENNACL_GENERATOR_OPERATORS_HPP
 
-/* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
-                            Institute for Analysis and Scientific Computing,
-                            TU Wien.
-   Portions of this software are copyright by UChicago Argonne, LLC.
+#include <string>
 
-                            -----------------
-                  ViennaCL - The Vienna Computing Library
-                            -----------------
+#include "viennacl/tools/shared_ptr.hpp"
 
-   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+namespace viennacl{
 
-   (A list of authors and contributors can be found in the PDF manual)
-
-   License:         MIT (X11), see file LICENSE in the base directory
-============================================================================= */
+namespace generator{
 
 
-/** @file viennacl/generator/operators.hpp
- *  @brief Definition of the operators between the symbolic types. Experimental.
- *
- *  Generator code contributed by Philippe Tillet
- */
+//////////////////////////////////////
+///// OPERATOR BASE
+//////////////////////////////////////
 
-#include "viennacl/generator/forwards.h"
-#include "viennacl/generator/result_of.hpp"
-#include "viennacl/generator/meta_tools/utils.hpp"
+class op_infos_base {
+public:
+    op_infos_base(std::string const & name) : name_(name){ }
+    std::string const & name() const { return name_; }
+    virtual ~op_infos_base(){ }
+protected:
+    std::string name_;
+};
 
-namespace viennacl
-{
-  namespace generator
-  {
+class binary_op_infos_base : public op_infos_base {
+public:
+    virtual std::string generate(std::string const & lhs, std::string const & rhs) const = 0;
+    binary_op_infos_base(std::string const & name) : op_infos_base(name){ }
+};
 
-    struct assign_type
-    {
-      static std::string expression_string() { return " = "; }
-      static std::string name() { return "eq"; }
-    };
+class binary_fun_op_infos_base : public binary_op_infos_base{
+public:
+    binary_fun_op_infos_base(std::string const & name) : binary_op_infos_base(name){ }
+    std::string generate(std::string const  & lhs, std::string const & rhs) const{
+        return name_+"("+lhs+","+rhs+")";
+    }
+};
 
-    struct add_type
-    {
-      static std::string expression_string() { return " + "; }
-      static std::string name() { return "p"; }
-    };
+class nonarithmetic_op_infos_base : public binary_op_infos_base{
+public:
+    nonarithmetic_op_infos_base(std::string name) : binary_op_infos_base(name){ }
+};
 
-    struct inplace_add_type
-    {
-      static std::string expression_string() { return " += "; }
-      static std::string name() { return "p_eq"; }
-    };
+class arithmetic_op_infos_base : public binary_op_infos_base{
+public:
+    std::string generate(std::string const & lhs, std::string const & rhs) const{
+        return lhs + expr_ + rhs;
+    }
+protected:
+    arithmetic_op_infos_base(std::string const & name, std::string const & expr) :  binary_op_infos_base(name), expr_(expr){ }
+private:
+    std::string expr_;
+};
 
-    struct sub_type
-    {
-      static std::string expression_string() { return " - "; }
-      static std::string name() { return "m"; }
-    };
+class assignment_op_infos_base : public arithmetic_op_infos_base{
+public:
+    assignment_op_infos_base(std::string const & name, std::string const & expr) : arithmetic_op_infos_base(name,expr){ }
+};
 
-    struct inplace_sub_type
-    {
-      static std::string expression_string() { return " -= "; }
-      static std::string name() { return "m_eq"; }
-    };
+class unary_op_infos_base : public op_infos_base {
+public:
+    virtual std::string generate(std::string const & sub) const = 0;
+    unary_op_infos_base(std::string const & name) : op_infos_base(name) { }
+};
 
-    struct scal_mul_type
-    {
-      static std::string expression_string() { return " * "; }
-      static std::string name() { return "mu"; }
-    };
+template<class ScalarType>
+class cast_type : public unary_op_infos_base{
+public:
+    cast_type() : unary_op_infos_base("cast_"+print_type<ScalarType>::value()){ }
+    std::string generate(const std::string &sub) const { return "("+print_type<ScalarType>::value()+")(" + sub + ")"; }
+};
 
-    struct inplace_scal_mul_type
-    {
-      static std::string expression_string() { return " *= "; }
-      static std::string name() { return "mu_eq"; }
-    };
+class unary_arithmetic_op_infos_base : public unary_op_infos_base{
+public:
+    std::string generate(std::string const &  sub) const{ return expr_+sub; }
+    unary_arithmetic_op_infos_base(std::string const & name, std::string const & expr) : unary_op_infos_base(name), expr_(expr){ }
+private:
+    std::string expr_;
+};
 
+class unary_fun_op_infos_base : public unary_op_infos_base{
+public:
+    unary_fun_op_infos_base(std::string const & name) : unary_op_infos_base(name){ }
+    std::string generate(std::string const & sub) const {
+        return name_+"("+sub+")";
+    }
+};
 
-    struct scal_div_type
-    {
-      static std::string expression_string() { return " / "; }
-      static std::string name() { return "d"; }
-    };
-
-    struct inplace_scal_div_type
-    {
-      static std::string expression_string() { return " /= "; }
-      static std::string name() { return "d_eq"; }
-    };
-
-    struct inner_prod_type
-    {
-      static std::string expression_string() { return "_i_"; }
-      static std::string name() { return "i"; }
-    };
-
-    struct prod_type
-    {
-      static std::string expression_string() { return "_p_"; }
-      static std::string name() { return "p"; }
-    };
-
-    struct elementwise_prod_type
-    {
-      static std::string expression_string() { return "*"; }
-      static std::string name() { return "ewp"; }
-    };
-
-    struct elementwise_div_type
-    {
-      static std::string expression_string() { return "/"; }
-      static std::string name() { return "ewd"; }
-    };
-
-
-    template<class T>
-    struct make_inplace
-    {
-      typedef T Result;
-    };
-
-    template<>
-    struct make_inplace<add_type>
-    {
-      typedef inplace_add_type Result;
-    };
-
-    template<>
-    struct make_inplace<sub_type>
-    {
-      typedef inplace_sub_type Result;
-    };
-
-    template<>
-    struct make_inplace<scal_mul_type>
-    {
-      typedef inplace_scal_mul_type Result;
-    };
-
-    template<>
-    struct make_inplace<scal_div_type>
-    {
-      typedef inplace_scal_div_type Result;
-    };
-
-    template<class LHS, class RHS>
-    struct CHECK_ALIGNMENT_COMPATIBILITY
-    {
-      typedef typename result_of::expression_type<LHS>::Result LHS_TYPE;
-      typedef typename result_of::expression_type<RHS>::Result RHS_TYPE;
-      VIENNACL_STATIC_ASSERT(LHS_TYPE::Alignment == RHS_TYPE::Alignment,AlignmentIncompatible);
-    };
-
-    template<class LHS, long val>
-    struct CHECK_ALIGNMENT_COMPATIBILITY<LHS, symbolic_constant<val> >{ };
-
-    template<class RHS, long val>
-    struct CHECK_ALIGNMENT_COMPATIBILITY< symbolic_constant<val>, RHS >{ };
-
-
-    /** @brief Unary minus operator */
-    template<class T>
-    typename enable_if_c<result_of::is_symbolic_expression<T>::value,compound_node<NullType,sub_type,T> >::type
-    operator -(T const &)
-    {
-      return compound_node<NullType,sub_type,T>();
+template<class REDUCE_TYPE>
+class reduce_type : public nonarithmetic_op_infos_base{
+public:
+    reduce_type() : nonarithmetic_op_infos_base("prod"), op_reduce_(new REDUCE_TYPE()){ }
+    binary_op_infos_base* op_reduce(){ return op_reduce_.get(); }
+    std::string generate(std::string const & lhs, std::string const & rhs) const {
+        return op_reduce_->generate(lhs,rhs);
     }
 
-    /** @brief Scalar multiplication operator */
-    template<class LHS_TYPE, class RHS_TYPE>
-    typename enable_if_c<result_of::is_scalar_expression<LHS_TYPE>::value || result_of::is_scalar_expression<RHS_TYPE>::value,
-                        compound_node<LHS_TYPE,scal_mul_type,RHS_TYPE> >::type
-    operator* ( LHS_TYPE const &, RHS_TYPE const & )
-    {
-      return compound_node<LHS_TYPE, scal_mul_type,RHS_TYPE> ();
+private:
+    viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
+};
+
+////////////////////////////
+//// BINARY AND UNARY OPERATORS
+///////////////////////////
+
+#define MAKE_OP(name,expression,base) \
+class name##_type : public base{\
+    public:\
+    name##_type() : base(#name,#expression){ }\
+};
+
+//Assignment
+MAKE_OP(assign,=,assignment_op_infos_base)
+MAKE_OP(inplace_add,+=,assignment_op_infos_base)
+MAKE_OP(inplace_sub,-=,assignment_op_infos_base)
+MAKE_OP(inplace_scal_mul,*=,assignment_op_infos_base)
+MAKE_OP(inplace_scal_div,/=,assignment_op_infos_base)
+
+//Arithmetic
+MAKE_OP(add,+,arithmetic_op_infos_base)
+MAKE_OP(sub,-,arithmetic_op_infos_base)
+
+
+//Comparison
+MAKE_OP(sup,>,arithmetic_op_infos_base)
+MAKE_OP(supeq,>=,arithmetic_op_infos_base)
+MAKE_OP(inf,<,arithmetic_op_infos_base)
+MAKE_OP(infeq,<=,arithmetic_op_infos_base)
+MAKE_OP(eqto,==,arithmetic_op_infos_base)
+MAKE_OP(neqto,!=,arithmetic_op_infos_base)
+
+//Bitwise
+MAKE_OP(and,&,arithmetic_op_infos_base)
+MAKE_OP(or,|,arithmetic_op_infos_base)
+MAKE_OP(xor,^,arithmetic_op_infos_base)
+
+
+
+MAKE_OP(unary_sub,-,unary_arithmetic_op_infos_base)
+MAKE_OP(identity, ,unary_arithmetic_op_infos_base)
+
+class trans_type : public unary_op_infos_base{
+public:
+    trans_type() : unary_op_infos_base("trans"){ }
+    std::string generate(const std::string &sub) const { return sub; }
+};
+
+
+class replicate_type : public unary_op_infos_base{
+public:
+    replicate_type() : unary_op_infos_base("replicate"){ }
+    std::string generate(const std::string &sub) const { return sub; }
+};
+
+class mul_type : public arithmetic_op_infos_base{
+public:
+    mul_type() : arithmetic_op_infos_base("mul_type","*"){ }
+    std::string generate(std::string const & lhs, std::string const & rhs) const{
+        if(lhs=="1" && rhs=="1") return "1";
+        else if(rhs=="1") return lhs;
+        else if(lhs=="1") return rhs;
+        else return lhs + "*" + rhs;
     }
+};
 
-
-    /** @brief Elementwise Scalar multiplication operators with a constant */
-    template<long VAL, class RHS_TYPE>
-    compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>
-    operator* ( symbolic_constant<VAL> const &, RHS_TYPE const & )
-    {
-      return compound_node<symbolic_constant<VAL>,elementwise_prod_type,RHS_TYPE>();
+class div_type : public arithmetic_op_infos_base{
+public:
+    div_type() : arithmetic_op_infos_base("div_type","/"){ }
+    std::string generate(std::string const & lhs, std::string const & rhs) const{
+        if(rhs=="1") return lhs;
+        else return lhs + "/" + rhs;
     }
-
-    template<class LHS_TYPE, long VAL>
-    compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >
-    operator* ( LHS_TYPE const &, symbolic_constant<VAL> const & )
-    {
-      return compound_node<LHS_TYPE ,elementwise_prod_type,symbolic_constant<VAL> >();
-    }
-
-    /** @brief Scalar division operator */
-    template<class LHS_TYPE, class RHS_TYPE>
-    typename enable_if_c< result_of::is_scalar_expression<RHS_TYPE>::value,
-                          compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> > ::type
-    operator/ ( LHS_TYPE const &, RHS_TYPE const & )
-    {
-      return compound_node<LHS_TYPE,scal_div_type,RHS_TYPE> ();
-    }
-
-    /** @brief Elementwise Scalar division operators with a constant */
-    template<long VAL, class RHS_TYPE>
-    compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>
-    operator/ ( symbolic_constant<VAL> const &, RHS_TYPE const & )
-    {
-      return compound_node<symbolic_constant<VAL>,elementwise_div_type,RHS_TYPE>();
-    }
-
-    template<class LHS_TYPE, long VAL>
-    compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >
-    operator/ ( LHS_TYPE const &, symbolic_constant<VAL> const & )
-    {
-      return compound_node<LHS_TYPE ,elementwise_div_type,symbolic_constant<VAL> >();
-    }
-
-    /** @brief Addition operator on 2 elements of the same type */
-    template<class LHS_TYPE, class RHS_TYPE>
-    typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
-                        compound_node<LHS_TYPE, add_type, RHS_TYPE> >::type
-    operator+ ( LHS_TYPE const &, RHS_TYPE const & )
-    {
-      CHECK_ALIGNMENT_COMPATIBILITY<LHS_TYPE,RHS_TYPE>();
-      return compound_node<LHS_TYPE, add_type, RHS_TYPE>();
-    }
-
-    /** @brief Substraction operator on 2 elements of the same type */
-    template<class LHS_TYPE, class RHS_TYPE>
-    typename enable_if< result_of::is_same_expression_type<LHS_TYPE, RHS_TYPE>,
-                        compound_node<LHS_TYPE, sub_type, RHS_TYPE> >::type
-    operator- ( LHS_TYPE const &, RHS_TYPE const & )
-    {
-      CHECK_ALIGNMENT_COMPATIBILITY<LHS_TYPE,RHS_TYPE>();
-      return compound_node<LHS_TYPE, sub_type, RHS_TYPE>();
-    }
-
-    /** @brief Helper for the inner_prod operator */
-    template<class LHS, class RHS>
-    struct make_inner_prod;
-
-    /** \cond */
-    template<class LHS, class LHS_SIZE_DESCRIPTOR,
-            class RHS, class RHS_SIZE_DESCRIPTOR>
-    struct make_inner_prod<result_of::vector_expression<LHS, LHS_SIZE_DESCRIPTOR>,
-                          result_of::vector_expression<RHS, RHS_SIZE_DESCRIPTOR> >
-    {
-      typedef compound_node<LHS,inner_prod_type,RHS> Result;
-    };
-    /** \endcond */
+};
 
 
-    /** @brief Inner product operator */
-    template<class LHS, class RHS>
-    typename enable_if<result_of::is_same_expression_type<LHS,RHS>,compound_node<LHS,inner_prod_type,RHS> >::type inner_prod ( LHS, RHS )
-    {
-      CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
-      return compound_node<LHS,inner_prod_type,RHS>();
-    }
-
-    /** @brief Product operator */
-    template<class LHS, class RHS>
-    compound_node<LHS,prod_type,RHS> prod ( LHS, RHS )
-    {
-      CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
-      return compound_node<LHS,prod_type,RHS>();
-    }
-
-    template<class LHS, class RHS>
-    compound_node<LHS,elementwise_prod_type,RHS> element_prod(LHS, RHS){
-        CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
-        return compound_node<LHS,elementwise_prod_type,RHS>();
-    }
-
-    template<class LHS, class RHS>
-    compound_node<LHS,elementwise_div_type,RHS> element_div(LHS, RHS){
-        CHECK_ALIGNMENT_COMPATIBILITY<LHS,RHS>();
-        return compound_node<LHS,elementwise_div_type,RHS>();
-    }
-
-    /*
-    * Traits
-    */
-
-    namespace result_of{
-
-    template<class OP>
-    struct is_assignment{
-      enum{ value = are_same_type<OP,assign_type>::value ||
-            are_same_type<OP,inplace_add_type>::value ||
-            are_same_type<OP,inplace_sub_type>::value ||
-            are_same_type<OP,inplace_scal_mul_type>::value ||
-            are_same_type<OP,inplace_scal_div_type>::value};
-    };
 
 
-    template<class T>
-    struct is_assignment_compound{
-        enum { value = 0 };
-    };
+#undef MAKE_OP
 
-    template<class LHS, class OP, class RHS>
-    struct is_assignment_compound<compound_node<LHS,OP,RHS> >
-    {
-        enum { value = is_assignment<OP>::value };
-    };
+/////////////////////////////////////////
+/////////////// BUILTIN FUNCTIONS
+/////////////////////////////////////////
 
-    template<class OP>
-    struct is_arithmetic_operator{
-      enum{ value = result_of::is_assignment<OP>::value ||
-              are_same_type<OP,add_type>::value ||
-              are_same_type<OP,sub_type>::value ||
-              are_same_type<OP,scal_mul_type>::value ||
-              are_same_type<OP,scal_div_type>::value};
-    };
+#define MAKE_UNARY_FUN_OP(name) \
+class name##_type : public unary_fun_op_infos_base{\
+    public:\
+    name##_type() : unary_fun_op_infos_base(#name){ }\
+};
 
-    template<class T>
-    struct is_arithmetic_compound{
-      enum { value = 0 };
-    };
+#define MAKE_BINARY_FUN_OP(name) \
+class name##_type : public binary_fun_op_infos_base{\
+    public:\
+    name##_type() : binary_fun_op_infos_base(#name){ }\
+};
 
-    template<class LHS, class OP, class RHS>
-    struct is_arithmetic_compound<compound_node<LHS,OP,RHS> >
-    {
-      enum { value = result_of::is_arithmetic_operator<OP>::value };
-    };
 
-    }
 
-  }
 
+MAKE_UNARY_FUN_OP(acos)
+MAKE_UNARY_FUN_OP(acosh)
+MAKE_UNARY_FUN_OP(acospi)
+MAKE_UNARY_FUN_OP(asin)
+MAKE_UNARY_FUN_OP(asinh)
+MAKE_UNARY_FUN_OP(asinpi)
+MAKE_UNARY_FUN_OP(atan)
+MAKE_BINARY_FUN_OP(atan2)
+MAKE_UNARY_FUN_OP(atanh)
+MAKE_UNARY_FUN_OP(atanpi)
+MAKE_BINARY_FUN_OP(atan2pi)
+MAKE_UNARY_FUN_OP(cbrt)
+MAKE_UNARY_FUN_OP(ceil)
+MAKE_BINARY_FUN_OP(copysign)
+MAKE_UNARY_FUN_OP(cos)
+MAKE_UNARY_FUN_OP(cosh)
+MAKE_UNARY_FUN_OP(cospi)
+MAKE_UNARY_FUN_OP(erfc)
+MAKE_UNARY_FUN_OP(erf)
+MAKE_UNARY_FUN_OP(exp)
+MAKE_UNARY_FUN_OP(exp2)
+MAKE_UNARY_FUN_OP(exp10)
+MAKE_UNARY_FUN_OP(expm1)
+MAKE_UNARY_FUN_OP(fabs)
+MAKE_BINARY_FUN_OP(fdim)
+MAKE_UNARY_FUN_OP(floor)
+//MAKE_BUILTIN_FUNCTION3(fma)
+MAKE_BINARY_FUN_OP(fmax)
+MAKE_BINARY_FUN_OP(fmin)
+MAKE_BINARY_FUN_OP(fmod)
+//    MAKE_UNARY_FUN_OP(fract)
+//    MAKE_UNARY_FUN_OP(frexp)
+MAKE_BINARY_FUN_OP(hypot)
+MAKE_UNARY_FUN_OP(ilogb)
+MAKE_BINARY_FUN_OP(ldexp)
+MAKE_UNARY_FUN_OP(lgamma)
+//    MAKE_UNARY_FUN_OP(lgamma_r)
+MAKE_UNARY_FUN_OP(log)
+MAKE_UNARY_FUN_OP(log2)
+MAKE_UNARY_FUN_OP(log10)
+MAKE_UNARY_FUN_OP(log1p)
+MAKE_UNARY_FUN_OP(logb)
+//MAKE_BUILTIN_FUNCTION3(mad)
+//    MAKE_UNARY_FUN_OP(modf)
+MAKE_UNARY_FUN_OP(nan)
+MAKE_BINARY_FUN_OP(nextafter)
+MAKE_BINARY_FUN_OP(pow)
+MAKE_BINARY_FUN_OP(pown)
+MAKE_BINARY_FUN_OP(powr)
+MAKE_BINARY_FUN_OP(remainder)
+//    MAKE_UNARY_FUN_OP(remquo)
+MAKE_UNARY_FUN_OP(rint)
+MAKE_UNARY_FUN_OP(rootn)
+MAKE_UNARY_FUN_OP(round)
+MAKE_UNARY_FUN_OP(rsqrt)
+MAKE_UNARY_FUN_OP(sin)
+//    MAKE_UNARY_FUN_OP(sincos)
+MAKE_UNARY_FUN_OP(sinh)
+MAKE_UNARY_FUN_OP(sinpi)
+MAKE_UNARY_FUN_OP(sqrt)
+MAKE_UNARY_FUN_OP(tan)
+MAKE_UNARY_FUN_OP(tanh)
+MAKE_UNARY_FUN_OP(tanpi)
+MAKE_UNARY_FUN_OP(tgamma)
+MAKE_UNARY_FUN_OP(trunc)
+
+
+//Integer functions
+MAKE_BINARY_FUN_OP(max)
+MAKE_BINARY_FUN_OP(min)
+
+#undef MAKE_UNARY_FUN_OP
+#undef MAKE_BINARY_FUN_OP
 }
 
-#endif
-
+}
+#endif // OPERATORS_HPP

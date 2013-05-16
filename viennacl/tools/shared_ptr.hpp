@@ -2,7 +2,7 @@
 #define VIENNACL_TOOLS_SHARED_PTR_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2012, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/tools/shared_ptr.hpp
+/** @file tools/shared_ptr.hpp
     @brief Implementation of a shared pointer class (cf. std::shared_ptr, boost::shared_ptr). Will be used until C++11 is widely available.
     
     Contributed by Philippe Tillet.
@@ -44,38 +44,41 @@ namespace viennacl
           unsigned int val_;
       };
 
+      struct aux
+      {
+        detail::count count;
+
+        aux() :count(1) {}
+        virtual void destroy()=0;
+        virtual ~aux() {}
+      };
+
+      template<class U, class Deleter>
+      struct auximpl: public detail::aux
+      {
+        U* p;
+        Deleter d;
+
+        auximpl(U* pu, Deleter x) :p(pu), d(x) {}
+        virtual void destroy() { d(p); }
+      };
+
+      template<class U>
+      struct default_deleter
+      {
+        void operator()(U* p) const { delete p; }
+      };
+
     }
 
     /** @brief A shared pointer class similar to boost::shared_ptr. Reimplemented in order to avoid a Boost-dependency. Will be replaced by std::shared_ptr as soon as C++11 is widely available. */
     template<class T>
     class shared_ptr
     {
-        struct aux
-        {
-          detail::count count;
-
-          aux() :count(1) {}
-          virtual void destroy()=0;
-          virtual ~aux() {}
-        };
-
-        template<class U, class Deleter>
-        struct auximpl: public aux
-        {
-          U* p;
-          Deleter d;
-
-          auximpl(U* pu, Deleter x) :p(pu), d(x) {}
-          virtual void destroy() { d(p); }
-        };
-
         template<class U>
-        struct default_deleter
-        {
-          void operator()(U* p) const { delete p; }
-        };
+        friend class shared_ptr;
 
-        aux* pa;
+        detail::aux* pa;
         T* pt;
 
         void inc() { if(pa) pa->count.inc(); }
@@ -100,10 +103,10 @@ namespace viennacl
         shared_ptr() :pa(NULL), pt(NULL) {}
 
         template<class U, class Deleter>
-        shared_ptr(U* pu, Deleter d) : pa(new auximpl<U, Deleter>(pu, d)), pt(pu) {}
+        shared_ptr(U* pu, Deleter d) : pa(new detail::auximpl<U, Deleter>(pu, d)), pt(pu) {}
 
         template<class U>
-        explicit shared_ptr(U* pu) : pa(new auximpl<U, default_deleter<U> >(pu, default_deleter<U>())), pt(pu) {}
+        explicit shared_ptr(U* pu) : pa(new detail::auximpl<U, detail::default_deleter<U> >(pu, detail::default_deleter<U>())), pt(pu) {}
 
         shared_ptr(const shared_ptr& s) :pa(s.pa), pt(s.pt) { inc(); }
 
@@ -111,6 +114,20 @@ namespace viennacl
         shared_ptr(const shared_ptr<U>& s) :pa(s.pa), pt(s.pt) { inc(); }
 
         ~shared_ptr() { dec(); }
+
+        void reset(){
+            shared_ptr<T>().swap(*this);
+        }
+
+        void reset(T * ptr){
+            shared_ptr<T>(ptr).swap(*this);
+        }
+
+        void swap(shared_ptr<T> & other){
+            std::swap(pt,other.pt);
+            std::swap(pa, other.pa);
+        }
+
 
         shared_ptr& operator=(const shared_ptr& s)
         {
@@ -125,6 +142,8 @@ namespace viennacl
         }
 
         T* get() const {  return pt; }
+
+        T* operator->() const {  return pt; }
 
         T& operator*() const { return *pt; }
     };

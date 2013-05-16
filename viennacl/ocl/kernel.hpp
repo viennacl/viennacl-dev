@@ -34,6 +34,7 @@
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/local_mem.hpp"
+#include "viennacl/ocl/infos.hpp"
 
 namespace viennacl
 {
@@ -52,6 +53,12 @@ namespace viennacl
     {
       template <typename KernelType>
       friend void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
+      
+      template<cl_kernel_info param>
+      friend typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k);
+      
+      template<cl_kernel_info param>
+      friend typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d);
       
       
     public:
@@ -145,6 +152,28 @@ namespace viennacl
         std::cout << "ViennaCL: Setting double precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
         #endif
         cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(double), (void*)&val);
+        VIENNACL_ERR_CHECK(err);
+      }
+      
+      /** @brief Sets an int argument at the provided position */
+      void arg(unsigned int pos, cl_int val)
+      {
+        init();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting int precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_int), (void*)&val);
+        VIENNACL_ERR_CHECK(err);
+      }
+
+      /** @brief Sets an unsigned long argument at the provided position */
+      void arg(unsigned int pos, cl_ulong val)
+      {
+        init();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting int precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_ulong), (void*)&val);
         VIENNACL_ERR_CHECK(err);
       }
 
@@ -710,6 +739,8 @@ namespace viennacl
 
       std::string const & name() const { return name_; }
 
+	  
+      
       viennacl::ocl::handle<cl_kernel> const & handle() const { return handle_; }
 
 
@@ -772,6 +803,29 @@ namespace viennacl
       size_type local_work_size_[2];
       size_type global_work_size_[2];
     };
+    
+    /** @brief Queries information about a kernel
+	* 
+	* @param k Corresponding kernel
+	*/
+    template<cl_kernel_info param>
+    static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k){
+        k.init();
+        typedef typename detail::return_type<cl_kernel, param>::Result res_t;
+        return detail::get_info_impl<res_t>()(k.handle_.get(),param);
+    }
+
+	/** @brief Queries information about the execution of a kernel on a particular device
+	 * 
+	 * @param k Corresponding kernel
+	 * @param d Corresponding device
+	 */
+    template<cl_kernel_info param>
+    static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d){
+        k.init();
+        typedef typename detail::return_type<cl_kernel, param>::Result res_t;
+        return detail::get_info_impl<res_t>()(k.handle_.get(),d.id(),param);
+    }
     
   } //namespace ocl
 } //namespace viennacl
