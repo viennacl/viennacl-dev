@@ -720,25 +720,76 @@ int test(Epsilon const& epsilon,
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  
+
+  ublas_v1 += ublas::element_prod(ublas_v1, ublas_v2);
+  vcl_v1 += viennacl::linalg::element_prod(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_prod(ublas_v1, ublas_v2);
+  vcl_v1 -= viennacl::linalg::element_prod(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  
+
+  ublas_v1 += ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 += viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 -= viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  ublas_v1 += ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 += viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 -= viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  
+
+  ublas_v1 += ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 += viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 -= viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
   
   std::cout << "Testing elementwise division..." << std::endl;
   ublas_v1 = ublas::element_div(ublas_v1, ublas_v2);
@@ -747,24 +798,76 @@ int test(Epsilon const& epsilon,
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  ublas_v1 += ublas::element_div(ublas_v1, ublas_v2);
+  vcl_v1 += viennacl::linalg::element_div(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_div(ublas_v1, ublas_v2);
+  vcl_v1 -= viennacl::linalg::element_div(vcl_v1, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_div(ublas_v1 + ublas_v2, ublas_v2);
   vcl_v1 = viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  ublas_v1 += ublas::element_div(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 += viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_div(ublas_v1 + ublas_v2, ublas_v2);
+  vcl_v1 -= viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_div(ublas_v1, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  ublas_v1 += ublas::element_div(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 += viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_div(ublas_v1, ublas_v2 + ublas_v1);
+  vcl_v1 -= viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ///////
   ublas_v1 = ublas::element_div(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  
+
+  ublas_v1 += ublas::element_div(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 += viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 -= ublas::element_div(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
+  vcl_v1 -= viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+
   // --------------------------------------------------------------------------         
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
