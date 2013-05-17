@@ -52,6 +52,11 @@ public:
            << "GROUP" << group_size0_;
         return oss.str();
     }
+
+    bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+        return optimization_profile::is_invalid(dev,0);
+    }
+
 private:
     unsigned int loop_unroll_;
     unsigned int group_size0_;

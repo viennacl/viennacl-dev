@@ -30,6 +30,7 @@ public:
          unroll_ = 1;
     }
 
+
     profile(unsigned int ml, unsigned int kl, unsigned int nl
                                , unsigned int ms, unsigned int ks, unsigned int ns
                                , bool use_LHS_shared, bool use_RHS_shared
@@ -80,6 +81,21 @@ public:
     bool use_LHS_shared() const{ return use_LHS_shared_; }
     bool use_RHS_shared() const{ return use_RHS_shared_; }
     unsigned int unroll() const { return unroll_; }
+
+    bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+        //Query profile informations
+        size_t lmem_used = 0;
+        if(use_LHS_shared()) lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
+        if(use_RHS_shared()) lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
+        return  optimization_profile::is_invalid(dev,lmem_used)
+                || vectorization_ > ms_
+                || vectorization_ > ks_
+                || vectorization_ > ns_
+                || ms_ > ml_
+                || ks_ > kl_
+                || ns_ > nl_;
+    }
+
 private:
     unsigned int ml_;
     unsigned int kl_;
@@ -632,6 +648,7 @@ public:
 
                         rhs_oss << "val_rhs_" << ind_rhs_1 << "_" << ind_rhs_2;
                         if(!is_vectorized_rhs && !use_RHS_shared && vectorization>1) rhs_oss << ".s" << ind_s_rhs;
+
 
                         kss << first_prod->update_val(res_oss.str(),lhs_oss.str(), rhs_oss.str()) << ";" << std::endl;
 

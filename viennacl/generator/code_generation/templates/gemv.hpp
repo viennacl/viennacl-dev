@@ -47,6 +47,12 @@ public:
         return oss.str();
     }
 
+    bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+        return optimization_profile::is_invalid(dev,m_*(k_+1)*scalartype_size)
+                || vectorization_ > m_
+                || vectorization_ > k_;
+    }
+
 
 private:
     unsigned int m_;

@@ -116,6 +116,18 @@ namespace viennacl{
         }
     };
 
+    template<class T>
+    struct get_info_impl<std::vector<T> >{
+        template<class MEM_T, class INFO_T>
+        std::vector<T> operator()(const MEM_T &mem, const INFO_T &info){
+            size_t vec_size;
+            detail::info<MEM_T>::get(mem,info,0,NULL,&vec_size);
+            std::vector<T> res(vec_size/sizeof(T));
+            detail::info<MEM_T>::get(mem,info,vec_size,res.data(),NULL);
+            return res;
+        }
+    };
+
     template<typename T, typename info<T>::type param>
     struct return_type;
 

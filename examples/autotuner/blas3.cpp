@@ -1,7 +1,7 @@
-#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_OPENCL
-#define VIENNACL_DEBUG_ALL
-//#define VIENNACL_USE_SCHEDULER
+
+//#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_ALL
 
 #define NDEBUG
 
@@ -35,9 +35,10 @@ struct blas3_config{
                          params.at("vector").current(),
                          params.at("unroll").current());
     }
-    static size_t local_mem_requirements(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        return (params.at("ml").current() + 1) * (params.at("kl").current() + 1) * sizeof(ScalarType);
-     }
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
+        profile_t prof = create_profile(params);
+        return prof.is_invalid(dev, sizeof(ScalarType));
+    }
 };
 
 
@@ -143,14 +144,14 @@ void run_autotune(){
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    conf.add_tuning_param("ml",16,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("kl",16,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("nl",16,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ms",4,4,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ks",4,4,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ns",2,2,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("vector",4,4,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("lhs_storage",0,0,&viennacl::generator::autotune::inc::add_one);
+    conf.add_tuning_param("ml",16,256,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("kl",16,256,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("nl",16,256,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("ms",2,16,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("ks",2,16,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("ns",2,16,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("vector",1,4,&viennacl::generator::autotune::inc::mul_by_two);
+    conf.add_tuning_param("lhs_storage",1,1,&viennacl::generator::autotune::inc::add_one);
     conf.add_tuning_param("rhs_storage",0,0,&viennacl::generator::autotune::inc::add_one);
     conf.add_tuning_param("unroll",1,1,&viennacl::generator::autotune::inc::mul_by_two);
 
@@ -199,7 +200,6 @@ int main(int argc, char* argv[]){
 
             if(current_device++==requested_device){
                 viennacl::ocl::switch_device(*it);
-                cl_device_id dev_id = it->id();
 
                 std::string devname = viennacl::ocl::current_device().name();
 

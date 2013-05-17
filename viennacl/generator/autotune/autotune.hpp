@@ -32,6 +32,7 @@ public:
         return true; //has been reset
     }
     unsigned int current() const{ return current_; }
+    void reset() { current_ = min_max_.first; }
 private:
     unsigned int current_;
     std::pair<unsigned int, unsigned int> min_max_;
@@ -56,12 +57,18 @@ public:
     void update(){
         for(typename params_t::iterator it = params_.begin() ; it != params_.end() ; ++it) if(it->second.inc()==false) break;
     }
-    size_t local_memory_used(){
-        return ConfigT::local_mem_requirements(params_);
+    bool is_invalid(viennacl::ocl::device const & dev) const{
+        return ConfigT::is_invalid(dev,params_);
     }
     typename ConfigT::profile_t get_current(){
         return ConfigT::create_profile(params_);
     }
+    void reset(){
+        for(params_t::iterator it = params_.begin() ; it != params_.end() ; ++it){
+            it->second.reset();
+        }
+    }
+
 private:
     params_t params_;
 };
@@ -80,10 +87,10 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
     viennacl::ocl::kernel & k = pgm.get_kernel("_k0");
 
 
-
     //Anticipates kernel failure
     size_t max_workgroup_size = viennacl::ocl::info<CL_KERNEL_WORK_GROUP_SIZE>(k,dev);
-    if(prof.local_work_size().first*prof.local_work_size().second > max_workgroup_size)  return;
+    std::pair<size_t,size_t> work_group_sizes = prof.local_work_size();
+    if(work_group_sizes.first*work_group_sizes.second > max_workgroup_size)  return;
 
     //Doesn't execute because it would likelily be a waste of time
     size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
@@ -104,14 +111,23 @@ void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device 
 
 template<class OpT, class ConfigT>
 void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, ConfigT & config){
-
     viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-    size_t dev_lsize = viennacl::ocl::info<CL_DEVICE_LOCAL_MEM_SIZE>(viennacl::ocl::current_device().id());
-    benchmark_impl(timings,dev,op,config.get_current());
+    if(config.is_invalid(dev)==false)  benchmark_impl(timings,dev,op,config.get_current());
+
+    unsigned int n=0, n_conf = 0;
     while(config.has_next()){
-        std::cout << '.' << std::flush;
         config.update();
-        if(config.local_memory_used() > dev_lsize) continue;
+        if(config.is_invalid(dev)) continue;
+        ++n_conf;
+    }
+
+    std::cout << "Benchmarking over " << n_conf << " valid kernels" << std::endl;
+
+    config.reset();
+    while(config.has_next()){
+        config.update();
+        if(config.is_invalid(dev)) continue;
+        std::cout << '\r' << (float)(n++)*100/n_conf << "%" << std::flush;
         benchmark_impl(timings,dev,op,config.get_current());
     }
 }

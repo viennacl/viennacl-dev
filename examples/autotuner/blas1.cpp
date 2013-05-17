@@ -22,12 +22,16 @@ typedef std::vector<cl_device_id> cl_devices_type;
 static const unsigned int size = 1024*1024;
 
 
+template<class ScalarType>
 struct dot_config{
     typedef viennacl::generator::code_generation::inner_product::profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         return profile_t(params.at("alignment").current(),params.at("group_size").current(),params.at("num_groups").current());
     }
-    static size_t local_mem_requirements(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){ return 0; }
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
+        profile_t prof = create_profile(params);
+        return prof.is_invalid(dev, sizeof(ScalarType));
+    }
 };
 
 
@@ -53,9 +57,9 @@ void autotune(){
 
     viennacl::scalar<ScalarType> s = 0;
 
-    std::map<double, dot_config::profile_t> timings;
+    std::map<double, typename dot_config<ScalarType>::profile_t> timings;
     std::cout << "* Tuning DOT" << std::endl;
-    viennacl::generator::autotune::tuning_config<dot_config> conf;
+    viennacl::generator::autotune::tuning_config<dot_config<ScalarType> > conf;
     conf.add_tuning_param("alignment",1,8,&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("group_size",8,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()),&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("num_groups",8,1024,&viennacl::generator::autotune::inc::mul_by_two);

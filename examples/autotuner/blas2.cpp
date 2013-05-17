@@ -27,9 +27,10 @@ struct blas2_config{
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         return profile_t(params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
     }
-    static size_t local_mem_requirements(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        return params.at("local_size1").current() * (params.at("local_size2").current() + 1) * sizeof(ScalarType);
-     }
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
+        profile_t prof = create_profile(params);
+        return prof.is_invalid(dev, sizeof(ScalarType));
+    }
 };
 
 

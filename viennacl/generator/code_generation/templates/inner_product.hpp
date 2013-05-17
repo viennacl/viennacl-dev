@@ -44,6 +44,11 @@ public:
             << "NG" << num_groups_;
         return oss.str();
     }
+
+    bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+        return optimization_profile::is_invalid(dev,group_size_*scalartype_size);
+    }
+
 private:
     unsigned int group_size_;
     unsigned int num_groups_;
