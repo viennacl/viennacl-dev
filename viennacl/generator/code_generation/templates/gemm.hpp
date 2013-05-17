@@ -2,7 +2,7 @@
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
 
 #include "viennacl/generator/code_generation/optimization_profile.hpp"
-#include "viennacl/generator/symbolic_types_base.hpp"
+#include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
 
@@ -60,8 +60,8 @@ public:
     }
 
 
-    void config_nd_range(viennacl::ocl::kernel & k, infos_base* p){
-        mat_infos_base* mat = dynamic_cast<mat_infos_base*>(p);
+    void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+        symbolic_matrix_base* mat = dynamic_cast<symbolic_matrix_base*>(p);
         k.local_work_size(0, ml_/ms_);
         k.global_work_size(0, mat->real_size1()/ms_);
         k.local_work_size(1, nl_/ns_);
@@ -114,7 +114,7 @@ private:
 
 class generator : public code_generation::generator{
 
-    static void transform_block(mat_infos_base const & mat_infos, bool is_transposed, bool store_shared
+    static void transform_block(symbolic_matrix_base const & mat_infos, bool is_transposed, bool store_shared
                                 , unsigned int & large_block_1, unsigned int & large_block_2
                                 , unsigned int & small_block_1, unsigned int & small_block_2){
         unsigned int vectorization = mat_infos.alignment();
@@ -142,7 +142,7 @@ class generator : public code_generation::generator{
 
     struct declare_rhs_global_ptr{
 
-        declare_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks_rhs,unsigned int _ns_rhs,
+        declare_rhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks_rhs,unsigned int _ns_rhs,
                                unsigned int _nl_rhs, std::string const & _offset_n,
                                bool _is_transposed) : kss(_kss), ks_rhs(_ks_rhs), ns_rhs(_ns_rhs)
                                                                                         , nl_rhs(_nl_rhs), offset_n(_offset_n)
@@ -150,29 +150,29 @@ class generator : public code_generation::generator{
 
         { }
 
-        void operator()( mat_infos_base * mat) {
+        void operator()( symbolic_matrix_base * mat) {
             if(mat->is_rowmajor())
                 for(unsigned int k = 0 ; k < ks_rhs ; ++k){
-                    std::string ptr_name = mat->name() + "_ptr_" + to_string(k);
+                    std::string ptr_name = mat->name() + "_ptr_" + utils::to_string(k);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + " ;
-                    if(is_transposed) kss<< mat->offset(to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + to_string(nl_rhs),"0");
-                    else kss << mat->offset(to_string(k),offset_n + " +  get_group_id(1)*" + to_string(nl_rhs));
+                    if(is_transposed) kss<< mat->offset(utils::to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + utils::to_string(nl_rhs),"0");
+                    else kss << mat->offset(utils::to_string(k),offset_n + " +  get_group_id(1)*" + utils::to_string(nl_rhs));
                     kss << ";" << std::endl;
                     mat->private_value(k,"*" + ptr_name);
                 }
            else
                 for(unsigned int n = 0 ; n < ns_rhs ; ++n){
-                    std::string ptr_name = mat->name() + "_ptr_" + to_string(n);
+                    std::string ptr_name = mat->name() + "_ptr_" + utils::to_string(n);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " +  " ;
-                    if(is_transposed)  kss << mat->offset(offset_n + " +  get_group_id(1)*" + to_string(nl_rhs), to_string(n));
-                    else kss << mat->offset("0",offset_n + " +  get_group_id(1)*" + to_string(nl_rhs) + " + " + to_string(n));
+                    if(is_transposed)  kss << mat->offset(offset_n + " +  get_group_id(1)*" + utils::to_string(nl_rhs), utils::to_string(n));
+                    else kss << mat->offset("0",offset_n + " +  get_group_id(1)*" + utils::to_string(nl_rhs) + " + " + utils::to_string(n));
                     kss << ";" << std::endl;
                     mat->private_value(n,"*" + ptr_name);
                 }
         }
 
     private:
-        kernel_generation_stream & kss;
+        utils::kernel_generation_stream & kss;
         unsigned int ks_rhs;
         unsigned int ns_rhs;
         unsigned int nl_rhs;
@@ -183,30 +183,30 @@ class generator : public code_generation::generator{
 
     struct declare_lhs_global_ptr{
 
-        declare_lhs_global_ptr(kernel_generation_stream & _kss,
+        declare_lhs_global_ptr(utils::kernel_generation_stream & _kss,
                                unsigned int _ms_lhs, unsigned int _ks_lhs,
                                unsigned int _ml_lhs, std::string const & _offset_m
                                ,bool _is_transposed) : kss(_kss), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), ml_lhs(_ml_lhs), offset_m(_offset_m),
                                                          is_transposed(_is_transposed)
         { }
 
-        void operator()( mat_infos_base * mat) {
+        void operator()( symbolic_matrix_base * mat) {
             if(mat->is_rowmajor()){
                 for(unsigned int m=0; m<ms_lhs; ++m){
-                    std::string ptr_name = mat->name() + "_ptr_" + to_string(m);
+                    std::string ptr_name = mat->name() + "_ptr_" + utils::to_string(m);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + ";
-                    if(is_transposed) kss << mat->offset(to_string(m),"get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
-                    else kss << mat->offset("get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m + "+" + to_string(m),"0");
+                    if(is_transposed) kss << mat->offset(utils::to_string(m),"get_group_id(0)*" + utils::to_string(ml_lhs) + "+" + offset_m );
+                    else kss << mat->offset("get_group_id(0)*" + utils::to_string(ml_lhs) + "+" + offset_m + "+" + utils::to_string(m),"0");
                     kss << ";" << std::endl;
                     mat->private_value(m,"*" + ptr_name);
                 }
             }
             else{
                 for(unsigned int k=0; k<ks_lhs; ++k){
-                    std::string ptr_name = mat->name() + "_ptr_" + to_string(k);
+                    std::string ptr_name = mat->name() + "_ptr_" + utils::to_string(k);
                     kss << "__global " << mat->aligned_scalartype() << " * " << ptr_name << " = " << mat->name() << " + " ;
-                    if(is_transposed) kss << mat->offset("0", to_string(k) + "+" + "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
-                    else kss << mat->offset( "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m, to_string(k));
+                    if(is_transposed) kss << mat->offset("0", utils::to_string(k) + "+" + "get_group_id(0)*" + utils::to_string(ml_lhs) + "+" + offset_m );
+                    else kss << mat->offset( "get_group_id(0)*" + utils::to_string(ml_lhs) + "+" + offset_m, utils::to_string(k));
                     kss << ";" << std::endl;
                     mat->private_value(k,"*" + ptr_name);
                 }
@@ -214,7 +214,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        kernel_generation_stream & kss;
+        utils::kernel_generation_stream & kss;
         unsigned int ms_lhs;
         unsigned int ks_lhs;
         unsigned int ml_lhs;
@@ -224,13 +224,13 @@ class generator : public code_generation::generator{
 
     struct update_rhs_global_ptr{
 
-        update_rhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ns_rhs, unsigned int _ks_rhs
+        update_rhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ns_rhs, unsigned int _ks_rhs
                               ,std::string const & _internal_size1_rhs,
                               std::string const & _internal_size2_rhs
                               ,bool _is_transposed) : kss(_kss), ks(_ks), ns_rhs(_ns_rhs), ks_rhs(_ks_rhs), internal_size1_rhs(_internal_size1_rhs), internal_size2_rhs(_internal_size2_rhs)
                                                     , is_transposed(_is_transposed){ }
 
-        void operator()(mat_infos_base * mat){
+        void operator()(symbolic_matrix_base * mat){
             if(mat->is_rowmajor() && !is_transposed)
                 for(unsigned int k=0 ; k<ks ; ++k)
                     kss << mat->name() << "_ptr_" << k << " += " << ks_rhs << "*" << internal_size2_rhs << " - " << ns_rhs << ";" << std::endl;
@@ -240,7 +240,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        kernel_generation_stream & kss;
+        utils::kernel_generation_stream & kss;
         unsigned int ks;
         unsigned int ns_rhs;
         unsigned int ks_rhs;
@@ -251,14 +251,14 @@ class generator : public code_generation::generator{
 
     struct update_lhs_global_ptr{
 
-        update_lhs_global_ptr(kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ms_lhs, unsigned int _ks_lhs
+        update_lhs_global_ptr(utils::kernel_generation_stream & _kss, unsigned int _ks, unsigned int _ms_lhs, unsigned int _ks_lhs
                               ,std::string const & _internal_size1_lhs,
                               std::string const & _internal_size2_lhs
                               ,bool _is_transposed) : kss(_kss), ks(_ks), ms_lhs(_ms_lhs), ks_lhs(_ks_lhs), internal_size1_lhs(_internal_size1_lhs), internal_size2_lhs(_internal_size2_lhs)
                                                     ,is_transposed(_is_transposed){ }
 
 
-        void operator()(mat_infos_base * mat){
+        void operator()(symbolic_matrix_base * mat){
             if(is_transposed && mat->is_rowmajor())
                 for(unsigned int m=0 ; m<ms_lhs ; ++m)
                     kss << mat->name() << "_ptr_" << m << " += " << ks << "*" << internal_size2_lhs << " - " <<  ks_lhs << ";" << std::endl;
@@ -268,7 +268,7 @@ class generator : public code_generation::generator{
         }
 
     private:
-        kernel_generation_stream & kss;
+        utils::kernel_generation_stream & kss;
         unsigned int ks;
         unsigned int ms_lhs;
         unsigned int ks_lhs;
@@ -279,7 +279,7 @@ class generator : public code_generation::generator{
 
 
 
-    static std::string helper_variable(kernel_generation_stream & kss
+    static std::string helper_variable(utils::kernel_generation_stream & kss
                                         , bool store_in_register
                                         , std::string const & type
                                         , std::string const & name
@@ -291,12 +291,12 @@ class generator : public code_generation::generator{
     }
 
     template<class MatContainerT>
-    static void fetch_to_local_mem(kernel_generation_stream & kss,
-                                   local_memory<2> const & lmem,
+    static void fetch_to_local_mem(utils::kernel_generation_stream & kss,
+                                   symbolic_local_memory<2> const & lmem,
                                    std::string const & offset,
                                    unsigned int bound1,
                                    unsigned int bound2,
-                                   infos_base const & mat_expression,
+                                   symbolic_expression_tree_base const & mat_expression,
                                    MatContainerT & matrices){
         unsigned int vectorization = (*matrices.begin())->alignment();
         std::string aligned_scalartype = (*matrices.begin())->aligned_scalartype();
@@ -345,42 +345,42 @@ class generator : public code_generation::generator{
     }
 
 public:
-    generator(std::list<binary_matrix_expression_infos_base * > const & blas3_expressions
+    generator(std::list<symbolic_binary_matrix_expression_base * > const & blas3_expressions
                     , profile * kernel_config): blas3_expressions_(blas3_expressions), optimization_profile_(kernel_config)
     {
-        for(std::list<binary_matrix_expression_infos_base*>::const_iterator it=blas3_expressions_.begin() ; it!= blas3_expressions_.end() ; ++it){
-            extract_as(*it, matmat_prods_, utils::is_type<matmat_prod_infos_base>());
-            extract_as(*it ,gpu_scalars_,  utils::is_type<gpu_scal_infos_base>());
-            extract_as(*it,matrices_, utils::is_type<mat_infos_base>());
+        for(std::list<symbolic_binary_matrix_expression_base*>::const_iterator it=blas3_expressions_.begin() ; it!= blas3_expressions_.end() ; ++it){
+            extract_as(*it, matmat_prods_, utils::is_type<symbolic_matrix_matrix_product_base>());
+            extract_as(*it ,gpu_scalars_,  utils::is_type<symbolic_pointer_scalar_base>());
+            extract_as(*it,matrices_, utils::is_type<symbolic_matrix_base>());
         }
     }
 
-    void operator()(kernel_generation_stream& kss){
+    void operator()(utils::kernel_generation_stream& kss){
 
 
-        std::list<mat_infos_base*> assigned;
-        std::list<mat_infos_base*> lhss;
-        std::list<mat_infos_base*> rhss;
+        std::list<symbolic_matrix_base*> assigned;
+        std::list<symbolic_matrix_base*> lhss;
+        std::list<symbolic_matrix_base*> rhss;
 
         //Fills assigned matrices set
-        for(std::list<binary_matrix_expression_infos_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
-            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned.push_back(dynamic_cast<mat_infos_base*>(&(*it)->lhs()));
+        for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
+            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned.push_back(dynamic_cast<symbolic_matrix_base*>(&(*it)->lhs()));
         }
 
         //Fills lhs's
-        for(std::list<matmat_prod_infos_base*>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
-            extract_as(&(*it)->lhs(),lhss,utils::is_type<mat_infos_base>());
-            extract_as(&(*it)->rhs(),rhss,utils::is_type<mat_infos_base>());
+        for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
+            extract_as(&(*it)->lhs(),lhss,utils::is_type<symbolic_matrix_base>());
+            extract_as(&(*it)->rhs(),rhss,utils::is_type<symbolic_matrix_base>());
         }
 
-        matmat_prod_infos_base * first_prod = dynamic_cast<matmat_prod_infos_base*>(*matmat_prods_.begin());
+        symbolic_matrix_matrix_product_base * first_prod = dynamic_cast<symbolic_matrix_matrix_product_base*>(*matmat_prods_.begin());
 
-        for(std::list<matmat_prod_infos_base*>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
-            (*it)->set_val_name("prod_val_" + to_string(std::distance(matmat_prods_.begin(),it)));
+        for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
+            (*it)->set_val_name("prod_val_" + utils::to_string(std::distance(matmat_prods_.begin(),it)));
         }
-        mat_infos_base* first_lhs = *lhss.begin();
-        mat_infos_base* first_rhs = *rhss.begin();
-        mat_infos_base* first_assigned = assigned.front();
+        symbolic_matrix_base* first_lhs = *lhss.begin();
+        symbolic_matrix_base* first_rhs = *rhss.begin();
+        symbolic_matrix_base* first_assigned = assigned.front();
 
         bool use_LHS_shared = optimization_profile_->use_LHS_shared();
         bool use_RHS_shared = optimization_profile_->use_RHS_shared();
@@ -432,8 +432,8 @@ public:
         if(is_lhs_transposed) std::swap(lhs_size1, lhs_size2);
         if(is_rhs_transposed) std::swap(rhs_size1, rhs_size2);
 
-        local_memory<2> lmem_lhs("local_lhs",lhs_size1,lhs_size2+1,first_lhs->scalartype());
-        local_memory<2> lmem_rhs("local_rhs",rhs_size1,rhs_size2+1,first_lhs->scalartype());
+        symbolic_local_memory<2> lmem_lhs("local_lhs",lhs_size1,lhs_size2+1,first_lhs->scalartype());
+        symbolic_local_memory<2> lmem_rhs("local_rhs",rhs_size1,rhs_size2+1,first_lhs->scalartype());
 
         //Declaration of results registers
 //                        std::string res_table_name(first_prod->repr() + "_res");
@@ -446,16 +446,16 @@ public:
         if(use_RHS_shared) kss << lmem_rhs.declare() << ";" << std::endl;
 
         //Declaration of helpers
-        std::string offset_m = helper_variable(kss,false,"unsigned int", "offset_m", "get_local_id(0)*" + to_string(ms_lhs));
-        std::string offset_n = helper_variable(kss,false,"unsigned int", "offset_n", "get_local_id(1)*" + to_string(ns_rhs));
-        std::string block_num = helper_variable(kss,true,"unsigned int", "block_num", (is_lhs_transposed?internal_size1_lhs:internal_size2_lhs) + '/' + to_string(kl_lhs));
+        std::string offset_m = helper_variable(kss,false,"unsigned int", "offset_m", "get_local_id(0)*" + utils::to_string(ms_lhs));
+        std::string offset_n = helper_variable(kss,false,"unsigned int", "offset_n", "get_local_id(1)*" + utils::to_string(ns_rhs));
+        std::string block_num = helper_variable(kss,true,"unsigned int", "block_num", (is_lhs_transposed?internal_size1_lhs:internal_size2_lhs) + '/' + utils::to_string(kl_lhs));
 
         //Declaration of pointers and/or offsets to result, rhs, lhs.
-        kss << "__global " << first_assigned->aligned_scalartype() << "* res_ptr = " <<  first_assigned->name() << " + " << first_assigned->offset("get_global_id(0)*" + to_string(ms_res), "get_global_id(1)*" + to_string(ns_res)) << ";" << std::endl;
+        kss << "__global " << first_assigned->aligned_scalartype() << "* res_ptr = " <<  first_assigned->name() << " + " << first_assigned->offset("get_global_id(0)*" + utils::to_string(ms_res), "get_global_id(1)*" + utils::to_string(ns_res)) << ";" << std::endl;
 
         if(use_RHS_shared){
-            if(is_rhs_transposed) kss << "unsigned int offsetRHS = " << first_rhs->offset(" get_group_id(1)*" + to_string(nl_rhs),"0") << ";" << std::endl;
-            else kss << "unsigned int offsetRHS = " << first_rhs->offset("0", " get_group_id(1)*" + to_string(nl_rhs)) << ";" << std::endl;
+            if(is_rhs_transposed) kss << "unsigned int offsetRHS = " << first_rhs->offset(" get_group_id(1)*" + utils::to_string(nl_rhs),"0") << ";" << std::endl;
+            else kss << "unsigned int offsetRHS = " << first_rhs->offset("0", " get_group_id(1)*" + utils::to_string(nl_rhs)) << ";" << std::endl;
         }
         else{
             if(is_rhs_transposed)
@@ -465,8 +465,8 @@ public:
         }
 
         if(use_LHS_shared){
-            if(is_lhs_transposed) kss << "unsigned int offsetLHS = " << first_lhs->offset("0", "get_group_id(0)*" + to_string(ml_lhs)) << ";" << std::endl;
-            else kss << "unsigned int offsetLHS = " << first_lhs->offset("get_group_id(0)*" + to_string(ml_lhs), "0") << ";" << std::endl;
+            if(is_lhs_transposed) kss << "unsigned int offsetLHS = " << first_lhs->offset("0", "get_group_id(0)*" + utils::to_string(ml_lhs)) << ";" << std::endl;
+            else kss << "unsigned int offsetLHS = " << first_lhs->offset("get_group_id(0)*" + utils::to_string(ml_lhs), "0") << ";" << std::endl;
         }
         else{
             if(is_lhs_transposed)
@@ -524,7 +524,7 @@ public:
                 }
                 kss << ";";
                 if( !use_RHS_shared ){
-                    for(std::list<mat_infos_base*>::iterator it = rhss.begin() ; it!=rhss.end() ; ++it){
+                    for(std::list<symbolic_matrix_base*>::iterator it = rhss.begin() ; it!=rhss.end() ; ++it){
                         if(is_rhs_rowmajor)kss << "++" << (*it)->name() << "_ptr_" << k << ";" ;
                         else kss << "++" << (*it)->name() << "_ptr_" << n << ";" ;
                     }
@@ -545,7 +545,7 @@ public:
                 else kss << first_prod->lhs().generate(k);
                 kss << ";";
                 if( !use_LHS_shared ){
-                    for(std::list<mat_infos_base*>::iterator it = lhss.begin() ; it!=lhss.end() ; ++it){
+                    for(std::list<symbolic_matrix_base*>::iterator it = lhss.begin() ; it!=lhss.end() ; ++it){
                         if(is_lhs_rowmajor) kss << "++" << (*it)->name() << "_ptr_" << m << ";" ;
                         else kss << "++" << (*it)->name() << "_ptr_" << k << ";" ;
                     }
@@ -745,10 +745,10 @@ public:
     }
 
 private:
-    std::list<binary_matrix_expression_infos_base*>  blas3_expressions_;
-    std::list<matmat_prod_infos_base*> matmat_prods_;
-    std::list<mat_infos_base *>  matrices_;
-    std::list<gpu_scal_infos_base *> gpu_scalars_;
+    std::list<symbolic_binary_matrix_expression_base*>  blas3_expressions_;
+    std::list<symbolic_matrix_matrix_product_base*> matmat_prods_;
+    std::list<symbolic_matrix_base *>  matrices_;
+    std::list<symbolic_pointer_scalar_base *> gpu_scalars_;
     profile * optimization_profile_;
 };
 

@@ -2,7 +2,7 @@
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMV_HPP
 
 #include "viennacl/generator/code_generation/optimization_profile.hpp"
-#include "viennacl/generator/symbolic_types_base.hpp"
+#include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
 
@@ -27,7 +27,7 @@ public:
         return std::make_pair(m_,k_);
     }
 
-    void config_nd_range(viennacl::ocl::kernel & k, infos_base* p){
+    void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
         k.local_work_size(0,m_);
         k.local_work_size(1,k_);
         k.global_work_size(0,m_*num_groups_0_);
@@ -63,20 +63,20 @@ private:
 
 class generator : public code_generation::generator{
 public:
-    generator(std::list<binary_vector_expression_infos_base * > const & expressions
+    generator(std::list<symbolic_binary_vector_expression_base * > const & expressions
               , profile * prof): expressions_(expressions), profile_(prof)
     {
-        for(std::list<binary_vector_expression_infos_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
-            extract_as(*it, gpu_scalars_,  utils::is_type<gpu_scal_infos_base>());
-            extract_as(*it, matrices_, utils::is_type<mat_infos_base>());
-            extract_as(*it, vectors_, utils::is_type<vec_infos_base>());
-            extract_as(*it, prods_, utils::is_type<matvec_prod_infos_base>());
+        for(std::list<symbolic_binary_vector_expression_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
+            extract_as(*it, gpu_scalars_,  utils::is_type<symbolic_pointer_scalar_base>());
+            extract_as(*it, matrices_, utils::is_type<symbolic_matrix_base>());
+            extract_as(*it, vectors_, utils::is_type<symbolic_vector_base>());
+            extract_as(*it, prods_, utils::is_type<symbolic_matrix_vector_product_base>());
         }
     }
 
-    void operator()(kernel_generation_stream& kss){
-            mat_infos_base* first_matrix = *matrices_.begin();
-            matvec_prod_infos_base * first_prod = *prods_.begin();
+    void operator()(utils::kernel_generation_stream& kss){
+            symbolic_matrix_base* first_matrix = *matrices_.begin();
+            symbolic_matrix_vector_product_base * first_prod = *prods_.begin();
             std::string scalartype = first_matrix->scalartype();
             std::string internal_size1 = first_matrix->internal_size1();
             std::string internal_size2 = first_matrix->internal_size2();
@@ -86,19 +86,19 @@ public:
 
             bool is_lhs_transposed = is_transposed(&first_prod->lhs());
 //            bool is_lhs_row_major = first_matrix->is_rowmajor();
-            std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > > reductions;
-            for(std::list<binary_vector_expression_infos_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
+            std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > > reductions;
+            for(std::list<symbolic_binary_vector_expression_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);
-                vec_infos_base* assigned = dynamic_cast<vec_infos_base*>(&(*it)->lhs());
-                local_memory<2> lmem("block_"+to_string(id),m,k+1,scalartype);
-                std::list<matvec_prod_infos_base *>  prods;
-                extract_as(*it, prods, utils::is_type<matvec_prod_infos_base>());
+                symbolic_vector_base* assigned = dynamic_cast<symbolic_vector_base*>(&(*it)->lhs());
+                symbolic_local_memory<2> lmem("block_"+utils::to_string(id),m,k+1,scalartype);
+                std::list<symbolic_matrix_vector_product_base *>  prods;
+                extract_as(*it, prods, utils::is_type<symbolic_matrix_vector_product_base>());
                 assert(prods.size()==1 && "More than one product involved in the expression");
-                reductions.insert(std::make_pair(*prods.begin(),std::make_pair("reduction_"+to_string(id),std::make_pair(lmem,assigned))));
+                reductions.insert(std::make_pair(*prods.begin(),std::make_pair("reduction_"+utils::to_string(id),std::make_pair(lmem,assigned))));
             }
             kss << "unsigned int lid0 = get_local_id(0);" << std::endl;
             kss << "unsigned int lid1 = get_local_id(1);" << std::endl;
-            for(std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+            for(std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
                 kss << it->second.second.first.declare() << ";" << std::endl;
             }
             if(is_lhs_transposed)
@@ -107,12 +107,12 @@ public:
                 kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size1 << " ; r += get_global_size(0)){" << std::endl;
             kss.inc_tab();
 
-            for(std::map<matvec_prod_infos_base*, std::pair<std::string,std::pair<local_memory<2>, vec_infos_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
-                matvec_prod_infos_base* prod = it->first;
+            for(std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+                symbolic_matrix_vector_product_base* prod = it->first;
                 binary_op_infos_base const & op_reduce = prod->op_reduce();
                 std::string const & sum_name = it->second.first;
-                local_memory<2> const & lmem = it->second.second.first;
-                vec_infos_base * assigned = it->second.second.second;
+                symbolic_local_memory<2> const & lmem = it->second.second.first;
+                symbolic_vector_base * assigned = it->second.second.second;
                 kss << scalartype << " " << sum_name << " = 0;" << std::endl;
                 if(is_lhs_transposed)
                     kss << "for(unsigned int c = get_local_id(1) ; c < " << internal_size1 << " ; c += get_local_size(1)){" << std::endl;
@@ -126,7 +126,7 @@ public:
 
 
 //                for(unsigned int a=0; a<alignment;++a){
-                    kss << sum_name << " = " << op_reduce.generate(sum_name,prod->binary_vector_expression_infos_base::generate(0)) << ";" << std::endl;
+                    kss << sum_name << " = " << op_reduce.generate(sum_name,prod->symbolic_binary_vector_expression_base::generate(0)) << ";" << std::endl;
 //                }
 
                 kss.dec_tab();
@@ -136,7 +136,7 @@ public:
 
                 for(unsigned int stride = k/2 ; stride>0 ; stride /=2){
                     kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
-                    kss <<  "if(lid1 < " << to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + to_string(stride))) << ";" << std::endl;
+                    kss <<  "if(lid1 < " << utils::to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + utils::to_string(stride))) << ";" << std::endl;
                 }
 
                 it->first->access_name(lmem.access("lid0","0"));
@@ -152,11 +152,11 @@ public:
 
 
 private:
-    std::list<binary_vector_expression_infos_base* >  expressions_;
-    std::list<matvec_prod_infos_base *>  prods_;
-    std::list<vec_infos_base *>  vectors_;
-    std::list<mat_infos_base *>  matrices_;
-    std::list<gpu_scal_infos_base *> gpu_scalars_;
+    std::list<symbolic_binary_vector_expression_base* >  expressions_;
+    std::list<symbolic_matrix_vector_product_base *>  prods_;
+    std::list<symbolic_vector_base *>  vectors_;
+    std::list<symbolic_matrix_base *>  matrices_;
+    std::list<symbolic_pointer_scalar_base *> gpu_scalars_;
     profile * profile_;
 };
 

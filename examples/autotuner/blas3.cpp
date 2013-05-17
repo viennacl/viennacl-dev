@@ -78,7 +78,7 @@ void benchmark(OpT const & operation, ConfigT conf, MatTypeA & A, MatTypeB & B, 
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
     rounds_config.push_back(std::make_pair(512,70));
-    rounds_config.push_back(std::make_pair(2048,20));
+    rounds_config.push_back(std::make_pair(4096,20));
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
         unsigned int k = std::distance(rounds_config.begin(),it);
         timings.clear();

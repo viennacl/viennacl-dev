@@ -35,7 +35,7 @@ public:
     optimization_profile() : vectorization_(1){ }
     optimization_profile(unsigned int vectorization) : vectorization_(vectorization){ }
     virtual std::string repr() const = 0;
-    virtual void config_nd_range(viennacl::ocl::kernel & k, infos_base * p) = 0;
+    virtual void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base * p) = 0;
     unsigned int vectorization() const{ return vectorization_; }
     virtual std::pair<size_t,size_t> local_work_size() const = 0;
     virtual ~optimization_profile(){ }
@@ -45,7 +45,7 @@ protected:
 
 class generator{
 public:
-    virtual void operator()(kernel_generation_stream& kss) = 0;
+    virtual void operator()(utils::kernel_generation_stream& kss) = 0;
     virtual ~generator(){ }
 };
 

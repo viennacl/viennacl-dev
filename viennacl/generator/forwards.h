@@ -6,7 +6,10 @@ namespace viennacl{
 namespace generator{
 
 class custom_operation;
-class infos_base;
+class symbolic_expression_tree_base;
+class symbolic_kernel_argument;
+class symbolic_datastructure;
+
 
 template<typename ScalarType> class vector;
 template<typename ScalarType> class scalar;

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/generator/utils.hpp"
 
 namespace viennacl{
 
@@ -67,8 +68,8 @@ public:
 template<class ScalarType>
 class cast_type : public unary_op_infos_base{
 public:
-    cast_type() : unary_op_infos_base("cast_"+print_type<ScalarType>::value()){ }
-    std::string generate(const std::string &sub) const { return "("+print_type<ScalarType>::value()+")(" + sub + ")"; }
+    cast_type() : unary_op_infos_base("cast_"+utils::print_type<ScalarType>::value()){ }
+    std::string generate(const std::string &sub) const { return "("+utils::print_type<ScalarType>::value()+")(" + sub + ")"; }
 };
 
 class unary_arithmetic_op_infos_base : public unary_op_infos_base{

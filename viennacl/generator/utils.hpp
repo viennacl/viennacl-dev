@@ -19,13 +19,15 @@
 
 #include <sstream>
 #include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/generator/forwards.h"
 #include <vector>
+#include <list>
 
 namespace viennacl{
 	
 	namespace generator{
 		
-
+       namespace utils{
 
             template<class T>
             struct deref_eq : std::binary_function<T,T,bool>{
@@ -40,11 +42,6 @@ namespace viennacl{
               std::stringstream ss;
               ss << t;
               return ss.str();
-            }
-
-            template<class T, class U>
-            static bool is_type(U* p){
-                return dynamic_cast<T *>(p);
             }
 
             template<class T, class U>
@@ -198,6 +195,17 @@ namespace viennacl{
                 return v.insert(res,p);
             }
 
+            template<class T>
+            struct is_type{
+                template<class U>
+                bool operator()(U* p) const{
+                    return dynamic_cast<T *>(p);
+                }
+            };
+
+
+
+       }
     }
 }
 #endif

@@ -75,7 +75,7 @@ struct to_sym<vector<ScalarType> >{
 template<unsigned int N>
 struct to_sym<constant_vector<N> >{
     typedef symbolic_constant type;
-    static type result(constant_vector<N> const &) { return type(to_string(N)); }
+    static type result(constant_vector<N> const &) { return type(utils::to_string(N)); }
 };
 
 

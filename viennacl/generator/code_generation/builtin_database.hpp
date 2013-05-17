@@ -46,7 +46,7 @@ static  builtin_database_t make_database(){
         //Row * Row and analogs
 
             //Float
-            tmp.insert(std::make_pair("assign(matfR,prod(matfR,matfR))"                 , viennacl::tools::shared_ptr<optimization_profile> ( new gemm::profile(32,64,256,8,8,4,1,0,4,1))));
+            tmp.insert(std::make_pair("assign(matfR,prod(matfR,matfR))"                 , viennacl::tools::shared_ptr<optimization_profile> ( new gemm::profile(16,64,256,4,2,4,1,0,4,1))));
             tmp.insert(std::make_pair("assign(matfC,prod(matfR,matfR))"                 , viennacl::tools::shared_ptr<optimization_profile> ( new gemm::profile(32,64,256,8,8,4,1,0,4,1))));
             tmp.insert(std::make_pair("assign(matfR,prod(trans(matfC),matfR))"          , viennacl::tools::shared_ptr<optimization_profile> ( new gemm::profile(32,64,256,8,8,4,1,0,4,1))));
             tmp.insert(std::make_pair("assign(matfC,prod(trans(matfC),matfR))"          , viennacl::tools::shared_ptr<optimization_profile> ( new gemm::profile(32,64,256,8,8,4,1,0,4,1))));
