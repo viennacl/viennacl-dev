@@ -5,7 +5,10 @@
 #include <string>
 
 #include <map>
-#include "viennacl/generator/code_generation/templates.hpp"
+#include "viennacl/generator/templates/gemm.hpp"
+#include "viennacl/generator/templates/gemv.hpp"
+#include "viennacl/generator/templates/inner_product.hpp"
+#include "viennacl/generator/templates/saxpy.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
 
 

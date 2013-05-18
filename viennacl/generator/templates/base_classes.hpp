@@ -1,9 +1,12 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
 #define VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
 
-#include "viennacl/generator/forwards.h"
+
 #include <list>
 #include <set>
+
+#include "viennacl/generator/forwards.h"
+#include "viennacl/generator/utils.hpp"
 
 namespace viennacl{
 

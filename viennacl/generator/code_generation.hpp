@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_CODE_GENERATION_FRONTEND_HPP
-#define VIENNACL_GENERATOR_CODE_GENERATION_FRONTEND_HPP
+#ifndef VIENNACL_GENERATOR_CODE_GENERATION_HPP
+#define VIENNACL_GENERATOR_CODE_GENERATION_HPP
 
 #include <cstdio>
 #include <cstdlib>
@@ -9,10 +9,15 @@
 
 #include "viennacl/ocl/infos.hpp"
 
+
+#include "viennacl/generator/templates/gemm.hpp"
+#include "viennacl/generator/templates/gemv.hpp"
+#include "viennacl/generator/templates/inner_product.hpp"
+#include "viennacl/generator/templates/saxpy.hpp"
+
 #include "viennacl/generator/symbolic_types.hpp"
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/code_generation/templates.hpp"
-#include "viennacl/generator/code_generation/builtin_database.hpp"
+#include "viennacl/generator/builtin_database.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl{

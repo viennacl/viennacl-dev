@@ -4,12 +4,12 @@
 
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/generator/forwards.h"
+
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/operators.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/backend/memory.hpp"
-#include "viennacl/generator/forwards.h"
-#include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/templates/base_classes.hpp"
 
 #include <map>
 #include <set>
@@ -19,6 +19,292 @@ namespace viennacl{
 
     namespace generator{
 
+
+    //////////////////////////////////////
+    ///// OPERATOR BASE
+    //////////////////////////////////////
+
+    /** @brief base class for operator */
+    class operator_base {
+    public:
+        operator_base(std::string const & name) : name_(name){ }
+        std::string const & name() const { return name_; }
+        virtual ~operator_base(){ }
+    protected:
+        std::string name_;
+    };
+
+    /** @brief base class for binary operator */
+    class binary_operator : public operator_base {
+    public:
+        virtual std::string generate(std::string const & lhs, std::string const & rhs) const = 0;
+        binary_operator(std::string const & name) : operator_base(name){ }
+    };
+
+    /** @brief base class for binary function
+     *
+     *  Implemented as a binary operator
+     */
+    class symbolic_binary_fun : public binary_operator{
+    public:
+        symbolic_binary_fun(std::string const & name) : binary_operator(name){ }
+        std::string generate(std::string const  & lhs, std::string const & rhs) const{
+            return name_+"("+lhs+","+rhs+")";
+        }
+    };
+
+    /** @brief base class for binary arithmetic operators
+     *
+     *  Refers to all built-in C99 operators (+, -, &, ||, ...)
+     */
+    class binary_builtin_operator : public binary_operator{
+    public:
+        std::string generate(std::string const & lhs, std::string const & rhs) const{
+            return lhs + expr_ + rhs;
+        }
+    protected:
+        binary_builtin_operator(std::string const & name, std::string const & expr) :  binary_operator(name), expr_(expr){ }
+    private:
+        std::string expr_;
+    };
+
+    /** @brief base class for assignment operators
+     *
+     * Refers to =, +=, -=, *=, /=
+     */
+    class assignment_operator : public binary_builtin_operator{
+    public:
+        assignment_operator(std::string const & name, std::string const & expr) : binary_builtin_operator(name,expr){ }
+    };
+
+    /** @brief base class for unary operators */
+    class unary_operator : public operator_base {
+    public:
+        virtual std::string generate(std::string const & sub) const = 0;
+        unary_operator(std::string const & name) : operator_base(name) { }
+    };
+
+    /** @brief base class for casting operators
+     *
+     * \tparam ScalarType destination's scalartype
+     */
+    template<class ScalarType>
+    class cast_type : public unary_operator{
+    public:
+        cast_type() : unary_operator("cast_"+utils::print_type<ScalarType>::value()){ }
+        std::string generate(const std::string &sub) const { return "("+utils::print_type<ScalarType>::value()+")(" + sub + ")"; }
+    };
+
+    /** @brief base class for unary arithmetic operators
+     *
+     * Include unary -,+
+     */
+    class unary_arithmetic_operator : public unary_operator{
+    public:
+        std::string generate(std::string const &  sub) const{ return expr_+sub; }
+        unary_arithmetic_operator(std::string const & name, std::string const & expr) : unary_operator(name), expr_(expr){ }
+    private:
+        std::string expr_;
+    };
+
+    /** @brief base class for unary functions*/
+    class symbolic_unary_fun : public unary_operator{
+    public:
+        symbolic_unary_fun(std::string const & name) : unary_operator(name){ }
+        std::string generate(std::string const & sub) const {
+            return name_+"("+sub+")";
+        }
+    };
+
+    /** @brief class for reduction operators
+    *
+    * \tparam REDUCE_TYPE underlying reduction type. Has to be a binary operator.
+    */
+    template<class REDUCE_TYPE>
+    class reduce_type : public binary_operator{
+    public:
+        reduce_type() : binary_operator("prod"), op_reduce_(new REDUCE_TYPE()){ }
+        binary_operator* op_reduce(){ return op_reduce_.get(); }
+        std::string generate(std::string const & lhs, std::string const & rhs) const {
+            return op_reduce_->generate(lhs,rhs);
+        }
+
+    private:
+        viennacl::tools::shared_ptr<binary_operator> op_reduce_;
+    };
+
+    ////////////////////////////
+    //// BUILTIN OPERATORS
+    ///////////////////////////
+
+    #define MAKE_OP(name,expression,base) \
+    class name##_type : public base{\
+        public:\
+        name##_type() : base(#name,#expression){ }\
+    };
+
+    //Assignment
+    MAKE_OP(assign,=,assignment_operator)
+    MAKE_OP(inplace_add,+=,assignment_operator)
+    MAKE_OP(inplace_sub,-=,assignment_operator)
+    MAKE_OP(inplace_scal_mul,*=,assignment_operator)
+    MAKE_OP(inplace_scal_div,/=,assignment_operator)
+
+    //Arithmetic
+    MAKE_OP(add,+,binary_builtin_operator)
+    MAKE_OP(sub,-,binary_builtin_operator)
+
+
+    //Comparison
+    MAKE_OP(sup,>,binary_builtin_operator)
+    MAKE_OP(supeq,>=,binary_builtin_operator)
+    MAKE_OP(inf,<,binary_builtin_operator)
+    MAKE_OP(infeq,<=,binary_builtin_operator)
+    MAKE_OP(eqto,==,binary_builtin_operator)
+    MAKE_OP(neqto,!=,binary_builtin_operator)
+
+    //Bitwise
+    MAKE_OP(and,&,binary_builtin_operator)
+    MAKE_OP(or,|,binary_builtin_operator)
+    MAKE_OP(xor,^,binary_builtin_operator)
+
+
+
+    MAKE_OP(unary_sub,-,unary_arithmetic_operator)
+    MAKE_OP(identity, ,unary_arithmetic_operator)
+
+    /** @brief transposition type */
+    class trans_type : public unary_operator{
+    public:
+        trans_type() : unary_operator("trans"){ }
+        std::string generate(const std::string &sub) const { return sub; }
+    };
+
+    /** @brief multiplication type
+     *
+     * Accounts for both scalar multiplication and elementwise products
+     */
+    class mul_type : public binary_builtin_operator{
+    public:
+        mul_type() : binary_builtin_operator("mul_type","*"){ }
+        std::string generate(std::string const & lhs, std::string const & rhs) const{
+            if(lhs=="1" && rhs=="1") return "1";
+            else if(rhs=="1") return lhs;
+            else if(lhs=="1") return rhs;
+            else return lhs + "*" + rhs;
+        }
+    };
+
+    /** @brief multiplication type
+     *
+     * Accounts for both scalar division and elementwise divisions
+     */
+    class div_type : public binary_builtin_operator{
+    public:
+        div_type() : binary_builtin_operator("div_type","/"){ }
+        std::string generate(std::string const & lhs, std::string const & rhs) const{
+            if(rhs=="1") return lhs;
+            else return lhs + "/" + rhs;
+        }
+    };
+
+
+
+
+    #undef MAKE_OP
+
+    /////////////////////////////////////////
+    /////////////// BUILTIN FUNCTIONS
+    /////////////////////////////////////////
+
+    #define MAKE_UNARY_FUN_OP(name) \
+    class name##_type : public symbolic_unary_fun{\
+        public:\
+        name##_type() : symbolic_unary_fun(#name){ }\
+    };
+
+    #define MAKE_BINARY_FUN_OP(name) \
+    class name##_type : public symbolic_binary_fun{\
+        public:\
+        name##_type() : symbolic_binary_fun(#name){ }\
+    };
+
+
+
+
+    MAKE_UNARY_FUN_OP(acos)
+    MAKE_UNARY_FUN_OP(acosh)
+    MAKE_UNARY_FUN_OP(acospi)
+    MAKE_UNARY_FUN_OP(asin)
+    MAKE_UNARY_FUN_OP(asinh)
+    MAKE_UNARY_FUN_OP(asinpi)
+    MAKE_UNARY_FUN_OP(atan)
+    MAKE_BINARY_FUN_OP(atan2)
+    MAKE_UNARY_FUN_OP(atanh)
+    MAKE_UNARY_FUN_OP(atanpi)
+    MAKE_BINARY_FUN_OP(atan2pi)
+    MAKE_UNARY_FUN_OP(cbrt)
+    MAKE_UNARY_FUN_OP(ceil)
+    MAKE_BINARY_FUN_OP(copysign)
+    MAKE_UNARY_FUN_OP(cos)
+    MAKE_UNARY_FUN_OP(cosh)
+    MAKE_UNARY_FUN_OP(cospi)
+    MAKE_UNARY_FUN_OP(erfc)
+    MAKE_UNARY_FUN_OP(erf)
+    MAKE_UNARY_FUN_OP(exp)
+    MAKE_UNARY_FUN_OP(exp2)
+    MAKE_UNARY_FUN_OP(exp10)
+    MAKE_UNARY_FUN_OP(expm1)
+    MAKE_UNARY_FUN_OP(fabs)
+    MAKE_BINARY_FUN_OP(fdim)
+    MAKE_UNARY_FUN_OP(floor)
+    //MAKE_BUILTIN_FUNCTION3(fma)
+    MAKE_BINARY_FUN_OP(fmax)
+    MAKE_BINARY_FUN_OP(fmin)
+    MAKE_BINARY_FUN_OP(fmod)
+    //    MAKE_UNARY_FUN_OP(fract)
+    //    MAKE_UNARY_FUN_OP(frexp)
+    MAKE_BINARY_FUN_OP(hypot)
+    MAKE_UNARY_FUN_OP(ilogb)
+    MAKE_BINARY_FUN_OP(ldexp)
+    MAKE_UNARY_FUN_OP(lgamma)
+    //    MAKE_UNARY_FUN_OP(lgamma_r)
+    MAKE_UNARY_FUN_OP(log)
+    MAKE_UNARY_FUN_OP(log2)
+    MAKE_UNARY_FUN_OP(log10)
+    MAKE_UNARY_FUN_OP(log1p)
+    MAKE_UNARY_FUN_OP(logb)
+    //MAKE_BUILTIN_FUNCTION3(mad)
+    //    MAKE_UNARY_FUN_OP(modf)
+    MAKE_UNARY_FUN_OP(nan)
+    MAKE_BINARY_FUN_OP(nextafter)
+    MAKE_BINARY_FUN_OP(pow)
+    MAKE_BINARY_FUN_OP(pown)
+    MAKE_BINARY_FUN_OP(powr)
+    MAKE_BINARY_FUN_OP(remainder)
+    //    MAKE_UNARY_FUN_OP(remquo)
+    MAKE_UNARY_FUN_OP(rint)
+    MAKE_UNARY_FUN_OP(rootn)
+    MAKE_UNARY_FUN_OP(round)
+    MAKE_UNARY_FUN_OP(rsqrt)
+    MAKE_UNARY_FUN_OP(sin)
+    //    MAKE_UNARY_FUN_OP(sincos)
+    MAKE_UNARY_FUN_OP(sinh)
+    MAKE_UNARY_FUN_OP(sinpi)
+    MAKE_UNARY_FUN_OP(sqrt)
+    MAKE_UNARY_FUN_OP(tan)
+    MAKE_UNARY_FUN_OP(tanh)
+    MAKE_UNARY_FUN_OP(tanpi)
+    MAKE_UNARY_FUN_OP(tgamma)
+    MAKE_UNARY_FUN_OP(trunc)
+
+
+    //Integer functions
+    MAKE_BINARY_FUN_OP(max)
+    MAKE_BINARY_FUN_OP(min)
+
+    #undef MAKE_UNARY_FUN_OP
+    #undef MAKE_BINARY_FUN_OP
 
         /** @brief class for representing a kernel argument */
         class symbolic_kernel_argument{
@@ -165,11 +451,11 @@ namespace viennacl{
         public:
             symbolic_expression_tree_base & lhs() const{ return *lhs_; }
             symbolic_expression_tree_base & rhs() const{ return *rhs_; }
-            binary_op_infos_base & op() { return *op_; }
+            binary_operator & op() { return *op_; }
             std::string name() const { return lhs_->name() + op_->name() + rhs_->name(); }
             std::string repr() const { return op_->name() + "("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const {
-                if(dynamic_cast<assignment_op_infos_base*>(op_.get()))
+                if(dynamic_cast<assignment_operator*>(op_.get()))
                     return "assign(" + lhs_->simplified_repr() + "," + rhs_->simplified_repr() + ")";
                 else
                     return lhs_->simplified_repr();
@@ -197,7 +483,7 @@ namespace viennacl{
             }
 
             void write_back(unsigned int i, utils::kernel_generation_stream & kss){
-                if(dynamic_cast<assignment_op_infos_base*>(op_.get())) lhs_->write_back(i,kss);
+                if(dynamic_cast<assignment_operator*>(op_.get())) lhs_->write_back(i,kss);
             }
 
             bool operator==(symbolic_expression_tree_base const & other) const{
@@ -210,9 +496,9 @@ namespace viennacl{
                 return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")";
             }
         protected:
-            symbolic_binary_expression_tree_infos_base(symbolic_expression_tree_base * lhs, binary_op_infos_base * op, symbolic_expression_tree_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
+            symbolic_binary_expression_tree_infos_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
             viennacl::tools::shared_ptr<symbolic_expression_tree_base> lhs_;
-            viennacl::tools::shared_ptr<binary_op_infos_base> op_;
+            viennacl::tools::shared_ptr<binary_operator> op_;
             viennacl::tools::shared_ptr<symbolic_expression_tree_base> rhs_;
         };
 
@@ -223,7 +509,7 @@ namespace viennacl{
          */
         class symbolic_binary_vector_expression_base : public symbolic_binary_expression_tree_infos_base{
         public:
-            symbolic_binary_vector_expression_base( symbolic_expression_tree_base * lhs, binary_op_infos_base* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
+            symbolic_binary_vector_expression_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
         };
 
         /** @brief Base class for binary scalar expressions
@@ -232,7 +518,7 @@ namespace viennacl{
          */
         class symbolic_binary_scalar_expression_base : public symbolic_binary_expression_tree_infos_base{
         public:
-            symbolic_binary_scalar_expression_base( symbolic_expression_tree_base * lhs, binary_op_infos_base* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
+            symbolic_binary_scalar_expression_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
         };
 
         /** @brief Base class for binary matrix expressions
@@ -241,16 +527,16 @@ namespace viennacl{
          */
         class symbolic_binary_matrix_expression_base : public symbolic_binary_expression_tree_infos_base{
         public:
-            symbolic_binary_matrix_expression_base( symbolic_expression_tree_base * lhs, binary_op_infos_base* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
+            symbolic_binary_matrix_expression_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_expression_tree_infos_base( lhs,op,rhs){ }
         };
 
 
         /** @brief Base class for unary expression trees */
         class symbolic_unary_tree_infos_base : public virtual symbolic_expression_tree_base{
         public:
-            symbolic_unary_tree_infos_base(symbolic_expression_tree_base * sub, unary_op_infos_base * op) : sub_(sub), op_(op) { }
+            symbolic_unary_tree_infos_base(symbolic_expression_tree_base * sub, unary_operator * op) : sub_(sub), op_(op) { }
             symbolic_expression_tree_base & sub() const{ return *sub_; }
-            unary_op_infos_base const & op() const{ return *op_; }
+            unary_operator const & op() const{ return *op_; }
             std::string name() const { return op_->name() + sub_->name(); }
             std::string repr() const { return op_->name() + "("+ sub_->repr()+")"; }
             std::string simplified_repr() const { return repr(); }
@@ -286,7 +572,7 @@ namespace viennacl{
             }
         protected:
             viennacl::tools::shared_ptr<symbolic_expression_tree_base> sub_;
-            viennacl::tools::shared_ptr<unary_op_infos_base> op_;
+            viennacl::tools::shared_ptr<unary_operator> op_;
         };
 
 
@@ -297,7 +583,7 @@ namespace viennacl{
          */
         class symbolic_unary_vector_expression_base : public symbolic_unary_tree_infos_base{
         public:
-            symbolic_unary_vector_expression_base( symbolic_expression_tree_base * sub, unary_op_infos_base* op) : symbolic_unary_tree_infos_base( sub,op){ }
+            symbolic_unary_vector_expression_base( symbolic_expression_tree_base * sub, unary_operator* op) : symbolic_unary_tree_infos_base( sub,op){ }
         };
 
         /** @brief Base class for unary scalar expressions
@@ -306,7 +592,7 @@ namespace viennacl{
          */
         class symbolic_unary_scalar_expression_base : public symbolic_unary_tree_infos_base{
         public:
-            symbolic_unary_scalar_expression_base( symbolic_expression_tree_base * sub, unary_op_infos_base* op) : symbolic_unary_tree_infos_base( sub,op){ }
+            symbolic_unary_scalar_expression_base( symbolic_expression_tree_base * sub, unary_operator* op) : symbolic_unary_tree_infos_base( sub,op){ }
         };
 
         /** @brief Base class for unary matrix expressions
@@ -315,7 +601,7 @@ namespace viennacl{
          */
         class symbolic_unary_matrix_expression_base : public symbolic_unary_tree_infos_base{
         public:
-            symbolic_unary_matrix_expression_base( symbolic_expression_tree_base * sub, unary_op_infos_base* op) : symbolic_unary_tree_infos_base( sub,op){ }
+            symbolic_unary_matrix_expression_base( symbolic_expression_tree_base * sub, unary_operator* op) : symbolic_unary_tree_infos_base( sub,op){ }
         };
 
         /** @brief Base class for symbolic_vector, symbolic_matrix, ... */
@@ -427,7 +713,7 @@ namespace viennacl{
         /** @brief Base class for symbolic matrix matrix products */
         class symbolic_matrix_matrix_product_base : public symbolic_binary_matrix_expression_base{
         public:
-            symbolic_matrix_matrix_product_base( symbolic_expression_tree_base * lhs, binary_op_infos_base* op, symbolic_expression_tree_base * rhs) :
+            symbolic_matrix_matrix_product_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) :
                 symbolic_binary_matrix_expression_base(lhs,op,rhs){
             }
             void set_val_name(std::string const & val_name) { val_name_ = val_name; }
@@ -445,21 +731,21 @@ namespace viennacl{
         /** @brief Base class for symbolic matrix vector products */
         class symbolic_matrix_vector_product_base : public symbolic_binary_vector_expression_base{
         public:
-            symbolic_matrix_vector_product_base( symbolic_expression_tree_base * lhs, binary_op_infos_base* op, symbolic_expression_tree_base * rhs) : symbolic_binary_vector_expression_base(lhs,new mul_type,rhs), op_reduce_(op){            }
+            symbolic_matrix_vector_product_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_vector_expression_base(lhs,new mul_type,rhs), op_reduce_(op){            }
             std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const { return "prod("+lhs_->simplified_repr() + "," + rhs_->simplified_repr() +")"; }
-            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            binary_operator const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
         private:
-            viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
+            viennacl::tools::shared_ptr<binary_operator> op_reduce_;
             std::string access_name_;
         };
 
         /** @brief Base class for symbolic inner products */
         class symbolic_inner_product_base : public symbolic_binary_scalar_expression_base {
         public:
-            symbolic_inner_product_base(symbolic_expression_tree_base * lhs, binary_op_infos_base * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
+            symbolic_inner_product_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
             bool is_computed(){ return current_kernel_; }
             void set_computed(){ current_kernel_ = 1; }
             void reset_state(){ current_kernel_ = 0; }
@@ -470,11 +756,11 @@ namespace viennacl{
             }
             std::string repr() const { return "prod("+lhs_->repr() + "," + rhs_->repr() +")"; }
             std::string simplified_repr() const { return "prod("+lhs_->simplified_repr() + "," + rhs_->simplified_repr() +")"; }
-            binary_op_infos_base const & op_reduce() const { return *op_reduce_; }
+            binary_operator const & op_reduce() const { return *op_reduce_; }
             void access_name(std::string const & str) { access_name_ = str; }
             std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
         protected:
-            viennacl::tools::shared_ptr<binary_op_infos_base> op_reduce_;
+            viennacl::tools::shared_ptr<binary_operator> op_reduce_;
             viennacl::tools::shared_ptr<symbolic_pointer_argument_base> handle_;
             std::string access_name_;
         };
@@ -1069,6 +1355,8 @@ namespace viennacl{
   //        protected:
   //          VCL_MATRIX const & vcl_mat_;
   //      };
+
+
 
     }
 

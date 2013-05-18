@@ -3,7 +3,7 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/templates/base_classes.hpp"
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{

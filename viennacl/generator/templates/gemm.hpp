@@ -1,7 +1,7 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
 
-#include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/templates/base_classes.hpp"
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -364,7 +364,7 @@ public:
 
         //Fills assigned matrices set
         for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
-            if(dynamic_cast<assignment_op_infos_base*>(&(*it)->op())) assigned.push_back(dynamic_cast<symbolic_matrix_base*>(&(*it)->lhs()));
+            if(dynamic_cast<assignment_operator*>(&(*it)->op())) assigned.push_back(dynamic_cast<symbolic_matrix_base*>(&(*it)->lhs()));
         }
 
         //Fills lhs's

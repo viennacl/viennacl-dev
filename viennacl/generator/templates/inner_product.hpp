@@ -2,7 +2,7 @@
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_INNER_PRODUCT_HPP
 
 #include "viennacl/generator/symbolic_types.hpp"
-#include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/templates/base_classes.hpp"
 #include "viennacl/generator/utils.hpp"
 
 namespace viennacl{
@@ -56,11 +56,11 @@ private:
 
 class generator: public code_generation::generator{
 private:
-    void compute_reductions_samesize(utils::kernel_generation_stream& kss, std::map<binary_op_infos_base const *, symbolic_local_memory<1> > const & lmems){
+    void compute_reductions_samesize(utils::kernel_generation_stream& kss, std::map<binary_operator const *, symbolic_local_memory<1> > const & lmems){
        unsigned int size = lmems.begin()->second.size();
        for(unsigned int stride = size/2 ; stride>0 ; stride /=2){
            kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
-           for(std::map<binary_op_infos_base const *, symbolic_local_memory<1> >::const_iterator it = lmems.begin(); it != lmems.end() ; ++it){
+           for(std::map<binary_operator const *, symbolic_local_memory<1> >::const_iterator it = lmems.begin(); it != lmems.end() ; ++it){
                kss <<  it->second.access("lid") <<  " = " << it->first->generate(it->second.access("lid"), "((lid < " + utils::to_string(stride) + ")?" + it->second.access("lid+" + utils::to_string(stride)) + " : 0)" ) << ";" << std::endl;
            }
        }
@@ -81,7 +81,7 @@ public:
         unsigned int alignment = profile_->vectorization();
         bool is_computed = (*inner_prods_.begin())->is_computed();
         if(is_computed){
-            std::map<binary_op_infos_base const *, symbolic_local_memory<1> > local_mems;
+            std::map<binary_operator const *, symbolic_local_memory<1> > local_mems;
             for( std::list<symbolic_inner_product_base *>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 symbolic_local_memory<1> lmem = symbolic_local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());
                 local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
@@ -122,7 +122,7 @@ public:
             }
             kss.dec_tab();
             kss << "}" << std::endl;
-            std::map<binary_op_infos_base const *, symbolic_local_memory<1> > local_mems;
+            std::map<binary_operator const *, symbolic_local_memory<1> > local_mems;
             for( std::list<symbolic_inner_product_base *>::const_iterator it = inner_prods_.begin(); it != inner_prods_.end() ; ++it){
                 std::string sum_name = (*it)->name() + "_reduced";
                 symbolic_local_memory<1> lmem = symbolic_local_memory<1>((*it)->name()+"_local",profile_->group_size(),(*it)->scalartype());

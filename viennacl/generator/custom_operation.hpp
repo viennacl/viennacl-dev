@@ -1,9 +1,9 @@
 #ifndef VIENNACL_GENERATOR_CUSTOM_OPERATION_HPP
 #define VIENNACL_GENERATOR_CUSTOM_OPERATION_HPP
 
-#include "viennacl/generator/code_generation/frontend.hpp"
+#include "viennacl/generator/code_generation.hpp"
 #include "viennacl/generator/symbolic_types.hpp"
-#include "viennacl/generator/dummy_types.hpp"
+#include "viennacl/generator/overloads.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
 #include <bitset>
 

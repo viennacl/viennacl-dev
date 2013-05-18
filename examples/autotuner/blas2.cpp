@@ -10,7 +10,7 @@
 #include "viennacl/matrix.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "viennacl/generator/custom_operation.hpp"
-#include "viennacl/generator/autotune/autotune.hpp"
+#include "viennacl/generator/autotune.hpp"
 
 #define N_RUNS 5
 

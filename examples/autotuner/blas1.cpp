@@ -9,8 +9,7 @@
 
 #include "viennacl/vector.hpp"
 #include "viennacl/generator/custom_operation.hpp"
-#include "viennacl/generator/dummy_types.hpp"
-#include "viennacl/generator/autotune/autotune.hpp"
+#include "viennacl/generator/autotune.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
 #define N_RUNS 5

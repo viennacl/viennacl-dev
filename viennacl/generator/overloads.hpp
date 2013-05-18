@@ -1,11 +1,10 @@
-#ifndef VIENNACL_GENERATOR_DUMMY_TYPES_HPP
-#define VIENNACL_GENERATOR_DUMMY_TYPES_HPP
+#ifndef VIENNACL_GENERATOR_OVERLOADS_HPP
+#define VIENNACL_GENERATOR_OVERLOADS_HPP
 
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/generator/forwards.h"
 //#include "viennacl/forwards.h"
 #include "viennacl/generator/symbolic_types.hpp"
-#include "viennacl/generator/operators.hpp"
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/vector.hpp"
 #include <set>

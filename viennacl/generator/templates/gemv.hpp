@@ -1,7 +1,7 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMV_HPP
 #define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMV_HPP
 
-#include "viennacl/generator/code_generation/optimization_profile.hpp"
+#include "viennacl/generator/templates/base_classes.hpp"
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -109,7 +109,7 @@ public:
 
             for(std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
                 symbolic_matrix_vector_product_base* prod = it->first;
-                binary_op_infos_base const & op_reduce = prod->op_reduce();
+                binary_operator const & op_reduce = prod->op_reduce();
                 std::string const & sum_name = it->second.first;
                 symbolic_local_memory<2> const & lmem = it->second.second.first;
                 symbolic_vector_base * assigned = it->second.second.second;

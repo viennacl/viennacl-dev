@@ -1,14 +1,16 @@
 #ifndef VIENNACL_GENERATOR_AUTOTUNE_HPP
 #define VIENNACL_GENERATOR_AUTOTUNE_HPP
 
-#include "viennacl/generator/autotune/benchmark-utils.hpp"
-#include "ctime"
+#include <ctime>
+#include <iomanip>
+#include <cmath>
+
+#include "viennacl/generator/benchmark-utils.hpp"
 #include "viennacl/generator/forwards.h"
 #include "viennacl/generator/code_generation/frontend.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
-#include "iomanip"
-#include "cmath"
+
 
 namespace viennacl{
 
@@ -16,10 +18,10 @@ namespace generator{
 
 namespace autotune{
 
-namespace inc{
+struct inc{
     static void mul_by_two(unsigned int & val) { val*=2 ; }
     static void add_one(unsigned int & val) { val+=1; }
-}
+};
 
 struct tuning_param{
 public:
