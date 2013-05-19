@@ -97,8 +97,6 @@ int main(int argc, char* argv[]){
     platforms_type platforms = viennacl::ocl::get_platforms();
     size_t num_platforms = platforms.size();
 
-    unsigned int current_device = 0;
-
     for(unsigned int k=0 ; k < num_platforms ; ++k)
     {
         viennacl::ocl::platform pf(k);

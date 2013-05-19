@@ -7,7 +7,7 @@
 
 #include "viennacl/generator/benchmark-utils.hpp"
 #include "viennacl/generator/forwards.h"
-#include "viennacl/generator/code_generation/frontend.hpp"
+#include "viennacl/generator/code_generation.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
 

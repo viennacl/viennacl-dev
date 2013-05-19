@@ -53,7 +53,7 @@ public:
 };
 
 
-static std::ostream& operator<<(std::ostream& os, optimization_profile const & prof){
+inline std::ostream& operator<<(std::ostream& os, optimization_profile const & prof){
     os << prof.repr();
     return os;
 }

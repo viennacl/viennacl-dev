@@ -188,9 +188,9 @@ int test_vector ( Epsilon const& epsilon) {
 
     {
         std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
-        for(int i=0 ; i<size; ++i){
-            int ind1 = std::max(i - 5, 0);
-            int ind2 = std::min(i + 3, (int)size-1);
+        for(unsigned int i=0 ; i<size; ++i){
+            int ind1 = std::max((int)i - 5, 0);
+            int ind2 = std::min(i + 3, size-1);
             cw(i) = cx(i) + cx(ind1) + cx(ind2);
         }
         generator::custom_operation op;
@@ -228,7 +228,6 @@ int test_vector ( Epsilon const& epsilon) {
         op.execute();
         viennacl::ocl::get_queue().finish();
         for(unsigned int i=0 ; i < size ; ++i){
-            float a = cw(i), b = cx(i), c = cy(i), d = cz(i);
             cw(i) = cx(i) - cy(i);
             cy(i) = cw(i)*cz(i);
             cz(i) = cx(i) + cz(i);
@@ -253,8 +252,8 @@ int test_matrix ( Epsilon const& epsilon) {
     unsigned int pattern_size1 = 256;
     unsigned int pattern_size2 = 128;
 
-    unsigned int n_rep1 = 4;
-    unsigned int n_rep2 = 8;
+//    unsigned int n_rep1 = 4;
+//    unsigned int n_rep2 = 8;
 
     typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > dm_t;
     typedef viennacl::generator::vector<NumericT> dv_t;

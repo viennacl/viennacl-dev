@@ -104,8 +104,6 @@ int test( Epsilon const& epsilon) {
     unsigned int size1 = 841;
     unsigned int size2 = 772;
 
-    NumericT                    cpu_scal = static_cast<NumericT> ( 42.1415 );
-    viennacl::scalar<NumericT>  gpu_scal = static_cast<NumericT> ( 42.1415 );
 
     typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > dm_t;
     typedef viennacl::generator::vector<NumericT> dv_t;
