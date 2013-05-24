@@ -134,13 +134,25 @@ int test_prod_rank1(Epsilon const & epsilon,
    
    
    // --------------------------------------------------------------------------            
-   std::cout << "Scaled rank 1 update" << std::endl;
+   std::cout << "Scaled rank 1 update - CPU Scalar" << std::endl;
    ublas_m1 += NumericT(4.2) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += NumericT(2.1) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * NumericT(2.1);  //check proper compilation
    if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
    {
-      std::cout << "# Error at operation: scaled rank 1 update" << std::endl;
+      std::cout << "# Error at operation: scaled rank 1 update - CPU Scalar" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      return EXIT_FAILURE;
+   }
+   
+      // --------------------------------------------------------------------------            
+   std::cout << "Scaled rank 1 update - GPU Scalar" << std::endl;
+   ublas_m1 += NumericT(4.2) * ublas::outer_prod(ublas_v1, ublas_v2);
+   vcl_m1 += viennacl::scalar<NumericT>(2.1) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
+   vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * viennacl::scalar<NumericT>(2.1);  //check proper compilation
+   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   {
+      std::cout << "# Error at operation: scaled rank 1 update - GPU Scalar" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
       return EXIT_FAILURE;
    }

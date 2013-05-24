@@ -305,6 +305,13 @@ namespace viennacl
       typedef viennacl::matrix<ScalarType, viennacl::row_major>   ResultType;
     };
     
+    template <typename ScalarType, typename T>
+    struct MATRIX_EXTRACTOR_IMPL<viennacl::matrix_expression<const viennacl::vector_base<ScalarType>, T, op_prod>,
+                                 viennacl::scalar<ScalarType> >
+    {
+      typedef viennacl::matrix<ScalarType, viennacl::row_major>   ResultType;
+    };
+
     /** \endcond */
 
     

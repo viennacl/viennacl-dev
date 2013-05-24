@@ -237,8 +237,11 @@ namespace viennacl
   
       self_type & operator=(const self_type & other)  //enables implicit conversions
       {
-        if (internal_size() == 0)
-          resize(other.size1(), other.size2(), false);
+		if (internal_size() == 0){
+			if (other.internal_size() == 0)
+				return *this;
+			resize(other.size1(), other.size2(), false);
+		}
         
         viennacl::linalg::am(*this,
                              other, cpu_value_type(1.0), 1, false, false);
