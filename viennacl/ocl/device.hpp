@@ -240,8 +240,6 @@ namespace viennacl
           return ret;
         }
         
-        std::size_t max_work_group_size() const { return max_work_group_size_; }
-        cl_uint compute_units() const { return compute_units_; }
         cl_device_type type() const { return type_; }
         
         bool operator==(device const & other) const
