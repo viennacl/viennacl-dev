@@ -156,7 +156,7 @@ int main()
 
   std::string devname   = dev.name();
   std::string driver    = dev.driver_version();
-  cl_uint compunits = dev.max_compute_units();      
+  cl_uint compunits     = dev.max_compute_units();
   std::size_t wgsize    = dev.max_workgroup_size();        
   
   // -----------------------------------------
@@ -169,19 +169,19 @@ int main()
   
   //set up test config:
   test_config conf;
-  conf.max_local_size(dev.max_work_group_size());
+  conf.max_local_size(dev.max_workgroup_size());
   
   // GPU specific test setup:
   if (dev.type() == CL_DEVICE_TYPE_GPU)
   {
     unsigned int units = 1;
-    while (2 * units < dev.compute_units())
+    while (2 * units < dev.max_compute_units())
       units *= 2;
     conf.min_work_groups(units);
     conf.max_work_groups(512); //reasonable upper limit on current GPUs
     
     conf.min_local_size(16); //less than 16 threads per work group is unlikely to have any impact
-    //conf.min_local_size(dev.max_work_group_size()); //testing only
+    //conf.min_local_size(dev.max_workgroup_size()); //testing only
   } 
   else if (dev.type() == CL_DEVICE_TYPE_CPU)// CPU specific test setup
   {
