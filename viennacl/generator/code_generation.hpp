@@ -169,7 +169,7 @@ namespace viennacl{
 
                 void init(){
                     if(!kernels_list_.empty()) return;
-                    for(typename operations_t::const_iterator it = operations_.begin() ; it!=operations_.end() ; ++it){
+                    for(operations_t::const_iterator it = operations_.begin() ; it!=operations_.end() ; ++it){
                         symbolic_expression_tree_base* ptr = it->get();
                         if(symbolic_binary_matrix_expression_base* p = dynamic_cast<symbolic_binary_matrix_expression_base*>(ptr)){
                             if(count_type<symbolic_matrix_matrix_product_base>(p)) add_operation<gemm::profile>(p);

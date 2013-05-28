@@ -86,7 +86,7 @@ public:
 
 
             //Set access indices
-            for(typename std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+            for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                     if(j==0) (*it)->access_index(j,"i","0");
                     else (*it)->access_index(j,"i + " + utils::to_string(j),"0");
@@ -95,13 +95,13 @@ public:
             }
 
             //Compute expressions
-            for(typename std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+            for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                     kss << (*it)->generate(j) << ";" << std::endl;
                 }
             }
 
-            for(typename std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
+            for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it){
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                     (*it)->write_back(j,kss);
                 }
@@ -123,7 +123,7 @@ public:
             kss.inc_tab();
 
             //Set access indices
-            for(typename std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+            for(std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
                     (*it)->access_index(0,"r","c");
                     (*it)->fetch(0,kss);
             }
@@ -132,7 +132,7 @@ public:
             for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
 
-            for(typename std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
+            for(std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
                 (*it)->write_back(0,kss);
 
 
