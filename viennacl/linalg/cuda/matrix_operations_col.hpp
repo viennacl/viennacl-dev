@@ -648,7 +648,7 @@ namespace viennacl
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
 
-                T * val,
+                const T * val,
                 unsigned int options2,
                 
                 const T * vec1,
