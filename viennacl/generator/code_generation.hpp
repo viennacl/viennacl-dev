@@ -90,7 +90,7 @@ namespace viennacl{
                     std::list<symbolic_binary_vector_expression_base *> vec_exprs = utils::cast<symbolic_binary_vector_expression_base>(kernel_infos_.trees());
                     std::list<symbolic_binary_matrix_expression_base *> mat_exprs = utils::cast<symbolic_binary_matrix_expression_base>(kernel_infos_.trees());
                     std::list<symbolic_binary_scalar_expression_base *> scal_exprs = utils::cast<symbolic_binary_scalar_expression_base>(kernel_infos_.trees());
-                    code_generation::generator * gen;
+                    code_generation::generator * gen = NULL;
                     if(saxpy::profile* p = dynamic_cast<saxpy::profile*>(kernel_infos_.profile())){
                         gen = new saxpy::generator(vec_exprs,scal_exprs,mat_exprs,p);
                     }
