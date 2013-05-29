@@ -1,6 +1,29 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_HPP
 #define VIENNACL_GENERATOR_CODE_GENERATION_HPP
 
+/* =========================================================================
+   Copyright (c) 2010-2013, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
+
+/** @file viennacl/generator/code_generation.hpp
+ *
+ * Functions related to the code generation itself
+*/
+
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>

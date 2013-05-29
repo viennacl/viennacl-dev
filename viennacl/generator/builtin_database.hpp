@@ -1,7 +1,29 @@
 #ifndef VIENNACL_GENERATOR_CODE_GENERATION_BUILTIN_DATABASE_HPP
 #define VIENNACL_GENERATOR_CODE_GENERATION_BUILTIN_DATABASE_HPP
 
-#include "CL/cl.h"
+/* =========================================================================
+   Copyright (c) 2010-2013, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
+
+/** @file viennacl/generator/builtin_database.hpp
+ *
+ * Vendor-specific parameters for the generated kernels
+*/
+
 #include <string>
 
 #include <map>
@@ -10,6 +32,7 @@
 #include "viennacl/generator/templates/inner_product.hpp"
 #include "viennacl/generator/templates/saxpy.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/ocl/forwards.h"
 
 
 namespace viennacl{

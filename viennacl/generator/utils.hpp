@@ -2,9 +2,10 @@
 #define VIENNACL_GENERATOR_UTILS_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2012, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
 
                             -----------------
                   ViennaCL - The Vienna Computing Library
@@ -16,6 +17,11 @@
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
+
+
+/** @file viennacl/generator/utils.hpp
+    @brief Some utils for the generator. These are rather general purpose and should end up being merged in viennacl/tools/
+*/
 
 #include <sstream>
 #include "viennacl/tools/shared_ptr.hpp"
