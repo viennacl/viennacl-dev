@@ -24,188 +24,188 @@
 #include <list>
 
 namespace viennacl{
-	
-	namespace generator{
-		
-       namespace utils{
 
-            template<class T>
-            struct deref_eq : std::binary_function<T,T,bool>{
-              bool operator()(T a, T b) const {
-                return *a == *b;
-              }
-            };
+  namespace generator{
 
-            template <class T>
-            inline std::string to_string ( T const t )
-            {
-              std::stringstream ss;
-              ss << t;
-              return ss.str();
-            }
+    namespace utils{
 
-            template<class T, class U>
-            struct are_same_type
-            {
-              enum { value = 0 };
-            };
+      template<class T>
+      struct deref_eq : std::binary_function<T,T,bool>{
+          bool operator()(T a, T b) const {
+            return *a == *b;
+          }
+      };
 
-            template<class T>
-            struct are_same_type<T,T>
-            {
-              enum { value = 1 };
-            };
+      template <class T>
+      inline std::string to_string ( T const t )
+      {
+        std::stringstream ss;
+        ss << t;
+        return ss.str();
+      }
 
+      template<class T, class U>
+      struct are_same_type
+      {
+          enum { value = 0 };
+      };
 
-            template<class Base,class Target>
-            struct Base2Target { Target* operator ()( Base* value ) const { return dynamic_cast<Target*>(value); } };
-
-            template<class T>
-            struct SharedPtr2Raw {
-                T* operator ()(viennacl::tools::shared_ptr<T> const & value ) const { return value.get(); }
-            };
+      template<class T>
+      struct are_same_type<T,T>
+      {
+          enum { value = 1 };
+      };
 
 
-            template<class Base,class Target>
-            struct UnsafeBase2Target { Target* operator ()( Base* value ) const { return static_cast<Target*>(value); } };
+      template<class Base,class Target>
+      struct Base2Target { Target* operator ()( Base* value ) const { return dynamic_cast<Target*>(value); } };
 
-            inline void replace_all_occurences(std::string& str, const std::string& oldstr, const std::string& newstr)
-            {
-              size_t pos = 0;
-              while((pos = str.find(oldstr, pos)) != std::string::npos)
-              {
-                 str.replace(pos, oldstr.length(), newstr);
-                 pos += newstr.length();
-              }
-            }
-
-		    template<class T>
-            struct print_type;
-
-            template<>
-            struct print_type<char>
-            {
-              static const std::string value() { return "char"; }
-            };
-
-            template<>
-            struct print_type<unsigned char>
-            {
-              static const std::string value() { return "unsigned char"; }
-            };
+      template<class T>
+      struct SharedPtr2Raw {
+          T* operator ()(viennacl::tools::shared_ptr<T> const & value ) const { return value.get(); }
+      };
 
 
-			template<>
-            struct print_type<int>
-			{
-			  static const std::string value() { return "int"; }
-			};
+      template<class Base,class Target>
+      struct UnsafeBase2Target { Target* operator ()( Base* value ) const { return static_cast<Target*>(value); } };
 
-			template<>
-            struct print_type<unsigned int>
-			{
-			  static const std::string value() { return "unsigned int"; }
-			};
+      inline void replace_all_occurences(std::string& str, const std::string& oldstr, const std::string& newstr)
+      {
+        size_t pos = 0;
+        while((pos = str.find(oldstr, pos)) != std::string::npos)
+        {
+          str.replace(pos, oldstr.length(), newstr);
+          pos += newstr.length();
+        }
+      }
 
-            template<>
-            struct print_type<short>
-            {
-              static const std::string value() { return "short"; }
-            };
+      template<class T>
+      struct print_type;
 
-            template<>
-            struct print_type<unsigned short>
-            {
-              static const std::string value() { return "unsigned short"; }
-            };
+      template<>
+      struct print_type<char>
+      {
+          static const std::string value() { return "char"; }
+      };
 
-			template<>
-            struct print_type<long>
-			{
-			  static const std::string value() { return "long"; }
-			};
-
-			template<>
-            struct print_type<unsigned long>
-			{
-              static const std::string value() { return "unsigned long"; }
-			};
-
-			template<>
-            struct print_type<float>
-			{
-			  static const std::string value() { return "float"; }
-			};
-
-			template<>
-            struct print_type<double>
-			{
-			  static const std::string value() { return "double"; }
-			};
+      template<>
+      struct print_type<unsigned char>
+      {
+          static const std::string value() { return "unsigned char"; }
+      };
 
 
-            class kernel_generation_stream : public std::ostream{
-            private:
-                class kgenstream : public std::stringbuf{
-                public:
-                    kgenstream(std::ostream& final_destination
-                               ,unsigned int const & tab_count) : final_destination_(final_destination)
-                                                                  ,tab_count_(tab_count){ }
-                    ~kgenstream() {  pubsync(); }
-                    int sync() {
-                        for(unsigned int i=0 ; i<tab_count_;++i)
-                            final_destination_ << '\t';
-                        final_destination_ << str();
-                        str("");
-                        return !final_destination_;
-                    }
-                private:
-                    std::ostream& final_destination_;
-                    unsigned int const & tab_count_;
-                };
+      template<>
+      struct print_type<int>
+      {
+          static const std::string value() { return "int"; }
+      };
 
+      template<>
+      struct print_type<unsigned int>
+      {
+          static const std::string value() { return "unsigned int"; }
+      };
+
+      template<>
+      struct print_type<short>
+      {
+          static const std::string value() { return "short"; }
+      };
+
+      template<>
+      struct print_type<unsigned short>
+      {
+          static const std::string value() { return "unsigned short"; }
+      };
+
+      template<>
+      struct print_type<long>
+      {
+          static const std::string value() { return "long"; }
+      };
+
+      template<>
+      struct print_type<unsigned long>
+      {
+          static const std::string value() { return "unsigned long"; }
+      };
+
+      template<>
+      struct print_type<float>
+      {
+          static const std::string value() { return "float"; }
+      };
+
+      template<>
+      struct print_type<double>
+      {
+          static const std::string value() { return "double"; }
+      };
+
+
+      class kernel_generation_stream : public std::ostream{
+        private:
+          class kgenstream : public std::stringbuf{
             public:
-                kernel_generation_stream(std::ostream& final_destination) : std::ostream(new kgenstream(final_destination,tab_count_))
-                                                                            , tab_count_(0){ }
-                ~kernel_generation_stream(){ delete rdbuf(); }
-                std::string str(){
-                    return static_cast<std::stringbuf*>(rdbuf())->str();
-                }
-
-                void inc_tab(){ ++tab_count_; }
-                void dec_tab(){ --tab_count_; }
-
+              kgenstream(std::ostream& final_destination
+                         ,unsigned int const & tab_count) : final_destination_(final_destination)
+              ,tab_count_(tab_count){ }
+              ~kgenstream() {  pubsync(); }
+              int sync() {
+                for(unsigned int i=0 ; i<tab_count_;++i)
+                  final_destination_ << '\t';
+                final_destination_ << str();
+                str("");
+                return !final_destination_;
+              }
             private:
-                unsigned int tab_count_;
-            };
+              std::ostream& final_destination_;
+              unsigned int const & tab_count_;
+          };
 
-            template<class U, class T>
-            void unique_push_back(U & v, T t){
-                if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T>(),t))==v.end())
-                    v.push_back(t);
-            }
+        public:
+          kernel_generation_stream(std::ostream& final_destination) : std::ostream(new kgenstream(final_destination,tab_count_))
+          , tab_count_(0){ }
+          ~kernel_generation_stream(){ delete rdbuf(); }
+          std::string str(){
+            return static_cast<std::stringbuf*>(rdbuf())->str();
+          }
 
-            template<class T, class U>
-            typename std::vector<std::pair<T*, U> >::iterator unique_insert(std::vector<std::pair<T*, U> > & v, std::pair<T*, U> p){
-                typename std::vector<std::pair<T*, U> >::iterator res = v.begin();
-                while(res != v.end()){
-                    if(*res->first == *p.first) return res;
-                    ++res;
-                }
-                return v.insert(res,p);
-            }
+          void inc_tab(){ ++tab_count_; }
+          void dec_tab(){ --tab_count_; }
 
-            template<class T>
-            struct is_type{
-                template<class U>
-                bool operator()(U* p) const{
-                    return dynamic_cast<T *>(p);
-                }
-            };
+        private:
+          unsigned int tab_count_;
+      };
+
+      template<class U, class T>
+      void unique_push_back(U & v, T t){
+        if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T>(),t))==v.end())
+          v.push_back(t);
+      }
+
+      template<class T, class U>
+      typename std::vector<std::pair<T*, U> >::iterator unique_insert(std::vector<std::pair<T*, U> > & v, std::pair<T*, U> p){
+        typename std::vector<std::pair<T*, U> >::iterator res = v.begin();
+        while(res != v.end()){
+          if(*res->first == *p.first) return res;
+          ++res;
+        }
+        return v.insert(res,p);
+      }
+
+      template<class T>
+      struct is_type{
+          template<class U>
+          bool operator()(U* p) const{
+            return dynamic_cast<T *>(p);
+          }
+      };
 
 
 
-       }
     }
+  }
 }
 #endif
