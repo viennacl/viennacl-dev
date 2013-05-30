@@ -34,32 +34,42 @@ namespace viennacl{
 
     namespace code_generation{
 
+
+      /** @brief profile template for the INNER PRODUCT kernel
+      *
+      *   Use of persistent threads determined by GROUP_SIZE and NUM_GROUPS
+      */
       namespace inner_product{
 
         class profile : public optimization_profile{
           public:
+
+            /** @brief The default constructor : GROUP_SIZE = 128 ; NUM_GROUPS = 256 */
             profile(){
               group_size_=128;
               num_groups_=256;
-              vectorization_=4;
             }
 
+            /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int group_size, unsigned int num_groups) : optimization_profile(vectorization){
               group_size_ = group_size;
               num_groups_ = num_groups;
             }
 
+            /** @brief Return the group sizes used by this kernel */
             std::pair<size_t,size_t> local_work_size() const{  return std::make_pair(group_size_,1); }
 
             unsigned int group_size() const { return group_size_; }
 
             unsigned int num_groups() const { return num_groups_; }
 
+            /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
               k.local_work_size(0,group_size_);
               k.global_work_size(0,group_size_*num_groups_);
             }
 
+            /** @brief Returns the representation string of this profile */
             std::string repr() const{
               std::ostringstream oss;
               oss << "V" << vectorization_
@@ -68,6 +78,8 @@ namespace viennacl{
               return oss.str();
             }
 
+            /** @brief returns whether or not the profile leads to undefined behavior on particular device
+             *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
               return optimization_profile::is_invalid(dev,group_size_*scalartype_size);
             }

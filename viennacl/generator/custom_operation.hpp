@@ -48,7 +48,7 @@ namespace viennacl
 #endif
           assert(!source_code_.empty() && " Custom Operation not initialized ");
           viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code_, pgm_name);
-          for(std::map<std::string, generator::code_generation::kernel_infos_t>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){
+          for(std::map<std::string, generator::code_generation::kernel_wrapper>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){
             program.add_kernel(it->first);
           }
         }
@@ -86,7 +86,7 @@ namespace viennacl
 
 
         /** @brief Returns the list of the operations handled at the time */
-        std::list<code_generation::kernel_infos_t> kernels_list(){
+        std::list<code_generation::kernel_wrapper> kernels_list(){
           return operations_manager_.get_kernels_list();
         }
 
@@ -100,10 +100,13 @@ namespace viennacl
           return viennacl::ocl::current_context().get_program(program_name_);
         }
 
+        /** @brief Executes the given operation
+         *  Compiles the program if not previously done
+         */
         void execute(){
           init();
           viennacl::ocl::program & pgm = program();
-          for(std::map<std::string, generator::code_generation::kernel_infos_t>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
+          for(std::map<std::string, generator::code_generation::kernel_wrapper>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
             viennacl::ocl::kernel& k = pgm.get_kernel(it->first);
             it->second.enqueue(k);
             it->second.config_nd_range(k);
@@ -112,13 +115,16 @@ namespace viennacl
         }
 
 
+        /** @brief Returns the source code of the given operation
+         *  Empty if not compiled yet
+         */
         std::string source_code() const{
           return source_code_;
         }
 
       private:
-        code_generation::operations_manager operations_manager_;
-        std::map<std::string, generator::code_generation::kernel_infos_t> kernels_infos_;
+        code_generation::operations_handler operations_manager_;
+        std::map<std::string, generator::code_generation::kernel_wrapper> kernels_infos_;
         std::string source_code_;
         std::string program_name_;
 

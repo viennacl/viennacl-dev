@@ -109,53 +109,98 @@ namespace viennacl{
 
 #endif
 
+      /** @brief Presets on how to increment the tuning parameter */
       struct inc{
+
+          /** @brief the parameter for the next optimization profile will be multiplied by 2 */
           static void mul_by_two(unsigned int & val) { val*=2 ; }
+
+          /** @brief the parameter for the next optimization profile will be added 1 */
           static void add_one(unsigned int & val) { val+=1; }
+
       };
 
-      struct tuning_param{
+      /** @brief class for a tuning parameter */
+      class tuning_param{
         public:
+
+          /** @brief The constructor
+           *
+           *  @param min minimal value
+           *  @param max maximal value
+           *  @param policy for increasing the tuning parameter
+           */
           tuning_param(unsigned int min, unsigned int max, void (*inc)(unsigned int &)) : current_(min), min_max_(min,max), inc_(inc){ }
+
+          /** @brief Returns true if the parameter has reached its maximum value */
           bool is_max() const { return current_ >= min_max_.second; }
+
+          /** @brief Increments the parameter */
           bool inc(){
             inc_(current_);
             if(current_<=min_max_.second) return false;
             current_=min_max_.first;
             return true; //has been reset
           }
+
+          /** @brief Returns the current value of the parameter */
           unsigned int current() const{ return current_; }
+
+          /** @brief Resets the parameter to its minimum value */
           void reset() { current_ = min_max_.first; }
+
         private:
           unsigned int current_;
           std::pair<unsigned int, unsigned int> min_max_;
           void (*inc_)(unsigned int &);
       };
 
+      /** @brief Tuning configuration
+       *
+       *  ConfigT must have a profile_t typedef
+       *  ConfigT must implement is_invalid that returns whether or not a given parameter is invalid
+       *  ConfigT must implement create_profile that creates a profile_t given a set of parameters
+       *
+       *  Parameters are stored in a std::map<std::string, viennacl::generator::autotune::tuning_param>
+       */
       template<class ConfigT>
       class tuning_config{
         private:
+          /** @brief Storage type of the parameters */
           typedef std::map<std::string, viennacl::generator::autotune::tuning_param> params_t;
+
         public:
+          /** @brief Accessor for profile_t */
           typedef typename ConfigT::profile_t profile_t;
-          tuning_config(){ }
+
+          /** @brief Add a tuning parameter to the config */
           void add_tuning_param(std::string const & name, unsigned int min, unsigned int max, void (*inc)(unsigned int &)){
             params_.insert(std::make_pair(name,tuning_param(min,max,inc)));
           }
+
+          /** @brief Returns true if the tuning config has still not explored all its possibilities */
           bool has_next() const{
             bool res = false;
             for(typename params_t::const_iterator it = params_.begin() ; it != params_.end() ; ++it) res = res || !it->second.is_max();
             return res;
           }
+
+          /** @brief Update the parameters of the config */
           void update(){
             for(typename params_t::iterator it = params_.begin() ; it != params_.end() ; ++it) if(it->second.inc()==false) break;
           }
+
+          /** @brief Returns true if the compilation/execution of the underlying profile has an undefined behavior */
           bool is_invalid(viennacl::ocl::device const & dev) const{
             return ConfigT::is_invalid(dev,params_);
           }
+
+          /** @brief Returns the current profile */
           typename ConfigT::profile_t get_current(){
             return ConfigT::create_profile(params_);
           }
+
+          /** @brief Reset the config */
           void reset(){
             for(params_t::iterator it = params_.begin() ; it != params_.end() ; ++it){
               it->second.reset();
@@ -166,6 +211,7 @@ namespace viennacl{
           params_t params_;
       };
 
+      /** @brief Add the timing value for a given profile and an operation */
       template<class OpT, class ProfileT>
       void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, OpT const & operation, ProfileT const & prof){
 
@@ -202,6 +248,13 @@ namespace viennacl{
         timings.insert(std::make_pair(exec_time, ProfileT(prof)));
       }
 
+      /** @brief Fills a timing map for a given operation and a benchmark configuration
+       *
+       * @tparam OpT type of the operation
+       * @tparam ConfigT type of the benchmark configuration
+       * @param timings the timings to fill
+       * @param op the given operation
+       * @param the given config */
       template<class OpT, class ConfigT>
       void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, ConfigT & config){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
@@ -225,6 +278,7 @@ namespace viennacl{
         }
       }
 
+      /** @brief Fills a timing map for a given operation and a list of profiles */
       template<class OpT, class ProfT>
       void benchmark(std::map<double, ProfT> & timings, OpT const & op, std::list<ProfT> const & profiles){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();

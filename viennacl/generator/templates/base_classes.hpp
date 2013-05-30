@@ -36,6 +36,7 @@ namespace viennacl{
 
     namespace code_generation{
 
+      /** @brief Base class for an optimization profile */
       class optimization_profile{
         protected:
           typedef unsigned int size_type;
@@ -68,6 +69,10 @@ namespace viennacl{
           unsigned int vectorization_;
       };
 
+      /** @brief Base class for a generator
+       *
+       *  Fills a given kernel generation stream
+       */
       class generator{
         public:
           virtual void operator()(utils::kernel_generation_stream& kss) = 0;
@@ -75,6 +80,7 @@ namespace viennacl{
       };
 
 
+      /** @brief Prints a given profile */
       inline std::ostream& operator<<(std::ostream& os, optimization_profile const & prof){
         os << prof.repr();
         return os;

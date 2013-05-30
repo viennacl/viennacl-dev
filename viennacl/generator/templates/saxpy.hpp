@@ -37,26 +37,37 @@ namespace viennacl{
 
       namespace saxpy{
 
+        /** @brief profile template for the SAXPY kernel
+        *
+        *   Possibility of loop unrolling.
+        *   No persistent threads (yet ?).
+        */
         class profile : public optimization_profile{
           public:
+
+            /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
             profile(){
               loop_unroll_ = 1;
               group_size0_ = 128;
             }
 
+            /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int loop_unroll, size_t group_size0) : optimization_profile(vectorization){
               loop_unroll_ = loop_unroll;
               group_size0_ = group_size0;
             }
 
+            /** @brief Returns the unrolling factor */
             unsigned int loop_unroll() const{
               return loop_unroll_;
             }
 
+            /** @brief Return the group sizes used by this kernel */
             std::pair<size_t,size_t> local_work_size() const{
               return std::make_pair(group_size0_,1);
             }
 
+            /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
               k.local_work_size(0,group_size0_);
               if(symbolic_vector_base* vec = dynamic_cast<symbolic_vector_base*>(p)){
@@ -67,7 +78,7 @@ namespace viennacl{
               }
             }
 
-
+            /** @brief Returns the representation string of this profile */
             std::string repr() const{
               std::ostringstream oss;
               oss << "V" << vectorization_
@@ -76,6 +87,8 @@ namespace viennacl{
               return oss.str();
             }
 
+            /** @brief returns whether or not the profile leads to undefined behavior on particular device
+             *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
               return optimization_profile::is_invalid(dev,0);
             }

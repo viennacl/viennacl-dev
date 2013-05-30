@@ -35,9 +35,21 @@ namespace viennacl{
 
       namespace gemm{
 
-        class profile : public optimization_profile{
+        /** @brief Profile template for a GEMM kernel
+         *
+         *  Implementation based on double blocking.
+         *  See Matsumoto et Al. "Implementing a Code Generator for Fast Matrix Multiplication in OpenCL on the GPU"
+         */
+          class profile : public optimization_profile{
           public:
 
+            /** @brief The default constructor
+             *
+             *  ML = KL = NL = 32
+             *  MS = KS = NS = 4
+             *  LHS stored to local memory, RHS not
+             *  Unroll = 1
+             */
             profile(){
               ml_ = 32;
               kl_ = 32;
@@ -54,6 +66,7 @@ namespace viennacl{
             }
 
 
+            /** @brief The user constructor */
             profile(unsigned int ml, unsigned int kl, unsigned int nl
                     , unsigned int ms, unsigned int ks, unsigned int ns
                     , bool use_LHS_shared, bool use_RHS_shared
@@ -66,7 +79,8 @@ namespace viennacl{
               unroll_ = unroll;
             }
 
-            virtual std::string repr() const{
+            /** @brief Returns the representation string of this profile */
+           std::string repr() const{
               std::ostringstream oss;
               oss << "ML" << ml_
                   << "KL" << kl_
@@ -83,6 +97,7 @@ namespace viennacl{
             }
 
 
+            /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
               symbolic_matrix_base* mat = dynamic_cast<symbolic_matrix_base*>(p);
               k.local_work_size(0, ml_/ms_);
@@ -91,20 +106,40 @@ namespace viennacl{
               k.global_work_size(1, mat->real_size2()/ns_);
             }
 
+            /** @brief Return the group sizes used by this kernel */
             std::pair<size_t,size_t> local_work_size() const{
               return std::make_pair(ml_/ms_, nl_/ns_);
             }
 
+            /** @brief returns the large m size */
             unsigned int ml() const{ return ml_ ; }
+
+            /** @brief returns the large k size */
             unsigned int kl() const{ return kl_ ; }
+
+            /** @brief returns the large n size */
             unsigned int nl() const{ return nl_ ; }
+
+            /** @brief returns the small m size */
             unsigned int ms() const{ return ms_ ; }
+
+            /** @brief returns the small k size */
             unsigned int ks() const{ return ks_ ; }
+
+            /** @brief returns the small n size */
             unsigned int ns() const{ return ns_ ; }
+
+            /** @brief returns whether or not the profile stores the LHS to shared memory */
             bool use_LHS_shared() const{ return use_LHS_shared_; }
+
+            /** @brief returns whether or not the profile stores the RHS to shared memory */
             bool use_RHS_shared() const{ return use_RHS_shared_; }
+
+            /** @brief returns the #pragma unroll constant */
             unsigned int unroll() const { return unroll_; }
 
+            /** @brief returns whether or not the profile leads to undefined behavior on particular device
+             *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
               //Query profile informations
               size_t lmem_used = 0;

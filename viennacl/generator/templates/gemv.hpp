@@ -35,21 +35,41 @@ namespace viennacl{
 
       namespace gemv{
 
+        /** @brief Profile template for a GEMV kernel
+         *
+         *  Implementation based on blocking.
+         *  Each work group processes a block of M rows, by iterating horizontally over M*K blocks
+         *  Uses persistents threads defined by NUM_GROUPS_0.
+         */
         class profile : public optimization_profile{
           public:
 
+            /** @brief The default constructor. M = 64, K = 16, NUM_GROUPS_0 = 64 */
             profile(){
               m_ = 64;
               k_ = 16;
               num_groups_0_ = 64;
             }
 
+            /** @brief The user constructor */
             profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : m_(m), k_(k), num_groups_0_(num_groups_0){ }
 
+            /** @brief Returns M */
+            unsigned int m() const { return m_; }
+
+            /** @brief Returns K */
+            unsigned int k() const { return k_; }
+
+            /** @brief Returns NUM_GROUPS_0 */
+            unsigned int num_groups_0() const { return num_groups_0_; }
+
+
+            /** @brief Return the group sizes used by this kernel */
             std::pair<size_t,size_t> local_work_size() const{
               return std::make_pair(m_,k_);
             }
 
+            /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
               k.local_work_size(0,m_);
               k.local_work_size(1,k_);
@@ -57,10 +77,7 @@ namespace viennacl{
               k.global_work_size(1,k_);
             }
 
-            unsigned int m() const { return m_; }
-            unsigned int k() const { return k_; }
-            unsigned int num_groups_0() const { return num_groups_0_; }
-
+            /** @brief Returns the representation string of this profile */
             std::string repr() const{
               std::ostringstream oss;
               oss << "V" << vectorization_;
@@ -70,6 +87,8 @@ namespace viennacl{
               return oss.str();
             }
 
+            /** @brief returns whether or not the profile leads to undefined behavior on particular device
+             *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
               return optimization_profile::is_invalid(dev,m_*(k_+1)*scalartype_size)
                   || vectorization_ > m_
