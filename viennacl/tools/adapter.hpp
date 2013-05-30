@@ -342,7 +342,7 @@ namespace viennacl
     *  @tparam SCALARTYPE   either float or double
     */
     template <typename SCALARTYPE, typename SizeType = unsigned int>
-    class sparse_matrix_adapter : public const_sparse_matrix_adapter<SCALARTYPE>
+    class sparse_matrix_adapter : public const_sparse_matrix_adapter<SCALARTYPE, SizeType>
     {
         typedef const_sparse_matrix_adapter<SCALARTYPE, SizeType>   BaseType;
       public:

@@ -261,6 +261,8 @@ namespace viennacl
             }
           }
         }
+        
+        vcl_size_t levels() const { return multifrontal_L_row_index_arrays_.size(); }
 
       private:
         void init(MatrixType const & mat)
