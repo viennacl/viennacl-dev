@@ -36,7 +36,7 @@ namespace viennacl
   {
 
 
-    /** @brief A class for making a custom operation */
+    /** @brief Interface class for using the kernel generator */
     class custom_operation
     {
 
@@ -60,28 +60,37 @@ namespace viennacl
 
       public :
 
+        /** @brief Default Constructor */
         custom_operation(){ }
 
+        /** @brief Creates a custom operation from one operation */
         template<class T0>
         custom_operation(T0 const & op0){
           add(op0);
         }
 
+        /** @brief Add an operation to the operations list */
         template<class T>
         void add(T const & op){
           operations_manager_.add(op);
         }
 
+        /** @brief Forces the code generator to use a particular profile to generate the operations corresponding to T
+         *
+         * @tparam T profile type
+         */
+        template<class T>
+        void override_model(T const & o){
+          operations_manager_.override_model(o);
+        }
+
+
+        /** @brief Returns the list of the operations handled at the time */
         std::list<code_generation::kernel_infos_t> kernels_list(){
           return operations_manager_.get_kernels_list();
         }
 
-        code_generation::operations_manager & operations_manager(){
-          return operations_manager_;
-        }
-
-
-
+        /** @brief Returns the corresponding program. Compiles the operation if not previously done */
         viennacl::ocl::program & program(){
           init();
           std::string program_name_ = operations_manager_.repr();

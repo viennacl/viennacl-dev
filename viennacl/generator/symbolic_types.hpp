@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator_symbolic_types.hpp
+/** @file viennacl/generator/symbolic_types.hpp
     @brief Defines the symbolic types for the expressions used by the code generator
 */
 

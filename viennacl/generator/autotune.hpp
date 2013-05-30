@@ -175,7 +175,7 @@ namespace viennacl{
 
         //Skips if use too much local memory.
         viennacl::generator::custom_operation op(operation);
-        op.operations_manager().override_model(prof);
+        op.override_model(prof);
         viennacl::ocl::program & pgm = op.program();
         viennacl::ocl::kernel & k = pgm.get_kernel("_k0");
 

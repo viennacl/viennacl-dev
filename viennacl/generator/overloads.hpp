@@ -38,6 +38,11 @@ namespace viennacl{
 
 
 
+    /** @brief Simple wrapper from viennacl::vector
+     *
+     *   Just holds a reference to a viennacl vector and provides the corresponding operator overloads.
+     *  Meant to be merged with viennacl::vector once all the kernels are dynamically generated.
+     */
     template<typename SCALARTYPE>
     class vector{
         typedef vector<SCALARTYPE> self_type;
@@ -81,19 +86,25 @@ namespace viennacl{
         vcl_t const & vec_;
     };
 
+    /** @brief Constant vector wrapper
+     *
+     *  Does not allocate any memory
+     *
+     *  @todo make it take any std::string instead of a template integer...
+     */
     template<unsigned int N>
     class constant_vector{
       public:
         static const unsigned int val = N;
     };
 
+    /** @brief Wrap an interface vector to an internal symbolic vector */
     template<class ScalarType>
     struct to_sym<vector<ScalarType> >{
         typedef symbolic_vector<ScalarType, index_set> type;
         static type result(vector<ScalarType> const & t) { return type(t.get().size(),t.get(), index_set()); }
     };
 
-    //TODO: clean
     template<unsigned int N>
     struct to_sym<constant_vector<N> >{
         typedef symbolic_constant type;
@@ -101,6 +112,11 @@ namespace viennacl{
     };
 
 
+    /** @brief Simple wrapper from viennacl::scalar
+     *
+     *   Just holds a reference to a viennacl scalar and provides the corresponding operator overloads.
+     *  Meant to be merged with viennacl::vector once all the kernels are dynamically generated.
+     */
     template<class ScalarType>
     class scalar{
         typedef scalar<ScalarType> self_type;
@@ -145,6 +161,7 @@ namespace viennacl{
     };
 
 
+    /** @brief Wrap an interface scalar to an internal symbolic scalar */
     template<class ScalarType>
     struct to_sym<scalar<ScalarType> >{
         typedef gpu_symbolic_scalar<ScalarType> type;
@@ -157,6 +174,12 @@ namespace viennacl{
         static type result(ScalarType const & t){ return t; }
     };
 
+
+    /** @brief Simple wrapper from viennacl::matrix
+     *
+     *   Just holds a reference to a viennacl vector and provides the corresponding operator overloads.
+     *  Meant to be merged with viennacl::vector once all the kernels are dynamically generated.
+     */
     template<class VCL_MATRIX>
     class matrix{
         typedef matrix<VCL_MATRIX> self_type;
@@ -204,7 +227,7 @@ namespace viennacl{
     };
 
 
-
+    /** @brief Wrap an interface matrix to an internal symbolic matrix */
     template<class VCL_MATRIX_T>
     struct to_sym<matrix<VCL_MATRIX_T> >{
         typedef symbolic_matrix<VCL_MATRIX_T, index_set, index_set> type;
@@ -212,6 +235,7 @@ namespace viennacl{
     };
 
 
+    /** @brief Some traits for vector expressions that have a symbolic equivalent */
     template<class T>
     struct is_vector_expression_t{ enum { value = 0 }; };
     template<typename ScalarType>
@@ -227,7 +251,7 @@ namespace viennacl{
     template<class SUB, class OP>
     struct is_vector_expression_t<unary_vector_expression<SUB,OP> >{ enum { value = 1}; };
 
-
+    /** @brief Some traits for scalar expressions that have a symbolic equivalent */
     template<class T>
     struct is_scalar_expression_t{ enum { value = is_primitive_type<T>::value }; };
     template<class ScalarType>
@@ -239,7 +263,7 @@ namespace viennacl{
     template<class SUB, class OP>
     struct is_scalar_expression_t<unary_scalar_expression<SUB,OP> >{ enum { value = 1}; };
 
-
+    /** @brief Some traits for matrix expressions that have a symbolic equivalent */
     template<class T>
     struct is_matrix_expression_t{ enum { value = 0}; };
     template<class VCL_MATRIX>
@@ -256,6 +280,10 @@ namespace viennacl{
     struct is_matrix_expression_t<unary_matrix_expression<SUB,OP> >{ enum { value = 1}; };
 
 
+    /** @brief generic functor to infer type for common operators such as +, -
+     *
+     *  Leads to the creation of only one implementation of the corresponding operators.
+     */
     template<class LHS, class OP, class RHS, bool create_vector, bool create_scalar, bool create_matrix>
     struct convert_to_binary_expr;
     template<class LHS, class OP, class RHS>
@@ -267,6 +295,7 @@ namespace viennacl{
 
 
 
+    /** @brief Some traits for operators that have a symbolic equivalent */
     template<class T>
     struct is_operator{ enum{ value = 0}; };
     template<> struct is_operator<assign_type>{ enum { value = 1}; };
@@ -312,6 +341,7 @@ namespace viennacl{
 
 
 
+    /** @brief elementwise product */
     template<class LHS, class RHS>
     typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
     ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
@@ -327,6 +357,7 @@ namespace viennacl{
           ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));
     }
 
+    /** @brief elementwise division */
     template<class LHS, class RHS>
     typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)
     ||(is_vector_expression_t<LHS>::value && is_vector_expression_t<RHS>::value)
@@ -343,6 +374,7 @@ namespace viennacl{
     }
 
 
+/** @brief macro for elementwise operators */
 #define CREATE_ELEMENTWISE_OPERATOR(function_name, symbolic_type) \
   template<class LHS, class RHS>\
   typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)\
@@ -366,8 +398,6 @@ namespace viennacl{
     CREATE_ELEMENTWISE_OPERATOR(operator<=,infeq_type)
     //CREATE_ELEMENTWISE_OPERATOR(operator==,eqto_type)
     CREATE_ELEMENTWISE_OPERATOR(operator!=,neqto_type)
-
-
 #undef CREATE_ELEMENTWISE_OPERATOR
 
     //Prod needs a special treatment to avoid ambiguities
@@ -505,6 +535,7 @@ namespace viennacl{
           ,is_matrix_expression_t<T>::value>::type(make_sym(t));\
     }
 
+/** @brief create an interface to opencl 1 argument functions */
 #define MAKE_BUILTIN_FUNCTION1(namefun) \
   template<class T>\
   typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\
@@ -512,13 +543,13 @@ namespace viennacl{
   ,is_scalar_expression_t<T>::value\
   ,is_matrix_expression_t<T>::value>::type>::type namefun (T const & t)\
     {\
-  return typename convert_to_unary_expr<T,namefun##_type\
-  ,is_vector_expression_t<T>::value\
-  ,is_scalar_expression_t<T>::value\
-  ,is_matrix_expression_t<T>::value>::type(make_sym(t));\
+    return typename convert_to_unary_expr<T,namefun##_type\
+    ,is_vector_expression_t<T>::value\
+    ,is_scalar_expression_t<T>::value\
+    ,is_matrix_expression_t<T>::value>::type(make_sym(t));\
   }
 
-
+/** @brief create an interface to opencl 2 arguments functions */
 #define MAKE_BUILTIN_FUNCTION2(namefun) \
   template<class LHS, class RHS>\
   typename viennacl::enable_if< (is_scalar_expression_t<LHS>::value || is_scalar_expression_t<RHS>::value)\
@@ -528,10 +559,10 @@ namespace viennacl{
   ,create_vector<LHS,RHS>::value\
   ,create_scalar<LHS,RHS>::value\
   ,create_matrix<LHS,RHS>::value>::type>::type namefun(LHS const & lhs, RHS const & rhs){\
-  return typename convert_to_binary_expr<LHS,namefun##_type,RHS\
-  ,create_vector<LHS,RHS>::value\
-  ,create_scalar<LHS,RHS>::value\
-  ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));\
+    return typename convert_to_binary_expr<LHS,namefun##_type,RHS\
+    ,create_vector<LHS,RHS>::value\
+    ,create_scalar<LHS,RHS>::value\
+    ,create_matrix<LHS,RHS>::value>::type(make_sym(lhs),make_sym(rhs));\
   }
 
 

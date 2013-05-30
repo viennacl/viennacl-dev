@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/
- *
+/** @file viennacl/generator/forwards.h
+ * Forward declarations for the generator
 */
 
 
