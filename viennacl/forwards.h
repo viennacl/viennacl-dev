@@ -334,7 +334,7 @@ namespace viennacl
     
   namespace linalg
   {
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || defined(__CUDACC__)
     
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     void convolve_i(viennacl::vector<SCALARTYPE, ALIGNMENT>& input1,
