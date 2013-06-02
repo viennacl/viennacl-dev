@@ -481,18 +481,22 @@ namespace viennacl{
           else
             return lhs_->simplified_repr();
         }
+
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
           lhs_->bind(shared_infos,prof);
           rhs_->bind(shared_infos,prof);
         }
+
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
           lhs_->access_index(i,ind0,ind1);
           rhs_->access_index(i,ind0,ind1);
         }
+
         void fetch(unsigned int i, utils::kernel_generation_stream & kss){
           lhs_->fetch(i,kss);
           rhs_->fetch(i,kss);
         }
+
         void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const{
           lhs_->get_kernel_arguments(args);
           rhs_->get_kernel_arguments(args);
@@ -513,9 +517,11 @@ namespace viennacl{
           }
           return false;
         }
+
         std::string generate(unsigned int i, int vector_element = -1) const {
           return "(" +  op_->generate(lhs_->generate(i,vector_element), rhs_->generate(i,vector_element) ) + ")";
         }
+
       protected:
         symbolic_binary_expression_tree_infos_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs) : lhs_(lhs), op_(op), rhs_(rhs){        }
         viennacl::tools::shared_ptr<symbolic_expression_tree_base> lhs_;
@@ -1157,106 +1163,178 @@ namespace viennacl{
     /**
         * @brief Symbolic matrix type
         *
-        * @tparam SCALARTYPE The Scalartype of the matrix in the generated code
-        * @tparam F The Layout of the matrix in the generated code
-        * @tparam ALIGNMENT The Alignment of the matrix in the generated code
+        * @tparam VCL_MATRIX underlying wished viennacl matrix type
+        * @tparam ELEMENTS_ACCESSOR policy to access the elements (they do not necessarily come from memory, but can also be constant for example!)
+        * @tparem ROW_INDEX policy to access a rows (using operations on index_set())
+        * @tparam COL_INDEX policy to access a column (using operations on index_set())
         */
-    template<class VCL_MATRIX, class ROW_ACCESSOR, class COL_ACCESSOR>
+    template<class VCL_MATRIX, class ELEMENT_ACCESSOR, class ROW_INDEX, class COL_INDEX>
     class symbolic_matrix : public symbolic_matrix_base
     {
-        typedef symbolic_matrix<VCL_MATRIX, ROW_ACCESSOR, COL_ACCESSOR> self_type;
+        typedef symbolic_matrix<VCL_MATRIX, ELEMENT_ACCESSOR, ROW_INDEX, COL_INDEX> self_type;
         std::string access_buffer(unsigned int i) const {
-          return infos_->name + '[' +  offset(row_accessor_.generate(i), col_accessor_.generate(i)) + ']';
+          return elements_.access(row_index_.generate(i), col_index_.generate(i), is_rowmajor_);
         }
       public:
         typedef VCL_MATRIX vcl_t;
         typedef typename vcl_t::value_type::value_type ScalarType;
-        symbolic_matrix(VCL_MATRIX const & vcl_mat, ROW_ACCESSOR const & row_accessor, COL_ACCESSOR const & col_accessor) : symbolic_matrix_base(utils::are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value), vcl_mat_(vcl_mat)
-        , row_accessor_(row_accessor), col_accessor_(col_accessor){ }
+        symbolic_matrix(size_t size1, size_t size2, ELEMENT_ACCESSOR const & elements, ROW_INDEX const & row_accessor, COL_INDEX const & col_index) : symbolic_matrix_base(utils::are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value)
+        , size1_(size1), size2_(size2), elements_(elements), row_index_(row_accessor), col_index_(col_index){ }
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
           infos_= utils::unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
                                                                     tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
 
+          elements_.bind(infos_);
         }
         void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_pointer_argument<ScalarType>(name(), vcl_mat_.handle(), infos_->alignment)));
-          cl_uint size1_arg = cl_uint(vcl_mat_.internal_size1());
-          cl_uint size2_arg = cl_uint(vcl_mat_.internal_size2());
+          cl_uint size1_arg = cl_uint(size1_);
+          cl_uint size2_arg = cl_uint(size2_);
           if(is_rowmajor_) size2_arg /= infos_->alignment;
           else size1_arg /= infos_->alignment;
           utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(internal_size1(), size1_arg)));
           utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(internal_size2(), size2_arg)));
 
 
-          row_accessor_.get_kernel_arguments(args);
-          col_accessor_.get_kernel_arguments(args);
+          row_index_.get_kernel_arguments(args);
+          col_index_.get_kernel_arguments(args);
+          elements_.template get_kernel_arguments<ScalarType>(args);
         }
-        std::string repr() const{ return "mat"+first_letter_of<typename VCL_MATRIX::value_type::value_type>::value()+(is_rowmajor_?'R':'C'); }
+        std::string repr() const{ return "mat"+elements_.repr()+row_index_.repr()+col_index_.repr()+first_letter_of<typename VCL_MATRIX::value_type::value_type>::value()+(is_rowmajor_?'R':'C'); }
         bool operator==(symbolic_expression_tree_base const & other) const{
           if(symbolic_matrix const * p = dynamic_cast<symbolic_matrix const *>(&other))
-            return typeid(other)==typeid(*this) &&
-                vcl_mat_.handle().opencl_handle() == p->vcl_mat_.handle().opencl_handle()
-                &&row_accessor_==p->row_accessor_
-                &&col_accessor_==p->col_accessor_;
+            return typeid(other)==typeid(*this)
+                &&row_index_==p->row_index_
+                &&col_index_==p->col_index_
+                &&elements_==p->elements_;
           return false;
         }
-        size_t real_size1() const { return vcl_mat_.internal_size1(); }
-        size_t real_size2() const { return vcl_mat_.internal_size2(); }
+        size_t real_size1() const { return size1_; }
+        size_t real_size2() const { return size2_; }
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
-          row_accessor_.access_index(i, ind0, "0");
-          col_accessor_.access_index(i, ind1, "0");
+          row_index_.access_index(i, ind0, "0");
+          col_index_.access_index(i, ind1, "0");
         }
       protected:
-        VCL_MATRIX const & vcl_mat_;
-        ROW_ACCESSOR row_accessor_;
-        COL_ACCESSOR col_accessor_;
+        size_t size1_;
+        size_t size2_;
+        ELEMENT_ACCESSOR elements_;
+        ROW_INDEX row_index_;
+        COL_INDEX col_index_;
     };
 
+
+
+
     /**
-          * @brief Symbolic vector type
-          *
-          * @tparam SCALARTYPE The Scalartype of the vector in the generated code
-          * @tparam ALIGNMENT The Alignment of the vector in the generated code
-          */
-    template <class SCALARTYPE, class ELEMENT_ACCESSOR>
+        * @brief Symbolic matrix type
+        *
+        * @tparam SCALARTYPE scalartype of the symbolic vector
+        * @tparam ELEMENTS_ACCESSOR policy to access the elements (they do not necessarily come from memory, but can also be constant for example!)
+        * @tparem INDEX policy to access the vector (using operations on index_set())
+    */
+    template <class SCALARTYPE, class ELEMENT_ACCESSOR, class INDEX>
     class symbolic_vector : public symbolic_vector_base{
       private:
-        std::string access_buffer(unsigned int i) const { return infos_->name + '[' +  accessor_.generate(i) + ']';  }
+        std::string access_buffer(unsigned int i) const { return elements_.access(index_.generate(i)); }
       public:
         typedef SCALARTYPE ScalarType;
-        symbolic_vector(size_t size, viennacl::vector<ScalarType> const & vec, ELEMENT_ACCESSOR const & accessor) : symbolic_vector_base(size), vec_(vec), accessor_(accessor){ }
+        symbolic_vector(size_t size, ELEMENT_ACCESSOR const & elements, INDEX const & accessor) : symbolic_vector_base(size), elements_(elements), index_(accessor){ }
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
           infos_= utils::unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this, tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
-          accessor_.bind(shared_infos,prof);
+          elements_.bind(infos_);
+          index_.bind(shared_infos,prof);
         }
         void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_pointer_argument<ScalarType>(infos_->name, vec_.handle(), infos_->alignment)));
           utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(size(), size_/infos_->alignment)));
-          accessor_.get_kernel_arguments(args);
+          elements_.template get_kernel_arguments<ScalarType>(args);
+          index_.get_kernel_arguments(args);
         }
         std::string repr() const{
-          return "vec"+first_letter_of<SCALARTYPE>::value()+accessor_.repr();
+          return "vec"+first_letter_of<SCALARTYPE>::value()+elements_.repr()+index_.repr();
         }
         std::string simplified_repr() const{
-          return "vec"+first_letter_of<SCALARTYPE>::value();
+          return "vec"+first_letter_of<SCALARTYPE>::value()+elements_.repr()+index_.repr();
         }
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
           assert(ind1=="0");
-          accessor_.access_index(i, ind0, "0");
+          index_.access_index(i, ind0, "0");
         }
         bool operator==(symbolic_expression_tree_base const & other) const{
-          if(symbolic_vector const * p = dynamic_cast<symbolic_vector const *>(&other)) return vec_.handle()==p->vec_.handle() && accessor_==p->accessor_;
+          if(symbolic_vector const * p = dynamic_cast<symbolic_vector const *>(&other)) return elements_==p->elements_ && index_==p->index_;
           return false;
         }
       protected:
-        viennacl::vector<ScalarType> const & vec_;
-        ELEMENT_ACCESSOR accessor_;
+        ELEMENT_ACCESSOR elements_;
+        INDEX index_;
+    };
+
+    /**
+     * @brief The handle_element_accessor class
+     *
+     * The most common/straightforward element accessor, accesses a memory buffer at a given index.
+     */
+    class handle_element_accessor{
+      public:
+        handle_element_accessor(viennacl::backend::mem_handle const & h) : h_(h){ }
+        void bind(shared_symbolic_infos_t const * infos){
+          infos_ = infos;
+        }
+        std::string repr() const{
+          return "handle";
+        }
+        template<class ScalarType>
+        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
+          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_pointer_argument<ScalarType>(infos_->name, h_, infos_->alignment)));
+        }
+        bool operator==(handle_element_accessor const & other) const{
+          return h_ == other.h_;
+        }
+      protected:
+        shared_symbolic_infos_t const * infos_;
+        viennacl::backend::mem_handle const & h_;
+    };
+
+    class matrix_handle_accessor : public handle_element_accessor{
+      public:
+        matrix_handle_accessor(viennacl::backend::mem_handle const & h) : handle_element_accessor(h){ }
+        std::string access(std::string const & ind1, std::string const & ind2, bool is_rowmajor) const{
+          std::string ind;
+          if(is_rowmajor){
+            std::string size1 = infos_->name + "internal_size1_";
+            ind = '(' + ind1 + ')' + '*' + size1 + "+ (" + ind2 + ')';
+          }
+          else{
+            std::string size2 = infos_->name + "internal_size2_";
+            ind = '(' + ind1 + ')' + "+ (" + ind2 + ')' + '*' + size2;
+          }
+          return infos_->name + "[" + ind + "]";
+        }
+    };
+
+    /**
+     * @brief The matrix_diag_accessor class
+     *
+     * The handle should refer to a vector, element(i,j) = (i==j)?vec[i]:0;
+     */
+    class matrix_diag_accessor : public handle_element_accessor{
+      public:
+        matrix_diag_accessor(viennacl::backend::mem_handle const & h) : handle_element_accessor(h){ }
+        std::string access(std::string const & ind1, std::string const & ind2, bool is_rowmajor) const{
+          return '('+ind1+"=="+ind2+")?"+infos_->name+"["+ind1+"]:0";
+        }
+    };
+
+
+    class vector_handle_accessor : public handle_element_accessor{
+      public:
+        vector_handle_accessor(viennacl::backend::mem_handle const & h) : handle_element_accessor(h){ }
+        std::string access(std::string const & ind) const{ return infos_->name + "[" + ind + "]"; }
     };
 
     /** @brief Set of indexes for the generated kernel
-           *
-           *  For example, symbolic_vector(index_set) corresponds to regular accesses, while symbolic_vector(index_set + 1) translates all the access indexes by 1 to the right
-          */
+     *
+     *  For example, symbolic_vector(index_set) corresponds to regular accesses, while symbolic_vector(index_set + 1) translates all the access indexes by 1 to the right
+    */
     class index_set : public symbolic_expression_tree_base{
       public:
         index_set() { }
@@ -1274,6 +1352,7 @@ namespace viennacl{
       private:
         std::map<unsigned int, std::string> ind0s_;
     };
+
 
 
     //    template<class VCL_MATRIX>

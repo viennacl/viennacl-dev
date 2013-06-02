@@ -47,18 +47,6 @@ namespace viennacl{
 
   namespace generator{
 
-
-//    template<class ArgumentsT>
-//    void set_arguments(viennacl::ocl::kernel & k, ArgumentsT const & args){
-//      unsigned int counter=0;
-//      for(typename ArgumentsT::const_iterator iit = args.begin(); iit != args.end() ; ++iit){
-//        (*iit)->enqueue(counter,k);
-//      }
-//    }
-
-
-
-
     namespace code_generation{
 
 

@@ -101,8 +101,8 @@ namespace viennacl{
     /** @brief Wrap an interface vector to an internal symbolic vector */
     template<class ScalarType>
     struct to_sym<vector<ScalarType> >{
-        typedef symbolic_vector<ScalarType, index_set> type;
-        static type result(vector<ScalarType> const & t) { return type(t.get().size(),t.get(), index_set()); }
+        typedef symbolic_vector<ScalarType, vector_handle_accessor, index_set> type;
+        static type result(vector<ScalarType> const & t) { return type(t.get().size(),vector_handle_accessor(t.get().handle()), index_set()); }
     };
 
     template<unsigned int N>
@@ -230,8 +230,8 @@ namespace viennacl{
     /** @brief Wrap an interface matrix to an internal symbolic matrix */
     template<class VCL_MATRIX_T>
     struct to_sym<matrix<VCL_MATRIX_T> >{
-        typedef symbolic_matrix<VCL_MATRIX_T, index_set, index_set> type;
-        static type result(matrix<VCL_MATRIX_T> const & t) { return type(t.get(), index_set(), index_set()); }
+        typedef symbolic_matrix<VCL_MATRIX_T, matrix_handle_accessor, index_set, index_set> type;
+        static type result(matrix<VCL_MATRIX_T> const & t) { return type(t.get().internal_size1(), t.get().internal_size2(), matrix_handle_accessor(t.get().handle()), index_set(), index_set()); }
     };
 
 
@@ -240,8 +240,8 @@ namespace viennacl{
     struct is_vector_expression_t{ enum { value = 0 }; };
     template<typename ScalarType>
     struct is_vector_expression_t<vector<ScalarType> >{ enum { value = 1}; };
-    template<typename ScalarType, class Accessor>
-    struct is_vector_expression_t<symbolic_vector<ScalarType, Accessor> >{ enum { value = 1}; };
+    template<typename ScalarType, class Elements, class Index>
+    struct is_vector_expression_t<symbolic_vector<ScalarType, Elements, Index> >{ enum { value = 1}; };
     template<>
     struct is_vector_expression_t<index_set>{ enum { value = 1}; };
     template<unsigned int N>
@@ -268,8 +268,8 @@ namespace viennacl{
     struct is_matrix_expression_t{ enum { value = 0}; };
     template<class VCL_MATRIX>
     struct is_matrix_expression_t<matrix<VCL_MATRIX> >{ enum { value = 1}; };
-    template<class VCL_MATRIX, class ACCESS_ROW, class ACCESS_COL>
-    struct is_matrix_expression_t<symbolic_matrix<VCL_MATRIX, ACCESS_ROW, ACCESS_COL> >{ enum { value = 1}; };
+    template<class VCL_MATRIX, class ELEMENTS, class ACCESS_ROW, class ACCESS_COL>
+    struct is_matrix_expression_t<symbolic_matrix<VCL_MATRIX, ELEMENTS, ACCESS_ROW, ACCESS_COL> >{ enum { value = 1}; };
     //template<class Scalartype, class F>
     //struct is_matrix_expression_t<viennacl::distributed::multi_matrix<Scalartype, F> >{ enum { value = 1}; };
     template<class LHS, class OP, class RHS>
@@ -473,6 +473,22 @@ namespace viennacl{
       return unary_matrix_expression<typename to_sym<T>::type,trans_type>(make_sym(t));
     }
 
+    template<class ScalarType, class F, unsigned int A>
+    symbolic_vector<ScalarType
+                      ,vector_handle_accessor
+                    ,binary_vector_expression<cpu_symbolic_scalar<long unsigned int>,mul_type,index_set> >
+    diag(viennacl::generator::matrix<viennacl::matrix<ScalarType, F, A> > const & m){
+      return symbolic_vector<ScalarType
+          ,vector_handle_accessor
+        ,binary_vector_expression<cpu_symbolic_scalar<long unsigned int>,mul_type,index_set> >(m.get().size1(), vector_handle_accessor(m.get().handle()), (m.get().size1()+1)*index_set());
+    }
+
+
+    template<class ScalarType>
+    symbolic_matrix<viennacl::matrix<ScalarType,viennacl::row_major>, matrix_diag_accessor, index_set, index_set>
+    diag(viennacl::generator::vector<ScalarType> const & v){
+      return symbolic_matrix<viennacl::matrix<ScalarType,viennacl::row_major>, matrix_diag_accessor, index_set, index_set>(v.get().size(), v.get().size(), matrix_diag_accessor(v.get().handle()),index_set(), index_set());
+    }
 
 
     template<class T>
@@ -638,21 +654,22 @@ namespace viennacl{
     MAKE_BUILTIN_FUNCTION2(min)
 
     template<class ScalarType>
-    symbolic_vector<ScalarType,
-    binary_vector_expression<
-    binary_vector_expression<
-    unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
-    >
-    ,min_type
-    ,cpu_symbolic_scalar<int> > >
+    symbolic_vector<ScalarType, vector_handle_accessor,
+              binary_vector_expression<
+                  binary_vector_expression<
+                      unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
+                  >
+              ,min_type
+            ,cpu_symbolic_scalar<int> > >
     shift(vector<ScalarType> const & t, int k){
-      return symbolic_vector<ScalarType,
+      return symbolic_vector<ScalarType, vector_handle_accessor,
           binary_vector_expression<
-          binary_vector_expression<
-          unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
-          >
+              binary_vector_expression<
+                  unary_vector_expression<binary_vector_expression<cpu_symbolic_scalar<int>,add_type,index_set>, cast_type<int> > , max_type, symbolic_constant
+              >
           ,min_type
-          ,cpu_symbolic_scalar<int> > >(t.get().size(), t.get()
+        ,cpu_symbolic_scalar<int> > >(t.get().size(),
+                                        vector_handle_accessor(t.get().handle())
                                         ,generator::min(generator::max(cast<int>(k+index_set()),constant_vector<0>()),(int)t.get().size() - 1));
     }
 
