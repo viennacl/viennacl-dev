@@ -490,6 +490,20 @@ namespace viennacl{
       return symbolic_matrix<viennacl::matrix<ScalarType,viennacl::row_major>, matrix_diag_accessor, index_set, index_set>(v.get().size(), v.get().size(), matrix_diag_accessor(v.get().handle()),index_set(), index_set());
     }
 
+    template<class ScalarType, class F>
+    symbolic_matrix<viennacl::matrix<ScalarType,F>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,F> >, index_set, index_set>
+    repmat(viennacl::generator::matrix<viennacl::matrix<ScalarType,F> > const & m, unsigned int repsize1, unsigned int repsize2){
+      size_t size1 = m.get().internal_size1();
+      size_t size2 = m.get().internal_size2();
+      return symbolic_matrix<viennacl::matrix<ScalarType,F>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,F> >, index_set, index_set>(size1*repsize1, size2*repsize2, matrix_repmat_accessor<viennacl::matrix<ScalarType,F> >(size1,size2,m.get().handle()), index_set(), index_set());
+    }
+
+    template<class ScalarType>
+    symbolic_matrix<viennacl::matrix<ScalarType,viennacl::column_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >, index_set, index_set>
+    repmat(viennacl::generator::vector<ScalarType> const & v, unsigned int repsize1, unsigned int repsize2){
+      size_t size = v.get().size();
+      return symbolic_matrix<viennacl::matrix<ScalarType,viennacl::column_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >, index_set, index_set>(size*repsize1, repsize2, matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >(size,1,v.get().handle()), index_set(), index_set());
+    }
 
     template<class T>
     typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value
@@ -532,12 +546,6 @@ namespace viennacl{
           ,symbolic_constant >(trans(t), symbolic_constant("1"));
     }
 
-    //template<class T>
-    //typename viennacl::enable_if<is_vector_expression_t<T>::value || is_matrix_expression_t<T>::value,
-    //                             replicate_matrix<typename T::vcl_t> >::type
-    //repmat(T const & t, unsigned int m, unsigned int n){
-    //    return replicate_matrix<typename T::vcl_t>(t.get(),m,n);
-    //}
 
     template<class ScalarType, class T>\
     typename viennacl::enable_if<is_scalar_expression_t<T>::value ||is_vector_expression_t<T>::value||is_matrix_expression_t<T>::value\

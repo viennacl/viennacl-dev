@@ -246,17 +246,17 @@ template< typename NumericT, class Layout, typename Epsilon >
 int test_matrix ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-    unsigned int size1 = 128;
-    unsigned int size2 = 128;
+    unsigned int size1 = 1024;
+    unsigned int size2 = 1024;
 
     unsigned int pattern_size1 = 256;
     unsigned int pattern_size2 = 128;
 
-//    unsigned int n_rep1 = 4;
-//    unsigned int n_rep2 = 8;
+    unsigned int n_rep1 = size1/pattern_size1;
+    unsigned int n_rep2 = size2/pattern_size2;
 
     typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > mat;
-    typedef viennacl::generator::vector<NumericT> dv_t;
+    typedef viennacl::generator::vector<NumericT> vec;
 
     ublas::matrix<NumericT> cA(size1,size2);
     ublas::matrix<NumericT> cB(size1,size2);
@@ -297,30 +297,30 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cB,B);
     viennacl::copy(cC,C);
 
+    viennacl::copy(cx,x);
     viennacl::copy(cPattern,pattern);
 
-    viennacl::copy(cx,x);
 
     {
-        std::cout << "A = diag(x) ..." << std::endl;
+        std::cout << "C = diag(x) ..." << std::endl;
         for(unsigned int i = 0 ; i < size1 ; ++i){
           for(unsigned int j = 0 ; j < size2 ; ++j){
             cC(i,j) = (i==j)?cx[i]:0;
           }
         }
         generator::custom_operation op;
-        op.add(mat(C) = generator::diag(dv_t(x)));
+        op.add(mat(C) = generator::diag(vec(x)));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cC, C, C = diag(x))
     }
 
     {
-        std::cout << "x = diag(A) ..." << std::endl;
+        std::cout << "x = diag(C) ..." << std::endl;
         for(unsigned int i = 0; i < size1 ; ++i){
             cx(i) = cA(i,i);
         }
-        generator::custom_operation op((dv_t(x) = generator::diag(mat(A))));
+        generator::custom_operation op((vec(x) = generator::diag(mat(A))));
         op.execute();
         viennacl::ocl::get_queue().finish();
         CHECK_RESULT(cx,x, x = diag(A));
@@ -335,38 +335,41 @@ int test_matrix ( Epsilon const& epsilon) {
         CHECK_RESULT(cC, C, C=A+B)
     }
 
-//    {
-//        std::cout << "C = repmat(P, M, N) ..." << std::endl;
-//        for(unsigned int i = 0 ; i < size1 ; ++i)
-//            for(unsigned int j = 0 ; j < size2 ; ++j)
-//                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
-//        generator::custom_operation op((dm_t(C) = generator::repmat(dm_t(pattern),n_rep1,n_rep2)));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cC, C, C = repmat(P, M, N))
-//    }
+    {
+        std::cout << "C = repmat(P, M, N) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
+        generator::custom_operation op;
+        op.add(mat(C) = generator::repmat(mat(pattern),n_rep1,n_rep2));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(P, M, N))
+    }
 
-//    {
-//        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
-//        for(unsigned int i = 0 ; i < size1 ; ++i)
-//            for(unsigned int j = 0 ; j < size2 ; ++j)
-//                cC(i,j) = cx(i);
-//        generator::custom_operation op((dm_t(C) = generator::repmat(dv_t(x),1,C.size2())));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
-//    }
+    {
+        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cx(i);
+        generator::custom_operation op;
+        op.add(mat(C) = generator::repmat(vec(x),1, C.size2()));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+    }
 
-//    {
-//        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
-//        for(unsigned int i = 0 ; i < size1 ; ++i)
-//            for(unsigned int j = 0 ; j < size2 ; ++j)
-//                cC(i,j) = cx(j);
-//        generator::custom_operation op((dm_t(C) = generator::trans(generator::repmat(dv_t(x),1,C.size2()))));
-//        op.execute();
-//        viennacl::ocl::get_queue().finish();
-//        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
-//    }
+    {
+        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i)
+            for(unsigned int j = 0 ; j < size2 ; ++j)
+                cC(i,j) = cx(j);
+        generator::custom_operation op;
+        op.add(mat(C) = generator::trans(generator::repmat(vec(x),1,C.size2())));
+        op.execute();
+        viennacl::ocl::get_queue().finish();
+        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+    }
 
 
     {
@@ -374,9 +377,11 @@ int test_matrix ( Epsilon const& epsilon) {
         for(unsigned int i = 0 ; i < size1 ; ++i)
             for(unsigned int j = 0 ; j < size2 ; ++j)
                 cC(i,j) = -cA(i,j);
-        generator::custom_operation op((mat(C) = -mat(A)));
+        generator::custom_operation op;
+        op.add(mat(C) = -mat(A));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
+
         CHECK_RESULT(cC, C, C = -A)
     }
 
@@ -472,6 +477,7 @@ int main(int argc, char* argv[]){
                     std::cout << "  Row-Major"      << std::endl;
                     std::cout << "  --------------" << std::endl;
                     retval = test_matrix<float, viennacl::row_major> (epsilon);
+
                     std::cout << "  --------------" << std::endl;
                     std::cout << "  Column-Major"      << std::endl;
                     std::cout << "  --------------" << std::endl;
@@ -482,6 +488,7 @@ int main(int argc, char* argv[]){
                     std::cout << "  Row-Major"      << std::endl;
                     std::cout << "  --------------" << std::endl;
                     retval = test_matrix<double, viennacl::row_major> (epsilon);
+
                     std::cout << "  --------------" << std::endl;
                     std::cout << "  Column-Major"      << std::endl;
                     std::cout << "  --------------" << std::endl;
