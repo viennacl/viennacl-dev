@@ -189,6 +189,10 @@ namespace viennacl{
 
               kss.dec_tab();
               kss << "}" << std::endl;
+
+              for(std::list<symbolic_binary_vector_expression_base* >::iterator it = expressions_.begin() ; it != expressions_.end() ; ++it){
+                (*it)->clear_private_value(0);
+              }
             }
 
 
