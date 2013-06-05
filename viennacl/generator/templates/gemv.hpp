@@ -44,9 +44,9 @@ namespace viennacl{
         class profile : public optimization_profile{
           public:
 
-            /** @brief The default constructor. M = 64, K = 16, NUM_GROUPS_0 = 64 */
+            /** @brief The default constructor. M = 1, K = 16, NUM_GROUPS_0 = 64 */
             profile(){
-              m_ = 64;
+              m_ = 1;
               k_ = 16;
               num_groups_0_ = 64;
             }

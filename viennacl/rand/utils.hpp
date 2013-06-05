@@ -3,7 +3,6 @@
 
 #ifdef VIENNACL_WITH_OPENCL
 #include "viennacl/linalg/kernels/rand_kernels.h"
-#endif
 
 namespace viennacl{
 
@@ -39,8 +38,12 @@ struct random_vector_t{
 template<class ScalarType, class Distribution>
 struct buffer_dumper;
 
+
 }
 
 }
+
+#endif
+
 
 #endif

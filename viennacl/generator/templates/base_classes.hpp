@@ -27,7 +27,8 @@
 #include <list>
 #include <set>
 
-#include "viennacl/generator/forwards.h"
+#include "viennacl/ocl/device.hpp"
+#include "viennacl/ocl/infos.hpp"
 #include "viennacl/generator/utils.hpp"
 
 namespace viennacl{

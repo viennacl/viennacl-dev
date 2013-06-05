@@ -36,7 +36,8 @@
 #include "viennacl/generator/templates/gemm.hpp"
 #include "viennacl/generator/templates/gemv.hpp"
 #include "viennacl/generator/templates/inner_product.hpp"
-#include "viennacl/generator/templates/saxpy.hpp"
+#include "viennacl/generator/templates/saxpy_vector.hpp"
+#include "viennacl/generator/templates/saxpy_matrix.hpp"
 
 #include "viennacl/generator/symbolic_types.hpp"
 #include "viennacl/generator/utils.hpp"
@@ -104,7 +105,6 @@ namespace viennacl{
           /** @brief Fills the generation stream with the header code */
           void generate_headers(){
             kss_ << "__kernel void " + kernel_name_ + "(";
-            kernel_infos_.init_arguments();
             kernel_infos_.fill_arguments(kss_);
             kss_ << ")" << std::endl;
           }
@@ -117,8 +117,11 @@ namespace viennacl{
             std::list<symbolic_binary_matrix_expression_base *> mat_exprs = utils::cast<symbolic_binary_matrix_expression_base>(kernel_infos_.trees());
             std::list<symbolic_binary_scalar_expression_base *> scal_exprs = utils::cast<symbolic_binary_scalar_expression_base>(kernel_infos_.trees());
             code_generation::generator * gen = NULL;
-            if(saxpy::profile* p = dynamic_cast<saxpy::profile*>(kernel_infos_.profile())){
-              gen = new saxpy::generator(vec_exprs,scal_exprs,mat_exprs,p);
+            if(saxpy_vector::profile* p = dynamic_cast<saxpy_vector::profile*>(kernel_infos_.profile())){
+              gen = new saxpy_vector::generator(vec_exprs,scal_exprs,p);
+            }
+            else if(saxpy_matrix::profile* p = dynamic_cast<saxpy_matrix::profile*>(kernel_infos_.profile())){
+              gen = new saxpy_matrix::generator(mat_exprs,p);
             }
             else if(gemm::profile* p = dynamic_cast<gemm::profile*>(kernel_infos_.profile())){
               gen = new gemm::generator(mat_exprs,p);
@@ -199,16 +202,17 @@ namespace viennacl{
           }
 
           void init(){
-            if(!kernels_list_.empty()) return;
+            if(!kernels_list_.empty())
+              return;
             for(operations_t::const_iterator it = operations_.begin() ; it!=operations_.end() ; ++it){
               symbolic_expression_tree_base* ptr = it->get();
               if(symbolic_binary_matrix_expression_base* p = dynamic_cast<symbolic_binary_matrix_expression_base*>(ptr)){
                 if(count_type<symbolic_matrix_matrix_product_base>(p)) add_operation<gemm::profile>(p);
-                else add_operation<saxpy::profile>(p);
+                else add_operation<saxpy_matrix::profile>(p);
               }
               else if(symbolic_binary_vector_expression_base* p = dynamic_cast<symbolic_binary_vector_expression_base*>(ptr)){
                 if(count_type<symbolic_matrix_vector_product_base>(p)) add_operation<gemv::profile>(p);
-                else add_operation<saxpy::profile>(p);
+                else add_operation<saxpy_vector::profile>(p);
               }
               else if(symbolic_binary_scalar_expression_base* p = dynamic_cast<symbolic_binary_scalar_expression_base*>(ptr)){
                 if(count_type<symbolic_inner_product_base>(p)){
@@ -216,7 +220,7 @@ namespace viennacl{
                   kernels_list_.push_back(kernel_wrapper(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
                 }
                 else{
-                  add_operation<saxpy::profile>(p);
+                  add_operation<saxpy_vector::profile>(p);
                 }
               }
               else{
@@ -246,12 +250,7 @@ namespace viennacl{
             operations_.clear();
           }
 
-          std::list<kernel_wrapper> get_kernels_list(){
-            init();
-            return kernels_list_;
-          }
-
-          std::string repr(){
+          std::string repr(unsigned int * nkernels = NULL){
             init();
             std::string res;
             for(std::list<kernel_wrapper>::iterator it = kernels_list_.begin() ; it !=kernels_list_.end() ; ++it){
@@ -260,12 +259,20 @@ namespace viennacl{
               }
               res+=' ' + it->profile()->repr();
             }
+            if(nkernels) *nkernels = kernels_list_.size();
             return res;
           }
 
-          std::string get_source_code( std::map<std::string, kernel_wrapper> & kernels_infos){
+          void bind_arguments(std::map<std::string, kernel_wrapper> & kernels_infos){
             init();
+            for(std::list<kernel_wrapper>::iterator it = kernels_list_.begin() ; it !=kernels_list_.end() ; ++it){
+              std::string name("_k"+utils::to_string(std::distance(kernels_list_.begin(),it)));
+              kernel_wrapper & infos = kernels_infos.insert(std::make_pair(name,*it)).first->second;
+              infos.init_arguments();
+            }
+          }
 
+          std::string get_source_code(){
             std::ostringstream oss;
             utils::kernel_generation_stream kss(oss);
             kss << "#if defined(cl_khr_fp64)\n";
@@ -273,14 +280,13 @@ namespace viennacl{
             kss <<  "#elif defined(cl_amd_fp64)\n";
             kss <<  "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
             kss <<  "#endif\n";
-
             for(std::list<kernel_wrapper>::iterator it = kernels_list_.begin() ; it !=kernels_list_.end() ; ++it){
               std::string name("_k"+utils::to_string(std::distance(kernels_list_.begin(),it)));
-              kernel_wrapper & infos = kernels_infos.insert(std::make_pair(name,*it)).first->second;
-              kss <<  "__attribute__((reqd_work_group_size(" << infos.profile()->local_work_size().first
-                   << "," << infos.profile()->local_work_size().second
+              it->init_arguments();
+              kss <<  "__attribute__((reqd_work_group_size(" << it->profile()->local_work_size().first
+                   << "," << it->profile()->local_work_size().second
                    << ",1)))" << std::endl;
-              code_generation::kernel_generator kg(infos,name,kss);
+              code_generation::kernel_generator kg(*it,name,kss);
               kg.generate() ;
             }
             return oss.str();

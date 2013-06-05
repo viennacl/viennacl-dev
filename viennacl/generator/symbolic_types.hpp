@@ -309,6 +309,7 @@ namespace viennacl{
     MAKE_UNARY_FUN_OP(round)
     MAKE_UNARY_FUN_OP(rsqrt)
     MAKE_UNARY_FUN_OP(sin)
+    MAKE_UNARY_FUN_OP(sign)
     //    MAKE_UNARY_FUN_OP(sincos)
     MAKE_UNARY_FUN_OP(sinh)
     MAKE_UNARY_FUN_OP(sinpi)
@@ -634,7 +635,7 @@ namespace viennacl{
     /** @brief Base class for symbolic_vector, symbolic_matrix, ... */
     class symbolic_datastructure : public symbolic_expression_tree_base{
       public:
-        void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
+        void private_value(unsigned int i, std::string const & new_name) { std::cout << name() << " " << i << std::endl; infos_->private_values[i] = new_name; }
         void clear_private_value(unsigned int i) { infos_->private_values[i] = ""; }
         std::string name() const { return infos_->name; }
         std::string const & scalartype() const { return infos_->scalartype; }

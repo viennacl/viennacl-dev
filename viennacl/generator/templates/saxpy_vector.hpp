@@ -1,0 +1,142 @@
+#ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_SAXPY_VECTOR_HPP
+#define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_SAXPY_VECTOR_HPP
+
+/* =========================================================================
+   Copyright (c) 2010-2013, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
+
+/** @file viennacl/generator/templates/saxpy.hpp
+ *
+ * Kernel template for the SAXPY operation
+*/
+
+#include "viennacl/tools/tools.hpp"
+
+#include "viennacl/generator/templates/base_classes.hpp"
+#include "viennacl/generator/symbolic_types.hpp"
+
+namespace viennacl{
+
+  namespace generator{
+
+    namespace code_generation{
+
+      namespace saxpy_vector{
+
+        /** @brief profile template for the SAXPY kernel
+        *
+        *   Possibility of loop unrolling.
+        *   No persistent threads (yet ?).
+        */
+        class profile : public optimization_profile{
+          public:
+
+            /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
+            profile(){
+              loop_unroll_ = 1;
+              group_size_ = 128;
+            }
+
+            /** @brief The user constructor */
+            profile(unsigned int vectorization, unsigned int loop_unroll, size_t group_size0) : optimization_profile(vectorization){
+              loop_unroll_ = loop_unroll;
+              group_size_ = group_size0;
+            }
+
+            /** @brief Returns the unrolling factor */
+            unsigned int loop_unroll() const{
+              return loop_unroll_;
+            }
+
+            /** @brief Return the group sizes used by this kernel */
+            std::pair<size_t,size_t> local_work_size() const{
+              return std::make_pair(group_size_,1);
+            }
+
+            /** @brief Configure the NDRange of a given kernel for this profile */
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+              symbolic_vector_base * vec = dynamic_cast<symbolic_vector_base*>(p);
+              k.local_work_size(0,group_size_);
+              k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(vec->real_size()/(vectorization_*loop_unroll_),group_size_)); //Note: now using for-loop for good performance on CPU
+            }
+
+            /** @brief Returns the representation string of this profile */
+            std::string repr() const{
+              std::ostringstream oss;
+              oss << "V" << vectorization_
+                  <<  "U" << loop_unroll_
+                   << "GROUP" << group_size_;
+              return oss.str();
+            }
+
+            /** @brief returns whether or not the profile leads to undefined behavior on particular device
+             *  @param dev the given device*/
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+              return optimization_profile::is_invalid(dev,0);
+            }
+
+          private:
+            unsigned int loop_unroll_;
+            unsigned int group_size_;
+        };
+
+        class generator : public code_generation::generator{
+          public:
+            generator(std::list<symbolic_binary_vector_expression_base* > const & vector_expressions
+                      ,std::list<symbolic_binary_scalar_expression_base *> const & scalar_expressions
+                      ,profile * kernel_config): vector_expressions_(vector_expressions), scalar_expressions_(scalar_expressions), profile_(kernel_config) { }
+
+
+            void operator()(utils::kernel_generation_stream& kss){
+              unsigned int n_unroll = profile_->loop_unroll();
+              kss << "int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
+              //Set access indices
+              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+                for(unsigned int j=0 ; j < n_unroll ; ++j){
+                  if(j==0) (*it)->access_index(j,"i","0");
+                  else (*it)->access_index(j,"i + " + utils::to_string(j),"0");
+                  (*it)->fetch(j,kss);
+                }
+              //Compute expressions
+              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+                for(unsigned int j=0 ; j < n_unroll ; ++j)
+                  kss << (*it)->generate(j) << ";" << std::endl;
+              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+                for(unsigned int j=0 ; j < n_unroll ; ++j)
+                  (*it)->write_back(j,kss);
+              for(unsigned int i=0 ; i < n_unroll ; ++i)
+                for(std::list<symbolic_binary_vector_expression_base*>::iterator it = vector_expressions_.begin(); it != vector_expressions_.end() ; ++it)
+                  (*it)->clear_private_value(i);
+              for(std::list<symbolic_binary_scalar_expression_base*>::iterator it = scalar_expressions_.begin() ; it != scalar_expressions_.end(); ++it)
+                  (*it)->clear_private_value(0);
+            }
+
+          private:
+            std::list<symbolic_binary_vector_expression_base* >  vector_expressions_;
+            std::list<symbolic_binary_scalar_expression_base* >  scalar_expressions_;
+            profile * profile_;
+        };
+
+      }
+
+    }
+
+  }
+
+}
+
+#endif

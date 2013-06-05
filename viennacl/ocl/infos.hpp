@@ -26,6 +26,9 @@
 #else
 #include <CL/cl.h>
 #endif
+#include <vector>
+#include "viennacl/ocl/forwards.h"
+#include "viennacl/ocl/error.hpp"
 
 namespace viennacl{
 

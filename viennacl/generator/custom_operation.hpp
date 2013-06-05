@@ -39,25 +39,6 @@ namespace viennacl
     /** @brief Interface class for using the kernel generator */
     class custom_operation
     {
-
-      private:
-        void compile_program(std::string const & pgm_name) const{
-#ifdef VIENNACL_DEBUG_BUILD
-          std::cout << "Building " << pgm_name << "..." << std::endl;
-          std::cout << source_code_ << std::endl;
-#endif
-          assert(!source_code_.empty() && " Custom Operation not initialized ");
-          viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code_, pgm_name);
-          for(std::map<std::string, generator::code_generation::kernel_wrapper>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){
-            program.add_kernel(it->first);
-          }
-        }
-
-        void init() {
-          if(source_code_.empty()) source_code_ = operations_manager_.get_source_code(kernels_infos_);
-        }
-
-
       public :
 
         /** @brief Default Constructor */
@@ -84,27 +65,29 @@ namespace viennacl
           operations_manager_.override_model(o);
         }
 
-
-        /** @brief Returns the list of the operations handled at the time */
-        std::list<code_generation::kernel_wrapper> kernels_list(){
-          return operations_manager_.get_kernels_list();
-        }
-
         /** @brief Returns the corresponding program. Compiles the operation if not previously done */
-        viennacl::ocl::program & program(){
-          init();
-          std::string program_name_ = operations_manager_.repr();
-          if(!viennacl::ocl::current_context().has_program(program_name_)){
-            compile_program(program_name_);
+        viennacl::ocl::program & program(unsigned int * nkernel = NULL){
+          std::string program_name = operations_manager_.repr(nkernel);
+          if(!viennacl::ocl::current_context().has_program(program_name)){
+            std::string source_code = operations_manager_.get_source_code();
+  #ifdef VIENNACL_DEBUG_BUILD
+            std::cout << "Building " << program_name << "..." << std::endl;
+            std::cout << source_code << std::endl;
+  #endif
+            viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code, program_name);
+            for(std::map<std::string, generator::code_generation::kernel_wrapper>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){
+              program.add_kernel(it->first);
+            }
           }
-          return viennacl::ocl::current_context().get_program(program_name_);
+          return viennacl::ocl::current_context().get_program(program_name);
         }
+
 
         /** @brief Executes the given operation
          *  Compiles the program if not previously done
          */
         void execute(){
-          init();
+          operations_manager_.bind_arguments(kernels_infos_);
           viennacl::ocl::program & pgm = program();
           for(std::map<std::string, generator::code_generation::kernel_wrapper>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
             viennacl::ocl::kernel& k = pgm.get_kernel(it->first);
@@ -114,19 +97,9 @@ namespace viennacl
           }
         }
 
-
-        /** @brief Returns the source code of the given operation
-         *  Empty if not compiled yet
-         */
-        std::string source_code() const{
-          return source_code_;
-        }
-
       private:
         code_generation::operations_handler operations_manager_;
         std::map<std::string, generator::code_generation::kernel_wrapper> kernels_infos_;
-        std::string source_code_;
-        std::string program_name_;
 
     };
   }
