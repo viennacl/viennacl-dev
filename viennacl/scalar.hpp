@@ -223,8 +223,8 @@ namespace viennacl
       /** @brief Returns the underlying host scalar type. */
       typedef typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType   value_type;
       
-      /** @brief Allocates the memory for the scalar, but does not set it to zero. */
-      scalar() {}  //No initialization yet in order to allow for global variables
+      /** @brief Creates the scalar object, but does not yet allocate memory. Thus, scalar<> can also be a global variable (if really necessary). */
+      scalar() {}
       
       /** @brief Allocates the memory for the scalar and sets it to the supplied value. */
       scalar(SCALARTYPE val)
