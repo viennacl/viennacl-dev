@@ -97,11 +97,12 @@ namespace viennacl
       SCALARTYPE value_;
   };
 
-
+#ifdef VIENNACL_WITH_OPENCL
   template<class SCALARTYPE, class DISTRIBUTION>
   rand::random_vector_t<SCALARTYPE, DISTRIBUTION> random_vector(unsigned int size, DISTRIBUTION const & distribution){
       return rand::random_vector_t<SCALARTYPE,DISTRIBUTION>(size,distribution);
   }
+#endif
 
   
   //

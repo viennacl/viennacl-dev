@@ -109,9 +109,7 @@ namespace viennacl{
                       , profile * prof): expressions_(expressions), profile_(prof)
             {
               for(std::list<symbolic_binary_vector_expression_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
-                extract_as(*it, gpu_scalars_,  utils::is_type<symbolic_pointer_scalar_base>());
                 extract_as(*it, matrices_, utils::is_type<symbolic_matrix_base>());
-                extract_as(*it, vectors_, utils::is_type<symbolic_vector_base>());
                 extract_as(*it, prods_, utils::is_type<symbolic_matrix_vector_product_base>());
               }
             }
@@ -161,26 +159,17 @@ namespace viennacl{
                 else
                   kss << "for(unsigned int c = get_local_id(1) ; c < " << internal_size2 << " ; c += get_local_size(1)){" << std::endl;
                 kss.inc_tab();
-
                 prod->lhs().access_index(0,"r","c");
                 prod->rhs().access_index(0,"c","0");
                 prod->fetch(0,kss);
-
-
-                //                for(unsigned int a=0; a<alignment;++a){
                 kss << sum_name << " = " << op_reduce.generate(sum_name,prod->symbolic_binary_vector_expression_base::generate(0)) << ";" << std::endl;
-                //                }
-
                 kss.dec_tab();
                 kss << "}" << std::endl;
-
                 kss << lmem.access("lid0", "lid1")<< " = " << sum_name << ";" << std::endl;
-
                 for(unsigned int stride = k/2 ; stride>0 ; stride /=2){
                   kss << "barrier(CLK_LOCAL_MEM_FENCE); ";
                   kss <<  "if(lid1 < " << utils::to_string(stride) << ")" << lmem.access("lid0", "lid1") <<  " = " <<   op_reduce.generate(lmem.access("lid0", "lid1"),lmem.access("lid0", "lid1+" + utils::to_string(stride))) << ";" << std::endl;
                 }
-
                 it->first->access_name(lmem.access("lid0","0"));
                 assigned->access_index(0,"r","0");
                 kss << "if(lid1==0)" << expressions_.front()->generate(0) << ";" << std::endl;
@@ -199,10 +188,8 @@ namespace viennacl{
 
           private:
             std::list<symbolic_binary_vector_expression_base* >  expressions_;
-            std::list<symbolic_matrix_vector_product_base *>  prods_;
-            std::list<symbolic_vector_base *>  vectors_;
             std::list<symbolic_matrix_base *>  matrices_;
-            std::list<symbolic_pointer_scalar_base *> gpu_scalars_;
+            std::list<symbolic_matrix_vector_product_base *>  prods_;
             profile * profile_;
         };
 

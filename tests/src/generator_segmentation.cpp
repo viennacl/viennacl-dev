@@ -60,7 +60,7 @@ int test () {
 
 
     unsigned int size = 512;
-
+    viennacl::vector<NumericT> w (size);
     viennacl::vector<NumericT> x (size);
     viennacl::vector<NumericT> y (size);
     viennacl::vector<NumericT> z (size);
@@ -110,6 +110,17 @@ int test () {
       op.add(vec(y) = vec(z) + vec(x));
       op.add(mat(C) = mat(A) + mat(B));
       op.add(mat(A) = mat(C) + mat(B));
+      op.program(&nkernels);
+      CHECK_RESULT(nkernels,2,name)
+    }
+
+    {
+      std::string name = "Double GEMV...";
+      std::cout << name << std::endl;
+      unsigned int nkernels;
+      viennacl::generator::custom_operation op;
+      op.add(vec(x) = viennacl::generator::prod(mat(A),vec(z)));
+      op.add(vec(w) = viennacl::generator::prod(mat(B),vec(y)));
       op.program(&nkernels);
       CHECK_RESULT(nkernels,2,name)
     }

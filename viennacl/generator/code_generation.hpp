@@ -56,12 +56,25 @@ namespace viennacl{
        */
       class kernel_wrapper{
         public:
-          kernel_wrapper(symbolic_expression_tree_base *op, optimization_profile* prof) : optimization_profile_(prof){ trees_.push_back(op); }
-          kernel_wrapper(symbolic_expression_tree_base *op, viennacl::tools::shared_ptr<optimization_profile> prof) : optimization_profile_(prof){ trees_.push_back(op); }
+          kernel_wrapper(symbolic_expression_tree_base *op, optimization_profile* prof) : optimization_profile_(prof){
+            trees_.push_back(op);
+          }
 
-          std::list<symbolic_expression_tree_base*> & trees(){ return trees_; }
+          kernel_wrapper(symbolic_expression_tree_base *op, viennacl::tools::shared_ptr<optimization_profile> prof) : optimization_profile_(prof){
+            trees_.push_back(op);
+          }
 
-          code_generation::optimization_profile* profile() { return optimization_profile_.get(); }
+          kernel_wrapper(std::list<symbolic_expression_tree_base*> trees, optimization_profile *prof) : trees_(trees), optimization_profile_(prof){
+
+          }
+
+          std::list<symbolic_expression_tree_base*> & trees(){
+            return trees_;
+          }
+
+          code_generation::optimization_profile* profile() {
+            return optimization_profile_.get();
+          }
 
           void config_nd_range(viennacl::ocl::kernel & k) const{
             symbolic_binary_expression_tree_infos_base * t = dynamic_cast<symbolic_binary_expression_tree_infos_base *>(trees_.front());
@@ -188,17 +201,24 @@ namespace viennacl{
               if(it2!=it->second.end())  return kernel_wrapper(op,it2->second);
             }
             return kernel_wrapper(op, new T());
-
           }
 
           template<class T>
-          T const & add_operation(symbolic_expression_tree_base* p){
-            if(kernels_list_.empty()) kernels_list_.push_back(create_infos<T>(p));
-            else{
-              if(dynamic_cast<T*>(kernels_list_.back().profile())) kernels_list_.back().trees().push_back(p);
-              else kernels_list_.push_back(create_infos<T>(p));
+          void add_operation(symbolic_expression_tree_base* p){
+            if(kernels_list_.size()){
+              bool merge_operation =  dynamic_cast<T*>(kernels_list_.back().profile()) && (typeid(T)==typeid(saxpy_vector::profile) || typeid(T)==typeid(saxpy_matrix::profile));
+              if(merge_operation)
+                kernels_list_.back().trees().push_back(p);
+              else{
+                if(inner_product::profile* ip = dynamic_cast<inner_product::profile*>(kernels_list_.back().profile())){
+                  kernels_list_.push_back(kernel_wrapper(kernels_list_.back().trees(), new inner_product::profile(ip->vectorization(),ip->num_groups(),1)));
+                }
+                kernels_list_.push_back(create_infos<T>(p));
+              }
             }
-            return * static_cast<T*>(kernels_list_.back().profile());
+            else{
+              kernels_list_.push_back(create_infos<T>(p));
+            }
           }
 
           void init(){
@@ -216,8 +236,7 @@ namespace viennacl{
               }
               else if(symbolic_binary_scalar_expression_base* p = dynamic_cast<symbolic_binary_scalar_expression_base*>(ptr)){
                 if(count_type<symbolic_inner_product_base>(p)){
-                  inner_product::profile const & prof =add_operation<inner_product::profile>(p);
-                  kernels_list_.push_back(kernel_wrapper(p, new inner_product::profile(prof.vectorization(),prof.num_groups(),1)));
+                  add_operation<inner_product::profile>(p);
                 }
                 else{
                   add_operation<saxpy_vector::profile>(p);
@@ -225,6 +244,9 @@ namespace viennacl{
               }
               else{
                 assert(false && "UNRECOGNIZED SCALARTYPE");
+              }
+              if(inner_product::profile* ip = dynamic_cast<inner_product::profile*>(kernels_list_.back().profile())){
+                kernels_list_.push_back(kernel_wrapper(kernels_list_.back().trees(), new inner_product::profile(ip->vectorization(),ip->num_groups(),1)));
               }
               ptr->bind(shared_infos_, kernels_list_.back().profile());
             }
