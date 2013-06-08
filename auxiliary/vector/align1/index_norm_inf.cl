@@ -51,6 +51,8 @@ __kernel void index_norm_inf(
           __local unsigned int * index_buffer,
           __global unsigned int * result) 
 { 
+  float_buffer[get_global_id(0)] = 0;
+  index_buffer[get_global_id(0)] = 0;
   unsigned int tmp = float_vector1_index_norm_inf_impl(vec, start1, inc1, size1, float_buffer, index_buffer);
   if (get_global_id(0) == 0) *result = tmp;
 }

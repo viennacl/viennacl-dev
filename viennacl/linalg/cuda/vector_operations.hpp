@@ -1189,6 +1189,8 @@ namespace viennacl
         __shared__ T float_buffer[128];
         __shared__ unsigned int index_buffer[128];
         
+        float_buffer[threadIdx.x] = 0;
+        index_buffer[threadIdx.x] = 0;
         unsigned int tmp = index_norm_inf_impl_kernel(vec, start1, inc1, size1, float_buffer, index_buffer);
         
         if (threadIdx.x == 0) 
