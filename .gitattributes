@@ -1,0 +1,16 @@
+
+# For users who don't have core.autocrlf set:
+* text=auto
+
+# File extensions for normalization: 
+*.c   text
+*.cpp text
+*.h   text
+*.hpp text
+
+
+# Truly binary:
+*.png binary
+*.jpg binary
+*.pdf binary
+
