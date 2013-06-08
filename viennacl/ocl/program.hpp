@@ -84,8 +84,9 @@ namespace viennacl
         //return kernels_[0];  //return a defined object
       }
 
-    private:
       const viennacl::ocl::handle<cl_program> & handle() const { return handle_; }
+      
+    private:
       
       viennacl::ocl::handle<cl_program> handle_;
       std::string name_;

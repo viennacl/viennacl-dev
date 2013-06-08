@@ -49,7 +49,6 @@ namespace viennacl
           class block_matrix
           {
             public:
-              block_matrix() : elements_(NULL), matrix_dimensions_(NULL), start_block_inds_(NULL) {}
               
               /**
               * @brief Returns a handle to the elements

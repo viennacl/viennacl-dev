@@ -64,7 +64,7 @@ namespace viennacl
     public:
       typedef std::size_t            size_type;
       
-      kernel() : handle_(0)
+      kernel()
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Creating kernel object (default CTOR)" << std::endl;
@@ -73,7 +73,7 @@ namespace viennacl
       }
       
       kernel(viennacl::ocl::handle<cl_program> const & prog, std::string const & name) 
-       : handle_(0), program_(prog), name_(name), init_done_(false)
+        : handle_(), program_(prog), name_(name), init_done_(false)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Creating kernel object (full CTOR)" << std::endl;
@@ -739,10 +739,7 @@ namespace viennacl
 
       std::string const & name() const { return name_; }
 
-	  
-      
       viennacl::ocl::handle<cl_kernel> const & handle() const { return handle_; }
-
 
     private:
       void create_kernel()
@@ -752,6 +749,7 @@ namespace viennacl
         std::cout << "ViennaCL: Building kernel " << name_ << std::endl;
         #endif
         handle_ = clCreateKernel(program_.get(), name_.c_str(), &err);
+        handle_.context(program_.context());
         
         if (err != CL_SUCCESS)
         {

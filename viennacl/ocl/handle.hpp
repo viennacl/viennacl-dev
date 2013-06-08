@@ -148,9 +148,9 @@ namespace viennacl
     class handle
     {
       public:
-        handle() : h_(0) {}
-        handle(const OCL_TYPE & something) : h_(something) {}
-        handle(const handle & other) : h_(other.h_) { if (h_ != 0) inc(); }
+        handle() : h_(0), context_(0) {}
+        handle(const OCL_TYPE & something, cl_context c) : h_(something), context_(c) {}
+        handle(const handle & other) : h_(other.h_), context_(other.context_) { if (h_ != 0) inc(); }
         ~handle() { if (h_ != 0) dec(); }
         
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
@@ -158,12 +158,13 @@ namespace viennacl
         {
           if (h_ != 0) 
             dec();
-          h_ = other.h_;
+          h_       = other.h_;
+          context_ = other.context_;
           inc();
           return *this;
         }
         
-        /** @brief Wraps an OpenCL handle. Decreases the reference count if the handle object is destroyed or another OpenCL handle is assigned. */
+        /** @brief Wraps an OpenCL handle. Does not change the context of this handle object! Decreases the reference count if the handle object is destroyed or another OpenCL handle is assigned. */
         handle & operator=(const OCL_TYPE & something)
         {
           if (h_ != 0) dec();
@@ -171,11 +172,23 @@ namespace viennacl
           return *this;
         }
         
+        /** @brief Wraps an OpenCL handle including its associated context. Decreases the reference count if the handle object is destroyed or another OpenCL handle is assigned. */
+        handle & operator=(std::pair<OCL_TYPE, cl_context> p)
+        {
+          if (h_ != 0) dec();
+          h_       = p.first;
+          context_ = p.second;
+          return *this;
+        }
+
+        
         /** @brief Implicit conversion to the plain OpenCL handle. DEPRECATED and will be removed some time in the future. */
         operator OCL_TYPE() const { return h_; }
         
         const OCL_TYPE & get() const { return h_; }
         
+        cl_context context() const { return context_; }
+        void context(cl_context c) { context_ = c; }
         
         
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -184,6 +197,11 @@ namespace viennacl
           OCL_TYPE tmp = other.h_;
           other.h_ = this->h_;
           this->h_ = tmp;
+          
+          cl_context tmp2 = other.context_;
+          other.context_ = this->context_;
+          this->context_ = tmp2;
+          
           return *this;
         }
         
@@ -193,6 +211,7 @@ namespace viennacl
         void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); };
       private:
         OCL_TYPE h_;
+        cl_context context_;
     };
 
     

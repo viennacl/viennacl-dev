@@ -49,7 +49,6 @@ namespace viennacl
           class block_vector
           {
             public:
-              block_vector() : elements_(NULL), start_block_inds_(NULL) {}
               
               /**
               * @brief Return handle to the elements

@@ -191,7 +191,7 @@ namespace viennacl
         */
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
         {
-          return create_memory_without_smart_handle(flags, size, ptr);
+          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, size, ptr), h_.get());
         }
 
         /** @brief Creates a memory buffer within the context initialized from the supplied data
@@ -202,7 +202,7 @@ namespace viennacl
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer)
         {
-          return create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]);
+          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), h_.get());
         }
         
         //////////////////// create queues ////////////////////////////////
@@ -213,7 +213,8 @@ namespace viennacl
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Adding existing queue " << q << " for device " << dev << " to context " << h_ << std::endl;
           #endif
-          queues_[dev].push_back(viennacl::ocl::command_queue(q));
+          viennacl::ocl::handle<cl_command_queue> queue_handle(q, h_.get());
+          queues_[dev].push_back(viennacl::ocl::command_queue(queue_handle));
           queues_[dev].back().handle().inc();
         }
         
@@ -224,7 +225,7 @@ namespace viennacl
           std::cout << "ViennaCL: Adding new queue for device " << dev << " to context " << h_ << std::endl;
           #endif
           cl_int err;
-          viennacl::ocl::handle<cl_command_queue> temp = clCreateCommandQueue(h_.get(), dev, 0, &err);
+          viennacl::ocl::handle<cl_command_queue> temp(clCreateCommandQueue(h_.get(), dev, 0, &err), h_.get());
           VIENNACL_ERR_CHECK(err);
           
           queues_[dev].push_back(viennacl::ocl::command_queue(temp));
@@ -264,7 +265,7 @@ namespace viennacl
         */
         viennacl::ocl::program & add_program(cl_program p, std::string const & prog_name)
         {
-          programs_.push_back(viennacl::ocl::program(p, prog_name));
+          programs_.push_back(viennacl::ocl::program(viennacl::ocl::handle<cl_program>(p, h_.get()), prog_name));
           return programs_.back();
         }
         
@@ -280,7 +281,7 @@ namespace viennacl
           std::cout << "ViennaCL: Adding program '" << prog_name << "' to context " << h_ << std::endl;
           #endif
           
-          viennacl::ocl::handle<cl_program> temp = clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err);
+          viennacl::ocl::handle<cl_program> temp(clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err), h_.get());
           VIENNACL_ERR_CHECK(err);
           
           const char * options = build_options_.c_str();
