@@ -700,7 +700,7 @@ int test(Epsilon const& epsilon,
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
     ublas_v1[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(5.0) + random<NumericT>();
   }
   
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
