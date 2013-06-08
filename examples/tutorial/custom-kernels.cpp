@@ -104,8 +104,7 @@ int main()
   // A program is one compilation unit and can hold many different compute kernels.
   //
   viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(my_compute_program, "my_compute_program");
-  my_prog.add_kernel("elementwise_prod");  //register elementwise product kernel
-  my_prog.add_kernel("elementwise_div");   //register elementwise division kernel
+  // Note: Releases older than ViennaCL 1.5.0 required calls to add_kernel(). This is no longer needed, the respective interface has been removed.
   
   //
   // Now we can get the kernels from the program 'my_program'.

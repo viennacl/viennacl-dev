@@ -34,8 +34,6 @@ namespace viennacl
   {
     class program
     {
-      friend class kernel;
-      
       typedef std::vector<viennacl::ocl::kernel>    KernelContainer;
       
     public:
@@ -60,9 +58,9 @@ namespace viennacl
       std::string const & name() const { return name_; }
       
       /** @brief Adds a kernel to the program */
-      viennacl::ocl::kernel & add_kernel(std::string const & kernel_name)
+      viennacl::ocl::kernel & add_kernel(cl_kernel kernel_handle, std::string const & kernel_name)
       {
-        viennacl::ocl::kernel temp(handle_, kernel_name);
+        viennacl::ocl::kernel temp(kernel_handle, handle_.get(), context_, kernel_name);
         kernels_.push_back(temp);
         return kernels_.back();
       }
@@ -89,6 +87,7 @@ namespace viennacl
     private:
       
       viennacl::ocl::handle<cl_program> handle_;
+      cl_context context_;
       std::string name_;
       KernelContainer kernels_;
     };

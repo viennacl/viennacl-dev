@@ -74,10 +74,7 @@ namespace viennacl
             std::cout << "Building " << program_name << "..." << std::endl;
             std::cout << source_code << std::endl;
   #endif
-            viennacl::ocl::program& program = viennacl::ocl::current_context().add_program(source_code, program_name);
-            for(std::map<std::string, generator::code_generation::kernel_wrapper>::const_iterator it = kernels_infos_.begin() ; it !=kernels_infos_.end() ; ++it){
-              program.add_kernel(it->first);
-            }
+            viennacl::ocl::current_context().add_program(source_code, program_name);
           }
           return viennacl::ocl::current_context().get_program(program_name);
         }

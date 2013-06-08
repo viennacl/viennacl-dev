@@ -222,6 +222,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
     kernel_file << "      if (!init_done[context_.handle().get()])" << std::endl;
     kernel_file << "      {" << std::endl;
     kernel_file << "        std::string source;" << std::endl;
+    kernel_file << "        source.reserve(8192);" << std::endl; //to avoid some early reallocations
     if (!is_float)
       kernel_file << "        std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();" << std::endl;
 
@@ -267,29 +268,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
     kernel_file << "        std::cout << \"Creating program \" << prog_name << std::endl;" << std::endl;
     kernel_file << "        #endif" << std::endl;
     kernel_file << "        context_.add_program(source, prog_name);" << std::endl;
-    kernel_file << "        viennacl::ocl::program & prog_ = context_.get_program(prog_name);" << std::endl;
-    
-    //write and register single precision sources:
-    for ( fs::directory_iterator cl_itr( filepath );
-          cl_itr != end_iter;
-          ++cl_itr )
-    {
-#ifdef USE_OLD_BOOST_FILESYSTEM_VERSION
-        std::string fname = cl_itr->path().filename();
-#else
-        std::string fname = cl_itr->path().filename().string();
-#endif
-        size_t pos = fname.find(".cl");
-        if ( pos == std::string::npos )
-          continue;
 
-        if (fname.substr(fname.size()-3, 3) == ".cl")
-        {
-            //initialize kernel:
-            kernel_file << "        prog_.add_kernel(\"" << fname.substr(0, fname.size()-3) << "\");" << std::endl;
-        }
-    } //for                
-    
     kernel_file << "        init_done[context_.handle().get()] = true;" << std::endl;
     kernel_file << "       } //if" << std::endl;
     kernel_file << "     } //init" << std::endl;

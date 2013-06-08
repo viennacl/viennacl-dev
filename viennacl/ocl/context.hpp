@@ -269,7 +269,7 @@ namespace viennacl
           return programs_.back();
         }
         
-        /** @brief Adds a new program with the provided source to the context
+        /** @brief Adds a new program with the provided source to the context. Compiles the program and extracts all kernels from it
         */
         viennacl::ocl::program & add_program(std::string const & source, std::string const & prog_name)
         {
@@ -281,6 +281,9 @@ namespace viennacl
           std::cout << "ViennaCL: Adding program '" << prog_name << "' to context " << h_ << std::endl;
           #endif
           
+          //
+          // Build program
+          //
           viennacl::ocl::handle<cl_program> temp(clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err), h_.get());
           VIENNACL_ERR_CHECK(err);
           
@@ -296,10 +299,27 @@ namespace viennacl
             //std::cout << "Sources: " << source << std::endl;
           #endif
           VIENNACL_ERR_CHECK(err);
-
+          
           programs_.push_back(viennacl::ocl::program(temp, prog_name));
           
-          return programs_.back();
+          viennacl::ocl::program & prog = programs_.back();
+          
+          //
+          // Extract kernels
+          //
+          cl_kernel kernels[1024];
+          cl_uint   num_kernels_in_prog;
+          err = clCreateKernelsInProgram(prog.handle().get(), 1024, kernels, &num_kernels_in_prog);
+          VIENNACL_ERR_CHECK(err);
+          
+          for (cl_uint i=0; i<num_kernels_in_prog; ++i)
+          {
+            char kernel_name[128];
+            err = clGetKernelInfo(kernels[i], CL_KERNEL_FUNCTION_NAME, 128, kernel_name, NULL);
+            prog.add_kernel(kernels[i], std::string(kernel_name));
+          }
+          
+          return prog;
         }
         
         /** @brief Returns the program with the provided name */
