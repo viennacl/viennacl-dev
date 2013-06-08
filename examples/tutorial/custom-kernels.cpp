@@ -57,61 +57,24 @@
 //            (in MATLAB notation this is something like 'result = v1 .* v2' and 'result = v1 ./ v2');
 //
 const char * my_compute_program = 
-"#if defined(cl_khr_fp64)\n"
-"#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
-"#elif defined(cl_amd_fp64)\n"
-"#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n"
-"#endif\n"
-"__attribute__((reqd_work_group_size(64,64,1)))\n"
-"__kernel void _k0(__global float* arg0\n"
-", unsigned int arg0internal_size1_\n"
-", unsigned int arg0internal_size2_\n"
-",__global float* arg1\n"
-", unsigned int arg1internal_size1_\n"
-", unsigned int arg1internal_size2_\n"
-",__global float* arg2\n"
-", unsigned int arg2internal_size1_\n"
-", unsigned int arg2internal_size2_\n"
-")\n"
-"{\n"
-"        float prod_val_0_0_0 = (float)(0) ;\n"
-"        float prod_val_0_0_1 = (float)(0) ;\n"
-"        float prod_val_0_1_0 = (float)(0) ;\n"
-"        float prod_val_0_1_1 = (float)(0) ;\n"
-"        unsigned int block_num = arg1internal_size2_/16;\n"
-"        __global float* res_ptr = arg0 + (get_global_id(0)*2)*arg0internal_size2_+ (get_global_id(1)*2);\n"
-"        __global float * arg2_ptr_0 = arg2 + (0)*arg2internal_size2_+ (get_local_id(1)*2 +  get_group_id(1)*256);\n"
-"        __global float * arg2_ptr_1 = arg2 + (1)*arg2internal_size2_+ (get_local_id(1)*2 +  get_group_id(1)*256);\n"
-"        __global float * arg1_ptr_0 = arg1 + (get_group_id(0)*256+get_local_id(0)*2+0)*arg1internal_size2_+ (0);\n"
-"        __global float * arg1_ptr_1 = arg1 + (get_group_id(0)*256+get_local_id(0)*2+1)*arg1internal_size2_+ (0);\n"
-"        for(unsigned int bl=0 ; bl<block_num ; ++bl){\n"
-"                 for(unsigned int bs=0 ; bs < 8 ; ++bs){\n"
-"                        float val_rhs_0_0 = *arg2_ptr_0;++arg2_ptr_0;\n"
-"                        float val_rhs_0_1 = *arg2_ptr_0;++arg2_ptr_0;\n"
-"                        float val_rhs_1_0 = *arg2_ptr_1;++arg2_ptr_1;\n"
-"                        float val_rhs_1_1 = *arg2_ptr_1;++arg2_ptr_1;\n"
-"                        float val_lhs_0_0 = *arg1_ptr_0;++arg1_ptr_0;\n"
-"                        float val_lhs_1_0 = *arg1_ptr_1;++arg1_ptr_1;\n"
-"                        float val_lhs_0_1 = *arg1_ptr_0;++arg1_ptr_0;\n"
-"                        float val_lhs_1_1 = *arg1_ptr_1;++arg1_ptr_1;\n"
-"                        prod_val_0_0_0 = prod_val_0_0_0+val_lhs_0_0*val_rhs_0_0;\n"
-"                        prod_val_0_1_0 = prod_val_0_1_0+val_lhs_1_0*val_rhs_0_0;\n"
-"                        prod_val_0_0_1 = prod_val_0_0_1+val_lhs_0_0*val_rhs_0_1;\n"
-"                        prod_val_0_1_1 = prod_val_0_1_1+val_lhs_1_0*val_rhs_0_1;\n"
-"                        prod_val_0_0_0 = prod_val_0_0_0+val_lhs_0_1*val_rhs_1_0;\n"
-"                        prod_val_0_1_0 = prod_val_0_1_0+val_lhs_1_1*val_rhs_1_0;\n"
-"                        prod_val_0_0_1 = prod_val_0_0_1+val_lhs_0_1*val_rhs_1_1;\n"
-"                        prod_val_0_1_1 = prod_val_0_1_1+val_lhs_1_1*val_rhs_1_1;\n"
-"                        arg2_ptr_0 += 2*arg2internal_size2_ - 2;\n"
-"                        arg2_ptr_1 += 2*arg2internal_size2_ - 2;\n"
-"                }\n"
-"        }\n"
-"        *res_ptr++=prod_val_0_0_0;\n"
-"        *res_ptr++=prod_val_0_0_1;\n"
-"        res_ptr+=arg0internal_size2_ - 2;\n"
-"        *res_ptr++=prod_val_0_1_0;\n"
-"        *res_ptr++=prod_val_0_1_1;\n"
-"}\n";
+"__kernel void elementwise_prod(\n"
+"          __global const float * vec1,\n"
+"          __global const float * vec2, \n"
+"          __global float * result,\n"
+"          unsigned int size) \n"
+"{ \n"
+"  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
+"    result[i] = vec1[i] * vec2[i];\n"
+"};\n\n"
+"__kernel void elementwise_div(\n"
+"          __global const float * vec1,\n"
+"          __global const float * vec2, \n"
+"          __global float * result,\n"
+"          unsigned int size) \n"
+"{ \n"
+"  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
+"    result[i] = vec1[i] / vec2[i];\n"
+"};\n";
 
 int main()
 {
@@ -141,33 +104,33 @@ int main()
   // A program is one compilation unit and can hold many different compute kernels.
   //
   viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(my_compute_program, "my_compute_program");
-  //my_prog.add_kernel("elementwise_prod");  //register elementwise product kernel
-  //my_prog.add_kernel("elementwise_div");   //register elementwise division kernel
+  my_prog.add_kernel("elementwise_prod");  //register elementwise product kernel
+  my_prog.add_kernel("elementwise_div");   //register elementwise division kernel
   
-  ////
-  //// Now we can get the kernels from the program 'my_program'.
-  //// (Note that first all kernels need to be registered via add_kernel() before get_kernel() can be called,
-  //// otherwise existing references might be invalidated)
-  ////
-  //viennacl::ocl::kernel & my_kernel_mul = my_prog.get_kernel("elementwise_prod");
-  //viennacl::ocl::kernel & my_kernel_div = my_prog.get_kernel("elementwise_div");
+  //
+  // Now we can get the kernels from the program 'my_program'.
+  // (Note that first all kernels need to be registered via add_kernel() before get_kernel() can be called,
+  // otherwise existing references might be invalidated)
+  //
+  viennacl::ocl::kernel & my_kernel_mul = my_prog.get_kernel("elementwise_prod");
+  viennacl::ocl::kernel & my_kernel_div = my_prog.get_kernel("elementwise_div");
   
-  ////
-  //// Launch the kernel with 'vector_size' threads in one work group
-  //// Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary for the forth argument.
-  ////
-  //viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));  
-  //viennacl::ocl::enqueue(my_kernel_div(vec1, vec2, result_div, static_cast<cl_uint>(vec1.size())));
+  //
+  // Launch the kernel with 'vector_size' threads in one work group
+  // Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary for the forth argument.
+  //
+  viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));  
+  viennacl::ocl::enqueue(my_kernel_div(vec1, vec2, result_div, static_cast<cl_uint>(vec1.size())));
   
-  ////
-  //// Print the result:
-  ////
-  //std::cout << "        vec1: " << vec1 << std::endl;
-  //std::cout << "        vec2: " << vec2 << std::endl;
-  //std::cout << "vec1 .* vec2: " << result_mul << std::endl;
-  //std::cout << "vec1 /* vec2: " << result_div << std::endl;
-  //std::cout << "norm_2(vec1 .* vec2): " << viennacl::linalg::norm_2(result_mul) << std::endl;
-  //std::cout << "norm_2(vec1 /* vec2): " << viennacl::linalg::norm_2(result_div) << std::endl;
+  //
+  // Print the result:
+  //
+  std::cout << "        vec1: " << vec1 << std::endl;
+  std::cout << "        vec2: " << vec2 << std::endl;
+  std::cout << "vec1 .* vec2: " << result_mul << std::endl;
+  std::cout << "vec1 /* vec2: " << result_div << std::endl;
+  std::cout << "norm_2(vec1 .* vec2): " << viennacl::linalg::norm_2(result_mul) << std::endl;
+  std::cout << "norm_2(vec1 /* vec2): " << viennacl::linalg::norm_2(result_div) << std::endl;
   
   //
   //  That's it.
