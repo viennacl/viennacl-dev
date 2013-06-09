@@ -155,7 +155,7 @@ int test( Epsilon const& epsilon) {
         cy     =  ublas::prod(cA,cx);
         generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cy,y,y=A*x)
     }
 
@@ -164,7 +164,7 @@ int test( Epsilon const& epsilon) {
         cx     =  ublas::prod(trans(cA),cy);
         generator::custom_operation op((dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cx,x,x=trans(A)*y)
     }
 
@@ -179,7 +179,7 @@ int test( Epsilon const& epsilon) {
         }
         generator::custom_operation op((dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
     }
 
@@ -195,7 +195,7 @@ int test( Epsilon const& epsilon) {
         }
         generator::custom_operation op((dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cx,x,x = reduce_cols<max>(A))
     }
 

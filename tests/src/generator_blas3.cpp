@@ -134,7 +134,7 @@ int test_prod(Epsilon const& epsilon,
        viennacl::generator::custom_operation op;
        op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),vcl_B));
        op.execute();
-       viennacl::ocl::get_queue().finish();
+       viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C.get()));
        if( act_diff > epsilon )
        {
@@ -151,7 +151,7 @@ int test_prod(Epsilon const& epsilon,
        viennacl::generator::custom_operation op;
        op.add(vcl_C = viennacl::generator::prod(vcl_A,trans(vcl_B_trans)));
        op.execute();
-       viennacl::ocl::get_queue().finish();
+       viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C.get()));
        if( act_diff > epsilon )
        {
@@ -168,7 +168,7 @@ int test_prod(Epsilon const& epsilon,
        viennacl::generator::custom_operation op;
        op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),trans(vcl_B_trans)));
        op.execute();
-       viennacl::ocl::get_queue().finish();
+       viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C.get()));
        if( act_diff > epsilon )
        {
@@ -188,7 +188,7 @@ int test_prod(Epsilon const& epsilon,
        viennacl::generator::custom_operation op;
        op.add(vcl_C = viennacl::generator::prod(vcl_A+vcl_A,vcl_B));
        op.execute();
-       viennacl::ocl::get_queue().finish();
+       viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C.get()));
        if( act_diff > epsilon )
        {

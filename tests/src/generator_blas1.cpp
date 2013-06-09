@@ -139,7 +139,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(w) = vec(x) + vec(y));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);
     }
 
@@ -149,7 +149,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(w) = vec(x) + vec(y));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);
     }
 
@@ -159,7 +159,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(x) = vec(w) + vec(y));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cx, x, x = w + y);
     }
 
@@ -172,7 +172,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(w) = vec(x) > (NumericT)0.42);
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x > 1)
     }
 
@@ -182,7 +182,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(w) = -vec(w));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cw,w, w=-w);
     }
 
@@ -196,7 +196,7 @@ int test_vector ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
     }
 
@@ -206,7 +206,7 @@ int test_vector ( Epsilon const& epsilon) {
         for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
         generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(s,gs, s=inner_prod(x,y));
     }
 
@@ -215,7 +215,7 @@ int test_vector ( Epsilon const& epsilon) {
         s = *std::max_element(cx.begin(),cx.end());
         generator::custom_operation op((scal(gs)= generator::reduce<generator::fmax_type>(vec(x))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(s,gs, s=max(x));
     }
 
@@ -226,7 +226,7 @@ int test_vector ( Epsilon const& epsilon) {
         op.add(vec(y) = element_prod(vec(w), vec(z)));
         op.add(vec(z) = vec(x) + vec(z));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         for(unsigned int i=0 ; i < size ; ++i){
             cw(i) = cx(i) - cy(i);
             cy(i) = cw(i)*cz(i);
@@ -311,7 +311,7 @@ int test_matrix ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(mat(C) = generator::diag(vec(x)));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = diag(x))
     }
 
@@ -322,7 +322,7 @@ int test_matrix ( Epsilon const& epsilon) {
         }
         generator::custom_operation op((vec(x) = generator::diag(mat(A))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cx,x, x = diag(A));
     }
 
@@ -331,7 +331,7 @@ int test_matrix ( Epsilon const& epsilon) {
         cC     = ( cA + cB );
         generator::custom_operation op((mat(C) = mat(A) + mat(B)));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C=A+B)
     }
 
@@ -343,7 +343,7 @@ int test_matrix ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(mat(C) = generator::repmat(mat(pattern),n_rep1,n_rep2));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = repmat(P, M, N))
     }
 
@@ -355,7 +355,7 @@ int test_matrix ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(mat(C) = generator::repmat(vec(x),1, C.size2()));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = repmat(x, 1, N))
     }
 
@@ -367,7 +367,7 @@ int test_matrix ( Epsilon const& epsilon) {
         generator::custom_operation op;
         op.add(mat(C) = generator::trans(generator::repmat(vec(x),1,C.size2())));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = repmat(x, 1, N))
     }
 
@@ -392,7 +392,7 @@ int test_matrix ( Epsilon const& epsilon) {
                 cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
         generator::custom_operation op((mat(C) = 1.0f/(1.0f+generator::exp(-mat(A)))));
         op.execute();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = 1/(1+EXP(-A)))
     }
 
