@@ -59,11 +59,11 @@ double execute(T functor, TestData & data)
 {
   Timer t;
   functor(data); //one startup calculation
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   t.start();
   for (int i=0; i<BENCHMARK_RUNS; ++i)
     functor(data);
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   return t.get();
 }
 
