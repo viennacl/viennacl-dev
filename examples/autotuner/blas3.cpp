@@ -63,7 +63,7 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
     viennacl::copy(cpu_A,A);
     viennacl::copy(cpu_B,B);
     viennacl::copy(cpu_C,C);
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
 }
 
 
@@ -86,16 +86,16 @@ void benchmark(OpT const & operation, ConfigT conf, MatTypeA & A, MatTypeB & B, 
         A.resize(size,size,false);
         B.resize(size,size,false);
         C.resize(size,size,false);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         fill_matrix<NumericT>(A,B,C);
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         if(k==0)
             viennacl::generator::autotune::benchmark(timings,operation,conf);
         else{
             viennacl::generator::autotune::benchmark(timings,operation,fastest_firsts);
         }
         fastest_firsts.clear();
-        viennacl::ocl::get_queue().finish();
+        viennacl::backend::finish();
         for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
             unsigned int n = std::distance(timings.begin(),itt);
             if(n>n_keep) break;
