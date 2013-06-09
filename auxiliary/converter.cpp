@@ -211,20 +211,19 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
     kernel_file << "_" << dirname << "_" << alignment << "\";" << std::endl;
     kernel_file << "    }" << std::endl;
     
-    kernel_file << "    static void init()" << std::endl;
+    kernel_file << "    static void init(viennacl::ocl::context & ctx)" << std::endl;
     kernel_file << "    {" << std::endl;
     if (is_float)
-      kernel_file << "      viennacl::ocl::DOUBLE_PRECISION_CHECKER<float>::apply();" << std::endl;
+      kernel_file << "      viennacl::ocl::DOUBLE_PRECISION_CHECKER<float>::apply(ctx);" << std::endl;
     else
-      kernel_file << "      viennacl::ocl::DOUBLE_PRECISION_CHECKER<double>::apply();" << std::endl;
+      kernel_file << "      viennacl::ocl::DOUBLE_PRECISION_CHECKER<double>::apply(ctx);" << std::endl;
     kernel_file << "      static std::map<cl_context, bool> init_done;" << std::endl;
-    kernel_file << "      viennacl::ocl::context & context_ = viennacl::ocl::current_context();" << std::endl;
-    kernel_file << "      if (!init_done[context_.handle().get()])" << std::endl;
+    kernel_file << "      if (!init_done[ctx.handle().get()])" << std::endl;
     kernel_file << "      {" << std::endl;
     kernel_file << "        std::string source;" << std::endl;
     kernel_file << "        source.reserve(8192);" << std::endl; //to avoid some early reallocations
     if (!is_float)
-      kernel_file << "        std::string fp64_ext = viennacl::ocl::current_device().double_support_extension();" << std::endl;
+      kernel_file << "        std::string fp64_ext = ctx.current_device().double_support_extension();" << std::endl;
 
     //iterate over all kernels in align1-folder:
     std::string current_dir(dirname);
@@ -251,7 +250,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
             //add kernel source to program string:
             std::string kernel_name_ending = fname.size() > 8 ? fname.substr(fname.size()-7, 4) : " ";
             if (kernel_name_ending == "_amd")
-              kernel_file << "        if (viennacl::ocl::current_device().local_memory() > 20000)" << std::endl << "  ";  //fast AMD kernels require more than 20 kB of local memory
+              kernel_file << "        if (ctx.current_device().local_memory() > 20000)" << std::endl << "  ";  //fast AMD kernels require more than 20 kB of local memory
             
             kernel_file << "        source.append(";
             if (!is_float)
@@ -267,9 +266,9 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
     kernel_file << "        #ifdef VIENNACL_BUILD_INFO" << std::endl;
     kernel_file << "        std::cout << \"Creating program \" << prog_name << std::endl;" << std::endl;
     kernel_file << "        #endif" << std::endl;
-    kernel_file << "        context_.add_program(source, prog_name);" << std::endl;
+    kernel_file << "        ctx.add_program(source, prog_name);" << std::endl;
 
-    kernel_file << "        init_done[context_.handle().get()] = true;" << std::endl;
+    kernel_file << "        init_done[ctx.handle().get()] = true;" << std::endl;
     kernel_file << "       } //if" << std::endl;
     kernel_file << "     } //init" << std::endl;
     kernel_file << "    }; // struct" << std::endl << std::endl;

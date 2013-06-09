@@ -64,16 +64,15 @@ namespace viennacl
     public:
       typedef std::size_t            size_type;
       
-      kernel()
+      kernel() : handle_(), p_program_(NULL), p_context_(NULL), name_()
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Creating kernel object (default CTOR)" << std::endl;
         #endif
-        set_work_size_defaults();
       }
       
-      kernel(cl_kernel kernel_handle, cl_program program_handle, cl_context context_handle, std::string const & name) 
-        : handle_(kernel_handle, context_handle), program_(program_handle), name_(name)
+      kernel(cl_kernel kernel_handle, viennacl::ocl::program const & kernel_program, viennacl::ocl::context const & kernel_context, std::string const & name)
+        : handle_(kernel_handle, kernel_context), p_program_(&kernel_program), p_context_(&kernel_context), name_(name)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Creating kernel object (full CTOR)" << std::endl;
@@ -82,7 +81,7 @@ namespace viennacl
       }
       
       kernel(kernel const & other) 
-        : handle_(other.handle_), program_(other.program_), name_(other.name_)
+        : handle_(other.handle_), p_program_(other.p_program_), p_context_(other.p_context_), name_(other.name_)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Creating kernel object (Copy CTOR)" << std::endl;
@@ -100,7 +99,8 @@ namespace viennacl
         std::cout << "ViennaCL: Assigning kernel object" << std::endl;
         #endif
         handle_ = other.handle_;
-        program_ = other.program_;
+        p_program_ = other.p_program_;
+        p_context_ = other.p_context_;
         name_ = other.name_;
         local_work_size_[0] = other.local_work_size_[0];
         local_work_size_[1] = other.local_work_size_[1];
@@ -175,6 +175,8 @@ namespace viennacl
       template<class VCL_TYPE>
       void arg(unsigned int pos, VCL_TYPE const & val)
       {
+        assert(&val.handle().opencl_handle().context() == &handle_.context() && bool("Kernel and memory object not in the same context!"));
+        
         cl_mem temp = val.handle().opencl_handle().get();
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Setting generic kernel argument " << temp << " at pos " << pos << " for kernel " << name_ << std::endl;
@@ -729,35 +731,16 @@ namespace viennacl
       std::string const & name() const { return name_; }
 
       viennacl::ocl::handle<cl_kernel> const & handle() const { return handle_; }
+      
+      viennacl::ocl::context const & context() const { return *p_context_; }
 
     private:
 
-      void set_work_size_defaults()
-      {
-        if (   (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_GPU)
-            || (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_ACCELERATOR) // Xeon Phi
-           )
-        {
-          local_work_size_[0] = 128; local_work_size_[1] = 0;
-          global_work_size_[0] = 128*128; global_work_size_[1] = 0;
-        }
-        else //assume CPU type:
-        {
-          //conservative assumption: one thread per CPU core:
-          local_work_size_[0] = 1; local_work_size_[1] = 0;
-          
-          size_type units = viennacl::ocl::current_device().max_compute_units();
-          size_type s = 1;
-          
-          while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
-            s *= 2;
-          
-          global_work_size_[0] = s; global_work_size_[1] = 0;
-        }
-      }
+      inline void set_work_size_defaults();    //see context.hpp for implementation
 
       viennacl::ocl::handle<cl_kernel> handle_;
-      cl_program program_;
+      viennacl::ocl::program const * p_program_;
+      viennacl::ocl::context const * p_context_;
       std::string name_;
       size_type local_work_size_[2];
       size_type global_work_size_[2];

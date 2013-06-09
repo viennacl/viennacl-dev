@@ -140,7 +140,7 @@ namespace viennacl
     template <typename KernelType>
     void enqueue(KernelType & k)
     {
-      enqueue(k, viennacl::ocl::current_context().get_queue());
+      enqueue(k, k.context().get_queue());
     }
     
     inline void enqueue(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue)

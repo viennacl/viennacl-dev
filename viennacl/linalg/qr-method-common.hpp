@@ -150,8 +150,8 @@ namespace viennacl
       {
 
         std::string kernel_name = copy_col ? SVD_COPY_COL_KERNEL : SVD_COPY_ROW_KERNEL;
-        viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(),
-                                                                  kernel_name);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), kernel_name);
 
         viennacl::ocl::enqueue(kernel(
                                       A, 
@@ -212,7 +212,8 @@ namespace viennacl
         viennacl::vector<SCALARTYPE, ALIGNMENT> D(dh.size());
         viennacl::vector<SCALARTYPE, ALIGNMENT> S(sh.size());
 
-        viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_BIDIAG_PACK_KERNEL);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_BIDIAG_PACK_KERNEL);
 
         viennacl::ocl::enqueue(kernel(
                                       A, 

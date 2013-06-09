@@ -37,20 +37,17 @@ namespace viennacl
       typedef std::vector<viennacl::ocl::kernel>    KernelContainer;
       
     public:
-      program() {}
-      program(viennacl::ocl::handle<cl_program> const & h, std::string const & prog_name = std::string()) : handle_(h), name_(prog_name) {}
+      program() : p_context_(NULL) {}
+      program(cl_program program_handle, viennacl::ocl::context const & program_context, std::string const & prog_name = std::string())
+        : handle_(program_handle, program_context), p_context_(&program_context), name_(prog_name) {}
       
-      program(program const & other)
-      {
-        handle_ = other.handle_;
-        name_ = other.name_;
-        kernels_ = other.kernels_;
-      }
+      program(program const & other) : handle_(other.handle_), p_context_(other.p_context_), name_(other.name_), kernels_(other.kernels_) {}
       
       viennacl::ocl::program & operator=(const program & other)
       {
         handle_ = other.handle_;
         name_ = other.name_;
+        p_context_ = other.p_context_;
         kernels_ = other.kernels_;
         return *this;
       }
@@ -58,36 +55,17 @@ namespace viennacl
       std::string const & name() const { return name_; }
       
       /** @brief Adds a kernel to the program */
-      viennacl::ocl::kernel & add_kernel(cl_kernel kernel_handle, std::string const & kernel_name)
-      {
-        viennacl::ocl::kernel temp(kernel_handle, handle_.get(), context_, kernel_name);
-        kernels_.push_back(temp);
-        return kernels_.back();
-      }
+      inline viennacl::ocl::kernel & add_kernel(cl_kernel kernel_handle, std::string const & kernel_name);   //see context.hpp for implementation
       
       /** @brief Returns the kernel with the provided name */
-      viennacl::ocl::kernel & get_kernel(std::string const & name)
-      {
-        //std::cout << "Requiring kernel " << name << " from program " << name_ << std::endl;
-        for (KernelContainer::iterator it = kernels_.begin();
-              it != kernels_.end();
-             ++it)
-        {
-          if (it->name() == name)
-            return *it;
-        }
-        std::cerr << "ViennaCL: FATAL ERROR: Could not find kernel '" << name << "'" << std::endl;
-        std::cout << "Number of kernels in program: " << kernels_.size() << std::endl;
-        throw "Kernel not found";
-        //return kernels_[0];  //return a defined object
-      }
+      inline viennacl::ocl::kernel & get_kernel(std::string const & name);    //see context.hpp for implementation
 
       const viennacl::ocl::handle<cl_program> & handle() const { return handle_; }
       
     private:
       
       viennacl::ocl::handle<cl_program> handle_;
-      cl_context context_;
+      viennacl::ocl::context const * p_context_;
       std::string name_;
       KernelContainer kernels_;
     };

@@ -71,7 +71,10 @@ namespace viennacl
                        std::size_t dst_offset,
                        std::size_t bytes_to_copy)
       {
-        cl_int err = clEnqueueCopyBuffer(viennacl::ocl::get_queue().handle().get(),
+        assert( &src_buffer.context() == &dst_buffer.context() && bool("Transfer between memory buffers in different contexts not supported yet!"));
+        
+        viennacl::ocl::context & memory_context = const_cast<viennacl::ocl::context &>(src_buffer.context());
+        cl_int err = clEnqueueCopyBuffer(memory_context.get_queue().handle().get(),
                                          src_buffer.get(),
                                          dst_buffer.get(),
                                          src_offset,
@@ -95,7 +98,8 @@ namespace viennacl
                         const void * ptr)
       {
         //std::cout << "Writing data (" << bytes_to_copy << " bytes, offset " << dst_offset << ") to OpenCL buffer" << std::endl;
-        cl_int err = clEnqueueWriteBuffer(viennacl::ocl::get_queue().handle().get(),
+        viennacl::ocl::context & memory_context = const_cast<viennacl::ocl::context &>(dst_buffer.context());
+        cl_int err = clEnqueueWriteBuffer(memory_context.get_queue().handle().get(),
                                           dst_buffer.get(),
                                           CL_TRUE,             //blocking
                                           dst_offset,
@@ -119,7 +123,8 @@ namespace viennacl
                        void * ptr)
       {
         //std::cout << "Reading data (" << bytes_to_copy << " bytes, offset " << src_offset << ") from OpenCL buffer " << src_buffer.get() << " to " << ptr << std::endl;
-        cl_int err =  clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
+        viennacl::ocl::context & memory_context = const_cast<viennacl::ocl::context &>(src_buffer.context());
+        cl_int err =  clEnqueueReadBuffer(memory_context.get_queue().handle().get(),
                                           src_buffer.get(),
                                           CL_TRUE,             //blocking
                                           src_offset,

@@ -51,7 +51,7 @@ namespace viennacl {
          */
         explicit hankel_matrix()
         {
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
+          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
 
         /**
@@ -63,7 +63,7 @@ namespace viennacl {
         explicit hankel_matrix(std::size_t rows, std::size_t cols) : elements_(rows, cols)
         {
           assert(rows == cols && bool("Hankel matrix must be square!"));
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
+          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
 
         /** @brief Resizes the matrix.

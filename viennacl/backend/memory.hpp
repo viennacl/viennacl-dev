@@ -96,6 +96,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
             handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
+            handle.opencl_handle().context(viennacl::ocl::current_context());
             handle.raw_size(size_in_bytes);
             break;
 #endif

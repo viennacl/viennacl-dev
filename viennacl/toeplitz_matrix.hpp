@@ -51,7 +51,7 @@ namespace viennacl {
          */
         explicit toeplitz_matrix()
         {
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
+          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
 
         /** @brief         Creates the matrix with the given size
@@ -63,7 +63,7 @@ namespace viennacl {
         {
           assert(rows == cols && bool("Toeplitz matrix must be square!"));
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
+          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
         
 

@@ -76,12 +76,14 @@ namespace viennacl
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+        
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
         
         std::stringstream ss;
         ss << SOLVERTAG::name() << "_solve";
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, B.size2() * k.local_work_size());
         detail::inplace_solve_impl(A, B, k);
@@ -97,12 +99,14 @@ namespace viennacl
                          matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
                          SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+        
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
 
         std::stringstream ss;
         ss << SOLVERTAG::name() << "_trans_solve";
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
         detail::inplace_solve_impl(A, proxy_B.lhs(), k);
@@ -119,12 +123,14 @@ namespace viennacl
                          matrix_base<NumericT, F2> & B,
                          SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(B).context());
+        
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
 
         std::stringstream ss;
         ss << "trans_" << SOLVERTAG::name() << "_solve";
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, B.size2() * k.local_work_size());
         detail::inplace_solve_impl(proxy_A.lhs(), B, k);
@@ -140,12 +146,14 @@ namespace viennacl
                                matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
                          SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_A.lhs()).context());
+        
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
 
         std::stringstream ss;
         ss << "trans_" << SOLVERTAG::name() << "_trans_solve";
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), ss.str());
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
 
         k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
         detail::inplace_solve_impl(proxy_A.lhs(), proxy_B.lhs(), k);
@@ -162,11 +170,13 @@ namespace viennacl
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
         
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
@@ -193,11 +203,13 @@ namespace viennacl
                          vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
-        KernelClass::init();
+        KernelClass::init(ctx);
         
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
         
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(proxy.lhs()),

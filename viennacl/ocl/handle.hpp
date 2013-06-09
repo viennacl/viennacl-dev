@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <string>
 #include <iostream>
+#include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
 
 namespace viennacl
@@ -148,9 +149,9 @@ namespace viennacl
     class handle
     {
       public:
-        handle() : h_(0), context_(0) {}
-        handle(const OCL_TYPE & something, cl_context c) : h_(something), context_(c) {}
-        handle(const handle & other) : h_(other.h_), context_(other.context_) { if (h_ != 0) inc(); }
+        handle() : h_(0), p_context_(NULL) {}
+        handle(const OCL_TYPE & something, viennacl::ocl::context const & c) : h_(something), p_context_(&c) {}
+        handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { if (h_ != 0) inc(); }
         ~handle() { if (h_ != 0) dec(); }
         
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
@@ -158,8 +159,8 @@ namespace viennacl
         {
           if (h_ != 0) 
             dec();
-          h_       = other.h_;
-          context_ = other.context_;
+          h_         = other.h_;
+          p_context_ = other.p_context_;
           inc();
           return *this;
         }
@@ -176,8 +177,8 @@ namespace viennacl
         handle & operator=(std::pair<OCL_TYPE, cl_context> p)
         {
           if (h_ != 0) dec();
-          h_       = p.first;
-          context_ = p.second;
+          h_         = p.first;
+          p_context_ = p.second;
           return *this;
         }
 
@@ -187,8 +188,12 @@ namespace viennacl
         
         const OCL_TYPE & get() const { return h_; }
         
-        cl_context context() const { return context_; }
-        void context(cl_context c) { context_ = c; }
+        viennacl::ocl::context const & context() const 
+        {
+          assert(p_context_ != NULL && bool("Logic error: Accessing dangling context from handle."));
+          return *p_context_;
+        }
+        void context(viennacl::ocl::context const & c) { p_context_ = &c; }
         
         
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -198,9 +203,9 @@ namespace viennacl
           other.h_ = this->h_;
           this->h_ = tmp;
           
-          cl_context tmp2 = other.context_;
-          other.context_ = this->context_;
-          this->context_ = tmp2;
+          viennacl::ocl::context const * tmp2 = other.p_context_;
+          other.p_context_ = this->p_context_;
+          this->p_context_ = tmp2;
           
           return *this;
         }
@@ -211,7 +216,7 @@ namespace viennacl
         void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); };
       private:
         OCL_TYPE h_;
-        cl_context context_;
+        viennacl::ocl::context const * p_context_;
     };
 
     

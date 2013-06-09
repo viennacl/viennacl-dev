@@ -52,8 +52,9 @@ namespace viennacl
                       vector_base<SCALARTYPE> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
-          viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-          viennacl::ocl::kernel & row_info_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+          viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+          viennacl::ocl::kernel & row_info_kernel = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
           
           viennacl::ocl::enqueue(row_info_kernel(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                                  viennacl::traits::opencl_handle(vec),
@@ -77,10 +78,11 @@ namespace viennacl
                      const viennacl::vector_base<TYPE> & vec,
                            viennacl::vector_base<TYPE> & result)
       {
-        viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = (viennacl::ocl::current_device().type() == CL_DEVICE_TYPE_CPU)
-                                      ? viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul_cpu")
-                                      : viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = (ctx.current_device().type() == CL_DEVICE_TYPE_CPU)
+                                      ? ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul_cpu")
+                                      : ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
 
         viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(),
                                 vec, result, static_cast<cl_uint>(mat.size1())));
@@ -101,8 +103,9 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_lower_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_forward");
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_forward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -123,9 +126,10 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::lower_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_forward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -147,8 +151,9 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_upper_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_backward");
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "unit_lu_backward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -169,9 +174,10 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::upper_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "lu_backward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -202,8 +208,9 @@ namespace viennacl
                                  vector_base<ScalarType> & vec,
                                  viennacl::linalg::unit_lower_tag)
         {
-          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
-          viennacl::ocl::kernel & block_solve_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_unit_lu_forward");
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L.lhs()).context());
+          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init(ctx);
+          viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_unit_lu_forward");
           block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
           
           viennacl::ocl::enqueue(block_solve_kernel(L.lhs().handle1().opencl_handle(),
@@ -224,8 +231,9 @@ namespace viennacl
                                  vector_base<ScalarType> & vec,
                                  viennacl::linalg::upper_tag)
         {
-          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init();
-          viennacl::ocl::kernel & block_solve_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_lu_backward");
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U.lhs()).context());
+          viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::init(ctx);
+          viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, 1>::program_name(), "block_trans_lu_backward");
           block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
 
           viennacl::ocl::enqueue(block_solve_kernel(U.lhs().handle1().opencl_handle(),
@@ -253,8 +261,9 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_lower_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_L.lhs()).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_forward");
 
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -278,12 +287,13 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::lower_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_L.lhs()).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
 
         viennacl::vector<SCALARTYPE> diagonal(vec.size());
         detail::row_info(proxy_L.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_forward");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_forward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -307,8 +317,9 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::unit_upper_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_backward");
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_U.lhs()).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_unit_lu_backward");
 
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -332,12 +343,13 @@ namespace viennacl
                          vector_base<SCALARTYPE> & vec,
                          viennacl::linalg::upper_tag)
       {
-        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_U.lhs()).context());
+        viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
 
         viennacl::vector<SCALARTYPE> diagonal(vec.size());
         detail::row_info(proxy_U.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_backward");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "trans_lu_backward");
         
         k.local_work_size(0, 128);
         k.global_work_size(0, k.local_work_size());
@@ -362,8 +374,9 @@ namespace viennacl
                       vector_base<SCALARTYPE> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
-          viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::init();
-          viennacl::ocl::kernel & row_info_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+          viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
+          viennacl::ocl::kernel & row_info_kernel = ctx.get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
           unsigned int thread_num = 256; //k.local_work_size(0);
           
           row_info_kernel.local_work_size(0, thread_num);
@@ -390,13 +403,14 @@ namespace viennacl
                      const viennacl::vector_base<SCALARTYPE> & vec,
                            viennacl::vector_base<SCALARTYPE> & result)
       {
-        viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::init(ctx);
         
         result.clear();
         
         //std::cout << "prod(coordinate_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::program_name(), "vec_mul");
         unsigned int thread_num = 256; //k.local_work_size(0);
         
         k.local_work_size(0, thread_num);
@@ -424,12 +438,13 @@ namespace viennacl
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
 
-        viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::init(ctx);
         result.clear();
 
         std::stringstream ss;
         ss << "vec_mul_" << 1;//(ALIGNMENT != 1?4:1);
-        viennacl::ocl::kernel& k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
 
         unsigned int thread_num = 128;
         unsigned int group_num = 256;
@@ -464,11 +479,12 @@ namespace viennacl
         assert(mat.size1() == result.size());
         assert(mat.size2() == vec.size());
 
-        viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::init(ctx);
         
         result.clear();
 
-        viennacl::ocl::kernel& k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
 
         unsigned int thread_num = 256;
         unsigned int group_num = 32;

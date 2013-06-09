@@ -36,15 +36,15 @@ namespace viennacl
     template <typename ScalarType>
     struct DOUBLE_PRECISION_CHECKER
     {
-      static void apply() {} 
+      static void apply(viennacl::ocl::context const & ctx) {} 
     };
     
     template <>
     struct DOUBLE_PRECISION_CHECKER<double>
     {
-      static void apply()
+      static void apply(viennacl::ocl::context const & ctx)
       {
-        if (!viennacl::ocl::current_device().double_support())
+        if (!ctx.current_device().double_support())
           throw viennacl::ocl::double_precision_not_provided_error();
       }
     };

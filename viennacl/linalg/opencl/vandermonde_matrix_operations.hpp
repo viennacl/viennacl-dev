@@ -52,11 +52,10 @@ namespace viennacl
                       const viennacl::vector_base<SCALARTYPE> & vec,
                             viennacl::vector_base<SCALARTYPE> & result)
         {
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init();
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
           
-          viennacl::ocl::kernel& kernel = viennacl::ocl::current_context()
-                                            .get_program(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name())
-                                            .get_kernel("vandermonde_prod");
+          viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "vandermonde_prod");
           viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(mat),
                                         viennacl::traits::opencl_handle(vec),
                                         viennacl::traits::opencl_handle(result),

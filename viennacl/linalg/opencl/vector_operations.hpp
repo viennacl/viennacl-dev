@@ -53,14 +53,15 @@ namespace viennacl
       void av(vector_base<T> & vec1, 
               vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
                                 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(),
-                                                              (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(),
+                                                   (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         
@@ -93,7 +94,8 @@ namespace viennacl
                 vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -112,7 +114,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         
@@ -155,7 +157,8 @@ namespace viennacl
                   vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -174,7 +177,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         
@@ -220,9 +223,10 @@ namespace viennacl
       template <typename T>
       void vector_assign(vector_base<T> & vec1, const T & alpha)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "assign_cpu");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
@@ -243,9 +247,10 @@ namespace viennacl
       template <typename T>
       void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "swap");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "swap");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -269,9 +274,10 @@ namespace viennacl
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "element_op");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "element_op");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -303,12 +309,13 @@ namespace viennacl
                            vector_base<T> const & vec2,
                            vector_base<T> & partial_result)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
       
         assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
               && bool("Incompatible vector sizes in inner_prod_impl()!"));
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "inner_prod");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "inner_prod");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
                 
@@ -340,6 +347,8 @@ namespace viennacl
                            vector_base<T> const & vec2,
                            scalar<T> & result)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
@@ -347,7 +356,7 @@ namespace viennacl
         inner_prod_impl(vec1, vec2, temp);
         
         // Step 2: Sum partial results:
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -375,6 +384,8 @@ namespace viennacl
                           vector_base<T> const & vec2,
                           T & result)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
@@ -406,9 +417,10 @@ namespace viennacl
                                vector_base<T> & partial_result,
                                 cl_uint norm_id)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "norm");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "norm");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
         
@@ -434,6 +446,8 @@ namespace viennacl
       void norm_1_impl(vector_base<T> const & vec,
                        scalar<T> & result)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
@@ -441,7 +455,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 1);
         
         // Step 2: Compute the partial reduction using OpenCL
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -493,6 +507,8 @@ namespace viennacl
       void norm_2_impl(vector_base<T> const & vec,
                        scalar<T> & result)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
@@ -500,7 +516,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 2);
 
         // Step 2: Reduction via OpenCL
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -552,6 +568,8 @@ namespace viennacl
       void norm_inf_impl(vector_base<T> const & vec,
                          scalar<T> & result)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        
         static std::size_t work_groups = 128;
         static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
 
@@ -559,7 +577,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 0);
         
         //part 2: parallel reduction of reduced kernel:
-        viennacl::ocl::kernel & ksum = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
         
@@ -611,11 +629,12 @@ namespace viennacl
       template <typename T>
       cl_uint index_norm_inf(vector_base<T> const & vec)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
-        viennacl::ocl::handle<cl_mem> h = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
+        viennacl::ocl::handle<cl_mem> h = ctx.create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "index_norm_inf");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "index_norm_inf");
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
 
         //TODO: Use multi-group kernel for large vector sizes
@@ -630,7 +649,7 @@ namespace viennacl
         
         //read value:
         cl_uint result;
-        cl_int err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(), h.get(), CL_TRUE, 0, sizeof(cl_uint), &result, 0, NULL, NULL);
+        cl_int err = clEnqueueReadBuffer(ctx.get_queue().handle().get(), h.get(), CL_TRUE, 0, sizeof(cl_uint), &result, 0, NULL, NULL);
         VIENNACL_ERR_CHECK(err);
         return result;
       }
@@ -650,10 +669,11 @@ namespace viennacl
                           vector_base<T> & vec2,
                           T alpha, T beta)
       {
-        viennacl::linalg::kernels::vector<T, 1>::init();
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
         assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "plane_rotation");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "plane_rotation");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),

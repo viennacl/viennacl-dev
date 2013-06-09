@@ -33,6 +33,7 @@
 #include <map>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/handle.hpp"
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/platform.hpp"
@@ -191,7 +192,7 @@ namespace viennacl
         */
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
         {
-          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, size, ptr), h_.get());
+          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, size, ptr), *this);
         }
 
         /** @brief Creates a memory buffer within the context initialized from the supplied data
@@ -202,7 +203,7 @@ namespace viennacl
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer)
         {
-          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), h_.get());
+          return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), *this);
         }
         
         //////////////////// create queues ////////////////////////////////
@@ -213,7 +214,7 @@ namespace viennacl
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Adding existing queue " << q << " for device " << dev << " to context " << h_ << std::endl;
           #endif
-          viennacl::ocl::handle<cl_command_queue> queue_handle(q, h_.get());
+          viennacl::ocl::handle<cl_command_queue> queue_handle(q, *this);
           queues_[dev].push_back(viennacl::ocl::command_queue(queue_handle));
           queues_[dev].back().handle().inc();
         }
@@ -225,7 +226,7 @@ namespace viennacl
           std::cout << "ViennaCL: Adding new queue for device " << dev << " to context " << h_ << std::endl;
           #endif
           cl_int err;
-          viennacl::ocl::handle<cl_command_queue> temp(clCreateCommandQueue(h_.get(), dev, 0, &err), h_.get());
+          viennacl::ocl::handle<cl_command_queue> temp(clCreateCommandQueue(h_.get(), dev, 0, &err), *this);
           VIENNACL_ERR_CHECK(err);
           
           queues_[dev].push_back(viennacl::ocl::command_queue(temp));
@@ -238,6 +239,23 @@ namespace viennacl
         viennacl::ocl::command_queue & get_queue()
         {
           return queues_[devices_[current_device_id_].id()][0];
+        }
+
+        viennacl::ocl::command_queue const & get_queue() const
+        {
+          typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
+          
+          // find queue:
+          typename QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
+          if (it != queues_.end())
+            return (it->second)[0];
+          
+          std::cerr << "ViennaCL: FATAL ERROR: Could not obtain current command queue!" << std::endl;
+          std::cout << "Number of queues in context: " << queues_.size() << std::endl;
+          std::cout << "Number of devices in context: " << devices_.size() << std::endl;
+          throw "queue not found!";
+          
+          return (it->second)[0];
         }
         
         //get a particular queue:
@@ -265,7 +283,7 @@ namespace viennacl
         */
         viennacl::ocl::program & add_program(cl_program p, std::string const & prog_name)
         {
-          programs_.push_back(viennacl::ocl::program(viennacl::ocl::handle<cl_program>(p, h_.get()), prog_name));
+          programs_.push_back(viennacl::ocl::program(p, *this, prog_name));
           return programs_.back();
         }
         
@@ -284,11 +302,11 @@ namespace viennacl
           //
           // Build program
           //
-          viennacl::ocl::handle<cl_program> temp(clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err), h_.get());
+          cl_program temp = clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err);
           VIENNACL_ERR_CHECK(err);
           
           const char * options = build_options_.c_str();
-          err = clBuildProgram(temp.get(), 0, NULL, options, NULL, NULL);
+          err = clBuildProgram(temp, 0, NULL, options, NULL, NULL);
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_BUILD)
             char buffer[8192];
             cl_build_status status;
@@ -300,7 +318,7 @@ namespace viennacl
           #endif
           VIENNACL_ERR_CHECK(err);
           
-          programs_.push_back(viennacl::ocl::program(temp, prog_name));
+          programs_.push_back(viennacl::ocl::program(temp, *this, prog_name));
           
           viennacl::ocl::program & prog = programs_.back();
           
@@ -339,6 +357,23 @@ namespace viennacl
           throw "In class 'context': name invalid in get_program()";
           //return programs_[0];  //return a defined object
         }
+
+        viennacl::ocl::program const & get_program(std::string const & name) const
+        {
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Getting program '" << name << "' from context " << h_ << std::endl;
+          #endif
+          for (ProgramContainer::const_iterator it = programs_.begin();
+                it != programs_.end();
+                ++it)
+          {
+            if (it->name() == name)
+              return *it;
+          }
+          std::cerr << "Could not find program '" << name << "'" << std::endl;
+          throw "In class 'context': name invalid in get_program()";
+          //return programs_[0];  //return a defined object
+        }
         
         /** @brief Returns whether the program with the provided name exists or not */
         bool has_program(std::string const & name){
@@ -360,6 +395,9 @@ namespace viennacl
         
         /** @brief Returns the number of programs within this context */
         std::size_t program_num() { return programs_.size(); }
+        
+        /** @brief Convenience function for retrieving the kernel of a program directly from the context */
+        viennacl::ocl::kernel & get_kernel(std::string const & program_name, std::string const & kernel_name) { return get_program(program_name).get_kernel(kernel_name); }
 
         /** @brief Returns the number of devices within this context */
         std::size_t device_num() { return devices_.size(); }
@@ -509,6 +547,62 @@ namespace viennacl
         std::size_t pf_index_;
     }; //context
     
+    
+
+    /** @brief Adds a kernel to the program */
+    inline viennacl::ocl::kernel & viennacl::ocl::program::add_kernel(cl_kernel kernel_handle, std::string const & kernel_name)
+    {
+      assert(p_context_ != NULL && bool("Pointer to context invalid in viennacl::ocl::program object"));
+      viennacl::ocl::kernel temp(kernel_handle, *this, *p_context_, kernel_name);
+      kernels_.push_back(temp);
+      return kernels_.back();
+    }
+    
+    /** @brief Returns the kernel with the provided name */
+    inline viennacl::ocl::kernel & viennacl::ocl::program::get_kernel(std::string const & name)
+    {
+      //std::cout << "Requiring kernel " << name << " from program " << name_ << std::endl;
+      for (KernelContainer::iterator it = kernels_.begin();
+            it != kernels_.end();
+           ++it)
+      {
+        if (it->name() == name)
+          return *it;
+      }
+      std::cerr << "ViennaCL: FATAL ERROR: Could not find kernel '" << name << "'" << std::endl;
+      std::cout << "Number of kernels in program: " << kernels_.size() << std::endl;
+      throw "Kernel not found";
+      //return kernels_[0];  //return a defined object
+    }
+
+    
+    inline void viennacl::ocl::kernel::set_work_size_defaults()
+    {
+      assert( p_program_ != NULL && bool("Kernel not initialized, program pointer invalid."));
+      assert( p_context_ != NULL && bool("Kernel not initialized, context pointer invalid."));
+      
+      if (   (p_context_->current_device().type() == CL_DEVICE_TYPE_GPU)
+          || (p_context_->current_device().type() == CL_DEVICE_TYPE_ACCELERATOR) // Xeon Phi
+         )
+      {
+        local_work_size_[0] = 128; local_work_size_[1] = 0;
+        global_work_size_[0] = 128*128; global_work_size_[1] = 0;
+      }
+      else //assume CPU type:
+      {
+        //conservative assumption: one thread per CPU core:
+        local_work_size_[0] = 1; local_work_size_[1] = 0;
+        
+        size_type units = p_context_->current_device().max_compute_units();
+        size_type s = 1;
+        
+        while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
+          s *= 2;
+        
+        global_work_size_[0] = s; global_work_size_[1] = 0;
+      }
+    }
+
   }
 }
 

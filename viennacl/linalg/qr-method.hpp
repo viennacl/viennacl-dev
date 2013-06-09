@@ -46,10 +46,12 @@ namespace viennacl
                         int m
                       )
         {
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
+          
           typedef typename MatrixType::value_type                                   ScalarType;
           typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
           
-          viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_GIVENS_NEXT_KERNEL);
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_GIVENS_NEXT_KERNEL);
 
           kernel.global_work_size(0, viennacl::tools::roundUpToNextMultiple<cl_uint>(viennacl::traits::size1(matrix), 256));
           kernel.local_work_size(0, 256);
@@ -182,7 +184,9 @@ namespace viennacl
                                 SCALARTYPE p
                                 )
         {
-            viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_FINAL_ITER_UPDATE_KERNEL);
+            viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+            
+            viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_FINAL_ITER_UPDATE_KERNEL);
 
             viennacl::ocl::enqueue(kernel(
                                           A,
@@ -204,9 +208,11 @@ namespace viennacl
                                 bool //is_triangular
                                 )
         {
+            viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+            
             viennacl::fast_copy(buf, buf_vcl);
             
-            viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_UPDATE_QR_COLUMN_KERNEL);
+            viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_UPDATE_QR_COLUMN_KERNEL);
 
             viennacl::ocl::enqueue(kernel(
                                           A,
@@ -787,13 +793,15 @@ namespace viennacl
                             viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
                             std::size_t start)
         {
+            viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+            
             if(start + 2 >= A.size1()) 
                 return false;
 
             prepare_householder_vector(A, D, A.size1(), start + 1, start, start + 1, true);
 
             {
-                viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_LEFT_KERNEL);
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_LEFT_KERNEL);
 
                 viennacl::ocl::enqueue(kernel(
                                               A,
@@ -808,7 +816,7 @@ namespace viennacl
             }
 
             {
-                viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_RIGHT_KERNEL);
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_A_RIGHT_KERNEL);
 
                 viennacl::ocl::enqueue(kernel(
                                               A,
@@ -823,7 +831,7 @@ namespace viennacl
             }
 
             {
-                viennacl::ocl::kernel& kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_QL_KERNEL);
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_HOUSEHOLDER_UPDATE_QL_KERNEL);
 
                 viennacl::ocl::enqueue(kernel(
                                                 Q,
@@ -860,12 +868,14 @@ namespace viennacl
                        boost::numeric::ublas::vector<SCALARTYPE> & E,
                        bool is_symmetric = true)
         {
-            assert(A.size1() == A.size2());
+            viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+            
+            assert(A.size1() == A.size2() && bool("Input matrix must be square for QR method!"));
             
             D.resize(A.size1());
             E.resize(A.size1());
 
-            viennacl::linalg::kernels::svd<SCALARTYPE, 1>::init();
+            viennacl::linalg::kernels::svd<SCALARTYPE, 1>::init(ctx);
 
             detail::eye(Q);
 

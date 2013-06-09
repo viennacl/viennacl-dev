@@ -53,15 +53,18 @@ namespace viennacl
       as(S1 & s1, 
          S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
+        assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
+        
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx); 
           
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
                                 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(),
-                                                              (viennacl::is_cpu_scalar<ScalarType1>::value ? "as_cpu" : "as_gpu"));
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(),
+                                                   (viennacl::is_cpu_scalar<ScalarType1>::value ? "as_cpu" : "as_gpu"));
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
@@ -85,8 +88,12 @@ namespace viennacl
            S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
            S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
+        assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
+        assert( &viennacl::traits::opencl_handle(s2).context() == &viennacl::traits::opencl_handle(s3).context() && bool("Operands not in the same OpenCL context!"));
+        
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx); 
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -105,7 +112,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
@@ -128,12 +135,16 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType1>::value
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
-      asbs_s(S1 & vec1,
-             S2 const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             S3 const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+      asbs_s(S1 & s1,
+             S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+             S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
+        assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
+        assert( &viennacl::traits::opencl_handle(s2).context() == &viennacl::traits::opencl_handle(s3).context() && bool("Operands not in the same OpenCL context!"));
+        
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
+        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx); 
         
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -152,15 +163,16 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha)),
-                                options_alpha,
+                                 options_alpha,
+                                 viennacl::traits::opencl_handle(s2),
                                  viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(beta)),
-                                options_beta,
-                                viennacl::traits::opencl_handle(vec3) )
+                                 options_beta,
+                                 viennacl::traits::opencl_handle(s3) )
                               );
       }
       
@@ -176,10 +188,13 @@ namespace viennacl
                                   >::type
       swap(S1 & s1, S2 & s2)
       {
+        assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
+        
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
         viennacl::linalg::kernels::scalar<value_type, 1>::init(); 
         
-        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), "swap");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), "swap");
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),

@@ -105,10 +105,12 @@ namespace viennacl
              viennacl::matrix<ScalarType> & H,
              nmf_config const & conf)
     {
+      viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(V).context());
+      
       const std::string NMF_MUL_DIV_KERNEL = "el_wise_mul_div";
       const std::string NMF_SUB_KERNEL = "sub_wise";
       
-      viennacl::linalg::kernels::nmf<ScalarType, 1>::init();
+      viennacl::linalg::kernels::nmf<ScalarType, 1>::init(ctx);
       
       assert(V.size1() == W.size1() && V.size2() == H.size2() && bool("Dimensions of W and H don't allow for V = W * H"));
       assert(W.size2() == H.size1() && bool("Dimensions of W and H don't match, prod(W, H) impossible"));
@@ -140,8 +142,7 @@ namespace viennacl
           htmp = viennacl::linalg::prod(trans(W), W);
           hd   = viennacl::linalg::prod(htmp, H);
 
-          viennacl::ocl::kernel & mul_div_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), 
-                                                                             NMF_MUL_DIV_KERNEL);
+          viennacl::ocl::kernel & mul_div_kernel = ctx.get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), NMF_MUL_DIV_KERNEL);
           viennacl::ocl::enqueue(mul_div_kernel(H, hn, hd, cl_uint(H.internal_size1() * H.internal_size2())));
         }
         {
@@ -149,8 +150,7 @@ namespace viennacl
           wtmp = viennacl::linalg::prod(W, H);
           wd   = viennacl::linalg::prod(wtmp, trans(H));
 
-          viennacl::ocl::kernel & mul_div_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), 
-                                                                             NMF_MUL_DIV_KERNEL);
+          viennacl::ocl::kernel & mul_div_kernel = ctx.get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), NMF_MUL_DIV_KERNEL);
           
           viennacl::ocl::enqueue(mul_div_kernel(W, wn, wd, cl_uint(W.internal_size1() * W.internal_size2())));
         }
@@ -159,8 +159,7 @@ namespace viennacl
         {
           appr = viennacl::linalg::prod(W, H);
 
-          viennacl::ocl::kernel & sub_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), 
-                                                                         NMF_SUB_KERNEL);
+          viennacl::ocl::kernel & sub_kernel = ctx.get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), NMF_SUB_KERNEL);
           //this is a cheat: save difference of two matrix into vector to get norm_2
           viennacl::ocl::enqueue(sub_kernel(appr, V, diff, cl_uint(V.size1() * V.size2())));
           ScalarType diff_val = viennacl::linalg::norm_2(diff);

@@ -142,8 +142,6 @@ namespace viennacl
       if (first)
       {
         viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(double_float_conversion_program, "double_float_conversion_program");
-        my_prog.add_kernel("assign_double_to_float");
-        my_prog.add_kernel("inplace_add_float_to_double");
       }
 
       viennacl::vector<float> residual_low_precision(problem_size);
@@ -155,9 +153,10 @@ namespace viennacl
       float initial_inner_rhs_norm_squared = static_cast<float>(ip_rr);
       float alpha;
       float beta;
-      
-      viennacl::ocl::kernel & assign_double_to_float      = viennacl::ocl::get_kernel("double_float_conversion_program", "assign_double_to_float");
-      viennacl::ocl::kernel & inplace_add_float_to_double = viennacl::ocl::get_kernel("double_float_conversion_program", "inplace_add_float_to_double");
+
+      viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
+      viennacl::ocl::kernel & assign_double_to_float      = ctx.get_kernel("double_float_conversion_program", "assign_double_to_float");
+      viennacl::ocl::kernel & inplace_add_float_to_double = ctx.get_kernel("double_float_conversion_program", "inplace_add_float_to_double");
       
       // transfer rhs to single precision:
       viennacl::ocl::enqueue( assign_double_to_float(p_low_precision.handle().opencl_handle(),
