@@ -189,7 +189,7 @@ void test_svd(const std::string & fn, ScalarType EPS)
 
   viennacl::linalg::svd(Ai, QL, QR);
 
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
 
   double time_spend = timer.get();
 
@@ -222,7 +222,7 @@ void time_svd(std::size_t sz1, std::size_t sz2)
   timer.start();
 
   viennacl::linalg::svd(Ai, QL, QR);
-  viennacl::ocl::get_queue().finish();
+  viennacl::backend::finish();
   double time_spend = timer.get();
 
   printf("[%dx%d] time = %.6f\n", static_cast<int>(sz1), static_cast<int>(sz2), time_spend);

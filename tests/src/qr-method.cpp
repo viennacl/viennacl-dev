@@ -190,7 +190,7 @@ void test_eigen(const std::string& fn, bool is_symm)
         viennacl::linalg::qr_method_nsm(A_input, Q, eigen_re, eigen_im);
 
     // std::cout << A_input << "\n";
-    viennacl::ocl::get_queue().finish();
+    viennacl::backend::finish();
 
     double time_spend = timer.get();
 
