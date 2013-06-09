@@ -179,7 +179,7 @@ int main()
   std::string devname   = dev.name();
   std::string driver    = dev.driver_version();
   cl_uint compunits     = dev.max_compute_units();
-  std::size_t  wgsize   = dev.max_workgroup_size();
+  std::size_t  wgsize   = dev.max_work_group_size();
   
   // -----------------------------------------
    paras.add_device();
@@ -191,7 +191,7 @@ int main()
   
   //set up test config:
   test_config conf;
-  conf.max_local_size(dev.max_workgroup_size());
+  conf.max_local_size(dev.max_work_group_size());
   
   // GPU specific test setup:
   if (dev.type() == CL_DEVICE_TYPE_GPU)

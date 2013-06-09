@@ -250,7 +250,7 @@ void writeKernelInit(std::ostream & kernel_file, const char * dirname, std::stri
             //add kernel source to program string:
             std::string kernel_name_ending = fname.size() > 8 ? fname.substr(fname.size()-7, 4) : " ";
             if (kernel_name_ending == "_amd")
-              kernel_file << "        if (ctx.current_device().local_memory() > 20000)" << std::endl << "  ";  //fast AMD kernels require more than 20 kB of local memory
+              kernel_file << "        if (ctx.current_device().local_mem_size() > 20000)" << std::endl << "  ";  //fast AMD kernels require more than 20 kB of local memory
             
             kernel_file << "        source.append(";
             if (!is_float)

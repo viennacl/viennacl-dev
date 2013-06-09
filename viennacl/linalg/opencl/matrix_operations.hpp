@@ -541,12 +541,7 @@ namespace viennacl
                   && (viennacl::traits::size1(B) % 128 == 0) 
                   && (viennacl::traits::size2(B) % 128 == 0) )   // Check for AMD kernel
           {
-            cl_uint vendor_id;
-            viennacl::ocl::device current_device = ctx.current_device();
-            cl_int err = clGetDeviceInfo(current_device.id(), CL_DEVICE_VENDOR_ID, sizeof(cl_uint), &vendor_id, NULL);
-            VIENNACL_ERR_CHECK(err);
-
-            if (vendor_id == 4098 // AMD's vendor ID
+            if (ctx.current_device().vendor_id() == 4098 // AMD's vendor ID
                 && viennacl::traits::start1(A) == 0 && viennacl::traits::start1(B) == 0 && viennacl::traits::start1(C) == 0
                 && viennacl::traits::start2(A) == 0 && viennacl::traits::start2(B) == 0 && viennacl::traits::start2(C) == 0
                 && viennacl::traits::stride1(A) == 1 && viennacl::traits::stride1(B) == 1 && viennacl::traits::stride1(C) == 1
@@ -554,7 +549,7 @@ namespace viennacl
                 //&& viennacl::traits::size1(A) == viennacl::traits::size2(A) 
                 //&& viennacl::traits::size1(B) == viennacl::traits::size2(B) 
                 //&& viennacl::traits::size1(C) == viennacl::traits::size2(C)
-                && current_device.local_memory() > 20000 // at least 20kB of local memory required for this kernel
+                && ctx.current_device().local_mem_size() > 20000 // at least 20kB of local memory required for this kernel
                ) // use tuned AMD kernel for square matrices
             {
               //std::cout << "Using fast AMD kernel" << std::endl;
