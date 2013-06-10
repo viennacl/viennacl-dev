@@ -87,14 +87,25 @@ namespace viennacl
       typedef SCALARTYPE const & const_reference;
       
       scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
+
+#ifdef VIENNACL_WITH_OPENCL
+      scalar_vector(size_type s, SCALARTYPE val, viennacl::ocl::context const & ctx) : size_(s), value_(val), ctx_(&ctx) {}
+#endif
       
       size_type size() const { return size_; }
       const_reference operator()(size_type /*i*/) const { return value_; }
       const_reference operator[](size_type /*i*/) const { return value_; }
-      
+
+#ifdef VIENNACL_WITH_OPENCL
+      viennacl::ocl::context const & context() const { return *ctx_; }
+#endif
+
     private:
       size_type size_;
       SCALARTYPE value_;
+#ifdef VIENNACL_WITH_OPENCL
+      viennacl::ocl::context const * ctx_;
+#endif
   };
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -362,6 +373,19 @@ namespace viennacl
           pad();
         }
       }
+
+#ifdef VIENNACL_WITH_OPENCL
+      /** @brief Creates a vector in the provided OpenCL context and allocates the necessary memory */
+      explicit vector_base(size_type vec_size, viennacl::ocl::context const & ctx) : size_(vec_size), start_(0), stride_(1)
+      {
+        if (size_ > 0)
+        {
+          std::vector<SCALARTYPE> temp(internal_size());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]), static_cast<const void *>(&ctx));
+          pad();
+        }
+      }
+#endif
 
 
     /** @brief Creates the vector from the supplied random vector. */
@@ -1071,6 +1095,13 @@ namespace viennacl
       
       base_type::set_handle(h);
     }
+
+    /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT') and the OpenCL context provided
+    *
+    * @param vec_size   The length (i.e. size) of the vector.
+    * @param ctx        The context
+    */
+    explicit vector(size_type vec_size, viennacl::ocl::context const & ctx) : base_type(vec_size, ctx) {}
 #endif
     
     template <typename LHS, typename RHS, typename OP>
@@ -1106,7 +1137,11 @@ namespace viennacl
     }
 
     /** @brief Creates the vector from the supplied scalar vector. */
-    vector(scalar_vector<SCALARTYPE> const & v) : base_type(v.size())
+    vector(scalar_vector<SCALARTYPE> const & v) : base_type(v.size()
+#ifdef VIENNACL_WITH_OPENCL
+                                                            , v.context()
+#endif
+                                                            )
     {
       if (v.size() > 0)
         viennacl::linalg::vector_assign(*this, v[0]);
