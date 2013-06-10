@@ -349,8 +349,11 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -385,9 +388,12 @@ namespace viennacl
                           T & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -447,9 +453,12 @@ namespace viennacl
                        scalar<T> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -478,8 +487,13 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -508,9 +522,12 @@ namespace viennacl
                        scalar<T> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -539,8 +556,13 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -569,9 +591,12 @@ namespace viennacl
                          scalar<T> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
@@ -600,8 +625,13 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        static std::size_t work_groups = 128;
-        static viennacl::vector<T> temp = viennacl::zero_vector<T>(work_groups);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+
+        std::size_t work_groups = 128;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
