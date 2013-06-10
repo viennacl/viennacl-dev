@@ -113,8 +113,8 @@ namespace viennacl{
                 kss << (*it)->generate(0) << ";" << std::endl;
               for(std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
                 (*it)->write_back(0,kss);
-              kss.dec_tab();
               kss << "}";
+              kss.dec_tab();
 
               for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = matrix_expressions_.begin(); it != matrix_expressions_.end() ; ++it)
                 (*it)->clear_private_value(0);

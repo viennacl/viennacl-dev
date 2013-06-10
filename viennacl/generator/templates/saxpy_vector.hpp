@@ -102,8 +102,11 @@ namespace viennacl{
 
 
             void operator()(utils::kernel_generation_stream& kss){
+              symbolic_vector_base * first_vector = static_cast<symbolic_vector_base*>(&(*vector_expressions_.begin())->lhs());
               unsigned int n_unroll = profile_->loop_unroll();
               kss << "int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
+              kss << "if(i<" << first_vector->size() << "){" << std::endl;
+              kss.inc_tab();
               //Set access indices
               for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
@@ -118,11 +121,15 @@ namespace viennacl{
               for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
                 for(unsigned int j=0 ; j < n_unroll ; ++j)
                   (*it)->write_back(j,kss);
+              kss << "}" << std::endl;
+              kss.dec_tab();
+
               for(unsigned int i=0 ; i < n_unroll ; ++i)
                 for(std::list<symbolic_binary_vector_expression_base*>::iterator it = vector_expressions_.begin(); it != vector_expressions_.end() ; ++it)
                   (*it)->clear_private_value(i);
               for(std::list<symbolic_binary_scalar_expression_base*>::iterator it = scalar_expressions_.begin() ; it != scalar_expressions_.end(); ++it)
                   (*it)->clear_private_value(0);
+
             }
 
           private:
