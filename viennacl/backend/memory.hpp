@@ -80,7 +80,7 @@ namespace viennacl
     * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
     * 
     */
-    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
+    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL, const void * mem_domain_info = NULL)
     {
       if (size_in_bytes > 0)
       {
@@ -95,8 +95,11 @@ namespace viennacl
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
-            handle.opencl_handle() = opencl::memory_create(size_in_bytes, host_ptr);
-            handle.opencl_handle().context(viennacl::ocl::current_context());
+            if (mem_domain_info)
+              handle.opencl_handle().context(*static_cast<viennacl::ocl::context const *>(mem_domain_info));
+            else
+              handle.opencl_handle().context(viennacl::ocl::current_context());
+            handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
             handle.raw_size(size_in_bytes);
             break;
 #endif
@@ -368,7 +371,8 @@ namespace viennacl
           {
 #ifdef VIENNACL_WITH_OPENCL
             case OPENCL_MEMORY:
-              handle.opencl_handle() = opencl::memory_create(handle.raw_size(), handle.ram_handle().get());
+              handle.opencl_handle().context(viennacl::ocl::current_context());
+              handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), handle.raw_size(), handle.ram_handle().get());
               break;
 #endif              
 #ifdef VIENNACL_WITH_CUDA

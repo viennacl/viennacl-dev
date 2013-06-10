@@ -51,10 +51,10 @@ namespace viennacl
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
        * 
        */
-      inline cl_mem memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
+      inline cl_mem memory_create(viennacl::ocl::context const & ctx, std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << std::endl;
-        return viennacl::ocl::current_context().create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
+        return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
       }
     
       /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' in the OpenCL context to memory starting at address 'dst_buffer + dst_offset' in the same OpenCL context.

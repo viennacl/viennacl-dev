@@ -170,7 +170,7 @@ namespace viennacl
         *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
         *  @return       A plain OpenCL handle. Either assign it to a viennacl::ocl::handle<cl_mem> directly, or make sure that you free to memory manually if you no longer need the allocated memory.
         */
-        cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
+        cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL) const
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;

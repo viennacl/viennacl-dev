@@ -973,6 +973,26 @@ namespace viennacl
       */
       void resize(size_type new_size, bool preserve = true)
       {
+        resize_impl(new_size, preserve, NULL);
+      }
+
+#ifdef VIENNACL_WITH_OPENCL
+      /** @brief Resizes the allocated memory for the vector. Convenience function for setting an OpenCL context in case reallocation is needed
+      *
+      *  @param new_size  The new size of the vector
+      *  @param ctx       The context within which the new memory should be allocated
+      *  @param preserve  If true, old entries of the vector are preserved, otherwise eventually discarded.
+      */
+      void resize(size_type new_size, viennacl::ocl::context const & ctx, bool preserve = true)
+      {
+        resize_impl(new_size, preserve, static_cast<const void *>(&ctx));
+      }
+#endif
+
+    private:
+
+      void resize_impl(size_type new_size, bool preserve = true, const void * locality_info = NULL)
+      {
         assert(new_size > 0 && bool("Positive size required when resizing vector!"));
         
         if (new_size != size_)
@@ -987,7 +1007,7 @@ namespace viennacl
           
           if (new_internal_size != internal_size())
           {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size, NULL, locality_info);
           }
           
           fast_copy(temp, *this);
@@ -995,9 +1015,7 @@ namespace viennacl
         }
         
       }
-      
-      
-    private:
+
       size_type       size_;
       size_type       start_;
       difference_type stride_;
@@ -1324,6 +1342,12 @@ namespace viennacl
       base_type::resize(new_size, preserve);
     }
     
+#ifdef VIENNACL_WITH_OPENCL
+    void resize(size_type new_size, viennacl::ocl::context const & ctx, bool preserve = true)
+    {
+      base_type::resize(new_size, ctx, preserve);
+    }
+#endif
 
     /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy
     */ 

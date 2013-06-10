@@ -353,7 +353,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -393,7 +393,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
         inner_prod_impl(vec1, vec2, temp);
@@ -458,7 +458,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -493,7 +493,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -527,7 +527,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -562,8 +562,8 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
-
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
         
@@ -596,7 +596,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
@@ -631,7 +631,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
         viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups); // bring default-constructed vectors to the correct size:
+        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
