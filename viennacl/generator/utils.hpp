@@ -91,62 +91,62 @@ namespace viennacl{
       template<>
       struct print_type<char>
       {
-          static const std::string value() { return "char"; }
+          static const char * value() { return "char"; }
       };
 
       template<>
       struct print_type<unsigned char>
       {
-          static const std::string value() { return "unsigned char"; }
+          static const char * value() { return "unsigned char"; }
       };
 
 
       template<>
       struct print_type<int>
       {
-          static const std::string value() { return "int"; }
+          static const char * value() { return "int"; }
       };
 
       template<>
       struct print_type<unsigned int>
       {
-          static const std::string value() { return "unsigned int"; }
+          static const char * value() { return "unsigned int"; }
       };
 
       template<>
       struct print_type<short>
       {
-          static const std::string value() { return "short"; }
+          static const char * value() { return "short"; }
       };
 
       template<>
       struct print_type<unsigned short>
       {
-          static const std::string value() { return "unsigned short"; }
+          static const char * value() { return "unsigned short"; }
       };
 
       template<>
       struct print_type<long>
       {
-          static const std::string value() { return "long"; }
+          static const char * value() { return "long"; }
       };
 
       template<>
       struct print_type<unsigned long>
       {
-          static const std::string value() { return "unsigned long"; }
+          static const char * value() { return "unsigned long"; }
       };
 
       template<>
       struct print_type<float>
       {
-          static const std::string value() { return "float"; }
+          static const char * value() { return "float"; }
       };
 
       template<>
       struct print_type<double>
       {
-          static const std::string value() { return "double"; }
+          static const char * value() { return "double"; }
       };
 
 

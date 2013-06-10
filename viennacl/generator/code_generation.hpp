@@ -99,7 +99,7 @@ namespace viennacl{
           void fill_arguments(utils::kernel_generation_stream & kss){
             for(std::vector<tools::shared_ptr<symbolic_kernel_argument> >::iterator it=arguments_.begin(); it!=arguments_.end();++it){
               if(it!=arguments_.begin()) kss << ',';
-              kss << (*it)->repr() << std::endl ;
+                (*it)->repr(kss);
             }
           }
 
@@ -197,7 +197,9 @@ namespace viennacl{
             cl_device_id id = viennacl::ocl::current_device().id();
             builtin_database_t::iterator it = builtin_dabase.find(std::make_pair(ocl::info<CL_DEVICE_VENDOR_ID>(id), ocl::info<CL_DEVICE_TYPE>(id)));
             if(it!=builtin_dabase.end()){
-              builtin_database_t::value_type::second_type::iterator it2 = it->second.find(op->simplified_repr());
+              std::ostringstream oss;
+              op->simplified_repr(oss);
+              builtin_database_t::value_type::second_type::iterator it2 = it->second.find(oss.str());
               if(it2!=it->second.end())  return kernel_wrapper(op,it2->second);
             }
             return kernel_wrapper(op, new T());
@@ -274,15 +276,15 @@ namespace viennacl{
 
           std::string repr(unsigned int * nkernels = NULL){
             init();
-            std::string res;
+            std::ostringstream oss;
             for(std::list<kernel_wrapper>::iterator it = kernels_list_.begin() ; it !=kernels_list_.end() ; ++it){
               for(std::list<symbolic_expression_tree_base*>::iterator iit = it->trees().begin() ; iit != it->trees().end() ; ++iit){
-                res += (*iit)->repr();
+                (*iit)->repr(oss);
               }
-              res+=' ' + it->profile()->repr();
+              oss << it->profile()->repr();
             }
             if(nkernels) *nkernels = kernels_list_.size();
-            return res;
+            return oss.str();
           }
 
           void bind_arguments(std::map<std::string, kernel_wrapper> & kernels_infos){
