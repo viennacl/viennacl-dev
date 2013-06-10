@@ -414,7 +414,7 @@ namespace viennacl{
       private:
         std::string name_;
         unsigned int size_;
-        std::string const & scalartype_;
+        std::string scalartype_;
     };
 
     template<>
