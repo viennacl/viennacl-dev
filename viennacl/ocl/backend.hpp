@@ -202,6 +202,15 @@ namespace viennacl
       viennacl::ocl::backend<>::setup_context(i, devices);
     }
 
+    /** @brief Convenience function for setting devices for a context */
+    inline void setup_context(long i,
+                              viennacl::ocl::device const & device)
+    {
+      std::vector<cl_device_id> device_id_array(1);
+      device_id_array[0] = device.id();
+      viennacl::ocl::backend<>::setup_context(i, device_id_array);
+    }
+
     /** @brief Convenience function for setting up a context in ViennaCL from an existing OpenCL context */
     inline void setup_context(long i,
                               cl_context c,
