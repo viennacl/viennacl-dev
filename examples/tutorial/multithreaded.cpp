@@ -45,10 +45,19 @@
 #include <boost/thread.hpp>
 
 template <typename T>
-void thread_func(viennacl::vector<T> * u, viennacl::vector<T> const * v, T * result, std::size_t thread_id) //Note: using references instead of pointers leads to some troubles with boost.thread
+void thread_func(std::string * message, std::size_t thread_id) //Note: using references instead of pointers leads to some troubles with boost.thread
 {
-  *u += *v;
-  *result = viennacl::linalg::norm_2(*u);
+  std::size_t N = 10;
+
+  viennacl::vector<T> u = viennacl::scalar_vector<T>(N, 1.0 * (thread_id + 1), viennacl::ocl::get_context(thread_id));
+  viennacl::vector<T> v = viennacl::scalar_vector<T>(N, 2.0 * (thread_id + 1), viennacl::ocl::get_context(thread_id));
+
+  u += v;
+  T result = viennacl::linalg::norm_2(u);
+
+  std::stringstream ss;
+  ss << "Result of thread " << thread_id << " on device " << viennacl::ocl::get_context(thread_id).devices()[0].name() << ": " << result << std::endl;
+  *message = ss.str();
 }
 
 
@@ -62,13 +71,13 @@ int main()
     std::cerr << "Error: No platform found!" << std::endl;
     return EXIT_FAILURE;
   }
-  
+
   //
   // Part 1: Setup first device for first context, second device for second context:
   //  
   viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
   std::vector<viennacl::ocl::device> const & devices = pf.devices();
-  
+
   // Set first device to first context:
   viennacl::ocl::setup_context(0, devices[0]);
 
@@ -79,30 +88,19 @@ int main()
     viennacl::ocl::setup_context(1, devices[0]);
 
   //
-  // Part 2: Now create vectors in the two contexts and let two threads process the results on two GPUs in parallel
+  // Part 2: Now let two threads operate on two GPUs in parallel
   //
   
-  std::size_t N = 10;
+  std::string message0;
+  std::string message1;
+  boost::thread worker_0(thread_func<ScalarType>, &message0, 0);
+  boost::thread worker_1(thread_func<ScalarType>, &message1, 1);
   
-  viennacl::ocl::switch_context(0);
-  viennacl::vector<ScalarType> u1 = viennacl::scalar_vector<ScalarType>(N, 1.0);
-  viennacl::vector<ScalarType> v1 = viennacl::scalar_vector<ScalarType>(N, 2.0);
-  ScalarType result1 = 0;
-  
-  viennacl::ocl::switch_context(1);
-  viennacl::vector<ScalarType> u2 = viennacl::scalar_vector<ScalarType>(N, 2.0);
-  viennacl::vector<ScalarType> v2 = viennacl::scalar_vector<ScalarType>(N, 4.0);
-  ScalarType result2 = 0;
-  
-  // Two threads operating on both contexts at the same time:
-  boost::thread worker_1(thread_func<ScalarType>, &u1, &v1, &result1, 1);
-  boost::thread worker_2(thread_func<ScalarType>, &u2, &v2, &result2, 2);
-  
+  worker_0.join();
   worker_1.join();
-  worker_2.join();
 
-  std::cout << "Result of thread 1: " << result1 << std::endl;
-  std::cout << "Result of thread 2: " << result2 << std::endl;
+  std::cout << message0 << std::endl;
+  std::cout << message1 << std::endl;
   
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
