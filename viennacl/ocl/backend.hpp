@@ -194,6 +194,11 @@ namespace viennacl
       viennacl::ocl::backend<>::switch_context(i);
     }
     
+    /** @brief Convenience function for returning the current context */
+    inline viennacl::ocl::context & get_context(long i)
+    {
+      return viennacl::ocl::backend<>::context(i);
+    }
 
     /** @brief Convenience function for setting devices for a context */
     inline void setup_context(long i,
