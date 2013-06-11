@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
-#define VIENNACL_GENERATOR_CODE_GENERATION_OPTIMIZATION_PROFILE
+#ifndef VIENNACL_GENERATOR_CODE_GENERATION_PROFILE_BASE
+#define VIENNACL_GENERATOR_CODE_GENERATION_PROFILE_BASE
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -19,9 +19,9 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/base_classes.hpp
+/** @file viennacl/generator/templates/profile_base.hpp
  *
- * Base classes for the kernel templates
+ * Base classes for the profile
 */
 
 #include <list>
@@ -29,7 +29,6 @@
 
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/infos.hpp"
-#include "viennacl/generator/utils.hpp"
 
 namespace viennacl{
 
@@ -38,7 +37,7 @@ namespace viennacl{
     namespace code_generation{
 
       /** @brief Base class for an optimization profile */
-      class optimization_profile{
+      class profile_base{
         protected:
           typedef unsigned int size_type;
         protected:
@@ -59,33 +58,16 @@ namespace viennacl{
                 || lmem_used>lmem_available;
           }
         public:
-          optimization_profile() : vectorization_(1){ }
-          optimization_profile(unsigned int vectorization) : vectorization_(vectorization){ }
-          virtual std::string repr() const = 0;
+          profile_base() : vectorization_(1){ }
+          profile_base(unsigned int vectorization) : vectorization_(vectorization){ }
           virtual void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base * p) = 0;
           unsigned int vectorization() const{ return vectorization_; }
           virtual std::pair<size_t,size_t> local_work_size() const = 0;
-          virtual ~optimization_profile(){ }
+          virtual void set_state(unsigned int i) { }
+          virtual ~profile_base(){ }
         protected:
           unsigned int vectorization_;
       };
-
-      /** @brief Base class for a generator
-       *
-       *  Fills a given kernel generation stream
-       */
-      class generator{
-        public:
-          virtual void operator()(utils::kernel_generation_stream& kss) = 0;
-          virtual ~generator(){ }
-      };
-
-
-      /** @brief Prints a given profile */
-      inline std::ostream& operator<<(std::ostream& os, optimization_profile const & prof){
-        os << prof.repr();
-        return os;
-      }
 
     }
 

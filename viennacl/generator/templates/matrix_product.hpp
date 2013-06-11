@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
-#define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMM_HPP
+#ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_MATRIX_PRODUCT_HPP
+#define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_MATRIX_PRODUCT_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -19,12 +19,14 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/gemm.hpp
+/** @file viennacl/generator/templates/matrix_product.hpp
  *
- * Kernel template for the GEMM operation
+ * Kernel template for the matrix product operation
 */
 
-#include "viennacl/generator/templates/base_classes.hpp"
+#include "viennacl/generator/templates/generator_base.hpp"
+#include "viennacl/generator/templates/profile_base.hpp"
+
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -33,14 +35,12 @@ namespace viennacl{
 
     namespace code_generation{
 
-      namespace gemm{
-
-        /** @brief Profile template for a GEMM kernel
+        /** @brief Profile template for a matrix product kernel
          *
          *  Implementation based on double blocking.
          *  See Matsumoto et Al. "Implementing a Code Generator for Fast Matrix Multiplication in OpenCL on the GPU"
          */
-          class profile : public optimization_profile{
+          class matrix_product_profile : public profile_base{
           public:
 
             /** @brief The default constructor
@@ -50,7 +50,7 @@ namespace viennacl{
              *  LHS stored to local memory, RHS not
              *  Unroll = 1
              */
-            profile(){
+            matrix_product_profile(){
               ml_ = 32;
               kl_ = 32;
               nl_ = 32;
@@ -67,35 +67,17 @@ namespace viennacl{
 
 
             /** @brief The user constructor */
-            profile(unsigned int ml, unsigned int kl, unsigned int nl
+            matrix_product_profile(unsigned int ml, unsigned int kl, unsigned int nl
                     , unsigned int ms, unsigned int ks, unsigned int ns
                     , bool use_LHS_shared, bool use_RHS_shared
                     , unsigned int vectorization
-                    , unsigned int unroll) : optimization_profile(vectorization){
+                    , unsigned int unroll) : profile_base(vectorization){
               ml_= ml; kl_=kl ; nl_=nl;
               ms_ = ms; ks_=ks; ns_=ns;
               use_LHS_shared_ = use_LHS_shared ; use_RHS_shared_ = use_RHS_shared;
               vectorization_ = vectorization;
               unroll_ = unroll;
             }
-
-            /** @brief Returns the representation string of this profile */
-           std::string repr() const{
-              std::ostringstream oss;
-              oss << "ML" << ml_
-                  << "KL" << kl_
-                  << "NL" << nl_
-                  << "MS" << ms_
-                  << "KS" << ks_
-                  << "NS" << ns_
-                  << "LHS" << use_LHS_shared_
-                  << "RHS" << use_RHS_shared_
-                  << "V" << vectorization_
-                  << "U" << unroll_;
-
-              return oss.str();
-            }
-
 
             /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
@@ -145,7 +127,7 @@ namespace viennacl{
               size_t lmem_used = 0;
               if(use_LHS_shared()) lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
               if(use_RHS_shared()) lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
-              return  optimization_profile::is_invalid(dev,lmem_used)
+              return  profile_base::is_invalid(dev,lmem_used)
                   || vectorization_ > ms_
                   || vectorization_ > ks_
                   || vectorization_ > ns_
@@ -170,8 +152,12 @@ namespace viennacl{
         };
 
 
-        class generator : public code_generation::generator{
+        class matrix_product_generator : public generator_base{
 
+          public:
+            matrix_product_generator(matrix_product_profile * kernel_config): generator_base(kernel_config) { }
+
+          private:
             static void transform_block(symbolic_matrix_base const & mat_infos, bool is_transposed, bool store_shared
                                         , unsigned int & large_block_1, unsigned int & large_block_2
                                         , unsigned int & small_block_1, unsigned int & small_block_2){
@@ -402,54 +388,53 @@ namespace viennacl{
 
             }
 
-          public:
-            generator(std::list<symbolic_binary_matrix_expression_base * > const & blas3_expressions
-                      , profile * kernel_config): blas3_expressions_(blas3_expressions), optimization_profile_(kernel_config)
-            {
-              for(std::list<symbolic_binary_matrix_expression_base*>::const_iterator it=blas3_expressions_.begin() ; it!= blas3_expressions_.end() ; ++it){
-                extract_as(*it, matmat_prods_, utils::is_type<symbolic_matrix_matrix_product_base>());
-                extract_as(*it ,gpu_scalars_,  utils::is_type<symbolic_pointer_scalar_base>());
-                extract_as(*it,matrices_, utils::is_type<symbolic_matrix_base>());
+            void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
+              matrix_product_profile * casted_prof = static_cast<matrix_product_profile *>(prof_.get());
+
+              std::list<symbolic_matrix_matrix_product_base*> matmat_prods;
+              std::list<symbolic_matrix_base *>  matrices;
+              std::list<symbolic_pointer_scalar_base *> gpu_scalars;
+
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::const_iterator it=expressions_.begin() ; it!= expressions_.end() ; ++it){
+                extract_as(*it,matmat_prods, utils::is_type<symbolic_matrix_matrix_product_base>());
+                extract_as(*it,gpu_scalars,  utils::is_type<symbolic_pointer_scalar_base>());
+                extract_as(*it,matrices, utils::is_type<symbolic_matrix_base>());
               }
-            }
-
-            void operator()(utils::kernel_generation_stream& kss){
-
 
               std::list<symbolic_matrix_base*> assigned;
               std::list<symbolic_matrix_base*> lhss;
               std::list<symbolic_matrix_base*> rhss;
 
               //Fills assigned matrices set
-              for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = blas3_expressions_.begin() ; it!=blas3_expressions_.end(); ++it){
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin() ; it!=expressions_.end(); ++it){
                 if(dynamic_cast<assignment_operator*>(&(*it)->op())) assigned.push_back(dynamic_cast<symbolic_matrix_base*>(&(*it)->lhs()));
               }
 
               //Fills lhs's
-              for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods_.begin(); it !=matmat_prods_.end(); ++it){
+              for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods.begin(); it !=matmat_prods.end(); ++it){
                 extract_as(&(*it)->lhs(),lhss,utils::is_type<symbolic_matrix_base>());
                 extract_as(&(*it)->rhs(),rhss,utils::is_type<symbolic_matrix_base>());
               }
 
-              symbolic_matrix_matrix_product_base * first_prod = dynamic_cast<symbolic_matrix_matrix_product_base*>(*matmat_prods_.begin());
+              symbolic_matrix_matrix_product_base * first_prod = dynamic_cast<symbolic_matrix_matrix_product_base*>(*matmat_prods.begin());
 
-              for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods_.begin() ; it != matmat_prods_.end() ; ++it){
-                (*it)->set_val_name("prod_val_" + utils::to_string(std::distance(matmat_prods_.begin(),it)));
+              for(std::list<symbolic_matrix_matrix_product_base*>::iterator it = matmat_prods.begin() ; it != matmat_prods.end() ; ++it){
+                (*it)->set_val_name("prod_val_" + utils::to_string(std::distance(matmat_prods.begin(),it)));
               }
               symbolic_matrix_base* first_lhs = *lhss.begin();
               symbolic_matrix_base* first_rhs = *rhss.begin();
               symbolic_matrix_base* first_assigned = assigned.front();
 
-              bool use_LHS_shared = optimization_profile_->use_LHS_shared();
-              bool use_RHS_shared = optimization_profile_->use_RHS_shared();
-              unsigned int vectorization = optimization_profile_->vectorization();
-              unsigned int kl = optimization_profile_->kl();
-              unsigned int ks = optimization_profile_->ks();
-              unsigned int ml = optimization_profile_->ml();
-              unsigned int ms = optimization_profile_->ms();
-              unsigned int nl = optimization_profile_->nl();
-              unsigned int ns = optimization_profile_->ns();
-              unsigned int unroll = optimization_profile_->unroll();
+              bool use_LHS_shared = casted_prof->use_LHS_shared();
+              bool use_RHS_shared = casted_prof->use_RHS_shared();
+              unsigned int vectorization = casted_prof->vectorization();
+              unsigned int kl = casted_prof->kl();
+              unsigned int ks = casted_prof->ks();
+              unsigned int ml = casted_prof->ml();
+              unsigned int ms = casted_prof->ms();
+              unsigned int nl = casted_prof->nl();
+              unsigned int ns = casted_prof->ns();
+              unsigned int unroll = casted_prof->unroll();
 
               bool is_lhs_rowmajor = first_lhs->is_rowmajor();
               bool is_rhs_rowmajor = first_rhs->is_rowmajor();
@@ -801,16 +786,8 @@ namespace viennacl{
 
 
             }
-
-          private:
-            std::list<symbolic_binary_matrix_expression_base*>  blas3_expressions_;
-            std::list<symbolic_matrix_matrix_product_base*> matmat_prods_;
-            std::list<symbolic_matrix_base *>  matrices_;
-            std::list<symbolic_pointer_scalar_base *> gpu_scalars_;
-            profile * optimization_profile_;
         };
 
-      }
 
     }
 

@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMV_HPP
-#define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_GEMV_HPP
+#ifndef VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_VECTOR_REDUCTION_HPP
+#define VIENNACL_GENERATOR_CODE_GENERATION_TEMPLATES_VECTOR_REDUCTION_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -19,12 +19,14 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/gemv.hpp
+/** @file viennacl/generator/templates/vector_reduction.hpp
  *
- * Kernel template for the GEMV operation
+ * Kernel template for the vector reduction operation
 */
 
-#include "viennacl/generator/templates/base_classes.hpp"
+#include "viennacl/generator/templates/generator_base.hpp"
+#include "viennacl/generator/templates/profile_base.hpp"
+
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -33,26 +35,25 @@ namespace viennacl{
 
     namespace code_generation{
 
-      namespace gemv{
 
-        /** @brief Profile template for a GEMV kernel
+        /** @brief Profile template for a vector reduction kernel
          *
          *  Implementation based on blocking.
          *  Each work group processes a block of M rows, by iterating horizontally over M*K blocks
          *  Uses persistents threads defined by NUM_GROUPS_0.
          */
-        class profile : public optimization_profile{
+        class vector_reduction_profile : public profile_base{
           public:
 
             /** @brief The default constructor. M = 1, K = 16, NUM_GROUPS_0 = 64 */
-            profile(){
+            vector_reduction_profile(){
               m_ = 1;
               k_ = 16;
               num_groups_0_ = 64;
             }
 
             /** @brief The user constructor */
-            profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : m_(m), k_(k), num_groups_0_(num_groups_0){ }
+            vector_reduction_profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : m_(m), k_(k), num_groups_0_(num_groups_0){ }
 
             /** @brief Returns M */
             unsigned int m() const { return m_; }
@@ -90,7 +91,7 @@ namespace viennacl{
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return optimization_profile::is_invalid(dev,m_*(k_+1)*scalartype_size)
+              return profile_base::is_invalid(dev,m_*(k_+1)*scalartype_size)
                   || vectorization_ > m_
                   || vectorization_ > k_;
             }
@@ -103,42 +104,48 @@ namespace viennacl{
         };
 
 
-        class generator : public code_generation::generator{
+        class vector_reduction_generator : public generator_base{
           public:
-            generator(std::list<symbolic_binary_vector_expression_base * > const & expressions
-                      , profile * prof): expressions_(expressions), profile_(prof)
+            vector_reduction_generator(vector_reduction_profile * prof): generator_base(prof)
             {
-              for(std::list<symbolic_binary_vector_expression_base*>::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
-                extract_as(*it, matrices_, utils::is_type<symbolic_matrix_base>());
-                extract_as(*it, prods_, utils::is_type<symbolic_matrix_vector_product_base>());
-              }
+
             }
 
-            void operator()(utils::kernel_generation_stream& kss){
-              symbolic_matrix_base* first_matrix = *matrices_.begin();
-              symbolic_matrix_vector_product_base * first_prod = *prods_.begin();
+          private:
+
+            void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
+              vector_reduction_profile * casted_prof = static_cast<vector_reduction_profile *>(prof_.get());
+
+              std::list<symbolic_matrix_base *>  matrices;
+              std::list<vector_reduction_base *>  prods;
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
+                extract_as(*it, matrices, utils::is_type<symbolic_matrix_base>());
+                extract_as(*it, prods, utils::is_type<vector_reduction_base>());
+              }
+              symbolic_matrix_base* first_matrix = *matrices.begin();
+              vector_reduction_base * first_prod = *prods.begin();
               std::string scalartype = first_matrix->scalartype();
               std::string internal_size1 = first_matrix->internal_size1();
               std::string internal_size2 = first_matrix->internal_size2();
 
-              unsigned int m = profile_->m();
-              unsigned int k = profile_->k();
+              unsigned int m = casted_prof->m();
+              unsigned int k = casted_prof->k();
 
               bool is_lhs_transposed = is_transposed(&first_prod->lhs());
               //            bool is_lhs_row_major = first_matrix->is_rowmajor();
-              std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > > reductions;
-              for(std::list<symbolic_binary_vector_expression_base*>::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
+              std::map<vector_reduction_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > > reductions;
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin(); it!=expressions_.end() ; ++it){
                 unsigned int id = std::distance(expressions_.begin(),it);
                 symbolic_vector_base* assigned = dynamic_cast<symbolic_vector_base*>(&(*it)->lhs());
                 symbolic_local_memory<2> lmem("block_"+utils::to_string(id),m,k+1,scalartype);
-                std::list<symbolic_matrix_vector_product_base *>  prods;
-                extract_as(*it, prods, utils::is_type<symbolic_matrix_vector_product_base>());
+                std::list<vector_reduction_base *>  prods;
+                extract_as(*it, prods, utils::is_type<vector_reduction_base>());
                 assert(prods.size()==1 && "More than one product involved in the expression");
                 reductions.insert(std::make_pair(*prods.begin(),std::make_pair("reduction_"+utils::to_string(id),std::make_pair(lmem,assigned))));
               }
               kss << "unsigned int lid0 = get_local_id(0);" << std::endl;
               kss << "unsigned int lid1 = get_local_id(1);" << std::endl;
-              for(std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+              for(std::map<vector_reduction_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
                 kss << it->second.second.first.declare() << ";" << std::endl;
               }
               if(is_lhs_transposed)
@@ -147,8 +154,8 @@ namespace viennacl{
                 kss << "for(unsigned int r = get_global_id(0) ; r < " << internal_size1 << " ; r += get_global_size(0)){" << std::endl;
               kss.inc_tab();
 
-              for(std::map<symbolic_matrix_vector_product_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
-                symbolic_matrix_vector_product_base* prod = it->first;
+              for(std::map<vector_reduction_base*, std::pair<std::string,std::pair<symbolic_local_memory<2>, symbolic_vector_base*> > >::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+                vector_reduction_base* prod = it->first;
                 binary_operator const & op_reduce = prod->op_reduce();
                 std::string const & sum_name = it->second.first;
                 symbolic_local_memory<2> const & lmem = it->second.second.first;
@@ -162,7 +169,7 @@ namespace viennacl{
                 prod->lhs().access_index(0,"r","c");
                 prod->rhs().access_index(0,"c","0");
                 prod->fetch(0,kss);
-                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->symbolic_binary_vector_expression_base::generate(0)) << ";" << std::endl;
+                kss << sum_name << " = " << op_reduce.generate(sum_name,prod->symbolic_binary_expression_tree_infos_base::generate(0)) << ";" << std::endl;
                 kss.dec_tab();
                 kss << "}" << std::endl;
                 kss << lmem.access("lid0", "lid1")<< " = " << sum_name << ";" << std::endl;
@@ -179,23 +186,14 @@ namespace viennacl{
               kss.dec_tab();
               kss << "}" << std::endl;
 
-              for(std::list<symbolic_binary_vector_expression_base* >::iterator it = expressions_.begin() ; it != expressions_.end() ; ++it){
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin() ; it != expressions_.end() ; ++it){
                 (*it)->clear_private_value(0);
               }
             }
 
-
-
-          private:
-            std::list<symbolic_binary_vector_expression_base* >  expressions_;
-            std::list<symbolic_matrix_base *>  matrices_;
-            std::list<symbolic_matrix_vector_product_base *>  prods_;
-            profile * profile_;
         };
 
       }
-
-    }
 
   }
 

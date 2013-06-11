@@ -26,7 +26,9 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/generator/templates/base_classes.hpp"
+#include "viennacl/generator/templates/generator_base.hpp"
+#include "viennacl/generator/templates/profile_base.hpp"
+
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -35,22 +37,21 @@ namespace viennacl{
 
     namespace code_generation{
 
-      namespace saxpy_matrix{
 
         /** @brief profile template for the SAXPY kernel
         *
         *   No persistent threads (yet ?).
         */
-        class profile : public optimization_profile{
+        class saxpy_matrix_profile : public profile_base{
           public:
 
             /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
-            profile(){
+            saxpy_matrix_profile(){
               group_size_ = 128;
             }
 
             /** @brief The user constructor */
-            profile(unsigned int vectorization, size_t group_size0) : optimization_profile(vectorization){
+            saxpy_matrix_profile(unsigned int vectorization, size_t group_size0) : profile_base(vectorization){
               group_size_ = group_size0;
             }
 
@@ -66,33 +67,23 @@ namespace viennacl{
               k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(mat->real_size1()*mat->real_size2()/vectorization_,group_size_));
             }
 
-            /** @brief Returns the representation string of this profile */
-            std::string repr() const{
-              std::ostringstream oss;
-              oss << "V" << vectorization_  << "GROUP" << group_size_;
-              return oss.str();
-            }
-
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return optimization_profile::is_invalid(dev,0);
+              return profile_base::is_invalid(dev,0);
             }
 
           private:
             unsigned int group_size_;
         };
 
-        class generator : public code_generation::generator{
+        class saxpy_matrix_generator : public generator_base{
           public:
-            generator(std::list<symbolic_binary_matrix_expression_base * > const & matrix_expressions
-                      ,profile * kernel_config): matrix_expressions_(matrix_expressions), profile_(kernel_config)
-            {
-            }
+            saxpy_matrix_generator(saxpy_matrix_profile * prof): generator_base(prof) { }
 
-
-            void operator()(utils::kernel_generation_stream& kss){
-              symbolic_matrix_base * first_matrix = static_cast<symbolic_matrix_base*>(&(*matrix_expressions_.begin())->lhs());
+          private:
+            void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
+              symbolic_matrix_base * first_matrix = static_cast<symbolic_matrix_base*>(&(*expressions_.begin())->lhs());
               if(first_matrix->is_rowmajor()){
                 kss << "unsigned int r = get_global_id(0)/" << first_matrix->internal_size2() << ";" << std::endl;
                 kss << "unsigned int c = get_global_id(0)%" << first_matrix->internal_size2() << ";" << std::endl;
@@ -104,30 +95,26 @@ namespace viennacl{
               kss << "if(r < " << first_matrix->internal_size1() << " && c < " << first_matrix->internal_size2() << "){" << std::endl;
               kss.inc_tab();
               //Set access indices
-              for(std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it){
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it=expressions_.begin() ; it!=expressions_.end();++it){
                 (*it)->access_index(0,"r","c");
                 (*it)->fetch(0,kss);
               }
               //Compute expressions
-              for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = matrix_expressions_.begin(); it!=matrix_expressions_.end(); ++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin(); it!=expressions_.end(); ++it)
                 kss << (*it)->generate(0) << ";" << std::endl;
-              for(std::list<symbolic_binary_matrix_expression_base*>::iterator it=matrix_expressions_.begin() ; it!=matrix_expressions_.end();++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it=expressions_.begin() ; it!=expressions_.end();++it)
                 (*it)->write_back(0,kss);
               kss << "}";
               kss.dec_tab();
 
-              for(std::list<symbolic_binary_matrix_expression_base*>::iterator it = matrix_expressions_.begin(); it != matrix_expressions_.end() ; ++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin(); it != expressions_.end() ; ++it)
                 (*it)->clear_private_value(0);
             }
 
-          private:
-            std::list<symbolic_binary_matrix_expression_base* >  matrix_expressions_;
-            profile * profile_;
         };
 
       }
 
-    }
 
   }
 

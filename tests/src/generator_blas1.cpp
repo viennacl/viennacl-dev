@@ -100,7 +100,7 @@ int test_vector ( Epsilon const& epsilon) {
     typedef viennacl::generator::scalar<NumericT> scal;
 
 
-    unsigned int size = 512;
+    unsigned int size = 128;
 
     ublas::vector<NumericT> cw(size);
     ublas::vector<NumericT> cx(size);
@@ -112,7 +112,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 
     for(unsigned int i=0; i<cw.size(); ++i){
-        cw[i]=i/cw.size();
+      cw[i]=(NumericT)i/cw.size();
     }
 
     std::cout << "Running tests for vector of size " << cw.size() << std::endl;
@@ -204,7 +204,8 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "s = inner_prod(x,y)..." << std::endl;
         s = 0;
         for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-        generator::custom_operation op((scal(gs)= generator::inner_prod(vec(x), vec(y))));
+        generator::custom_operation op;
+        op.add(scal(gs)= generator::inner_prod(vec(x), vec(y)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(s,gs, s=inner_prod(x,y));
@@ -213,7 +214,8 @@ int test_vector ( Epsilon const& epsilon) {
     {
         std::cout << "s = max(x)..." << std::endl;
         s = *std::max_element(cx.begin(),cx.end());
-        generator::custom_operation op((scal(gs)= generator::reduce<generator::fmax_type>(vec(x))));
+        generator::custom_operation op;
+        op.add(scal(gs)= generator::reduce<generator::fmax_type>(vec(x)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(s,gs, s=max(x));
@@ -320,7 +322,8 @@ int test_matrix ( Epsilon const& epsilon) {
         for(unsigned int i = 0; i < size1 ; ++i){
             cx(i) = cA(i,i);
         }
-        generator::custom_operation op((vec(x) = generator::diag(mat(A))));
+        generator::custom_operation op;
+        op.add(vec(x) = generator::diag(mat(A)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cx,x, x = diag(A));
@@ -329,7 +332,8 @@ int test_matrix ( Epsilon const& epsilon) {
     {
         std::cout << "C = A + B ..." << std::endl;
         cC     = ( cA + cB );
-        generator::custom_operation op((mat(C) = mat(A) + mat(B)));
+        generator::custom_operation op;
+        op.add(mat(C) = mat(A) + mat(B));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cC, C, C=A+B)
@@ -390,7 +394,8 @@ int test_matrix ( Epsilon const& epsilon) {
         for(unsigned int i = 0 ; i < size1 ; ++i)
             for(unsigned int j = 0 ; j < size2 ; ++j)
                 cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
-        generator::custom_operation op((mat(C) = 1.0f/(1.0f+generator::exp(-mat(A)))));
+        generator::custom_operation op;
+        op.add(mat(C) = 1.0f/(1.0f+generator::exp(-mat(A))));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cC, C, C = 1/(1+EXP(-A)))
@@ -493,6 +498,7 @@ int main(int argc, char* argv[]){
                     std::cout << "  Column-Major"      << std::endl;
                     std::cout << "  --------------" << std::endl;
                     retval &= test_matrix<double, viennacl::column_major> (epsilon);
+
                     if ( retval == EXIT_SUCCESS )
                         std::cout << "# Test passed" << std::endl;
                     else

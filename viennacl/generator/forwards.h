@@ -46,6 +46,10 @@ namespace viennacl{
       class optimization_profile;
     }
 
+    namespace utils{
+      class kernel_generation_stream;
+    }
+
   }
 
 }

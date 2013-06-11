@@ -146,6 +146,33 @@ namespace viennacl
           return false;
         }
         
+        /** @brief Compares the two handles and returns true if the active memory handles in the two mem_handles point a buffer with inferior address
+         * useful to store handles into a map, since they naturally have strong ordering
+         */
+        bool operator<(mem_handle const & other) const
+        {
+          if (active_handle_ != other.active_handle_)
+            return false;
+
+          switch (active_handle_)
+          {
+            case MAIN_MEMORY:
+              return ram_handle_.get() < other.ram_handle_.get();
+#ifdef VIENNACL_WITH_OPENCL
+            case OPENCL_MEMORY:
+              return opencl_handle_.get() < other.opencl_handle_.get();
+#endif
+#ifdef VIENNACL_WITH_CUDA
+            case CUDA_MEMORY:
+              return cuda_handle_.get() < other.cuda_handle_.get();
+#endif
+            default: break;
+          }
+
+          return false;
+        }
+
+
         bool operator!=(mem_handle const & other) const { return !(*this == other); }
 
         /** @brief Implements a fast swapping method. No data is copied, only the handles are exchanged. */

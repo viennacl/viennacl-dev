@@ -153,7 +153,8 @@ int test( Epsilon const& epsilon) {
     {
         std::cout << "y = A*x..." << std::endl;
         cy     =  ublas::prod(cA,cx);
-        generator::custom_operation op((dv_t(y) = generator::prod(dm_t(A),dv_t(x))));
+        generator::custom_operation op;
+        op.add(dv_t(y) = generator::prod(dm_t(A),dv_t(x)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cy,y,y=A*x)
@@ -162,7 +163,8 @@ int test( Epsilon const& epsilon) {
     {
         std::cout << "x = trans(A)*y..." << std::endl;
         cx     =  ublas::prod(trans(cA),cy);
-        generator::custom_operation op((dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y))));
+        generator::custom_operation op;
+        op.add(dv_t(x) = generator::prod(trans(dm_t(A)),dv_t(y)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cx,x,x=trans(A)*y)
@@ -177,7 +179,8 @@ int test( Epsilon const& epsilon) {
             }
             cy(i) = current_max;
         }
-        generator::custom_operation op((dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A))));
+        generator::custom_operation op;
+        op.add(dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
@@ -193,7 +196,8 @@ int test( Epsilon const& epsilon) {
             }
             cx(j) = current_max;
         }
-        generator::custom_operation op((dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A))));
+        generator::custom_operation op;
+        op.add(dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A)));
         op.execute();
         viennacl::backend::finish();
         CHECK_RESULT(cx,x,x = reduce_cols<max>(A))

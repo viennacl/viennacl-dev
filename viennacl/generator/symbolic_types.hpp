@@ -27,10 +27,12 @@
 
 #include "viennacl/generator/forwards.h"
 
+#include "viennacl/generator/templates/profile_base.hpp"
+
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/backend/memory.hpp"
-#include "viennacl/generator/templates/base_classes.hpp"
+
 
 #include <map>
 #include <set>
@@ -328,70 +330,41 @@ namespace viennacl{
 #undef MAKE_UNARY_FUN_OP
 #undef MAKE_BINARY_FUN_OP
 
-    /** @brief class for representing a kernel argument */
-    class symbolic_kernel_argument{
-      protected:
-        virtual void const * handle() const = 0;
-      public:
-        symbolic_kernel_argument(const char * address_space, const char * scalartype_name, std::string const & name) : address_space_(address_space), scalartype_name_(scalartype_name), name_(name){ }
-        virtual void enqueue(unsigned int & arg, viennacl::ocl::kernel & k) const = 0;
-        bool operator==(symbolic_kernel_argument const & other) const{ return name_ == other.name_; }
-        virtual void repr(utils::kernel_generation_stream& kss) const = 0;
-        std::string const & name() const { return name_; }
-        void scalartype_name(const char * str) { scalartype_name_ = str; }
-        const char * scalartype_name() const { return scalartype_name_; }
-        virtual ~symbolic_kernel_argument(){ }
-      protected:
-        const char * address_space_;
-        const char * scalartype_name_;
-        std::string name_;
-    };
-
-    /** @brief Base class for value arguments */
-    class symbolic_value_argument_base: public symbolic_kernel_argument{
-      public:
-        symbolic_value_argument_base(const char * scalartype_name, std::string const & name) : symbolic_kernel_argument("",scalartype_name,name){ }
-        void repr(utils::kernel_generation_stream& kss) const{
-          kss << address_space_ << " " << scalartype_name_ << " " << name_;
-        }
-    };
-
     template<class ScalarType>
-    class symbolic_value_argument : public symbolic_value_argument_base{
-      public:
+    struct symbolic_value_argument{
+      private:
         typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_type;
-      private:
-        void const * handle() const { return static_cast<void const *>(&handle_); }
       public:
-        symbolic_value_argument(std::string const & name, ScalarType const & val) : symbolic_value_argument_base(utils::print_type<ScalarType>::value(), name), handle_(val){ }
-        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const { k.arg(n_arg++,handle_); }
-      private:
-        cl_type handle_;
-    };
-
-
-    /** @brief Base class for pointer arguments */
-    class symbolic_pointer_argument_base : public symbolic_kernel_argument{
-      public:
-        symbolic_pointer_argument_base(const char * address_space, const char * scalartype_name, unsigned int vector, std::string const & name) : symbolic_kernel_argument(address_space,scalartype_name,name), vector_(vector){ }
-        void repr(utils::kernel_generation_stream& kss) const{
-          kss << address_space_ << " " << scalartype_name_;
-          if(vector_>1) kss << vector_;
-          kss << "* " << name_;
+        static std::string generate_header(const char * address_space, unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> &) {
+          std::string name = "arg"+utils::to_string(n_arg++);
+          kss << address_space << " " << utils::print_type<ScalarType>::value() << " " << name << ",";
+          return name;
         }
-      private:
-        unsigned int vector_;
+        static void enqueue(cl_type value, unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & ) {
+          k.arg(n_arg++,value);
+        }
     };
+
 
     template<class ScalarType>
-    class symbolic_pointer_argument : public symbolic_pointer_argument_base{
-      private:
-        void const * handle() const { return static_cast<void const *>(&handle_); }
-      public:
-        symbolic_pointer_argument(std::string const & name, viennacl::backend::mem_handle const & handle, unsigned int alignment) : symbolic_pointer_argument_base("__global", utils::print_type<ScalarType>::value(),alignment,name), handle_(handle){ }
-        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k) const { k.arg(n_arg++,handle_.opencl_handle()); }
-      private:
-        viennacl::backend::mem_handle const & handle_;
+    struct symbolic_pointer_argument{
+        static void enqueue(viennacl::backend::mem_handle const & handle, unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued) {
+          if(already_enqueued.insert(handle).second==true){
+            k.arg(n_arg++,handle.opencl_handle());
+          }
+        }
+
+        static std::string generate_header(viennacl::backend::mem_handle const & handle, const char * address_space, size_t vector,
+                                    unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          if(already_enqueued.insert(std::make_pair(handle,n_arg)).second==true){
+            std::string name = "arg"+utils::to_string(n_arg++);
+            kss << address_space << ' ' << utils::print_type<ScalarType>::value() ;
+            if(vector>1);
+            kss << "* " << name << ",";
+          }
+          return "arg"+utils::to_string(already_enqueued.at(handle));
+        }
+
     };
 
     /** @brief symbolic structure for local memory
@@ -440,7 +413,6 @@ namespace viennacl{
       public:
         shared_symbolic_infos_t(unsigned int _id, std::string const & _scalartype, unsigned int _scalartype_size, unsigned int _alignment = 1) {
           id = _id;
-          name = "arg" + utils::to_string(id);
           scalartype = _scalartype;
           scalartype_size = _scalartype_size;
           alignment = _alignment;
@@ -458,20 +430,16 @@ namespace viennacl{
     class symbolic_expression_tree_base{
       public:
         virtual std::string generate(unsigned int i, int vector_element = -1) const { return ""; }
-        virtual void repr(std::ostringstream & oss) const = 0;
-        virtual void simplified_repr(std::ostringstream & oss) const { repr(oss); }
-        virtual std::string name() const = 0;
-        virtual void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof)= 0;
+        virtual void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::profile_base const & prof)= 0;
         virtual void access_index(unsigned int i, std::string const & ind0, std::string const & ind1) = 0;
         virtual void fetch(unsigned int i, utils::kernel_generation_stream & kss) = 0;
         virtual void write_back(unsigned int i, utils::kernel_generation_stream & kss) = 0;
-        virtual void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const = 0;
+        virtual void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued)  = 0;
+        virtual void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const = 0;
         virtual void clear_private_value(unsigned int i) = 0;
         virtual bool operator==(symbolic_expression_tree_base const & other) const = 0;
         virtual ~symbolic_expression_tree_base(){ }
-        symbolic_expression_tree_base() : current_kernel_(0) { }
-      protected:
-        unsigned int current_kernel_;
+        symbolic_expression_tree_base() { }
     };
 
 
@@ -482,28 +450,8 @@ namespace viennacl{
         symbolic_expression_tree_base & lhs() const{ return *lhs_; }
         symbolic_expression_tree_base & rhs() const{ return *rhs_; }
         binary_operator & op() { return *op_; }
-        std::string name() const { return lhs_->name() + op_->name() + rhs_->name(); }
-        void repr(std::ostringstream & oss) const {
-          oss << op_->name() << '(' ;
-          lhs_->repr(oss);
-          oss << ',' ;
-          rhs_->repr(oss);
-          oss << ')';
-        }
-        void simplified_repr(std::ostringstream & oss) const {
-          if(dynamic_cast<assignment_operator*>(op_.get())){
-            oss << "assign(";
-            lhs_->simplified_repr(oss);
-            oss << ",";
-            rhs_->simplified_repr(oss);
-            oss << ")";
-          }
-          else{
-            lhs_->simplified_repr(oss);
-          }
-        }
 
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::profile_base const & prof){
           lhs_->bind(shared_infos,prof);
           rhs_->bind(shared_infos,prof);
         }
@@ -518,9 +466,14 @@ namespace viennacl{
           rhs_->fetch(i,kss);
         }
 
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const{
-          lhs_->get_kernel_arguments(args);
-          rhs_->get_kernel_arguments(args);
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+           lhs_->generate_header(n_arg, kss, already_enqueued);
+           rhs_->generate_header(n_arg, kss, already_enqueued);
+        }
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          lhs_->enqueue(n_arg, k, already_enqueued, prof);
+          rhs_->enqueue(n_arg, k, already_enqueued, prof);
         }
 
         void clear_private_value(unsigned int i){
@@ -583,18 +536,12 @@ namespace viennacl{
     class symbolic_unary_tree_infos_base : public virtual symbolic_expression_tree_base{
       public:
         symbolic_unary_tree_infos_base(symbolic_expression_tree_base * sub, unary_operator * op) : sub_(sub), op_(op) { }
+
         symbolic_expression_tree_base & sub() const{ return *sub_; }
+
         unary_operator const & op() const{ return *op_; }
-        std::string name() const { return op_->name() + sub_->name(); }
 
-        void repr(std::ostringstream & oss) const {
-          oss << op_->name();
-          oss << '(';
-          sub_->repr(oss);
-          oss << ')';
-        }
-
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::profile_base const & prof){
           sub_->bind(shared_infos,prof);
         }
 
@@ -607,8 +554,13 @@ namespace viennacl{
 
         void write_back(unsigned int i, utils::kernel_generation_stream & kss){}
 
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const{
-          sub_->get_kernel_arguments(args);
+
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          return sub_->generate_header(n_arg, kss, already_enqueued);
+        }
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          return sub_->enqueue(n_arg, k, already_enqueued, prof);
         }
 
         void clear_private_value(unsigned int i){
@@ -660,11 +612,14 @@ namespace viennacl{
     /** @brief Base class for symbolic_vector, symbolic_matrix, ... */
     class symbolic_datastructure : public symbolic_expression_tree_base{
       public:
-        void private_value(unsigned int i, std::string const & new_name) { std::cout << name() << " " << i << std::endl; infos_->private_values[i] = new_name; }
+        void private_value(unsigned int i, std::string const & new_name) { infos_->private_values[i] = new_name; }
+
         void clear_private_value(unsigned int i) { infos_->private_values[i] = ""; }
-        std::string name() const { return infos_->name; }
+
         std::string const & scalartype() const { return infos_->scalartype; }
+
         unsigned int scalartype_size() const { return infos_->scalartype_size; }
+
         std::string aligned_scalartype() const {
           unsigned int alignment = infos_->alignment;
           std::string const & scalartype = infos_->scalartype;
@@ -676,8 +631,11 @@ namespace viennacl{
             return scalartype + utils::to_string(alignment);
           }
         }
+
         unsigned int alignment() const { return infos_->alignment; }
+
         void alignment(unsigned int val) { infos_->alignment = val; }
+
         virtual ~symbolic_datastructure(){ }
       protected:
         shared_symbolic_infos_t* infos_;
@@ -699,12 +657,15 @@ namespace viennacl{
       public:
         void fetch(unsigned int i, utils::kernel_generation_stream & kss){
           if(infos_->private_values[i].empty()){
-            std::string val = infos_->name + "_private" + utils::to_string(i);
+            std::string val = "private" + utils::to_string(infos_->id) + utils::to_string(i);
             std::string aligned_scalartype = infos_->scalartype;
             if(infos_->alignment > 1) aligned_scalartype += utils::to_string(infos_->alignment);
             kss << aligned_scalartype << " " << val << " = " << access_buffer(i) << ";" << std::endl;
             infos_->private_values[i] = val;
           }
+        }
+        std::string name() const{
+          return infos_->name;
         }
         virtual void write_back(unsigned int i, utils::kernel_generation_stream & kss){
           kss << access_buffer(i) << " = " << infos_->private_values[i] << ";" << std::endl;
@@ -735,19 +696,20 @@ namespace viennacl{
     class symbolic_vector_base : public symbolic_pointed_datastructure{
       public:
         symbolic_vector_base(size_t size) : size_(size) { }
-        std::string size() const{ return infos_->name + "_size"; }
+        std::string size() const{ return size_name; }
         size_t real_size() const { return size_; }
         virtual ~symbolic_vector_base(){ }
       protected:
         size_t size_;
+        std::string size_name;
     };
 
     /** @brief Base class for symbolic matrices */
     class symbolic_matrix_base : public symbolic_pointed_datastructure{
       public:
         symbolic_matrix_base(bool is_rowmajor) : is_rowmajor_(is_rowmajor){ }
-        std::string  internal_size1() const{ return infos_->name +"internal_size1_"; }
-        std::string  internal_size2() const{ return infos_->name +"internal_size2_"; }
+        std::string  internal_size1() const{ return size1_name; }
+        std::string  internal_size2() const{ return size2_name; }
         virtual size_t real_size1() const = 0;
         virtual size_t real_size2() const = 0;
         bool const is_rowmajor() const { return is_rowmajor_; }
@@ -760,6 +722,8 @@ namespace viennacl{
 
       protected:
         bool is_rowmajor_;
+        std::string size1_name;
+        std::string size2_name;
     };
 
     /** @brief Base class for symbolic matrix matrix products */
@@ -768,22 +732,11 @@ namespace viennacl{
         symbolic_matrix_matrix_product_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) :
           symbolic_binary_matrix_expression_base(lhs,op,rhs){
         }
+
         void set_val_name(std::string const & val_name) { val_name_ = val_name; }
-        void repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->repr(oss);
-          oss << ",";
-          rhs_->repr(oss);
-          oss << ")";
-        }
-        void simplified_repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->simplified_repr(oss);
-          oss << ",";
-          rhs_->simplified_repr(oss);
-          oss << ")";
-        }
+
         std::string val_name(unsigned int m, unsigned int n){ return val_name_ +  '_' + utils::to_string(m) + '_' + utils::to_string(n); }
+
         std::string update_val(std::string const & res, std::string const & lhs, std::string const & rhs){
           return res + " = " + op_->generate(res , lhs + "*" + rhs);
         }
@@ -793,23 +746,9 @@ namespace viennacl{
 
 
     /** @brief Base class for symbolic matrix vector products */
-    class symbolic_matrix_vector_product_base : public symbolic_binary_vector_expression_base{
+    class vector_reduction_base : public symbolic_binary_vector_expression_base{
       public:
-        symbolic_matrix_vector_product_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_vector_expression_base(lhs,new mul_type,rhs), op_reduce_(op){            }
-        void repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->repr(oss);
-          oss << ",";
-          rhs_->repr(oss);
-          oss << ")";
-        }
-        void simplified_repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->simplified_repr(oss);
-          oss << ",";
-          rhs_->simplified_repr(oss);
-          oss << ")";
-        }
+        vector_reduction_base( symbolic_expression_tree_base * lhs, binary_operator* op, symbolic_expression_tree_base * rhs) : symbolic_binary_vector_expression_base(lhs,new mul_type,rhs), op_reduce_(op){            }
         binary_operator const & op_reduce() const { return *op_reduce_; }
         void access_name(std::string const & str) { access_name_ = str; }
         std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
@@ -819,37 +758,18 @@ namespace viennacl{
     };
 
     /** @brief Base class for symbolic inner products */
-    class symbolic_inner_product_base : public symbolic_binary_scalar_expression_base {
+    class scalar_reduction_base : public symbolic_binary_scalar_expression_base {
       public:
-        symbolic_inner_product_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
-        bool is_computed(){ return current_kernel_; }
-        void set_computed(){ current_kernel_ = 1; }
-        void reset_state(){ current_kernel_ = 0; }
-        const char * scalartype() const { return handle_->scalartype_name(); }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const{
-          symbolic_binary_scalar_expression_base::get_kernel_arguments(args);
-          args.push_back(handle_);
-        }
-        void repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->repr(oss);
-          oss << ",";
-          rhs_->repr(oss);
-          oss << ")";
-        }
-        void simplified_repr(std::ostringstream & oss) const {
-          oss << "prod(";
-          lhs_->simplified_repr(oss);
-          oss << ",";
-          rhs_->simplified_repr(oss);
-          oss << ")";
-        }
+        scalar_reduction_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
+        virtual const char * scalartype() const = 0;
         binary_operator const & op_reduce() const { return *op_reduce_; }
         void access_name(std::string const & str) { access_name_ = str; }
-        std::string generate(unsigned int i, int vector_element = -1) const{ return access_name_; }
+        virtual symbolic_local_memory<1> make_local_memory(size_t size)=0;
+        virtual std::string sum_name()=0;
+        virtual std::string access(std::string const & str)=0;
+        virtual std::string name() const = 0;
       protected:
         viennacl::tools::shared_ptr<binary_operator> op_reduce_;
-        viennacl::tools::shared_ptr<symbolic_pointer_argument_base> handle_;
         std::string access_name_;
     };
 
@@ -869,6 +789,11 @@ namespace viennacl{
     }
 
     template<class T, class Pred>
+    static void extract_as(tools::shared_ptr<symbolic_expression_tree_base> const & root, std::list<T*> & args, Pred pred){
+      extract_as(root.get(), args, pred);
+    }
+
+    template<class T, class Pred>
     static void extract_as_unique(symbolic_expression_tree_base* root, std::list<T*> & args, Pred pred){
       if(symbolic_binary_expression_tree_infos_base* p = dynamic_cast<symbolic_binary_expression_tree_infos_base*>(root)){
         extract_as(&p->lhs(), args,pred);
@@ -880,20 +805,6 @@ namespace viennacl{
       if(T* t = dynamic_cast<T*>(root)){
         if(pred(t)) utils::unique_push_back(args,t);
       }
-    }
-
-    template<class T>
-    static unsigned int count_type(symbolic_expression_tree_base* root){
-      unsigned int res = 0;
-      if(symbolic_binary_expression_tree_infos_base* p = dynamic_cast<symbolic_binary_expression_tree_infos_base*>(root)){
-        res += count_type<T>(&p->lhs());
-        res += count_type<T>(&p->rhs());
-      }
-      else if(symbolic_unary_tree_infos_base* p = dynamic_cast<symbolic_unary_tree_infos_base*>(root)){
-        res += count_type<T>(&p->sub());
-      }
-      if(dynamic_cast<T*>(root)) return res+1;
-      else return res;
     }
 
     template<class T>
@@ -1009,6 +920,8 @@ namespace viennacl{
     class binary_vector_expression : public symbolic_binary_vector_expression_base{
       public:
         typedef typename LHS::ScalarType ScalarType;
+        typedef LHS Lhs;
+        typedef RHS Rhs;
         binary_vector_expression(LHS const & lhs, RHS const & rhs) :symbolic_binary_vector_expression_base( new LHS(lhs),new OP(),new RHS(rhs)){ }
     };
 
@@ -1018,10 +931,12 @@ namespace viennacl{
          * \tparam OP_REDUCE corresponding reduction operator
          */
     template<class LHS, class RHS, class OP_REDUCE>
-    class binary_vector_expression<LHS,reduce_type<OP_REDUCE>,RHS> : public symbolic_matrix_vector_product_base{
+    class binary_vector_expression<LHS,reduce_type<OP_REDUCE>,RHS> : public vector_reduction_base{
       public:
         typedef typename LHS::ScalarType ScalarType;
-        binary_vector_expression(LHS const & lhs, RHS const & rhs) : symbolic_matrix_vector_product_base(new LHS(lhs), new reduce_type<OP_REDUCE>(), new RHS(rhs)){ }
+        typedef LHS Lhs;
+        typedef RHS Rhs;
+        binary_vector_expression(LHS const & lhs, RHS const & rhs) : vector_reduction_base(new LHS(lhs), new reduce_type<OP_REDUCE>(), new RHS(rhs)){ }
     };
 
 
@@ -1054,6 +969,8 @@ namespace viennacl{
     class binary_matrix_expression<LHS,reduce_type<OP_REDUCE>,RHS> : public symbolic_matrix_matrix_product_base{
       public:
         typedef typename LHS::ScalarType ScalarType;
+        typedef LHS Lhs;
+        typedef RHS Rhs;
         binary_matrix_expression(LHS const & lhs, RHS const & rhs) : symbolic_matrix_matrix_product_base(new LHS(lhs), new reduce_type<OP_REDUCE>(), new RHS(rhs)){ }
       private:
 
@@ -1064,6 +981,7 @@ namespace viennacl{
     class unary_vector_expression : public symbolic_unary_vector_expression_base{
       public:
         typedef typename UNDERLYING::ScalarType ScalarType;
+        typedef UNDERLYING Underlying;
         unary_vector_expression(UNDERLYING const & underlying) :symbolic_unary_vector_expression_base(new UNDERLYING(underlying), new OP()){ }
     };
 
@@ -1072,6 +990,7 @@ namespace viennacl{
     class unary_scalar_expression : public symbolic_unary_scalar_expression_base{
       public:
         typedef typename UNDERLYING::ScalarType ScalarType;
+        typedef UNDERLYING Underlying;
         unary_scalar_expression(UNDERLYING const & underlying) :symbolic_unary_scalar_expression_base(new UNDERLYING(underlying), new OP()){ }
     };
 
@@ -1080,6 +999,7 @@ namespace viennacl{
     class unary_matrix_expression : public symbolic_unary_matrix_expression_base{
       public:
         typedef typename UNDERLYING::ScalarType ScalarType;
+        typedef UNDERLYING Underlying;
         unary_matrix_expression(UNDERLYING const & underlying) :symbolic_unary_matrix_expression_base(new UNDERLYING(underlying), new OP()){ }
     };
 
@@ -1095,32 +1015,7 @@ namespace viennacl{
     template<class ScalarType>
     std::map<cl_context, viennacl::vector<ScalarType> > inner_product_tempories<ScalarType>::map;
 
-    /** @brief Reduction from a vector to a scalar
-         *
-         * \tparam Reduction operator
-         */
-    template<class LHS, class OP_REDUCE, class RHS>
-    class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public symbolic_inner_product_base{
-        typedef typename LHS::ScalarType ScalarType;
-      public:
-        binary_scalar_expression(LHS const & lhs, RHS const & rhs):  symbolic_inner_product_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
-        , tmp_(inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()]){
-          tmp_.resize(1024);
-        }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
-          lhs_->bind(shared_infos,prof);
-          rhs_->bind(shared_infos,prof);
-          handle_.reset((new symbolic_pointer_argument<ScalarType>( name(), tmp_.handle(), 1)));
-        }
-        bool operator==(symbolic_expression_tree_base const & other) const{
-          if(binary_scalar_expression const * p = dynamic_cast<binary_scalar_expression const *>(&other)){
-            return tmp_.handle() == p->tmp_.handle();
-          }
-          return false;
-        }
-      private:
-        viennacl::vector<ScalarType> & tmp_;
-    };
+
 
 
 
@@ -1142,14 +1037,19 @@ namespace viennacl{
         void repr(std::ostringstream & oss) const{
           oss << "vscal" << first_letter_of<SCALARTYPE>::value();
         }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos
-                  ,code_generation::optimization_profile * prof){
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::profile_base const &prof){
           infos_= utils::unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this,
                                                                    tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType)))))->second.get();
         }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<ScalarType>(name(), val_)));
+
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          infos_->name = symbolic_value_argument<ScalarType>::generate_header("",  n_arg, kss, already_enqueued);
         }
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          symbolic_value_argument<ScalarType>::enqueue(val_, n_arg, k, already_enqueued);
+        }
+
         bool operator==(symbolic_expression_tree_base const & other) const{
           if(cpu_symbolic_scalar const * p = dynamic_cast<cpu_symbolic_scalar const *>(&other)) return val_ == p->val_;
           return false;
@@ -1167,17 +1067,14 @@ namespace viennacl{
       public:
         symbolic_constant(std::string const & expr) : expr_(expr){ }
         std::string generate(unsigned int i, int vector_element = -1) const { return expr_; }
-        void repr(std::ostringstream & oss) const {
-          oss << "cst" << expr_;
-        }
-        std::string name() const { return "cst"+expr_; }
         virtual void clear_private_value(unsigned int i){ }
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){ }
         void fetch(unsigned int i, utils::kernel_generation_stream & kss){ }
         void write_back(unsigned int i, utils::kernel_generation_stream & kss){ }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >& , code_generation::optimization_profile*){ }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >& , code_generation::profile_base const &){ }
         bool operator==(symbolic_expression_tree_base const & other) const{ return dynamic_cast<symbolic_constant const *>(&other); }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const { }
+        void generate_header(unsigned int &, std::ostringstream &, std::map<viennacl::backend::mem_handle, unsigned int> &) { }
+        void enqueue(unsigned int &, viennacl::ocl::kernel &, std::set<viennacl::backend::mem_handle> &, code_generation::profile_base const &) const { }
       private:
         std::string expr_;
     };
@@ -1200,12 +1097,15 @@ namespace viennacl{
         typedef SCALARTYPE ScalarType;
         gpu_symbolic_scalar(vcl_t const & vcl_scal) : vcl_scal_(vcl_scal){ }
         void const * handle() const{ return static_cast<void const *>(&vcl_scal_.handle()); }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::profile_base const & prof){
           infos_= utils::unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
                                                                     tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType)))))->second.get();
         }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_pointer_argument<ScalarType>(name(), vcl_scal_.handle(), 1)));
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          infos_->name = symbolic_pointer_argument<ScalarType>::generate_header(vcl_scal_.handle(), "__global ", 1, n_arg, kss, already_enqueued);
+        }
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          symbolic_pointer_argument<ScalarType>::enqueue(vcl_scal_.handle(), n_arg, k, already_enqueued);
         }
         bool operator==(symbolic_expression_tree_base const & other) const{
           if(gpu_symbolic_scalar const * p = dynamic_cast<gpu_symbolic_scalar const *>(&other)){
@@ -1239,39 +1139,45 @@ namespace viennacl{
     {
         typedef symbolic_matrix<VCL_MATRIX, ELEMENT_ACCESSOR, ROW_INDEX, COL_INDEX> self_type;
         std::string access_buffer(unsigned int i) const {
-          return elements_.access(row_index_.generate(i), col_index_.generate(i), is_rowmajor_);
+          return elements_.access(row_index_.generate(i), col_index_.generate(i), size1_name, size2_name, is_rowmajor_);
         }
       public:
         typedef VCL_MATRIX vcl_t;
         typedef typename vcl_t::value_type::value_type ScalarType;
+
         symbolic_matrix(size_t size1, size_t size2, ELEMENT_ACCESSOR const & elements, ROW_INDEX const & row_accessor, COL_INDEX const & col_index) : symbolic_matrix_base(utils::are_same_type<typename VCL_MATRIX::orientation_category,viennacl::row_major_tag>::value)
         , size1_(size1), size2_(size2), elements_(elements), row_index_(row_accessor), col_index_(col_index){ }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
+
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::profile_base const & prof){
           infos_= utils::unique_insert(shared_infos,std::make_pair( (symbolic_datastructure *)this,
-                                                                    tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
+                                                                    tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof.vectorization()))))->second.get();
 
           elements_.bind(shared_infos, prof, infos_);
         }
+
         ELEMENT_ACCESSOR const & elements() const { return elements_; }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          cl_uint size1_arg = cl_uint(size1_);
-          cl_uint size2_arg = cl_uint(size2_);
-          if(is_rowmajor_) size2_arg /= infos_->alignment;
-          else size1_arg /= infos_->alignment;
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(internal_size1(), size1_arg)));
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(internal_size2(), size2_arg)));
-
-
-          row_index_.get_kernel_arguments(args);
-          col_index_.get_kernel_arguments(args);
-          elements_.template get_kernel_arguments<ScalarType>(args);
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+            infos_->name = elements_.template generate_header<ScalarType>(n_arg,kss,already_enqueued);
+            row_index_.generate_header(n_arg, kss, already_enqueued);
+            col_index_.generate_header(n_arg, kss, already_enqueued);
+            size1_name = symbolic_value_argument<unsigned int>::generate_header("", n_arg, kss, already_enqueued);
+            size2_name = symbolic_value_argument<unsigned int>::generate_header("", n_arg, kss, already_enqueued);
         }
-        void repr(std::ostringstream & oss) const{
-           oss << "mat" << first_letter_of<typename VCL_MATRIX::value_type::value_type>::value() << (is_rowmajor_?'R':'C');
-           elements_.repr(oss);
-           row_index_.repr(oss);
-           col_index_.repr(oss);
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+            elements_.template enqueue<ScalarType>(n_arg,k,already_enqueued,prof);
+            row_index_.enqueue(n_arg, k, already_enqueued, prof);
+            col_index_.enqueue(n_arg, k, already_enqueued, prof);
+            cl_uint size1_arg = cl_uint(size1_);
+            cl_uint size2_arg = cl_uint(size2_);
+            if(is_rowmajor_)
+              size2_arg /= prof.vectorization();
+            else
+              size1_arg /= prof.vectorization();
+            symbolic_value_argument<unsigned int>::enqueue(size1_arg,n_arg,k,already_enqueued);
+            symbolic_value_argument<unsigned int>::enqueue(size2_arg,n_arg,k,already_enqueued);
         }
+
         bool operator==(symbolic_expression_tree_base const & other) const{
           if(symbolic_matrix const * p = dynamic_cast<symbolic_matrix const *>(&other))
             return typeid(other)==typeid(*this)
@@ -1280,7 +1186,9 @@ namespace viennacl{
                 &&elements_==p->elements_;
           return false;
         }
+
         size_t real_size1() const { return size1_; }
+
         size_t real_size2() const { return size2_; }
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
           row_index_.access_index(i, ind0, "0");
@@ -1311,26 +1219,30 @@ namespace viennacl{
       public:
         typedef SCALARTYPE ScalarType;
         symbolic_vector(size_t size, ELEMENT_ACCESSOR const & elements, INDEX const & accessor) : symbolic_vector_base(size), elements_(elements), index_(accessor){ }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::optimization_profile* prof){
-          infos_= utils::unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this, tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof->vectorization()))))->second.get();
-          elements_.bind(shared_infos,prof,infos_);
+
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::profile_base const & prof){
+          infos_= utils::unique_insert(shared_infos,std::make_pair((symbolic_datastructure *)this, tools::shared_ptr<shared_symbolic_infos_t>(new shared_symbolic_infos_t(shared_infos.size(),utils::print_type<ScalarType>::value(),sizeof(ScalarType), prof.vectorization()))))->second.get();
           index_.bind(shared_infos,prof);
+          elements_.bind(shared_infos,prof,infos_);
         }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          std::string arg_name = size();
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_value_argument<unsigned int>(arg_name, size_/infos_->alignment)));
-          elements_.template get_kernel_arguments<ScalarType>(args);
-          index_.get_kernel_arguments(args);
+
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          infos_->name = elements_.template generate_header<ScalarType>(n_arg,kss,already_enqueued);
+          index_.generate_header(n_arg,kss,already_enqueued);
+          size_name = symbolic_value_argument<unsigned int>::generate_header("", n_arg, kss, already_enqueued);
         }
-        void repr(std::ostringstream & oss) const{
-          oss << "vec" << first_letter_of<ScalarType>::value();
-          elements_.repr(oss);
-          index_.repr(oss);
+
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          elements_.template enqueue<ScalarType>(n_arg, k, already_enqueued, prof);
+          index_.enqueue(n_arg,k,already_enqueued, prof);
+          symbolic_value_argument<unsigned int>::enqueue(size_, n_arg, k, already_enqueued);
         }
+
         void access_index(unsigned int i, std::string const & ind0, std::string const & ind1){
           assert(ind1=="0");
           index_.access_index(i, ind0, "0");
         }
+
         bool operator==(symbolic_expression_tree_base const & other) const{
           if(symbolic_vector const * p = dynamic_cast<symbolic_vector const *>(&other))
             return elements_==p->elements_ && index_==p->index_;
@@ -1349,13 +1261,12 @@ namespace viennacl{
     class index_set : public symbolic_expression_tree_base{
       public:
         index_set() { }
-        void repr(std::ostringstream & oss) const { oss << "i"; }
-        std::string name() const { return "i"; }
         void access_index(unsigned int i, std::string const & ind0, std::string const &){ ind0s_[i] = ind0; }
-        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::optimization_profile* prof){ }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > >  & shared_infos, code_generation::profile_base const & prof){ }
         void fetch(unsigned int i, utils::kernel_generation_stream & kss){ }
         void write_back(unsigned int i, utils::kernel_generation_stream & kss){ }
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> > & args) const { }
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> &) { }
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const { }
         void clear_private_value(unsigned int i){ }
         std::string generate(unsigned int i, int vector_element = -1) const { return ind0s_.at(i); }
         bool operator==(symbolic_expression_tree_base const & other) const{ return dynamic_cast<index_set const *>(&other); }
@@ -1372,17 +1283,23 @@ namespace viennacl{
       public:
         handle_element_accessor(viennacl::backend::mem_handle const & h) : h_(h){ }
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos
-                  ,code_generation::optimization_profile* prof
+                  ,code_generation::profile_base const & prof
                   ,shared_symbolic_infos_t const * infos){ infos_ = infos; }
-        void repr(std::ostringstream & oss) const{ oss << "handle"; }
+
         template<class ScalarType>
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-          std::string arg_name = infos_->name;
-          utils::unique_push_back(args,tools::shared_ptr<symbolic_kernel_argument>(new symbolic_pointer_argument<ScalarType>(arg_name, h_, infos_->alignment)));
+        std::string generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          return symbolic_pointer_argument<ScalarType>::generate_header(h_, "__global", infos_->alignment, n_arg, kss, already_enqueued);
         }
+
+        template<class ScalarType>
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          return symbolic_pointer_argument<ScalarType>::enqueue(h_, n_arg, k, already_enqueued);
+        }
+
         bool operator==(handle_element_accessor const & other) const{
           return h_ == other.h_;
         }
+
       protected:
         shared_symbolic_infos_t const * infos_;
         viennacl::backend::mem_handle const & h_;
@@ -1391,14 +1308,12 @@ namespace viennacl{
     class matrix_handle_accessor : public handle_element_accessor{
       public:
         matrix_handle_accessor(viennacl::backend::mem_handle const & h) : handle_element_accessor(h){ }
-        std::string access(std::string const & ind1, std::string const & ind2, bool is_rowmajor) const{
+        std::string access(std::string const & ind1, std::string const & ind2, std::string const & size1, std::string const & size2, bool is_rowmajor) const{
           std::string ind;
           if(is_rowmajor){
-            std::string size2 = infos_->name + "internal_size2_";
             ind = '(' + ind1 + ')' + '*' + size2 + "+ (" + ind2 + ')';
           }
           else{
-            std::string size1 = infos_->name + "internal_size1_";
             ind = '(' + ind1 + ')' + "+ (" + ind2 + ')' + '*' + size1;
           }
           return infos_->name + "[" + ind + "]";
@@ -1408,21 +1323,29 @@ namespace viennacl{
     template<class MatrixT>
     class matrix_repmat_accessor : public handle_element_accessor {
       public:
-        matrix_repmat_accessor(size_t size1, size_t size2, viennacl::backend::mem_handle const & h) : handle_element_accessor(h), underlying_(size1,size2,matrix_handle_accessor(h),index_set(), index_set()){ }
-        std::string access(std::string const & ind1, std::string const & ind2, bool is_rowmajor) const{
-          return underlying_.elements().access(ind1 + "%" + underlying_.internal_size1(), ind2 + "%" + underlying_.internal_size2(), underlying_.is_rowmajor());
+        matrix_repmat_accessor(size_t size1, size_t size2, viennacl::backend::mem_handle const & h) : handle_element_accessor(h), underlying_(size1,size2,matrix_handle_accessor(h),index_set(), index_set()){
+
         }
+
+        std::string access(std::string const & ind1, std::string const & ind2, std::string const & size1, std::string const & size2, bool is_rowmajor) const{
+          return underlying_.elements().access(ind1 + "%" + underlying_.internal_size1(), ind2 + "%" + underlying_.internal_size2(), underlying_.internal_size1(), underlying_.internal_size2(), underlying_.is_rowmajor());
+        }
+
         void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos
-                  ,code_generation::optimization_profile* prof
+                  ,code_generation::profile_base const & prof
                   ,shared_symbolic_infos_t const * infos){
           underlying_.bind(shared_infos, prof);
         }
-        void repr(std::ostringstream & oss) const {
-          oss << "rep"; underlying_.repr(oss);
-        }
+
         template<class ScalarType>
-        void get_kernel_arguments(std::vector<tools::shared_ptr<symbolic_kernel_argument> >& args) const{
-         underlying_.get_kernel_arguments(args);
+        std::string generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued)  {
+           underlying_.generate_header(n_arg, kss, already_enqueued);
+           return underlying_.name();
+        }
+
+        template<class ScalarType>
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+           underlying_.enqueue(n_arg, k, already_enqueued, prof);
         }
       private:
         symbolic_matrix<MatrixT, matrix_handle_accessor, index_set, index_set> underlying_;
@@ -1436,7 +1359,7 @@ namespace viennacl{
     class matrix_diag_accessor : public handle_element_accessor{
       public:
         matrix_diag_accessor(viennacl::backend::mem_handle const & h) : handle_element_accessor(h){ }
-        std::string access(std::string const & ind1, std::string const & ind2, bool is_rowmajor) const{
+        std::string access(std::string const & ind1, std::string const & ind2, std::string size1, std::string size2, bool is_rowmajor) const{
           return '('+ind1+"=="+ind2+")?"+infos_->name+"["+ind1+"]:0";
         }
     };
@@ -1449,6 +1372,60 @@ namespace viennacl{
     };
 
 
+    /** @brief Reduction from a vector to a scalar
+         *
+         * \tparam Reduction operator
+         */
+    template<class LHS, class OP_REDUCE, class RHS>
+    class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public scalar_reduction_base{
+        typedef typename LHS::ScalarType ScalarType;
+      public:
+        typedef LHS Lhs;
+        typedef RHS Rhs;
+        binary_scalar_expression(LHS const & lhs, RHS const & rhs):  scalar_reduction_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
+                                                     ,tmp_(1024,vector_handle_accessor(inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()].handle()),index_set()){
+          inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()].resize(1024);
+        }
+        void generate_header(unsigned int & n_arg, std::ostringstream & kss, std::map<viennacl::backend::mem_handle, unsigned int> & already_enqueued) {
+          symbolic_binary_scalar_expression_base::generate_header(n_arg, kss, already_enqueued);
+          tmp_.generate_header(n_arg,kss,already_enqueued);
+        }
+        const char * scalartype() const {
+          return utils::print_type<ScalarType>::value();
+        }
+        void enqueue(unsigned int & n_arg, viennacl::ocl::kernel & k, std::set<viennacl::backend::mem_handle> & already_enqueued, code_generation::profile_base const & prof) const{
+          symbolic_binary_scalar_expression_base::enqueue(n_arg,k,already_enqueued,prof);
+          tmp_.enqueue(n_arg,k,already_enqueued,prof);
+        }
+        void bind(std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > & shared_infos, code_generation::profile_base const & prof){
+          lhs_->bind(shared_infos,prof);
+          rhs_->bind(shared_infos,prof);
+          tmp_.bind(shared_infos,prof);
+        }
+        std::string generate(unsigned int i, int vector_element = -1) const{
+            return access_name_;
+        }
+        std::string name() const{
+            return tmp_.name();
+        }
+
+        symbolic_local_memory<1> make_local_memory(size_t size){
+          return symbolic_local_memory<1>(tmp_.name()+"_local", size, utils::print_type<ScalarType>::value());
+        }
+        std::string sum_name(){
+          return tmp_.name() + "_reduced";
+        }
+        std::string access(const std::string &str){
+          return tmp_.name() + "[" + str + "]";
+        }
+
+        bool operator==(symbolic_expression_tree_base const & other) const{
+          return false;
+        }
+
+      private:
+        symbolic_vector<ScalarType, vector_handle_accessor, index_set> tmp_;
+    };
 
   }
 

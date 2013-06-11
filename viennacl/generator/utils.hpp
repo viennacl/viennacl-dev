@@ -50,6 +50,7 @@ namespace viennacl{
         return ss.str();
       }
 
+      //Are same type
       template<class T, class U>
       struct are_same_type
       {
@@ -61,7 +62,6 @@ namespace viennacl{
       {
           enum { value = 1 };
       };
-
 
       template<class Base,class Target>
       struct Base2Target { Target* operator ()( Base* value ) const { return dynamic_cast<Target*>(value); } };

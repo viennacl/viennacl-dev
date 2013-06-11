@@ -499,10 +499,10 @@ namespace viennacl{
     }
 
     template<class ScalarType>
-    symbolic_matrix<viennacl::matrix<ScalarType,viennacl::column_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >, index_set, index_set>
+    symbolic_matrix<viennacl::matrix<ScalarType,viennacl::row_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::row_major> >, index_set, index_set>
     repmat(viennacl::generator::vector<ScalarType> const & v, unsigned int repsize1, unsigned int repsize2){
       size_t size = v.get().size();
-      return symbolic_matrix<viennacl::matrix<ScalarType,viennacl::column_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >, index_set, index_set>(size*repsize1, repsize2, matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::column_major> >(size,1,v.get().handle()), index_set(), index_set());
+      return symbolic_matrix<viennacl::matrix<ScalarType,viennacl::row_major>,  matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::row_major> >, index_set, index_set>(size*repsize1, repsize2, matrix_repmat_accessor<viennacl::matrix<ScalarType,viennacl::row_major> >(size,1,v.get().handle()), index_set(), index_set());
     }
 
     template<class T>

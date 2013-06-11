@@ -26,7 +26,9 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/generator/templates/base_classes.hpp"
+#include "viennacl/generator/templates/generator_base.hpp"
+#include "viennacl/generator/templates/profile_base.hpp"
+
 #include "viennacl/generator/symbolic_types.hpp"
 
 namespace viennacl{
@@ -35,24 +37,23 @@ namespace viennacl{
 
     namespace code_generation{
 
-      namespace saxpy_vector{
 
         /** @brief profile template for the SAXPY kernel
         *
         *   Possibility of loop unrolling.
         *   No persistent threads (yet ?).
         */
-        class profile : public optimization_profile{
+        class saxpy_vector_profile : public profile_base{
           public:
 
             /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
-            profile(){
+            saxpy_vector_profile(){
               loop_unroll_ = 1;
               group_size_ = 128;
             }
 
             /** @brief The user constructor */
-            profile(unsigned int vectorization, unsigned int loop_unroll, size_t group_size0) : optimization_profile(vectorization){
+            saxpy_vector_profile(unsigned int vectorization, unsigned int loop_unroll, size_t group_size0) : profile_base(vectorization){
               loop_unroll_ = loop_unroll;
               group_size_ = group_size0;
             }
@@ -86,7 +87,7 @@ namespace viennacl{
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
             bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return optimization_profile::is_invalid(dev,0);
+              return profile_base::is_invalid(dev,0);
             }
 
           private:
@@ -94,51 +95,45 @@ namespace viennacl{
             unsigned int group_size_;
         };
 
-        class generator : public code_generation::generator{
+        class saxpy_vector_generator : public generator_base{
           public:
-            generator(std::list<symbolic_binary_vector_expression_base* > const & vector_expressions
-                      ,std::list<symbolic_binary_scalar_expression_base *> const & scalar_expressions
-                      ,profile * kernel_config): vector_expressions_(vector_expressions), scalar_expressions_(scalar_expressions), profile_(kernel_config) { }
+            saxpy_vector_generator(saxpy_vector_profile * prof) : generator_base(prof) { }
 
+          private:
+            void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
+              saxpy_vector_profile * casted_prof = static_cast<saxpy_vector_profile *>(prof_.get());
 
-            void operator()(utils::kernel_generation_stream& kss){
-              symbolic_vector_base * first_vector = static_cast<symbolic_vector_base*>(&(*vector_expressions_.begin())->lhs());
-              unsigned int n_unroll = profile_->loop_unroll();
+              symbolic_vector_base * first_vector = static_cast<symbolic_vector_base*>(&(*expressions_.begin())->lhs());
+              unsigned int n_unroll = casted_prof->loop_unroll();
               kss << "int i = get_global_id(0)" ; if(n_unroll>1) kss << "*" << n_unroll; kss << ";" << std::endl;
               kss << "if(i<" << first_vector->size() << "){" << std::endl;
               kss.inc_tab();
               //Set access indices
-              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it=expressions_.begin() ; it!=expressions_.end();++it)
                 for(unsigned int j=0 ; j < n_unroll ; ++j){
                   if(j==0) (*it)->access_index(j,"i","0");
                   else (*it)->access_index(j,"i + " + utils::to_string(j),"0");
                   (*it)->fetch(j,kss);
                 }
               //Compute expressions
-              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it=expressions_.begin() ; it!=expressions_.end();++it)
                 for(unsigned int j=0 ; j < n_unroll ; ++j)
                   kss << (*it)->generate(j) << ";" << std::endl;
-              for(std::list<symbolic_binary_vector_expression_base*>::iterator it=vector_expressions_.begin() ; it!=vector_expressions_.end();++it)
+              for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it=expressions_.begin() ; it!=expressions_.end();++it)
                 for(unsigned int j=0 ; j < n_unroll ; ++j)
                   (*it)->write_back(j,kss);
               kss << "}" << std::endl;
               kss.dec_tab();
 
               for(unsigned int i=0 ; i < n_unroll ; ++i)
-                for(std::list<symbolic_binary_vector_expression_base*>::iterator it = vector_expressions_.begin(); it != vector_expressions_.end() ; ++it)
+                for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin(); it != expressions_.end() ; ++it)
                   (*it)->clear_private_value(i);
-              for(std::list<symbolic_binary_scalar_expression_base*>::iterator it = scalar_expressions_.begin() ; it != scalar_expressions_.end(); ++it)
-                  (*it)->clear_private_value(0);
 
             }
 
-          private:
-            std::list<symbolic_binary_vector_expression_base* >  vector_expressions_;
-            std::list<symbolic_binary_scalar_expression_base* >  scalar_expressions_;
-            profile * profile_;
+
         };
 
-      }
 
     }
 
