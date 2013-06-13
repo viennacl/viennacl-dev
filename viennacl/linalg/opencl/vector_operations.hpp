@@ -53,6 +53,8 @@ namespace viennacl
       void av(vector_base<T> & vec1, 
               vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -94,6 +96,9 @@ namespace viennacl
                 vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -157,6 +162,9 @@ namespace viennacl
                   vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -247,6 +255,8 @@ namespace viennacl
       template <typename T>
       void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -274,6 +284,9 @@ namespace viennacl
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -309,6 +322,9 @@ namespace viennacl
                            vector_base<T> const & vec2,
                            vector_base<T> & partial_result)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
       
@@ -347,6 +363,9 @@ namespace viennacl
                            vector_base<T> const & vec2,
                            scalar<T> & result)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         
         static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
@@ -387,6 +406,8 @@ namespace viennacl
                           vector_base<T> const & vec2,
                           T & result)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
         static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
@@ -423,6 +444,8 @@ namespace viennacl
                                vector_base<T> & partial_result,
                                 cl_uint norm_id)
       {
+        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         
@@ -452,6 +475,8 @@ namespace viennacl
       void norm_1_impl(vector_base<T> const & vec,
                        scalar<T> & result)
       {
+        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
         static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
@@ -521,6 +546,8 @@ namespace viennacl
       void norm_2_impl(vector_base<T> const & vec,
                        scalar<T> & result)
       {
+        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
         static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
@@ -590,6 +617,8 @@ namespace viennacl
       void norm_inf_impl(vector_base<T> const & vec,
                          scalar<T> & result)
       {
+        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
         static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
@@ -699,6 +728,8 @@ namespace viennacl
                           vector_base<T> & vec2,
                           T alpha, T beta)
       {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::kernels::vector<T, 1>::init(ctx);
         

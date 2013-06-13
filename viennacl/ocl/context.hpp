@@ -426,7 +426,12 @@ namespace viennacl
         {
           return h_.get() < other.h_.get();
         }
-        
+
+        bool operator==(context const & other) const
+        {
+          return h_.get() == other.h_.get();
+        }
+
       private:
         /** @brief Initialize a new context. Reuse any previously supplied information (devices, queues) */
         void init_new()
