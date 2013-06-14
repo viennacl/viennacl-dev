@@ -140,6 +140,12 @@ namespace viennacl
       enum { value = true };
     };
     
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_circulant_matrix<const viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
     //
     // is_hankel_matrix
     //
@@ -151,6 +157,12 @@ namespace viennacl
 
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_hankel_matrix<viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+    
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_hankel_matrix<const viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
@@ -169,7 +181,13 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_toeplitz_matrix<const viennacl::toeplitz_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
     //
     // is_vandermonde_matrix
     //
@@ -185,6 +203,11 @@ namespace viennacl
       enum { value = true };
     };
     
+    template <typename ScalarType, unsigned int ALIGNMENT>
+    struct is_vandermonde_matrix<const viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
     
     
     //
@@ -279,6 +302,12 @@ namespace viennacl
     struct is_any_sparse_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
+    };
+
+    template <typename T>
+    struct is_any_sparse_matrix<const T>
+    {
+      enum { value = is_any_sparse_matrix<T>::value };
     };
 
     /** \endcond */

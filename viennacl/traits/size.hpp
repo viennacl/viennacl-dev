@@ -147,12 +147,6 @@ namespace viennacl
     }
 
     /** \cond */
-    template <typename LHS, typename RHS, typename OP>
-    vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
-    {
-      return size(proxy.lhs());
-    }
-
     template <typename SparseMatrixType, typename VectorType>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vcl_size_t >::type
@@ -160,7 +154,19 @@ namespace viennacl
     {
       return proxy.lhs().size1(); 
     }
-    
+
+    template <typename T, unsigned int A, typename VectorType>
+    vcl_size_t size(vector_expression<const circulant_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
+
+    template <typename T, unsigned int A, typename VectorType>
+    vcl_size_t size(vector_expression<const hankel_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
+
+    template <typename T, unsigned int A, typename VectorType>
+    vcl_size_t size(vector_expression<const toeplitz_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
+
+    template <typename T, unsigned int A, typename VectorType>
+    vcl_size_t size(vector_expression<const vandermonde_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
+
     template <typename NumericT, typename F>
     vcl_size_t size(vector_expression<const matrix_base<NumericT, F>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
     {
@@ -174,8 +180,8 @@ namespace viennacl
     {
       return proxy.lhs().lhs().size2();
     }
-    
-    
+
+
     #ifdef VIENNACL_WITH_MTL4
     template <typename ScalarType>
     vcl_size_t size(mtl::dense_vector<ScalarType> const & vec) { return vec.used_memory(); }
@@ -185,6 +191,13 @@ namespace viennacl
     inline vcl_size_t size(Eigen::VectorXf const & v) { return v.rows(); }
     inline vcl_size_t size(Eigen::VectorXd const & v) { return v.rows(); }
     #endif
+    
+    template <typename LHS, typename RHS, typename OP>
+    vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
+    {
+      return size(proxy.lhs());
+    }
+
     /** \endcond */
 
     

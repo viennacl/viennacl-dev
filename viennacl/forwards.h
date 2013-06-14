@@ -57,6 +57,13 @@ namespace viennacl
   typedef std::ptrdiff_t                                    vcl_ptrdiff_t;
  
   
+  /** @brief A tag class representing assignment */
+  struct op_assign;
+  /** @brief A tag class representing inplace addition */
+  struct op_inplace_add;
+  /** @brief A tag class representing inplace subtraction */
+  struct op_inplace_sub;
+  
   /** @brief A tag class representing addition */
   struct op_add;
   /** @brief A tag class representing subtraction */
@@ -83,7 +90,6 @@ namespace viennacl
 
   /** @brief A tag class representing sign flips (for scalars only. Vectors and matrices use the standard multiplication by the scalar -1.0) */
   struct op_flip_sign;
-  
 
   //forward declaration of basic types:
   template<class TYPE>

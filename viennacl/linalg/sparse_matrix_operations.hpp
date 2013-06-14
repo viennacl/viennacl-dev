@@ -241,31 +241,6 @@ namespace viennacl
   }
 
 
-  /** @brief Implementation of the operation v1 = A * v2, where A is a sparse matrix
-  *
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
-  template <typename SparseMatrixType>
-  typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
-                                viennacl::vector<SCALARTYPE, ALIGNMENT> & >::type
-  viennacl::vector<SCALARTYPE, ALIGNMENT>::operator=(const viennacl::vector_expression< const SparseMatrixType,
-                                                                                        const viennacl::vector_base<SCALARTYPE>,
-                                                                                        viennacl::op_prod> & proxy) 
-  {
-    // check for the special case x = A * x
-    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-    {
-      viennacl::vector<SCALARTYPE, ALIGNMENT> temp(proxy.lhs().size1());
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), temp);
-      *this = temp;
-      return *this;
-    }
-
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-    return *this;
-  }
-
   //v += A * x
   /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
   *

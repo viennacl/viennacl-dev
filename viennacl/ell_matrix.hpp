@@ -167,7 +167,93 @@ namespace viennacl
       }
     }
 
-    
+    namespace linalg
+    {
+      namespace detail
+      {
+        // x = A * y
+        template <typename T, unsigned int A>
+        struct op_executor<vector_base<T>, op_assign, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
+            {
+              // check for the special case x = A * x
+              if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
+              {
+                viennacl::vector<T> temp(rhs.lhs().size1());
+                viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
+                lhs = temp;
+              }
+
+              viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+            }
+        };
+
+        template <typename T, unsigned int A>
+        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
+            {
+              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
+              lhs += temp;
+            }
+        };
+
+        template <typename T, unsigned int A>
+        struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
+            {
+              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
+              lhs -= temp;
+            }
+        };
+
+
+        // x = A * vec_op
+        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        struct op_executor<vector_base<T>, op_assign, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
+            {
+              viennacl::vector<T> temp(rhs.rhs());
+              viennacl::linalg::prod_impl(rhs.lhs(), temp, lhs);
+            }
+        };
+
+        // x = A * vec_op
+        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const ell_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
+            {
+              viennacl::vector<T> temp(rhs.rhs());
+              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
+              lhs += temp_result;
+            }
+        };
+
+        // x = A * vec_op
+        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
+        {
+            static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
+            {
+              viennacl::vector<T> temp(rhs.rhs());
+              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
+              lhs -= temp_result;
+            }
+        };
+
+
+        
+     } // namespace detail
+   } // namespace linalg
+
 }
 
 #endif
