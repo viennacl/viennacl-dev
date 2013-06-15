@@ -751,7 +751,7 @@ namespace viennacl
 	* @param k Corresponding kernel
 	*/
     template<cl_kernel_info param>
-    static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k)
+    typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k)
     {
         typedef typename detail::return_type<cl_kernel, param>::Result res_t;
         return detail::get_info_impl<res_t>()(k.handle_.get(),param);
@@ -763,7 +763,7 @@ namespace viennacl
 	 * @param d Corresponding device
 	 */
     template<cl_kernel_info param>
-    static typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d)
+    typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d)
     {
         typedef typename detail::return_type<cl_kernel, param>::Result res_t;
         return detail::get_info_impl<res_t>()(k.handle_.get(),d.id(),param);

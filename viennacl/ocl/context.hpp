@@ -246,7 +246,7 @@ namespace viennacl
           typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
           
           // find queue:
-          typename QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
+          QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
           if (it != queues_.end())
             return (it->second)[0];
           
