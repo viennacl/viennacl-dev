@@ -580,12 +580,12 @@ namespace viennacl
       */
       static void checkError(cl_int err,
           #ifdef VIENNACL_DEBUG_ALL
-                             const std::string & file,
-                             const std::string & func,
+                             const char * file,
+                             const char * func,
                              int line)
           #else
-                             const std::string &,
-                             const std::string &,
+                             const char *,
+                             const char *,
                              int)
           #endif
       {
