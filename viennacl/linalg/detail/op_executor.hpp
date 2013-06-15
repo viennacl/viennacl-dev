@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -31,7 +31,7 @@ namespace viennacl
       {
         return false;
       }
-      
+
       template <typename T>
       bool op_aliasing(vector_base<T> const & lhs, vector_base<T> const & b)
       {
@@ -43,7 +43,7 @@ namespace viennacl
       {
         return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
       }
-      
+
 
 
       /** @brief Worker class for decomposing expression templates.
@@ -54,30 +54,8 @@ namespace viennacl
       */
       template <typename A, typename OP, typename T>
       struct op_executor {};
-    
-      // generic x = vec_expr1 + vec_expr2:
-      template <typename A, typename LHS, typename RHS>
-      struct op_executor<A, op_assign, vector_expression<const LHS, const RHS, op_add> >
-      {
-          static void apply(A & lhs, vector_expression<const LHS, const RHS, op_add> const & proxy)
-          {
-            bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
-            bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
-            if (op_aliasing_lhs || op_aliasing_rhs)
-            {
-              A temp(proxy.lhs());
-              op_executor<A, op_inplace_add, RHS>::apply(temp, proxy.rhs());
-              lhs = temp;
-            }
-            else
-            {
-              op_executor<A, op_assign, LHS>::apply(lhs, proxy.lhs());
-              op_executor<A, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
-            }
-          }
-      };
-      
+
+
       // generic x += vec_expr1 + vec_expr2:
       template <typename A, typename LHS, typename RHS>
       struct op_executor<A, op_inplace_add, vector_expression<const LHS, const RHS, op_add> >
@@ -86,7 +64,7 @@ namespace viennacl
           {
             bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
             bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
+
             if (op_aliasing_lhs || op_aliasing_rhs)
             {
               A temp(proxy.lhs());
@@ -109,7 +87,7 @@ namespace viennacl
           {
             bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
             bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
+
             if (op_aliasing_lhs || op_aliasing_rhs)
             {
               A temp(proxy.lhs());
@@ -125,7 +103,7 @@ namespace viennacl
       };
 
       ////////////////////////////////////////////////
-      
+
       // generic x = vec_expr1 - vec_expr2:
       template <typename A, typename LHS, typename RHS>
       struct op_executor<A, op_assign, vector_expression<const LHS, const RHS, op_sub> >
@@ -134,7 +112,7 @@ namespace viennacl
           {
             bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
             bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
+
             if (op_aliasing_lhs || op_aliasing_rhs)
             {
               A temp(proxy.lhs());
@@ -148,7 +126,7 @@ namespace viennacl
             }
           }
       };
-      
+
       // generic x += vec_expr1 - vec_expr2:
       template <typename A, typename LHS, typename RHS>
       struct op_executor<A, op_inplace_add, vector_expression<const LHS, const RHS, op_sub> >
@@ -157,7 +135,7 @@ namespace viennacl
           {
             bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
             bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
+
             if (op_aliasing_lhs || op_aliasing_rhs)
             {
               A temp(proxy.lhs());
@@ -180,7 +158,7 @@ namespace viennacl
           {
             bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
             bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
-            
+
             if (op_aliasing_lhs || op_aliasing_rhs)
             {
               A temp(proxy.lhs());
@@ -194,7 +172,7 @@ namespace viennacl
             }
           }
       };
-    
+
     }
   }
 }

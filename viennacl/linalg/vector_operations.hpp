@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -46,17 +46,17 @@ namespace viennacl
   namespace linalg
   {
     template <typename T, typename ScalarType1>
-    void av(vector_base<T> & vec1, 
-            vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha) 
+    void av(vector_base<T> & vec1,
+            vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)"));
-      
+
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
@@ -70,16 +70,16 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     template <typename T, typename ScalarType1, typename ScalarType2>
-    void avbv(vector_base<T> & vec1, 
+    void avbv(vector_base<T> & vec1,
               vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-              vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+              vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
-      
+
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
@@ -87,7 +87,7 @@ namespace viennacl
                                                   vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                   vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::avbv(vec1,
                                          vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -105,16 +105,16 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     template <typename T, typename ScalarType1, typename ScalarType2>
     void avbv_v(vector_base<T> & vec1,
                 vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta) 
+                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
-      
+
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
@@ -122,7 +122,7 @@ namespace viennacl
                                                     vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
                                                     vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::avbv_v(vec1,
                                            vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -140,8 +140,8 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     /** @brief Assign a constant value to a vector (-range/-slice)
     *
     * @param vec1   The vector to which the value should be assigned
@@ -155,7 +155,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::vector_assign(vec1, alpha);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_assign(vec1, alpha);
           break;
@@ -170,7 +170,7 @@ namespace viennacl
       }
     }
 
-    
+
     /** @brief Swaps the contents of two vectors, data is copied
     *
     * @param vec1   The first vector (or -range, or -slice)
@@ -186,7 +186,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::vector_swap(vec1, vec2);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::vector_swap(vec1, vec2);
           break;
@@ -200,12 +200,12 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     ///////////////////////// Elementwise operations /////////////
-    
-    
-    
+
+
+
     /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
     *
     * @param vec1   The result vector (or -range, or -slice)
@@ -222,7 +222,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::element_op(vec1, proxy);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::element_op(vec1, proxy);
           break;
@@ -239,32 +239,32 @@ namespace viennacl
 
 
 
-    
+
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_prod>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_mult>
     element_prod(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_prod>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_mult>(v1, v2);
     }
 
     template <typename V1, typename V2, typename OP, typename T>
     viennacl::vector<T>
     element_prod(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
     {
-      viennacl::vector<T> temp = proxy; 
+      viennacl::vector<T> temp = proxy;
       temp = element_prod(temp, v2);
       return temp;
     }
-    
+
     template <typename T, typename V2, typename V3, typename OP>
     viennacl::vector<T>
     element_prod(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
     {
-      viennacl::vector<T> temp = proxy; 
+      viennacl::vector<T> temp = proxy;
       temp = element_prod(v1, temp);
       return temp;
     }
-    
+
     template <typename V1, typename V2, typename OP1,
               typename V3, typename V4, typename OP2>
     viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
@@ -272,24 +272,24 @@ namespace viennacl
                  vector_expression<const V3, const V4, OP2> const & proxy2)
     {
       typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp1 = proxy1; 
+      VectorType temp1 = proxy1;
       VectorType temp2 = proxy2;
       temp1 = element_prod(temp1, temp2);
       return temp1;
     }
-    
 
-    
-    
-    
-    
+
+
+
+
+
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_div>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_div>
     element_div(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_div>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_div>(v1, v2);
     }
-    
+
     template <typename V1, typename V2, typename OP, typename T>
     viennacl::vector<T>
     element_div(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
@@ -298,7 +298,7 @@ namespace viennacl
       temp = element_div(temp, v2);
       return temp;
     }
-    
+
     template <typename T, typename V2, typename V3, typename OP>
     viennacl::vector<T>
     element_div(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
@@ -307,7 +307,7 @@ namespace viennacl
       temp = element_div(v1, temp);
       return temp;
     }
-    
+
     template <typename V1, typename V2, typename OP1,
               typename V3, typename V4, typename OP2>
     viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
@@ -315,14 +315,14 @@ namespace viennacl
                 vector_expression<const V3, const V4, OP2> const & proxy2)
     {
       typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp1 = proxy1; 
-      VectorType temp2 = proxy2; 
+      VectorType temp1 = proxy1;
+      VectorType temp2 = proxy2;
       temp1 = element_div(temp1, temp2);
       return temp1;
     }
-    
-    
-    
+
+
+
     ///////////////////////// Norms and inner product ///////////////////
 
 
@@ -340,18 +340,18 @@ namespace viennacl
                          scalar<T> & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
-      
+
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::inner_prod_impl(vec1, vec2, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
-#ifdef VIENNACL_WITH_CUDA          
+#ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::inner_prod_impl(vec1, vec2, result);
           break;
@@ -360,7 +360,7 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
+
     // vector expression on lhs
     template <typename LHS, typename RHS, typename OP, typename T>
     void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
@@ -370,8 +370,8 @@ namespace viennacl
       viennacl::vector<T> temp = vec1;
       inner_prod_impl(temp, vec2, result);
     }
-    
-    
+
+
     // vector expression on rhs
     template <typename T, typename LHS, typename RHS, typename OP>
     void inner_prod_impl(vector_base<T> const & vec1,
@@ -381,7 +381,7 @@ namespace viennacl
       viennacl::vector<T> temp = vec2;
       inner_prod_impl(vec1, temp, result);
     }
-    
+
 
     // vector expression on lhs and rhs
     template <typename LHS1, typename RHS1, typename OP1,
@@ -394,9 +394,9 @@ namespace viennacl
       viennacl::vector<T> temp2 = vec2;
       inner_prod_impl(temp1, temp2, result);
     }
-    
-    
-    
+
+
+
 
     /** @brief Computes the inner product of two vectors with the final reduction step on the CPU - dispatcher interface
      *
@@ -410,13 +410,13 @@ namespace viennacl
                         T & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
-      
+
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::inner_prod_impl(vec1, vec2, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::inner_prod_cpu(vec1, vec2, result);
           break;
@@ -430,7 +430,7 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
+
     // vector expression on lhs
     template <typename LHS, typename RHS, typename OP, typename T>
     void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
@@ -440,8 +440,8 @@ namespace viennacl
       viennacl::vector<T> temp = vec1;
       inner_prod_cpu(temp, vec2, result);
     }
-    
-    
+
+
     // vector expression on rhs
     template <typename T, typename LHS, typename RHS, typename OP>
     void inner_prod_cpu(vector_base<T> const & vec1,
@@ -451,7 +451,7 @@ namespace viennacl
       viennacl::vector<T> temp = vec2;
       inner_prod_cpu(vec1, temp, result);
     }
-    
+
 
     // vector expression on lhs and rhs
     template <typename LHS1, typename RHS1, typename OP1,
@@ -464,11 +464,11 @@ namespace viennacl
       viennacl::vector<S3> temp2 = vec2;
       inner_prod_cpu(temp1, temp2, result);
     }
-    
 
-    
-    
-    
+
+
+
+
     /** @brief Computes the l^1-norm of a vector - dispatcher interface
     *
     * @param vec The vector
@@ -483,7 +483,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_1_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_1_impl(vec, result);
           break;
@@ -497,8 +497,8 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     /** @brief Computes the l^1-norm of a vector - interface for a vector expression. Creates a temporary.
     *
     * @param vec    The vector expression
@@ -511,8 +511,8 @@ namespace viennacl
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_1_impl(temp, result);
     }
-    
-    
+
+
 
     /** @brief Computes the l^1-norm of a vector with final reduction on the CPU
     *
@@ -528,7 +528,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_1_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_1_cpu(vec, result);
           break;
@@ -555,10 +555,10 @@ namespace viennacl
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_1_cpu(temp, result);
     }
-    
-    
-    
-    
+
+
+
+
     /** @brief Computes the l^2-norm of a vector - dispatcher interface
     *
     * @param vec The vector
@@ -573,7 +573,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_2_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_2_impl(vec, result);
           break;
@@ -600,8 +600,8 @@ namespace viennacl
       viennacl::vector<T> temp = vec;
       norm_2_impl(temp, result);
     }
-    
-    
+
+
     /** @brief Computes the l^2-norm of a vector with final reduction on the CPU - dispatcher interface
     *
     * @param vec The vector
@@ -616,7 +616,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_2_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_2_cpu(vec, result);
           break;
@@ -630,7 +630,7 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
+
     /** @brief Computes the l^2-norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
     *
     * @param vec    The vector expression
@@ -643,10 +643,10 @@ namespace viennacl
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_2_cpu(temp, result);
     }
-    
-    
-    
-    
+
+
+
+
     /** @brief Computes the supremum-norm of a vector
     *
     * @param vec The vector
@@ -661,7 +661,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_inf_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_inf_impl(vec, result);
           break;
@@ -688,8 +688,8 @@ namespace viennacl
       viennacl::vector<T> temp = vec;
       norm_inf_impl(temp, result);
     }
-    
-    
+
+
     /** @brief Computes the supremum-norm of a vector with final reduction on the CPU
     *
     * @param vec The vector
@@ -704,7 +704,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::norm_inf_impl(vec, result);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::norm_inf_cpu(vec, result);
           break;
@@ -731,10 +731,10 @@ namespace viennacl
       viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
       norm_inf_cpu(temp, result);
     }
-    
-    
-    //This function should return a CPU scalar, otherwise statements like 
-    // vcl_rhs[index_norm_inf(vcl_rhs)] 
+
+
+    //This function should return a CPU scalar, otherwise statements like
+    // vcl_rhs[index_norm_inf(vcl_rhs)]
     // are ambiguous
     /** @brief Computes the index of the first entry that is equal to the supremum-norm in modulus.
     *
@@ -748,7 +748,7 @@ namespace viennacl
       {
         case viennacl::MAIN_MEMORY:
           return viennacl::linalg::host_based::index_norm_inf(vec);
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           return viennacl::linalg::opencl::index_norm_inf(vec);
 #endif
@@ -760,7 +760,7 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
+
     /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
     *
     * @param vec    The vector expression
@@ -772,7 +772,7 @@ namespace viennacl
       return index_norm_inf(temp);
     }
 
-    
+
     /** @brief Computes a plane rotation of two vectors.
     *
     * Computes (x,y) <- (alpha * x + beta * y, -beta * x + alpha * y)
@@ -792,7 +792,7 @@ namespace viennacl
         case viennacl::MAIN_MEMORY:
           viennacl::linalg::host_based::plane_rotation(vec1, vec2, alpha, beta);
           break;
-#ifdef VIENNACL_WITH_OPENCL          
+#ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::plane_rotation(vec1, vec2, alpha, beta);
           break;
@@ -806,7 +806,7 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
+
   } //namespace linalg
 } //namespace viennacl
 
