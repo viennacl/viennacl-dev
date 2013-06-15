@@ -1843,7 +1843,7 @@ namespace viennacl
       {
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_div> const & proxy)
         {
-          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, false);
+          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, true);
         }
       };
 

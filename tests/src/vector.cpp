@@ -301,7 +301,7 @@ int test(Epsilon const& epsilon,
   // --------------------------------------------------------------------------
   
   std::cout << "Testing assignments..." << std::endl;
-  NumericT val = static_cast<NumericT>(1e-3);
+  NumericT val = static_cast<NumericT>(1e-1);
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = val;
 
@@ -316,7 +316,7 @@ int test(Epsilon const& epsilon,
   // multiplication and division of vectors by scalars
   //
   std::cout << "Testing scaling with CPU scalar..." << std::endl;
-  NumericT alpha = static_cast<NumericT>(2.7182);
+  NumericT alpha = static_cast<NumericT>(1.7182);
   viennacl::scalar<NumericT> gpu_alpha = alpha;
 
   ublas_v1  *= alpha;
@@ -354,7 +354,8 @@ int test(Epsilon const& epsilon,
   //
   // add and inplace_add of vectors
   //
-    
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
@@ -414,6 +415,8 @@ int test(Epsilon const& epsilon,
   // multiply-add
   //
   std::cout << "Testing multiply-add on vector with CPU scalar (right)..." << std::endl;
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
@@ -534,6 +537,8 @@ int test(Epsilon const& epsilon,
   // division-add
   //
   std::cout << "Testing division-add on vector with CPU scalar (right)..." << std::endl;
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
@@ -701,6 +706,8 @@ int test(Epsilon const& epsilon,
   // multiply-subtract
   //
   std::cout << "Testing multiply-subtract on vector with CPU scalar (right)..." << std::endl;
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
@@ -820,6 +827,8 @@ int test(Epsilon const& epsilon,
   // division-subtract
   //
   std::cout << "Testing division-subtract on vector with CPU scalar (right)..." << std::endl;
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
@@ -861,6 +870,17 @@ int test(Epsilon const& epsilon,
 
   ublas_v1 -= ublas_v2 / alpha;
   vcl_v1   -=   vcl_v2 / alpha;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  std::cout << "Testing inplace division-subtract on vector with GPU scalar..." << std::endl;
+  ublas_v2 = 3.1415 * ublas_v1;
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+  ublas_v1 -= ublas_v2 / alpha;
+  vcl_v1   -=   vcl_v2 / gpu_alpha;
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -1004,7 +1024,8 @@ int test(Epsilon const& epsilon,
   //
   // More complicated expressions (for ensuring the operator overloads work correctly)
   //
-  
+  for (size_t i=0; i < ublas_v1.size(); ++i)
+    ublas_v1(i) = NumericT(1.0) + random<NumericT>();
   ublas_v2 = 3.1415 * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
