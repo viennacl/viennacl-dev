@@ -121,19 +121,19 @@ namespace viennacl{
 
             void generate_body_impl(unsigned int kernel_id, utils::kernel_generation_stream& kss){
               scalar_reduction_profile * casted_prof = static_cast<scalar_reduction_profile *>(prof_.get());
-              std::list<scalar_reduction_base*>  inner_prods;
+              std::list<symbolic_scalar_reduction_base*>  inner_prods;
               std::list<symbolic_vector_base *>  vectors;
               std::list<symbolic_pointer_scalar_base *> gpu_scalars;
               for(std::list<tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::const_iterator it=expressions_.begin() ; it!=expressions_.end() ; ++it){
                 extract_as(*it,vectors,utils::is_type<symbolic_vector_base>());
                 extract_as(*it,gpu_scalars,utils::is_type<symbolic_pointer_scalar_base>());
-                extract_as(*it,inner_prods,utils::is_type<scalar_reduction_base>());
+                extract_as(*it,inner_prods,utils::is_type<symbolic_scalar_reduction_base>());
               }
 
               kss << "unsigned int lid = get_local_id(0);" << std::endl;
               unsigned int alignment = casted_prof->vectorization();
               if(kernel_id==0){
-                for(std::list<scalar_reduction_base*>::iterator it = inner_prods.begin() ; it!=inner_prods.end() ; ++it){
+                for(std::list<symbolic_scalar_reduction_base*>::iterator it = inner_prods.begin() ; it!=inner_prods.end() ; ++it){
                   std::string sum_name = (*it)->sum_name();
                   kss << (*it)->scalartype() << " " << sum_name << " = 0;" << std::endl;
                 }
@@ -145,11 +145,11 @@ namespace viennacl{
                 kss.inc_tab();
 
                 //Set access index
-                for(std::list<scalar_reduction_base*>::iterator it = inner_prods.begin() ; it!=inner_prods.end() ; ++it){
+                for(std::list<symbolic_scalar_reduction_base*>::iterator it = inner_prods.begin() ; it!=inner_prods.end() ; ++it){
                   (*it)->access_index(0,"i","0");
                   (*it)->fetch(0,kss);
                 }
-                for(std::list<scalar_reduction_base*>::iterator it=inner_prods.begin() ; it!=inner_prods.end();++it){
+                for(std::list<symbolic_scalar_reduction_base*>::iterator it=inner_prods.begin() ; it!=inner_prods.end();++it){
                   std::string sum_name = (*it)->sum_name();
                   for(unsigned int a=0; a<alignment;++a){
                     kss << sum_name << " = " << (*it)->op_reduce().generate(sum_name, (*it)->symbolic_binary_expression_tree_infos_base::generate(0,a)) << ";" << std::endl;
@@ -158,7 +158,7 @@ namespace viennacl{
                 kss.dec_tab();
                 kss << "}" << std::endl;
                 std::map<binary_operator const *, symbolic_local_memory<1> > local_mems;
-                for( std::list<scalar_reduction_base *>::const_iterator it = inner_prods.begin(); it != inner_prods.end() ; ++it){
+                for( std::list<symbolic_scalar_reduction_base *>::const_iterator it = inner_prods.begin(); it != inner_prods.end() ; ++it){
                   std::string sum_name = (*it)->sum_name();
                   symbolic_local_memory<1> lmem = (*it)->make_local_memory(casted_prof->group_size());
                   local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
@@ -166,13 +166,13 @@ namespace viennacl{
                   kss << lmem.access("lid") << " = " << sum_name << ";" << std::endl;
                 }
                 compute_reductions_samesize(kss,local_mems);
-                for(std::list<scalar_reduction_base *>::iterator it=inner_prods.begin() ; it!=inner_prods.end();++it){
+                for(std::list<symbolic_scalar_reduction_base *>::iterator it=inner_prods.begin() ; it!=inner_prods.end();++it){
                   kss << "if(lid==0) " << (*it)->name() << "[get_group_id(0)]" << "=" << (*it)->name()+"_local" << "[0]" << ";" << std::endl;
                 }
               }
               else{
                 std::map<binary_operator const *, symbolic_local_memory<1> > local_mems;
-                for( std::list<scalar_reduction_base *>::const_iterator it = inner_prods.begin(); it != inner_prods.end() ; ++it){
+                for( std::list<symbolic_scalar_reduction_base *>::const_iterator it = inner_prods.begin(); it != inner_prods.end() ; ++it){
                   symbolic_local_memory<1> lmem = (*it)->make_local_memory(casted_prof->group_size());
                   local_mems.insert(std::make_pair(&(*it)->op_reduce(),lmem));
                   kss << lmem.declare() << ";" << std::endl;

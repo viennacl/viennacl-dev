@@ -59,6 +59,10 @@ namespace viennacl
 //          operations_manager_.override_model(o);
 //        }
 
+        std::string source_code() const{
+          return operations_manager_.get_source_code();
+        }
+
         viennacl::ocl::program & program(){
           std::string program_name = operations_manager_.representation();
           if(!viennacl::ocl::current_context().has_program(program_name)){

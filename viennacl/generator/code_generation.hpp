@@ -139,7 +139,7 @@ namespace viennacl{
             }
           }
 
-          std::string get_source_code(){
+          std::string get_source_code() const{
             std::ostringstream oss;
             utils::kernel_generation_stream kss(oss);
             kss << "#if defined(cl_khr_fp64)\n";
@@ -148,7 +148,7 @@ namespace viennacl{
             kss <<  "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
             kss <<  "#endif\n";
             unsigned int kernel_counter = 0;
-            for(std::list<tools::shared_ptr<generator_base> >::iterator it = operations_.begin() ; it != operations_.end() ; ++it){
+            for(std::list<tools::shared_ptr<generator_base> >::const_iterator it = operations_.begin() ; it != operations_.end() ; ++it){
               (*it)->generate(kernel_counter,kss);
             }
             return oss.str();

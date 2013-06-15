@@ -758,9 +758,9 @@ namespace viennacl{
     };
 
     /** @brief Base class for symbolic inner products */
-    class scalar_reduction_base : public symbolic_binary_scalar_expression_base {
+    class symbolic_scalar_reduction_base : public symbolic_binary_scalar_expression_base {
       public:
-        scalar_reduction_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
+        symbolic_scalar_reduction_base(symbolic_expression_tree_base * lhs, binary_operator * op, symbolic_expression_tree_base * rhs): symbolic_binary_scalar_expression_base(lhs,new mul_type,rhs), op_reduce_(op){ }
         virtual const char * scalartype() const = 0;
         binary_operator const & op_reduce() const { return *op_reduce_; }
         void access_name(std::string const & str) { access_name_ = str; }
@@ -1377,12 +1377,12 @@ namespace viennacl{
          * \tparam Reduction operator
          */
     template<class LHS, class OP_REDUCE, class RHS>
-    class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public scalar_reduction_base{
+    class binary_scalar_expression<LHS, reduce_type<OP_REDUCE>, RHS > : public symbolic_scalar_reduction_base{
         typedef typename LHS::ScalarType ScalarType;
       public:
         typedef LHS Lhs;
         typedef RHS Rhs;
-        binary_scalar_expression(LHS const & lhs, RHS const & rhs):  scalar_reduction_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
+        binary_scalar_expression(LHS const & lhs, RHS const & rhs):  symbolic_scalar_reduction_base(new LHS(lhs), new OP_REDUCE, new RHS(rhs))
                                                      ,tmp_(1024,vector_handle_accessor(inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()].handle()),index_set()){
           inner_product_tempories<ScalarType>::map[viennacl::ocl::current_context().handle().get()].resize(1024);
         }
