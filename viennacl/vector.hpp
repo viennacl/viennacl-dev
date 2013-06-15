@@ -2007,6 +2007,622 @@ namespace viennacl
       };
 
 
+      // generic x += vec_expr1 + vec_expr2:
+      template <typename T, typename LHS, typename RHS>
+      struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_add> >
+      {
+        // generic x += vec_expr1 + vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_add> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            vector_base<T> temp(proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_add, RHS>::apply(temp, proxy.rhs());
+            lhs += temp;
+          }
+          else
+          {
+            op_executor<vector_base<T>, op_inplace_add, LHS>::apply(lhs, proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x += y + z
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_base<T>, op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += alpha * y + z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_base<T>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += y / alpha + z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_base<T>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += y + beta * z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += y + z / beta
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x += alpha * y + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += alpha * y + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x += y / alpha + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += y / alpha + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+      };
+
+
+
+      // generic x -= vec_expr1 + vec_expr2:
+      template <typename T, typename LHS, typename RHS>
+      struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_add> >
+      {
+        // generic x -= vec_expr1 + vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_add> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            vector_base<T> temp(proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_add, RHS>::apply(temp, proxy.rhs());
+            lhs -= temp;
+          }
+          else
+          {
+            op_executor<vector_base<T>, op_inplace_sub, LHS>::apply(lhs, proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x -= y + z
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_base<T>, op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= alpha * y + z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_base<T>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= y / alpha + z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_base<T>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= y + beta * z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= y + z / beta
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x -= alpha * y + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= alpha * y + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x -= y / alpha + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= y / alpha + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+
+      ///////////////////////
+
+
+
+      // generic x = vec_expr1 - vec_expr2:
+      template <typename T, typename LHS, typename RHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x = vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            vector_base<T> temp(proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs = temp;
+          }
+          else
+          {
+            op_executor<vector_base<T>, op_assign, LHS>::apply(lhs, proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x = y - z
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_base<T>, op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = alpha * y - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = y / alpha - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = y - beta * z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = y - z / beta
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x = alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x = y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+      // generic x += vec_expr1 - vec_expr2:
+      template <typename T, typename LHS, typename RHS>
+      struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x += vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            vector_base<T> temp(proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs += temp;
+          }
+          else
+          {
+            op_executor<vector_base<T>, op_inplace_add, LHS>::apply(lhs, proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x += y - z
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_base<T>, op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += alpha * y - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += y / alpha - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += y - beta * z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += y - z / beta
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x += alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x += y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+
+      // generic x -= vec_expr1 - vec_expr2:
+      template <typename T, typename LHS, typename RHS>
+      struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x -= vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            vector_base<T> temp(proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs -= temp;
+          }
+          else
+          {
+            op_executor<vector_base<T>, op_inplace_sub, LHS>::apply(lhs, proxy.lhs());
+            op_executor<vector_base<T>, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x -= y - z
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_base<T>, op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= alpha * y - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= y / alpha - z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_base<T>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= y - beta * z
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= y - z / beta
+        template <typename ScalarType>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x -= alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x -= y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::avbv_v(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+      };
+
 
 
 
