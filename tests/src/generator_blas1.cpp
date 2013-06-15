@@ -144,23 +144,23 @@ int test_vector ( Epsilon const& epsilon) {
     }
 
     {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + vec(y));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
-
-    {
         std::cout << "x = w + y ..." << std::endl;
         cx = cw + cy;
         generator::custom_operation op;
         op.add(vec(x) = vec(w) + vec(y));
         op.execute();
         viennacl::backend::finish();
-        CHECK_RESULT(cx, x, x = w + y);
+        CHECK_RESULT(cw, w, x = w + y);
+    }
+
+    {
+        std::cout << "y = w + x ..." << std::endl;
+        cy = cw + cx;
+        generator::custom_operation op;
+        op.add(vec(y) = vec(w) + vec(x));
+        op.execute();
+        viennacl::backend::finish();
+        CHECK_RESULT(cx, x, y = w + x);
     }
 
 
@@ -456,6 +456,8 @@ int main(int argc, char* argv[]){
                     std::cout << "  numeric: float" << std::endl;
                     retval = test_vector<float> (epsilon);
 
+
+                    std::cout << std::endl;
 
                     std::cout << "# Testing setup:" << std::endl;
                     std::cout << "  numeric: double" << std::endl;
