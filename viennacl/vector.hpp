@@ -144,7 +144,6 @@ namespace viennacl
 
       /** @brief Extracts the vector type from the two operands.
       */
-      //typedef typename viennacl::tools::VECTOR_EXTRACTOR<LHS, RHS>::ResultType    VectorType;
       typedef vcl_size_t       size_type;
 
       vector_expression(LHS & l, RHS & r) : lhs_(l), rhs_(r) {}
