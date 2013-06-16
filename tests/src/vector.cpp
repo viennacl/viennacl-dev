@@ -1087,18 +1087,21 @@ int test(Epsilon const& epsilon,
   
 
   std::cout << "Testing elementwise multiplication..." << std::endl;
+  std::cout << " v1 = element_prod(v1, v2);" << std::endl;
   ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 += element_prod(v1, v2);" << std::endl;
   ublas_v1 += ublas::element_prod(ublas_v1, ublas_v2);
   vcl_v1 += viennacl::linalg::element_prod(vcl_v1, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 -= element_prod(v1, v2);" << std::endl;
   ublas_v1 -= ublas::element_prod(ublas_v1, ublas_v2);
   vcl_v1 -= viennacl::linalg::element_prod(vcl_v1, vcl_v2);
 
@@ -1106,18 +1109,21 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   ///////
+  std::cout << " v1 = element_prod(v1 + v2, v2);" << std::endl;
   ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 += element_prod(v1 + v2, v2);" << std::endl;
   ublas_v1 += ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
   vcl_v1 += viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 -= element_prod(v1 + v2, v2);" << std::endl;
   ublas_v1 -= ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2);
   vcl_v1 -= viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2);
 
@@ -1125,18 +1131,21 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   ///////
+  std::cout << " v1 = element_prod(v1, v2 + v1);" << std::endl;
   ublas_v1 = ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 += element_prod(v1, v2 + v1);" << std::endl;
   ublas_v1 += ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
   vcl_v1 += viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 -= element_prod(v1, v2 + v1);" << std::endl;
   ublas_v1 -= ublas::element_prod(ublas_v1, ublas_v2 + ublas_v1);
   vcl_v1 -= viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1);
 
@@ -1144,18 +1153,21 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   ///////
+  std::cout << " v1 = element_prod(v1 + v2, v2 + v1);" << std::endl;
   ublas_v1 = ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
   vcl_v1 = viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 += element_prod(v1 + v2, v2 + v1);" << std::endl;
   ublas_v1 += ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
   vcl_v1 += viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << " v1 -= element_prod(v1 + v2, v2 + v1);" << std::endl;
   ublas_v1 -= ublas::element_prod(ublas_v1 + ublas_v2, ublas_v2 + ublas_v1);
   vcl_v1 -= viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2 + vcl_v1);
 
@@ -1164,6 +1176,15 @@ int test(Epsilon const& epsilon,
 
   
   std::cout << "Testing elementwise division..." << std::endl;
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(5.0) + random<NumericT>();
+  }
+
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
   ublas_v1 = ublas::element_div(ublas_v1, ublas_v2);
   vcl_v1 = viennacl::linalg::element_div(vcl_v1, vcl_v2);
 

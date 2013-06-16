@@ -366,6 +366,18 @@ namespace viennacl
     {
       enum { value = true };
     };
+    
+    template <>
+    struct is_product<viennacl::op_mult>
+    {
+      enum { value = true };
+    };
+    
+    template <>
+    struct is_product<viennacl::op_element_mult>
+    {
+      enum { value = true };
+    };
     /** \endcond */
     
     //
@@ -381,6 +393,11 @@ namespace viennacl
     /** \cond */
     template <>
     struct is_division<viennacl::op_div>
+    {
+      enum { value = true };
+    };
+    template <>
+    struct is_division<viennacl::op_element_div>
     {
       enum { value = true };
     };
