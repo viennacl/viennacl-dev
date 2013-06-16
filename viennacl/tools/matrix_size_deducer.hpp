@@ -52,75 +52,73 @@ namespace viennacl
 
     /** \cond */
     //special case: outer vector product:
-    template <typename ScalarType, unsigned int A1, unsigned int A2>
-    struct MATRIX_SIZE_DEDUCER<const viennacl::vector<ScalarType, A1>,
-                               const viennacl::vector<ScalarType, A2>,
+    template <typename ScalarType>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::vector_base<ScalarType>,
+                               const viennacl::vector_base<ScalarType>,
                                viennacl::op_prod>
     {
-      static std::size_t size1(viennacl::vector<ScalarType, A1> const & lhs,
-                               viennacl::vector<ScalarType, A2> const & /*rhs*/) { return lhs.size(); }
+      static std::size_t size1(viennacl::vector_base<ScalarType> const & lhs,
+                               viennacl::vector_base<ScalarType> const & /*rhs*/) { return lhs.size(); }
 
-      static std::size_t size2(viennacl::vector<ScalarType, A1> const & /*lhs*/,
-                               viennacl::vector<ScalarType, A2> const & rhs) { return rhs.size(); }
+      static std::size_t size2(viennacl::vector_base<ScalarType> const & /*lhs*/,
+                               viennacl::vector_base<ScalarType> const & rhs) { return rhs.size(); }
     };
 
-    //special case: multiplication with a GPU scalar
-    template <typename ScalarType, typename F>
-    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F>,
-                               const viennacl::scalar<ScalarType>,
-                               viennacl::op_prod>
-    {
-      static std::size_t size1(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size1(); }
 
-      static std::size_t size2(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size2(); }
+    //special case: multiplication with a scalar
+    template <typename LHS, typename RHS, typename OP, typename ScalarType>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS, const RHS, OP>,
+                               const ScalarType,
+                               viennacl::op_mult>
+    {
+      static std::size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                               ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(lhs.lhs(), lhs.rhs()); }
+
+      static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                               ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
     
-    //special case: multiplication with a CPU scalar
-    template <typename ScalarType, typename F>
-    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F>,
+    //special case: multiplication with a scalar
+    template <typename T, typename F, typename ScalarType>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T, F>,
                                const ScalarType,
-                               viennacl::op_prod>
+                               viennacl::op_mult>
     {
-      static std::size_t size1(viennacl::matrix_base<ScalarType, F> const & lhs,
+      static std::size_t size1(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size1(); }
 
-      static std::size_t size2(viennacl::matrix_base<ScalarType, F> const & lhs,
+      static std::size_t size2(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size2(); }
     };
-    
 
 
-
-    
-    //special case: division by with a GPU scalar
-    template <typename ScalarType, typename F>
-    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F>,
-                               const viennacl::scalar<ScalarType>,
-                               viennacl::op_div>
-    {
-      static std::size_t size1(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size1(); }
-
-      static std::size_t size2(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               viennacl::scalar<ScalarType> const & /*rhs*/) { return lhs.size2(); }
-    };
-    
-    //special case: division by a CPU scalar
-    template <typename ScalarType, typename F>
-    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F>,
+    //special case: division with a scalar
+    template <typename LHS, typename RHS, typename OP, typename ScalarType>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS, const RHS, OP>,
                                const ScalarType,
                                viennacl::op_div>
     {
-      static std::size_t size1(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               ScalarType const & /*rhs*/) { return lhs.size1(); }
+      static std::size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                               ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(lhs.lhs(), lhs.rhs()); }
 
-      static std::size_t size2(viennacl::matrix_base<ScalarType, F> const & lhs,
-                               ScalarType const & /*rhs*/) { return lhs.size2(); }
+      static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                               ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
     
-    
+    //special case: division with a scalar
+    template <typename T, typename F, typename ScalarType>
+    struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T, F>,
+                               const ScalarType,
+                               viennacl::op_div>
+    {
+      static std::size_t size1(viennacl::matrix_base<T, F> const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size1(); }
+
+      static std::size_t size2(viennacl::matrix_base<T, F> const & lhs,
+                               ScalarType const & /*rhs*/) { return lhs.size2(); }
+    };
+
+
     
     
     

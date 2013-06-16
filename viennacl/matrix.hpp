@@ -114,10 +114,6 @@ namespace viennacl
     public:
       typedef typename LHS::size_type       size_type;
       
-      ///** @brief Extracts the vector type from the two operands.
-      //*/
-      typedef typename viennacl::tools::MATRIX_EXTRACTOR<LHS, RHS>::ResultType    matrix_type;
-    
       matrix_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
       
       /** @brief Get left hand side operand
@@ -236,6 +232,20 @@ namespace viennacl
           internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
           elements_(h) {}
   
+      template <typename LHS, typename RHS, typename OP>
+      matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) : 
+        size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
+        internal_size1_(viennacl::traits::size1(proxy)), internal_size2_(viennacl::traits::size2(proxy))
+      {
+        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
+        if (internal_size() > 0)
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+
+        self_type::operator=(proxy);
+      }
+
+
+
       self_type & operator=(const self_type & other)  //enables implicit conversions
       {
 		if (internal_size() == 0){
@@ -266,175 +276,96 @@ namespace viennacl
       *
       * @param proxy  An expression template proxy class.
       */
-      template <typename T, typename F1, typename S1, typename OP>
-      typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                    self_type & >::type
-      operator = (const matrix_expression< const matrix_base<T, F1>, const S1, OP> & proxy)
+      template <typename LHS, typename RHS, typename OP>
+      self_type & operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
       {
-        assert(  (proxy.lhs().size1() == size1() || size1() == 0)
-              && (proxy.lhs().size2() == size2() || size2() == 0)
+        assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
+              && (viennacl::traits::size2(proxy) == size2() || size2() == 0)
               && bool("Incompatible matrix sizes!"));
         
-        if (internal_size() == 0 && proxy.lhs().internal_size() > 0)
+        if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
         {
-          size1_ = proxy.lhs().size1();
-          size2_ = proxy.lhs().size2();
+          size1_ = viennacl::traits::size1(proxy);
+          size2_ = viennacl::traits::size2(proxy);
           internal_size1_ = size1_;
           internal_size2_ = size2_;
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
   
         if (internal_size() > 0)
-          viennacl::linalg::am(*this,
-                                proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), false);
-        return *this;
-      }
-  
-      //m1 = m2 +- m3; 
-      /** @brief Implementation of the operation m1 = m2 +- m3
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename T, typename F1, typename F2, typename OP>
-      typename viennacl::enable_if< viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value,
-                                    self_type &>::type
-      operator = (const matrix_expression< const matrix_base<T, F1>,
-                                           const matrix_base<T, F2>,
-                                           OP> & proxy)
-      {
-        assert(  (proxy.lhs().size1() == size1() || size1() == 0)
-              && (proxy.lhs().size2() == size2() || size2() == 0)
-              && bool("Incompatible matrix sizes!"));
+          linalg::detail::op_executor<self_type, op_assign, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
         
-        if (internal_size() == 0 && proxy.lhs().internal_size() > 0)
-        {
-          size1_ = proxy.lhs().size1();
-          size2_ = proxy.lhs().size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        } 
-  
-        if (internal_size() > 0)
-          viennacl::linalg::ambm(*this, 
-                                  proxy.lhs(), SCALARTYPE(1.0), 1, false, false,
-                                  proxy.rhs(), SCALARTYPE(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false));
         return *this;
       }
+
       
-      /** @brief Implementation of the operation m1 = m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename T, typename F1, typename F2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator = (const matrix_expression< const matrix_base<T, F1>,
-                                            const matrix_expression<const matrix_base<T, F2>, const S2, OP2>,
-                                            OP> & proxy)
+      // A = trans(B). Currently achieved in CPU memory
+      self_type & operator=(const matrix_expression< const self_type,
+                                                     const self_type,
+                                                     op_trans> & proxy)
       {
-        assert(  (proxy.lhs().size1() == size1() || size1() == 0)
-              && (proxy.lhs().size2() == size2() || size2() == 0)
-              && bool("Incompatible matrix sizes!"));
-        
-        if (internal_size() == 0 && proxy.lhs().internal_size() > 0)
+        assert( (handle() != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
+        assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
+        assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
+  
+        if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
         {
-          size1_ = proxy.lhs().size1();
-          size2_ = proxy.lhs().size2();
+          size1_ = viennacl::traits::size1(proxy);
+          size2_ = viennacl::traits::size2(proxy);
           internal_size1_ = size1_;
           internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
         } 
-  
-        if (internal_size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::ambm(*this, 
-                                  proxy.lhs(),         SCALARTYPE(1.0), 1, false                                             , false,
-                                  proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
-        }
-        return *this;
-      }
-  
-      /** @brief Implementation of the operation m1 = m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename T, typename F1, typename F2, typename S1, typename OP1,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>, const S1, OP1>,
-                                           const matrix_base<T, F2>,
-                                           OP> & proxy)
-      {
-        assert(  (proxy.lhs().size1() == size1() || size1() == 0)
-              && (proxy.lhs().size2() == size2() || size2() == 0)
-              && bool("Incompatible matrix sizes!"));
         
-        if (internal_size() == 0 && proxy.rhs().internal_size() > 0)
-        {
-          size1_ = proxy.lhs().size1();
-          size2_ = proxy.lhs().size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        } 
+        std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
   
-        if (internal_size() > 0)
-          viennacl::linalg::ambm(*this, 
-                                proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                proxy.rhs(),         SCALARTYPE(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false));
+        viennacl::backend::memory_read(proxy.lhs().handle(), 0, sizeof(SCALARTYPE)*proxy.lhs().internal_size(), &(temp[0]));
+  
+        // now transpose it
+        std::vector<SCALARTYPE> temp_trans(internal_size());
+  
+        for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
+          for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
+            temp_trans[F::mem_index(start2() + stride2() * j,
+                                    start1() + stride1() * i,
+                                    internal_size1(), internal_size2())] 
+              = temp[F::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
+                                  proxy.lhs().start2() + proxy.lhs().stride2() * j,
+                                  proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+  
+        // write back
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp_trans[0]));
+
         return *this;
       }
-      
-      /** @brief Implementation of the operation m1 = m2 @ alpha +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename T,
-                typename F1, typename S1, typename OP1,
-                typename F2, typename S2, typename OP2,
-                typename OP>
-      typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value && (viennacl::is_product<OP1>::value || viennacl::is_division<OP1>::value)
-                                    && viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                    && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                    self_type &>::type
-      operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>, const S1, OP1>,
-                                           const matrix_expression<const matrix_base<T, F2>, const S2, OP2>,
-                                           OP> & proxy)
+
+      template <typename LHS, typename RHS, typename OP>
+      self_type & operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
       {
-        assert(  (proxy.lhs().size1() == size1() || size1() == 0)
-              && (proxy.lhs().size2() == size2() || size2() == 0)
+        assert(  (viennacl::traits::size1(proxy) == size1())
+              && (viennacl::traits::size2(proxy) == size2())
               && bool("Incompatible matrix sizes!"));
-        
-        if (internal_size() == 0 && proxy.lhs().lhs().internal_size() > 0)
-        {
-          size1_ = proxy.lhs().size1();
-          size2_ = proxy.lhs().size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        } 
-  
-        if (internal_size() > 0)
-        {
-          bool flip_sign_2 = (viennacl::is_subtraction<OP>::value ? true : false);
-          if (viennacl::is_flip_sign_scalar<S2>::value)
-            flip_sign_2 = !flip_sign_2;
-          viennacl::linalg::ambm(*this, 
-                                  proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP1>::value ? true : false), (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                  proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), flip_sign_2);
-        }
+        assert( (size1() > 0) && bool("Vector not yet initialized!") );
+        assert( (size2() > 0) && bool("Vector not yet initialized!") );
+
+        linalg::detail::op_executor<self_type, op_inplace_add, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
         return *this;
       }
-      
-      
+
+      template <typename LHS, typename RHS, typename OP>
+      self_type & operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+      {
+        assert(  (viennacl::traits::size1(proxy) == size1())
+              && (viennacl::traits::size2(proxy) == size2())
+              && bool("Incompatible matrix sizes!"));
+        assert( (size1() > 0) && bool("Vector not yet initialized!") );
+        assert( (size2() > 0) && bool("Vector not yet initialized!") );
+
+        linalg::detail::op_executor<self_type, op_inplace_sub, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
+        return *this;
+      }
+
       /** @brief Assigns the supplied identity matrix to the matrix. */
       self_type & operator = (identity_matrix<SCALARTYPE> const & m)
       {
@@ -564,62 +495,11 @@ namespace viennacl
       
       
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const self_type, const SCALARTYPE, op_prod> operator-() const
+      matrix_expression<const self_type, const SCALARTYPE, op_mult> operator-() const
       {
-        return matrix_expression<const self_type, const SCALARTYPE, op_prod>(*this, SCALARTYPE(-1.0));
+        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
       }
       
-      
-      //
-      // Matrix-Matrix products:
-      //
-      
-      //this = A * B and related (with trans())
-      template <typename T, typename F1, typename F2>
-      self_type & operator = (const matrix_expression< const matrix_base<T, F1>,
-                                                       const matrix_base<T, F2>,
-                                                       op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-      
-      template <typename T, typename F1, typename F2>
-      self_type & operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>,
-                                                                               const matrix_base<T, F1>,
-                                                                               op_trans>,
-                                                      const matrix_base<T, F2>,
-                                                      op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-      
-      template <typename T, typename F1, typename F2>
-      self_type & operator = (const matrix_expression< const matrix_base<T, F1>,
-                                                       const matrix_expression<const matrix_base<T, F2>,
-                                                                               const matrix_base<T, F2>,
-                                                                               op_trans>,
-                                                      op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-
-      template <typename T, typename F1, typename F2>
-      self_type & operator = (const matrix_expression< const matrix_expression<const matrix_base<T, F1>,
-                                                                               const matrix_base<T, F1>,
-                                                                               op_trans>,
-                                                       const matrix_expression<const matrix_base<T, F2>,
-                                                                               const matrix_base<T, F2>,
-                                                                               op_trans>,
-                                                      op_prod > & proxy) 
-      {
-        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this, 1.0, 0.0);
-        return *this;
-      }
-
-  
       /** @brief Returns the number of rows */
       size_type size1() const { return size1_;}
       /** @brief Returns the number of columns */
@@ -780,17 +660,8 @@ namespace viennacl
   #endif
   
       template <typename LHS, typename RHS, typename OP>
-      matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy.size1(), proxy.size2(), viennacl::traits::active_handle_id(proxy))
-      {
-        base_type::operator=(proxy);
-      }
+      matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy) {}
 
-      template <typename MatrixType>
-      matrix(matrix_expression<MatrixType, MatrixType, op_trans> const & proxy) : base_type(proxy.size1(), proxy.size2(), viennacl::traits::active_handle_id(proxy))
-      {
-        self_type::operator=(proxy);
-      }
-      
       /** @brief Creates the matrix from the supplied identity matrix. */
       matrix(identity_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2())
       {
@@ -824,40 +695,6 @@ namespace viennacl
         base_type::operator=(other);
       }
   
-      
-      // A = trans(B). Currently achieved in CPU memory
-      self_type & operator=(const matrix_expression< const base_type,
-                                                     const base_type,
-                                                     op_trans> & proxy)
-      {
-        assert( (base_type::handle() != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
-        assert( ( (proxy.lhs().size1() == base_type::size2()) || (base_type::size2() == 0) ) && bool("Matrix dimensions do not match!"));
-        assert( ( (proxy.lhs().size2() == base_type::size1()) || (base_type::size1() == 0) ) && bool("Matrix dimensions do not match!"));
-  
-        if (base_type::internal_size() == 0)
-          resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
-        
-        std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
-  
-        viennacl::backend::memory_read(proxy.lhs().handle(), 0, sizeof(SCALARTYPE)*proxy.lhs().internal_size(), &(temp[0]));
-  
-        // now transpose it
-        std::vector<SCALARTYPE> temp_trans(base_type::internal_size());
-  
-        for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
-          for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-            temp_trans[F::mem_index(base_type::start2() + base_type::stride2() * j,
-                                    base_type::start1() + base_type::stride1() * i,
-                                    base_type::internal_size1(), base_type::internal_size2())] 
-              = temp[F::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
-                                  proxy.lhs().start2() + proxy.lhs().stride2() * j,
-                                  proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
-  
-        // write back
-        viennacl::backend::memory_write(base_type::handle(), 0, sizeof(SCALARTYPE)*base_type::internal_size(), &(temp_trans[0]));
-          
-        return *this;
-      }
       
       /*template <typename M1>
       self_type & operator=(const matrix_expression< const M1, const M1, op_trans> & proxy)
@@ -1234,47 +1071,51 @@ namespace viennacl
   /** @brief Generic 'catch-all' overload, which enforces a temporary if the expression tree gets too deep. */
   template <typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
-  typename matrix_expression< LHS1, RHS1, OP1>::matrix_type
-  operator + (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
-              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+  matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                     const matrix_expression<const LHS2, const RHS2, OP2>,
+                     op_add>
+  operator + (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
+              matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
-    result += proxy2;
-    return result;
+    return matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                              const matrix_expression<const LHS2, const RHS2, OP2>,
+                              op_add>(proxy1, proxy2);
   }
   
   template <typename LHS1, typename RHS1, typename OP1,
             typename NumericT, typename F>
-  matrix<NumericT, F>
-  operator + (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
+  matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                     const matrix_base<NumericT, F>,
+                     op_add>
+  operator + (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
               matrix_base<NumericT, F> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix<NumericT, F> result = proxy1;
-    result += proxy2;
-    return result;
+    return matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                              const matrix_base<NumericT, F>,
+                              op_add>(proxy1, proxy2);
   }
   
   template <typename NumericT, typename F,
             typename LHS2, typename RHS2, typename OP2>
-  matrix<NumericT, F>
+  matrix_expression< const matrix_base<NumericT, F>,
+                     const matrix_expression<const LHS2, const RHS2, OP2>,
+                     op_add>
   operator + (matrix_base<NumericT, F> const & proxy1,
-              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+              matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix<NumericT, F> result = proxy1;
-    result += proxy2;
-    return result;
+    return  matrix_expression< const matrix_base<NumericT, F>,
+                               const matrix_expression<const LHS2, const RHS2, OP2>,
+                               op_add>(proxy1, proxy2);
   }
-  
-  
   
   /** @brief Operator overload for m1 + m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices. No mixing of different storage layouts allowed at the moment. */
   template <typename NumericT, typename F>
@@ -1286,338 +1127,55 @@ namespace viennacl
                               op_add > (m1, m2);
   }
 
-  /** @brief Operator overload for the addition of a matrix expression m1 + m2 @ beta, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename NumericT, typename F, typename S3, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S3>::value,
-                                matrix_expression< const matrix_base<NumericT, F>,
-                                                   const matrix_expression<const matrix_base<NumericT, F>, const S3, OP>,
-                                                   op_add >
-                              >::type
-  operator + (const matrix_base<NumericT, F> & m1,
-              const matrix_expression< const matrix_base<NumericT, F>, const S3, OP> & proxy) 
-  {
-    return matrix_expression< const matrix_base<NumericT, F>,
-                              const matrix_expression<const matrix_base<NumericT, F>, const S3, OP>,
-                              op_add > (m1, proxy);
-  }
-  
-  /** @brief Operator overload for the addition of a matrix expression m1 @ alpha + m2, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename NumericT, typename F, typename S2, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value,
-                                matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP>,
-                                                   const matrix_base<NumericT, F>,
-                                                   op_add >
-                              >::type
-  operator + (const matrix_expression< const matrix_base<NumericT, F>, const S2, OP> & proxy,
-              const matrix_base<NumericT, F> & m3) 
-  {
-    return matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP>,
-                              const matrix_base<NumericT, F>,
-                              op_add > (proxy, m3);
-  }
-  
-  
-  /** @brief Operator overload for the addition of a matrix expression m1 @ alpha + m2 @ beta, where @ denotes either product or division, and alpha, beta are either CPU or GPU scalars.
-  *
-  * @param lhs   Left hand side vector expression
-  * @param rhs     Right hand side vector (also -range and -slice is allowed)
-  */
-  template <typename NumericT, typename F,
-            typename S1, typename OP1,
-            typename S2, typename OP2>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value && viennacl::is_any_scalar<S2>::value,
-                                matrix_expression<const matrix_expression<const matrix_base<NumericT, F>, const S1, OP1>,
-                                                  const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                                  op_add>
-                              >::type
-  operator + (matrix_expression<const matrix_base<NumericT, F>, const S1, OP1> const & lhs,
-              matrix_expression<const matrix_base<NumericT, F>, const S2, OP2> const & rhs)
-  {
-    return matrix_expression<const matrix_expression<const matrix_base<NumericT, F>, const S1, OP1>,
-                             const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                             op_add>(lhs, rhs);
-  }
 
-  
-  
-  
-  // operator +=
-  template <typename NumericT, typename F>
-  matrix_base<NumericT, F> & 
-  operator += (matrix_base<NumericT, F> & m1, const matrix_base<NumericT, F> & other) 
-  {
-    viennacl::linalg::ambm(m1,
-                           m1,    NumericT(1.0), 1, false, false,
-                           other, NumericT(1.0), 1, false, false);
-    return m1;
-  }
-
-  /** @brief Inplace addition of a scaled matrix, i.e. m1 += m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-  */
-  template <typename NumericT, typename F, typename S2, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value,
-                                matrix_base<NumericT, F> &>::type
-  operator += (matrix_base<NumericT, F> & m1, 
-               const matrix_expression< const matrix_base<NumericT, F>, const S2, OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm(m1, 
-                             m1,        NumericT(1.0), 1, false,                                             false,
-                             proxy.lhs(), proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false) );
-    return m1;
-  }
-
-  /** @brief Implementation of the operation m1 += m2 +- m3
-  *
-  * @param m1     The result matrix where m2 +- m3 is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F, typename OP>
-  typename viennacl::enable_if< viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value,
-                                matrix_base<NumericT, F> &>::type
-  operator += (matrix_base<NumericT, F> & m1, 
-               const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm_m(m1, 
-                                proxy.lhs(), NumericT(1.0), 1, false, false,
-                                proxy.rhs(), NumericT(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? true : false) );
-    return m1;
-  }
-  
-  /** @brief Implementation of the operation m1 += m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 +- m3 @ beta is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S3, typename OP3,
-            typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator += (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_base<NumericT, F>,
-                                        const matrix_expression<const matrix_base<NumericT, F>, const S3, OP3>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-    {
-      bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? true : false);
-      if (viennacl::is_flip_sign_scalar<S3>::value)
-        flip_sign_3 = !flip_sign_3;
-      viennacl::linalg::ambm_m(m1, 
-                                proxy.lhs(),           NumericT(1.0), 1, false                                             , false,
-                                proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
-    }
-    return m1;
-  }
-
-  /** @brief Implementation of the operation m1 += m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 @ alpha +- m3 is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S2, typename OP2,
-            typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator += (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                        const matrix_base<NumericT, F>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.size1() == m1.size1())
-            && (proxy.size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm_m(m1, 
-                                proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false),
-                                proxy.rhs(),           NumericT(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? true : false) );
-    return m1;
-  }
-  
-  /** @brief Implementation of the operation m1 += m2 @ alpha +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 @ alpha +- m3 @ beta is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S2, typename OP2,
-            typename S3, typename OP3,
-            typename OP>
-  typename viennacl::enable_if<    viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator += (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                        const matrix_expression<const matrix_base<NumericT, F>, const S3, OP3>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.size1() == m1.size1())
-            && (proxy.size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-    {
-      bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? true : false);
-      if (viennacl::is_flip_sign_scalar<S3>::value)
-        flip_sign_3 = !flip_sign_3;
-      viennacl::linalg::ambm_m(m1, 
-                               proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? true : false),
-                               proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
-    }
-    return m1;
-  }
-  
-  
-  
-  template <typename NumericT, typename F>
-  matrix_base<NumericT, F> & 
-  operator += (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod > & proxy) 
-  {
-    viennacl::linalg::scaled_rank_1_update(m1,
-                                            NumericT(1.0), 1, false, false,
-                                            proxy.lhs(),
-                                            proxy.rhs());
-    return m1;
-  }
-
-  template <typename NumericT, typename F, typename S1>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                matrix_base<NumericT, F> & 
-                              >::type
-  operator += (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod >,
-                                        const S1,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::scaled_rank_1_update(m1,
-                                           proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false),
-                                           proxy.lhs().lhs(),
-                                           proxy.lhs().rhs());
-    return m1;
-  }
-  
-  //C += A * B 
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator += (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_base<NumericT, F2>,
-                                        const matrix_base<NumericT, F3>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator += (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_base<NumericT, F2>,
-                                        const matrix_expression< const matrix_base<NumericT, F3>,
-                                                                 const matrix_base<NumericT, F3>,
-                                                                 op_trans>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator += (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
-                                                                 const matrix_base<NumericT, F2>,
-                                                                 op_trans>,
-                                        const matrix_base<NumericT, F3>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator += (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
-                                                                 const matrix_base<NumericT, F2>,
-                                                                 op_trans>,
-                                        const matrix_expression< const matrix_base<NumericT, F3>,
-                                                                 const matrix_base<NumericT, F3>,
-                                                                 op_trans>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, 1.0, 1.0);
-    return m1;
-  }
-
-  
-    
-  
-  
   // operator -
-  /** @brief Generic 'catch-all' overload, which enforces a temporary if the expression tree gets too deep. */
   template <typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
-  typename matrix_expression< LHS1, RHS1, OP1>::matrix_type
-  operator - (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
-              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+  matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                     const matrix_expression<const LHS2, const RHS2, OP2>,
+                     op_sub>
+  operator - (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
+              matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    typename matrix_expression< LHS1, RHS1, OP1>::matrix_type result = proxy1;
-    result -= proxy2;
-    return result;
+    return matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                              const matrix_expression<const LHS2, const RHS2, OP2>,
+                              op_sub>(proxy1, proxy2);
   }
   
   template <typename LHS1, typename RHS1, typename OP1,
             typename NumericT, typename F>
-  matrix<NumericT, F>
-  operator - (matrix_expression< LHS1, RHS1, OP1> const & proxy1,
+  matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                     const matrix_base<NumericT, F>,
+                     op_sub>
+  operator - (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
               matrix_base<NumericT, F> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix<NumericT, F> result = proxy1;
-    result -= proxy2;
-    return result;
+    return matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
+                              const matrix_base<NumericT, F>,
+                              op_sub>(proxy1, proxy2);
   }
   
   template <typename NumericT, typename F,
             typename LHS2, typename RHS2, typename OP2>
-  matrix<NumericT, F>
+  matrix_expression< const matrix_base<NumericT, F>,
+                     const matrix_expression<const LHS2, const RHS2, OP2>,
+                     op_sub>
   operator - (matrix_base<NumericT, F> const & proxy1,
-              matrix_expression< LHS2, RHS2, OP2> const & proxy2)
+              matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
   {
     assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
             && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
             && bool("Incompatible matrix sizes!"));
-    matrix<NumericT, F> result = proxy1;
-    result -= proxy2;
-    return result;
+    return  matrix_expression< const matrix_base<NumericT, F>,
+                               const matrix_expression<const LHS2, const RHS2, OP2>,
+                               op_sub>(proxy1, proxy2);
   }
-  
-  
   
   /** @brief Operator overload for m1 - m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices. No mixing of different storage layouts allowed at the moment. */
   template <typename NumericT, typename F>
@@ -1629,290 +1187,8 @@ namespace viennacl
                               op_sub > (m1, m2);
   }
 
-  /** @brief Operator overload for the addition of a matrix expression m1 - m2 @ beta, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename NumericT, typename F, typename S3, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S3>::value,
-                                matrix_expression< const matrix_base<NumericT, F>,
-                                                   const matrix_expression<const matrix_base<NumericT, F>, const S3, OP>,
-                                                   op_sub >
-                              >::type
-  operator - (const matrix_base<NumericT, F> & m1,
-              const matrix_expression< const matrix_base<NumericT, F>, const S3, OP> & proxy) 
-  {
-    return matrix_expression< const matrix_base<NumericT, F>,
-                              const matrix_expression<const matrix_base<NumericT, F>, const S3, OP>,
-                              op_sub > (m1, proxy);
-  }
-  
-  /** @brief Operator overload for the addition of a matrix expression m1 @ alpha - m2, where @ is either product or division, and beta is either a CPU or GPU scalar. */
-  template <typename NumericT, typename F, typename S2, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value,
-                                matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP>,
-                                                   const matrix_base<NumericT, F>,
-                                                   op_sub >
-                              >::type
-  operator - (const matrix_expression< const matrix_base<NumericT, F>, const S2, OP> & proxy,
-              const matrix_base<NumericT, F> & m3) 
-  {
-    return matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP>,
-                              const matrix_base<NumericT, F>,
-                              op_sub > (proxy, m3);
-  }
-  
-  
-  /** @brief Operator overload for the addition of a matrix expression m1 @ alpha - m2 @ beta, where @ denotes either product or division, and alpha, beta are either CPU or GPU scalars.
-  *
-  * @param lhs   Left hand side vector expression
-  * @param rhs     Right hand side vector (also -range and -slice is allowed)
-  */
-  template <typename NumericT, typename F,
-            typename S1, typename OP1,
-            typename S2, typename OP2>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value && viennacl::is_any_scalar<S2>::value,
-                                matrix_expression<const matrix_expression<const matrix_base<NumericT, F>, const S1, OP1>,
-                                                  const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                                  op_sub>
-                              >::type
-  operator - (matrix_expression<const matrix_base<NumericT, F>, const S1, OP1> const & lhs,
-              matrix_expression<const matrix_base<NumericT, F>, const S2, OP2> const & rhs)
-  {
-    return matrix_expression<const matrix_expression<const matrix_base<NumericT, F>, const S1, OP1>,
-                             const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                             op_sub>(lhs, rhs);
-  }
 
-  
-  
-  
-  // operator -=
-  template <typename NumericT, typename F>
-  matrix_base<NumericT, F> & 
-  operator -= (matrix_base<NumericT, F> & m1, const matrix_base<NumericT, F> & other) 
-  {
-    viennacl::linalg::ambm(m1,
-                           m1,    NumericT(1.0), 1, false, false,
-                           other, NumericT(-1.0), 1, false, false);
-    return m1;
-  }
 
-  /** @brief Inplace addition of a scaled matrix, i.e. m1 -= m2 @ alpha, where @ is either product or division and alpha is either a CPU or a GPU scalar
-  */
-  template <typename NumericT, typename F, typename S2, typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value,
-                                matrix_base<NumericT, F> &>::type
-  operator -= (matrix_base<NumericT, F> & m1, 
-               const matrix_expression< const matrix_base<NumericT, F>, const S2, OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm(m1, 
-                             m1,          NumericT(1.0), 1, false,                                             false,
-                             proxy.lhs(),   proxy.rhs(), 1, (viennacl::is_division<OP>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true) );
-    return m1;
-  }
-
-  /** @brief Implementation of the operation m1 -= m2 +- m3
-  *
-  * @param m1     The result matrix where m2 +- m3 is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F, typename OP>
-  typename viennacl::enable_if< viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value,
-                                matrix_base<NumericT, F> &>::type
-  operator -= (matrix_base<NumericT, F> & m1, 
-               const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm_m(m1, 
-                               proxy.lhs(), NumericT(1.0), 1, false, true,
-                               proxy.rhs(), NumericT(1.0), 1, false, (viennacl::is_subtraction<OP>::value ? false : true) );
-    return m1;
-  }
-  
-  /** @brief Implementation of the operation m1 -= m2 +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 +- m3 @ beta is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S3, typename OP3,
-            typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator -= (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_base<NumericT, F>,
-                                        const matrix_expression<const matrix_base<NumericT, F>, const S3, OP3>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.lhs().size1() == m1.size1())
-            && (proxy.lhs().size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-    {
-      bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? false : true);
-      if (viennacl::is_flip_sign_scalar<S3>::value)
-        flip_sign_3 = !flip_sign_3;
-      viennacl::linalg::ambm_m(m1, 
-                               proxy.lhs(),           NumericT(1.0), 1, false                                             , true,
-                               proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
-    }
-    return m1;
-  }
-
-  /** @brief Implementation of the operation m1 -= m2 @ alpha +- m3, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 @ alpha +- m3 is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S2, typename OP2,
-            typename OP>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator -= (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                        const matrix_base<NumericT, F>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.size1() == m1.size1())
-            && (proxy.size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-      viennacl::linalg::ambm_m(m1, 
-                                proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true),
-                                proxy.rhs(),           NumericT(1.0), 1, false                                             , (viennacl::is_subtraction<OP>::value ? false : true) );
-    return m1;
-  }
-  
-  /** @brief Implementation of the operation m1 -= m2 @ alpha +- m3 @ beta, where @ is either product or division, and alpha, beta are either CPU or GPU scalars
-  *
-  * @param m1     The result matrix where m2 @ alpha +- m3 @ beta is added to
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename NumericT, typename F,
-            typename S2, typename OP2,
-            typename S3, typename OP3,
-            typename OP>
-  typename viennacl::enable_if<    viennacl::is_any_scalar<S2>::value && (viennacl::is_product<OP2>::value || viennacl::is_division<OP2>::value)
-                                && viennacl::is_any_scalar<S3>::value && (viennacl::is_product<OP3>::value || viennacl::is_division<OP3>::value)
-                                && (viennacl::is_addition<OP>::value || viennacl::is_subtraction<OP>::value),
-                                matrix_base<NumericT, F> &>::type
-  operator -= (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression<const matrix_base<NumericT, F>, const S2, OP2>,
-                                        const matrix_expression<const matrix_base<NumericT, F>, const S3, OP3>,
-                                        OP> & proxy)
-  {
-    assert(   (proxy.size1() == m1.size1())
-            && (proxy.size2() == m1.size2())
-            && bool("Incompatible matrix sizes!"));
-
-    if (m1.size1() > 0 && m1.size2() > 0)
-    {
-      bool flip_sign_3 = (viennacl::is_subtraction<OP>::value ? false : true);
-      if (viennacl::is_flip_sign_scalar<S3>::value)
-        flip_sign_3 = !flip_sign_3;
-      viennacl::linalg::ambm_m(m1, 
-                               proxy.lhs().lhs(), proxy.lhs().rhs(), 1, (viennacl::is_division<OP2>::value ? true : false), (viennacl::is_flip_sign_scalar<S2>::value ? false : true),
-                               proxy.rhs().lhs(), proxy.rhs().rhs(), 1, (viennacl::is_division<OP3>::value ? true : false), flip_sign_3 );
-    }
-    return m1;
-  }
-  
-  
-  
-  template <typename NumericT, typename F>
-  matrix_base<NumericT, F> & 
-  operator -= (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod > & proxy) 
-  {
-    viennacl::linalg::scaled_rank_1_update(m1,
-                                           NumericT(-1.0), 1, false, false,
-                                           proxy.lhs(),
-                                           proxy.rhs());
-    return m1;
-  }
-
-  template <typename NumericT, typename F, typename S1>
-  typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                matrix_base<NumericT, F> & 
-                              >::type
-  operator -= (matrix_base<NumericT, F> & m1,
-               const matrix_expression< const matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod >,
-                                        const S1,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::scaled_rank_1_update(m1,
-                                           proxy.rhs(), 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? false : true),
-                                           proxy.lhs().lhs(),
-                                           proxy.lhs().rhs());
-    return m1;
-  }
-  
-  //C -= A * B 
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator -= (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F3>, op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator -= (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_base<NumericT, F2>,
-                                        const matrix_expression< const matrix_base<NumericT, F3>,
-                                                                 const matrix_base<NumericT, F3>,
-                                                                 op_trans>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator -= (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
-                                                                 const matrix_base<NumericT, F2>,
-                                                                 op_trans>,
-                                        const matrix_base<NumericT, F3>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
-    return m1;
-  }
-
-  template <typename NumericT, typename F1, typename F2, typename F3>
-  matrix_base<NumericT, F1> &
-  operator -= (matrix_base<NumericT, F1> & m1,
-               const matrix_expression< const matrix_expression< const matrix_base<NumericT, F2>,
-                                                                 const matrix_base<NumericT, F2>,
-                                                                 op_trans>,
-                                        const matrix_expression< const matrix_base<NumericT, F3>,
-                                                                 const matrix_base<NumericT, F3>,
-                                                                 op_trans>,
-                                        op_prod > & proxy) 
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), m1, -1.0, 1.0);
-    return m1;
-  }
-  
-  
-
-  
   // operator *
   /** @brief Operator overload for the expression alpha * m1, where alpha is a host scalar (float or double) and m1 is a ViennaCL matrix.
   *
@@ -1921,11 +1197,11 @@ namespace viennacl
   */
   template <typename S1, typename NumericT, typename F>
   typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value,
-                                matrix_expression< const matrix_base<NumericT, F>, const S1, op_prod>
+                                matrix_expression< const matrix_base<NumericT, F>, const S1, op_mult>
                               >::type 
   operator * (S1 const & value, matrix_base<NumericT, F> const & m1)
   {
-    return matrix_expression< const matrix_base<NumericT, F>, const S1, op_prod>(m1, value);
+    return matrix_expression< const matrix_base<NumericT, F>, const S1, op_mult>(m1, value);
   }
 
 
@@ -1936,14 +1212,11 @@ namespace viennacl
   */
   template <typename LHS, typename RHS, typename OP, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                typename matrix_expression< LHS, RHS, OP>::matrix_type >::type
+                                matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult> >::type
   operator * (matrix_expression< LHS, RHS, OP> const & proxy,
               S1 const & val)
   {
-    typename matrix_expression< LHS, RHS, OP>::matrix_type result(proxy.size1(), proxy.size2());
-    result = proxy;
-    result *= val;
-    return result;
+    return matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult>(proxy, val);
   }
 
 
@@ -1954,24 +1227,21 @@ namespace viennacl
   */
   template <typename S1, typename LHS, typename RHS, typename OP>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                typename matrix_expression< LHS, RHS, OP>::matrix_type >::type
+                                matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult> >::type
   operator * (S1 const & val,
               matrix_expression< LHS, RHS, OP> const & proxy)
   {
-    typename matrix_expression< LHS, RHS, OP>::matrix_type result(proxy.size());
-    result = proxy;
-    result *= val;
-    return result;
+    return matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult>(proxy, val);
   }
   
   /** @brief Scales the matrix by a GPU scalar 'alpha' and returns an expression template
   */
   template <typename NumericT, typename F, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                matrix_expression< const matrix_base<NumericT, F>, const S1, op_prod> >::type
+                                matrix_expression< const matrix_base<NumericT, F>, const S1, op_mult> >::type
   operator * (matrix_base<NumericT, F> const & m1, S1 const & s1)
   {
-    return matrix_expression< const matrix_base<NumericT, F>, const S1, op_prod>(m1, s1);
+    return matrix_expression< const matrix_base<NumericT, F>, const S1, op_mult>(m1, s1);
   }
   
   
@@ -2000,16 +1270,13 @@ namespace viennacl
   * @param proxy   Left hand side matrix expression
   * @param val     Right hand side scalar
   */
-  template <typename S1, typename LHS, typename RHS, typename OP>
+  template <typename LHS, typename RHS, typename OP, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-                                typename matrix_expression< LHS, RHS, OP>::matrix_type >::type
-  operator / (matrix_expression< LHS, RHS, OP> const & proxy,
+                                matrix_expression< const matrix_expression<const LHS, const RHS, OP>, const S1, op_div> >::type
+  operator / (matrix_expression<const LHS, const RHS, OP> const & proxy,
               S1 const & val)
   {
-    typename matrix_expression< LHS, RHS, OP>::matrix_type result(proxy.size1(), proxy.size2());
-    result = proxy;
-    result /= val;
-    return result;
+    return matrix_expression< const matrix_expression<const LHS, const RHS, OP>, const S1, op_div>(proxy, val);
   }
 
 
@@ -2049,28 +1316,28 @@ namespace viennacl
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                              const S1,
-                                                             op_prod>                                  
+                                                             op_mult>                                  
                               >::type
   operator*(const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy,
             const S1 & val)
   {
     return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                         const S1,
-                                        op_prod>(proxy, val);
+                                        op_mult>(proxy, val);
   }
 
   template <typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                               const NumericT,
-                                                              op_prod>                                  
+                                                              op_mult>                                  
                               >::type
   operator*(const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy,
             const S1 & val)
   {
     return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                         const NumericT,
-                                        op_prod>(proxy, NumericT(val));
+                                        op_mult>(proxy, NumericT(val));
   }
   
   // val * outer_prod(v1, v2);
@@ -2078,31 +1345,1565 @@ namespace viennacl
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                              const S1,
-                                                             op_prod>                                  
+                                                             op_mult>                                  
                               >::type
   operator*(const S1 & val,
             const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy)
   {
     return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                         const S1,
-                                        op_prod>(proxy, val);
+                                        op_mult>(proxy, val);
   }
   
   template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                              const NumericT,
-                                                             op_prod>                                  
+                                                             op_mult>                                  
                               >::type
   operator*(const S1 & val,
             const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy)
   {
     return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                         const NumericT,
-                                        op_prod>(proxy, NumericT(val));
+                                        op_mult>(proxy, NumericT(val));
   }
   
   
+  
+  //
+  // Specify available operations:
+  //
+
+  namespace linalg
+  {
+    namespace detail
+    {
+
+      // x = y
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_base<T, F> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_base<T, F> const & rhs)
+        {
+          viennacl::linalg::am(lhs, rhs, T(1), 1, false, false);
+        }
+      };
+
+      // x += y
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_base<T, F> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_base<T, F> const & rhs)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, rhs, T(1), 1, false, false);
+        }
+      };
+
+      // x -= y
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_base<T, F> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_base<T, F> const & rhs)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, rhs, T(1), 1, false, true);
+        }
+      };
+
+      ///////////// x  OP  y * alpha ////////////////////////
+
+
+      // x = alpha * y
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> const & proxy)
+        {
+          viennacl::linalg::am(lhs, proxy.lhs(), proxy.rhs(), 1, false, false);
+        }
+      };
+
+      // x += alpha * y
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, false);
+        }
+      };
+
+      // x -= alpha * y
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, true);
+        }
+      };
+
+
+      ///////////// x  OP  vec_expr * alpha ////////////////////////
+
+      // x = alpha * vec_expr
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            lhs = temp * proxy.rhs();
+          }
+      };
+
+      // x += alpha * vec_expr
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            lhs += temp * proxy.rhs();
+          }
+      };
+
+      // x -= alpha * vec_expr
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            lhs -= temp * proxy.rhs();
+          }
+      };
+
+
+      ///////////// x  OP  y / alpha ////////////////////////
+
+      // x = y / alpha
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> const & proxy)
+        {
+          viennacl::linalg::am(lhs, proxy.lhs(), proxy.rhs(), 1, true, false);
+        }
+      };
+
+      // x += y / alpha
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, false);
+        }
+      };
+
+      // x -= y / alpha
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const ScalarType, op_div> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, true);
+        }
+      };
+
+
+      ///////////// x  OP  vec_expr / alpha ////////////////////////
+
+      // x = vec_expr / alpha
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            lhs = temp / proxy.rhs();
+          }
+      };
+
+      // x += vec_expr / alpha
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            lhs += temp / proxy.rhs();
+          }
+      };
+
+      // x -= vec_expr / alpha
+      template <typename T, typename F, typename LHS, typename RHS, typename OP, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+      {
+          static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+          {
+            matrix<T, F> temp(proxy.lhs());
+            std::cout << "lhs -= temp / proxy.rhs()" << std::endl;
+            std::cout << temp(0,0) << " / " << proxy.rhs() << std::endl;
+            lhs -= temp / proxy.rhs();
+          }
+      };
+
+
+
+      // generic x = vec_expr1 + vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_add> >
+      {
+        // generic x = vec_expr1 + vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(temp, proxy.rhs());
+            lhs = temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_assign, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x = y + z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x = alpha * y + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x = y / alpha + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x = y + beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x = y + z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x = alpha * y + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x = alpha * y + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x = y / alpha + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x = y / alpha + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+      };
+
+
+      // generic x += vec_expr1 + vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_add> >
+      {
+        // generic x += vec_expr1 + vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(temp, proxy.rhs());
+            lhs += temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_inplace_add, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x += y + z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += alpha * y + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += y / alpha + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x += y + beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += y + z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x += alpha * y + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += alpha * y + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x += y / alpha + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x += y / alpha + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+      };
+
+
+
+      // generic x -= vec_expr1 + vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_add> >
+      {
+        // generic x -= vec_expr1 + vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(temp, proxy.rhs());
+            lhs -= temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_inplace_sub, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x -= y + z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= alpha * y + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= y / alpha + z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x -= y + beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= y + z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x -= alpha * y + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= alpha * y + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x -= y / alpha + beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x -= y / alpha + z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_add> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+
+      ///////////////////////
+
+
+
+      // generic x = vec_expr1 - vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x = vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs = temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_assign, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x = y - z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = alpha * y - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = y / alpha - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x = y - beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = y - z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs(), T(1), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x = alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x = y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x = y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm(lhs,
+                                 proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                 proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+      // generic x += vec_expr1 - vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x += vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs += temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_inplace_add, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x += y - z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += alpha * y - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += y / alpha - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs(), T(1), 1, false, true);
+        }
+
+        // x += y - beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += y - z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x += alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+
+        // x += y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, true);
+        }
+
+        // x += y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, false,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, true);
+        }
+      };
+
+
+
+      // generic x -= vec_expr1 - vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_sub> >
+      {
+        // generic x -= vec_expr1 - vec_expr2:
+        template <typename LHS1, typename RHS1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
+        {
+          bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
+          bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());
+
+          if (op_aliasing_lhs || op_aliasing_rhs)
+          {
+            matrix_base<T, F> temp(proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_sub, RHS>::apply(temp, proxy.rhs());
+            lhs -= temp;
+          }
+          else
+          {
+            op_executor<matrix_base<T, F>, op_inplace_sub, LHS>::apply(lhs, proxy.lhs());
+            op_executor<matrix_base<T, F>, op_inplace_add, RHS>::apply(lhs, proxy.rhs());
+          }
+        }
+
+        // x -= y - z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= alpha * y - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= y / alpha - z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  const matrix_base<T, F>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs(), T(1), 1, false, false);
+        }
+
+        // x -= y - beta * z
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= y - z / beta
+        template <typename ScalarType>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs(), T(1), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x -= alpha * y - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= alpha * y - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_mult>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, false, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+
+        // x -= y / alpha - beta * z
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_mult>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, false, false);
+        }
+
+        // x -= y / alpha - z / beta
+        template <typename ScalarType1, typename ScalarType2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F>, const ScalarType1, op_div>,
+                                                                  const matrix_expression<const matrix_base<T, F>, const ScalarType2, op_div>,
+                                                                  op_sub> const & proxy)
+        {
+          viennacl::linalg::ambm_m(lhs,
+                                   proxy.lhs().lhs(), proxy.lhs().rhs(), 1, true, true,
+                                   proxy.rhs().lhs(), proxy.rhs().rhs(), 1, true, false);
+        }
+      };
+
+
+
+
+
+
+
+
+      //////////////////// Element-wise operations ////////////////////////////////////////
+
+      // generic x = vec_expr1 .* vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_element_mult> >
+      {
+        // x = y .* z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          viennacl::linalg::element_op(lhs, proxy);
+        }
+
+        // x = y .* vec_expr
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(proxy.lhs(), temp));
+        }
+
+        // x = vec_expr .* z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(temp, proxy.rhs()));
+        }
+
+        // x = vec_expr .* vec_expr
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(temp1, temp2));
+        }
+      };
+
+      // generic x += vec_expr1 .* vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_mult> >
+      {
+        // x += y .* z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          viennacl::matrix<T, F> temp(proxy);
+          lhs += temp;
+        }
+
+        // x += y .* vec_expr
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(proxy.lhs(), temp));
+          lhs += temp2;
+        }
+
+        // x += vec_expr .* z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(temp, proxy.rhs()));
+          lhs += temp2;
+        }
+
+        // x += vec_expr .* vec_expr
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          matrix<T, F> temp3(temp1.size());
+          viennacl::linalg::element_op(temp3, viennacl::linalg::element_prod(temp1, temp2));
+          lhs += temp3;
+        }
+      };
+
+      // generic x -= vec_expr1 .* vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_mult> >
+      {
+
+        // x -= y .* z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          viennacl::matrix<T, F> temp(proxy);
+          lhs -= temp;
+        }
+
+        // x -= y .* vec_expr
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(proxy.lhs(), temp));
+          lhs -= temp2;
+        }
+
+        // x -= vec_expr .* z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(temp, proxy.rhs()));
+          lhs -= temp2;
+        }
+
+        // x -= vec_exor .* vec_expr
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_mult> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          matrix<T, F> temp3(temp1.size());
+          viennacl::linalg::element_op(temp3, viennacl::linalg::element_prod(temp1, temp2));
+          lhs -= temp3;
+        }
+      };
+
+
+
+
+
+      // generic x = vec_expr1 ./ vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_element_div> >
+      {
+        // x = y ./ z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          viennacl::linalg::element_op(lhs, proxy);
+        }
+
+        // x = y ./ vec_op
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(proxy.lhs(), temp));
+        }
+
+        // x = vec_op ./ z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(temp, proxy.rhs()));
+        }
+
+        // x = vec_op ./ vec_op
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_div> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(temp1, temp2));
+        }
+      };
+
+
+      // generic x += vec_expr1 ./ vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_div> >
+      {
+        // x = y /* z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          viennacl::matrix<T, F> temp(proxy);
+          lhs += temp;
+        }
+
+        // x = y /* vec_op
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(proxy.lhs(), temp));
+          lhs += temp2;
+        }
+
+        // x = vec_op /* z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(temp, proxy.rhs()));
+          lhs += temp2;
+        }
+
+        // x = vec_op /* vec_op
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_div> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          matrix<T, F> temp3(temp1.size());
+          viennacl::linalg::element_op(temp3, viennacl::linalg::element_div(temp1, temp2));
+          lhs += temp3;
+        }
+      };
+
+
+      // generic x -= vec_expr1 ./ vec_expr2:
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_div> >
+      {
+        // x -= y /* z
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          viennacl::matrix<T, F> temp(proxy);
+          lhs -= temp;
+        }
+
+        // x -= y /* vec_op
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.rhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(proxy.lhs(), temp));
+          lhs -= temp2;
+        }
+
+        // x -= vec_op /* z
+        template <typename LHS1, typename RHS1, typename OP1>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
+        {
+          matrix<T, F> temp(proxy.lhs());
+          matrix<T, F> temp2(temp.size());
+          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(temp, proxy.rhs()));
+          lhs -= temp2;
+        }
+
+        // x -= vec_op /* vec_op
+        template <typename LHS1, typename RHS1, typename OP1,
+                  typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
+                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                  op_element_div> const & proxy)
+        {
+          matrix<T, F> temp1(proxy.lhs());
+          matrix<T, F> temp2(proxy.rhs());
+          matrix<T, F> temp3(temp1.size());
+          viennacl::linalg::element_op(temp3, viennacl::linalg::element_div(temp1, temp2));
+          lhs -= temp3;
+        }
+      };
+
+      //////////////// Matrix - Matrix products ////////////////
+
+      // C = A * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+        }
+      };
+
+      // C = A * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F1>,
+                                                                         const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                         op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+        }
+      };
+
+      // C = A^T * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                         const matrix_base<T, F2>,
+                                                                         op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_base<T, F2>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+        }
+      };
+
+      // C = A^T * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                         const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                         op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+        }
+      };
+
+
+      // C += A * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+        }
+      };
+
+      // C += A * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F1>,
+                                                                              const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+        }
+      };
+
+      // C += A^T * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                              const matrix_base<T, F2>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_base<T, F2>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+        }
+      };
+
+      // C += A^T * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                              const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+        }
+      };
+
+
+      // C -= A * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+        }
+      };
+
+      // C -= A * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F1>,
+                                                                              const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+        }
+      };
+
+      // C -= A^T * B
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                              const matrix_base<T, F2>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_base<T, F2>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+        }
+      };
+
+      // C -= A^T * B^T
+      template <typename T, typename F, typename F1, typename F2>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                              const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                              op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
+                                                                     const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
+                                                                     op_prod> const & rhs)
+        {
+          viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+        }
+      };
+      
+      ////////////////// Matrix-Vector Products ///////////////
+      
+      // y = A * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> const & rhs)
+        {
+          // check for x = A * x
+          if (op_aliasing(lhs, rhs.rhs()))
+          {
+            vector_base<T> temp(rhs);
+            lhs = temp;
+          }
+          else
+            viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+        }
+      };
+      
+      // y = A^T * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                      const vector_base<T>,
+                                                                      op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                  const vector_base<T>,
+                                                                  op_prod> const & rhs)
+        {
+          // check for x = A^T * x
+          if (op_aliasing(lhs, rhs.rhs()))
+          {
+            vector_base<T> temp(rhs);
+            lhs = temp;
+          }
+          else
+            viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+        }
+      };
+      
+      
+      // y += A * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> const & rhs)
+        {
+          vector_base<T> temp(rhs);
+          lhs += temp;
+        }
+      };
+      
+      // y += A^T * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                           const vector_base<T>,
+                                                                           op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                  const vector_base<T>,
+                                                                  op_prod> const & rhs)
+        {
+          vector_base<T> temp(rhs);
+          lhs += temp;
+        }
+      };
+      
+      
+      // y -= A * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const vector_base<T>, op_prod> const & rhs)
+        {
+          vector_base<T> temp(rhs);
+          lhs -= temp;
+        }
+      };
+      
+      // y -= A^T * x
+      template <typename T, typename F>
+      struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                           const vector_base<T>,
+                                                                           op_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_trans>,
+                                                                  const vector_base<T>,
+                                                                  op_prod> const & rhs)
+        {
+          vector_base<T> temp(rhs);
+          lhs -= temp;
+        }
+      };
+      
+
+
+      ////////////////// Rank-1 Updates ///////////////
+      
+      // A = v1 * v2^T
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
+        {
+          lhs.clear();
+          viennacl::linalg::scaled_rank_1_update(lhs, T(1.0), 1, false, false, rhs.lhs(), rhs.rhs());
+        }
+      };
+
+      // A = alpha * v1 * v2^T
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                          const ScalarType,
+                                                                          op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                      const ScalarType,
+                                                                      op_mult> const & rhs)
+        {
+          lhs.clear();
+          viennacl::linalg::scaled_rank_1_update(lhs, rhs.rhs(), 1, false, false, rhs.lhs().lhs(), rhs.lhs().rhs());
+        }
+      };
+
+      // A += v1 * v2^T
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
+        {
+          viennacl::linalg::scaled_rank_1_update(lhs, T(1.0), 1, false, false, rhs.lhs(), rhs.rhs());
+        }
+      };
+
+      // A += alpha * v1 * v2^T
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                               const ScalarType,
+                                                                               op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                      const ScalarType,
+                                                                      op_mult> const & rhs)
+        {
+          viennacl::linalg::scaled_rank_1_update(lhs, rhs.rhs(), 1, false, false, rhs.lhs().lhs(), rhs.lhs().rhs());
+        }
+      };
+
+      // A -= v1 * v2^T
+      template <typename T, typename F>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
+        {
+          viennacl::linalg::scaled_rank_1_update(lhs, T(1.0), 1, false, true, rhs.lhs(), rhs.rhs());
+        }
+      };
+
+      // A -= alpha * v1 * v2^T
+      template <typename T, typename F, typename ScalarType>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                               const ScalarType,
+                                                                               op_mult> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
+                                                                      const ScalarType,
+                                                                      op_mult> const & rhs)
+        {
+          viennacl::linalg::scaled_rank_1_update(lhs, rhs.rhs(), 1, false, true, rhs.lhs().lhs(), rhs.lhs().rhs());
+        }
+      };
+
+      
+    } // namespace detail
+
+  } // namespace linalg
 
 } //namespace viennacl
 

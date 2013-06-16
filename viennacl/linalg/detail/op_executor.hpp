@@ -45,6 +45,24 @@ namespace viennacl
       }
 
 
+      template <typename T, typename F, typename B>
+      bool op_aliasing(matrix_base<T, F> const & lhs, B const & b)
+      {
+        return false;
+      }
+
+      template <typename T, typename F>
+      bool op_aliasing(matrix_base<T, F> const & lhs, matrix_base<T, F> const & b)
+      {
+        return lhs.handle() == b.handle();
+      }
+
+      template <typename T, typename F, typename LHS, typename RHS, typename OP>
+      bool op_aliasing(matrix_base<T, F> const & lhs, matrix_expression<const LHS, const RHS, OP> const & rhs)
+      {
+        return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
+      }
+
 
       /** @brief Worker class for decomposing expression templates.
         *
