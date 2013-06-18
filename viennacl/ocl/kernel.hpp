@@ -88,9 +88,11 @@ namespace viennacl
         #endif
         local_work_size_[0] = other.local_work_size_[0];
         local_work_size_[1] = other.local_work_size_[1];
+        local_work_size_[2] = other.local_work_size_[2];
         
         global_work_size_[0] = other.global_work_size_[0];
         global_work_size_[1] = other.global_work_size_[1];
+        global_work_size_[2] = other.global_work_size_[2];
       }
       
       viennacl::ocl::kernel & operator=(const kernel & other)
@@ -104,8 +106,10 @@ namespace viennacl
         name_ = other.name_;
         local_work_size_[0] = other.local_work_size_[0];
         local_work_size_[1] = other.local_work_size_[1];
+        local_work_size_[2] = other.local_work_size_[2];
         global_work_size_[0] = other.global_work_size_[0];
         global_work_size_[1] = other.global_work_size_[1];
+        global_work_size_[2] = other.global_work_size_[2];
         return *this;
       }
       
@@ -688,7 +692,7 @@ namespace viennacl
       */
       size_type local_work_size(int index = 0) const
       {
-        assert(index == 0 || index == 1);
+        assert(index < 3 && bool("Work size index out of bounds"));
         return local_work_size_[index];
       }
       /** @brief Returns the global work size at the respective dimension
@@ -697,7 +701,7 @@ namespace viennacl
       */
       size_type global_work_size(int index = 0) const
       { 
-        assert(index == 0 || index == 1);
+        assert(index < 3 && bool("Work size index out of bounds"));
         return global_work_size_[index];
       }
 
@@ -711,7 +715,7 @@ namespace viennacl
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Setting local work size to " << s << " at index " << index << " for kernel " << name_ << std::endl;
         #endif
-        assert(index == 0 || index == 1);
+        assert(index < 3 && bool("Work size index out of bounds"));
         local_work_size_[index] = s;
       }
       /** @brief Sets the global work size at the respective dimension
@@ -724,7 +728,7 @@ namespace viennacl
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Setting global work size to " << s << " at index " << index << " for kernel " << name_ << std::endl;
         #endif
-        assert(index == 0 || index == 1);
+        assert(index < 3 && bool("Work size index out of bounds"));
         global_work_size_[index] = s;
       }
 
@@ -742,8 +746,8 @@ namespace viennacl
       viennacl::ocl::program const * p_program_;
       viennacl::ocl::context const * p_context_;
       std::string name_;
-      size_type local_work_size_[2];
-      size_type global_work_size_[2];
+      size_type local_work_size_[3];
+      size_type global_work_size_[3];
     };
     
     /** @brief Queries information about a kernel

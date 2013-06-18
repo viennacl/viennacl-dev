@@ -102,23 +102,25 @@ namespace viennacl
           }          
         }
       }
-      else //2D kernel
+      else //2D or 3D kernel
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Starting 2D-kernel '" << k.name() << "'..." << std::endl;
-        std::cout << "ViennaCL: Global work size: '"  << k.global_work_size(0) << ", " << k.global_work_size(1) << "'..." << std::endl;
-        std::cout << "ViennaCL: Local work size: '"   << k.local_work_size(0) << ", " << k.local_work_size(1) << "'..." << std::endl;
+        std::cout << "ViennaCL: Starting 2D/3D-kernel '" << k.name() << "'..." << std::endl;
+        std::cout << "ViennaCL: Global work size: '"  << k.global_work_size(0) << ", " << k.global_work_size(1) << ", " << k.global_work_size(2) << "'..." << std::endl;
+        std::cout << "ViennaCL: Local work size: '"   << k.local_work_size(0) << ", " << k.local_work_size(1) << ", " << k.local_work_size(2) << "'..." << std::endl;
         #endif
 
-        std::size_t tmp_global[2]; 
+        std::size_t tmp_global[3];
         tmp_global[0] = k.global_work_size(0);
         tmp_global[1] = k.global_work_size(1);
+        tmp_global[2] = k.global_work_size(2);
         
-        std::size_t tmp_local[2];
+        std::size_t tmp_local[3];
         tmp_local[0] = k.local_work_size(0);
         tmp_local[1] = k.local_work_size(1);
+        tmp_local[2] = k.local_work_size(2);
         
-        cl_int err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 2, NULL, tmp_global, tmp_local, 0, NULL, NULL);
+        cl_int err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), (tmp_global[2] == 0) ? 2 : 3, NULL, tmp_global, tmp_local, 0, NULL, NULL);
 
         if (err != CL_SUCCESS)
         {

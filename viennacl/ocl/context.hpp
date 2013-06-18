@@ -590,13 +590,13 @@ namespace viennacl
           || (p_context_->current_device().type() == CL_DEVICE_TYPE_ACCELERATOR) // Xeon Phi
          )
       {
-        local_work_size_[0] = 128; local_work_size_[1] = 0;
-        global_work_size_[0] = 128*128; global_work_size_[1] = 0;
+        local_work_size_[0] = 128;      local_work_size_[1] = 0;  local_work_size_[2] = 0;
+        global_work_size_[0] = 128*128; global_work_size_[1] = 0; global_work_size_[2] = 0;
       }
       else //assume CPU type:
       {
         //conservative assumption: one thread per CPU core:
-        local_work_size_[0] = 1; local_work_size_[1] = 0;
+        local_work_size_[0] = 1; local_work_size_[1] = 0; local_work_size_[2] = 0;
         
         size_type units = p_context_->current_device().max_compute_units();
         size_type s = 1;
@@ -604,7 +604,7 @@ namespace viennacl
         while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
           s *= 2;
         
-        global_work_size_[0] = s; global_work_size_[1] = 0;
+        global_work_size_[0] = s; global_work_size_[1] = 0; global_work_size_[2] = 0;
       }
     }
 
