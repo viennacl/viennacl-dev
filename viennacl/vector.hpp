@@ -411,7 +411,7 @@ namespace viennacl
       }
 
       template <typename LHS, typename RHS, typename OP>
-      vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(proxy.size()), start_(0), stride_(1)
+      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(proxy.size()), start_(0), stride_(1)
       {
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (size_ > 0)

@@ -233,7 +233,7 @@ namespace viennacl
           elements_(h) {}
   
       template <typename LHS, typename RHS, typename OP>
-      matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) : 
+      explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
         size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
         internal_size1_(viennacl::traits::size1(proxy)), internal_size2_(viennacl::traits::size2(proxy))
       {

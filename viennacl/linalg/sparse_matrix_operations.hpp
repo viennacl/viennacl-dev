@@ -240,43 +240,6 @@ namespace viennacl
     return matrix_expression< const M1, const M1, op_trans>(mat, mat);
   }
 
-
-  //v += A * x
-  /** @brief Implementation of the operation v1 += A * v2, where A is a matrix
-  *
-  * @param result The result vector v1
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename SCALARTYPE, typename SparseMatrixType>
-  typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
-                                viennacl::vector_base<SCALARTYPE> & >::type
-  operator+=(viennacl::vector_base<SCALARTYPE> & result,
-             const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy) 
-  {
-    vector<SCALARTYPE> temp(proxy.lhs().size1());
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), temp);
-    result += temp;
-    return result;
-  }
-
-  /** @brief Implementation of the operation v1 -= A * v2, where A is a matrix
-  *
-  * @param result The result vector v1
-  * @param proxy  An expression template proxy class.
-  */
-  template <typename SCALARTYPE, typename SparseMatrixType>
-  typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
-                                viennacl::vector_base<SCALARTYPE> & >::type
-  operator-=(viennacl::vector_base<SCALARTYPE> & result,
-             const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy) 
-  {
-    vector<SCALARTYPE> temp(proxy.lhs().size1());
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), temp);
-    result -= temp;
-    return result;
-  }
-  
-  
   //free functions:
   /** @brief Implementation of the operation 'result = v1 + A * v2', where A is a matrix
   *
