@@ -141,7 +141,7 @@ namespace viennacl
       
       if (first)
       {
-        viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(double_float_conversion_program, "double_float_conversion_program");
+        viennacl::ocl::current_context().add_program(double_float_conversion_program, "double_float_conversion_program");
       }
 
       viennacl::vector<float> residual_low_precision(problem_size);
