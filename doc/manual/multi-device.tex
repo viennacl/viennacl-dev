@@ -2,10 +2,10 @@
 \chapter{Configuring OpenCL Contexts and Devices} \label{chap:multi-devices}
 Support for multiple devices was officially added in {\OpenCL} 1.1.
 Among other things, this allows e.g.~to use all CPUs in a multi-socket CPU mainboard as a single {\OpenCL} compute device.
-Nevertheless, the efficient use of multiple {\OpenCL} devices is far from trivial, because algorithms have to be designed such that 
+Nevertheless, the efficient use of multiple {\OpenCL} devices is far from trivial, because algorithms have to be designed such that
 they take distributed memory and synchronization issues into account.
 
-Support for multiple {\OpenCL} devices and contexts was introduced in {\ViennaCL} with version 1.1.0. In the following we give a description of the 
+Support for multiple {\OpenCL} devices and contexts was introduced in {\ViennaCL} with version 1.1.0. In the following we give a description of the
 provided functionality.
 
 \NOTE{In {\ViennaCLversion} there is no native support for automatically executing operations over multiple GPUs. Partition of data is left to the user.}
@@ -30,8 +30,8 @@ By default, only the first device in the context is used for all operations. Thi
  viennacl::ocl::current_context().current_device();
  viennacl::ocl::current_device(); //equivalent to above
 \end{lstlisting}
-A user may wish to use multiple {\OpenCL} contexts, where each context consists of a subset of the available devices. 
-To setup a context with ID \lstinline|id| with a particular device type only, the user has to specify this 
+A user may wish to use multiple {\OpenCL} contexts, where each context consists of a subset of the available devices.
+To setup a context with ID \lstinline|id| with a particular device type only, the user has to specify this
 prior to any other {\ViennaCL} related statements:
 \begin{lstlisting}
 //use only GPUs:

@@ -27,10 +27,10 @@ types, as the following snippet shows:
   viennacl::scalar<double> gpu_double = 2.71828;
 
   //conversions and t
-  cpu_float = gpu_float;  
+  cpu_float = gpu_float;
   gpu_float = cpu_double;  //automatic transfer and conversion
 
-  cpu_float = gpu_float * 2.0f; 
+  cpu_float = gpu_float * 2.0f;
   cpu_double = gpu_float - cpu_float;
 \end{lstlisting}
 Mixing built-in types with the {\ViennaCL} scalar is usually not a
@@ -75,7 +75,7 @@ supplied length, but the memory is not initialized to zero. Another difference
 to CPU implementations is that accessing single vector elements is very costly,
 because every time an element is
 accessed, it has to be transferred from the CPU to the compute device or vice
-versa. 
+versa.
 \subsection{Example Usage}
 The following code snippet shows the typical use of the vector type provided by
 {\ViennaCL}. The overloaded function \texttt{copy()} function, which is used similar to
@@ -157,7 +157,7 @@ for (size_t i=0; i<cpu_vector.size(); ++i)
 // fill a ViennaCL vector - VERY SLOW with GPU backends!!
 for (size_t i=0; i<gpu_vector.size(); ++i)
     vcl_vector(i) = 1e-3f;
-\end{lstlisting} 
+\end{lstlisting}
 The difference in execution speed is typically several orders of magnitude,
 therefore direct vector element access should be used only if a very small
 number of entries is accessed in this way. A much faster initialization is as
@@ -171,7 +171,7 @@ for (long i=0; i<cpu_vector.size(); ++i)
 // fill a vector on GPU with data from CPU - faster versions:
 copy(cpu_vector, vcl_vector);                                   //option 1
 copy(cpu_vector.begin(), cpu_vector.end(), vcl_vector.begin()); //option 2
-\end{lstlisting} 
+\end{lstlisting}
 In this way, setup costs for the CPU vector and the {\ViennaCL} vector are comparable.
 
 \section{Dense Matrix Type}
@@ -188,11 +188,11 @@ The use of \texttt{matrix$<$T, F$>$} is similar to that of the counterpart in {\
  viennacl::matrix<float>  vcl_matrix(4, 5);
 
  //fill it up:
- vcl_matrix(0,2) = 1.0; 
- vcl_matrix(1,2) = -1.5; 
- vcl_matrix(2,0) = 4.2; 
- vcl_matrix(3,4) = 3.1415; 
-\end{lstlisting} 
+ vcl_matrix(0,2) = 1.0;
+ vcl_matrix(1,2) = -1.5;
+ vcl_matrix(2,0) = 4.2;
+ vcl_matrix(3,4) = 3.1415;
+\end{lstlisting}
 
 \NOTE{Accessing single elements of a matrix using \texttt{operator()} is very slow on GPU backends! Use with care!}
 
@@ -203,7 +203,7 @@ copy(cpu_matrix, gpu_matrix);
 
 //copy content from GPU matrix to CPU matrix
 copy(gpu_matrix, cpu_matrix);
-\end{lstlisting} 
+\end{lstlisting}
 The type requirement on the \texttt{cpu\_matrix} is that \texttt{operator()} can be used for accessing entries, that a member function \texttt{size1()} returns the number of rows and that \texttt{size2()} returns the number of columns.
 Please refer to Chap.~\ref{chap:other-libs} for an overview of other libraries for which an overload of \texttt{copy()} is provided.
 
@@ -285,9 +285,9 @@ There is a direct interfacing with the standard implementation using a vector of
  std::vector< std::map< unsigned int, float> > cpu_sparse_matrix(4);
 
  //fill it up:
- cpu_sparse_matrix[0][2] = 1.0; 
- cpu_sparse_matrix[1][2] = -1.5; 
- cpu_sparse_matrix[3][0] = 4.2; 
+ cpu_sparse_matrix[0][2] = 1.0;
+ cpu_sparse_matrix[1][2] = -1.5;
+ cpu_sparse_matrix[3][0] = 4.2;
 
  //set up a sparse ViennaCL matrix:
  viennacl::compressed_matrix<float>  vcl_sparse_matrix(4, 5);
@@ -317,11 +317,11 @@ For the sparse matrix types in {\ublas}, these requirements are all fulfilled. P
 of other libraries for which an overload of \texttt{copy()} is provided.
 
 \subsubsection{Members}
-The interface is described in Tab.~\ref{tab:compressed-matrix-interface}. 
+The interface is described in Tab.~\ref{tab:compressed-matrix-interface}.
 
 \subsection{Coordinate Matrix}
-In the second sparse matrix type, \texttt{coordinate\_matrix$<$T, alignment$>$}, 
-entries are stored as triplets \texttt{(i,j,val)}, where \texttt{i} is the row index, \texttt{j} is the column index and \texttt{val} is the entry. 
+In the second sparse matrix type, \texttt{coordinate\_matrix$<$T, alignment$>$},
+entries are stored as triplets \texttt{(i,j,val)}, where \texttt{i} is the row index, \texttt{j} is the column index and \texttt{val} is the entry.
 Again, \texttt{T} is the floating point type. The optional \texttt{alignment} defaults to \texttt{1} at present.
 In general, sparse matrices should be set up on the
 CPU and then be pushed to the compute device using \texttt{copy()}, because dynamic memory management of sparse matrices is not provided on {\OpenCL} compute devices such as GPUs.
@@ -352,12 +352,12 @@ Interface & Comment\\
 \end{table}
 
 \subsubsection{Example Usage}
-The use of \texttt{coordinate\_matrix$<$T, alignment$>$} is similar to that of the first sparse matrix type 
+The use of \texttt{coordinate\_matrix$<$T, alignment$>$} is similar to that of the first sparse matrix type
 \texttt{compressed\_matrix$<$T, alignment$>$}, thus we refer to Sec.~\ref{sec:compressed-matrix-example}
 
 
 \subsubsection{Members}
-The interface is described in Tab.~\ref{tab:coordinate-matrix-interface}. 
+The interface is described in Tab.~\ref{tab:coordinate-matrix-interface}.
 
 %\TIP{In {\ViennaCLversion} the use of \lstinline|compressed\_matrix| over \lstinline|coordinate\_matrix| is encouraged due to better performance!}
 \NOTE{Note that only a few preconditioners work with \lstinline|coordinate_matrix| so far, cf.~ Sec.~\ref{sec:preconditioner}.}

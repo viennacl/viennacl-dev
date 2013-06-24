@@ -1,6 +1,6 @@
 \chapter{Using ViennaCL in User-Provided OpenCL Contexts} \label{chap:custom-contexts}
 
-Many projects need similar basic linear algebra operations, but essentially operate in their own {\OpenCL} context. 
+Many projects need similar basic linear algebra operations, but essentially operate in their own {\OpenCL} context.
 To provide the functionality and convenience of {\ViennaCL} to such existing projects,
 existing contexts can be passed to {\ViennaCL} and memory objects can be wrapped into the basic linear algebra types \lstinline|vector|, \lstinline|matrix| and \lstinline|compressed_matrix|.
 This chapter is devoted to the description of the necessary steps to use {\ViennaCL} on contexts provided by the library user.
@@ -8,7 +8,7 @@ This chapter is devoted to the description of the necessary steps to use {\Vienn
 \TIP{An example of providing a custom context to {\ViennaCL} can be found in \texttt{examples/tutorial/custom-contexts.cpp}}
 
 \section{Passing Contexts to ViennaCL}
-{\ViennaCLversion} is able to handle an arbitrary number of contexts, which are identified by a key value of type \lstinline|long|. 
+{\ViennaCLversion} is able to handle an arbitrary number of contexts, which are identified by a key value of type \lstinline|long|.
 By default, {\ViennaCL} operates on the context identified by $0$, unless the user switches the context, cf.~Chapter \ref{chap:multi-devices}.
 
 According to the {\OpenCL} standard, a context contains devices and queues for each device. Thus, it is assumed in the following that
@@ -57,7 +57,7 @@ and the queues in a STL map:
  my_queues[my_device2].push_back(my_queue3);
  ...
 
- //supply existing context with multiple devices 
+ //supply existing context with multiple devices
  //and queues to ViennaCL using id '0':
  viennacl::ocl::setup_context(0, my_context, my_devices, my_queues);
 \end{lstlisting}
@@ -75,7 +75,7 @@ Typically, one of the types \lstinline|scalar|, \lstinline|vector|, \lstinline|m
  cl_mem my_memory3 = ...;
  cl_mem my_memory4 = ...;
  cl_mem my_memory5 = ...;
- 
+
  //wrap my_memory1 into a vector of size 10
  viennacl::vector<float> my_vec(my_memory1, 10);
 

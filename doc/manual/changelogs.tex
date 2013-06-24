@@ -62,7 +62,7 @@ New features and feature improvements are as follows:
  \item Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
  \item Reduced overhead when copying to/from \lstinline|ublas::compressed_matrix|.
  \item ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
- \item Refurbished OpenCL vector kernels backend. 
+ \item Refurbished OpenCL vector kernels backend.
        All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
  \item \lstinline|matrix_range| and \lstinline|matrix_slice| as well as \lstinline|vector_range| and \lstinline|vector_slice| can now be used and mixed completely seamlessly with all standard operations except \lstinline|lu_factorize()|.
  \item Fixed a bug when using copy() with iterators on vector proxy objects.
@@ -120,7 +120,7 @@ Some of the experimental features introduced in 1.2.0 keep their experimental st
 
 
 \section*{Version 1.2.x}
- 
+
 \subsection*{Version 1.2.1}
 The current release mostly provides a few bug fixes for experimental features introduced in 1.2.0.
 In addition, performance improvements for matrix-matrix multiplications are applied.
@@ -213,7 +213,7 @@ storage.
 
 \section*{Version 1.0.x}
 
-\subsection*{Version 1.0.5} 
+\subsection*{Version 1.0.5}
 This is the last 1.0.x release. The main changes are as follows:
 \begin{itemize}
  \item Added a reader and writer for MatrixMarket files (thanks to Evan Bollig for suggesting that)
@@ -223,7 +223,7 @@ This is the last 1.0.x release. The main changes are as follows:
  \item Disabled the use of reference counting for OpenCL handles on Mac OS X (caused seg faults on program exit)
 \end{itemize}
 
-\subsection*{Version 1.0.4} 
+\subsection*{Version 1.0.4}
 The changes in this release are:
 \begin{itemize}
  \item All tutorials now work out-of the box with Visual Studio 2008.
@@ -234,16 +234,16 @@ The changes in this release are:
  \item Corrected incorrect return values in the sparse matrix regression test suite (thanks to Klaus Schnass for the hint)
 \end{itemize}
 
-\subsection*{Version 1.0.3} 
+\subsection*{Version 1.0.3}
 The main improvements in this release are:
 \begin{itemize}
  \item Support for multi-core CPUs with ATI Stream SDK (thanks to Riccardo Rossi, UPC. BARCELONA TECH, for suggesting this)
  \item \lstinline|inner_prod| is now up to a factor of four faster (thanks to Serban Georgescu, ETH, for pointing the poor performance of the old implementation out)
  \item Fixed a bug with \lstinline|plane_rotation| that caused system freezes with ATI GPUs.
- \item Extended the doxygen generated reference documentation 
+ \item Extended the doxygen generated reference documentation
 \end{itemize}
 
-\subsection*{Version 1.0.2} 
+\subsection*{Version 1.0.2}
 A bug-fix release that resolves some problems with the Visual C++ compiler.
 \begin{itemize}
  \item Fixed some compilation problems under Visual C++ (version 2005 and 2008).
@@ -251,7 +251,7 @@ A bug-fix release that resolves some problems with the Visual C++ compiler.
  \item Renamed \texttt{aux/} folder to \texttt{auxiliary/} (caused some problems on windows machines)
 \end{itemize}
 
-\subsection*{Version 1.0.1} 
+\subsection*{Version 1.0.1}
 This is a quite large revision of \texttt{ViennaCL 1.0.0}, but mainly improves things under the hood.
 \begin{itemize}
  \item Fixed a bug in lu\_substitute for dense matrices

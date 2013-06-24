@@ -24,7 +24,7 @@ or
 \begin{lstlisting}
   gpu_vector[0] = 2.0f;
 \end{lstlisting}
-where one of the operands resides on the CPU and the other on the GPU. 
+where one of the operands resides on the CPU and the other on the GPU.
 Initialization of a separate type followed by a call to \lstinline|copy| is
 certainly not desired for the above examples.
 
@@ -102,7 +102,7 @@ classes could be introduced in future releases of {\ViennaCL}.
 A remedy for quick iteration over the entries of e.g.~a vector is the following:
 \begin{lstlisting}
  std::vector<double> temp(gpu_vector.size());
- copy(gpu_vector.begin(), gpu_vector.end(), temp.begin());  
+ copy(gpu_vector.begin(), gpu_vector.end(), temp.begin());
  for (std::vector<double>::iterator it = temp.begin();
       it != temp.end();
      ++it)
@@ -126,11 +126,11 @@ One possibility was to require a mandatory
 before using any other objects provided by {\ViennaCL}, but this approach was discarded for the following two reasons:
 \begin{itemize}
  \item If \lstinline|viennacl::init();| is accidentally forgotten by the user,
-the program will most likely terminate in a rather uncontrolled way. 
+the program will most likely terminate in a rather uncontrolled way.
  \item It requires the user to remember and write one extra line of code, even
 if the default settings are fine.
 \end{itemize}
-Initialization is instead done in a lazy manner when requesting {\OpenCL} kernels. 
+Initialization is instead done in a lazy manner when requesting {\OpenCL} kernels.
 Kernels with similar functionality are grouped together in a common compilation units.
 This allows a fine-grained control over which source code to compile
 where and when. For example, there is no reason to compile the sparse matrix

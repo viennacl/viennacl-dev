@@ -98,7 +98,7 @@ matrices as proposed by Huckle \cite{huckle:fspai}.
 SPAI can be employed for a CPU matrix \lstinline|M| of type \lstinline|MatrixType| as follows:
 \begin{lstlisting}
 // setup SPAI preconditioner, purely CPU-based
-viennacl::linalg::spai_precond<MatrixType> 
+viennacl::linalg::spai_precond<MatrixType>
   spai_cpu(M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
 
 //solve (e.g. using stab. Bi-conjugate gradient solver)
@@ -113,7 +113,7 @@ parameter is the threshold for the residual of each minimization problem.
 For GPU-matrices, only parts of the setup phase are computed on the CPU, because compute-intensive tasks can be carried out on the GPU:
 \begin{lstlisting}
 // setup SPAI preconditioner, GPU-assisted
-viennacl::linalg::spai_precond<GPUMatrixType> 
+viennacl::linalg::spai_precond<GPUMatrixType>
   spai_gpu(vcl_matrix, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
 
 //solve (e.g. using conjugate gradient solver)
@@ -135,7 +135,7 @@ vcl_result = viennacl::linalg::solve(M,
                                      fspai_cpu);
 \end{lstlisting}
 Our experience is that FSPAI is typically more efficient than SPAI when applied to the same matrix, both in computational effort and in terms of convergence
-acceleration of the iterative solvers. 
+acceleration of the iterative solvers.
 
 \NOTE{At present, there is no GPU-accelerated FSPAI included in {\ViennaCL}.}
 
@@ -192,7 +192,7 @@ number of additional root nodes considered.
 The algorithms are called for a \lstinline|matrix| of a type compatible with \lstinline|std::vector< std::map<int, double> >| by
 \begin{lstlisting}
  r = viennacl::reorder(matrix, viennacl::cuthill_mckee_tag());
- r = viennacl::reorder(matrix, 
+ r = viennacl::reorder(matrix,
                        viennacl::advanced_cuthill_mckee_tag(a, gmax));
  r = viennacl::reorder(matrix, viennacl::gibbs_poole_stockmeyer_tag());
 \end{lstlisting}

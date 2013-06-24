@@ -6,7 +6,7 @@ platforms, but we could not check every possible combination of hardware,
 operating system and compiler. If you experience any trouble, please write to
 the maining list at \\
 \begin{center}
-\texttt{viennacl-support$@$lists.sourceforge.net} 
+\texttt{viennacl-support$@$lists.sourceforge.net}
 \end{center}
 
 
@@ -68,16 +68,16 @@ In order to compile and run {\OpenCL} applications, a corresponding library
 (e.g.~\texttt{libOpenCL.so} under Unix based systems) and is required.
 If {\OpenCL} is to be used with GPUs, suitable drivers have to be installed. This section describes how these can be acquired.
 
-\TIP{Note, that for Mac OS X systems there is no need to install an {\OpenCL} 
-capable driver and the corresponding library. 
-The {\OpenCL} library is already present if a suitable graphics 
+\TIP{Note, that for Mac OS X systems there is no need to install an {\OpenCL}
+capable driver and the corresponding library.
+The {\OpenCL} library is already present if a suitable graphics
 card is present. The setup of {\ViennaCL} on Mac OS X is discussed in
 Section~\ref{apple}.}
 
 \subsection{\NVIDIA Driver}
-\NVIDIA provides the {\OpenCL} library with the GPU driver. Therefore, if a 
-\NVIDIA driver is present on the system, the library is too. However, 
-not all of the released drivers contain the {\OpenCL} library. 
+\NVIDIA provides the {\OpenCL} library with the GPU driver. Therefore, if a
+\NVIDIA driver is present on the system, the library is too. However,
+not all of the released drivers contain the {\OpenCL} library.
 A driver which is known to support {\OpenCL}, and hence providing the required
 library, is $260.19.21$. Note that the latest {\NVIDIA} drivers do not include
 the {\OpenCL} headers anymore. Therefore, the official {\OpenCL} headers from
@@ -91,14 +91,14 @@ At the release of {\ViennaCLversion}, the latest version of the
 SDK is $2.7$. If used with AMD GPUs, recent AMD GPU drivers are typically required. If {\ViennaCL} is to be run on multi-core CPUs,
 no additional GPU driver is required. The installation notes
 of the APP SDK provides guidance throughout the
-installation process~\cite{atistreamdocu}. 
+installation process~\cite{atistreamdocu}.
 
 \TIP{If the SDK is installed in a non-system wide location on UNIX-based systems, be sure to add the
 {\OpenCL} library path to the \texttt{LD\_LIBRARY\_PATH} environment variable.
 Otherwise, linker errors will occur as the required library cannot be found.}
 
 It is important to note that the AMD APP SDK may not provide {\OpenCL}
-certified double precision support~\cite{atidouble} on some CPUs and GPUs. 
+certified double precision support~\cite{atidouble} on some CPUs and GPUs.
 
 \NOTE{Unfortunately, some versions of the AMD APP SDK are known to have bugs. For example, APP SDK 2.7 on Linux causes BiCGStab to fail on some devices.}
 
@@ -223,7 +223,7 @@ Execute
 \end{lstlisting}
 to obtain a Makefile and type
 \begin{lstlisting}
- $> make 
+ $> make
 \end{lstlisting}
 to build the examples. If some of the dependencies in Tab.~\ref{tab:tutorial-dependencies} are not fulfilled, you can build each example separately:
 \begin{lstlisting}
@@ -238,24 +238,24 @@ Execute the examples from the \lstinline|build/| folder as follows:
  $> examples/tutorial/blas1
  $> examples/benchmarks/vectorbench
 \end{lstlisting}
-Note that all benchmark executables carry the suffix \lstinline|bench|. 
+Note that all benchmark executables carry the suffix \lstinline|bench|.
 
 \TIP{Use the {\CMake}-GUI via \lstinline|cmake-gui ..| within the \lstinline|build/| folder in order to enable or disable optional libraries conveniently.}
 
 \subsection{Mac OS X}
 \label{apple}
-The tools mentioned in Section \ref{dependencies} are available on 
-Macintosh platforms too. 
+The tools mentioned in Section \ref{dependencies} are available on
+Macintosh platforms too.
 For the {\GCC} compiler the Xcode~\cite{xcode} package has to be installed.
-To install {\CMake} and {\Boost} external portation tools have to be used, 
-for example, Fink~\cite{fink}, DarwinPorts~\cite{darwinports} 
-or MacPorts~\cite{macports}. Such portation tools provide the 
-aforementioned packages, {\CMake} and {\Boost}, for macintosh platforms. 
+To install {\CMake} and {\Boost} external portation tools have to be used,
+for example, Fink~\cite{fink}, DarwinPorts~\cite{darwinports}
+or MacPorts~\cite{macports}. Such portation tools provide the
+aforementioned packages, {\CMake} and {\Boost}, for macintosh platforms.
 
-\TIP{If the {\CMake} build system has problems detecting your {\Boost} libraries, 
-determine the location of your {\Boost} folder. 
-Open the \texttt{CMakeLists.txt} file in the root directory of {\ViennaCL} and 
-add your {\Boost} path after the following entry: 
+\TIP{If the {\CMake} build system has problems detecting your {\Boost} libraries,
+determine the location of your {\Boost} folder.
+Open the \texttt{CMakeLists.txt} file in the root directory of {\ViennaCL} and
+add your {\Boost} path after the following entry:
 \texttt{IF(\${CMAKE\_SYSTEM\_NAME} MATCHES "Darwin")} }
 
 The build process of {\ViennaCL} on Mac OS is similar to Linux.

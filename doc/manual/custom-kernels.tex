@@ -13,7 +13,7 @@ A tutorial on this topic can be found at \texttt{examples/tutorial/custom-kernel
 \section{Setting up the {\OpenCL} Source Code}
 The {\OpenCL} source code has to be provided as a string. One can either write the source code directly into a string within C++ files, or one can read the {\OpenCL} source from a file. For demonstration purposes, we write the source directly as a string constant:
 \begin{lstlisting}
-const char * my_compute_program = 
+const char * my_compute_program =
 "__kernel void elementwise_prod(\n"
 "          __global const float * vec1,\n"
 "          __global const float * vec2, \n"
@@ -31,7 +31,7 @@ The source code in the string constant \lstinline{my_compute_kernel} has to be c
 An {\OpenCL} program is a compilation unit and may contain several different compute kernels,
 so one could also include another kernel function \lstinline{inplace_elementwise_prod} which writes the result directly to one of the two operands \lstinline{vec1} or \lstinline{vec2} in the same program.
 \begin{lstlisting}
-viennacl::ocl::program & my_prog = 
+viennacl::ocl::program & my_prog =
   viennacl::ocl::current_context().add_program(my_compute_program,
                                                "my_compute_program");
 \end{lstlisting}
@@ -46,12 +46,12 @@ viennacl::ocl::kernel & my_kernel = my_prog.get_kernel("elementwise_prod");
 \end{lstlisting}
 Now, the kernel is set up to use the function \lstinline|elementwise_prod| compiled into the program \lstinline|my_prog|.
 
-\NOTE{Note that C++ references to kernels and programs may become invalid as other kernels or programs are added. 
+\NOTE{Note that C++ references to kernels and programs may become invalid as other kernels or programs are added.
       Therefore, first allocate the required {\ViennaCL} objects and compile/add all custom kernels, before you start taking references to custom programs or kernels.}
 
 Instead of extracting references to programs and kernels directly at program compilation, one can obtain them at other places within the application source code by
 \begin{lstlisting}
-viennacl::ocl::program & prog = 
+viennacl::ocl::program & prog =
   viennacl::ocl::current_context().get_program("my_compute_program");
 viennacl::ocl::kernel & my_kernel = my_prog.get_kernel("elementwise_prod");
 \end{lstlisting}
