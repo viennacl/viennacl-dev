@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -39,8 +39,8 @@ namespace viennacl
     struct accelerator_tag {};
     /** @brief A tag denoting the default OpenCL device type (SDK-specific) */
     struct default_tag {};
-    
-    
+
+
     class kernel;
     class device;
     class command_queue;
@@ -52,7 +52,7 @@ namespace viennacl
 
     template <typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
-    
+
     inline viennacl::ocl::context & current_context();
     inline viennacl::ocl::device const & current_device();
   }

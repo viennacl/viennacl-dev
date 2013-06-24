@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -32,7 +32,7 @@ namespace viennacl
     {
       public:
         local_mem(unsigned int s) : size_(s) {}
-        
+
         /** @brief Returns size in bytes */
         unsigned int size() const { return size_; }
 
@@ -42,7 +42,7 @@ namespace viennacl
       private:
         unsigned int size_;
     };
-    
+
   }
 }
 #endif

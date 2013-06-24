@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -29,7 +29,7 @@
 
 /** @file viennacl/linalg/detail/spai/block_vector.hpp
     @brief Implementation of a bunch of vectors on GPU. Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -41,15 +41,15 @@ namespace viennacl
       {
         namespace spai
         {
-        
+
           /**
           * @brief Represents a contigious vector on GPU
           */
-          
+
           class block_vector
           {
             public:
-              
+
               /**
               * @brief Return handle to the elements
               */
@@ -58,7 +58,7 @@ namespace viennacl
               * @brief Return handle to start indices
               */
               viennacl::ocl::handle<cl_mem>& handle1() { return start_block_inds_; }
-              
+
               /**
               * @brief Return handle to the const elements
               */

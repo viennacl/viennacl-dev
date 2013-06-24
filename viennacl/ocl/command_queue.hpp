@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -39,7 +39,7 @@ namespace viennacl
 {
   namespace ocl
   {
-    
+
     /** @brief A class representing a command queue
     *
     */
@@ -48,7 +48,7 @@ namespace viennacl
       public:
         command_queue() {};
         command_queue(viennacl::ocl::handle<cl_command_queue> h) : handle_(h) {}
-        
+
         //Copy constructor:
         command_queue(command_queue const & other)
         {
@@ -61,13 +61,13 @@ namespace viennacl
           handle_ = other.handle_;
           return *this;
         }
-        
+
         /** @brief Waits until all kernels in the queue have finished their execution */
         void finish() const
         {
           clFinish(handle_.get());
         }
-        
+
         /** @brief Waits until all kernels in the queue have started their execution */
         void flush() const
         {
@@ -78,12 +78,12 @@ namespace viennacl
         viennacl::ocl::handle<cl_command_queue>       & handle()       { return handle_; }
 
       private:
-        
+
         viennacl::ocl::handle<cl_command_queue> handle_;
     };
 
- 
-    
+
+
   } //namespace ocl
 } //namespace viennacl
 

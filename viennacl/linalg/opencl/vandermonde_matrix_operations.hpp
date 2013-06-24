@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -38,7 +38,7 @@ namespace viennacl
   {
     namespace opencl
     {
-    
+
       /** @brief Carries out matrix-vector multiplication with a vandermonde_matrix
       *
       * Implementation of the convenience expression result = prod(mat, vec);
@@ -48,20 +48,20 @@ namespace viennacl
       * @param result The result vector
       */
         template<class SCALARTYPE, unsigned int ALIGNMENT>
-        void prod_impl(const viennacl::vandermonde_matrix<SCALARTYPE, ALIGNMENT> & mat, 
+        void prod_impl(const viennacl::vandermonde_matrix<SCALARTYPE, ALIGNMENT> & mat,
                       const viennacl::vector_base<SCALARTYPE> & vec,
                             viennacl::vector_base<SCALARTYPE> & result)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
-          
+
           viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "vandermonde_prod");
           viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(mat),
                                         viennacl::traits::opencl_handle(vec),
                                         viennacl::traits::opencl_handle(result),
                                         static_cast<cl_uint>(mat.size1())));
         }
-        
+
     } //namespace opencl
   } //namespace linalg
 } //namespace viennacl

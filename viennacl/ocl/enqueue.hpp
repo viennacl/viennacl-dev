@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -37,7 +37,7 @@ namespace viennacl
       class custom_operation;
       void enqueue_custom_op(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue);
   }
-  
+
   namespace ocl
   {
 
@@ -53,10 +53,10 @@ namespace viennacl
         std::cout << "ViennaCL: Global work size: '"  << k.global_work_size() << "'..." << std::endl;
         std::cout << "ViennaCL: Local work size: '"   << k.local_work_size() << "'..." << std::endl;
         #endif
-      
+
         std::size_t tmp_global = k.global_work_size();
         std::size_t tmp_local = k.local_work_size();
-        
+
         cl_int err;
         if (tmp_global == 1 && tmp_local == 1)
           err = clEnqueueTask(queue.handle().get(), k.handle().get(), 0, NULL, NULL);
@@ -70,7 +70,7 @@ namespace viennacl
           {
             //std::cout << "Flushing queue, then enqueuing again with half the size..." << std::endl;
             //std::cout << "Error code: " << err << std::endl;
-            
+
             tmp_global /= 2;
             tmp_local /= 2;
 
@@ -79,11 +79,11 @@ namespace viennacl
             std::cout << "ViennaCL: Global work size: '"  << tmp_global << "'..." << std::endl;
             std::cout << "ViennaCL: Local work size: '"   << tmp_local << "'..." << std::endl;
             #endif
-            
+
             queue.finish();
             err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, NULL);
           }
-          
+
           if (err != CL_SUCCESS)
           {
             //could not start kernel with any parameters
@@ -99,7 +99,7 @@ namespace viennacl
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
             std::cout << "ViennaCL: Kernel '" << k.name() << "' now uses global work size " << tmp_global << " and local work size " << tmp_local << "."  << std::endl;
             #endif
-          }          
+          }
         }
       }
       else //2D or 3D kernel
@@ -114,12 +114,12 @@ namespace viennacl
         tmp_global[0] = k.global_work_size(0);
         tmp_global[1] = k.global_work_size(1);
         tmp_global[2] = k.global_work_size(2);
-        
+
         std::size_t tmp_local[3];
         tmp_local[0] = k.local_work_size(0);
         tmp_local[1] = k.local_work_size(1);
         tmp_local[2] = k.local_work_size(2);
-        
+
         cl_int err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), (tmp_global[2] == 0) ? 2 : 3, NULL, tmp_global, tmp_local, 0, NULL, NULL);
 
         if (err != CL_SUCCESS)
@@ -128,23 +128,23 @@ namespace viennacl
           std::cerr << "ViennaCL: FATAL ERROR: Kernel start failed for '" << k.name() << "'." << std::endl;
           VIENNACL_ERR_CHECK(err);
         }
-        
+
       }
-            
+
       #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
       queue.finish();
       std::cout << "ViennaCL: Kernel " << k.name() << " finished!" << std::endl;
       #endif
     } //enqueue()
-    
-    
+
+
     /** @brief Convenience function that enqueues the provided kernel into the first queue of the currently active device in the currently active context */
     template <typename KernelType>
     void enqueue(KernelType & k)
     {
       enqueue(k, k.context().get_queue());
     }
-    
+
     inline void enqueue(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue)
     {
       generator::enqueue_custom_op(op,queue);
@@ -154,7 +154,7 @@ namespace viennacl
     {
       enqueue(op, viennacl::ocl::current_context().get_queue());
     }
-    
+
   } // namespace ocl
 } // namespace viennacl
 #endif

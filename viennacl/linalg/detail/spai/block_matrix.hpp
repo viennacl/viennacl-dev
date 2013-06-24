@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -29,7 +29,7 @@
 
 /** @file viennacl/linalg/detail/spai/block_matrix.hpp
     @brief Implementation of a bunch of (small) matrices on GPU. Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -41,15 +41,15 @@ namespace viennacl
       {
         namespace spai
         {
-          
+
           /**
           * @brief Represents a contigious matrices on GPU
           */
-          
+
           class block_matrix
           {
             public:
-              
+
               /**
               * @brief Returns a handle to the elements
               */
@@ -62,7 +62,7 @@ namespace viennacl
               * @brief Returns a handle to the start indices of matrix
               */
               viennacl::ocl::handle<cl_mem>& handle2() { return start_block_inds_; }
-              
+
               /**
               * @brief Returns a handle to the const elements
               */
@@ -80,8 +80,8 @@ namespace viennacl
               viennacl::ocl::handle<cl_mem> matrix_dimensions_;
               viennacl::ocl::handle<cl_mem> start_block_inds_;
           };
-        
-        
+
+
         }
       }
     }

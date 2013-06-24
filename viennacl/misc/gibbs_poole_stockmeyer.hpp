@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -21,7 +21,7 @@
 
 /** @file viennacl/misc/gibbs_poole_stockmeyer.hpp
  *  @brief Implementation of the Gibbs-Poole-Stockmeyer algorithm.  Experimental.
- *    
+ *
  *  Contributed by Philipp Grabenweger, interface adjustments by Karl Rupp.
  */
 
@@ -38,7 +38,7 @@
 
 namespace viennacl
 {
-  
+
   namespace detail
   {
 
@@ -46,16 +46,16 @@ namespace viennacl
     inline int calc_layering_width(std::vector< std::vector<int> > const & l)
     {
         int w;
-        
+
         w = 0;
         for (std::size_t i = 0; i < l.size(); i++)
         {
             w = std::max(w, static_cast<int>(l[i].size()));
         }
-        
+
         return w;
     }
-    
+
     // function to decompose a list of nodes rg into connected components
     // sorted by decreasing number of nodes per component
     template <typename MatrixType>
@@ -70,12 +70,12 @@ namespace viennacl
         int c;
         std::vector<bool> inr(n, true);
         std::deque<int> q;
-        
+
         for (std::size_t i = 0; i < rg.size(); i++)
         {
             inr[rg[i]] = false;
         }
-        
+
         do
         {
             for (int i = 0; i < n; i++)
@@ -90,7 +90,7 @@ namespace viennacl
             {
                 break;
             }
-            
+
             tmp.resize(0);
             while (q.size() > 0)
             {
@@ -101,19 +101,19 @@ namespace viennacl
                 {
                     tmp.push_back(c);
                     inr[c] = true;
-                    
+
                     for (typename MatrixType::value_type::const_iterator it = matrix[c].begin(); it != matrix[c].end(); it++)
                     {
                         if (it->first == c) continue;
                         if (inr[it->first]) continue;
-                        
+
                         q.push_back(it->first);
                     }
                 }
             }
             rgc.push_back(tmp);
         } while (true);
-        
+
         for (std::size_t i = 0; i < rgc.size(); i++)
         {
             ind[0] = i;
@@ -125,26 +125,26 @@ namespace viennacl
         {
             rgc_sorted.push_back(rgc[sort_ind[rgc.size()-1-i][0]]);
         }
-        
+
         return rgc_sorted;
     }
-    
+
   } // namespace detail
-  
-  
+
+
   struct gibbs_poole_stockmeyer_tag {};
-  
+
 
   /** @brief Function for the calculation of a node numbering permutation vector to reduce the bandwidth of a incidence matrix by the Gibbs-Poole-Stockmeyer algorithm
-   * 
+   *
    * references:
-   *   Werner Neudorf: "Bandbreitenreduktion - Teil 3. Algorithmus von 
+   *   Werner Neudorf: "Bandbreitenreduktion - Teil 3. Algorithmus von
    *   Gibbs-Poole-Stockmeyer. Testbeispiele mit CM und GPS", Preprint No.
    *   M 08/02, September 2002. Technische Universität Ilmenau, Fakultät
    *   für Mathematik und Naturwissenschaften, Institut für Mathematik.
    *   http://www.db-thueringen.de/servlets/DerivateServlet/Derivate-8673/IfM_Preprint_M_02_08.pdf
    *   (URL taken on June 14, 2011)
-   * 
+   *
    * @param matrix  vector of n matrix rows, where each row is a map<int, double> containing only the nonzero elements
    * @return permutation vector r. r[l] = i means that the new label of node i will be l.
    */
@@ -180,10 +180,10 @@ namespace viennacl
     int deg_min;
     int deg;
     int ind_min;
-    
+
     r.reserve(n);
     nodes.reserve(n);
-    
+
     while (r.size() < n) // for all components of the graph apply GPS algorithm
     {
         // determine node g with mimimal degree among all nodes which
@@ -201,13 +201,13 @@ namespace viennacl
                 }
             }
         }
-        
+
         // algorithm for determining nodes g, h as endpoints of a pseudo graph diameter
-        while (new_g) 
+        while (new_g)
         {
           lg.clear();
           detail::generate_layering(matrix, lg, g);
-            
+
           nodes.resize(0);
           for (std::size_t i = 0; i < lg.back().size(); i++)
           {
@@ -220,7 +220,7 @@ namespace viennacl
           {
               lg.back()[i] = nodes[i][0];
           }
-          
+
           m_min = -1;
           new_g = false;
           for (std::size_t i = 0; i < lg.back().size(); i++)
@@ -241,10 +241,10 @@ namespace viennacl
               }
           }
         }
-        
+
         lh.clear();
         detail::generate_layering(matrix, lh, h);
-        
+
         // calculate ls as layering intersection and rg as remaining
         // graph
         lap.clear();
@@ -266,7 +266,7 @@ namespace viennacl
         rg.clear();
         ls.clear();
         ls.resize(lg.size());
-        for (std::map< int, std::vector<int> >::iterator it = lap.begin(); 
+        for (std::map< int, std::vector<int> >::iterator it = lap.begin();
           it != lap.end(); it++)
         {
             if ((it->second)[0] == (it->second)[1])
@@ -278,7 +278,7 @@ namespace viennacl
                 rg.push_back(it->first);
             }
         }
-        // partition remaining graph in connected components 
+        // partition remaining graph in connected components
         rgc = detail::gps_rg_components(matrix, n, rg);
 
         // insert nodes of each component of rgc
@@ -328,7 +328,7 @@ namespace viennacl
                 }
             }
         }
-        
+
         // renumber nodes in ls
         rl.clear();
         rl.resize(ls.size());
@@ -342,12 +342,12 @@ namespace viennacl
                 l = 0;
                 state = 4;
                 break;
-                
+
               case 2:
                 for (std::size_t i = 0; i < rl[l-1].size(); i++)
                 {
                     isn.assign(n, false);
-                    for (std::map<int, double>::const_iterator it = matrix[rl[l-1][i]].begin();  
+                    for (std::map<int, double>::const_iterator it = matrix[rl[l-1][i]].begin();
                                                                it != matrix[rl[l-1][i]].end();
                                                                it++)
                     {
@@ -371,12 +371,12 @@ namespace viennacl
                         inr[nodes[j][0]] = true;
                     }
                 }
-                
+
               case 3:
                 for (std::size_t i = 0; i < rl[l].size(); i++)
                 {
                     isn.assign(n, false);
-                    for (std::map<int, double>::const_iterator it = matrix[rl[l][i]].begin(); 
+                    for (std::map<int, double>::const_iterator it = matrix[rl[l][i]].begin();
                                                                it != matrix[rl[l][i]].end();
                                                                it++)
                     {
@@ -400,7 +400,7 @@ namespace viennacl
                         inr[nodes[j][0]] = true;
                     }
                 }
-                
+
               case 4:
                 if (rl[l].size() < ls[l].size())
                 {
@@ -421,7 +421,7 @@ namespace viennacl
                     state = 3;
                     break;
                 }
-                
+
               case 5:
                 l++;
                 if (l < ls.size())
@@ -433,19 +433,19 @@ namespace viennacl
                     state_end = true;
                 }
                 break;
-                
+
             default:
                 break;
             }
         }
 
     }
-    
+
     return r;
   }
-  
-  
+
+
 } //namespace viennacl
-    
+
 
 #endif

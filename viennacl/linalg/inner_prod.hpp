@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -33,11 +33,11 @@ namespace viennacl
   //
   // generic inner_prod function
   //   uses tag dispatch to identify which algorithm
-  //   should be called 
+  //   should be called
   //
-  namespace linalg 
+  namespace linalg
   {
-    
+
     #ifdef VIENNACL_WITH_EIGEN
     // ----------------------------------------------------
     // EIGEN
@@ -51,7 +51,7 @@ namespace viennacl
       return v1.dot(v2);
     }
     #endif
-    
+
     #ifdef VIENNACL_WITH_MTL4
     // ----------------------------------------------------
     // MTL4
@@ -65,7 +65,7 @@ namespace viennacl
       return mtl::dot(v1, v2);
     }
     #endif
-    
+
     #ifdef VIENNACL_WITH_UBLAS
     // ----------------------------------------------------
     // UBLAS
@@ -93,7 +93,7 @@ namespace viennacl
       typename VectorT1::value_type result = 0;
       for (typename VectorT1::size_type i=0; i<v1.size(); ++i)
         result += v1[i] * v2[i];
-      
+
       return result;
     }
 
@@ -106,11 +106,11 @@ namespace viennacl
                vector_base<NumericT> const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const vector_base<NumericT>, 
+      return viennacl::scalar_expression< const vector_base<NumericT>,
                                           const vector_base<NumericT>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
-    
+
 
     // expression on lhs:
     template< typename LHS, typename RHS, typename OP, typename NumericT>
@@ -121,7 +121,7 @@ namespace viennacl
                vector_base<NumericT> const & vector2)
     {
       //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>, 
+      return viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
                                           const vector_base<NumericT>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
@@ -136,7 +136,7 @@ namespace viennacl
     {
       //std::cout << "viennacl .. " << std::endl;
       return viennacl::scalar_expression< const vector_base<NumericT>,
-                                          const viennacl::vector_expression<LHS, RHS, OP>, 
+                                          const viennacl::vector_expression<LHS, RHS, OP>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
 
@@ -154,7 +154,7 @@ namespace viennacl
                                           const viennacl::vector_expression<LHS2, RHS2, OP2>,
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
-    
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif

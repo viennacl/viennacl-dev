@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -30,9 +30,9 @@
 namespace viennacl
 {
   //TODO: Add convenience overload here. Which should be default?
-  
-  
+
+
 } //namespace viennacl
-    
+
 
 #endif

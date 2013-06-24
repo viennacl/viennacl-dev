@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -43,7 +43,7 @@ namespace viennacl
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::unit_upper_tag) { return (1 << 0); }
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::lower_tag)      { return (1 << 2); }
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::unit_lower_tag) { return (1 << 2) | (1 << 0); }
-        
+
         template <typename M1, typename M2, typename KernelType>
         void inplace_solve_impl(M1 const & A, M2 & B, KernelType & k)
         {
@@ -58,15 +58,15 @@ namespace viennacl
                                    cl_uint(viennacl::traits::size1(B)),          cl_uint(viennacl::traits::size2(B)),
                                    cl_uint(viennacl::traits::internal_size1(B)), cl_uint(viennacl::traits::internal_size2(B))
                                   )
-                                );        
+                                );
         }
       }
-      
-      
+
+
       //
       // Note: By convention, all size checks are performed in the calling frontend. No need to double-check here.
       //
-      
+
       ////////////////// upper triangular solver (upper_tag) //////////////////////////////////////
       /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
       *
@@ -77,10 +77,10 @@ namespace viennacl
       void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-        
+
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init(ctx);
-        
+
         std::stringstream ss;
         ss << SOLVERTAG::name() << "_solve";
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
@@ -88,7 +88,7 @@ namespace viennacl
         k.global_work_size(0, B.size2() * k.local_work_size());
         detail::inplace_solve_impl(A, B, k);
       }
-      
+
       /** @brief Direct inplace solver for dense triangular systems with transposed right hand side
       *
       * @param A       The system matrix
@@ -100,7 +100,7 @@ namespace viennacl
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-        
+
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init(ctx);
 
@@ -111,7 +111,7 @@ namespace viennacl
         k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
         detail::inplace_solve_impl(A, proxy_B.lhs(), k);
       }
-      
+
       //upper triangular solver for transposed lower triangular matrices
       /** @brief Direct inplace solver for dense triangular systems that stem from transposed triangular systems
       *
@@ -124,7 +124,7 @@ namespace viennacl
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(B).context());
-        
+
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init(ctx);
 
@@ -147,7 +147,7 @@ namespace viennacl
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_A.lhs()).context());
-        
+
         typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
         KernelClass::init(ctx);
 
@@ -158,9 +158,9 @@ namespace viennacl
         k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
         detail::inplace_solve_impl(proxy_A.lhs(), proxy_B.lhs(), k);
       }
-      
-      
-      
+
+
+
       //
       //  Solve on vector
       //
@@ -171,13 +171,13 @@ namespace viennacl
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        
+
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
         KernelClass::init(ctx);
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
-        
+
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                  cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
@@ -190,7 +190,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::size(vec)),
                                  options
                                 )
-                              );        
+                              );
       }
 
       /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
@@ -204,13 +204,13 @@ namespace viennacl
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        
+
         typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
         KernelClass::init(ctx);
-        
+
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
-        
+
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(proxy.lhs()),
                                  cl_uint(viennacl::traits::start1(proxy.lhs())),         cl_uint(viennacl::traits::start2(proxy.lhs())),
@@ -223,10 +223,10 @@ namespace viennacl
                                  cl_uint(viennacl::traits::size(vec)),
                                  options
                                 )
-                              );        
+                              );
       }
-      
-      
+
+
     }
   }
 }

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -77,7 +77,7 @@ namespace viennacl
       static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
-    
+
     //special case: multiplication with a scalar
     template <typename T, typename F, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T, F>,
@@ -104,7 +104,7 @@ namespace viennacl
       static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
-    
+
     //special case: division with a scalar
     template <typename T, typename F, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T, F>,
@@ -119,11 +119,11 @@ namespace viennacl
     };
 
 
-    
-    
-    
-    
-    
+
+
+
+
+
     //special case: transposed matrix-vector product: Return the number of rows of the matrix
     template <typename MatrixType>
     struct MATRIX_SIZE_DEDUCER<MatrixType,
@@ -153,9 +153,9 @@ namespace viennacl
                                viennacl::matrix_base<ScalarType, F2> const & rhs) { return rhs.size2(); }
     };
 
-    
-    // A * B^T 
-    
+
+    // A * B^T
+
     template <typename ScalarType, typename F1, typename T2>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F1>,
                                const viennacl::matrix_expression<T2,
@@ -173,10 +173,10 @@ namespace viennacl
     };
 
 
-    
-    
-    // A^T * B^T 
-    
+
+
+    // A^T * B^T
+
     template <typename T1, typename T2>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<T1,
                                                                  T1, op_trans>,
@@ -186,7 +186,7 @@ namespace viennacl
     {
       typedef viennacl::matrix_expression<T1, T1, op_trans>   LHSType;
       typedef viennacl::matrix_expression<T2, T2, op_trans>   RHSType;
-      
+
       static std::size_t size1(LHSType const & lhs,
                                RHSType const & /*rhs*/) { return lhs.lhs().size2(); }
       static std::size_t size2(LHSType const & /*lhs*/,

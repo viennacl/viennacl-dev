@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -35,19 +35,19 @@ namespace viennacl
   {
     namespace cuda
     {
-      
+
       namespace detail
       {
-        
+
         template <typename T>
         __global__ void level_scheduling_substitute_kernel(
                   const unsigned int * row_index_array,
                   const unsigned int * row_indices,
-                  const unsigned int * column_indices, 
+                  const unsigned int * column_indices,
                   const T * elements,
-                  T * vec,  
-                  unsigned int size) 
-        { 
+                  T * vec,
+                  unsigned int size)
+        {
           for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
                             row  < size;
                             row += gridDim.x * blockDim.x)
@@ -55,16 +55,16 @@ namespace viennacl
             unsigned int eq_row = row_index_array[row];
             T vec_entry = vec[eq_row];
             unsigned int row_end = row_indices[row+1];
-            
+
             for (unsigned int j = row_indices[row]; j < row_end; ++j)
               vec_entry -= vec[column_indices[j]] * elements[j];
-            
+
             vec[eq_row] = vec_entry;
           }
         }
-        
-        
-        
+
+
+
         template <typename ScalarType>
         void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
@@ -82,9 +82,9 @@ namespace viennacl
                                                        static_cast<unsigned int>(num_rows)
                                                       );
         }
-      
+
       }
-      
+
     } // namespace cuda
   } //namespace linalg
 } //namespace viennacl

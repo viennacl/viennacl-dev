@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -65,7 +65,7 @@ namespace viennacl {
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
           viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
-        
+
 
         /** @brief Resizes the matrix.
         *   Existing entries can be preserved
@@ -95,7 +95,7 @@ namespace viennacl {
          * @brief Returns the number of rows of the matrix
          */
         std::size_t size1() const { return elements_.size() / 2; }
-        
+
         /**
          * @brief Returns the number of columns of the matrix
          */
@@ -116,12 +116,12 @@ namespace viennacl {
          * @param col_index  Column index of accessed element
          * @return Proxy for matrix entry
          */
-        entry_proxy<SCALARTYPE> operator()(std::size_t row_index, std::size_t col_index) 
+        entry_proxy<SCALARTYPE> operator()(std::size_t row_index, std::size_t col_index)
         {
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
-            
+
             int index = static_cast<int>(col_index) - static_cast<int>(row_index);
-            
+
             if (index < 0)
               index = -index;
             else if
@@ -144,8 +144,8 @@ namespace viennacl {
     private:
         toeplitz_matrix(toeplitz_matrix const & t) {}
         toeplitz_matrix & operator=(toeplitz_matrix const & t);
-        
-      
+
+
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;
     };
 
@@ -282,7 +282,7 @@ namespace viennacl {
     //
     // Specify available operations:
     //
-    
+
     namespace linalg
     {
       namespace detail
@@ -366,7 +366,7 @@ namespace viennacl {
         };
 
 
-        
+
      } // namespace detail
    } // namespace linalg
 

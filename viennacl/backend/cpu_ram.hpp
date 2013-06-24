@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -34,16 +34,16 @@ namespace viennacl
     {
       typedef viennacl::tools::shared_ptr<char>  handle_type;
       // Requirements for backend:
-      
+
       // * memory_create(size, host_ptr)
       // * memory_copy(src, dest, offset_src, offset_dest, size)
       // * memory_write_from_main_memory(src, offset, size,
       //                                 dest, offset, size)
       // * memory_read_to_main_memory(src, offset, size
       //                              dest, offset, size)
-      // * 
+      // *
       //
-      
+
       namespace detail
       {
         /** @brief Helper struct for deleting an pointer to an array */
@@ -52,33 +52,33 @@ namespace viennacl
         {
           void operator()(U* p) const { delete[] p; }
         };
-        
+
       }
-      
+
       /** @brief Creates an array of the specified size in main RAM. If the second argument is provided, the buffer is initialized with data from that pointer.
-       * 
+       *
        * @param size_in_bytes   Number of bytes to allocate
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
-       * 
+       *
        */
       inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         if (!host_ptr)
           return handle_type(new char[size_in_bytes], detail::array_deleter<char>());
-        
+
         handle_type new_handle(new char[size_in_bytes], detail::array_deleter<char>());
-        
+
         // copy data:
         char * raw_ptr = new_handle.get();
         const char * data_ptr = static_cast<const char *>(host_ptr);
         for (std::size_t i=0; i<size_in_bytes; ++i)
           raw_ptr[i] = data_ptr[i];
-        
+
         return new_handle;
       }
-    
+
       /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' to memory starting at address 'dst_buffer + dst_offset'.
-       *  
+       *
        *  @param src_buffer     A smart pointer to the begin of an allocated buffer
        *  @param dst_buffer     A smart pointer to the end of an allocated buffer
        *  @param src_offset     Offset of the first byte to be written from the address given by 'src_buffer' (in bytes)
@@ -93,13 +93,13 @@ namespace viennacl
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = src_buffer.get()[i + src_offset];
       }
-      
+
       /** @brief Writes data from main RAM identified by 'ptr' to the buffer identified by 'dst_buffer'
-       * 
+       *
        * @param dst_buffer    A smart pointer to the beginning of an allocated buffer
        * @param dst_offset    Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
        * @param bytes_to_copy Number of bytes to be copied
@@ -111,13 +111,13 @@ namespace viennacl
                                const void * ptr)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = static_cast<const char *>(ptr)[i];
       }
-      
+
       /** @brief Reads data from a buffer back to main RAM.
-       * 
+       *
        * @param src_buffer         A smart pointer to the beginning of an allocated source buffer
        * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
        * @param bytes_to_copy      Number of bytes to be read
@@ -129,12 +129,12 @@ namespace viennacl
                               void * ptr)
       {
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         for (std::size_t i=0; i<bytes_to_copy; ++i)
           static_cast<char *>(ptr)[i] = src_buffer.get()[i+src_offset];
       }
-      
-    
+
+
     }
   } //backend
 } //viennacl

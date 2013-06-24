@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -43,7 +43,7 @@ namespace viennacl
     //{
     //  enum { value = false };
     //};
-  
+
     template <>
     struct is_cpu_scalar<float>
     {
@@ -55,7 +55,7 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     //
     // is_scalar: checks for viennacl::scalar
     //
@@ -64,7 +64,7 @@ namespace viennacl
     //{
     //  enum { value = false };
     //};
-  
+
     template <typename T>
     struct is_scalar<viennacl::scalar<T> >
     {
@@ -79,7 +79,7 @@ namespace viennacl
     //{
     //  enum { value = false };
     //};
-  
+
     template <typename T>
     struct is_flip_sign_scalar<viennacl::scalar_expression< const scalar<T>,
                                                             const scalar<T>,
@@ -87,7 +87,7 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     //
     // is_any_scalar: checks for either CPU and GPU scalars, i.e. is_cpu_scalar<>::value || is_scalar<>::value
     //
@@ -123,8 +123,8 @@ namespace viennacl
     {
       enum { value = is_row_major<T>::value };
     };
-    
-    
+
+
     //
     // is_circulant_matrix
     //
@@ -139,13 +139,13 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_circulant_matrix<const viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
-    
+
     //
     // is_hankel_matrix
     //
@@ -160,13 +160,13 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_hankel_matrix<const viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
-    
+
     //
     // is_toeplitz_matrix
     //
@@ -202,14 +202,14 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_vandermonde_matrix<const viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
-    
-    
+
+
     //
     // is_compressed_matrix
     //
@@ -270,7 +270,7 @@ namespace viennacl
       enum { value = true };
     };
 
-    
+
     //
     // is_any_sparse_matrix
     //
@@ -311,9 +311,9 @@ namespace viennacl
     };
 
     /** \endcond */
-    
+
     //////////////// Part 2: Operator predicates ////////////////////
-    
+
     //
     // is_addition
     //
@@ -331,7 +331,7 @@ namespace viennacl
       enum { value = true };
     };
     /** \endcond */
-    
+
     //
     // is_subtraction
     //
@@ -341,7 +341,7 @@ namespace viennacl
     {
       enum { value = false };
     };
-    
+
     /** \cond */
     template <>
     struct is_subtraction<viennacl::op_sub>
@@ -349,7 +349,7 @@ namespace viennacl
       enum { value = true };
     };
     /** \endcond */
-    
+
     //
     // is_product
     //
@@ -366,20 +366,20 @@ namespace viennacl
     {
       enum { value = true };
     };
-    
+
     template <>
     struct is_product<viennacl::op_mult>
     {
       enum { value = true };
     };
-    
+
     template <>
     struct is_product<viennacl::op_element_mult>
     {
       enum { value = true };
     };
     /** \endcond */
-    
+
     //
     // is_division
     //
@@ -402,7 +402,7 @@ namespace viennacl
       enum { value = true };
     };
     /** \endcond */
-    
+
         // is_primitive_type
     //
     template<class T>
@@ -439,6 +439,6 @@ namespace viennacl
 #endif
 
 } //namespace viennacl
-    
+
 
 #endif

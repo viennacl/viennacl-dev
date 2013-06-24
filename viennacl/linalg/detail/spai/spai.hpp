@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -76,7 +76,7 @@ namespace viennacl
     {
       namespace spai
       {
-        
+
         //debug function for print
         template<typename SparseVectorType>
         void print_sparse_vector(const SparseVectorType& v){
@@ -93,12 +93,12 @@ namespace viennacl
                 std::cout<<std::endl;
             }
         }
-        
+
         /** @brief Add two sparse vectors res_v = b*v
          * @param v initial sparse vector
          * @param b scalar
-         * @param res_v output vector 
-         */ 
+         * @param res_v output vector
+         */
         template<typename SparseVectorType, typename ScalarType>
         void add_sparse_vectors(const SparseVectorType& v, const ScalarType b,  SparseVectorType& res_v){
             for(typename SparseVectorType::const_iterator v_it = v.begin(); v_it != v.end(); ++v_it){
@@ -108,10 +108,10 @@ namespace viennacl
         //sparse-matrix - vector product
         /** @brief Computation of residual res = A*v - e
          * @param A_v_c column major vectorized input sparse matrix
-         * @param v sparse vector, in this case new column of preconditioner matrix 
+         * @param v sparse vector, in this case new column of preconditioner matrix
          * @param ind index for current column
          * @param res residual
-         */ 
+         */
         template<typename SparseVectorType, typename ScalarType>
         void compute_spai_residual(const std::vector<SparseVectorType>& A_v_c, const SparseVectorType& v,
                                    const unsigned int ind, SparseVectorType& res){
@@ -120,24 +120,24 @@ namespace viennacl
             }
             res[ind] -= static_cast<ScalarType>(1);
         }
-        
+
         /** @brief Setting up index set of columns and rows for certain column
-         * @param A_v_c column major vectorized initial sparse matrix  
+         * @param A_v_c column major vectorized initial sparse matrix
          * @param v current column of preconditioner matrix
          * @param J set of column indices
          * @param I set of row indices
-         */ 
+         */
         template<typename SparseVectorType>
-        void build_index_set(const std::vector<SparseVectorType>& A_v_c, const SparseVectorType& v, std::vector<unsigned int>& J, 
+        void build_index_set(const std::vector<SparseVectorType>& A_v_c, const SparseVectorType& v, std::vector<unsigned int>& J,
                              std::vector<unsigned int>& I){
             buildColumnIndexSet(v, J);
             projectRows(A_v_c, J, I);
         }
-        
+
         /** @brief Initializes a dense matrix from a sparse one
         * @param A_in Riginal sparse matrix
         * @param J Set of column indices
-        * @param I Set of row indices 
+        * @param I Set of row indices
         * @param A_out dense matrix output
         */
         template<typename SparseMatrixType, typename DenseMatrixType>
@@ -152,77 +152,77 @@ namespace viennacl
               A_out(i,j) = A_in(I[i],J[j]);
           }
         }
-        
-        
+
+
         /************************************************** CPU BLOCK SET UP ***************************************/
         /** @brief Setting up blocks and QR factorizing them on CPU
-         * @param A initial sparse matrix 
-         * @param A_v_c column major vectorized initial sparse matrix  
+         * @param A initial sparse matrix
+         * @param A_v_c column major vectorized initial sparse matrix
          * @param M_v initialized preconditioner
          * @param g_I container of row indices
          * @param g_J container of column indices
          * @param g_A_I_J container of dense matrices -> R matrices after QR factorization
          * @param g_b_v container of vectors beta, necessary for Q recovery
-         */ 
+         */
         template<typename SparseMatrixType, typename DenseMatrixType, typename SparseVectorType, typename VectorType>
         void block_set_up(const SparseMatrixType& A,
                           const std::vector<SparseVectorType>& A_v_c,
-                          const std::vector<SparseVectorType>& M_v, 
-                          std::vector<std::vector<unsigned int> >& g_I, 
+                          const std::vector<SparseVectorType>& M_v,
+                          std::vector<std::vector<unsigned int> >& g_I,
                           std::vector<std::vector<unsigned int> >& g_J,
                           std::vector<DenseMatrixType>& g_A_I_J,
                           std::vector<VectorType>& g_b_v){
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif            
+#endif
             for(std::size_t i = 0; i < M_v.size(); ++i){
                 build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
                 initProjectSubMatrix(A, g_J[i], g_I[i], g_A_I_J[i]);
                 //print_matrix(g_A_I_J[i]);
                 single_qr(g_A_I_J[i], g_b_v[i]);
                 //print_matrix(g_A_I_J[i]);
-            }            
+            }
         }
-        
+
         /** @brief Setting up index set of columns and rows for all columns
-         * @param A_v_c column major vectorized initial sparse matrix  
+         * @param A_v_c column major vectorized initial sparse matrix
          * @param M_v initialized preconditioner
          * @param g_J container of column indices
          * @param g_I container of row indices
-         */ 
+         */
         template<typename SparseVectorType>
         void index_set_up(const std::vector<SparseVectorType>& A_v_c,
-                          const std::vector<SparseVectorType>& M_v, 
-                          std::vector<std::vector<unsigned int> >& g_J, 
+                          const std::vector<SparseVectorType>& M_v,
+                          std::vector<std::vector<unsigned int> >& g_J,
                           std::vector<std::vector<unsigned int> >& g_I)
         {
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif            
+#endif
             for(std::size_t i = 0; i < M_v.size(); ++i){
                 build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
             }
         }
-        
+
         /************************************************** GPU BLOCK SET UP ***************************************/
         /** @brief Setting up blocks and QR factorizing them on GPU
-         * @param A initial sparse matrix 
-         * @param A_v_c column major vectorized initial sparse matrix  
+         * @param A initial sparse matrix
+         * @param A_v_c column major vectorized initial sparse matrix
          * @param M_v initialized preconditioner
          * @param g_is_update container that indicates which blocks are active
          * @param g_I container of row indices
          * @param g_J container of column indices
          * @param g_A_I_J container of dense matrices -> R matrices after QR factorization
          * @param g_bv container of vectors beta, necessary for Q recovery
-         */ 
+         */
         template<typename ScalarType, unsigned int MAT_ALIGNMENT, typename SparseVectorType>
         void block_set_up(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A,
-                          const std::vector<SparseVectorType>& A_v_c, 
+                          const std::vector<SparseVectorType>& A_v_c,
                           const std::vector<SparseVectorType>& M_v,
                           std::vector<cl_uint> g_is_update,
-                          std::vector<std::vector<unsigned int> >& g_I, 
-                          std::vector<std::vector<unsigned int> >& g_J, 
-                          block_matrix & g_A_I_J, 
+                          std::vector<std::vector<unsigned int> >& g_I,
+                          std::vector<std::vector<unsigned int> >& g_J,
+                          block_matrix & g_A_I_J,
                           block_vector & g_bv)
         {
             bool is_empty_block;
@@ -230,19 +230,19 @@ namespace viennacl
             index_set_up(A_v_c, M_v, g_J, g_I);
             block_assembly(A, g_J, g_I, g_A_I_J, g_is_update, is_empty_block);
             block_qr<ScalarType>(g_I, g_J, g_A_I_J, g_bv, g_is_update);
-            
+
         }
-        
-        
+
+
         /***************************************************************************************************/
         /******************************** SOLVING LS PROBLEMS ON GPU ***************************************/
         /***************************************************************************************************/
-        /** @brief Elicitation of sparse vector m for particular column from m_in - contigious vector for all columns  
+        /** @brief Elicitation of sparse vector m for particular column from m_in - contigious vector for all columns
          * @param m_in contigious sparse vector for all columns
-         * @param start_m_ind start index of particular vector   
+         * @param start_m_ind start index of particular vector
          * @param J column index set
          * @param m sparse vector for particular column
-         */ 
+         */
         template<typename ScalarType, typename SparseVectorType>
         void custom_fan_out(const std::vector<ScalarType> & m_in,
                             unsigned int start_m_ind,
@@ -254,25 +254,25 @@ namespace viennacl
                 m[J[i]] = m_in[start_m_ind + cnt++];
             }
         }
-        
-        
+
+
 
         //GPU based least square problem
-        /** @brief Solution of Least square problem on GPU 
-         * @param A_v_c column-major vectorized initial sparse matrix 
+        /** @brief Solution of Least square problem on GPU
+         * @param A_v_c column-major vectorized initial sparse matrix
          * @param M_v column-major vectorized sparse preconditioner matrix
          * @param g_I container of row set indices
          * @param g_J container of column set indices
          * @param g_A_I_J_vcl contigious matrix that consists of blocks A(I_k, J_k)
          * @param g_bv_vcl contigious vector that consists of betas, necessary for Q recovery
-         * @param g_res container of residuals 
+         * @param g_res container of residuals
          * @param g_is_update container with indicators which blocks are active
          * @param tag spai tag
-         */ 
+         */
         template<typename SparseVectorType, typename ScalarType>
-        void least_square_solve(std::vector<SparseVectorType> & A_v_c, 
+        void least_square_solve(std::vector<SparseVectorType> & A_v_c,
                                 std::vector<SparseVectorType> & M_v,
-                                std::vector<std::vector<unsigned int> >& g_I, 
+                                std::vector<std::vector<unsigned int> >& g_I,
                                 std::vector<std::vector<unsigned int> > & g_J,
                                 block_matrix & g_A_I_J_vcl,
                                 block_vector & g_bv_vcl,
@@ -296,18 +296,18 @@ namespace viennacl
             //compute m_v
             get_size(g_J, m_sz);
             std::vector<ScalarType> m_v(m_sz, static_cast<cl_uint>(0));
-            
+
             block_vector y_v_vcl;
             block_vector m_v_vcl;
             //prepearing memory for least square problem on GPU
-            y_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                              static_cast<unsigned int>(sizeof(ScalarType)*y_v.size()), 
+            y_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                              static_cast<unsigned int>(sizeof(ScalarType)*y_v.size()),
                                                                               &(y_v[0]));
-            m_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
+            m_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                               static_cast<unsigned int>(sizeof(ScalarType)*m_v.size()),
                                                                               &(m_v[0]));
             y_v_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                               static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)), 
+                                                                               static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
                                                                                &(y_inds[0]));
             viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
@@ -315,14 +315,14 @@ namespace viennacl
             viennacl::ocl::kernel& ls_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_least_squares");
             ls_kernel.local_work_size(0, 1);
             ls_kernel.global_work_size(0, 256);
-            viennacl::ocl::enqueue(ls_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_bv_vcl.handle(), g_bv_vcl.handle1(), m_v_vcl.handle(), 
-                                             y_v_vcl.handle(), y_v_vcl.handle1(), 
+            viennacl::ocl::enqueue(ls_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_bv_vcl.handle(), g_bv_vcl.handle1(), m_v_vcl.handle(),
+                                             y_v_vcl.handle(), y_v_vcl.handle1(),
                                              g_A_I_J_vcl.handle1(), g_is_update_vcl,
                                              //viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
                                              static_cast<unsigned int>(M_v.size())));
             //copy vector m_v back from GPU to CPU
             cl_int vcl_err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                                 m_v_vcl.handle().get(), CL_TRUE, 0, 
+                                                 m_v_vcl.handle().get(), CL_TRUE, 0,
                                                  sizeof(ScalarType)*(m_v.size()),
                                                  &(m_v[0]), 0, NULL, NULL);
             VIENNACL_ERR_CHECK(vcl_err);
@@ -341,14 +341,14 @@ namespace viennacl
                     //std::cout<<res_norm<<std::endl;
                     //std::cout<<"************************"<<std::endl;
                     g_is_update[i] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic())?(1):(0);
-                    
+
                 }
             }
         }
-        
+
         //CPU based least square problems
-        /** @brief Solution of Least square problem on CPU 
-         * @param A_v_c column-major vectorized initial sparse matrix 
+        /** @brief Solution of Least square problem on CPU
+         * @param A_v_c column-major vectorized initial sparse matrix
          * @param g_R blocks for least square solution
          * @param g_b_v vectors beta, necessary for Q recovery
          * @param g_I container of row index set for all columns of matrix M
@@ -357,22 +357,22 @@ namespace viennacl
          * @param g_is_update container with indicators which blocks are active
          * @param M_v column-major vectorized sparse matrix, final preconditioner
          * @param tag spai tag
-         */ 
+         */
         template<typename SparseVectorType, typename DenseMatrixType, typename VectorType>
         void least_square_solve(const std::vector<SparseVectorType>& A_v_c,
-                                std::vector<DenseMatrixType>& g_R, 
+                                std::vector<DenseMatrixType>& g_R,
                                 std::vector<VectorType>& g_b_v,
-                                std::vector<std::vector<unsigned int> >& g_I, 
+                                std::vector<std::vector<unsigned int> >& g_I,
                                 std::vector<std::vector<unsigned int> >& g_J,
-                                std::vector<SparseVectorType>& g_res, 
-                                std::vector<bool>& g_is_update, 
+                                std::vector<SparseVectorType>& g_res,
+                                std::vector<bool>& g_is_update,
                                 std::vector<SparseVectorType>& M_v,
                                 const spai_tag& tag){
             typedef typename DenseMatrixType::value_type ScalarType;
             //VectorType m_new, y;
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif            
+#endif
             for(std::size_t i = 0; i < M_v.size(); ++i){
                 if(g_is_update[i]){
                     VectorType y = boost::numeric::ublas::zero_vector<ScalarType>(g_I[i].size());
@@ -383,7 +383,7 @@ namespace viennacl
                     backwardSolve(g_R[i], y, m_new);
                     fanOutVector(m_new, g_J[i], M_v[i]);
                     g_res[i].clear();
-                    compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[i], static_cast<unsigned int>(tag.getBegInd() + i), g_res[i]); 
+                    compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[i], static_cast<unsigned int>(tag.getBegInd() + i), g_res[i]);
                     ScalarType res_norm = 0;
                     sparse_norm_2(g_res[i], res_norm);
 //                    std::cout<<"Residual norm of column #: "<<i<<std::endl;
@@ -392,75 +392,75 @@ namespace viennacl
                     g_is_update[i] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic());
                 }
             }
-        } 
-        
+        }
+
         //************************************ UPDATE CHECK ***************************************************//
         template<typename VectorType>
         bool is_all_update(VectorType& parallel_is_update){
-            
+
             for(unsigned int i = 0; i < parallel_is_update.size(); ++i){
                 if(parallel_is_update[i])
                     return true;
             }
             return false;
         }
-        
+
         //********************************** MATRIX VECTORIZATION ***********************************************//
         //Matrix vectorization, column based approach
-        /** @brief Solution of Least square problem on CPU 
-         * @param M_in input sparse, boost::numeric::ublas::compressed_matrix 
-         * @param M_v array of sparse vectors 
-         */ 
+        /** @brief Solution of Least square problem on CPU
+         * @param M_in input sparse, boost::numeric::ublas::compressed_matrix
+         * @param M_v array of sparse vectors
+         */
         template<typename SparseMatrixType, typename SparseVectorType>
         void vectorize_column_matrix(const SparseMatrixType& M_in, std::vector<SparseVectorType>& M_v){
             for(typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
                 //
                 for(typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
-                    M_v[static_cast<unsigned int>(col_it.index2())][static_cast<unsigned int>(col_it.index1())] = *col_it; 
+                    M_v[static_cast<unsigned int>(col_it.index2())][static_cast<unsigned int>(col_it.index1())] = *col_it;
                 }
                 //std::cout<<std::endl;
             }
         }
-        
+
         //Matrix vectorization row based approach
         template<typename SparseMatrixType, typename SparseVectorType>
         void vectorize_row_matrix(const SparseMatrixType& M_in, std::vector<SparseVectorType>& M_v){
             for(typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
                 for(typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
-                    M_v[static_cast<unsigned int>(col_it.index1())][static_cast<unsigned int>(col_it.index2())] = *col_it; 
+                    M_v[static_cast<unsigned int>(col_it.index1())][static_cast<unsigned int>(col_it.index2())] = *col_it;
                 }
             }
         }
-        
+
         //************************************* BLOCK ASSEMBLY CODE *********************************************//
-        
-        
+
+
         template <typename SizeType>
         void write_set_to_array(const std::vector<std::vector<SizeType> >& ind_set, std::vector<cl_uint>& a){
             std::size_t cnt = 0;
             //unsigned int tmp;
             for(std::size_t i = 0; i < ind_set.size(); ++i){
                 for(std::size_t j = 0; j < ind_set[i].size(); ++j){
-                    a[cnt++] = static_cast<cl_uint>(ind_set[i][j]); 
+                    a[cnt++] = static_cast<cl_uint>(ind_set[i][j]);
                 }
             }
         }
-        
-        
-        
+
+
+
         //assembling blocks on GPU
-        /** @brief Assembly of blocks on GPU by a gived set of row indices: g_I and column indices: g_J 
-         * @param A intial sparse matrix  
+        /** @brief Assembly of blocks on GPU by a gived set of row indices: g_I and column indices: g_J
+         * @param A intial sparse matrix
          * @param g_J container of column index set
          * @param g_I container of row index set
          * @param g_A_I_J_vcl contigious blocks A(I, J) using GPU memory
          * @param g_is_update container with indicators which blocks are active
-         * @param is_empty_block parameter that indicates if no block were assembled 
-         */ 
+         * @param is_empty_block parameter that indicates if no block were assembled
+         */
         template<typename ScalarType, unsigned int MAT_ALIGNMENT>
-        void block_assembly(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, const std::vector<std::vector<unsigned int> >& g_J, 
+        void block_assembly(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, const std::vector<std::vector<unsigned int> >& g_J,
                             const std::vector<std::vector<unsigned int> >& g_I,
-                            block_matrix& g_A_I_J_vcl, 
+                            block_matrix& g_A_I_J_vcl,
                             std::vector<cl_uint>& g_is_update,
                             bool& is_empty_block)
         {
@@ -470,7 +470,7 @@ namespace viennacl
             std::vector<cl_uint> i_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             std::vector<cl_uint> j_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
-            // 
+            //
             init_start_inds(g_J, j_ind);
             init_start_inds(g_I, i_ind);
             //
@@ -487,63 +487,63 @@ namespace viennacl
             if(I_set.size() > 0 && J_set.size() > 0){
                 compute_blocks_size(g_I, g_J, sz_blocks, blocks_ind, matrix_dims);
                 std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
-                
+
                 block_vector set_I_vcl, set_J_vcl;
                 //init memory on GPU
                 //contigious g_A_I_J
-                g_A_I_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                      static_cast<unsigned int>(sizeof(ScalarType)*(sz_blocks)), 
+                g_A_I_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                      static_cast<unsigned int>(sizeof(ScalarType)*(sz_blocks)),
                                                                                       &(con_A_I_J[0]));
                 //matrix_dimensions
-                g_A_I_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                   static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<cl_uint>(g_I.size())), 
+                g_A_I_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                   static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<cl_uint>(g_I.size())),
                                                                                    &(matrix_dims[0]));
                 //start_block inds
-                g_A_I_J_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                       static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)), 
+                g_A_I_J_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                       static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
                                                                                        &(blocks_ind[0]));
                 //set_I
-                set_I_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_I), 
+                set_I_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_I),
                                                                                     &(I_set[0]));
                 //set_J
-                set_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_J), 
+                set_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_J),
                                                                                     &(J_set[0]));
                 //i_ind
-                set_I_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)), 
+                set_I_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
                                                                                      &(i_ind[0]));
                 //j_ind
-                set_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)), 
+                set_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
                                                                                      &(j_ind[0]));
-                
-                viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
+
+                viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
                                                                                                                &(g_is_update[0]));
                 viennacl::ocl::kernel& assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "assemble_blocks");
                 assembly_kernel.local_work_size(0, 1);
                 assembly_kernel.global_work_size(0, 256);
-                viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), 
-                                                       set_I_vcl.handle(), set_J_vcl.handle(), set_I_vcl.handle1(), 
-                                                       set_J_vcl.handle1(), 
+                viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                                                       set_I_vcl.handle(), set_J_vcl.handle(), set_I_vcl.handle1(),
+                                                       set_J_vcl.handle1(),
                                                        g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(), g_A_I_J_vcl.handle(),
                                                        g_is_update_vcl,
                                                        static_cast<unsigned int>(g_I.size())));
                 is_empty_block = false;
-            }else{ 
+            }else{
                 is_empty_block = true;
             }
         }
-        
+
         /************************************************************************************************************************/
-        
-        /** @brief Insertion of vectorized matrix column into original sparse matrix 
-         * @param M_v column-major vectorized matrix 
+
+        /** @brief Insertion of vectorized matrix column into original sparse matrix
+         * @param M_v column-major vectorized matrix
          * @param M original sparse matrix
          * @param is_right indicates if matrix should be transposed in the output
-         */ 
+         */
         template<typename SparseMatrixType, typename SparseVectorType>
         void insert_sparse_columns(const std::vector<SparseVectorType>& M_v,
                                    SparseMatrixType& M,
@@ -565,17 +565,17 @@ namespace viennacl
               }
             }
         }
-        
+
         /** @brief Transposition of sparse matrix
-         * @param A_in intial sparse matrix  
-         * @param A output transposed matrix 
-         */ 
+         * @param A_in intial sparse matrix
+         * @param A output transposed matrix
+         */
         template<typename MatrixType>
         void sparse_transpose(const MatrixType& A_in, MatrixType& A){
             typedef typename MatrixType::value_type ScalarType;
             std::vector<std::map<std::size_t, ScalarType> >   temp_A(A_in.size2());
             A.resize(A_in.size2(), A_in.size1(), false);
-            
+
             for (typename MatrixType::const_iterator1 row_it = A_in.begin1();
                  row_it != A_in.end1();
                  ++row_it)
@@ -587,7 +587,7 @@ namespace viennacl
                     temp_A[col_it.index2()][col_it.index1()] = *col_it;
                 }
             }
-            
+
             for (std::size_t i=0; i<temp_A.size(); ++i)
             {
                 for (typename std::map<std::size_t, ScalarType>::const_iterator it = temp_A[i].begin();
@@ -596,23 +596,23 @@ namespace viennacl
                     A(i, it->first) = it->second;
             }
         }
-        
-        
-        
-        
+
+
+
+
 //        template<typename SparseVectorType>
 //        void custom_copy(std::vector<SparseVectorType> & M_v, std::vector<SparseVectorType> & l_M_v, const unsigned int beg_ind){
 //            for(int i = 0; i < l_M_v.size(); ++i){
 //                l_M_v[i] = M_v[i + beg_ind];
 //            }
 //        }
-        
+
         //CPU version
-        /** @brief Construction of SPAI preconditioner on CPU 
-         * @param A initial sparse matrix   
+        /** @brief Construction of SPAI preconditioner on CPU
+         * @param A initial sparse matrix
          * @param M output preconditioner
          * @param tag spai tag
-         */ 
+         */
         template <typename MatrixType>
         void computeSPAI(const MatrixType & A, MatrixType & M, spai_tag & tag){
             typedef typename MatrixType::value_type ScalarType;
@@ -627,8 +627,8 @@ namespace viennacl
             std::vector<SparseVectorType> M_v(M.size2());
             vectorize_column_matrix(A, A_v_c);
             vectorize_column_matrix(M, M_v);
-            
-            
+
+
             while(go_on){
                 go_on = (tag.getEndInd() < static_cast<long>(M.size2()));
                 cur_iter = 0;
@@ -643,7 +643,7 @@ namespace viennacl
                 //print_matrix(M_v);
                 std::vector<SparseVectorType> l_M_v(l_sz);
                 //custom_copy(M_v, l_M_v, beg_ind);
-                std::copy(M_v.begin() + tag.getBegInd(), M_v.begin() + tag.getEndInd(), l_M_v.begin()); 
+                std::copy(M_v.begin() + tag.getBegInd(), M_v.begin() + tag.getEndInd(), l_M_v.begin());
                 //print_matrix(l_M_v);
                 //std::vector<SparseVectorType> l_A_v_c(K);
                 //custom_copy(A_v_c, l_A_v_c, beg_ind);
@@ -651,7 +651,7 @@ namespace viennacl
                 //print_matrix(l_A_v_c);
                 //vectorize_row_matrix(A, A_v_r);
                 //working blocks
-                //std::vector<DenseMatrixType> g_A_I_J(M.size2())                
+                //std::vector<DenseMatrixType> g_A_I_J(M.size2())
                 std::vector<DenseMatrixType> g_A_I_J(l_sz);
                 //std::vector<VectorType> g_b_v(M.size2());
                 std::vector<VectorType> g_b_v(l_sz);
@@ -666,34 +666,34 @@ namespace viennacl
                     // PHASE ONE
                     if(cur_iter == 0) block_set_up(A, A_v_c, l_M_v,  g_I, g_J, g_A_I_J, g_b_v);
                     else block_update(A, A_v_c, g_res, g_is_update, g_I, g_J, g_b_v, g_A_I_J, tag);
-                    
+
                     //PHASE TWO, LEAST SQUARE SOLUTION
                     least_square_solve(A_v_c, g_A_I_J, g_b_v, g_I, g_J, g_res, g_is_update, l_M_v, tag);
-                    
+
                     if(tag.getIsStatic()) break;
                     cur_iter++;
-                    
-                    
+
+
                 }
                 std::copy(l_M_v.begin(), l_M_v.end(), M_v.begin() + tag.getBegInd());
                 tag.setBegInd(tag.getEndInd());//beg_ind = end_ind;
                 tag.setEndInd(std::min(static_cast<long>(tag.getBegInd() + VIENNACL_SPAI_K_b), static_cast<long>(M.size2())));
-                //std::copy(l_M_v.begin(), l_M_v.end(), M_v.begin() + tag.getBegInd()); 
-                
+                //std::copy(l_M_v.begin(), l_M_v.end(), M_v.begin() + tag.getBegInd());
+
             }
             M.resize(M.size1(), M.size2(), false);
             insert_sparse_columns(M_v, M, tag.getIsRight());
         }
 
-        
+
         //GPU - based version
         /** @brief Construction of SPAI preconditioner on GPU
-         * @param A initial sparse matrix   
+         * @param A initial sparse matrix
          * @param cpu_A copy of initial matrix on CPU
          * @param cpu_M output preconditioner on CPU
          * @param M output preconditioner
          * @param tag SPAI tag class with parameters
-         */ 
+         */
         template <typename ScalarType, unsigned int MAT_ALIGNMENT>
         void computeSPAI(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, //input
                          const boost::numeric::ublas::compressed_matrix<ScalarType>& cpu_A,
@@ -717,7 +717,7 @@ namespace viennacl
             std::vector<SparseVectorType> g_res(cpu_M.size2());
             std::vector<std::vector<unsigned int> > g_I(cpu_M.size2());
             std::vector<std::vector<unsigned int> > g_J(cpu_M.size2());
-            
+
             //OpenCL variables
             block_matrix g_A_I_J_vcl;
             block_vector g_bv_vcl;
@@ -745,8 +745,8 @@ namespace viennacl
             M.resize(static_cast<unsigned int>(cpu_M.size1()), static_cast<unsigned int>(cpu_M.size2()));
             viennacl::copy(cpu_M, M);
         }
-        
-      }        
+
+      }
     }
   }
 }

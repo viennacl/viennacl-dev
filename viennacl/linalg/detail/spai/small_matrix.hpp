@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/detail/spai/small_matrix.hpp
     @brief Implementation of a routines for small matrices (helper for SPAI). Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -81,28 +81,28 @@ namespace viennacl
           double determinant(boost::numeric::ublas::matrix_expression<MatrixType> const& mat_r)
           {
               double det = 1.0;
-              
+
               MatrixType mLu(mat_r() );
               boost::numeric::ublas::permutation_matrix<std::size_t> pivots(mat_r().size1() );
-              
+
               int is_singular = static_cast<int>(lu_factorize(mLu, pivots));
-              
+
               if (!is_singular)
               {
                   for (std::size_t i=0; i < pivots.size(); ++i)
                   {
                       if (pivots(i) != i)
                           det *= -1.0;
-                      
+
                       det *= mLu(i,i);
                   }
               }
               else
                   det = 0.0;
-              
+
               return det;
-          } 
-          
+          }
+
         }
       }
     }

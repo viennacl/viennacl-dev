@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -35,12 +35,12 @@
 namespace viennacl
 {
   namespace linalg
-  {    
+  {
     namespace detail
     {
       namespace amg
       {
-    
+
     /** @brief Calls the right coarsening procedure
       * @param level    Coarse level identifier
       * @param A    Operator matrix on all levels
@@ -59,8 +59,8 @@ namespace viennacl
         case VIENNACL_AMG_COARSE_RS3: amg_coarse_rs3 (level, A, Pointvector, Slicing, tag); break;
         case VIENNACL_AMG_COARSE_AG:   amg_coarse_ag (level, A, Pointvector, tag); break;
       }
-    } 
-    
+    }
+
     /** @brief Determines strong influences in system matrix, classical approach (RS). Multithreaded!
     * @param level    Coarse level identifier
     * @param A      Operator matrix on all levels
@@ -76,20 +76,20 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::const_iterator1 ConstRowIterator;
       typedef typename SparseMatrixType::const_iterator2 ConstColIterator;
-      
+
       ScalarType max;
       int diag_sign;
       //unsigned int i;
-        
+
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (max,diag_sign) shared (A,Pointvector)
-#endif      
+#endif
       for (unsigned int i=0; i<A[level].size1(); ++i)
-      {  
+      {
         diag_sign = 1;
         if (A[level](i,i) < 0)
           diag_sign = -1;
-        
+
         ConstRowIterator row_iter = A[level].begin1();
         row_iter += i;
         // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
@@ -102,15 +102,15 @@ namespace viennacl
             if (diag_sign == -1)
               if (max < *col_iter)  max = *col_iter;
         }
-        
+
         // If maximum is 0 then the row is independent of the others
         if (max == 0)
           continue;
-        
+
         // Find all points that strongly influence current point (Yang, p.5)
         for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
         {
-          unsigned int j = col_iter.index2();  
+          unsigned int j = col_iter.index2();
           if (i == j) continue;
           if (diag_sign * (-*col_iter) >= tag.get_threshold() * (diag_sign * (-max)))
           {
@@ -119,14 +119,14 @@ namespace viennacl
           }
         }
       }
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Influence Matrix: " << std::endl;
       boost::numeric::ublas::matrix<bool> mat;
       Pointvector[level].get_influence_matrix(mat);
       printmatrix (mat);
       #endif
-      
+
       // Save influenced points
       for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
       {
@@ -135,7 +135,7 @@ namespace viennacl
           (*iter2)->add_influenced_point(*iter);
         }
       }
-        
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Influence Measures: " << std::endl;
       boost::numeric::ublas::vector<unsigned int> temp;
@@ -144,9 +144,9 @@ namespace viennacl
       std::cout << "Point Sorting: " << std::endl;
       Pointvector[level].get_sorting(temp);
       printvector (temp);
-      #endif 
+      #endif
     }
-        
+
     /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
     * @param level     Course level identifier
     * @param A      Operator matrix on all levels
@@ -159,32 +159,32 @@ namespace viennacl
       typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
-      
+
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       amg_point* c_point, *point1, *point2;
       unsigned int i;
-        
+
       // Check and save all strong influences
-      amg_influence (level, A, Pointvector, tag);    
-      
+      amg_influence (level, A, Pointvector, tag);
+
       // Traverse through points and calculate initial influence measure
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (i) shared (Pointvector)
-#endif      
+#endif
       for (i=0; i<Pointvector[level].size(); ++i)
   Pointvector[level][i]->calc_influence();
-      
+
        // Do initial sorting
       Pointvector[level].sort();
-      
+
       // Get undecided point with highest influence measure
       while ((c_point = Pointvector[level].get_nextpoint()) != NULL)
-      {    
+      {
         // Make this point C point
         Pointvector[level].make_cpoint(c_point);
-        
+
         // All strongly influenced points become F points
         for (typename amg_point::iterator iter = c_point->begin_influenced(); iter != c_point->end_influenced(); ++iter)
         {
@@ -193,7 +193,7 @@ namespace viennacl
           if (!point1->is_undecided()) continue;
           // Make this point F point if it is still undecided point
           Pointvector[level].make_fpoint(point1);
-          
+
           // Add +1 to influence measure for all undecided points that strongly influence new F point
           for (typename amg_point::iterator iter2 = point1->begin_influencing(); iter2 != point1->end_influencing(); ++iter2)
           {
@@ -204,7 +204,7 @@ namespace viennacl
           }
         }
       }
-      
+
       // If a point is neither C nor F point but is nevertheless influenced by other points make it F point
       // (this situation can happen when this point does not influence other points and the points that influence this point became F points already)
       /*#pragma omp parallel for private (i,point1)
@@ -240,8 +240,8 @@ namespace viennacl
       Pointvector[level].get_F(F);
       printvector (F);
       #endif
-    }    
-        
+    }
+
     /** @brief Classical (RS) two-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC)
     * @param level    Coarse level identifier
     * @param A      Operator matrix on all levels
@@ -254,16 +254,16 @@ namespace viennacl
       typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
-      
+
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       bool add_C;
-      amg_point *c_point, *point1, *point2;     
-      
+      amg_point *c_point, *point1, *point2;
+
       // Use one-pass-coarsening as first pass.
       amg_coarse_classic_onepass(level, A, Pointvector, tag);
-    
+
       // 2nd pass: Add more C points if F-F connection does not have a common C point.
       for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
       {
@@ -274,11 +274,11 @@ namespace viennacl
           // Check for strong connections from influencing and influenced points.
           amg_point::iterator iter2 = point1->begin_influencing();
           amg_point::iterator iter3 = point1->begin_influenced();
-          
+
           // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
           // Note: Only works because influencing and influenced lists are sorted by point-index.
           while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
-          {     
+          {
             if (iter2 == point1->end_influencing())
             {
               point2 = *iter3;
@@ -290,8 +290,8 @@ namespace viennacl
               ++iter2;
             }
             else
-            {      
-              if ((*iter2)->get_index() == (*iter3)->get_index())   
+            {
+              if ((*iter2)->get_index() == (*iter3)->get_index())
               {
                 point2 = *iter2;
                 ++iter2;
@@ -311,7 +311,7 @@ namespace viennacl
             // Only check points with higher index as points with lower index have been checked already.
             if (point2->get_index() < point1->get_index())
               continue;
-            
+
             // If there is a strong connection then it has to either be a C point or a F point with common C point.
             // C point? Then skip as everything is ok.
             if (point2->is_cpoint())
@@ -331,7 +331,7 @@ namespace viennacl
                   if (point2->is_influencing(c_point))
                   {
                     add_C = false;
-                    break;            
+                    break;
                   }
                 }
               }
@@ -342,7 +342,7 @@ namespace viennacl
           }
         }
       }
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "After 2nd pass:" << std::endl;
       std::cout << "Coarse Points:" << std::endl;
@@ -358,7 +358,7 @@ namespace viennacl
       #ifdef VIENNACL_AMG_DEBUG
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp critical
-#endif      
+#endif
       {
       std::cout << "No C and no F point: ";
       for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
@@ -382,39 +382,39 @@ namespace viennacl
       typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
-      
+
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       unsigned int total_points;
-      
+
       // Slice matrix into parts such that points are distributed among threads
-      Slicing.slice(level, A, Pointvector);     
-      
+      Slicing.slice(level, A, Pointvector);
+
       // Run classical coarsening in parallel
       total_points = 0;
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for shared (total_points,Slicing,level)
-#endif      
+#endif
       for (unsigned int i=0; i<Slicing.threads_; ++i)
       {
         amg_coarse_classic(level,Slicing.A_slice[i],Slicing.Pointvector_slice[i],tag);
-        
+
         // Save C points (using Slicing.Offset on the next level as temporary memory)
         // Note: Number of C points for point i is saved in i+1!! (makes it easier later to compute offset)
         Slicing.Offset[i+1][level+1] = Slicing.Pointvector_slice[i][level].get_cpoints();
       #ifdef VIENNACL_WITH_OPENMP
         #pragma omp critical
-      #endif  
+      #endif
         total_points += Slicing.Pointvector_slice[i][level].get_cpoints();
-      }      
-      
+      }
+
       // If no coarser level can be found on any level then resume and coarsening will stop in amg_coarse()
       if (total_points != 0)
-      {    
+      {
       #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for shared (Slicing)
-      #endif  
+      #endif
         for (unsigned int i=0; i<Slicing.threads_; ++i)
         {
           // If no higher coarse level can be found on slice i (saved in Slicing.Offset[i+1][level+1]) then pull C point(s) to the next level
@@ -426,18 +426,18 @@ namespace viennacl
             Slicing.Offset[i+1][level+1] = Slicing.A_slice[i][level].size1();
           }
         }
-          
+
         // Build slicing offset from number of C points (offset = total sum of C points on threads with lower number)
         for (unsigned int i=2; i<=Slicing.threads_; ++i)
           Slicing.Offset[i][level+1] += Slicing.Offset[i-1][level+1];
-            
+
         // Join C and F points
         Slicing.join(level, Pointvector);
       }
-      
+
       // Calculate global influence measures for interpolation and/or RS3.
-      amg_influence(level, A, Pointvector, tag); 
-      
+      amg_influence(level, A, Pointvector, tag);
+
       #if defined(VIENNACL_AMG_DEBUG)// or defined (VIENNACL_AMG_DEBUGBENCH)
       for (unsigned int i=0; i<Slicing._threads; ++i)
       {
@@ -449,7 +449,7 @@ namespace viennacl
       }
       #endif
     }
-    
+
     /** @brief RS3 coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_RS3)
     * @param level    Coarse level identifier
     * @param A      Operator matrix on all levels
@@ -463,22 +463,22 @@ namespace viennacl
       typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
-      
+
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       amg_point *c_point, *point1, *point2;
       bool add_C;
       unsigned int i, j;
-            
+
       // Run RS0 first (parallel).
       amg_coarse_rs0(level, A, Pointvector, Slicing, tag);
-      
+
       // Save slicing offset
       boost::numeric::ublas::vector<unsigned int> Offset = boost::numeric::ublas::vector<unsigned int> (Slicing.Offset.size());
       for (i=0; i<Slicing.Offset.size(); ++i)
         Offset[i] = Slicing.Offset[i][level];
-      
+
       // Correct the coarsening with a third pass: Don't allow strong F-F connections without common C point
       for (i=0; i<Slicing.threads_; ++i)
       {
@@ -492,11 +492,11 @@ namespace viennacl
           // Check for strong connections from influencing and influenced points.
           amg_point::iterator iter2 = point1->begin_influencing();
           amg_point::iterator iter3 = point1->begin_influenced();
-          
+
           // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
           // Note: Only works because influencing and influenced lists are sorted by point-index.
           while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
-          {     
+          {
             if (iter2 == point1->end_influencing())
             {
               point2 = *iter3;
@@ -508,8 +508,8 @@ namespace viennacl
               ++iter2;
             }
             else
-            {      
-              if ((*iter2)->get_index() == (*iter3)->get_index())   
+            {
+              if ((*iter2)->get_index() == (*iter3)->get_index())
               {
                 point2 = *iter2;
                 ++iter2;
@@ -526,16 +526,16 @@ namespace viennacl
                 ++iter3;
               }
             }
-                  
+
             // Only check points with higher index as points with lower index have been checked already.
             if (point2->get_index() < point1->get_index())
               continue;
-                    
+
             // Only check points that are outside the slicing boundaries (interior F-F connections have already been checked in second pass)
             //if (point2->get_index() >= Slicing.Offset[i][level] || point2->get_index() < Slicing.Offset[i+1][level])
             if (point2->get_index() >= Offset[i] && point2->get_index() < Offset[i+1])
               continue;
-            
+
             // If there is a strong connection then it has to either be a C point or a F point with common C point.
             // C point? Then skip as everything is ok.
             if (point2->is_cpoint())
@@ -555,7 +555,7 @@ namespace viennacl
                   if (point2->is_influencing(c_point))
                   {
                     add_C = false;
-                    break;            
+                    break;
                   }
                 }
               }
@@ -572,7 +572,7 @@ namespace viennacl
               }
             }
           }
-          
+
           #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After 3rd pass:" << std::endl;
           std::cout << "Coarse Points:" << std::endl;
@@ -589,7 +589,7 @@ namespace viennacl
           unsigned int i;
     #ifdef VIENNACL_WITH_OPENMP
           #pragma omp critical
-    #endif      
+    #endif
           {
             std::cout << "No C and no F point: ";
             for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
@@ -599,7 +599,7 @@ namespace viennacl
           }
           #endif
         }
-        
+
         /** @brief AG (aggregation based) coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_SA)
         *
         * @param level    Coarse level identifier
@@ -613,22 +613,22 @@ namespace viennacl
           typedef typename InternalType1::value_type SparseMatrixType;
           typedef typename InternalType2::value_type PointVectorType;
           typedef typename SparseMatrixType::value_type ScalarType;
-          
+
           typedef typename SparseMatrixType::iterator1 InternalRowIterator;
           typedef typename SparseMatrixType::iterator2 InternalColIterator;
-          
+
           unsigned int x,y;
           ScalarType diag;
           amg_point *pointx, *pointy;
-        
+
           // Cannot determine aggregates if size == 1 as then a new aggregate would always consist of this point (infinite loop)
           if (A[level].size1() == 1) return;
-          
-          // SA algorithm (Vanek et al. p.6)     
+
+          // SA algorithm (Vanek et al. p.6)
           // Build neighborhoods
     #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y,diag) shared (A)
-    #endif      
+    #endif
           for (x=0; x<A[level].size1(); ++x)
           {
             InternalRowIterator row_iter = A[level].begin1();
@@ -644,7 +644,7 @@ namespace viennacl
               }
             }
           }
-          
+
           #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Neighborhoods:" << std::endl;
           boost::numeric::ublas::matrix<bool> mat;
@@ -652,11 +652,11 @@ namespace viennacl
           printmatrix (mat);
           #endif
 
-          // Build aggregates from neighborhoods  
+          // Build aggregates from neighborhoods
           for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
           {
             pointx = (*iter);
-            
+
             if (pointx->is_undecided())
             {
               // Make center of aggregate to C point and include it to aggregate x.
@@ -665,7 +665,7 @@ namespace viennacl
               for (amg_point::iterator iter2 = pointx->begin_influencing(); iter2 != pointx->end_influencing(); ++iter2)
               {
               pointy = (*iter2);
-                
+
                 if (pointy->is_undecided())
                 {
                   // Make neighbor y to F point and include it to aggregate x.
@@ -675,7 +675,7 @@ namespace viennacl
               }
             }
           }
-          
+
           #ifdef VIENNACL_AMG_DEBUG
           std::cout << "After aggregation:" << std::endl;
           std::cout << "Coarse Points:" << std::endl;
@@ -687,7 +687,7 @@ namespace viennacl
           Pointvector[level].get_F(F);
           printvector (F);
           std::cout << "Aggregates:" << std::endl;
-          printvector (Aggregates[level]);          
+          printvector (Aggregates[level]);
           #endif
         }
       } //namespace amg

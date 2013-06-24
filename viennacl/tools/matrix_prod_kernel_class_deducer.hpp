@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -42,14 +42,14 @@ namespace viennacl
 {
   namespace tools
   {
-    
+
     /** @brief deduces kernel type for C=A*B, where A, B, C are MatrixType1, MatrixType2 and MatrixType3 respectively */
     template <typename MatrixType1, typename MatrixType2, typename MatrixType3>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER
     {
       typedef typename MatrixType1::ERROR_INVALID_TEMPLATE_ARGUMENTS_PROVIDED   ResultType;
     };
-    
+
     /** \cond */
     template <typename SCALARTYPE>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
@@ -66,7 +66,7 @@ namespace viennacl
     {
       typedef viennacl::linalg::kernels::matrix_prod_row_row_col<SCALARTYPE, 1>     ResultType;
     };
-    
+
     template <typename SCALARTYPE>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
                                              viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
@@ -83,7 +83,7 @@ namespace viennacl
       typedef viennacl::linalg::kernels::matrix_prod_row_col_col<SCALARTYPE, 1>     ResultType;
     };
 
-    
+
     template <typename SCALARTYPE>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
                                              viennacl::matrix_base<SCALARTYPE, viennacl::row_major>,
@@ -99,7 +99,7 @@ namespace viennacl
     {
       typedef viennacl::linalg::kernels::matrix_prod_col_row_col<SCALARTYPE, 1>     ResultType;
     };
-    
+
     template <typename SCALARTYPE>
     struct MATRIX_PROD_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,
                                              viennacl::matrix_base<SCALARTYPE, viennacl::column_major>,

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -41,12 +41,12 @@ namespace viennacl
   {
     namespace detail
     {
-    
-      
+
+
       //
       // Level Scheduling Setup for ILU:
       //
-      
+
       template <typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_impl(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                        vector<ScalarType> const & diagonal_LU,
@@ -61,18 +61,18 @@ namespace viennacl
         ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LU.handle());
         unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle1());
         unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle2());
-        
+
         //
         // Step 1: Determine row elimination order for each row and build up meta information about the number of entries taking part in each elimination step:
         //
         std::vector<std::size_t> row_elimination(LU.size1());
         std::map<std::size_t, std::map<std::size_t, std::size_t> > row_entries_per_elimination_step;
-        
+
         std::size_t max_elimination_runs = 0;
         for (std::size_t row2 = 0; row2 < LU.size1(); ++row2)
         {
           std::size_t row = setup_U ? (LU.size1() - row2) - 1 : row2;
-          
+
           std::size_t row_begin = row_buffer[row];
           std::size_t row_end   = row_buffer[row+1];
           unsigned int elimination_index = 0;  //Note: first run corresponds to elimination_index = 1 (otherwise, type issues with int <-> unsigned int would arise
@@ -88,27 +88,27 @@ namespace viennacl
           row_elimination[row] = elimination_index + 1;
           max_elimination_runs = std::max<std::size_t>(max_elimination_runs, elimination_index + 1);
         }
-        
+
         //std::cout << "Number of elimination runs: " << max_elimination_runs << std::endl;
-        
+
         //
         // Step 2: Build row-major elimination matrix for each elimination step
         //
-        
+
         //std::cout << "Elimination order: " << std::endl;
         //for (std::size_t i=0; i<row_elimination.size(); ++i)
         //  std::cout << row_elimination[i] << ", ";
         //std::cout << std::endl;
-        
+
         //std::size_t summed_rows = 0;
         for (std::size_t elimination_run = 1; elimination_run <= max_elimination_runs; ++elimination_run)
         {
           std::map<std::size_t, std::size_t> const & current_elimination_info = row_entries_per_elimination_step[elimination_run];
-          
+
           // count cols and entries handled in this elimination step
           std::size_t num_tainted_cols = current_elimination_info.size();
           std::size_t num_entries = 0;
-          
+
           for (std::map<std::size_t, std::size_t>::const_iterator it  = current_elimination_info.begin();
                                                                   it != current_elimination_info.end();
                                                                 ++it)
@@ -116,27 +116,27 @@ namespace viennacl
 
           //std::cout << "num_entries: " << num_entries << std::endl;
           //std::cout << "num_tainted_cols: " << num_tainted_cols << std::endl;
-          
+
           if (num_tainted_cols > 0)
           {
             row_index_arrays.push_back(viennacl::backend::mem_handle());
             viennacl::backend::typesafe_host_array<unsigned int> elim_row_index_array(row_index_arrays.back(), num_tainted_cols);
-            
+
             row_buffers.push_back(viennacl::backend::mem_handle());
             viennacl::backend::typesafe_host_array<unsigned int> elim_row_buffer(row_buffers.back(), num_tainted_cols + 1);
-            
+
             col_buffers.push_back(viennacl::backend::mem_handle());
             viennacl::backend::typesafe_host_array<unsigned int> elim_col_buffer(col_buffers.back(), num_entries);
-            
+
             element_buffers.push_back(viennacl::backend::mem_handle());
             std::vector<ScalarType> elim_elements_buffer(num_entries);
-            
+
             row_elimination_num_list.push_back(num_tainted_cols);
-            
+
             std::size_t k=0;
             std::size_t nnz_index = 0;
             elim_row_buffer.set(0, 0);
-            
+
             for (std::map<std::size_t, std::size_t>::const_iterator it  = current_elimination_info.begin();
                                                                     it != current_elimination_info.end();
                                                                   ++it)
@@ -144,7 +144,7 @@ namespace viennacl
               //std::size_t col = setup_U ? (elimination_matrix.size() - it->first) - 1 : col2;
               std::size_t row = it->first;
               elim_row_index_array.set(k, row);
-              
+
               std::size_t row_begin = row_buffer[row];
               std::size_t row_end   = row_buffer[row+1];
               for (std::size_t i = row_begin; i < row_end; ++i)
@@ -160,10 +160,10 @@ namespace viennacl
                   }
                 }
               }
-              
+
               elim_row_buffer.set(++k, nnz_index);
             }
-          
+
             //
             // Wrap in memory_handles:
             //
@@ -181,8 +181,8 @@ namespace viennacl
         }
         //std::cout << "Eliminated rows: " << summed_rows << " out of " << row_elimination.size() << std::endl;
       }
-      
-      
+
+
       template <typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_L(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
@@ -194,12 +194,12 @@ namespace viennacl
       {
         level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, false);
       }
-      
-      
+
+
       //
       // Multifrontal setup of U:
       //
-      
+
       template <typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_U(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
@@ -211,8 +211,8 @@ namespace viennacl
       {
         level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, true);
       }
-      
-      
+
+
       //
       // Multifrontal substitution (both L and U). Will partly be moved to single_threaded/opencl/cuda implementations
       //
@@ -233,7 +233,7 @@ namespace viennacl
         for (std::size_t i=0; i<row_index_arrays.size(); ++i)
         {
           viennacl::linalg::detail::level_scheduling_substitute(vec, *row_index_array_it, *row_buffers_it, *col_buffers_it, *element_buffers_it, *row_elimination_num_it);
-          
+
           ++row_index_array_it;
           ++row_buffers_it;
           ++col_buffers_it;
@@ -241,11 +241,11 @@ namespace viennacl
           ++row_elimination_num_it;
         }
       }
-      
-      
-      
-      
-      
+
+
+
+
+
     } // namespace detail
   } // namespace linalg
 } // namespace viennacl

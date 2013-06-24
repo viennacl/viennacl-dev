@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -60,7 +60,7 @@ namespace viennacl
         {
           if (buffer[i] == 0)   //end of string
             break;
-          
+
           if (buffer[i] != ' ')
             stop = i;
         }
@@ -69,25 +69,25 @@ namespace viennacl
         {
           buffer[i] = buffer[start + i];
         }
-        
+
         if (buffer[0] != ' ')
           buffer[stop - start + 1] = 0; //terminate string
         else
           buffer[0] = 0;
-      }      
-      
+      }
+
       inline std::string tolower(std::string & s)
       {
         std::transform(s.begin(), s.end(), s.begin(), static_cast < int(*)(int) > (std::tolower));
         return s;
       }
-      
-      
-      
-    } //namespace 
-    
+
+
+
+    } //namespace
+
     ///////// reader ////////////
-    
+
     /** @brief Reads a sparse or dense matrix from a file (MatrixMarket format)
     *
     * @param mat The matrix that is to be read
@@ -102,7 +102,7 @@ namespace viennacl
                                       long index_base)
     {
       typedef typename viennacl::result_of::cpu_value_type<typename viennacl::result_of::value_type<MatrixType>::type>::type    ScalarType;
-      
+
       //std::cout << "Reading matrix market file" << std::endl;
       char buffer[1025];
       std::ifstream reader(file);
@@ -116,12 +116,12 @@ namespace viennacl
       long valid_entries = 0;
       long nnz = 0;
 
-      
+
       if (!reader){
         std::cerr << "ViennaCL: Matrix Market Reader: Cannot open file " << file << std::endl;
         return EXIT_FAILURE;
       }
-      
+
       while (reader.good())
       {
         // get a non-empty line
@@ -132,7 +132,7 @@ namespace viennacl
           detail::trim(buffer, 1024);
         }
         while (reader.good() && buffer[0] == 0);
-        
+
         if (buffer[0] == '%')
         {
           if (buffer[1] == '%')
@@ -184,7 +184,7 @@ namespace viennacl
               std::cerr << "Error in file " << file << ": The MatrixMarket reader provided with ViennaCL supports only general or symmetric matrices." << std::endl;
               return 0;
             }
-            
+
           }
         }
         else
@@ -197,7 +197,7 @@ namespace viennacl
             //read header line
             long rows;
             long cols;
-            
+
             if (line.good())
               line >> rows;
             else
@@ -205,7 +205,7 @@ namespace viennacl
               std::cerr << "Error in file " << file << ": Could not get matrix dimensions (rows) in line " << linenum << std::endl;
               return 0;
             }
-            
+
             if (line.good())
               line >> cols;
             else
@@ -223,10 +223,10 @@ namespace viennacl
                 return 0;
               }
             }
-            
+
             if (rows > 0 && cols > 0)
               viennacl::traits::resize(mat, rows, cols);
-            
+
             is_header = false;
           }
           else
@@ -237,7 +237,7 @@ namespace viennacl
               ScalarType value;
               line >> value;
               viennacl::traits::fill(mat, cur_row, cur_col, value);
-              
+
               if (++cur_row == static_cast<long>(viennacl::traits::size1(mat)))
               {
                 //next column
@@ -250,7 +250,7 @@ namespace viennacl
               long row;
               long col;
               ScalarType value;
-              
+
               //parse data:
               if (line.good())
                 line >> row;
@@ -259,7 +259,7 @@ namespace viennacl
                 std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
                 return 0;
               }
-              
+
               if (line.good())
                 line >> col;
               else
@@ -267,11 +267,11 @@ namespace viennacl
                 std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
                 return 0;
               }
-              
+
               //take index_base base into account:
               row -= index_base;
               col -= index_base;
-              
+
               if (line.good())
                 line >> value;
               else
@@ -279,36 +279,36 @@ namespace viennacl
                 std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
                 return 0;
               }
-              
+
               if (row >= static_cast<long>(viennacl::traits::size1(mat)) || row < 0)
               {
                 std::cerr << "Error in file " << file << " at line " << linenum << ": Row index out of bounds: " << row << " (matrix dim: " << viennacl::traits::size1(mat) << " x " << viennacl::traits::size2(mat) << ")" << std::endl;
                 return 0;
               }
-                  
+
               if (col >= static_cast<long>(viennacl::traits::size2(mat)) || col < 0)
               {
                 std::cerr << "Error in file " << file << " at line " << linenum << ": Column index out of bounds: " << col << " (matrix dim: " << viennacl::traits::size1(mat) << " x " << viennacl::traits::size2(mat) << ")" << std::endl;
                 return 0;
               }
-              
+
               viennacl::traits::fill(mat, row, col, value); //basically equivalent to mat(row, col) = value;
               if (symmetric)
                 viennacl::traits::fill(mat, col, row, value); //basically equivalent to mat(col, row) = value;
-              
+
               if (++valid_entries == nnz)
                 break;
-              
+
             } //else dense_format
           }
         }
       }
-      
+
       std::cout << linenum << " lines read." << std::endl;
       reader.close();
       return linenum;
     }
-    
+
 
     /** @brief Reads a sparse matrix from a file (MatrixMarket format)
     *
@@ -323,7 +323,7 @@ namespace viennacl
                                  const char * file,
                                  long index_base = 1)
     {
-      return read_matrix_market_file_impl(mat, file, index_base);  
+      return read_matrix_market_file_impl(mat, file, index_base);
     }
 
     template <typename MatrixType>
@@ -333,7 +333,7 @@ namespace viennacl
     {
       return read_matrix_market_file_impl(mat, file.c_str(), index_base);
     }
-    
+
     template <typename ScalarType>
     long read_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > & mat,
                                  const char * file,
@@ -342,7 +342,7 @@ namespace viennacl
       viennacl::tools::sparse_matrix_adapter<ScalarType> adapted_matrix(mat);
       return read_matrix_market_file_impl(adapted_matrix, file, index_base);
     }
-    
+
     template <typename ScalarType>
     long read_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > & mat,
                                  const std::string & file,
@@ -358,7 +358,7 @@ namespace viennacl
     void write_matrix_market_file_impl(MatrixType const & mat, const char * file, long index_base)
     {
       std::ofstream writer(file);
-      
+
       long num_entries = 0;
       for (typename MatrixType::const_iterator1 row_it = mat.begin1();
             row_it != mat.end1();
@@ -370,7 +370,7 @@ namespace viennacl
 
       writer << "%%MatrixMarket matrix coordinate real general" << std::endl;
       writer << mat.size1() << " " << mat.size2() << " " << num_entries << std::endl;
-      
+
       for (typename MatrixType::const_iterator1 row_it = mat.begin1();
             row_it != mat.end1();
             ++row_it)
@@ -378,7 +378,7 @@ namespace viennacl
               col_it != row_it.end();
               ++col_it)
           writer << col_it.index1() + index_base << " " << col_it.index2() + index_base << " " << *col_it << std::endl;
-      
+
       writer.close();
     }
 
@@ -416,7 +416,7 @@ namespace viennacl
       write_matrix_market_file_impl(mat, file.c_str(), index_base);
     }
 
-    
+
   } //namespace io
 } //namespace viennacl
 

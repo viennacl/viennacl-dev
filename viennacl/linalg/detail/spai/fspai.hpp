@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -62,7 +62,7 @@ namespace viennacl
       {
         namespace spai
         {
-        
+
           /** @brief A tag for FSPAI. Experimental.
           * Contains values for the algorithm.
           * Must be passed to spai_precond constructor
@@ -77,14 +77,14 @@ namespace viennacl
           public:
               fspai_tag(
                       double residual_norm_threshold = 1e-3,
-                      unsigned int iteration_limit = 5, 
+                      unsigned int iteration_limit = 5,
                       bool is_static = false,
                       bool is_right = false) :
               residual_norm_threshold_(residual_norm_threshold),
               iteration_limit_(iteration_limit),
               is_static_(is_static),
               is_right_(is_right){};
-              
+
               inline double getResidualNormThreshold() const
               { return residual_norm_threshold_; }
               inline unsigned long getIterationLimit () const
@@ -107,15 +107,15 @@ namespace viennacl
               inline void setIsStatic(bool is_static){
                   is_static_ = is_static;
               }
-              
+
           private:
               double residual_norm_threshold_;
               unsigned long iteration_limit_;
               bool is_static_;
               bool is_right_;
           };
-          
-          
+
+
           //
           // Helper: Store A in an STL container of type, exploiting symmetry
           // Reason: ublas interface does not allow to iterate over nonzeros of a particular row without starting an iterator1 from the very beginning of the matrix...
@@ -139,8 +139,8 @@ namespace viennacl
               }
             }
           }
-          
-          
+
+
           //
           // Generate index sets J_k, k=0,...,N-1
           //
@@ -168,7 +168,7 @@ namespace viennacl
 
 
           //
-          // Extracts the blocks A(\tilde{J}_k, \tilde{J}_k) from A 
+          // Extracts the blocks A(\tilde{J}_k, \tilde{J}_k) from A
           // Sets up y_k = A(\tilde{J}_k, k) for the inplace-solution after Cholesky-factoriation
           //
           template <typename ScalarType, typename MatrixType, typename VectorType>
@@ -186,15 +186,15 @@ namespace viennacl
               yk.resize(Jk.size());
               block_k.resize(Jk.size(), Jk.size());
               block_k.clear();
-              
+
               for (std::size_t i=0; i<Jk.size(); ++i)
               {
                 std::size_t row_index = Jk[i];
                 std::map<unsigned int, ScalarType> & A_row = A[row_index];
-                
+
                 //fill y_k:
                 yk[i] = A_row[k];
-                
+
                 for (std::size_t j=0; j<Jk.size(); ++j)
                 {
                   std::size_t col_index = Jk[j];
@@ -204,8 +204,8 @@ namespace viennacl
               }
             }
           }
-          
-          
+
+
           //
           // Perform Cholesky factorization of A inplace. Cf. Schwarz: Numerische Mathematik, vol 5, p. 58
           //
@@ -219,11 +219,11 @@ namespace viennacl
                 std::cout << "k: " << k << std::endl;
                 std::cout << "A(k,k): " << A(k,k) << std::endl;
               }
-              
+
               assert(A(k,k) > 0);
-              
+
               A(k,k) = std::sqrt(A(k,k));
-              
+
               for (std::size_t i=k+1; i<A.size1(); ++i)
               {
                 A(i,k) /= A(k,k);
@@ -232,8 +232,8 @@ namespace viennacl
               }
             }
           }
-          
-          
+
+
           //
           // Compute x in Ax = b, where A is already Cholesky factored (A = L L^T)
           //
@@ -241,7 +241,7 @@ namespace viennacl
           void cholesky_solve(MatrixType const & L, VectorType & b)
           {
             typedef typename VectorType::value_type  ScalarType;
-            
+
             // inplace forward solve L x = b
             for (std::size_t i=0; i<L.size1(); ++i)
             {
@@ -249,26 +249,26 @@ namespace viennacl
                 b[i] -= L(i,j) * b[j];
               b[i] /= L(i,i);
             }
-            
+
             // inplace backward solve L^T x = b:
             for (std::size_t i=L.size1()-1; ; --i)
             {
               for (std::size_t k=i+1; k<L.size1(); ++k)
                 b[i] -= L(k,i) * b[k];
               b[i] /= L(i,i);
-              
+
               if (i==0) //std::size_t might be unsigned, therefore manual check for equality with zero here
                 break;
             }
           }
-          
-          
-          
+
+
+
           //
           // Compute the Cholesky factor L from the sparse vectors y_k
           //
           template <typename MatrixType, typename VectorType1>
-          void computeL(MatrixType const & A, 
+          void computeL(MatrixType const & A,
                         MatrixType & L,
                         MatrixType & L_trans,
                         std::vector<VectorType1> & Y,
@@ -276,23 +276,23 @@ namespace viennacl
           {
             typedef typename VectorType1::value_type    ScalarType;
             typedef std::vector<std::map<unsigned int, ScalarType> >     STLSparseMatrixType;
-            
+
             STLSparseMatrixType L_temp(A.size1());
-            
+
             for (std::size_t k=0; k<A.size1(); ++k)
             {
               std::vector<std::size_t> const & Jk = J[k];
               VectorType1 const & yk = Y[k];
-              
+
               //compute L(k,k):
               ScalarType Lkk = A(k,k);
               for (std::size_t i=0; i<Jk.size(); ++i)
                 Lkk -= A(Jk[i],k) * yk[i];
-              
+
               Lkk = ScalarType(1) / std::sqrt(Lkk);
               L_temp[k][k] = Lkk;
               L_trans(k,k) = Lkk;
-              
+
               //write lower diagonal entries:
               for (std::size_t i=0; i<Jk.size(); ++i)
               {
@@ -300,8 +300,8 @@ namespace viennacl
                 L_trans(k, Jk[i]) = -Lkk * yk[i];
               }
             } //for k
-            
-            
+
+
             //build L from L_temp
             for (std::size_t i=0; i<L_temp.size(); ++i)
               for (typename std::map<unsigned int, ScalarType>::const_iterator it = L_temp[i].begin();
@@ -309,22 +309,22 @@ namespace viennacl
                 ++it)
                   L(i, it->first) = it->second;
           }
-          
+
 
           //
           // Top level FSPAI function
           //
           template <typename MatrixType>
-          void computeFSPAI(MatrixType const & A, 
+          void computeFSPAI(MatrixType const & A,
                             MatrixType const & PatternA,
-                            MatrixType & L, 
-                            MatrixType & L_trans, 
+                            MatrixType & L,
+                            MatrixType & L_trans,
                             fspai_tag)
           {
             typedef typename MatrixType::value_type              ScalarType;
             typedef boost::numeric::ublas::matrix<ScalarType>    DenseMatrixType;
             typedef std::vector<std::map<unsigned int, ScalarType> >     SparseMatrixType;
-            
+
             //
             // preprocessing: Store A in a STL container:
             //
@@ -332,8 +332,8 @@ namespace viennacl
             std::vector<std::vector<ScalarType> >    y_k(A.size1());
             SparseMatrixType   STL_A(A.size1());
             sym_sparse_matrix_to_stl(A, STL_A);
-            
-            
+
+
             //
             // Step 1: Generate pattern indices
             //
@@ -348,7 +348,7 @@ namespace viennacl
             std::vector<DenseMatrixType>  subblocks_A(A.size1());
             fill_blocks(STL_A, subblocks_A, J, y_k);
             STL_A.clear(); //not needed anymore
-            
+
             //
             // Step 3: Cholesky-factor blocks
             //
@@ -359,13 +359,13 @@ namespace viennacl
               cholesky_decompose(subblocks_A[i]);
               //std::cout << "Block after: " << subblocks_A[i] << std::endl;
             }
-            
-            
+
+
             /*std::size_t num_bytes = 0;
             for (std::size_t i=0; i<subblocks_A.size(); ++i)
               num_bytes += 8*subblocks_A[i].size1()*subblocks_A[i].size2();*/
             //std::cout << "Memory for FSPAI matrix: " << num_bytes / (1024.0 * 1024.0) << " MB" << std::endl;
-            
+
             //
             // Step 4: Solve for y_k
             //
@@ -382,8 +382,8 @@ namespace viennacl
                 cholesky_solve(subblocks_A[i], y_k[i]);
               }
             }
-            
-            
+
+
             //
             // Step 5: Set up Cholesky factors L and L_trans
             //
@@ -393,12 +393,12 @@ namespace viennacl
             L_trans.resize(A.size1(), A.size2(), false);
             L_trans.reserve(A.nnz(), false);
             computeL(A, L, L_trans, y_k, J);
-            
+
             //std::cout << "L: " << L << std::endl;
           }
-          
-          
-          
+
+
+
         }
       }
     }

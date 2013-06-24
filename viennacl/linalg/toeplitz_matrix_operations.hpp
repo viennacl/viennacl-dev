@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -35,10 +35,10 @@ namespace viennacl
 {
   namespace linalg
   {
-    
-    
+
+
     // A * x
-    
+
     /** @brief Carries out matrix-vector multiplication with a toeplitz_matrix
     *
     * Implementation of the convenience expression result = prod(mat, vec);
@@ -48,21 +48,21 @@ namespace viennacl
     * @param result The result vector
     */
     template<class SCALARTYPE, unsigned int ALIGNMENT>
-    void prod_impl(const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT> & mat, 
+    void prod_impl(const viennacl::toeplitz_matrix<SCALARTYPE, ALIGNMENT> & mat,
                    const viennacl::vector_base<SCALARTYPE> & vec,
                          viennacl::vector_base<SCALARTYPE> & result)
     {
       assert(mat.size1() == result.size());
       assert(mat.size2() == vec.size());
-      
+
       viennacl::vector<SCALARTYPE> tmp(vec.size() * 4); tmp.clear();
       viennacl::vector<SCALARTYPE> tmp2(vec.size() * 4);
-      
+
       viennacl::vector<SCALARTYPE> tep(mat.elements().size() * 2);
       viennacl::detail::fft::real_to_complex(mat.elements(), tep, mat.elements().size());
 
 
-      
+
       copy(vec, tmp);
       viennacl::detail::fft::real_to_complex(tmp, tmp2, vec.size() * 2);
       viennacl::linalg::convolve(tep, tmp2, tmp);

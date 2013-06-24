@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/tred2.hpp
 *   @brief optimized CPU tridiagonalization
-* 
+*
 *   Contributed by Alex Christensen.
 */
 
@@ -32,7 +32,7 @@ namespace viennacl
   namespace linalg
   {
     /** @brief Inplace reduction of a hermitian (or real symmetric) to tridiagonal form using householder similarity transforms (preserving eigenvalues)
-     * 
+     *
      * @param A            A dense matrix to be tridiagonalized
      * @param block_size   The block size to be used
      */
@@ -62,7 +62,7 @@ namespace viennacl
 
       delete [] rows;
     }
-    
+
   } //namespace linalg
 } //namespace viennacl
 #endif

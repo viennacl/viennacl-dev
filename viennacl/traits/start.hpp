@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -34,7 +34,7 @@ namespace viennacl
     //
     // start: Mostly for vectors
     //
-    
+
     // Default: Try to get the start index from the .start() member function
     template <typename T>
     typename result_of::size_type<T>::type
@@ -42,20 +42,20 @@ namespace viennacl
     {
       return obj.start();
     }
-    
+
     //ViennaCL vector leads to start index 0:
     template <typename ScalarType, unsigned int ALIGNMENT>
     typename result_of::size_type<viennacl::vector<ScalarType, ALIGNMENT> >::type
     start(viennacl::vector<ScalarType, ALIGNMENT> const &)
     {
-      return 0; 
+      return 0;
     }
 
 
     //
     // start1: Row start index
     //
-    
+
     // Default: Try to get the start index from the .start1() member function
     template <typename T>
     typename result_of::size_type<T>::type
@@ -69,7 +69,7 @@ namespace viennacl
     typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
     start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
     {
-      return 0; 
+      return 0;
     }
 
 
@@ -88,12 +88,12 @@ namespace viennacl
     typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
     start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
     {
-      return 0; 
+      return 0;
     }
-    
+
 
   } //namespace traits
 } //namespace viennacl
-    
+
 
 #endif

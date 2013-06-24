@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -30,7 +30,7 @@
 
 #include "viennacl/fft.hpp"
 
-namespace viennacl 
+namespace viennacl
 {
     /** @brief A Circulant matrix class
     *
@@ -40,10 +40,10 @@ namespace viennacl
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     class circulant_matrix
     {
-      public:     
+      public:
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
-        
+
         /**
          * @brief The default constructor. Does not allocate any memory.
          *
@@ -94,7 +94,7 @@ namespace viennacl
          * @brief Returns the number of rows of the matrix
          */
         std::size_t size1() const { return elements_.size(); }
-        
+
         /**
          * @brief Returns the number of columns of the matrix
          */
@@ -119,7 +119,7 @@ namespace viennacl
             int index = static_cast<int>(row_index) - static_cast<int>(col_index);
 
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
-            
+
             while (index < 0)
               index += size1();
             return elements_[index];
@@ -140,7 +140,7 @@ namespace viennacl
     private:
         circulant_matrix(circulant_matrix const & t) {}
         circulant_matrix & operator=(circulant_matrix const & t);
-      
+
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;
     };
 
@@ -258,11 +258,11 @@ namespace viennacl
         s << ")";
         return s;
     }
-    
+
     //
     // Specify available operations:
     //
-    
+
     namespace linalg
     {
       namespace detail
@@ -346,7 +346,7 @@ namespace viennacl
         };
 
 
-        
+
      } // namespace detail
    } // namespace linalg
 

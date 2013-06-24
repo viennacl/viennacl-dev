@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -44,7 +44,7 @@ namespace viennacl {
       public:
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
-        
+
         /**
          * @brief The default constructor. Does not allocate any memory.
          *
@@ -94,7 +94,7 @@ namespace viennacl {
          * @brief Returns the number of rows of the matrix
          */
         std::size_t size1() const { return elements_.size(); }
-        
+
         /**
          * @brief Returns the number of columns of the matrix
          */
@@ -128,14 +128,14 @@ namespace viennacl {
         SCALARTYPE operator()(std::size_t row_index, std::size_t col_index) const
         {
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
-            
+
             return pow(elements_[row_index], static_cast<int>(col_index));
         }
 
     private:
         vandermonde_matrix(vandermonde_matrix const & t) {}
         vandermonde_matrix & operator=(vandermonde_matrix const & t);
-        
+
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;
     };
 
@@ -186,7 +186,7 @@ namespace viennacl {
             }
         }
     }
-    
+
     /** @brief Copies a the matrix-like object to the Vandermonde matrix from the OpenCL device (either GPU or multi-core CPU)
     *
     *
@@ -194,7 +194,7 @@ namespace viennacl {
     * @param vander_dst   A vandermonde_matrix from ViennaCL
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
-    void copy(MATRIXTYPE& com_src, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_dst) 
+    void copy(MATRIXTYPE& com_src, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_dst)
     {
         std::size_t size = vander_dst.size1();
         assert(size == com_src.size1() && bool("Size mismatch"));
@@ -245,7 +245,7 @@ namespace viennacl {
     //
     // Specify available operations:
     //
-    
+
     namespace linalg
     {
       namespace detail
@@ -329,7 +329,7 @@ namespace viennacl {
         };
 
 
-        
+
      } // namespace detail
    } // namespace linalg
 

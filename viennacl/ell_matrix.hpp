@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file ell_matrix.hpp
     @brief Implementation of the ell_matrix class
-    
+
     Contributed by Volodymyr Kysenko.
 */
 
@@ -40,30 +40,30 @@ namespace viennacl
       public:
         typedef viennacl::backend::mem_handle                                                              handle_type;
         typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
-        
+
         ell_matrix() : rows_(0), cols_(0), maxnnz_(0) {}
-        
-        //ell_matrix(std::size_t row_num, std::size_t col_num) 
+
+        //ell_matrix(std::size_t row_num, std::size_t col_num)
         //{
         //  viennacl::linalg::kernels::ell_matrix<SCALARTYPE, ALIGNMENT>::init();
         //}
-    
+
       public:
         std::size_t internal_size1() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(rows_, ALIGNMENT); }
         std::size_t internal_size2() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(cols_, ALIGNMENT); }
 
         std::size_t size1() const { return rows_; }
         std::size_t size2() const { return cols_; }
-        
+
         std::size_t internal_maxnnz() const {return viennacl::tools::roundUpToNextMultiple<std::size_t>(maxnnz_, ALIGNMENT); }
         std::size_t maxnnz() const { return maxnnz_; }
 
         std::size_t nnz() const { return rows_ * maxnnz_; }
         std::size_t internal_nnz() const { return internal_size1() * internal_maxnnz(); }
 
-              handle_type & handle()       { return elements_; } 
-        const handle_type & handle() const { return elements_; } 
-        
+              handle_type & handle()       { return elements_; }
+        const handle_type & handle() const { return elements_; }
+
               handle_type & handle2()       { return coords_; }
         const handle_type & handle2() const { return coords_; }
 
@@ -73,15 +73,15 @@ namespace viennacl
       #else
         template <typename CPU_MATRIX, typename T, unsigned int ALIGN>
         friend void copy(const CPU_MATRIX & cpu_matrix, ell_matrix<T, ALIGN> & gpu_matrix );
-      #endif        
-        
+      #endif
+
       private:
         std::size_t rows_;
         std::size_t cols_;
         std::size_t maxnnz_;
 
         handle_type coords_;
-        handle_type elements_;        
+        handle_type elements_;
     };
 
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
@@ -112,13 +112,13 @@ namespace viennacl
         viennacl::backend::typesafe_host_array<unsigned int> coords(gpu_matrix.handle2(), nnz);
         std::vector<SCALARTYPE> elements(nnz, 0);
 
-        // std::cout << "ELL_MATRIX copy " << gpu_matrix.maxnnz_ << " " << gpu_matrix.rows_ << " " << gpu_matrix.cols_ << " " 
+        // std::cout << "ELL_MATRIX copy " << gpu_matrix.maxnnz_ << " " << gpu_matrix.rows_ << " " << gpu_matrix.cols_ << " "
         //             << gpu_matrix.internal_maxnnz() << "\n";
 
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1(); row_it != cpu_matrix.end1(); ++row_it)
         {
           std::size_t data_index = 0;
-          
+
           for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
           {
             coords.set(gpu_matrix.internal_size1() * data_index + col_it.index1(), col_it.index2());
@@ -151,7 +151,7 @@ namespace viennacl
           for(std::size_t ind = 0; ind < gpu_matrix.internal_maxnnz(); ind++)
           {
             std::size_t offset = gpu_matrix.internal_size1() * ind + row;
-            
+
             if(elements[offset] == static_cast<SCALARTYPE>(0.0))
                 continue;
 
@@ -250,7 +250,7 @@ namespace viennacl
         };
 
 
-        
+
      } // namespace detail
    } // namespace linalg
 

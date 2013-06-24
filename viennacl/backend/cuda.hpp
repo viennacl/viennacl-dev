@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -40,16 +40,16 @@ namespace viennacl
     {
       typedef viennacl::tools::shared_ptr<char>  handle_type;
       // Requirements for backend:
-      
+
       // * memory_create(size, host_ptr)
       // * memory_copy(src, dest, offset_src, offset_dest, size)
       // * memory_write_from_main_memory(src, offset, size,
       //                                 dest, offset, size)
       // * memory_read_to_main_memory(src, offset, size
       //                              dest, offset, size)
-      // * 
+      // *
       //
-      
+
       namespace detail
       {
 
@@ -63,46 +63,46 @@ namespace viennacl
           }
         }
 
-        
+
         template <typename U>
         struct cuda_deleter
         {
-          void operator()(U * p) const 
+          void operator()(U * p) const
           {
             //std::cout << "Freeing handle " << reinterpret_cast<void *>(p) << std::endl;
             cudaFree(p);
           }
         };
-        
+
       }
-      
+
       /** @brief Creates an array of the specified size on the CUDA device. If the second argument is provided, the buffer is initialized with data from that pointer.
-       * 
+       *
        * @param size_in_bytes   Number of bytes to allocate
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
-       * 
+       *
        */
       inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
         void * dev_ptr = NULL;
         VIENNACL_CUDA_ERROR_CHECK( cudaMalloc(&dev_ptr, size_in_bytes) );
         //std::cout << "Allocated new dev_ptr " << dev_ptr << " of size " <<  size_in_bytes << std::endl;
-        
+
         if (!host_ptr)
           return handle_type(reinterpret_cast<char *>(dev_ptr), detail::cuda_deleter<char>());
-        
+
         handle_type new_handle(reinterpret_cast<char*>(dev_ptr), detail::cuda_deleter<char>());
-        
+
         // copy data:
         //std::cout << "Filling new handle from host_ptr " << host_ptr << std::endl;
         cudaMemcpy(new_handle.get(), host_ptr, size_in_bytes, cudaMemcpyHostToDevice);
-        
+
         return new_handle;
       }
-    
-    
+
+
       /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' on the CUDA device to memory starting at address 'dst_buffer + dst_offset' on the same CUDA device.
-       *  
+       *
        *  @param src_buffer     A smart pointer to the begin of an allocated CUDA buffer
        *  @param dst_buffer     A smart pointer to the end of an allocated CUDA buffer
        *  @param src_offset     Offset of the first byte to be written from the address given by 'src_buffer' (in bytes)
@@ -117,7 +117,7 @@ namespace viennacl
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         cudaMemcpy(reinterpret_cast<void *>(dst_buffer.get() + dst_offset),
                    reinterpret_cast<void *>(src_buffer.get() + src_offset),
                    bytes_to_copy,
@@ -126,7 +126,7 @@ namespace viennacl
 
 
       /** @brief Writes data from main RAM identified by 'ptr' to the CUDA buffer identified by 'dst_buffer'
-       * 
+       *
        * @param dst_buffer    A smart pointer to the beginning of an allocated CUDA buffer
        * @param dst_offset    Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
        * @param bytes_to_copy Number of bytes to be copied
@@ -138,16 +138,16 @@ namespace viennacl
                                const void * ptr)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         cudaMemcpy(reinterpret_cast<char *>(dst_buffer.get()) + dst_offset,
                    reinterpret_cast<const char *>(ptr),
                    bytes_to_copy,
                    cudaMemcpyHostToDevice);
       }
-      
-      
+
+
       /** @brief Reads data from a CUDA buffer back to main RAM.
-       * 
+       *
        * @param src_buffer         A smart pointer to the beginning of an allocated CUDA source buffer
        * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
        * @param bytes_to_copy      Number of bytes to be read
@@ -159,13 +159,13 @@ namespace viennacl
                               void * ptr)
       {
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
-        
+
         cudaMemcpy(reinterpret_cast<char *>(ptr),
                    reinterpret_cast<char *>(src_buffer.get()) + src_offset,
                    bytes_to_copy,
                    cudaMemcpyDeviceToHost);
       }
-    
+
     } //cuda
   } //backend
 } //viennacl

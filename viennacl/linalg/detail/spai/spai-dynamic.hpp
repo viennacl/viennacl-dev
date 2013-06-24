@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/detail/spai/spai-dynamic.hpp
     @brief Implementation of a dynamic SPAI. Provides the routines for automatic pattern updates Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -73,7 +73,7 @@ namespace viennacl
       {
         namespace spai
         {
-        
+
           typedef std::pair<unsigned int, double> PairT;
           struct CompareSecond
           {
@@ -82,24 +82,24 @@ namespace viennacl
               return static_cast<double>(left.second) > static_cast<double>(right.second);
             }
           };
-          
-          
+
+
           /** @brief Composition of new matrix R, that is going to be used in Least Square problem solving
           * @param A matrix Q'*A(I, \\tilde J), where \\tilde J - set of new column indices
           * @param R_n matrix A_Iu_J_u after QR factorization
-          * @param R previously composed matrix R 
+          * @param R previously composed matrix R
           */
           template<typename MatrixType>
           void composeNewR(const MatrixType& A, const MatrixType& R_n, MatrixType& R)
           {
             typedef typename MatrixType::value_type ScalarType;
-            std::size_t row_n = R_n.size1() - (A.size1() - R.size2()); 
+            std::size_t row_n = R_n.size1() - (A.size1() - R.size2());
             MatrixType C = boost::numeric::ublas::zero_matrix<ScalarType>(R.size1() + row_n, R.size2() + A.size2());
             //write original R to new Composite R
             boost::numeric::ublas::project(C, boost::numeric::ublas::range(0,R.size1()), boost::numeric::ublas::range(0, R.size2())) += R;
             //write upper part of Q'*A_I_\hatJ, all columns and number of rows that equals to R.size2()
-            boost::numeric::ublas::project(C, boost::numeric::ublas::range(0, R.size2()), boost::numeric::ublas::range(R.size2(), 
-                                                                                                                      R.size2() + A.size2())) += 
+            boost::numeric::ublas::project(C, boost::numeric::ublas::range(0, R.size2()), boost::numeric::ublas::range(R.size2(),
+                                                                                                                      R.size2() + A.size2())) +=
             boost::numeric::ublas::project(A, boost::numeric::ublas::range(0, R.size2()), boost::numeric::ublas::range(0, A.size2()));
             //adding decomposed(QR) block to Composite R
             if(R_n.size1() > 0 && R_n.size2() > 0)
@@ -107,7 +107,7 @@ namespace viennacl
                                               boost::numeric::ublas::range(R.size2(), R.size2() + A.size2())) += R_n;
             R = C;
           }
-          
+
           /** @brief Composition of new vector of coefficients beta from QR factorizations(necessary for Q recovery)
           * @param v_n new vector from last QR factorization
           * @param v composition of previous vectors from QR factorizations
@@ -121,7 +121,7 @@ namespace viennacl
             boost::numeric::ublas::project(w, boost::numeric::ublas::range(v.size(), v.size() + v_n.size())) += v_n;
             v = w;
           }
-          
+
           /** @brief Computation of Euclidean norm for sparse vector
           * @param v initial sparse vector
           * @param norm scalar that represents Euclidean norm
@@ -134,7 +134,7 @@ namespace viennacl
 
             norm = std::sqrt(norm);
           }
-          
+
           /** @brief Dot product of two sparse vectors
           * @param v1 initial sparse vector
           * @param v2 initial sparse vector
@@ -155,20 +155,20 @@ namespace viennacl
               }
               else if(v_it1->first < v_it2->first)
                 ++v_it1;
-              else 
+              else
                 ++v_it2;
             }
           }
-          
+
           /** @brief Building a new set of column indices J_u, cf. Kallischko dissertation p.31
-          * @param A_v_c vectorized column-wise initial matrix 
-          * @param res residual vector 
+          * @param A_v_c vectorized column-wise initial matrix
+          * @param res residual vector
           * @param J set of column indices
-          * @param J_u set of new column indices 
+          * @param J_u set of new column indices
           * @param tag SPAI tag with parameters
           */
           template <typename SparseVectorType, typename ScalarType>
-          bool buildAugmentedIndexSet(const std::vector<SparseVectorType>& A_v_c, 
+          bool buildAugmentedIndexSet(const std::vector<SparseVectorType>& A_v_c,
                                       const SparseVectorType& res,
                                       std::vector<unsigned int>& J,
                                       std::vector<unsigned int>& J_u,
@@ -188,9 +188,9 @@ namespace viennacl
                 p.push_back(std::pair<std::size_t, ScalarType>(res_it->first, (inprod*inprod)/(norm2*norm2)));
               }
             }
-            
+
             std::sort(p.begin(), p.end(), CompareSecond());
-            while ((cur_size < J.size())&&(p.size() > 0)) 
+            while ((cur_size < J.size())&&(p.size() > 0))
             {
               J_u.push_back(p[0].first);
               p.erase(p.begin());
@@ -199,15 +199,15 @@ namespace viennacl
             p.clear();
             return (cur_size > 0);
           }
-          
+
           /** @brief Building a new indices to current set of row indices I_n, cf. Kallischko dissertation p.32
           * @param A_v_c vectorized column-wise initial matrix
           * @param I set of previous determined row indices
           * @param J_n set of new column indices
-          * @param I_n set of new indices 
+          * @param I_n set of new indices
           */
           template<typename SparseVectorType>
-          void buildNewRowSet(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& I, 
+          void buildNewRowSet(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& I,
                               const std::vector<unsigned int>& J_n, std::vector<unsigned int>& I_n)
           {
             for(std::size_t i = 0; i < J_n.size(); ++i)
@@ -219,7 +219,7 @@ namespace viennacl
               }
             }
           }
-          
+
           /** @brief Composition of new block for QR factorization cf. Kallischko dissertation p.82, figure 4.7
           * @param A_I_J previously composed block
           * @param A_I_J_u matrix Q'*A(I, \\tilde J), where \\tilde J - set of new column indices
@@ -234,24 +234,24 @@ namespace viennacl
             std::size_t row_n = row_n1 + row_n2;
             std::size_t col_n = A_I_J_u.size2();
             MatrixType C = boost::numeric::ublas::zero_matrix<ScalarType>(row_n, col_n);
-            boost::numeric::ublas::project(C, boost::numeric::ublas::range(0, row_n1), boost::numeric::ublas::range(0, col_n)) += 
+            boost::numeric::ublas::project(C, boost::numeric::ublas::range(0, row_n1), boost::numeric::ublas::range(0, col_n)) +=
             boost::numeric::ublas::project(A_I_J_u, boost::numeric::ublas::range(A_I_J.size2(), A_I_J_u.size1()),
                                           boost::numeric::ublas::range(0, col_n));
-                                          
+
             boost::numeric::ublas::project(C, boost::numeric::ublas::range(row_n1, row_n1 + row_n2),
                                           boost::numeric::ublas::range(0, col_n)) += A_I_u_J_u;
             A_I_u_J_u = C;
           }
-          
+
           /** @brief CPU-based dynamic update for SPAI preconditioner
           * @param A initial sparse matrix
           * @param A_v_c vectorized column-wise initial matrix
           * @param g_res container of residuals for all columns
-          * @param g_is_update container with identificators that shows which block should be modified 
+          * @param g_is_update container with identificators that shows which block should be modified
           * @param g_I container of row index sets for all columns
           * @param g_J container of column index sets for all columns
           * @param g_b_v container of vectors of beta for Q recovery(cf. Golub Van Loan "Matrix Computations", 3rd edition p.211)
-          * @param g_A_I_J container of block matrices from previous update  
+          * @param g_A_I_J container of block matrices from previous update
           * @param tag  SPAI configuration tag
           */
           template<typename SparseMatrixType, typename SparseVectorType, typename DenseMatrixType, typename VectorType>
@@ -259,7 +259,7 @@ namespace viennacl
                             std::vector<SparseVectorType>& g_res,
                             std::vector<bool>& g_is_update,
                             std::vector<std::vector<unsigned int> >& g_I,
-                            std::vector<std::vector<unsigned int> >& g_J, 
+                            std::vector<std::vector<unsigned int> >& g_J,
                             std::vector<VectorType>& g_b_v,
                             std::vector<DenseMatrixType>& g_A_I_J,
                             spai_tag const & tag)
@@ -267,7 +267,7 @@ namespace viennacl
             typedef typename DenseMatrixType::value_type ScalarType;
             //set of new column indices
             std::vector<std::vector<unsigned int> > g_J_u(g_J.size());
-            //set of new row indices 
+            //set of new row indices
             std::vector<std::vector<unsigned int> > g_I_u(g_J.size());
             //matrix A(I, \tilde J), cf. Kallischko p.31-32
             std::vector<DenseMatrixType> g_A_I_J_u(g_J.size());
@@ -277,7 +277,7 @@ namespace viennacl
             std::vector<VectorType> g_b_v_u(g_J.size());
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif              
+#endif
             for(std::size_t i = 0; i < g_J.size(); ++i)
             {
               if(g_is_update[i])
@@ -310,23 +310,23 @@ namespace viennacl
             }
           }
           /**************************************************** GPU SPAI Update ****************************************************************/
-          
-          
+
+
           //performs Q'*A(I, \tilde J) on GPU
           /** @brief Performs multiplication Q'*A(I, \\tilde J) on GPU
           * @param g_J_u container of sets of new column indices
           * @param g_I container of row indices
           * @param g_A_I_J_vcl block matrix composed from previous blocks, they are blocks of R
-          * @param g_bv_vcl block of beta vectors 
-          * @param g_A_I_J_u_vcl block of matrices A(I, \\tilde J) 
+          * @param g_bv_vcl block of beta vectors
+          * @param g_A_I_J_u_vcl block of matrices A(I, \\tilde J)
           * @param g_is_update indicators, that show if a certain block should be processed
           */
           template<typename ScalarType>
-          void block_q_multiplication(const std::vector<std::vector<unsigned int> >& g_J_u, 
-                                      const std::vector<std::vector<unsigned int> >& g_I, 
-                                      block_matrix& g_A_I_J_vcl, 
-                                      block_vector& g_bv_vcl, 
-                                      block_matrix& g_A_I_J_u_vcl, 
+          void block_q_multiplication(const std::vector<std::vector<unsigned int> >& g_J_u,
+                                      const std::vector<std::vector<unsigned int> >& g_I,
+                                      block_matrix& g_A_I_J_vcl,
+                                      block_vector& g_bv_vcl,
+                                      block_matrix& g_A_I_J_u_vcl,
                                       std::vector<cl_uint>& g_is_update)
           {
             unsigned int local_r_n = 0;
@@ -334,55 +334,55 @@ namespace viennacl
             unsigned int sz_blocks = 0;
             get_max_block_size(g_I, local_r_n);
             get_max_block_size(g_J_u, local_c_n);
-            //for debug 
+            //for debug
             std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));
             std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             compute_blocks_size(g_I, g_J_u, sz_blocks, blocks_ind, matrix_dims);
             std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
-            
+
             viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                 static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
                                                                                                           &(g_is_update[0]));
             viennacl::ocl::kernel& block_q_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_q_mult");
             block_q_kernel.local_work_size(0, local_c_n);
             block_q_kernel.global_work_size(0, 256);
-            viennacl::ocl::enqueue(block_q_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(), 
-                                                  g_bv_vcl.handle(),   
+            viennacl::ocl::enqueue(block_q_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(),
+                                                  g_bv_vcl.handle(),
                                                   g_bv_vcl.handle1(), g_A_I_J_vcl.handle1(), g_A_I_J_u_vcl.handle1(), g_is_update_vcl,
                                                   viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
                                                   static_cast<cl_uint>(g_I.size())));
           }
-          
+
           /** @brief Assembly of container of index row sets: I_q, row indices for new "QR block"
           * @param g_I container of row indices
           * @param g_J container of column indices
-          * @param g_I_u container of new row indices 
+          * @param g_I_u container of new row indices
           * @param g_I_q container of row indices for new QR blocks
           */
           template <typename SizeType>
-          void assemble_qr_row_inds(const std::vector<std::vector<SizeType> >& g_I, const std::vector<std::vector<SizeType> > g_J, 
-                                    const std::vector<std::vector<SizeType> >& g_I_u, 
+          void assemble_qr_row_inds(const std::vector<std::vector<SizeType> >& g_I, const std::vector<std::vector<SizeType> > g_J,
+                                    const std::vector<std::vector<SizeType> >& g_I_u,
                                     std::vector<std::vector<SizeType> >& g_I_q)
           {
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif              
+#endif
             for(std::size_t i = 0; i < g_I.size(); ++i)
             {
               for(std::size_t j = g_J[i].size(); j < g_I[i].size(); ++j)
                   g_I_q[i].push_back(g_I[i][j]);
-              
+
               for(std::size_t j = 0; j < g_I_u[i].size(); ++j)
                   g_I_q[i].push_back(g_I_u[i][j]);
             }
           }
 
           /** @brief Performs assembly for new QR block
-          * @param g_J container of column indices 
+          * @param g_J container of column indices
           * @param g_I container of row indices
           * @param g_J_u container of new column indices
-          * @param g_I_u container of new row indices 
-          * @param g_I_q container of row indices for new QR blocks 
+          * @param g_I_u container of new row indices
+          * @param g_I_q container of row indices for new QR blocks
           * @param g_A_I_J_u_vcl blocks of Q'*A(I, \\tilde J)
           * @param matrix_dimensions array with matrix dimensions for all blocks
           * @param g_A_I_u_J_u_vcl blocks A(\\tilde I, \\tilde J)
@@ -392,14 +392,14 @@ namespace viennacl
           */
           template<typename ScalarType>
           void assemble_qr_block(
-                                const std::vector<std::vector<unsigned int> >& g_J, 
-                                const std::vector<std::vector<unsigned int> >& g_I, 
+                                const std::vector<std::vector<unsigned int> >& g_J,
+                                const std::vector<std::vector<unsigned int> >& g_I,
                                 const std::vector<std::vector<unsigned int> >& g_J_u,
-                                const std::vector<std::vector<unsigned int> >& g_I_u, 
+                                const std::vector<std::vector<unsigned int> >& g_I_u,
                                 std::vector<std::vector<unsigned int> >& g_I_q,
-                                block_matrix& g_A_I_J_u_vcl, 
-                                viennacl::ocl::handle<cl_mem>& matrix_dimensions, 
-                                block_matrix& g_A_I_u_J_u_vcl, 
+                                block_matrix& g_A_I_J_u_vcl,
+                                viennacl::ocl::handle<cl_mem>& matrix_dimensions,
+                                block_matrix& g_A_I_u_J_u_vcl,
                                 std::vector<cl_uint>& g_is_update,
                                 const bool is_empty_block)
           {
@@ -410,14 +410,14 @@ namespace viennacl
             std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             compute_blocks_size(g_I_q, g_J_u, sz_blocks, blocks_ind, matrix_dims);
             std::vector<ScalarType> con_A_I_J_q(sz_blocks, static_cast<ScalarType>(0));
-            
+
             block_matrix g_A_I_J_q_vcl;
             //need to allocate memory for QR block
             g_A_I_J_q_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                     static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
                                                                                     &(con_A_I_J_q[0]));
-            g_A_I_J_q_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                              static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())), 
+            g_A_I_J_q_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                              static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
                                                                               &(matrix_dims[0]));
             g_A_I_J_q_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                 static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
@@ -425,21 +425,21 @@ namespace viennacl
             viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                                           static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
                                                                                                           &(g_is_update[0]));
-            
+
             if(!is_empty_block)
             {
               viennacl::ocl::kernel& qr_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly");
               qr_assembly_kernel.local_work_size(0, 1);
               qr_assembly_kernel.global_work_size(0, 256);
-              viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions, 
-                                                        g_A_I_J_u_vcl.handle(), 
-                                                        g_A_I_J_u_vcl.handle2(), 
-                                                        g_A_I_J_u_vcl.handle1(), 
+              viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions,
+                                                        g_A_I_J_u_vcl.handle(),
+                                                        g_A_I_J_u_vcl.handle2(),
+                                                        g_A_I_J_u_vcl.handle1(),
                                                         g_A_I_u_J_u_vcl.handle(),
-                                                        g_A_I_u_J_u_vcl.handle2(), 
-                                                        g_A_I_u_J_u_vcl.handle1(), 
-                                                        g_A_I_J_q_vcl.handle(), 
-                                                        g_A_I_J_q_vcl.handle2(), 
+                                                        g_A_I_u_J_u_vcl.handle2(),
+                                                        g_A_I_u_J_u_vcl.handle1(),
+                                                        g_A_I_J_q_vcl.handle(),
+                                                        g_A_I_J_q_vcl.handle2(),
                                                         g_A_I_J_q_vcl.handle1(),
                                                         g_is_update_vcl,
                                                         static_cast<unsigned int>(g_I.size())));
@@ -449,9 +449,9 @@ namespace viennacl
               viennacl::ocl::kernel& qr_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly_1");
               qr_assembly_kernel.local_work_size(0, 1);
               qr_assembly_kernel.global_work_size(0, 256);
-              viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions, g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(), 
+              viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions, g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(),
                                                         g_A_I_J_u_vcl.handle1(),
-                                                        g_A_I_J_q_vcl.handle(), 
+                                                        g_A_I_J_q_vcl.handle(),
                                                         g_A_I_J_q_vcl.handle2(), g_A_I_J_q_vcl.handle1(),
                                                         g_is_update_vcl,
                                                         static_cast<unsigned int>(g_I.size())));
@@ -464,19 +464,19 @@ namespace viennacl
           /** @brief Performs assembly for new R matrix on GPU
           * @param g_I container of row indices
           * @param g_J container of column indices
-          * @param g_A_I_J_vcl container of block matrices from previous update  
+          * @param g_A_I_J_vcl container of block matrices from previous update
           * @param g_A_I_J_u_vcl container of block matrices Q'*A(I, \\tilde J)
           * @param g_A_I_u_J_u_vcl container of block matrices QR factored on current iteration
           * @param g_bv_vcl block of beta vectors from previous iteration
           * @param g_bv_vcl_u block of updated beta vectors got after recent QR factorization
-          * @param g_is_update container with identificators that shows which block should be modified 
-          */ 
+          * @param g_is_update container with identificators that shows which block should be modified
+          */
           template<typename ScalarType>
           void assemble_r(std::vector<std::vector<unsigned int> >& g_I, std::vector<std::vector<unsigned int> >& g_J,
-                          block_matrix& g_A_I_J_vcl, 
+                          block_matrix& g_A_I_J_vcl,
                           block_matrix& g_A_I_J_u_vcl,
-                          block_matrix& g_A_I_u_J_u_vcl, 
-                          block_vector& g_bv_vcl, 
+                          block_matrix& g_A_I_u_J_u_vcl,
+                          block_vector& g_bv_vcl,
                           block_vector& g_bv_vcl_u,
                           std::vector<cl_uint>& g_is_update)
           {
@@ -489,23 +489,23 @@ namespace viennacl
             init_start_inds(g_J, start_bv_r_inds);
             std::vector<ScalarType> con_A_I_J_r(sz_blocks, static_cast<ScalarType>(0));
             std::vector<ScalarType> b_v_r(bv_size, static_cast<ScalarType>(0));
-            
+
             block_matrix g_A_I_J_r_vcl;
             block_vector g_bv_r_vcl;
             g_A_I_J_r_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                     static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
                                                                                     &(con_A_I_J_r[0]));
-            g_A_I_J_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                        static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())), 
+            g_A_I_J_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                        static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
                                                                                     &(matrix_dims[0]));
             g_A_I_J_r_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                         static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
                                                                                     &(blocks_ind[0]));
-            g_bv_r_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,  
-                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size), 
+            g_bv_r_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
                                                                       &(b_v_r[0]));
-            g_bv_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                              static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)), 
+            g_bv_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                              static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
                                                                               &(start_bv_r_inds[0]));
             viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                         static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
@@ -513,13 +513,13 @@ namespace viennacl
             viennacl::ocl::kernel& r_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_r_assembly");
             r_assembly_kernel.local_work_size(0, 1);
             r_assembly_kernel.global_work_size(0, 256);
-            
-            viennacl::ocl::enqueue(r_assembly_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(), 
-                                                    g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(), g_A_I_J_u_vcl.handle1(), 
-                                                    g_A_I_u_J_u_vcl.handle(), g_A_I_u_J_u_vcl.handle2(), g_A_I_u_J_u_vcl.handle1(), 
+
+            viennacl::ocl::enqueue(r_assembly_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(),
+                                                    g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(), g_A_I_J_u_vcl.handle1(),
+                                                    g_A_I_u_J_u_vcl.handle(), g_A_I_u_J_u_vcl.handle2(), g_A_I_u_J_u_vcl.handle1(),
                                                     g_A_I_J_r_vcl.handle(), g_A_I_J_r_vcl.handle2(), g_A_I_J_r_vcl.handle1(),
                                                     g_is_update_vcl, static_cast<cl_uint>(g_I.size())));
-            
+
             viennacl::ocl::kernel & bv_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_bv_assembly");
             bv_assembly_kernel.local_work_size(0, 1);
             bv_assembly_kernel.global_work_size(0, 256);
@@ -529,30 +529,30 @@ namespace viennacl
                                                       static_cast<cl_uint>(g_I.size())));
             g_bv_vcl.handle() = g_bv_r_vcl.handle();
             g_bv_vcl.handle1() = g_bv_r_vcl.handle1();
-            
+
             g_A_I_J_vcl.handle() = g_A_I_J_r_vcl.handle();
             g_A_I_J_vcl.handle2() = g_A_I_J_r_vcl.handle2();
             g_A_I_J_vcl.handle1() = g_A_I_J_r_vcl.handle1();
           }
-          
-          /** @brief GPU-based block update 
+
+          /** @brief GPU-based block update
           * @param A sparse matrix
-          * @param A_v_c vectorized column-wise initial matrix 
-          * @param g_is_update container with identificators that shows which block should be modified 
+          * @param A_v_c vectorized column-wise initial matrix
+          * @param g_is_update container with identificators that shows which block should be modified
           * @param g_res container of residuals for all columns
           * @param g_J container of column index sets for all columns
           * @param g_I container of row index sets for all columns
-          * @param g_A_I_J_vcl container of block matrices from previous update  
+          * @param g_A_I_J_vcl container of block matrices from previous update
           * @param g_bv_vcl block of beta vectors from previous iteration
           * @param tag SPAI configuration tag
-          */ 
+          */
           template<typename ScalarType, unsigned int MAT_ALIGNMENT, typename SparseVectorType>
           void block_update(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, const std::vector<SparseVectorType>& A_v_c,
                             std::vector<cl_uint>& g_is_update,
                             std::vector<SparseVectorType>& g_res,
-                            std::vector<std::vector<unsigned int> >& g_J, 
+                            std::vector<std::vector<unsigned int> >& g_J,
                             std::vector<std::vector<unsigned int> >& g_I,
-                            block_matrix& g_A_I_J_vcl, 
+                            block_matrix& g_A_I_J_vcl,
                             block_vector& g_bv_vcl,
                             spai_tag const & tag)
           {
@@ -560,7 +560,7 @@ namespace viennacl
             std::vector<std::vector<unsigned int> > g_J_u(g_J.size());
             //updated index set for rows
             std::vector<std::vector<unsigned int> > g_I_u(g_J.size());
-            //mixed index set of old and updated indices for rows 
+            //mixed index set of old and updated indices for rows
             std::vector<std::vector<unsigned int> > g_I_q(g_J.size());
             //GPU memory for A_I_\hatJ
             block_matrix g_A_I_J_u_vcl;
@@ -571,7 +571,7 @@ namespace viennacl
             block_vector g_bv_u_vcl;
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif              
+#endif
             for(std::size_t i = 0; i < g_J.size(); ++i)
             {
               if(g_is_update[i])
@@ -588,12 +588,12 @@ namespace viennacl
             block_assembly(A, g_J_u, g_I_u, g_A_I_u_J_u_vcl, g_is_update, is_empty_block);
             assemble_qr_block<ScalarType>(g_J, g_I, g_J_u, g_I_u, g_I_q, g_A_I_J_u_vcl, g_A_I_J_vcl.handle1(),
                                           g_A_I_u_J_u_vcl, g_is_update, is_empty_block);
-            
+
             block_qr<ScalarType>(g_I_q, g_J_u, g_A_I_u_J_u_vcl, g_bv_u_vcl, g_is_update);
             //concatanation of new and old indices
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
-#endif              
+#endif
             for(std::size_t i = 0; i < g_J.size(); ++i)
             {
               g_J[i].insert(g_J[i].end(), g_J_u[i].begin(), g_J_u[i].end());
@@ -601,9 +601,9 @@ namespace viennacl
             }
             assemble_r<ScalarType>(g_I, g_J, g_A_I_J_vcl, g_A_I_J_u_vcl, g_A_I_u_J_u_vcl,  g_bv_vcl,  g_bv_u_vcl, g_is_update);
           }
-        
-        }        
-      }        
+
+        }
+      }
     }
 }
 #endif

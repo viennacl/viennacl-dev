@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -37,11 +37,11 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     /** @brief A tag for a jacobi preconditioner
     */
     class jacobi_tag {};
-    
+
 
     /** @brief Jacobi preconditioner class, can be supplied to solve()-routines. Generic version for non-ViennaCL matrices.
     */
@@ -50,17 +50,17 @@ namespace viennacl
     class jacobi_precond
     {
       typedef typename MatrixType::value_type      ScalarType;
-      
+
       public:
         jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(viennacl::traits::size1(mat))
         {
           init(mat);
         }
-        
+
         void init(MatrixType const & mat)
         {
           diag_A.resize(viennacl::traits::size1(mat));  //resize without preserving values
-          
+
           for (typename MatrixType::const_iterator1 row_it = mat.begin1();
                 row_it != mat.end1();
                 ++row_it)
@@ -80,8 +80,8 @@ namespace viennacl
               throw "ViennaCL: Zero in diagonal encountered while setting up Jacobi preconditioner!";
           }
         }
-        
-        
+
+
         /** @brief Apply to res = b - Ax, i.e. jacobi applied vec (right hand side),  */
         template <typename VectorType>
         void apply(VectorType & vec) const
@@ -90,12 +90,12 @@ namespace viennacl
           for (std::size_t i=0; i<diag_A.size(); ++i)
             vec[i] /= diag_A[i];
         }
-        
+
       private:
         std::vector<ScalarType> diag_A;
     };
 
-    
+
     /** @brief Jacobi preconditioner class, can be supplied to solve()-routines.
     *
     *  Specialization for compressed_matrix
@@ -104,27 +104,27 @@ namespace viennacl
     class jacobi_precond< MatrixType, true>
     {
         typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
-      
+
       public:
         jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(mat.size1())
         {
           init(mat);
         }
-          
-        
+
+
         void init(MatrixType const & mat)
         {
           detail::row_info(mat, diag_A, detail::SPARSE_ROW_DIAGONAL);
         }
-        
-        
+
+
         template <unsigned int ALIGNMENT>
         void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
         {
           assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));
           vec = element_div(vec, diag_A);
         }
-        
+
       private:
         viennacl::vector<ScalarType> diag_A;
     };

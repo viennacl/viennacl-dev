@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -68,7 +68,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class device_not_available : public std::exception
     {
       virtual const char* what() const throw()
@@ -86,7 +86,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class mem_object_allocation_failure : public std::exception
     {
       virtual const char* what() const throw()
@@ -95,7 +95,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class out_of_resources : public std::exception
     {
       virtual const char* what() const throw()
@@ -113,7 +113,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class profiling_info_not_available : public std::exception
     {
       virtual const char* what() const throw()
@@ -122,7 +122,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class mem_copy_overlap : public std::exception
     {
       virtual const char* what() const throw()
@@ -131,7 +131,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class image_format_mismatch : public std::exception
     {
       virtual const char* what() const throw()
@@ -140,7 +140,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class image_format_not_supported : public std::exception
     {
       virtual const char* what() const throw()
@@ -158,7 +158,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class map_failure : public std::exception
     {
       virtual const char* what() const throw()
@@ -167,7 +167,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_value : public std::exception
     {
       virtual const char* what() const throw()
@@ -176,7 +176,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_device_type : public std::exception
     {
       virtual const char* what() const throw()
@@ -185,7 +185,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_platform : public std::exception
     {
       virtual const char* what() const throw()
@@ -194,7 +194,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_device : public std::exception
     {
       virtual const char* what() const throw()
@@ -203,7 +203,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_context : public std::exception
     {
       virtual const char* what() const throw()
@@ -212,7 +212,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_queue_properties : public std::exception
     {
       virtual const char* what() const throw()
@@ -221,7 +221,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_command_queue : public std::exception
     {
       virtual const char* what() const throw()
@@ -230,7 +230,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_host_ptr : public std::exception
     {
       virtual const char* what() const throw()
@@ -239,7 +239,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_mem_object : public std::exception
     {
       virtual const char* what() const throw()
@@ -248,7 +248,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_image_format_descriptor : public std::exception
     {
       virtual const char* what() const throw()
@@ -257,7 +257,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_image_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -266,7 +266,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_sampler : public std::exception
     {
       virtual const char* what() const throw()
@@ -275,7 +275,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_binary : public std::exception
     {
       virtual const char* what() const throw()
@@ -284,7 +284,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_build_options : public std::exception
     {
       virtual const char* what() const throw()
@@ -293,7 +293,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_program : public std::exception
     {
       virtual const char* what() const throw()
@@ -302,7 +302,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_program_executable : public std::exception
     {
       virtual const char* what() const throw()
@@ -311,7 +311,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_kernel_name : public std::exception
     {
       virtual const char* what() const throw()
@@ -338,7 +338,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_arg_index : public std::exception
     {
       virtual const char* what() const throw()
@@ -347,7 +347,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_arg_value : public std::exception
     {
       virtual const char* what() const throw()
@@ -365,7 +365,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_kernel_args : public std::exception
     {
       virtual const char* what() const throw()
@@ -374,7 +374,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_work_dimension : public std::exception
     {
       virtual const char* what() const throw()
@@ -383,7 +383,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_work_group_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -401,7 +401,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_global_offset : public std::exception
     {
       virtual const char* what() const throw()
@@ -410,7 +410,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_event_wait_list : public std::exception
     {
       virtual const char* what() const throw()
@@ -419,7 +419,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_event : public std::exception
     {
       virtual const char* what() const throw()
@@ -428,7 +428,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_operation : public std::exception
     {
       virtual const char* what() const throw()
@@ -437,7 +437,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_gl_object : public std::exception
     {
       virtual const char* what() const throw()
@@ -446,7 +446,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_buffer_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -455,7 +455,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_mip_level : public std::exception
     {
       virtual const char* what() const throw()
@@ -464,7 +464,7 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
+
     class invalid_global_work_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -492,7 +492,7 @@ namespace viennacl
       }
     };
 
-    
+
     class double_precision_not_provided_error : public std::exception
     {
       virtual const char* what() const throw()
@@ -501,8 +501,8 @@ namespace viennacl
                VIENNACL_BUG_REPORT_STRING;
       }
     };
-    
-    
+
+
     /** @brief An error reporting class. Template argument is used to avoid problems with external linkage.
     *
     *  Do not use this class directly, use the macro CL_ERROR_CHECK instead.
@@ -511,7 +511,7 @@ namespace viennacl
     template <typename T>
     struct error_checker
     {
-      
+
       /** @brief Trows exceptions that reflect OpenCL error codes */
       static void raise_exception(cl_int err)
       {
@@ -565,17 +565,17 @@ namespace viennacl
           case CL_INVALID_MIP_LEVEL:              throw invalid_mip_level();
           case CL_INVALID_GLOBAL_WORK_SIZE:       throw invalid_global_work_size();
       #ifdef CL_INVALID_PROPERTY
-	  case CL_INVALID_PROPERTY:               throw invalid_property();
+    case CL_INVALID_PROPERTY:               throw invalid_property();
       #endif
           //  return "CL_INVALID_GLOBAL_WORK_SIZE";
-            
+
           default: throw unknown_error();
         }
 
       } //getErrorString
-    
-      /** @brief Checks whether an OpenCL error has occured. 
-      * 
+
+      /** @brief Checks whether an OpenCL error has occured.
+      *
       *  Do not use this function directly, use the macro CL_ERROR_CHECK instead.
       */
       static void checkError(cl_int err,
@@ -597,11 +597,11 @@ namespace viennacl
           raise_exception(err);
         }
       } //checkError()
-      
-    }; //struct 
-    
+
+    }; //struct
+
     #define VIENNACL_ERR_CHECK(err) viennacl::ocl::error_checker<void>::checkError(err, __FILE__, __FUNCTION__, __LINE__);
-    
+
   } //namespace ocl
 } //namespace viennacl
 

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -40,11 +40,11 @@ namespace viennacl
     void lu_factorize(matrix<SCALARTYPE, viennacl::row_major> & A)
     {
       typedef matrix<SCALARTYPE, viennacl::row_major>  MatrixType;
-      
+
       std::size_t max_block_size = 32;
       std::size_t num_blocks = (A.size2() - 1) / max_block_size + 1;
       std::vector<SCALARTYPE> temp_buffer(A.internal_size2() * max_block_size);
-      
+
       // Iterate over panels
       for (std::size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
       {
@@ -53,14 +53,14 @@ namespace viennacl
 
         viennacl::range     block_range(row_start, row_start + current_block_size);
         viennacl::range remainder_range(row_start + current_block_size, A.size1());
-        
+
         //
         // Perform LU factorization on panel:
         //
-        
-        
+
+
         // Read from matrix to buffer:
-        viennacl::backend::memory_read(A.handle(), 
+        viennacl::backend::memory_read(A.handle(),
                                        sizeof(SCALARTYPE) * row_start          * A.internal_size2(),
                                        sizeof(SCALARTYPE) * current_block_size * A.internal_size2(),
                                        &(temp_buffer[0]));
@@ -71,20 +71,20 @@ namespace viennacl
           for (std::size_t i=k+1; i < current_block_size; ++i)
           {
             temp_buffer[row_start + i * A.internal_size2() + k] /= temp_buffer[row_start + k * A.internal_size2() + k];  // write l_ik
-            
+
             SCALARTYPE l_ik = temp_buffer[row_start + i * A.internal_size2() + k];
-            
+
             for (std::size_t j = row_start + k + 1; j < A.size1(); ++j)
               temp_buffer[i * A.internal_size2() + j] -= l_ik * temp_buffer[k * A.internal_size2() + j];  // l_ik * a_kj
           }
         }
 
         // Write back:
-        viennacl::backend::memory_write(A.handle(), 
+        viennacl::backend::memory_write(A.handle(),
                                         sizeof(SCALARTYPE) * row_start          * A.internal_size2(),
                                         sizeof(SCALARTYPE) * current_block_size * A.internal_size2(),
                                         &(temp_buffer[0]));
-        
+
         if (remainder_range.size() > 0)
         {
           //
@@ -93,21 +93,21 @@ namespace viennacl
           viennacl::matrix_range<MatrixType> U_11(A, block_range,     block_range);
           viennacl::matrix_range<MatrixType> A_21(A, remainder_range, block_range);
           viennacl::linalg::inplace_solve(trans(U_11), trans(A_21), viennacl::linalg::lower_tag());
-          
+
           //
           // Update remainder of A
           //
           viennacl::matrix_range<MatrixType> L_21(A, remainder_range, block_range);
           viennacl::matrix_range<MatrixType> U_12(A, block_range,     remainder_range);
           viennacl::matrix_range<MatrixType> A_22(A, remainder_range, remainder_range);
-          
+
           A_22 -= viennacl::linalg::prod(L_21, U_12);
         }
       }
-      
+
     }
 
-    
+
     /** @brief LU factorization of a column-major dense matrix.
     *
     * @param A    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
@@ -116,11 +116,11 @@ namespace viennacl
     void lu_factorize(matrix<SCALARTYPE, viennacl::column_major> & A)
     {
       typedef matrix<SCALARTYPE, viennacl::column_major>  MatrixType;
-      
+
       std::size_t max_block_size = 32;
       std::size_t num_blocks = (A.size1() - 1) / max_block_size + 1;
       std::vector<SCALARTYPE> temp_buffer(A.internal_size1() * max_block_size);
-      
+
       // Iterate over panels
       for (std::size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
       {
@@ -129,14 +129,14 @@ namespace viennacl
 
         viennacl::range     block_range(col_start, col_start + current_block_size);
         viennacl::range remainder_range(col_start + current_block_size, A.size1());
-        
+
         //
         // Perform LU factorization on panel:
         //
-        
-        
+
+
         // Read from matrix to buffer:
-        viennacl::backend::memory_read(A.handle(), 
+        viennacl::backend::memory_read(A.handle(),
                                        sizeof(SCALARTYPE) * col_start          * A.internal_size1(),
                                        sizeof(SCALARTYPE) * current_block_size * A.internal_size1(),
                                        &(temp_buffer[0]));
@@ -147,7 +147,7 @@ namespace viennacl
           SCALARTYPE a_kk = temp_buffer[col_start + k + k * A.internal_size1()];
           for (std::size_t i=col_start+k+1; i < A.size1(); ++i)
             temp_buffer[i + k * A.internal_size1()] /= a_kk;  // write l_ik
-            
+
           for (std::size_t j=k+1; j < current_block_size; ++j)
           {
             SCALARTYPE a_kj = temp_buffer[col_start + k + j * A.internal_size1()];
@@ -157,11 +157,11 @@ namespace viennacl
         }
 
         // Write back:
-        viennacl::backend::memory_write(A.handle(), 
+        viennacl::backend::memory_write(A.handle(),
                                         sizeof(SCALARTYPE) * col_start          * A.internal_size1(),
                                         sizeof(SCALARTYPE) * current_block_size * A.internal_size1(),
                                         &(temp_buffer[0]));
-        
+
         if (remainder_range.size() > 0)
         {
           //
@@ -170,26 +170,26 @@ namespace viennacl
           viennacl::matrix_range<MatrixType> L_11(A, block_range,     block_range);
           viennacl::matrix_range<MatrixType> A_12(A, block_range, remainder_range);
           viennacl::linalg::inplace_solve(L_11, A_12, viennacl::linalg::unit_lower_tag());
-        
+
           //
           // Update remainder of A
           //
           viennacl::matrix_range<MatrixType> L_21(A, remainder_range, block_range);
           viennacl::matrix_range<MatrixType> U_12(A, block_range,     remainder_range);
           viennacl::matrix_range<MatrixType> A_22(A, remainder_range, remainder_range);
-          
+
           A_22 -= viennacl::linalg::prod(L_21, U_12);
         }
-          
+
       }
-      
+
     }
 
-    
+
     //
     // Convenience layer:
     //
-    
+
     /** @brief LU substitution for the system LU = rhs.
     *
     * @param A    The system matrix, where the LU matrices are directly written to. The implicit unit diagonal of L is not written.
@@ -218,7 +218,7 @@ namespace viennacl
       inplace_solve(A, vec, unit_lower_tag());
       inplace_solve(A, vec, upper_tag());
     }
-    
+
   }
 }
 

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -34,7 +34,7 @@
 
 namespace viennacl
 {
-  namespace linalg 
+  namespace linalg
   {
     const std::string SVD_BIDIAG_PACK_KERNEL = "bidiag_pack";
     const std::string SVD_HOUSEHOLDER_UPDATE_A_LEFT_KERNEL = "house_update_A_left";
@@ -59,20 +59,20 @@ namespace viennacl
       static const std::size_t ITER_MAX = 50;
 
       template <typename SCALARTYPE>
-      SCALARTYPE pythag(SCALARTYPE a, SCALARTYPE b) 
+      SCALARTYPE pythag(SCALARTYPE a, SCALARTYPE b)
       {
         return std::sqrt(a*a + b*b);
       }
 
       template <typename SCALARTYPE>
-      SCALARTYPE sign(SCALARTYPE val) 
+      SCALARTYPE sign(SCALARTYPE val)
       {
           return (val >= 0) ? SCALARTYPE(1) : SCALARTYPE(-1);
       }
 
       // DEPRECATED: Replace with viennacl::linalg::norm_2
       template <typename VectorType>
-      typename VectorType::value_type norm_lcl(VectorType const & x, unsigned int size) 
+      typename VectorType::value_type norm_lcl(VectorType const & x, unsigned int size)
       {
         typename VectorType::value_type x_norm = 0.0;
         for(std::size_t i = 0; i < size; i++)
@@ -81,15 +81,15 @@ namespace viennacl
       }
 
       template <typename VectorType>
-      void normalize(VectorType & x, unsigned int size) 
+      void normalize(VectorType & x, unsigned int size)
       {
         typename VectorType::value_type x_norm = norm_lcl(x, size);
         for(std::size_t i = 0; i < size; i++)
             x[i] /= x_norm;
       }
 
-      
-      
+
+
       template <typename VectorType>
       void householder_vector(VectorType & v, unsigned int start)
       {
@@ -105,7 +105,7 @@ namespace viennacl
       {
         typedef typename MatrixType::value_type                                   ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-        
+
         viennacl::ocl::kernel & kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
 
         viennacl::ocl::enqueue(kernel(A,
@@ -115,8 +115,8 @@ namespace viennacl
                               );
       }
 
-      
-      
+
+
       template <typename T>
       void cdiv(T xr, T xi, T yr, T yi, T& cdivr, T& cdivi)
       {
@@ -139,12 +139,12 @@ namespace viennacl
           }
       }
 
-      
+
       template <typename SCALARTYPE, unsigned int ALIGNMENT>
       void copy_vec(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& V,
-                    std::size_t row_start, 
-                    std::size_t col_start, 
+                    std::size_t row_start,
+                    std::size_t col_start,
                     bool copy_col
       )
       {
@@ -154,9 +154,9 @@ namespace viennacl
         viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), kernel_name);
 
         viennacl::ocl::enqueue(kernel(
-                                      A, 
-                                      V, 
-                                      static_cast<cl_uint>(row_start), 
+                                      A,
+                                      V,
+                                      static_cast<cl_uint>(row_start),
                                       static_cast<cl_uint>(col_start),
                                       copy_col ? static_cast<cl_uint>(A.size1())
                                                : static_cast<cl_uint>(A.size2()),
@@ -194,7 +194,7 @@ namespace viennacl
       void eye(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A)
       {
         std::vector<SCALARTYPE> foo(A.size1() * A.size1(), 0);
-        
+
         for(std::size_t i = 0; i < A.size1(); i++)
         {
           foo[i*A.size1() + i] = 1;
@@ -216,10 +216,10 @@ namespace viennacl
         viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_BIDIAG_PACK_KERNEL);
 
         viennacl::ocl::enqueue(kernel(
-                                      A, 
-                                      D, 
+                                      A,
+                                      D,
                                       S,
-                                      static_cast<cl_uint>(A.size1()), 
+                                      static_cast<cl_uint>(A.size1()),
                                       static_cast<cl_uint>(A.size2()),
                                       static_cast<cl_uint>(A.internal_size2())
                                     ));
@@ -227,7 +227,7 @@ namespace viennacl
         fast_copy(D, dh);
         fast_copy(S, sh);
       }
-      
+
     }
   }
 }

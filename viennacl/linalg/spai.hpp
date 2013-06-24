@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/spai.hpp
     @brief Main include file for the sparse approximate inverse preconditioner family (SPAI and FSPAI).  Experimental.
-    
+
     Most implementation contributed by Nikolay Lukash.
 */
 
@@ -62,10 +62,10 @@ namespace viennacl
 {
     namespace linalg
     {
-        
+
         typedef viennacl::linalg::detail::spai::spai_tag         spai_tag;
         typedef viennacl::linalg::detail::spai::fspai_tag        fspai_tag;
-        
+
         /** @brief Implementation of the SParse Approximate Inverse Algorithm
          * @param Matrix matrix that is used for computations
          * @param Vector vector that is used for computations
@@ -79,12 +79,12 @@ namespace viennacl
             typedef typename boost::numeric::ublas::vector<ScalarType> VectorType;
             /** @brief Constructor
              * @param A matrix whose approximate inverse is calculated. Must be quadratic.
-             * @param tag spai tag 
+             * @param tag spai tag
              */
             spai_precond(const MatrixType& A,
                          const spai_tag& tag): tag_(tag){
-                
-                //VCLMatrixType vcl_Ap((unsigned int)A.size2(), (unsigned int)A.size1()), vcl_A((unsigned int)A.size1(), (unsigned int)A.size2()), 
+
+                //VCLMatrixType vcl_Ap((unsigned int)A.size2(), (unsigned int)A.size1()), vcl_A((unsigned int)A.size1(), (unsigned int)A.size2()),
                 //vcl_At((unsigned int)A.size1(), (unsigned int)A.size2());
                 //UBLASDenseMatrixType dA = A;
                 MatrixType pA(A.size1(), A.size2());
@@ -100,7 +100,7 @@ namespace viennacl
                 viennacl::linalg::detail::spai::computeSPAI(At, spai_m_, tag_);
                 //(At, pA, tag_.getIsRight(), tag_.getIsStatic(), (ScalarType)_tag.getResidualNormThreshold(), (unsigned int)_tag.getIterationLimit(),
                  //_spai_m);
-                
+
             }
             /** @brief Application of current preconditioner, multiplication on the right-hand side vector
              * @param vec rhs vector
@@ -113,8 +113,8 @@ namespace viennacl
             spai_tag tag_;
             // result of SPAI
             MatrixType spai_m_;
-        };   
-        
+        };
+
         //VIENNACL version
         template <typename ScalarType, unsigned int MAT_ALIGNMENT>
         class spai_precond< viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> >
@@ -123,10 +123,10 @@ namespace viennacl
             typedef boost::numeric::ublas::compressed_matrix<ScalarType> UBLASSparseMatrixType;
             typedef viennacl::vector<ScalarType> VectorType;
             typedef viennacl::matrix<ScalarType> VCLDenseMatrixType;
-            
+
             typedef boost::numeric::ublas::vector<ScalarType> UBLASVectorType;
         public:
-            
+
             /** @brief Constructor
              * @param A matrix whose approximate inverse is calculated. Must be quadratic.
              * @param tag spai tag
@@ -136,7 +136,7 @@ namespace viennacl
             {
                 viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
                 viennacl::linalg::kernels::spai<ScalarType, 1>::init(ctx);
-              
+
                 MatrixType At(A.size1(), A.size2());
                 UBLASSparseMatrixType ubls_A, ubls_spai_m;
                 UBLASSparseMatrixType ubls_At;
@@ -154,7 +154,7 @@ namespace viennacl
                 viennacl::copy(ubls_At, At);
                 viennacl::linalg::detail::spai::computeSPAI(At, ubls_At, ubls_spai_m, spai_m_, tag_);
                 //viennacl::copy(ubls_spai_m, spai_m_);
-                
+
             }
             /** @brief Application of current preconditioner, multiplication on the right-hand side vector
              * @param vec rhs vector
@@ -168,12 +168,12 @@ namespace viennacl
             // result of SPAI
             MatrixType spai_m_;
         };
-        
-        
+
+
         //
         // FSPAI
         //
-        
+
         /** @brief Implementation of the Factored SParse Approximate Inverse Algorithm
         * @param Matrix matrix that is used for computations
         * @param Vector vector that is used for computations
@@ -187,7 +187,7 @@ namespace viennacl
             typedef typename boost::numeric::ublas::matrix<ScalarType> UBLASDenseMatrixType;
             typedef typename viennacl::matrix<ScalarType> VCLMatrixType;
         public:
-            
+
             /** @brief Constructor
             * @param A matrix whose approximate inverse is calculated. Must be quadratic.
             * @param tag SPAI configuration tag
@@ -198,28 +198,28 @@ namespace viennacl
                 MatrixType pA = A;
                 viennacl::linalg::detail::spai::computeFSPAI(A, pA, L, L_trans, tag_);
             }
-            
+
             /** @brief Application of current preconditioner, multiplication on the right-hand side vector
             * @param vec rhs vector
             */
-            void apply(VectorType& vec) const 
+            void apply(VectorType& vec) const
             {
               VectorType temp = viennacl::linalg::prod(L_trans, vec);
               vec = viennacl::linalg::prod(L, temp);
             }
-            
+
         private:
             // variables
             const fspai_tag & tag_;
             // result of SPAI
             MatrixType L;
             MatrixType L_trans;
-        };   
-        
+        };
 
-        
-        
-        
+
+
+
+
         //
         // ViennaCL version
         //
@@ -232,7 +232,7 @@ namespace viennacl
             typedef boost::numeric::ublas::compressed_matrix<ScalarType> UBLASSparseMatrixType;
             typedef boost::numeric::ublas::vector<ScalarType> UBLASVectorType;
         public:
-            
+
             /** @brief Constructor
             * @param A matrix whose approximate inverse is calculated. Must be quadratic.
             * @param tag SPAI configuration tag
@@ -256,26 +256,26 @@ namespace viennacl
                 viennacl::copy(ublas_L, L);
                 viennacl::copy(ublas_L_trans, L_trans);
             }
-            
-            
+
+
             /** @brief Application of current preconditioner, multiplication on the right-hand side vector
             * @param vec rhs vector
             */
-            void apply(VectorType& vec) const 
+            void apply(VectorType& vec) const
             {
               VectorType temp(vec.size());
               temp = viennacl::linalg::prod(L_trans, vec);
               vec = viennacl::linalg::prod(L, temp);
             }
-            
+
         private:
             // variables
             const fspai_tag & tag_;
             MatrixType L;
             MatrixType L_trans;
         };
-        
-        
+
+
     }
 }
 #endif

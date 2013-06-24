@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -35,14 +35,14 @@ namespace viennacl
     class program
     {
       typedef std::vector<viennacl::ocl::kernel>    KernelContainer;
-      
+
     public:
       program() : p_context_(NULL) {}
       program(cl_program program_handle, viennacl::ocl::context const & program_context, std::string const & prog_name = std::string())
         : handle_(program_handle, program_context), p_context_(&program_context), name_(prog_name) {}
-      
+
       program(program const & other) : handle_(other.handle_), p_context_(other.p_context_), name_(other.name_), kernels_(other.kernels_) {}
-      
+
       viennacl::ocl::program & operator=(const program & other)
       {
         handle_ = other.handle_;
@@ -53,17 +53,17 @@ namespace viennacl
       }
 
       std::string const & name() const { return name_; }
-      
+
       /** @brief Adds a kernel to the program */
       inline viennacl::ocl::kernel & add_kernel(cl_kernel kernel_handle, std::string const & kernel_name);   //see context.hpp for implementation
-      
+
       /** @brief Returns the kernel with the provided name */
       inline viennacl::ocl::kernel & get_kernel(std::string const & name);    //see context.hpp for implementation
 
       const viennacl::ocl::handle<cl_program> & handle() const { return handle_; }
-      
+
     private:
-      
+
       viennacl::ocl::handle<cl_program> handle_;
       viennacl::ocl::context const * p_context_;
       std::string name_;

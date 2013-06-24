@@ -13,7 +13,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -23,15 +23,15 @@
   @brief Implementations of incomplete factorization preconditioners with static nonzero pattern.
 
   Contributed by Evan Bollig.
-  
-  ILU0 (Incomplete LU with zero fill-in) 
-  - All preconditioner nonzeros exist at locations that were nonzero in the input matrix. 
+
+  ILU0 (Incomplete LU with zero fill-in)
+  - All preconditioner nonzeros exist at locations that were nonzero in the input matrix.
   - The number of nonzeros in the output preconditioner are exactly the same number as the input matrix
 
  Evan Bollig 3/30/12
- 
+
  Adapted from viennacl/linalg/detail/ilut.hpp
- 
+
  Low-level reimplementation by Karl Rupp in Nov 2012, increasing performance substantially. Also added level-scheduling.
 
 */
@@ -56,19 +56,19 @@ namespace viennacl
 
     /** @brief A tag for incomplete LU factorization with static pattern (ILU0)
     */
-    class ilu0_tag 
+    class ilu0_tag
     {
       public:
         ilu0_tag(bool with_level_scheduling = false) : use_level_scheduling_(with_level_scheduling) {}
-        
+
         bool use_level_scheduling() const { return use_level_scheduling_; }
         void use_level_scheduling(bool b) { use_level_scheduling_ = b; }
-        
+
       private:
         bool use_level_scheduling_;
     };
 
-    
+
     /** @brief Implementation of a ILU-preconditioner with static pattern. Optimized version for CSR matrices.
       *
       * refer to the Algorithm in Saad's book (1996 edition)
@@ -81,13 +81,13 @@ namespace viennacl
       assert( (A.handle1().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
       assert( (A.handle2().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
       assert( (A.handle().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILU0") );
-      
+
       ScalarType         * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(A.handle());
       unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
       unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
-      
+
       // Note: Line numbers in the following refer to the algorithm in Saad's book
-      
+
       for (std::size_t i=1; i<A.size1(); ++i)  // Line 1
       {
         unsigned int row_i_begin = row_buffer[i];
@@ -97,10 +97,10 @@ namespace viennacl
           unsigned int k = col_buffer[buf_index_k];
           if (k >= i)
             continue; //Note: We do not assume that the column indices within a row are sorted
-            
+
           unsigned int row_k_begin = row_buffer[k];
           unsigned int row_k_end   = row_buffer[k+1];
-            
+
           // get a_kk:
           ScalarType a_kk = 0;
           for (unsigned int buf_index_akk = row_k_begin; buf_index_akk < row_k_end; ++buf_index_akk)
@@ -111,16 +111,16 @@ namespace viennacl
               break;
             }
           }
-          
+
           ScalarType & a_ik = elements[buf_index_k];
           a_ik /= a_kk;                                 //Line 3
-          
+
           for (unsigned int buf_index_j = row_i_begin; buf_index_j < row_i_end; ++buf_index_j) //Note: We do not assume that the column indices within a row are sorted
           {
             unsigned int j = col_buffer[buf_index_j];
             if (j <= k)
               continue;
-            
+
             // determine a_kj:
             ScalarType a_kj = 0;
             for (unsigned int buf_index_akj = row_k_begin; buf_index_akj < row_k_end; ++buf_index_akj)
@@ -131,13 +131,13 @@ namespace viennacl
                 break;
               }
             }
-            
+
             //a_ij -= a_ik * a_kj
             elements[buf_index_j] -= a_ik * a_kj;  //Line 5
           }
         }
       }
-      
+
     }
 
 
@@ -153,7 +153,7 @@ namespace viennacl
         {
             //initialize preconditioner:
             //std::cout << "Start CPU precond" << std::endl;
-            init(mat);          
+            init(mat);
             //std::cout << "End CPU precond" << std::endl;
         }
 
@@ -163,7 +163,7 @@ namespace viennacl
           unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle1());
           unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle2());
           ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LU.handle());
-          
+
           viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), unit_lower_tag());
           viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec, LU.size2(), upper_tag());
         }
@@ -172,13 +172,13 @@ namespace viennacl
         void init(MatrixType const & mat)
         {
           viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
-          
+
           viennacl::copy(mat, LU);
           viennacl::linalg::precondition(LU, tag_);
         }
 
         ilu0_tag const & tag_;
-        
+
         viennacl::compressed_matrix<ScalarType> LU;
     };
 
@@ -197,7 +197,7 @@ namespace viennacl
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
-          init(mat);          
+          init(mat);
           //std::cout << "End GPU precond" << std::endl;
         }
 
@@ -214,9 +214,9 @@ namespace viennacl
                                                   multifrontal_L_col_buffers_,
                                                   multifrontal_L_element_buffers_,
                                                   multifrontal_L_row_elimination_num_list_);
-              
+
               vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
-              
+
               detail::level_scheduling_substitute(vec,
                                                   multifrontal_U_row_index_arrays_,
                                                   multifrontal_U_row_buffers_,
@@ -244,9 +244,9 @@ namespace viennacl
                                                   multifrontal_L_col_buffers_,
                                                   multifrontal_L_element_buffers_,
                                                   multifrontal_L_row_elimination_num_list_);
-              
+
               vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
-              
+
               detail::level_scheduling_substitute(vec,
                                                   multifrontal_U_row_index_arrays_,
                                                   multifrontal_U_row_buffers_,
@@ -261,7 +261,7 @@ namespace viennacl
             }
           }
         }
-        
+
         vcl_size_t levels() const { return multifrontal_L_row_index_arrays_.size(); }
 
       private:
@@ -270,15 +270,15 @@ namespace viennacl
           viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
           LU = mat;
           viennacl::linalg::precondition(LU, tag_);
-          
+
           if (!tag_.use_level_scheduling())
             return;
-          
+
           // multifrontal part:
           viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::MAIN_MEMORY);
           multifrontal_U_diagonal_.resize(LU.size1(), false);
           host_based::detail::row_info(LU, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
-          
+
           detail::level_scheduling_setup_L(LU,
                                            multifrontal_U_diagonal_, //dummy
                                            multifrontal_L_row_index_arrays_,
@@ -286,8 +286,8 @@ namespace viennacl
                                            multifrontal_L_col_buffers_,
                                            multifrontal_L_element_buffers_,
                                            multifrontal_L_row_elimination_num_list_);
-          
-          
+
+
           detail::level_scheduling_setup_U(LU,
                                            multifrontal_U_diagonal_,
                                            multifrontal_U_row_index_arrays_,
@@ -295,13 +295,13 @@ namespace viennacl
                                            multifrontal_U_col_buffers_,
                                            multifrontal_U_element_buffers_,
                                            multifrontal_U_row_elimination_num_list_);
-          
+
           //
           // Bring to device if necessary:
           //
-          
+
           // L:
-          
+
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_index_arrays_.begin();
                                                                              it != multifrontal_L_row_index_arrays_.end();
                                                                            ++it)
@@ -321,8 +321,8 @@ namespace viennacl
                                                                              it != multifrontal_L_element_buffers_.end();
                                                                            ++it)
             viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
-          
-          
+
+
           // U:
 
           viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::memory_domain(mat));
@@ -346,25 +346,25 @@ namespace viennacl
                                                                              it != multifrontal_U_element_buffers_.end();
                                                                            ++it)
             viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
-          
+
         }
 
         ilu0_tag const & tag_;
         viennacl::compressed_matrix<ScalarType> LU;
-        
+
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_index_arrays_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
         std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
-        
+
         viennacl::vector<ScalarType> multifrontal_U_diagonal_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
         std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
-        
+
     };
 
   }

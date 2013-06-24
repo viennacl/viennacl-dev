@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -62,14 +62,14 @@ namespace viennacl
     //template <typename MatrixType>
     //typename result_of::size_type<MatrixType>::type
     //stride2(MatrixType const &) { return 1; }
- 
+
     template <typename NumericT, typename F>
     typename result_of::size_type< matrix_base<NumericT, F> >::type
     stride2(matrix_base<NumericT, F> const & s) { return s.stride2(); }
 
- 
+
   } //namespace traits
 } //namespace viennacl
-    
+
 
 #endif

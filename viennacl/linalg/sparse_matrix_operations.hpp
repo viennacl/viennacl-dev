@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -41,10 +41,10 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     namespace detail
     {
-      
+
       template<typename SparseMatrixType, typename SCALARTYPE, unsigned int VEC_ALIGNMENT>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value >::type
       row_info(SparseMatrixType const & mat,
@@ -70,13 +70,13 @@ namespace viennacl
             throw "not implemented";
         }
       }
-    
+
     }
-    
-    
-    
+
+
+
     // A * x
-   
+
     /** @brief Carries out matrix-vector multiplication involving a sparse matrix type
     *
     * Implementation of the convenience expression result = prod(mat, vec);
@@ -87,7 +87,7 @@ namespace viennacl
     */
     template<typename SparseMatrixType, class ScalarType>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
-    prod_impl(const SparseMatrixType & mat, 
+    prod_impl(const SparseMatrixType & mat,
               const viennacl::vector_base<ScalarType> & vec,
                     viennacl::vector_base<ScalarType> & result)
     {
@@ -113,8 +113,8 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     /** @brief Carries out triangular inplace solves
     *
     * @param mat    The matrix
@@ -123,7 +123,7 @@ namespace viennacl
     */
     template<typename SparseMatrixType, class ScalarType, typename SOLVERTAG>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
-    inplace_solve(const SparseMatrixType & mat, 
+    inplace_solve(const SparseMatrixType & mat,
                   viennacl::vector_base<ScalarType> & vec,
                   SOLVERTAG tag)
     {
@@ -149,8 +149,8 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
-    
+
+
     /** @brief Carries out transposed triangular inplace solves
     *
     * @param mat    The matrix
@@ -159,7 +159,7 @@ namespace viennacl
     */
     template<typename SparseMatrixType, class ScalarType, typename SOLVERTAG>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
-    inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+    inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat,
                   viennacl::vector_base<ScalarType> & vec,
                   SOLVERTAG tag)
     {
@@ -185,15 +185,15 @@ namespace viennacl
           throw "not implemented";
       }
     }
-    
 
-    
+
+
     namespace detail
     {
-      
+
       template<typename SparseMatrixType, class ScalarType, typename SOLVERTAG>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
-      block_inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat, 
+      block_inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat,
                           viennacl::backend::mem_handle const & block_index_array, std::size_t num_blocks,
                           viennacl::vector_base<ScalarType> const & mat_diagonal,
                           viennacl::vector_base<ScalarType> & vec,
@@ -221,11 +221,11 @@ namespace viennacl
             throw "not implemented";
         }
       }
-      
-      
+
+
     }
-    
-    
+
+
 
   } //namespace linalg
 
@@ -250,7 +250,7 @@ namespace viennacl
   typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                 viennacl::vector<SCALARTYPE> >::type
   operator+(viennacl::vector_base<SCALARTYPE> & result,
-            const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy) 
+            const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
   {
     assert(proxy.lhs().size1() == result.size() && bool("Dimensions for addition of sparse matrix-vector product to vector don't match!"));
     vector<SCALARTYPE> temp(proxy.lhs().size1());
@@ -268,7 +268,7 @@ namespace viennacl
   typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                 viennacl::vector<SCALARTYPE> >::type
   operator-(viennacl::vector_base<SCALARTYPE> & result,
-            const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy) 
+            const viennacl::vector_expression< const SparseMatrixType, const viennacl::vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
   {
     assert(proxy.lhs().size1() == result.size() && bool("Dimensions for addition of sparse matrix-vector product to vector don't match!"));
     vector<SCALARTYPE> temp(proxy.lhs().size1());

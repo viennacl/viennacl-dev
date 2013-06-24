@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/host_based/sse_kernels.hpp
 *   @brief optimized linear algebra operations for the CPU
-* 
+*
 *   Contributed by Alex Christensen.
 */
 
@@ -41,7 +41,7 @@ namespace viennacl
     {
       namespace detail
       {
-      
+
         // returns true if the matrix is hermitian (or real symmetric), false otherwise
         template <typename ScalarType>
         bool isHermitian(ScalarType ** const A, std::size_t n)
@@ -49,10 +49,10 @@ namespace viennacl
           for(std::size_t i=0;i<n;i++)
             for(std::size_t j=i;j<n;j++)
               if(A[i][j] != conjIfComplex(A[j][i]))
-                return false;              
+                return false;
           return true;
         }
-        
+
         // returns the bandwidth of a hermitian (or real symmetric) matrix
         template <typename ScalarType>
         std::size_t getHermitianBandwidth(ScalarType ** const A, std::size_t n)
@@ -84,7 +84,7 @@ namespace viennacl
             for(std::size_t i=row+from;i<row+to;i++)
               A[row][i]/=norm;
             A[row][row+from]+=ScalarType(1);
-              
+
             //apply the similarity transformation
 
             //left transformation
@@ -162,10 +162,10 @@ namespace viennacl
           {
             for(std::size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
             {
-              
+
               //this is the same as the norm of the column, since it's hermetian
               norms[bi]=_nrm2(&A[k+bi][k+bi+block_size],n-k-bi-block_size);
-                  
+
               if(norms[bi]!=ScalarType(0))
               {
 
@@ -176,7 +176,7 @@ namespace viennacl
                 for(std::size_t i=k+bi+block_size;i<n;i++)
                     A[k+bi][i]/=norms[bi];
                 A[k+bi][k+bi+block_size]+=ScalarType(1);
-                
+
                 // Apply transformation to remaining rows within the block
                 for(std::size_t j=k+bi+1;j<k+block_size;j++)
                 {
@@ -239,7 +239,7 @@ namespace viennacl
                 }
               }
             }
-              
+
             //clean up householder reflectors
             for(std::size_t row=k;row<k+block_size;row++)
               for(std::size_t col=row+block_size;col<n;col++)
@@ -253,7 +253,7 @@ namespace viennacl
 
       /** @brief Inplace reduction of a dense n x n row-major or column-major hermitian (or real symmetric) matrix
       *         to tridiagonal form using householder similarity transforms (preserving eigenvalues)
-      * 
+      *
       * @param A            A dense hermitian matrix to be tridiagonalized
       * @param n            The height and width of the hermitian matrix
       * @param block_size   The block size to be used
@@ -281,7 +281,7 @@ namespace viennacl
       /** @brief Inplace lu factorization of an m x n dense row-major matrix with optional partial pivoting,
       *         returning true for an even number of pivots, false for an odd number of pivots.  Factorization
       *         is successful if there are no nonzero values on the diagonal.
-      * 
+      *
       * @param A            A dense row-major matrix to be factorized
       * @param m            The height of the matrix
       * @param n            The width of the matrix
@@ -318,14 +318,14 @@ namespace viennacl
               {
                 for(std::size_t k=0; k<n; k++)
                 {
-                  ScalarType t=A[p][k]; 
-                  A[p][k]=A[j+bi][k]; 
+                  ScalarType t=A[p][k];
+                  A[p][k]=A[j+bi][k];
                   A[j+bi][k]=t;
                 }
 
                 //swap pivot vector
-                std::size_t k = piv[p]; 
-                piv[p] = piv[j+bi]; 
+                std::size_t k = piv[p];
+                piv[p] = piv[j+bi];
                 piv[j+bi] = k;
                 pivsign = !pivsign;
               }
@@ -394,7 +394,7 @@ namespace viennacl
       }
 
       /** @brief Inplace qr factorization of an m x n dense column-major matrix, returning the householder normalization coefficients
-      * 
+      *
       * @param A            A dense column-major matrix to be factorized
       * @param m            The height of the matrix
       * @param n            The width of the matrix
@@ -473,7 +473,7 @@ namespace viennacl
       }
 
       /** @brief Inplace qr factorization of an m x n dense row-major matrix, returning the householder normalization coefficients
-      * 
+      *
       * @param A            A dense row-major matrix to be factorized
       * @param m            The height of the matrix
       * @param n            The width of the matrix
@@ -580,7 +580,7 @@ namespace viennacl
 
         return betas;
       }
-      
+
     } //namespace host_based
   } //namespace linalg
 } //namespace viennacl

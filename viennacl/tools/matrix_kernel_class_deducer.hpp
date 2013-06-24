@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -42,14 +42,14 @@ namespace viennacl
     {
       typedef typename MatrixType1::ERROR_INVALID_ARGUMENT_FOR_KERNEL_CLASS_DEDUCER    ResultType;
     };
-    
+
     /** \cond */
     template <typename SCALARTYPE>
     struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
     {
       typedef viennacl::linalg::kernels::matrix_row<SCALARTYPE, 1>     ResultType;
     };
-    
+
     template <typename SCALARTYPE>
     struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
     {

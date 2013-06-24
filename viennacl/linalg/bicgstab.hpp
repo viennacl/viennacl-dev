@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -37,7 +37,7 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     /** @brief A tag for the stabilized Bi-conjugate gradient solver. Used for supplying solver parameters and for dispatching the solve() function
     */
     class bicgstab_tag
@@ -49,25 +49,25 @@ namespace viennacl
         * @param max_iters        The maximum number of iterations
         * @param max_iters_before_restart   The maximum number of iterations before BiCGStab is reinitialized (to avoid accumulation of round-off errors)
         */
-        bicgstab_tag(double tol = 1e-8, std::size_t max_iters = 400, std::size_t max_iters_before_restart = 200) 
+        bicgstab_tag(double tol = 1e-8, std::size_t max_iters = 400, std::size_t max_iters_before_restart = 200)
           : tol_(tol), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {};
-      
+
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }
         /** @brief Returns the maximum number of iterations */
         std::size_t max_iterations() const { return iterations_; }
         /** @brief Returns the maximum number of iterations before a restart*/
         std::size_t max_iterations_before_restart() const { return iterations_before_restart_; }
-        
+
         /** @brief Return the number of solver iterations: */
         std::size_t iters() const { return iters_taken_; }
         void iters(std::size_t i) const { iters_taken_ = i; }
-        
+
         /** @brief Returns the estimated relative error at the end of the solver run */
         double error() const { return last_error_; }
         /** @brief Sets the estimated relative error at the end of the solver run */
         void error(double e) const { last_error_ = e; }
-        
+
       private:
         double tol_;
         std::size_t iterations_;
@@ -77,7 +77,7 @@ namespace viennacl
         mutable std::size_t iters_taken_;
         mutable double last_error_;
     };
-    
+
 
     /** @brief Implementation of the stabilized Bi-conjugate gradient solver
     *
@@ -112,10 +112,10 @@ namespace viennacl
       //ScalarType inner_prod_temp; //temporary variable for inner product computation
       CPU_ScalarType new_ip_rr0star = 0;
       CPU_ScalarType residual_norm = norm_rhs_host;
-      
+
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
-      
+
       bool restart_flag = true;
       std::size_t last_restart = 0;
       for (std::size_t i = 0; i < tag.max_iterations(); ++i)
@@ -131,41 +131,41 @@ namespace viennacl
           restart_flag = false;
           last_restart = i;
         }
-        
+
         tag.iters(i+1);
         tmp0 = viennacl::linalg::prod(matrix, p);
         alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
 
         s = residual - alpha*tmp0;
-        
+
         tmp1 = viennacl::linalg::prod(matrix, s);
         CPU_ScalarType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
         omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
-        
+
         result += alpha * p + omega * s;
         residual = s - omega * tmp1;
-        
+
         new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
         residual_norm = viennacl::linalg::norm_2(residual);
         if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance())
           break;
-        
+
         beta = new_ip_rr0star / ip_rr0star * alpha/omega;
         ip_rr0star = new_ip_rr0star;
 
         if (ip_rr0star == 0 || omega == 0 || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
           restart_flag = true;
-        
+
         // Execution of
         //  p = residual + beta * (p - omega*tmp0);
         // without introducing temporary vectors:
         p -= omega * tmp0;
         p = residual + beta * p;
       }
-      
+
       //store last error estimate:
       tag.error(residual_norm / norm_rhs_host);
-      
+
       return result;
     }
 
@@ -199,7 +199,7 @@ namespace viennacl
       VectorType tmp0(problem_size);
       VectorType tmp1(problem_size);
       VectorType s(problem_size);
-      
+
       VectorType p = residual;
 
       CPU_ScalarType ip_rr0star = viennacl::linalg::norm_2(residual);
@@ -209,10 +209,10 @@ namespace viennacl
       CPU_ScalarType omega;
       CPU_ScalarType new_ip_rr0star = 0;
       CPU_ScalarType residual_norm = norm_rhs_host;
-      
+
       if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
         return result;
-      
+
       bool restart_flag = true;
       std::size_t last_restart = 0;
       for (unsigned int i = 0; i < tag.max_iterations(); ++i)
@@ -229,7 +229,7 @@ namespace viennacl
           restart_flag = false;
           last_restart = i;
         }
-        
+
         tag.iters(i+1);
         tmp0 = viennacl::linalg::prod(matrix, p);
         precond.apply(tmp0);
@@ -241,34 +241,34 @@ namespace viennacl
         precond.apply(tmp1);
         CPU_ScalarType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
         omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
-        
+
         result += alpha * p + omega * s;
         residual = s - omega * tmp1;
-        
+
         residual_norm = viennacl::linalg::norm_2(residual);
         if (residual_norm / norm_rhs_host < tag.tolerance())
           break;
 
         new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
-        
+
         beta = new_ip_rr0star / ip_rr0star * alpha/omega;
         ip_rr0star = new_ip_rr0star;
 
         if (ip_rr0star == 0 || omega == 0 || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
           restart_flag = true;
-        
+
         // Execution of
         //  p = residual + beta * (p - omega*tmp0);
         // without introducing temporary vectors:
         p -= omega * tmp0;
         p = residual + beta * p;
-        
+
         //std::cout << "Rel. Residual in current step: " << std::sqrt(std::fabs(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) << std::endl;
       }
-      
+
       //store last error estimate:
       tag.error(residual_norm / norm_rhs_host);
-      
+
       return result;
     }
 

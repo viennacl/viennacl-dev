@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/nmf.hpp
     @brief Provides a nonnegative matrix factorization implementation.  Experimental.
-    
+
     Contributed by Volodymyr Kysenko.
 */
 
@@ -35,7 +35,7 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     class nmf_config
     {
       public:
@@ -47,42 +47,42 @@ namespace viennacl
            max_iters_(num_max_iters),
            check_after_steps_( (num_check_iters > 0) ? num_check_iters : 1),
            iters_(0) {}
-         
+
         /** @brief Returns the relative tolerance for convergence */
         double tolerance() const { return eps_; }
-        
+
         /** @brief Sets the relative tolerance for convergence, i.e. norm(V - W * H) / norm(V - W_init * H_init) */
         void tolerance(double e) { eps_ = e; }
-        
+
         /** @brief Relative tolerance for the stagnation check */
         double stagnation_tolerance() const { return stagnation_eps_; }
-        
+
         /** @brief Sets the tolerance for the stagnation check (i.e. the minimum required relative change of the residual between two iterations) */
         void stagnation_tolerance(double e) { stagnation_eps_ = e; }
-        
+
         /** @brief Returns the maximum number of iterations for the NMF algorithm */
         std::size_t max_iterations() const { return max_iters_; }
         /** @brief Sets the maximum number of iterations for the NMF algorithm */
         void max_iterations(std::size_t m) { max_iters_ = m; }
-        
-        
+
+
         /** @brief Returns the number of iterations of the last NMF run using this configuration object */
         std::size_t iters() const { return iters_; }
-        
-        
+
+
         /** @brief Number of steps after which the convergence of NMF should be checked (again) */
         std::size_t check_after_steps() const { return check_after_steps_; }
-        
+
         /** @brief Set the number of steps after which the convergence of NMF should be checked (again) */
         void check_after_steps(std::size_t c) { if (c > 0) check_after_steps_ = c; }
-        
-        
+
+
         template <typename ScalarType>
         friend void nmf(viennacl::matrix<ScalarType> const & V,
                         viennacl::matrix<ScalarType> & W,
                         viennacl::matrix<ScalarType> & H,
                         nmf_config const & conf);
-        
+
       private:
         double eps_;
         double stagnation_eps_;
@@ -91,13 +91,13 @@ namespace viennacl
         mutable std::size_t iters_;
     };
 
-    
+
     /** @brief The nonnegative matrix factorization (approximation) algorithm as suggested by Lee and Seung. Factorizes a matrix V with nonnegative entries into matrices W and H such that ||V - W*H|| is minimized.
-     * 
-     * @param V     Input matrix 
+     *
+     * @param V     Input matrix
      * @param W     First factor
      * @param H     Second factor
-     * @param conf  A configuration object holding tolerances and the like 
+     * @param conf  A configuration object holding tolerances and the like
      */
     template <typename ScalarType>
     void nmf(viennacl::matrix<ScalarType> const & V,
@@ -106,18 +106,18 @@ namespace viennacl
              nmf_config const & conf)
     {
       viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(V).context());
-      
+
       const std::string NMF_MUL_DIV_KERNEL = "el_wise_mul_div";
       const std::string NMF_SUB_KERNEL = "sub_wise";
-      
+
       viennacl::linalg::kernels::nmf<ScalarType, 1>::init(ctx);
-      
+
       assert(V.size1() == W.size1() && V.size2() == H.size2() && bool("Dimensions of W and H don't allow for V = W * H"));
       assert(W.size2() == H.size1() && bool("Dimensions of W and H don't match, prod(W, H) impossible"));
 
       std::size_t k = W.size2();
       conf.iters_ = 0;
-      
+
       viennacl::matrix<ScalarType> wn(V.size1(), k);
       viennacl::matrix<ScalarType> wd(V.size1(), k);
       viennacl::matrix<ScalarType> wtmp(V.size1(), V.size2());
@@ -133,7 +133,7 @@ namespace viennacl
       ScalarType diff_init = 0;
       bool stagnation_flag = false;
 
-      
+
       for (std::size_t i = 0; i < conf.max_iterations(); i++)
       {
         conf.iters_ = i + 1;
@@ -151,7 +151,7 @@ namespace viennacl
           wd   = viennacl::linalg::prod(wtmp, trans(H));
 
           viennacl::ocl::kernel & mul_div_kernel = ctx.get_kernel(viennacl::linalg::kernels::nmf<ScalarType, 1>::program_name(), NMF_MUL_DIV_KERNEL);
-          
+
           viennacl::ocl::enqueue(mul_div_kernel(W, wn, wd, cl_uint(W.internal_size1() * W.internal_size2())));
         }
 
@@ -163,10 +163,10 @@ namespace viennacl
           //this is a cheat: save difference of two matrix into vector to get norm_2
           viennacl::ocl::enqueue(sub_kernel(appr, V, diff, cl_uint(V.size1() * V.size2())));
           ScalarType diff_val = viennacl::linalg::norm_2(diff);
-          
+
           if (i == 0)
             diff_init = diff_val;
-          
+
           std::cout << diff_val / diff_init << std::endl;
 
           // Approximation check
@@ -188,8 +188,8 @@ namespace viennacl
           last_diff = diff_val;
         }
       }
-      
-      
+
+
     }
   }
 }

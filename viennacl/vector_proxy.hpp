@@ -6,13 +6,13 @@
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
-   
+
                             -----------------
                   ViennaCL - The Vienna Computing Library
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -36,7 +36,7 @@ namespace viennacl
   {
       typedef vector_range<VectorType>             self_type;
       typedef vector_base<typename VectorType::cpu_value_type> base_type;
-    
+
     public:
       typedef typename VectorType::value_type      value_type;
       typedef range::size_type                     size_type;
@@ -47,29 +47,29 @@ namespace viennacl
       typedef typename VectorType::iterator        iterator;
 
       typedef typename VectorType::cpu_value_type    cpu_value_type;
-      
+
       static const int alignment = VectorType::alignment;
-      
+
       vector_range(VectorType & v, range const & entry_range)
        : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
-                   
-      
+
+
       using base_type::operator=;
-      
+
   };
-  
-  
-  
+
+
+
   /////////////////////////////////////////////////////////////
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
-  
+
   template <typename VectorType, typename SCALARTYPE>
   void copy(const VectorType & cpu_vector,
             vector_range<vector<SCALARTYPE> > & gpu_vector_range )
   {
     assert(cpu_vector.end() - cpu_vector.begin() >= 0);
-    
+
     if (cpu_vector.end() - cpu_vector.begin() > 0)
     {
       //we require that the size of the gpu_vector is larger or equal to the cpu-size
@@ -94,19 +94,19 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
   ///////////////////////// GPU to CPU ////////////////////////
   /////////////////////////////////////////////////////////////
-  
+
 
   template <typename SCALARTYPE, typename VectorType>
   void copy(vector_range<vector<SCALARTYPE> > const & gpu_vector_range,
             VectorType & cpu_vector)
   {
     assert(cpu_vector.end() - cpu_vector.begin() >= 0);
-    
+
     if (cpu_vector.end() > cpu_vector.begin())
     {
       std::vector<SCALARTYPE> temp_buffer(cpu_vector.end() - cpu_vector.begin());
       viennacl::backend::memory_read(gpu_vector_range.handle(), sizeof(SCALARTYPE)*gpu_vector_range.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
-      
+
       //now copy entries to cpu_vec:
       std::copy(temp_buffer.begin(), temp_buffer.end(), cpu_vector.begin());
     }
@@ -142,7 +142,7 @@ namespace viennacl
     assert(r1.size() <= vec.size() && bool("Size of range invalid!"));
     return vector_range<VectorType>(vec.get(), viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
   }
-  
+
 //
 //
 //
@@ -159,7 +159,7 @@ namespace viennacl
   {
       typedef vector_slice<VectorType>             self_type;
       typedef vector_base<typename VectorType::cpu_value_type> base_type;
-    
+
     public:
       typedef typename VectorType::value_type      value_type;
       typedef slice::size_type                     size_type;
@@ -168,24 +168,24 @@ namespace viennacl
       typedef const value_type &                   const_reference;
       typedef typename VectorType::const_iterator  const_iterator;
       typedef typename VectorType::iterator        iterator;
-      
+
       typedef typename VectorType::cpu_value_type  cpu_value_type;
-      
+
       static const int alignment = VectorType::alignment;
-      
-      vector_slice(VectorType & v, slice const & entry_slice) 
+
+      vector_slice(VectorType & v, slice const & entry_slice)
           : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
-                   
+
 
       using base_type::operator=;
 
   };
-  
-  
+
+
   /////////////////////////////////////////////////////////////
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
-  
+
   template <typename VectorType, typename SCALARTYPE>
   void copy(const VectorType & cpu_vector,
             vector_slice<vector<SCALARTYPE> > & gpu_vector_slice )
@@ -193,12 +193,12 @@ namespace viennacl
     if (cpu_vector.size() > 0)
     {
       std::vector<SCALARTYPE> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
-      
+
       viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
       for (std::size_t i=0; i<cpu_vector.size(); ++i)
         temp_buffer[i * gpu_vector_slice.stride()] = cpu_vector[i];
-      
+
       viennacl::backend::memory_write(gpu_vector_slice.handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
     }
   }
@@ -208,14 +208,14 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
   ///////////////////////// GPU to CPU ////////////////////////
   /////////////////////////////////////////////////////////////
-  
+
 
   template <typename VectorType, typename SCALARTYPE>
   void copy(vector_slice<vector<SCALARTYPE> > const & gpu_vector_slice,
             VectorType & cpu_vector)
   {
     assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0);
-    
+
     if (gpu_vector_slice.end() - gpu_vector_slice.begin() > 0)
     {
       std::vector<SCALARTYPE> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
@@ -248,22 +248,22 @@ namespace viennacl
   }
 
   // interaction with range and vector_range:
-  
+
   template <typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
   {
     assert(r1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
     return vector_slice<VectorType>(vec.get(), viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
   }
-  
+
   template <typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
     return vector_slice<VectorType>(vec.get(), viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
   }
-  
-  
+
+
 }
 
 #endif

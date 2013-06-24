@@ -12,14 +12,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /** @file viennacl/linalg/misc_operations.hpp
-    @brief Implementations of miscellaneous operations 
+    @brief Implementations of miscellaneous operations
 */
 
 #include "viennacl/forwards.h"
@@ -41,10 +41,10 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     namespace detail
     {
-      
+
       template <typename ScalarType>
       void level_scheduling_substitute(vector<ScalarType> & vec,
                                   viennacl::backend::mem_handle const & row_index_array,
@@ -58,7 +58,7 @@ namespace viennacl
         assert( viennacl::traits::handle(vec).get_active_handle_id() ==      row_buffer.get_active_handle_id() && bool("Incompatible memory domains"));
         assert( viennacl::traits::handle(vec).get_active_handle_id() ==      col_buffer.get_active_handle_id() && bool("Incompatible memory domains"));
         assert( viennacl::traits::handle(vec).get_active_handle_id() ==  element_buffer.get_active_handle_id() && bool("Incompatible memory domains"));
-        
+
         switch (viennacl::traits::handle(vec).get_active_handle_id())
         {
           case viennacl::MAIN_MEMORY:
@@ -78,13 +78,13 @@ namespace viennacl
             throw "not implemented";
         }
       }
-      
-      
-      
-    
+
+
+
+
     } //namespace detail
-    
-    
+
+
   } //namespace linalg
 } //namespace viennacl
 

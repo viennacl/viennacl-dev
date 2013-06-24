@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -41,7 +41,7 @@ namespace viennacl
     {
       namespace amg
       {
-    
+
     /** @brief Calls the right function to build interpolation matrix
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -59,7 +59,7 @@ namespace viennacl
         case VIENNACL_AMG_INTERPOL_AG: amg_interpol_ag (level, A, P, Pointvector, tag); break;
         case VIENNACL_AMG_INTERPOL_SA: amg_interpol_sa (level, A, P, Pointvector, tag); break;
       }
-    } 
+    }
     /** @brief Direct interpolation. Multi-threaded! (VIENNACL_AMG_INTERPOL_DIRECT)
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -75,7 +75,7 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       ScalarType temp_res;
       ScalarType row_sum, c_sum, diag;
       //int diag_sign;
@@ -86,33 +86,33 @@ namespace viennacl
       // Setup Prolongation/Interpolation matrix
       P[level] = SparseMatrixType(A[level].size1(),c_points);
       P[level].clear();
-      
+
       // Assign indices to C points
       Pointvector[level].build_index();
-      
+
       // Direct Interpolation (Yang, p.14)
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (pointx,pointy,row_sum,c_sum,temp_res,y,x,diag) shared (P,A,Pointvector,tag)
-#endif      
+#endif
       for (x=0; x < Pointvector[level].size(); ++x)
       {
         pointx = Pointvector[level][x];
-        /*if (A[level](x,x) > 0) 
+        /*if (A[level](x,x) > 0)
           diag_sign = 1;
         else
           diag_sign = -1;*/
-        
+
         // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
         if (pointx->is_cpoint())
           P[level](x,pointx->get_coarse_index()) = 1;
-        
+
         // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
         if (pointx->is_fpoint())
         {
           // Jump to row x
           InternalRowIterator row_iter = A[level].begin1();
           row_iter += x;
-          
+
           // Row sum of coefficients (without diagonal) and sum of influencing C point coefficients has to be computed
           row_sum = c_sum = diag = 0;
           for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
@@ -123,7 +123,7 @@ namespace viennacl
               diag += *col_iter;
               continue;
             }
-            
+
             // Sum all other coefficients in line x
             row_sum += *col_iter;
 
@@ -131,13 +131,13 @@ namespace viennacl
             // Sum all coefficients that correspond to a strongly influencing C point
             if (pointy->is_cpoint())
               if (pointx->is_influencing(pointy))
-                c_sum += *col_iter;        
+                c_sum += *col_iter;
           }
           temp_res = -row_sum/(c_sum*diag);
 
           // Iterate over all strongly influencing points of point x
           for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
-          {    
+          {
             pointy = *iter;
             // The value is only non-zero for columns that correspond to a C point
             if (pointy->is_cpoint())
@@ -146,22 +146,22 @@ namespace viennacl
                 P[level](x, pointy->get_coarse_index()) = temp_res * A[level](x,pointy->get_index());
             }
           }
-          
+
           //Truncate interpolation if chosen
           if (tag.get_interpolweight() != 0)
             amg_truncate_row(P[level], x, tag);
         }
       }
-      
+
       // P test
       //test_interpolation(A[level], P[level], Pointvector[level]);
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
-      #endif  
+      #endif
     }
-    
+
     /** @brief Classical interpolation. Don't use with onepass classical coarsening or RS0 (Yang, p.14)! Multi-threaded! (VIENNACL_AMG_INTERPOL_CLASSIC)
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -177,46 +177,46 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       ScalarType temp_res;
       ScalarType weak_sum, strong_sum;
       int diag_sign;
       amg_sparsevector<ScalarType> c_sum_row;
       amg_point *pointx, *pointy, *pointk, *pointm;
       unsigned int x, y, k, m;
-      
+
       unsigned int c_points = Pointvector[level].get_cpoints();
-      
+
       // Setup Prolongation/Interpolation matrix
       P[level] = SparseMatrixType(A[level].size1(), c_points);
       P[level].clear();
-      
+
       // Assign indices to C points
       Pointvector[level].build_index();
-      
+
       // Classical Interpolation (Yang, p.13-14)
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (pointx,pointy,pointk,pointm,weak_sum,strong_sum,c_sum_row,temp_res,x,y,k,m,diag_sign) shared (A,P,Pointvector)
-#endif      
+#endif
       for (x=0; x < Pointvector[level].size(); ++x)
       {
         pointx = Pointvector[level][x];
-        if (A[level](x,x) > 0) 
+        if (A[level](x,x) > 0)
           diag_sign = 1;
         else
           diag_sign = -1;
-        
+
         // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
         if (pointx->is_cpoint())
           P[level](x,pointx->get_coarse_index()) = 1;
 
         // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
         if (pointx->is_fpoint())
-        {  
+        {
           // Jump to row x
           InternalRowIterator row_iter = A[level].begin1();
           row_iter += x;
-          
+
           weak_sum = 0;
           c_sum_row = amg_sparsevector<ScalarType>(A[level].size1());
           c_sum_row.clear();
@@ -224,14 +224,14 @@ namespace viennacl
           {
             k = col_iter.index2();
             pointk = Pointvector[level][k];
-            
+
             // Sum of weakly influencing neighbors + diagonal coefficient
             if (x == k || !pointx->is_influencing(pointk))// || *col_iter * diag_sign > 0)
             {
               weak_sum += *col_iter;
               continue;
             }
-              
+
             // Sums of coefficients in row k (strongly influening F neighbors) of C point neighbors of x are calculated
             if (pointk->is_fpoint() && pointx->is_influencing(pointk))
             {
@@ -239,7 +239,7 @@ namespace viennacl
               {
                 pointm = *iter;
                 m = pointm->get_index();
-                
+
                 if (pointm->is_cpoint())
                   // Only use coefficients that have opposite sign of diagonal.
                   if (A[level](k,m) * diag_sign < 0)
@@ -248,13 +248,13 @@ namespace viennacl
               continue;
             }
           }
-          
+
           // Iterate over all strongly influencing points of point x
           for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
-          {    
+          {
             pointy = *iter;
             y = pointy->get_index();
-            
+
             // The value is only non-zero for columns that correspond to a C point
             if (pointy->is_cpoint())
             {
@@ -267,26 +267,26 @@ namespace viennacl
                 if (A[level](k,y) * diag_sign < 0)
                   strong_sum += (A[level](x,k) * A[level](k,y)) / (*iter2);
               }
-              
+
               // Calculate coefficient
               temp_res = - (A[level](x,y) + strong_sum) / (weak_sum);
               if (temp_res != 0)
-                P[level](x,pointy->get_coarse_index()) = temp_res;   
+                P[level](x,pointy->get_coarse_index()) = temp_res;
             }
           }
-          
+
           //Truncate iteration if chosen
           if (tag.get_interpolweight() != 0)
             amg_truncate_row(P[level], x, tag);
         }
       }
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
-      #endif  
+      #endif
     }
-    
+
     /** @brief Interpolation truncation (for VIENNACL_AMG_INTERPOL_DIRECT and VIENNACL_AMG_INTERPOL_CLASSIC)
     *
     * @param P    Interpolation matrix
@@ -299,17 +299,17 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       ScalarType row_max, row_min, row_sum_pos, row_sum_neg, row_sum_pos_scale, row_sum_neg_scale;
-      
+
       InternalRowIterator row_iter = P.begin1();
       row_iter += row;
-      
+
       row_max = 0;
       row_min = 0;
       row_sum_pos = 0;
       row_sum_neg = 0;
-      
+
       // Truncate interpolation by making values to zero that are a lot smaller than the biggest value in a row
       // Determine max entry and sum of row (seperately for negative and positive entries)
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
@@ -323,10 +323,10 @@ namespace viennacl
         if (*col_iter < 0)
           row_sum_neg += *col_iter;
       }
-      
+
       row_sum_pos_scale = row_sum_pos;
       row_sum_neg_scale = row_sum_neg;
-      
+
       // Make certain values to zero (seperately for negative and positive entries)
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
@@ -341,7 +341,7 @@ namespace viennacl
           *col_iter = 0;
         }
       }
-      
+
       // Scale remaining values such that row sum is unchanged
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
@@ -351,7 +351,7 @@ namespace viennacl
           *col_iter = *col_iter *(row_sum_neg/row_sum_neg_scale);
       }
     }
-    
+
     /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -366,21 +366,21 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       unsigned int x;
       amg_point *pointx, *pointy;
       unsigned int c_points = Pointvector[level].get_cpoints();
-      
+
       P[level] = SparseMatrixType(A[level].size1(), c_points);
       P[level].clear();
-      
+
       // Assign indices to C points
       Pointvector[level].build_index();
-      
+
       // Set prolongation such that F point is interpolated (weight=1) by the aggregate it belongs to (Vanek et al p.6)
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (x,pointx) shared (P)
-#endif      
+#endif
       for (x=0; x<Pointvector[level].size(); ++x)
       {
         pointx = Pointvector[level][x];
@@ -388,13 +388,13 @@ namespace viennacl
         // Point x belongs to aggregate y.
         P[level](x,pointy->get_coarse_index()) = 1;
       }
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Aggregation based Prolongation:" << std::endl;
       printmatrix(P[level]);
       #endif
     }
-      
+
     /** @brief SA (smoothed aggregate) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
      * @param level    Coarse level identifier
      * @param A      Operator matrix on all levels
@@ -410,21 +410,21 @@ namespace viennacl
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
-      
+
       unsigned int x,y;
       ScalarType diag = 0;
       unsigned int c_points = Pointvector[level].get_cpoints();
-           
+
       InternalType1 P_tentative = InternalType1(P.size());
       SparseMatrixType Jacobi = SparseMatrixType(A[level].size1(), A[level].size2());
       Jacobi.clear();
       P[level] = SparseMatrixType(A[level].size1(), c_points);
-      P[level].clear();      
-           
+      P[level].clear();
+
       // Build Jacobi Matrix via filtered A matrix (Vanek et al. p.6)
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (x,y,diag) shared (A,Pointvector)
-#endif      
+#endif
       for (x=0; x<A[level].size1(); ++x)
       {
         diag = 0;
@@ -442,7 +442,7 @@ namespace viennacl
           else if (!Pointvector[level][x]->is_influencing(Pointvector[level][y]))
             diag += -*col_iter;
           else
-            Jacobi (x,y) = *col_iter;      
+            Jacobi (x,y) = *col_iter;
         }
         InternalRowIterator row_iter2 = Jacobi.begin1();
         row_iter2 += x;
@@ -454,27 +454,27 @@ namespace viennacl
         // Diagonal can be computed seperately.
         Jacobi (x,x) = 1 - static_cast<ScalarType>(tag.get_interpolweight());
       }
-          
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Jacobi Matrix:" << std::endl;
       printmatrix(Jacobi);
       #endif
-      
+
       // Use AG interpolation as tentative prolongation
       amg_interpol_ag(level, A, P_tentative, Pointvector, tag);
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Tentative Prolongation:" << std::endl;
       printmatrix(P_tentative[level]);
       #endif
-      
+
       // Multiply Jacobi matrix with tentative prolongation to get actual prolongation
       amg_mat_prod(Jacobi,P_tentative[level],P[level]);
-      
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Prolongation Matrix:" << std::endl;
       printmatrix (P[level]);
-      #endif    
+      #endif
     }
       } //namespace amg
     }

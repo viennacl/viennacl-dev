@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -50,28 +50,28 @@ namespace viennacl
     };
     /** \endcond */
 
-    
+
     /** @brief A guard that checks whether the floating point type of GPU types is either float or double */
     template <typename T>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT
     {
         typedef typename T::ERROR_SCALAR_MUST_HAVE_TEMPLATE_ARGUMENT_FLOAT_OR_DOUBLE  ResultType;
     };
-    
+
     template <>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT<float>
     {
         typedef float  ResultType;
     };
-    
+
     template <>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT<double>
     {
         typedef double  ResultType;
     };
 
-    
-    
+
+
     /** @brief Reads a text from a file into a std::string
     *
     * @param filename   The filename
@@ -126,8 +126,8 @@ namespace viennacl
       if (to_reach % base == 0) return to_reach;
       return ((to_reach / base) + 1) * base;
     }
-    
-    
+
+
     /** @brief Create a double precision kernel out of a single precision kernel
     *
     * @param source          The source string
@@ -138,13 +138,13 @@ namespace viennacl
     {
       std::stringstream ss;
       ss << "#pragma OPENCL EXTENSION " << fp_extension << " : enable\n\n";
-      
+
       std::string result = ss.str();
       result.append(strReplace(source, "float", "double"));
       return result;
     }
-    
-    
+
+
     /** @brief Removes the const qualifier from a type */
     template <typename T>
     struct CONST_REMOVER
@@ -158,9 +158,9 @@ namespace viennacl
       typedef T   ResultType;
     };
 
-    
+
     /////// CPU scalar type deducer ///////////
-    
+
     /** @brief Obtain the cpu scalar type from a type, including a GPU type like viennacl::scalar<T>
     *
     * @tparam T   Either a CPU scalar type or a GPU scalar type
@@ -184,7 +184,7 @@ namespace viennacl
     {
       typedef double       ResultType;
     };
-    
+
     template <typename T>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::scalar<T> >
     {
@@ -203,7 +203,7 @@ namespace viennacl
       typedef T       ResultType;
     };
 
-    
+
     template <typename T, typename F, unsigned int A>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::matrix_expression<const matrix<T, F, A>, const matrix<T, F, A>, op_trans> >
     {
@@ -214,38 +214,38 @@ namespace viennacl
     //
     // Converts a scalar type when necessary unless it is a viennacl::scalar<> (typical use-case: convert user-provided floats to double (and vice versa) for OpenCL kernels)
     //
-    
+
     template <typename HostScalarType>
     viennacl::scalar<HostScalarType> const & promote_if_host_scalar(viennacl::scalar<HostScalarType> const & s) { return s; }
 
     template <typename HostScalarType>
     viennacl::scalar_expression<const viennacl::scalar<HostScalarType>,
                                 const viennacl::scalar<HostScalarType>,
-                                viennacl::op_flip_sign> const & 
+                                viennacl::op_flip_sign> const &
     promote_if_host_scalar(viennacl::scalar_expression<const viennacl::scalar<HostScalarType>,
                                                        const viennacl::scalar<HostScalarType>,
                                                        viennacl::op_flip_sign> const & s) { return s; }
-    
+
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(float s) { return s; }
 
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(double s) { return s; }
-    
+
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(long s) { return s; }
-    
+
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(unsigned long s) { return s; }
-    
+
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(int s) { return s; }
-    
+
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(unsigned int s) { return s; }
-    
+
   } //namespace tools
 } //namespace viennacl
-    
+
 
 #endif

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -43,7 +43,7 @@ namespace viennacl
 {
   namespace linalg
   {
-    
+
     /** @brief A tag for the conjugate gradient Used for supplying solver parameters and for dispatching the solve() function
     */
     class mixed_precision_cg_tag
@@ -56,36 +56,36 @@ namespace viennacl
         * @param inner_tol        Inner tolerance for the low-precision iterations
         */
         mixed_precision_cg_tag(double tol = 1e-8, unsigned int max_iterations = 300, float inner_tol = 1e-2f) : tol_(tol), iterations_(max_iterations), inner_tol_(inner_tol) {};
-      
+
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }
         /** @brief Returns the relative tolerance */
         float inner_tolerance() const { return inner_tol_; }
         /** @brief Returns the maximum number of iterations */
         unsigned int max_iterations() const { return iterations_; }
-        
+
         /** @brief Return the number of solver iterations: */
         unsigned int iters() const { return iters_taken_; }
         void iters(unsigned int i) const { iters_taken_ = i; }
-        
+
         /** @brief Returns the estimated relative error at the end of the solver run */
         double error() const { return last_error_; }
         /** @brief Sets the estimated relative error at the end of the solver run */
         void error(double e) const { last_error_ = e; }
-        
-        
+
+
       private:
         double tol_;
         unsigned int iterations_;
         float inner_tol_;
-        
+
         //return values from solver
         mutable unsigned int iters_taken_;
         mutable double last_error_;
     };
-    
-    
-    const char * double_float_conversion_program = 
+
+
+    const char * double_float_conversion_program =
     "#pragma OPENCL EXTENSION cl_khr_fp64 : enable \n"
     "__kernel void assign_double_to_float(\n"
     "          __global float * vec1,\n"
@@ -103,7 +103,7 @@ namespace viennacl
     "  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
     "    vec1[i] += (double)(vec2[i]);\n"
     "};\n";
-    
+
 
     /** @brief Implementation of the conjugate gradient solver without preconditioner
     *
@@ -120,9 +120,9 @@ namespace viennacl
       //typedef typename VectorType::value_type      ScalarType;
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      
+
       //TODO: Assert CPU_ScalarType == double
-      
+
       //std::cout << "Starting CG" << std::endl;
       std::size_t problem_size = viennacl::traits::size(rhs);
       VectorType result(problem_size);
@@ -136,9 +136,9 @@ namespace viennacl
 
       if (norm_rhs_squared == 0) //solution is zero if RHS norm is zero
         return result;
-      
+
       static bool first = true;
-      
+
       if (first)
       {
         viennacl::ocl::current_context().add_program(double_float_conversion_program, "double_float_conversion_program");
@@ -157,7 +157,7 @@ namespace viennacl
       viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
       viennacl::ocl::kernel & assign_double_to_float      = ctx.get_kernel("double_float_conversion_program", "assign_double_to_float");
       viennacl::ocl::kernel & inplace_add_float_to_double = ctx.get_kernel("double_float_conversion_program", "inplace_add_float_to_double");
-      
+
       // transfer rhs to single precision:
       viennacl::ocl::enqueue( assign_double_to_float(p_low_precision.handle().opencl_handle(),
                                                      rhs.handle().opencl_handle(),
@@ -166,7 +166,7 @@ namespace viennacl
       //std::cout << "copying p_low_precision..." << std::endl;
       //assign_double_to_float(p_low_precision.handle(), residual.handle(), residual.size());
       residual_low_precision = p_low_precision;
-      
+
       // transfer matrix to single precision:
       viennacl::compressed_matrix<float> matrix_low_precision(matrix.size1(), matrix.size2(), matrix.nnz());
       viennacl::backend::memory_copy(matrix.handle1(), const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle1()), 0, 0, sizeof(cl_uint) * (matrix.size1() + 1) );
@@ -178,30 +178,30 @@ namespace viennacl
                                                     ) );
       //std::cout << "copying matrix_low_precision..." << std::endl;
       //assign_double_to_float(const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle()), matrix.handle(), matrix.nnz());
-      
+
       //std::cout << "Starting CG solver iterations... " << std::endl;
-      
-      
+
+
       for (unsigned int i = 0; i < tag.max_iterations(); ++i)
       {
         tag.iters(i+1);
-        
+
         // lower precision 'inner iteration'
         tmp_low_precision = viennacl::linalg::prod(matrix_low_precision, p_low_precision);
 
         alpha = inner_ip_rr / viennacl::linalg::inner_prod(tmp_low_precision, p_low_precision);
         result_low_precision += alpha * p_low_precision;
         residual_low_precision -= alpha * tmp_low_precision;
-        
+
         new_inner_ip_rr = viennacl::linalg::inner_prod(residual_low_precision, residual_low_precision);
-        
+
         beta = new_inner_ip_rr / inner_ip_rr;
         inner_ip_rr = new_inner_ip_rr;
 
         p_low_precision = residual_low_precision + beta * p_low_precision;
-        
-        
-        
+
+
+
         if (new_inner_ip_rr < tag.inner_tolerance() * initial_inner_rhs_norm_squared || i == tag.max_iterations()-1)
         {
           //std::cout << "outer correction at i=" << i << std::endl;
@@ -210,11 +210,11 @@ namespace viennacl
                                                               result_low_precision.handle().opencl_handle(),
                                                               cl_uint(result.size())
                                                              ) );
-          
+
           // residual = b - Ax  (without introducing a temporary)
           residual = viennacl::linalg::prod(matrix, result);
           residual = rhs - residual;
-        
+
           new_ip_rr = viennacl::linalg::inner_prod(residual, residual);
           if (new_ip_rr / norm_rhs_squared < tag.tolerance() *  tag.tolerance())//squared norms involved here
             break;
@@ -229,11 +229,11 @@ namespace viennacl
           initial_inner_rhs_norm_squared = static_cast<float>(new_ip_rr);
           inner_ip_rr = static_cast<float>(new_ip_rr);
         }
-      } 
-      
+      }
+
       //store last error estimate:
       tag.error(std::sqrt(new_ip_rr / norm_rhs_squared));
-      
+
       return result;
     }
 

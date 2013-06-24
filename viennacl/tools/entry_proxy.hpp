@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -41,25 +41,25 @@ namespace viennacl
     {
       public:
         typedef viennacl::backend::mem_handle      handle_type;
-        
+
         /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
         *
         * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
         * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
         */
-        explicit entry_proxy(unsigned int mem_offset, 
-                             handle_type & mem_handle) 
+        explicit entry_proxy(unsigned int mem_offset,
+                             handle_type & mem_handle)
          : index_(mem_offset), mem_handle_(mem_handle) {};
-        
-         
+
+
         //operators:
         /** @brief Inplace addition of a CPU floating point value
         */
         entry_proxy & operator+=(SCALARTYPE value)
         {
           SCALARTYPE temp = read();
-          temp += value; 
-          write(temp);         
+          temp += value;
+          write(temp);
           return *this;
         }
 
@@ -68,8 +68,8 @@ namespace viennacl
         entry_proxy &  operator-=(SCALARTYPE value)
         {
           SCALARTYPE temp = read();
-          temp -= value; 
-          write(temp);         
+          temp -= value;
+          write(temp);
           return *this;
         }
 
@@ -78,8 +78,8 @@ namespace viennacl
         entry_proxy &  operator*=(SCALARTYPE value)
         {
           SCALARTYPE temp = read();
-          temp *= value; 
-          write(temp);         
+          temp *= value;
+          write(temp);
           return *this;
         }
 
@@ -88,8 +88,8 @@ namespace viennacl
         entry_proxy &  operator/=(SCALARTYPE value)
         {
           SCALARTYPE temp = read();
-          temp /= value; 
-          write(temp);         
+          temp /= value;
+          write(temp);
           return *this;
         }
 
@@ -131,11 +131,11 @@ namespace viennacl
           SCALARTYPE temp = read();
           return temp;
         }
-        
+
         /** @brief Returns the index of the represented element
         */
         unsigned int index() const { return index_; }
-        
+
         /** @brief Returns the memory viennacl::ocl::handle
         */
         handle_type const & handle() const { return mem_handle_; }
@@ -149,24 +149,24 @@ namespace viennacl
           viennacl::backend::memory_read(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &temp);
           return temp;
         }
-        
+
         /** @brief Writes a floating point value to the GPU
         */
         void write(SCALARTYPE value)
         {
           viennacl::backend::memory_write(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &value);
         }
-        
+
         std::size_t index_;
         viennacl::backend::mem_handle & mem_handle_;
     }; //entry_proxy
 
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
     /**
     * @brief A proxy class for a single element of a vector or matrix. This proxy should not be noticed by end-users of the library.
     *
@@ -180,16 +180,16 @@ namespace viennacl
         typedef const_entry_proxy<SCALARTYPE>      self_type;
       public:
         typedef viennacl::backend::mem_handle      handle_type;
-        
+
         /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
         *
         * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
         * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
         */
-        explicit const_entry_proxy(unsigned int mem_offset, 
-                                   handle_type const & mem_handle) 
+        explicit const_entry_proxy(unsigned int mem_offset,
+                                   handle_type const & mem_handle)
          : index_(mem_offset), mem_handle_(mem_handle) {};
-        
+
 
         //type conversion:
         // allows to write something like:
@@ -205,11 +205,11 @@ namespace viennacl
           SCALARTYPE temp = read();
           return temp;
         }
-        
+
         /** @brief Returns the index of the represented element
         */
         unsigned int index() const { return index_; }
-        
+
         /** @brief Returns the memory handle
         */
         handle_type const & handle() const { return mem_handle_; }
@@ -223,11 +223,11 @@ namespace viennacl
           viennacl::backend::memory_read(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &temp);
           return temp;
         }
-        
+
         std::size_t index_;
         viennacl::backend::mem_handle const & mem_handle_;
     }; //entry_proxy
-    
+
 }
 
 #endif

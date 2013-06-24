@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/detail/spai/qr.hpp
     @brief Implementation of a simultaneous QR factorization of multiple matrices. Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -59,7 +59,7 @@ namespace viennacl
       {
         namespace spai
         {
-        
+
           //********** DEBUG FUNCTIONS *****************//
           template< typename T, typename InputIterator>
           void Print(std::ostream& ostr, InputIterator it_begin, InputIterator it_end){
@@ -68,7 +68,7 @@ namespace viennacl
               std::copy(it_begin, it_end, std::ostream_iterator<T>(ostr, delimiters.c_str()));
               ostr<<std::endl;
           }
-          
+
           template<typename VectorType, typename MatrixType>
           void write_to_block(VectorType& con_A_I_J, unsigned int start_ind,  const std::vector<unsigned int>& I, const std::vector<unsigned int>& J, MatrixType& m){
               m.resize(I.size(), J.size(), false);
@@ -78,7 +78,7 @@ namespace viennacl
                   }
               }
           }
-          
+
           template<typename VectorType>
           void print_continious_matrix(VectorType& con_A_I_J, std::vector<cl_uint>& blocks_ind,
                                       const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J){
@@ -102,16 +102,16 @@ namespace viennacl
                   std::cout<<com_v[i]<<std::endl;
               }
           }
-          
+
           ///**************************************** BLOCK FUNCTIONS ************************************//
           /** @brief Computes size of elements, start indices and matrix dimensions for a certain block
-          * @param g_I container of row indices 
-          * @param g_J container of column indices 
+          * @param g_I container of row indices
+          * @param g_J container of column indices
           * @param sz general size for all elements in a certain block
           * @param blocks_ind start indices in a certain
           * @param matrix_dims matrix dimensions for each block
-          */ 
-          inline void compute_blocks_size(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J, 
+          */
+          inline void compute_blocks_size(const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J,
                                           unsigned int& sz, std::vector<cl_uint>& blocks_ind, std::vector<cl_uint>& matrix_dims)
           {
               sz = 0;
@@ -120,13 +120,13 @@ namespace viennacl
                   matrix_dims[2*i] = static_cast<cl_uint>(g_I[i].size());
                   matrix_dims[2*i + 1] = static_cast<cl_uint>(g_J[i].size());
                   blocks_ind[i+1] = blocks_ind[i] + static_cast<cl_uint>(g_I[i].size()*g_J[i].size());
-                  
+
               }
           }
-          /** @brief Computes size of particular container of index set 
-          * @param inds container of index sets 
-          * @param size output size 
-          */ 
+          /** @brief Computes size of particular container of index set
+          * @param inds container of index sets
+          * @param size output size
+          */
           template <typename SizeType>
           void get_size(const std::vector<std::vector<SizeType> >& inds, SizeType & size){
               size = 0;
@@ -134,10 +134,10 @@ namespace viennacl
                   size += static_cast<unsigned int>(inds[i].size());
               }
           }
-          
-          /** @brief Initializes start indices of particular index set 
-          * @param inds container of index sets 
-          * @param start_inds output index set 
+
+          /** @brief Initializes start indices of particular index set
+          * @param inds container of index sets
+          * @param start_inds output index set
           */
           template <typename SizeType>
           void init_start_inds(const std::vector<std::vector<SizeType> >& inds, std::vector<cl_uint>& start_inds){
@@ -147,8 +147,8 @@ namespace viennacl
           }
 
           //*************************************  QR FUNCTIONS  ***************************************//
-          /** @brief Dot prod of particular column of martix A with it's self starting at a certain index beg_ind 
-          * @param A init matrix 
+          /** @brief Dot prod of particular column of martix A with it's self starting at a certain index beg_ind
+          * @param A init matrix
           * @param beg_ind starting index
           * @param res result of dot product
           */
@@ -170,11 +170,11 @@ namespace viennacl
           void custom_inner_prod(const MatrixType& A, const VectorType& v, unsigned int col_ind, unsigned int start_ind, ScalarType& res){
               res = static_cast<ScalarType>(0);
               for(unsigned int i = start_ind; i < static_cast<unsigned int>(A.size1()); ++i){
-                  res += A(i, col_ind)*v(i);  
+                  res += A(i, col_ind)*v(i);
               }
           }
-          
-          /** @brief Copying part of matrix column 
+
+          /** @brief Copying part of matrix column
           * @param A init matrix
           * @param v output vector
           * @param beg_ind start index for copying
@@ -185,19 +185,19 @@ namespace viennacl
                   v(i) = A( i, beg_ind-1);
               }
           }
-          
+
           //householder reflection c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.210
           /** @brief Coputation of Householder vector, householder reflection c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.210
           * @param A init matrix
-          * @param j start index for computations 
-          * @param v output Householder vector 
+          * @param j start index for computations
+          * @param v output Householder vector
           * @param b beta
           */
           template<typename MatrixType, typename VectorType, typename ScalarType>
           void householder_vector(const MatrixType& A, unsigned int j, VectorType& v, ScalarType& b){
               ScalarType sg;
               //
-              dot_prod(A, j+1, sg); 
+              dot_prod(A, j+1, sg);
               copy_vector(A, v, j+1);
               ScalarType mu;
               v(j) = static_cast<ScalarType>(1.0);
@@ -218,7 +218,7 @@ namespace viennacl
           /** @brief Inplace application of Householder vector to a matrix A
           * @param A init matrix
           * @param iter_cnt current iteration
-          * @param v Householder vector 
+          * @param v Householder vector
           * @param b beta
           */
           template<typename MatrixType, typename VectorType, typename ScalarType>
@@ -233,7 +233,7 @@ namespace viennacl
                   }
               }
           }
-          
+
           /** @brief Storage of vector v in column(A, ind), starting from ind-1 index of a column
           * @param A init matrix
           * @param ind index of a column
@@ -245,11 +245,11 @@ namespace viennacl
                   A(i, ind-1) = v(i);
               }
           }
-          
-          
-          //QR algorithm 
+
+
+          //QR algorithm
           /** @brief Inplace QR factorization via Householder reflections c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.224
-          * @param R input matrix 
+          * @param R input matrix
           * @param b_v vector of betas
           */
           template<typename MatrixType, typename VectorType>
@@ -265,18 +265,18 @@ namespace viennacl
                   }
               }
           }
-          
+
           //********************** HELP FUNCTIONS FOR GPU-based QR factorization *************************//
           /* * @brief Reading from text file into string
           * @param file_name file name
           * @param kernel_source string that contains file
-          
+
           void read_kernel_from_file(std::string& file_name, std::string& kernel_source){
               std::ifstream ifs(file_name.c_str(), std::ifstream::in);
-              
+
               if (!ifs)
                 std::cerr << "WARNING: Cannot open file " << file_name << std::endl;
-              
+
               std::string line;
               std::ostringstream ost;
               while (std::getline(ifs, line)) {
@@ -284,7 +284,7 @@ namespace viennacl
               }
               kernel_source = ost.str();
           }*/
-          
+
           /** @brief Getting max size of rows/columns from container of index set
           * @param inds container of index set
           * @param max_size max size that corresponds to that container
@@ -298,8 +298,8 @@ namespace viennacl
                   }
               }
           }
-          
-          /** @brief Dot_prod(column(A, ind), v) starting from index ind+1 
+
+          /** @brief Dot_prod(column(A, ind), v) starting from index ind+1
           * @param A input matrix
           * @param v input vector
           * @param ind index
@@ -316,7 +316,7 @@ namespace viennacl
                   }
               }
           }
-          
+
           /** @brief Recovery Q from matrix R and vector of betas b_v
           * @param R input matrix
           * @param b_v vector of betas
@@ -338,7 +338,7 @@ namespace viennacl
                   }
               }
           }
-          
+
           /** @brief Multiplication of Q'*A, where Q is in implicit for lower part of R and vector of betas - b_v
           * @param R input matrix
           * @param b_v vector of betas
@@ -354,19 +354,19 @@ namespace viennacl
                   column(A,i) = tmp_v;
               }
           }
-          
+
           //parallel QR for GPU
           /** @brief Inplace QR factorization via Householder reflections c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.224 performed on GPU
-          * 
+          *
           * @param g_I container of row indices
           * @param g_J container of column indices
           * @param g_A_I_J_vcl contigious matrices, GPU memory is used
-          * @param g_bv_vcl contigios vectors beta, GPU memory is used 
-          * @param g_is_update container of indicators that show active blocks  
+          * @param g_bv_vcl contigios vectors beta, GPU memory is used
+          * @param g_is_update container of indicators that show active blocks
           */
           template<typename ScalarType>
-          void block_qr(std::vector<std::vector<unsigned int> >& g_I, 
-                        std::vector<std::vector<unsigned int> >& g_J, 
+          void block_qr(std::vector<std::vector<unsigned int> >& g_I,
+                        std::vector<std::vector<unsigned int> >& g_J,
                         block_matrix& g_A_I_J_vcl,
                         block_vector& g_bv_vcl,
                         std::vector<cl_uint>& g_is_update)
@@ -394,21 +394,21 @@ namespace viennacl
               std::vector<ScalarType> v(v_size, static_cast<ScalarType>(0));
               //call qr program
               block_vector v_vcl;
-              
-              g_bv_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,  
-                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size), 
+
+              g_bv_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
                                                                       &(b_v[0]));
-              
-              v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,  
-                                                                                                  static_cast<unsigned int>(sizeof(ScalarType)*v_size), 
+
+              v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                                  static_cast<unsigned int>(sizeof(ScalarType)*v_size),
                                                                                                   &(v[0]));
               //the same as j_start_inds
-              g_bv_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()), 
+              g_bv_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
                                                                                 &(start_bv_inds[0]));
-              
-              v_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, 
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()), 
+
+              v_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
                                                                                 &(start_v_inds[0]));
               viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                                 static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
@@ -418,12 +418,12 @@ namespace viennacl
               viennacl::ocl::kernel& qr_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr");
               qr_kernel.local_work_size(0, local_c_n);
               qr_kernel.global_work_size(0, 256);
-              viennacl::ocl::enqueue(qr_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle1(), g_bv_vcl.handle(), 
-                                              v_vcl.handle(), g_A_I_J_vcl.handle2(), 
+              viennacl::ocl::enqueue(qr_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle1(), g_bv_vcl.handle(),
+                                              v_vcl.handle(), g_A_I_J_vcl.handle2(),
                                               g_bv_vcl.handle1(), v_vcl.handle1(), g_is_update_vcl,
                                               viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
                                               static_cast<cl_uint>(g_I.size())));
-              
+
           }
         }
       }

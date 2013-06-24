@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file  viennacl/linalg/cuda/matrix_operations_prod.hpp
     @brief Dense matrix-matrix product CUDA kernels reside here.
-    
+
     Note: File created semi-automatically from OpenCL kernels.
 */
 
@@ -31,7 +31,7 @@ namespace viennacl
   {
     namespace cuda
     {
-      
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...col_major, B...col_major
       template <typename T>
@@ -46,7 +46,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -64,8 +64,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -133,7 +133,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -151,8 +151,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -220,7 +220,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -238,8 +238,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -307,7 +307,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -325,8 +325,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -380,13 +380,13 @@ namespace viennacl
           C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows];
       }
 
-      
-      
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...col_major, B...col_major
       template <typename T>
@@ -401,7 +401,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -419,8 +419,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -488,7 +488,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -506,8 +506,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -575,7 +575,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -593,8 +593,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -662,7 +662,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -680,8 +680,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -736,13 +736,13 @@ namespace viennacl
       }
 
 
-      
-      
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...col_major, B...row_major
       template <typename T>
@@ -757,7 +757,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -775,8 +775,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -844,7 +844,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -862,8 +862,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -931,7 +931,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -949,8 +949,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1018,7 +1018,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1036,8 +1036,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1091,13 +1091,13 @@ namespace viennacl
           C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows];
       }
 
-      
-      
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...col_major, B...row_major
       template <typename T>
@@ -1112,7 +1112,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1130,8 +1130,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1199,7 +1199,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1217,8 +1217,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1286,7 +1286,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1304,8 +1304,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1373,7 +1373,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1391,8 +1391,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1446,17 +1446,17 @@ namespace viennacl
           C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start];
       }
 
-      
 
-      
-      
+
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
-      
-      
+
+
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...row_major, B...col_major
       template <typename T>
@@ -1471,7 +1471,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1489,8 +1489,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1558,7 +1558,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1576,8 +1576,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1645,7 +1645,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1663,8 +1663,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1732,7 +1732,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1750,8 +1750,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1805,14 +1805,14 @@ namespace viennacl
           C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows];
       }
 
-      
-      
-      
+
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...row_major, B...col_major
       template <typename T>
@@ -1827,7 +1827,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1845,8 +1845,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -1914,7 +1914,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -1932,8 +1932,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2001,7 +2001,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2019,8 +2019,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2088,7 +2088,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2106,8 +2106,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2161,17 +2161,17 @@ namespace viennacl
           C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start];
       }
 
-      
 
-      
-      
+
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
-      
-      
+
+
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...row_major, B...row_major
       template <typename T>
@@ -2186,7 +2186,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2204,8 +2204,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2273,7 +2273,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2291,8 +2291,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2360,7 +2360,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2378,8 +2378,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2447,7 +2447,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2465,8 +2465,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2520,15 +2520,15 @@ namespace viennacl
           C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[(blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start + ((blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start) * C_internal_rows];
       }
 
-      
 
-      
-      
+
+
+
       ////////////////////////////////////////////////////////////////////////////
-      
-      
-      
-      
+
+
+
+
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...row_major, B...row_major
       template <typename T>
@@ -2543,7 +2543,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2561,8 +2561,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2630,7 +2630,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2648,8 +2648,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2717,7 +2717,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2735,8 +2735,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2804,7 +2804,7 @@ namespace viennacl
                 unsigned int A_col_size,
                 unsigned int A_internal_rows,
                 unsigned int A_internal_cols,
-                const T * B,  
+                const T * B,
                 unsigned int B_row_start,
                 unsigned int B_col_start,
                 unsigned int B_row_inc,
@@ -2822,8 +2822,8 @@ namespace viennacl
                 unsigned int C_row_size,
                 unsigned int C_col_size,
                 unsigned int C_internal_rows,
-                unsigned int C_internal_cols) 
-      { 
+                unsigned int C_internal_cols)
+      {
 
         __shared__ T bufA[272];
         __shared__ T bufB[272];
@@ -2876,8 +2876,8 @@ namespace viennacl
         if ((blockIdx.x * blockDim.x + threadIdx.x) < A_col_size && (blockIdx.y * blockDim.y + threadIdx.y) < B_row_size)
           C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[((blockIdx.x * blockDim.x + threadIdx.x) * C_row_inc + C_row_start) * C_internal_cols + (blockIdx.y * blockDim.y + threadIdx.y) * C_col_inc + C_col_start];
       }
-      
-      
+
+
     } // namespace cuda
   } //namespace linalg
 } //namespace viennacl

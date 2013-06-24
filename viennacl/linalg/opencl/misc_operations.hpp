@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -38,10 +38,10 @@ namespace viennacl
   {
     namespace opencl
     {
-      
+
       namespace detail
       {
-        
+
         template <typename ScalarType>
         void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
@@ -52,18 +52,18 @@ namespace viennacl
                                     )
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-  
+
           viennacl::linalg::kernels::ilu<ScalarType, 1>::init(ctx);
           viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::ilu<ScalarType, 1>::program_name(), "level_scheduling_substitute");
-          
+
           viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
-                                   vec, 
+                                   vec,
                                    static_cast<cl_uint>(num_rows)));
         }
-        
+
       } //namespace detail
-      
-      
+
+
     } // namespace opencl
   } //namespace linalg
 } //namespace viennacl

@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -32,7 +32,7 @@ namespace viennacl
       //
       // am
       //
-      
+
       // alpha on CPU
       template <typename T>
       __global__ void am_row_kernel(
@@ -41,14 +41,14 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 T fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2)
-      { 
+      {
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -57,7 +57,7 @@ namespace viennacl
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
             A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
@@ -71,14 +71,14 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 const T * fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2)
-      { 
+      {
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -87,17 +87,17 @@ namespace viennacl
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
             A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
       }
-      
-      
+
+
       //
       // ambm
       //
-      
+
       // alpha and beta on CPU
       template <typename T>
       __global__ void ambm_row_kernel(
@@ -106,21 +106,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 T fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 T fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -132,18 +132,18 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
-      
+
+
       // alpha on CPU, beta on GPU
       template <typename T>
       __global__ void ambm_row_kernel(
@@ -152,21 +152,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 T fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 const T * fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -178,17 +178,17 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
+
       // alpha on GPU, beta on CPU
       template <typename T>
       __global__ void ambm_row_kernel(
@@ -197,21 +197,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 const T * fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 T fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -223,18 +223,18 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
-      
+
+
       // alpha and beta on GPU
       template <typename T>
       __global__ void ambm_row_kernel(
@@ -243,21 +243,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 const T * fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 const T * fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -269,22 +269,22 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
-      
+
+
       //
       // ambm_m
       //
-      
+
       // alpha and beta on CPU
       template <typename T>
       __global__ void ambm_m_row_kernel(
@@ -293,21 +293,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 T fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 T fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -319,18 +319,18 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
            + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
-      
+
+
       // alpha on CPU, beta on GPU
       template <typename T>
       __global__ void ambm_m_row_kernel(
@@ -339,21 +339,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 T fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 const T * fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -365,17 +365,17 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
            + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
+
       // alpha on GPU, beta on CPU
       template <typename T>
       __global__ void ambm_m_row_kernel(
@@ -384,21 +384,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 const T * fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 T fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -410,18 +410,18 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
            + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
-      
+
+
       // alpha and beta on GPU
       template <typename T>
       __global__ void ambm_m_row_kernel(
@@ -430,21 +430,21 @@ namespace viennacl
                 unsigned int A_inc1,   unsigned int A_inc2,
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
-                
+
                 const T * fac2,
                 unsigned int options2,
                 const T * B,
                 unsigned int B_start1, unsigned int B_start2,
                 unsigned int B_inc1,   unsigned int B_inc2,
                 unsigned int B_internal_size1,  unsigned int B_internal_size2,
-                
+
                 const T * fac3,
                 unsigned int options3,
                 const T * C,
                 unsigned int C_start1, unsigned int C_start2,
                 unsigned int C_inc1,   unsigned int C_inc2,
                 unsigned int C_internal_size1,  unsigned int C_internal_size2)
-      { 
+      {
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -456,21 +456,21 @@ namespace viennacl
           beta = -beta;
         if (options3 & (1 << 1))
           beta = ((T)(1)) / beta;
-          
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] 
+            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
           += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
            + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
       }
-      
+
       //
       // assignments
       //
-      
+
       template <typename T>
       __global__ void matrix_row_assign_kernel(
                 T * A,
@@ -479,16 +479,16 @@ namespace viennacl
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
                 T alpha)
-      { 
+      {
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
           for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
             A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = alpha;
       }
-      
-      
+
+
       template <typename T>
       __global__ void matrix_row_diagonal_assign_kernel(
                 T * A,
@@ -497,14 +497,14 @@ namespace viennacl
                 unsigned int A_size1,  unsigned int A_size2,
                 unsigned int A_internal_size1,  unsigned int A_internal_size2,
                 T alpha)
-      { 
+      {
         unsigned int gid = (blockIdx.x * blockDim.x + threadIdx.x);
-        
+
         for (unsigned int row = gid; row < A_size1; row += blockDim.x * gridDim.x)
           A[(row * A_inc1 + A_start1) * A_internal_size2 + row * A_inc2 + A_start2] = alpha;
       }
-      
-      
+
+
       //
       // matrix-vector product
       //
@@ -527,33 +527,33 @@ namespace viennacl
                 T * result,
                 unsigned int result_start,
                 unsigned int result_inc,
-                unsigned int result_size) 
-      { 
+                unsigned int result_size)
+      {
         __shared__ T work[128];
-        
+
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
         unsigned int lid = threadIdx.x;
-        
+
         for (unsigned int row = row_gid; row < A_row_size; row += gridDim.x)
         {
           T dot_prod = 0;
           for (unsigned int col = col_gid; col < A_col_size; col += blockDim.x)
             dot_prod += A[(row * A_row_inc + A_row_start) * A_internal_cols + col * A_col_inc + A_col_start] * v[v_start + v_inc * col];
           work[lid] = dot_prod;
-          
+
           for(unsigned int stride = blockDim.x/2 ; stride>0 ; stride>>=1){
             __syncthreads();
             if(lid < stride)
               work[lid] += work[lid+stride];
           }
-          
+
           if(lid == 0)
             result[row * result_inc + result_start] = work[0];
         }
       }
-      
-      
+
+
       template <typename T>
       __global__ void trans_vec_mul_row_kernel(
                 const T * A,
@@ -572,8 +572,8 @@ namespace viennacl
                 T * result,
                 unsigned int result_start,
                 unsigned int result_inc,
-                unsigned int result_size) 
-      { 
+                unsigned int result_size)
+      {
         for (unsigned int row = blockIdx.x * blockDim.x + threadIdx.x; row < A_col_size; row += gridDim.x * blockDim.x)
         {
           T dot_prod = 0;
@@ -582,19 +582,19 @@ namespace viennacl
           result[row * result_inc + result_start] = dot_prod;
         }
       }
-      
-      
+
+
       //
       // matrix-matrix products
       //
-      
-      
-      
-      
+
+
+
+
       //
       // scaled rank-1-update
       //
-      
+
       // alpha on CPU
       template <typename T>
       __global__ void scaled_rank1_update_row_kernel(
@@ -606,17 +606,17 @@ namespace viennacl
 
                 T val,
                 unsigned int options2,
-                
+
                 const T * vec1,
                 unsigned int start1,
-                unsigned int inc1,          
+                unsigned int inc1,
                 unsigned int size1,
 
                 const T * vec2,
                 unsigned int start2,
-                unsigned int inc2,          
-                unsigned int size2) 
-      { 
+                unsigned int inc2,
+                unsigned int size2)
+      {
         T alpha = val;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -625,7 +625,7 @@ namespace viennacl
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
         {
           T tmp = alpha * vec1[row * inc1 + start1];
@@ -646,17 +646,17 @@ namespace viennacl
 
                 const T * val,
                 unsigned int options2,
-                
+
                 const T * vec1,
                 unsigned int start1,
-                unsigned int inc1,          
+                unsigned int inc1,
                 unsigned int size1,
 
                 const T * vec2,
                 unsigned int start2,
-                unsigned int inc2,          
-                unsigned int size2) 
-      { 
+                unsigned int inc2,
+                unsigned int size2)
+      {
         T alpha = *val;
         if (options2 & (1 << 0))
           alpha = -alpha;
@@ -665,7 +665,7 @@ namespace viennacl
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
-        
+
         for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
         {
           T tmp = alpha * vec1[row * inc1 + start1];
@@ -674,8 +674,8 @@ namespace viennacl
         }
       }
 
-      
-      
+
+
     } // namespace cuda
   } //namespace linalg
 } //namespace viennacl

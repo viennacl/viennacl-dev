@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/bisect.hpp
 *   @brief Implementation of the algorithm for finding eigenvalues of a tridiagonal matrix.
-* 
+*
 *   Contributed by Guenther Mader and Astrid Rupp.
 */
 
@@ -32,37 +32,37 @@
 
 namespace viennacl
 {
-  namespace linalg 
+  namespace linalg
   {
-    
+
     namespace detail
     {
-      /** 
-      *    @brief overloaded function for copying vectors 
+      /**
+      *    @brief overloaded function for copying vectors
       */
       template <typename T, typename OtherVectorType>
       void copy_vec_to_vec(viennacl::vector<T> const & src, OtherVectorType & dest)
       {
-        viennacl::copy(src, dest); 
+        viennacl::copy(src, dest);
       }
 
       template <typename OtherVectorType, typename T>
       void copy_vec_to_vec(OtherVectorType const & src, viennacl::vector<T> & dest)
       {
-        viennacl::copy(src, dest); 
+        viennacl::copy(src, dest);
       }
 
       template <typename VectorType1, typename VectorType2>
       void copy_vec_to_vec(VectorType1 const & src, VectorType2 & dest)
       {
         for (std::size_t i=0; i<src.size(); ++i)
-          dest[i] = src[i]; 
+          dest[i] = src[i];
       }
     }
-    
-    /** 
+
+    /**
     *   @brief Implementation of the bisect-algorithm for the calculation of the eigenvalues of a tridiagonal matrix. Experimental - interface might change.
-    *   
+    *
     *   @param alphas       Elements of the main diagonal
     *   @param betas        Elements of the secondary diagonal
     *   @return             Returns the eigenvalues of the tridiagonal matrix defined by alpha and beta
@@ -70,11 +70,11 @@ namespace viennacl
     template< typename VectorT >
     std::vector<
             typename viennacl::result_of::cpu_value_type<typename VectorT::value_type>::type
-            > 
+            >
     bisect(VectorT const & alphas, VectorT const & betas)
     {
       typedef typename viennacl::result_of::value_type<VectorT>::type           ScalarType;
-      typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;  
+      typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
       std::size_t size = betas.size();
       std::vector<CPU_ScalarType>  x_temp(size);
@@ -85,7 +85,7 @@ namespace viennacl
 
       double rel_error = std::numeric_limits<CPU_ScalarType>::epsilon();
       beta_bisect.push_back(0);
-    
+
       for(std::size_t i = 1; i < size; i++){
               beta_bisect.push_back(betas[i] * betas[i]);
       }
@@ -102,7 +102,7 @@ namespace viennacl
           xmin = alphas[i] - h;
       }
 
-      
+
       double eps1 = 1e-6;
       /*double eps2 = (xmin + xmax > 0) ? (rel_error * xmax) : (-rel_error * xmin);
       if(eps1 <= 0)
@@ -129,7 +129,7 @@ namespace viennacl
             break;
           }
         }
-        
+
         if(x0 > x_temp[k])
           x0 = x_temp[k];
 
@@ -148,7 +148,7 @@ namespace viennacl
             if(q < 0)
               a++;
           }
-          
+
           if (a <= static_cast<std::size_t>(k))
           {
             xu = x1;
@@ -170,7 +170,7 @@ namespace viennacl
       }
       return x_temp;
     }
-    
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif

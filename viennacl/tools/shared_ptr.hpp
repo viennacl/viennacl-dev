@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file tools/shared_ptr.hpp
     @brief Implementation of a shared pointer class (cf. std::shared_ptr, boost::shared_ptr). Will be used until C++11 is widely available.
-    
+
     Contributed by Philippe Tillet.
 */
 
@@ -88,7 +88,7 @@ namespace viennacl
           if(pa)
           {
             pa->count.dec();
-            
+
             if(pa->count.is_null())
             {
                 pa->destroy();

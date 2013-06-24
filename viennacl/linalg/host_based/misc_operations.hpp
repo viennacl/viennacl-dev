@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -48,12 +48,12 @@ namespace viennacl
                                     )
         {
           ScalarType * vec_buf = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(vec.handle());
-          
+
           unsigned int const * elim_row_index  = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(row_index_array);
           unsigned int const * elim_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(row_buffer);
           unsigned int const * elim_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(col_buffer);
           ScalarType   const * elim_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(element_buffer);
-          
+
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
@@ -62,16 +62,16 @@ namespace viennacl
             unsigned int eq_row = elim_row_index[row];
             ScalarType vec_entry = vec_buf[eq_row];
             unsigned int row_end = elim_row_buffer[row+1];
-            
+
             for (std::size_t j = elim_row_buffer[row]; j < row_end; ++j)
               vec_entry -= vec_buf[elim_col_buffer[j]] * elim_elements[j];
-            
+
             vec_buf[eq_row] = vec_entry;
           }
-            
+
         }
       }
-      
+
     } // namespace host_based
   } //namespace linalg
 } //namespace viennacl

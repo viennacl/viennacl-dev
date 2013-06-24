@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -20,7 +20,7 @@
 
 /** @file viennacl/linalg/lanczos.hpp
 *   @brief Generic interface for the Lanczos algorithm.
-* 
+*
 *   Contributed by Guenther Mader and Astrid Rupp.
 */
 
@@ -40,21 +40,21 @@
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/operation.hpp> 
+#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
 namespace viennacl
 {
-  namespace linalg 
+  namespace linalg
   {
-    
-    /** @brief A tag for the lanczos algorithm. 
+
+    /** @brief A tag for the lanczos algorithm.
     */
-    class lanczos_tag 
+    class lanczos_tag
     {
       public:
-        
+
         enum
         {
           partial_reorthogonalization = 0,
@@ -86,36 +86,36 @@ namespace viennacl
 
         /** @brief Returns the exponent */
         double factor() const { return factor_; }
-        
+
         /** @brief Sets the size of the kylov space */
         void krylov_size(int max) { krylov_size_ = max; }
 
-        /** @brief Returns the size of the kylov space */  
+        /** @brief Returns the size of the kylov space */
         std::size_t  krylov_size() const { return krylov_size_; }
 
-        /** @brief Sets the reorthogonalization method */ 
+        /** @brief Sets the reorthogonalization method */
         void method(int met){ method_ = met; }
-        
-        /** @brief Returns the reorthogonalization method */ 
+
+        /** @brief Returns the reorthogonalization method */
         int method() const { return method_; }
 
 
-      private: 
+      private:
         double factor_;
         std::size_t num_eigenvalues_;
         int method_; // see enum defined above for possible values
         std::size_t krylov_size_;
 
     };
-    
-    
+
+
     namespace detail
     {
-      /** 
+      /**
       *   @brief Implementation of the Lanczos PRO algorithm
-      *   
+      *
       *   @param A            The system matrix
-      *   @param r            Random start vector 
+      *   @param r            Random start vector
       *   @param size         Size of krylov-space
       *   @param tag          Lanczos_tag with several options for the algorithm
       *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
@@ -127,11 +127,11 @@ namespace viennacl
               >
       lanczosPRO (MatrixT const& A, VectorT & r, int size, lanczos_tag const & tag)
       {
-    
+
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-        
+
         // generation of some random numbers, used for lanczos PRO algorithm
         boost::mt11213b mt;
         boost::normal_distribution<double> N(0, 1);
@@ -142,7 +142,7 @@ namespace viennacl
         boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<double> >  get_B(mt, B);
         boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<double> >   get_T(mt, T);
 
-        
+
         long i, j, k, index, retry, reorths;
         std::vector<long> l_bound(size/2), u_bound(size/2);
         bool second_step;
@@ -167,20 +167,20 @@ namespace viennacl
         eta = std::exp(std::log(eps) * tag.factor());
         reorths = 0;
         retry = 0;
-        
+
         vcl_beta = viennacl::linalg::norm_2(r);
-        
+
         r /= vcl_beta;
-        
+
         detail::copy_vec_to_vec(r,s);
         boost::numeric::ublas::column(Q, 0) = s;
-        
+
         VectorT u = viennacl::linalg::prod(A, r);
         vcl_alpha = viennacl::linalg::inner_prod(u, r);
         alphas.push_back(vcl_alpha);
         w[0][0] = 1;
         betas.push_back(vcl_beta);
-        
+
         long batches = 0;
         for(i = 1;i < size; i++)
         {
@@ -194,10 +194,10 @@ namespace viennacl
           w[index][i] = 1;
           k = (i + 1) % 2;
           w[index][0] = (betas[1] * w[k][1] + (alphas[0] - vcl_alpha) * w[k][0] - betas[i - 1] * w[index][0]) / vcl_beta + eps * 0.3 * get_N() * (betas[1] + vcl_beta);
-          
+
           for(j = 1;j < i - 1;j++)
           {
-                  w[index][j] = (betas[j + 1] * w[k][j + 1] + (alphas[j] - vcl_alpha) * w[k][j] + betas[j] * w[k][j - 1] - betas[i - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);      
+                  w[index][j] = (betas[j + 1] * w[k][j + 1] + (alphas[j] - vcl_alpha) * w[k][j] + betas[j] * w[k][j - 1] - betas[i - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
           }
           w[index][i - 1] = 0.6 * eps * n * get_N() * betas[1] / vcl_beta;
 
@@ -212,7 +212,7 @@ namespace viennacl
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
-                r = r - inner_rt * t;   
+                r = r - inner_rt * t;
                 w[index][k] = 1.5 * eps * get_N();
                 reorths++;
               }
@@ -225,7 +225,7 @@ namespace viennacl
           batches = 0;
 
           for(j = 0;j < i;j++)
-          { 
+          {
             if(std::fabs(w[index][j]) >= squ_eps)
             {
               detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, j), t);
@@ -245,12 +245,12 @@ namespace viennacl
               }
               l_bound[batches] = k + 1;
               k = j + 1;
-              
+
               while(k < i && std::fabs(w[index][k]) > eta)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
-                r = r - inner_rt * t;   
+                r = r - inner_rt * t;
                 w[index][k] = 1.5 * eps * get_N();
                 k++;
                 reorths++;
@@ -260,7 +260,7 @@ namespace viennacl
               j = k;
             }
           }
-          
+
           if(batches > 0)
           {
             temp = viennacl::linalg::norm_2(r);
@@ -283,7 +283,7 @@ namespace viennacl
               vcl_beta = vcl_beta * temp;
             }
           }
-      
+
           detail::copy_vec_to_vec(r,s);
           boost::numeric::ublas::column(Q, i) = s;
 
@@ -296,15 +296,15 @@ namespace viennacl
         }
 
         return bisect(alphas, betas);
-      
+
       }
 
 
-      /** 
+      /**
       *   @brief Implementation of the lanczos algorithm without reorthogonalization
-      * 
+      *
       *   @param A            The system matrix
-      *   @param r            Random start vector 
+      *   @param r            Random start vector
       *   @param size         Size of krylov-space
       *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
       */
@@ -314,7 +314,7 @@ namespace viennacl
               >
       lanczos (MatrixT const& A, VectorT & r, int size, lanczos_tag)
       {
-      
+
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
@@ -331,7 +331,7 @@ namespace viennacl
         u_zero = boost::numeric::ublas::zero_vector<CPU_ScalarType>(n);
         detail::copy_vec_to_vec(u_zero, u);
         norm = norm_2(r);
-        
+
         for(i = 0;i < size; i++)
         {
           r /= norm;
@@ -357,11 +357,11 @@ namespace viennacl
         return bisect(alphas, betas);
       }
 
-      /** 
+      /**
       *   @brief Implementation of the Lanczos FRO algorithm
-      *   
-      *   @param A            The system matrix 
-      *   @param r            Random start vector 
+      *
+      *   @param A            The system matrix
+      *   @param r            Random start vector
       *   @param size         Size of krylov-space
       *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
       */
@@ -371,10 +371,10 @@ namespace viennacl
               >
       lanczosFRO (MatrixT const& A, VectorT & r, int size, lanczos_tag)
       {
-        
+
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-        
+
           CPU_ScalarType temp;
           CPU_ScalarType norm;
           ScalarType vcl_beta;
@@ -385,7 +385,7 @@ namespace viennacl
           ScalarType inner_rt;
           boost::numeric::ublas::vector<CPU_ScalarType> u_zero(n), s(r.size()), q(n);
           boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
-          
+
           long reorths = 0;
           norm = norm_2(r);
 
@@ -418,15 +418,15 @@ namespace viennacl
             alphas.push_back(vcl_alpha);
             betas.push_back(vcl_beta);
           }
-          
+
           return bisect(alphas, betas);
       }
 
-    } // end namespace detail    
+    } // end namespace detail
 
-    /** 
+    /**
     *   @brief Implementation of the calculation of eigenvalues using lanczos
-    *   
+    *
     *   @param matrix        The system matrix
     *   @param tag           Tag with several options for the lanczos algorithm
     *   @return              Returns the n largest eigenvalues (n defined in the lanczos_tag)
@@ -438,7 +438,7 @@ namespace viennacl
       typedef typename viennacl::result_of::value_type<MatrixT>::type           ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       typedef typename viennacl::result_of::vector_for_matrix<MatrixT>::type    VectorT;
-    
+
       boost::mt11213b mt;
       boost::normal_distribution<double> N(0, 1);
       boost::bernoulli_distribution<double> B(0.5);
@@ -447,20 +447,20 @@ namespace viennacl
       boost::variate_generator<boost::mt11213b&, boost::normal_distribution<double> >     get_N(mt, N);
       boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<double> >  get_B(mt, B);
       boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<double> >   get_T(mt, T);
-      
+
       std::vector<CPU_ScalarType> eigenvalues;
       std::size_t matrix_size = matrix.size1();
       VectorT r(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
-      
+
       for(std::size_t i=0; i<s.size(); ++i)
-        s[i] = 3.0 * get_B() + get_T() - 1.5; 
+        s[i] = 3.0 * get_B() + get_T() - 1.5;
 
       detail::copy_vec_to_vec(s,r);
 
       std::size_t size_krylov = (matrix_size < tag.krylov_size()) ? matrix_size
                                                                   : tag.krylov_size();
-      
+
       switch(tag.method())
       {
         case lanczos_tag::partial_reorthogonalization:
@@ -471,21 +471,21 @@ namespace viennacl
           break;
         case lanczos_tag::no_reorthogonalization:
           eigenvalues = detail::lanczos(matrix, r, size_krylov, tag);
-          break;                
+          break;
       }
 
       std::vector<CPU_ScalarType> largest_eigenvalues;
 
       for(std::size_t i = 1; i<=tag.num_eigenvalues(); i++)
         largest_eigenvalues.push_back(eigenvalues[size_krylov-i]);
-    
-    
+
+
       return largest_eigenvalues;
     }
-    
-    
 
-    
+
+
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif

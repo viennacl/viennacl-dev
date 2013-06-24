@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -21,7 +21,7 @@
 
 /** @file viennacl/linalg/detail/spai/spai_tag.hpp
     @brief Implementation of the spai tag holding SPAI configuration parameters. Experimental.
-    
+
     SPAI code contributed by Nikolay Lukash
 */
 
@@ -55,7 +55,7 @@ namespace viennacl
       {
         namespace spai
         {
-        
+
           /** @brief A tag for SPAI
           * Contains values for the algorithm.
           * Must be passed to spai_precond constructor
@@ -81,57 +81,57 @@ namespace viennacl
               residual_threshold_(residual_threshold),
               is_static_(is_static),
               is_right_(is_right) {};
-              
+
               double getResidualNormThreshold() const
               { return residual_norm_threshold_; }
-              
+
               double getResidualThreshold() const
               { return residual_threshold_; }
-              
+
               unsigned int getIterationLimit () const
               { return iteration_limit_; }
-              
+
               bool getIsStatic() const
               { return is_static_; }
-              
+
               bool getIsRight() const
               { return is_right_; }
-              
+
               long getBegInd() const
               { return beg_ind_; }
-              
-              long getEndInd() const 
+
+              long getEndInd() const
               { return end_ind_; }
-              
-              
-              
+
+
+
               void setResidualNormThreshold(double residual_norm_threshold)
               {
                   if(residual_norm_threshold > 0)
                       residual_norm_threshold_ = residual_norm_threshold;
               }
-              
+
               void setResidualThreshold(double residual_threshold)
               {
                   if(residual_threshold > 0)
                       residual_threshold_ = residual_threshold;
               }
-              
+
               void setIterationLimit(unsigned int iteration_limit)
               {
                   if(iteration_limit > 0)
                       iteration_limit_ = iteration_limit;
               }
-              
+
               void setIsRight(bool is_right) { is_right_ = is_right; }
-              
+
               void setIsStatic(bool is_static) { is_static_ = is_static; }
-              
+
               void setBegInd(long beg_ind) { beg_ind_ = beg_ind; }
-              
+
               void setEndInd(long end_ind){ end_ind_ = end_ind; }
-              
-              
+
+
             private:
               double residual_norm_threshold_;
               unsigned int iteration_limit_;
@@ -140,7 +140,7 @@ namespace viennacl
               bool is_static_;
               bool is_right_;
           };
-        
+
         }
       }
     }
