@@ -16,9 +16,9 @@
 ============================================================================= */
 
 /*
-* 
+*
 *   Benchmark: BLAS level 3 functionality for dense matrices (blas3.cpp and blas3.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 //disable debug mechanisms to have a fair benchmark environment

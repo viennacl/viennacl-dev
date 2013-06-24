@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Explains the use of vector ranges with simple BLAS level 1 and 2 operations.
 *             (vector-range.cpp and vector-range.cu are identical, the latter being required for compilation using CUDA nvcc)
 *
@@ -51,25 +51,25 @@ int main (int, const char **)
 {
   typedef float                                           ScalarType;    //feel free to change this to 'double' if supported by your hardware
   typedef boost::numeric::ublas::vector<ScalarType>       VectorType;
-  
+
   typedef viennacl::vector<ScalarType>                    VCLVectorType;
-  
+
   std::size_t dim_large = 7;
   std::size_t dim_small = 3;
-  
+
   //
   // Setup ublas objects and fill with data:
   //
   VectorType ublas_v1(dim_large);
   VectorType ublas_v2(dim_small);
-  
+
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
     ublas_v1(i) = ScalarType(i+1);
 
   for (std::size_t i=0; i<ublas_v2.size(); ++i)
     ublas_v2(i) = ScalarType(dim_large + i);
-    
-  
+
+
   //
   // Extract submatrices using the ranges in ublas
   //
@@ -79,18 +79,18 @@ int main (int, const char **)
   boost::numeric::ublas::vector_range<VectorType> ublas_v1_sub1(ublas_v1, ublas_r1); // front part of vector v_1
   boost::numeric::ublas::vector_range<VectorType> ublas_v1_sub2(ublas_v1, ublas_r2); // center part of vector v_1
   boost::numeric::ublas::vector_range<VectorType> ublas_v1_sub3(ublas_v1, ublas_r3); // tail of vector v_1
-  
+
 
   //
   // Setup ViennaCL objects
   //
   VCLVectorType vcl_v1(dim_large);
   VCLVectorType vcl_v2(dim_small);
-  
+
   viennacl::copy(ublas_v1, vcl_v1);
   viennacl::copy(ublas_v2, vcl_v2);
-    
-  
+
+
   //
   // Extract submatrices using the ranges in ViennaCL
   //
@@ -101,19 +101,19 @@ int main (int, const char **)
   viennacl::vector_range<VCLVectorType>   vcl_v1_sub2(vcl_v1, vcl_r2); // center part of vector v_1
   viennacl::vector_range<VCLVectorType>   vcl_v1_sub3(vcl_v1, vcl_r3); // tail of vector v_1
 
-  
+
   //
   // Copy from ublas to submatrices and back:
   //
-  
+
   ublas_v1_sub1 = ublas_v2;
   viennacl::copy(ublas_v2, vcl_v1_sub1);
-  viennacl::copy(vcl_v1_sub1, ublas_v2);  
-  
+  viennacl::copy(vcl_v1_sub1, ublas_v2);
+
   //
   // Addition:
   //
-  
+
   ublas_v1_sub1 += ublas_v1_sub1;
   vcl_v1_sub1 += vcl_v1_sub1;
 
@@ -122,7 +122,7 @@ int main (int, const char **)
 
   ublas_v1_sub3 += ublas_v1_sub3;
   vcl_v1_sub3 += vcl_v1_sub3;
-  
+
   //
   // print vectors:
   //

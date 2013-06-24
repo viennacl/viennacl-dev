@@ -55,7 +55,7 @@ if (ENABLE_OPENCL)
     target_link_libraries(${tut} ${OPENCL_LIBRARIES})
     set_target_properties(${tut} PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach()
-  
+
   if(ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
     foreach(tut amg iterative spai structured-matrices)
@@ -71,7 +71,7 @@ endif (ENABLE_OPENCL)
 
 #
 # Part 3: Tutorials with CUDA support
-# 
+#
 
 if (ENABLE_CUDA)
   foreach(tut blas1)

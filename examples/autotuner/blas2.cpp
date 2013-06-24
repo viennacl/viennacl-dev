@@ -73,16 +73,16 @@ int main(){
     platforms_type platforms = viennacl::ocl::get_platforms();
     size_t num_platforms = platforms.size();
     for(unsigned int k=0 ; k < num_platforms ; ++k)
-	{
-		viennacl::ocl::platform pf(k);
-		viennacl::ocl::set_context_platform_index(k,k);
-		viennacl::ocl::switch_context(k);
-		devices_type dev = viennacl::ocl::current_context().devices();
-		for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
-			viennacl::ocl::switch_device(*it);
+  {
+    viennacl::ocl::platform pf(k);
+    viennacl::ocl::set_context_platform_index(k,k);
+    viennacl::ocl::switch_context(k);
+    devices_type dev = viennacl::ocl::current_context().devices();
+    for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+      viennacl::ocl::switch_device(*it);
             std::cout << "-------------------" << std::endl;
             std::cout << it->name()<< std::endl;
-			std::cout << "-------------------" << std::endl;
+      std::cout << "-------------------" << std::endl;
 
             std::cout << "scalartype : float" << std::endl;
             std::cout << "-- Layout : row-major" << std::endl;
@@ -95,8 +95,8 @@ int main(){
             autotune<double, viennacl::row_major, boost::numeric::ublas::row_major>();
             std::cout << "-- Layout : column-major" << std::endl;
             autotune<double, viennacl::column_major, boost::numeric::ublas::column_major>();
-		}
-	}
-	
-	
+    }
+  }
+
+
 }

@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Explains the use of matrix ranges with simple BLAS level 1 and 2 operations.
 *             (matrix-range.cpp and matrix-range.cu are identical, the latter being required for compilation using CUDA nvcc)
 */
@@ -51,12 +51,12 @@ int main (int, const char **)
 {
   typedef float                                           ScalarType;    //feel free to change this to 'double' if supported by your hardware
   typedef boost::numeric::ublas::matrix<ScalarType>       MatrixType;
-  
+
   typedef viennacl::matrix<ScalarType, viennacl::row_major>    VCLMatrixType;
-  
+
   std::size_t dim_large = 5;
   std::size_t dim_small = 3;
-  
+
   //
   // Setup ublas objects and fill with data:
   //
@@ -64,8 +64,8 @@ int main (int, const char **)
   MatrixType ublas_B(dim_small, dim_small);
   MatrixType ublas_C(dim_large, dim_small);
   MatrixType ublas_D(dim_small, dim_large);
-  
-  
+
+
   for (std::size_t i=0; i<ublas_A.size1(); ++i)
     for (std::size_t j=0; j<ublas_A.size2(); ++j)
       ublas_A(i,j) = static_cast<ScalarType>((i+1) + (j+1)*(i+1));
@@ -81,7 +81,7 @@ int main (int, const char **)
   for (std::size_t i=0; i<ublas_D.size1(); ++i)
     for (std::size_t j=0; j<ublas_D.size2(); ++j)
       ublas_D(i,j) = static_cast<ScalarType>((j+2) + (j+1)*(i+1));
-  
+
   //
   // Extract submatrices using the ranges in ublas
   //
@@ -100,12 +100,12 @@ int main (int, const char **)
   VCLMatrixType vcl_B(dim_small, dim_small);
   VCLMatrixType vcl_C(dim_large, dim_small);
   VCLMatrixType vcl_D(dim_small, dim_large);
-  
+
   viennacl::copy(ublas_A, vcl_A);
   viennacl::copy(ublas_B, vcl_B);
   viennacl::copy(ublas_C, vcl_C);
   viennacl::copy(ublas_D, vcl_D);
-  
+
   //
   // Extract submatrices using the ranges in ViennaCL
   //
@@ -113,22 +113,22 @@ int main (int, const char **)
   viennacl::range vcl_r2(dim_large - dim_small, dim_large); //the last 'dim_small' entries
   viennacl::matrix_range<VCLMatrixType>   vcl_A_sub1(vcl_A, vcl_r1, vcl_r1); //upper left part of A
   viennacl::matrix_range<VCLMatrixType>   vcl_A_sub2(vcl_A, vcl_r2, vcl_r2); //lower right part of A
-  
+
   viennacl::matrix_range<VCLMatrixType>   vcl_C_sub(vcl_C, vcl_r1, vcl_r1); //upper left part of C
   viennacl::matrix_range<VCLMatrixType>   vcl_D_sub(vcl_D, vcl_r1, vcl_r1); //upper left part of D
 
   //
   // Copy from ublas to submatrices and back:
   //
-  
+
   ublas_A_sub1 = ublas_B;
   viennacl::copy(ublas_B, vcl_A_sub1);
   viennacl::copy(vcl_A_sub1, ublas_B);
-  
+
   //
   // Addition:
   //
-  
+
   // range to range:
   ublas_A_sub2 += ublas_A_sub2;
   vcl_A_sub2 += vcl_A_sub2;
@@ -137,7 +137,7 @@ int main (int, const char **)
   ublas_B += ublas_A_sub2;
   vcl_B += vcl_A_sub2;
 
-  
+
   //
   // use matrix range with matrix-matrix product:
   //
@@ -149,7 +149,7 @@ int main (int, const char **)
   //
   std::cout << "Result ublas:    " << ublas_A << std::endl;
   std::cout << "Result ViennaCL: " << vcl_A << std::endl;
-  
+
   //
   //  That's it.
   //

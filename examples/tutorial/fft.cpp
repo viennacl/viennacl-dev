@@ -10,7 +10,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -37,15 +37,15 @@
 // include FFT routines
 #include "viennacl/fft.hpp"
 
-int main() 
+int main()
 {
   // Change this type definition to double if your gpu supports that
   typedef float       ScalarType;
-  
+
   // Create vectors of eight complex values (represented as pairs of floating point values: [real_0, imag_0, real_1, imag_1, etc.])
-  viennacl::vector<ScalarType> input_vec(16);  
-  viennacl::vector<ScalarType> output_vec(16); 
-  
+  viennacl::vector<ScalarType> input_vec(16);
+  viennacl::vector<ScalarType> output_vec(16);
+
   // Fill with values (use viennacl::copy() for larger data!)
   for (std::size_t i=0; i<input_vec.size(); ++i)
   {
@@ -54,28 +54,28 @@ int main()
     else
       input_vec(i) = 0;                // odd indices represent imaginary part
   }
-  
+
   // Print the vector
   std::cout << "input_vec: " << input_vec << std::endl;
-  
+
   // Compute FFT and store result in 'output_vec'
   std::cout << "Computing FFT..." << std::endl;
   viennacl::fft(input_vec, output_vec);
-  
+
   // Compute FFT and store result directly in 'input_vec'
   viennacl::inplace_fft(input_vec);
-  
+
   // Print result
   std::cout << "input_vec: " << input_vec << std::endl;
   std::cout << "output_vec: " << output_vec << std::endl;
 
   std::cout << "Computing inverse FFT..." << std::endl;
   viennacl::ifft(input_vec, output_vec); // either store result into output_vec
-  viennacl::inplace_ifft(input_vec);     // or compute in-place  
-  
+  viennacl::inplace_ifft(input_vec);     // or compute in-place
+
   std::cout << "input_vec: " << input_vec << std::endl;
   std::cout << "output_vec: " << output_vec << std::endl;
-  
+
   //
   //  That's it.
   //

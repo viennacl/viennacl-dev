@@ -9,7 +9,7 @@ if (ENABLE_UBLAS)
       add_executable(${bench}bench-cpu ${bench}.cpp)
     endforeach()
 endif (ENABLE_UBLAS)
-  
+
 
 # Targets using OpenCL
 if (ENABLE_OPENCL)
@@ -19,7 +19,7 @@ if (ENABLE_OPENCL)
     target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
     set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach()
-  
+
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver vector)
@@ -28,23 +28,23 @@ if (ENABLE_OPENCL)
        set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
      endforeach()
   endif (ENABLE_UBLAS)
-  
+
 endif (ENABLE_OPENCL)
 
 # Targets using CUDA
 if (ENABLE_CUDA)
-  
+
   foreach(bench blas3)
      cuda_add_executable(${bench}bench-cuda ${bench}.cu)
   endforeach()
-  
+
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver vector)
        cuda_add_executable(${bench}bench-cuda ${bench}.cu)
      endforeach()
   endif (ENABLE_UBLAS)
-  
+
 endif (ENABLE_CUDA)
 
 

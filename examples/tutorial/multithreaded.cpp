@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Using ViennaCL with multiple threads, one thread per GPU
 *
 */
@@ -74,7 +74,7 @@ int main()
 
   //
   // Part 1: Setup first device for first context, second device for second context:
-  //  
+  //
   viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
   std::vector<viennacl::ocl::device> const & devices = pf.devices();
 
@@ -90,18 +90,18 @@ int main()
   //
   // Part 2: Now let two threads operate on two GPUs in parallel
   //
-  
+
   std::string message0;
   std::string message1;
   boost::thread worker_0(thread_func<ScalarType>, &message0, 0);
   boost::thread worker_1(thread_func<ScalarType>, &message1, 1);
-  
+
   worker_0.join();
   worker_1.join();
 
   std::cout << message0 << std::endl;
   std::cout << message1 << std::endl;
-  
+
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

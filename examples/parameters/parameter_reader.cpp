@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -43,13 +43,13 @@ int main(int, char **)
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
-  
+
   std::cout << viennacl::ocl::current_device().info() << std::endl;
 
   viennacl::io::read_kernel_parameters< viennacl::vector<float> >("vector_parameters.xml");
   viennacl::io::read_kernel_parameters< viennacl::matrix<float> >("matrix_parameters.xml");
   viennacl::io::read_kernel_parameters< viennacl::compressed_matrix<float> >("sparse_parameters.xml");
-  // -----------------------------------------  
+  // -----------------------------------------
 
   //check:
   std::cout << "vector add:" << std::endl;
@@ -59,12 +59,12 @@ int main(int, char **)
   std::cout << "matrix vec_mul:" << std::endl;
   std::cout << viennacl::ocl::get_kernel("f_matrix_row_1", "vec_mul").local_work_size() << std::endl;
   std::cout << viennacl::ocl::get_kernel("f_matrix_row_1", "vec_mul").global_work_size() << std::endl;
-  
+
   std::cout << "compressed_matrix vec_mul:" << std::endl;
   std::cout << viennacl::ocl::get_kernel("f_compressed_matrix_1", "vec_mul").local_work_size() << std::endl;
   std::cout << viennacl::ocl::get_kernel("f_compressed_matrix_1", "vec_mul").global_work_size() << std::endl;
 
- 
+
   return 0;
 }
 

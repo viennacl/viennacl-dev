@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -18,7 +18,7 @@
 /*
 *
 *   Tutorial:  Use of the iterative solvers in ViennaCL with Boost.uBLAS
-*   
+*
 */
 
 //
@@ -68,7 +68,7 @@ using namespace boost::numeric;
 int main()
 {
   typedef float       ScalarType;
-  
+
   //
   // Set up some ublas objects
   //
@@ -77,7 +77,7 @@ int main()
   ublas::vector<ScalarType> ref_result;
   ublas::vector<ScalarType> result;
   ublas::compressed_matrix<ScalarType> ublas_matrix;
-  
+
   //
   // Read system from file
   //
@@ -102,15 +102,15 @@ int main()
   }
   //std::cout << "done reading result" << std::endl;
 
-  
+
   //
   // set up ILUT preconditioners for ViennaCL and ublas objects. Other preconditioners can also be used (see manual)
-  // 
+  //
   viennacl::linalg::ilut_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilut(ublas_matrix, viennacl::linalg::ilut_tag());
   viennacl::linalg::ilu0_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
   viennacl::linalg::block_ilu_precond< ublas::compressed_matrix<ScalarType>,
                                        viennacl::linalg::ilu0_tag>          ublas_block_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
-  
+
   //
   // Conjugate gradient solver:
   //
@@ -124,7 +124,7 @@ int main()
   std::cout << "Residual norm: " << norm_2(prod(ublas_matrix, result) - rhs) << std::endl;
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::cg_tag(1e-6, 20), ublas_block_ilu0);
   std::cout << "Residual norm: " << norm_2(prod(ublas_matrix, result) - rhs) << std::endl;
-  
+
   //
   // Stabilized BiConjugate gradient solver:
   //
@@ -133,7 +133,7 @@ int main()
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag());          //without preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_ilut); //with preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_ilu0); //with preconditioner
-  
+
   //
   // GMRES solver:
   //
@@ -147,10 +147,10 @@ int main()
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::gmres_tag(1e-6, 20), ublas_ilu0);//with preconditioner
 
   //
-  //  That's it. 
+  //  That's it.
   //
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
-  
+
   return 0;
 }
 

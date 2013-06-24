@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Calculation of eigenvalues using Lanczos' method (lanczos.cpp and lanczos.cu are identical, the latter being required for compilation using CUDA nvcc)
 *
 */
@@ -49,7 +49,7 @@
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/operation.hpp> 
+#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/vector_expression.hpp>
 
 
@@ -60,9 +60,9 @@ std::vector<double> initEig(MatrixType const & A)
   viennacl::linalg::lanczos_tag ltag(0.75, 10, viennacl::linalg::lanczos_tag::partial_reorthogonalization, 1700);
   std::vector<double> lanczos_eigenvalues = viennacl::linalg::eig(A, ltag);
   for(std::size_t i = 0; i< lanczos_eigenvalues.size(); i++){
-          std::cout << "Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl; 
+          std::cout << "Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl;
   }
-  
+
   return lanczos_eigenvalues;
 }
 
@@ -70,7 +70,7 @@ std::vector<double> initEig(MatrixType const & A)
 int main()
 {
   typedef double     ScalarType;
-  
+
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_A;
 
   if (!viennacl::io::read_matrix_market_file(ublas_A, "../examples/testdata/mat65k.mtx"))
@@ -78,7 +78,7 @@ int main()
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
-  
+
   std::cout << "Running Lanczos algorithm (this might take a while)..." << std::endl;
   std::vector<double> eigenvalues = initEig(ublas_A);
 }

@@ -9,16 +9,16 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: BLAS level 3 functionality (blas3.cpp and blas3.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 //disable debug mechanisms to have a fair comparison with ublas:
@@ -72,7 +72,7 @@ using namespace boost::numeric;
     std::size_t size() const { return 1; }
   };
 #endif
-    
+
 
 int main()
 {
@@ -121,11 +121,11 @@ int main()
   viennacl::matrix<ScalarType> vcl_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType, viennacl::column_major> vcl_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
-  
+
   /////////////////////////////////////////////////
   //////////// Matrix-matrix products /////////////
   /////////////////////////////////////////////////
-  
+
   //
   // Compute reference product using ublas:
   //
@@ -134,7 +134,7 @@ int main()
   ublas_C = ublas::prod(ublas_A, ublas_B);
   exec_time = timer.get();
   std::cout << " - Execution time: " << exec_time << std::endl;
-  
+
   //
   // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
   //
@@ -144,7 +144,7 @@ int main()
 #else
   dummy devices;
 #endif
-  
+
   for (std::size_t i=0; i<devices.size(); ++i)
   {
 #ifdef VIENNACL_WITH_OPENCL
@@ -167,7 +167,7 @@ int main()
     viennacl::backend::finish();
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
-    
+
     //
     // Verify the result
     //
@@ -196,11 +196,11 @@ int main()
       std::cout << "[OK]" << std::endl << std::endl;
     else
       std::cout << "[FAILED]" << std::endl << std::endl;
-      
+
   }
 
   //
-  //  That's it. 
+  //  That's it.
   //
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
   return EXIT_SUCCESS;

@@ -9,16 +9,16 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Benchmark: BLAS level 3 functionality for dense matrices (blas3.cpp and blas3.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 //disable debug mechanisms to have a fair benchmark environment
@@ -86,19 +86,19 @@ int run_benchmark()
   viennacl::matrix<ScalarType> vcl_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
-  
-  
+
+
   /////////////////////////////////////////////////
   //////////// Matrix-matrix products /////////////
   /////////////////////////////////////////////////
-  
+
   //
   // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
   //
-  
+
   std::cout << " ------ Benchmark 1: Matrix-Matrix product ------ " << std::endl;
-  
-  
+
+
 #ifdef VIENNACL_WITH_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
 #else
@@ -137,7 +137,7 @@ int run_benchmark()
     viennacl::ocl::current_context().switch_device(devices[i]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
-    
+
     viennacl::fast_copy(&(stl_A[0]),
                         &(stl_A[0]) + stl_A.size(),
                         vcl_A);
@@ -182,7 +182,7 @@ int run_benchmark()
     std::cout << std::endl;
   }
 
-  
+
   std::cout << " ------ Benchmark 4: LU factorization ------ " << std::endl;
 
   for (std::size_t i=0; i<devices.size(); ++i)
@@ -205,7 +205,7 @@ int run_benchmark()
     std::cout << " - GFLOPs (counting multiply&add as separate operations): " << 2.0 * (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_A.size2() / 1000.0) / exec_time << std::endl;
     std::cout << std::endl;
   }
-  
+
   return EXIT_SUCCESS;
 }
 
@@ -215,12 +215,12 @@ int main()
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
-  
+
 #ifdef VIENNACL_WITH_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
-#endif  
-  
-  
+#endif
+
+
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;

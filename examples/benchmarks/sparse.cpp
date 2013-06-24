@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -18,7 +18,7 @@
 
 /*
 *   Benchmark:  Sparse matrix operations, i.e. matrix-vector products (sparse.cpp and sparse.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 //#define VIENNACL_BUILD_INFO
@@ -56,17 +56,17 @@
 
 template<typename ScalarType>
 int run_benchmark()
-{   
+{
    Timer timer;
    double exec_time;
-   
+
    //ScalarType std_result = 0;
-   
+
   ScalarType std_factor1 = ScalarType(3.1415);
   ScalarType std_factor2 = ScalarType(42.0);
   viennacl::scalar<ScalarType> vcl_factor1(std_factor1);
   viennacl::scalar<ScalarType> vcl_factor2(std_factor2);
-  
+
   boost::numeric::ublas::vector<ScalarType> ublas_vec1;
   boost::numeric::ublas::vector<ScalarType> ublas_vec2;
 
@@ -77,11 +77,11 @@ int run_benchmark()
   }
   std::cout << "done reading rhs" << std::endl;
   ublas_vec2 = ublas_vec1;
-  
+
   viennacl::compressed_matrix<ScalarType, 1> vcl_compressed_matrix_1;
   viennacl::compressed_matrix<ScalarType, 4> vcl_compressed_matrix_4;
   viennacl::compressed_matrix<ScalarType, 8> vcl_compressed_matrix_8;
-  
+
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix_128;
 
   viennacl::ell_matrix<ScalarType, 1> vcl_ell_matrix_1;
@@ -93,13 +93,13 @@ int run_benchmark()
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
-  //unsigned int cg_mat_size = cg_mat.size(); 
+  //unsigned int cg_mat_size = cg_mat.size();
   std::cout << "done reading matrix" << std::endl;
-  
+
   viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size());
-  viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size()); 
-  viennacl::vector<ScalarType> vcl_vec3(ublas_vec1.size()); 
-  
+  viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size());
+  viennacl::vector<ScalarType> vcl_vec3(ublas_vec1.size());
+
   //cpu to gpu:
   viennacl::copy(ublas_matrix, vcl_compressed_matrix_1);
   #ifndef VIENNACL_EXPERIMENTAL_DOUBLE_PRECISION_WITH_STREAM_SDK_ON_GPU
@@ -112,9 +112,9 @@ int run_benchmark()
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::copy(ublas_vec2, vcl_vec2);
 
-  
+
   ///////////// Matrix operations /////////////////
-  
+
   std::cout << "------- Matrix-Vector product on CPU ----------" << std::endl;
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -126,16 +126,16 @@ int run_benchmark()
   std::cout << "CPU time: " << exec_time << std::endl;
   std::cout << "CPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << ublas_vec1[0] << std::endl;
-  
-  
+
+
   std::cout << "------- Matrix-Vector product with compressed_matrix ----------" << std::endl;
-  
-  
+
+
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_1, vcl_vec2); //startup calculation
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_4, vcl_vec2); //startup calculation
   vcl_vec1 = viennacl::linalg::prod(vcl_compressed_matrix_8, vcl_vec2); //startup calculation
   //std_result = 0.0;
-  
+
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -149,7 +149,7 @@ int run_benchmark()
   std::cout << vcl_vec1[0] << std::endl;
 
   std::cout << "Testing triangular solves: compressed_matrix" << std::endl;
-  
+
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
   viennacl::copy(ublas_vec1, vcl_vec1);
@@ -163,9 +163,9 @@ int run_benchmark()
   viennacl::linalg::inplace_solve(trans(vcl_compressed_matrix_1), vcl_vec1, viennacl::linalg::unit_lower_tag());
   viennacl::backend::finish();
   std::cout << "Time elapsed: " << timer.get() << std::endl;
-  
+
   ublas_vec1 = boost::numeric::ublas::prod(ublas_matrix, ublas_vec2);
-  
+
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -189,13 +189,13 @@ int run_benchmark()
   std::cout << "GPU time align8: " << exec_time << std::endl;
   std::cout << "GPU align8 "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
-  
-  
+
+
   std::cout << "------- Matrix-Vector product with coordinate_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_coordinate_matrix_128, vcl_vec2); //startup calculation
   viennacl::backend::finish();
-  
-  viennacl::copy(vcl_vec1, ublas_vec2);  
+
+  viennacl::copy(vcl_vec1, ublas_vec2);
   long err_cnt = 0;
   for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
@@ -207,7 +207,7 @@ int run_benchmark()
         break;
     }
   }
-  
+
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -220,12 +220,12 @@ int run_benchmark()
   std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
-  
+
   std::cout << "------- Matrix-Vector product with ell_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_ell_matrix_1, vcl_vec2); //startup calculation
   viennacl::backend::finish();
-  
-  viennacl::copy(vcl_vec1, ublas_vec2);  
+
+  viennacl::copy(vcl_vec1, ublas_vec2);
   err_cnt = 0;
   for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
@@ -237,7 +237,7 @@ int run_benchmark()
         break;
     }
   }
-  
+
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -250,12 +250,12 @@ int run_benchmark()
   std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
-  
+
   std::cout << "------- Matrix-Vector product with hyb_matrix ----------" << std::endl;
   vcl_vec1 = viennacl::linalg::prod(vcl_hyb_matrix_1, vcl_vec2); //startup calculation
   viennacl::backend::finish();
-  
-  viennacl::copy(vcl_vec1, ublas_vec2);  
+
+  viennacl::copy(vcl_vec1, ublas_vec2);
   err_cnt = 0;
   for (std::size_t i=0; i<ublas_vec1.size(); ++i)
   {
@@ -267,7 +267,7 @@ int run_benchmark()
         break;
     }
   }
-  
+
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
@@ -279,8 +279,8 @@ int run_benchmark()
   std::cout << "GPU time: " << exec_time << std::endl;
   std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
-  
-  
+
+
   return EXIT_SUCCESS;
 }
 
@@ -291,7 +291,7 @@ int main()
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "               Device Info" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
-  
+
 #ifdef VIENNACL_WITH_OPENCL
   std::cout << viennacl::ocl::current_device().info() << std::endl;
 #endif

@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Calculation of the eigenvalue with largest modulus using the power iteration method
 *             (power-iter.cpp and power-iter.cu are identical, the latter being required for compilation using CUDA nvcc)
 *
@@ -49,7 +49,7 @@
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/operation.hpp> 
+#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/vector_expression.hpp>
 
 
@@ -57,7 +57,7 @@
 int main()
 {
   typedef double     ScalarType;
-  
+
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_A;
 
   if (!viennacl::io::read_matrix_market_file(ublas_A, "../examples/testdata/mat65k.mtx"))
@@ -65,15 +65,15 @@ int main()
     std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
-  
-  viennacl::compressed_matrix<double>  vcl_A(ublas_A.size1(), ublas_A.size2());  
+
+  viennacl::compressed_matrix<double>  vcl_A(ublas_A.size1(), ublas_A.size2());
   viennacl::copy(ublas_A, vcl_A);
-  
+
   viennacl::linalg::power_iter_tag ptag(1e-8);
 
   std::cout << "Starting computation of eigenvalue with largest modulus (might take about a minute)..." << std::endl;
   std::cout << "Result of power iteration with ublas matrix (single-threaded): " << viennacl::linalg::eig(ublas_A, ptag) << std::endl;
   std::cout << "Result of power iteration with ViennaCL (OpenCL accelerated): " << viennacl::linalg::eig(vcl_A, ptag) << std::endl;
-  
+
 }
 

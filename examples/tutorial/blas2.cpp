@@ -9,16 +9,16 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: BLAS level 2 functionality (blas2.cpp and blas2.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 
@@ -63,7 +63,7 @@ using namespace boost::numeric;
 int main()
 {
   typedef float       ScalarType;
-  
+
   //
   // Set up some ublas objects
   //
@@ -77,7 +77,7 @@ int main()
   rhs_trans.resize(result.size(), true);
   ublas::vector<ScalarType> result_trans = ublas::zero_vector<ScalarType>(rhs.size());
 
-  
+
   ublas::matrix<ScalarType> matrix(result.size(),rhs.size());
 
   //
@@ -86,7 +86,7 @@ int main()
   for (unsigned int i = 0; i < matrix.size1(); ++i)
     for (unsigned int j = 0; j < matrix.size2(); ++j)
       matrix(i,j) = random<ScalarType>();
-    
+
   //
   // Use some plain STL types:
   //
@@ -107,7 +107,7 @@ int main()
   // Set up some ViennaCL objects
   //
   viennacl::vector<ScalarType> vcl_rhs(rhs.size());
-  viennacl::vector<ScalarType> vcl_result(result.size()); 
+  viennacl::vector<ScalarType> vcl_result(result.size());
   viennacl::matrix<ScalarType> vcl_matrix(result.size(), rhs.size());
   viennacl::matrix<ScalarType> vcl_matrix2(result.size(), rhs.size());
 
@@ -122,7 +122,7 @@ int main()
   vcl_matrix2 -= vcl_matrix;
   vcl_matrix2 = vcl_matrix2 + vcl_matrix;
   vcl_matrix2 = vcl_matrix2 - vcl_matrix;
-  
+
   viennacl::scalar<ScalarType> vcl_3(3.0);
   vcl_matrix2 *= ScalarType(2.0);
   vcl_matrix2 /= ScalarType(2.0);
@@ -133,18 +133,18 @@ int main()
   // A matrix can be cleared directly:
   //
   vcl_matrix.clear();
-  
+
   viennacl::copy(stl_matrix, vcl_matrix); //alternative: copy from STL vector< vector<> > type to ViennaCL type
 
   //for demonstration purposes (no effect):
   viennacl::copy(vcl_matrix, matrix); //copy back from ViennaCL to ublas type.
   viennacl::copy(vcl_matrix, stl_matrix); //copy back from ViennaCL to STL type.
-  
+
   /////////////////////////////////////////////////
   //////////// Matrix vector products /////////////
   /////////////////////////////////////////////////
-  
-  
+
+
   //
   // Compute matrix-vector products
   //
@@ -152,25 +152,25 @@ int main()
   result = ublas::prod(matrix, rhs);                            //the ublas way
   stl_result = viennacl::linalg::prod(stl_matrix, stl_rhs);     //using STL
   vcl_result = viennacl::linalg::prod(vcl_matrix, vcl_rhs);     //the ViennaCL way
-  
+
   //
   // Compute transposed matrix-vector products
   //
   std::cout << "----- Transposed Matrix-Vector product -----" << std::endl;
   result_trans = prod(trans(matrix), rhs_trans);
-  
+
   viennacl::vector<ScalarType> vcl_rhs_trans(rhs_trans.size());
-  viennacl::vector<ScalarType> vcl_result_trans(result_trans.size()); 
+  viennacl::vector<ScalarType> vcl_result_trans(result_trans.size());
   viennacl::copy(rhs_trans.begin(), rhs_trans.end(), vcl_rhs_trans.begin());
   vcl_result_trans = viennacl::linalg::prod(trans(vcl_matrix), vcl_rhs_trans);
-  
-  
-  
+
+
+
   /////////////////////////////////////////////////
   //////////////// Direct solver  /////////////////
   /////////////////////////////////////////////////
-  
-  
+
+
   //
   // Setup suitable matrices
   //
@@ -183,35 +183,35 @@ int main()
     for (std::size_t j=i; j<tri_matrix.size2(); ++j)
       tri_matrix(i,j) = matrix(i,j);
   }
-  
+
   viennacl::matrix<ScalarType> vcl_tri_matrix = viennacl::identity_matrix<ScalarType>(tri_matrix.size1());
   viennacl::copy(tri_matrix, vcl_tri_matrix);
-  
+
   rhs.resize(tri_matrix.size1(), true);
   rhs2.resize(tri_matrix.size1(), true);
   vcl_rhs.resize(tri_matrix.size1(), true);
-  
+
   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
   vcl_result.resize(10);
 
-  
+
   //
   // Triangular solver
   //
   std::cout << "----- Upper Triangular solve -----" << std::endl;
   result = ublas::solve(tri_matrix, rhs, ublas::upper_tag());                                    //ublas
   vcl_result = viennacl::linalg::solve(vcl_tri_matrix, vcl_rhs, viennacl::linalg::upper_tag());  //ViennaCL
-  
+
   //
   // Inplace variants of the above
   //
   ublas::inplace_solve(tri_matrix, rhs, ublas::upper_tag());                                //ublas
   viennacl::linalg::inplace_solve(vcl_tri_matrix, vcl_rhs, viennacl::linalg::upper_tag());  //ViennaCL
-  
+
 
   //
   // Set up a full system for LU solver:
-  // 
+  //
   std::cout << "----- LU factorization -----" << std::endl;
   std::size_t lu_dim = 300;
   ublas::matrix<ScalarType> square_matrix(lu_dim, lu_dim);
@@ -229,7 +229,7 @@ int main()
     square_matrix(j,j) += 10.0;
     lu_rhs(j) = random<ScalarType>();
   }
-    
+
   viennacl::copy(square_matrix, vcl_square_matrix);
   viennacl::copy(lu_rhs, vcl_lu_rhs);
   viennacl::linalg::lu_factorize(vcl_square_matrix);
@@ -237,7 +237,7 @@ int main()
   viennacl::copy(square_matrix, vcl_square_matrix);
   viennacl::copy(lu_rhs, vcl_lu_rhs);
 
-  
+
   //
   // ublas:
   //
@@ -253,10 +253,10 @@ int main()
   viennacl::linalg::lu_substitute(vcl_square_matrix, vcl_lu_rhs);
 
   //
-  //  That's it. 
+  //  That's it.
   //
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
-  
+
   return 0;
 }
 

@@ -9,14 +9,14 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: Sparse approximate inverse preconditioner (only available with the OpenCL backend, experimental)
 *
 */
@@ -73,7 +73,7 @@ int main (int, const char **)
     typedef boost::numeric::ublas::vector<ScalarType>                   VectorType;
     typedef viennacl::compressed_matrix<ScalarType>                     GPUMatrixType;
     typedef viennacl::vector<ScalarType>                                GPUVectorType;
-  
+
     MatrixType M;
 
     //
@@ -84,10 +84,10 @@ int main (int, const char **)
       std::cerr<<"ERROR: Could not read matrix file " << std::endl;
       exit(EXIT_FAILURE);
     }
-    
+
     std::cout << "Size of matrix: " << M.size1() << std::endl;
     std::cout << "Avg. Entries per row: " << M.nnz() / static_cast<double>(M.size1()) << std::endl;
-    
+
     //
     // Use uniform load vector:
     //
@@ -99,7 +99,7 @@ int main (int, const char **)
     GPUVectorType  gpu_rhs(M.size1());
     viennacl::copy(M, gpu_M);
     viennacl::copy(rhs, gpu_rhs);
-    
+
     ///////////////////////////////// Tests to follow /////////////////////////////
 
     viennacl::linalg::bicgstab_tag solver_tag(1e-10, 50); //for simplicity and reasonably short execution times we use only 50 iterations here
@@ -119,8 +119,8 @@ int main (int, const char **)
     GPUVectorType gpu_residual = viennacl::linalg::prod(gpu_M, gpu_result);
     gpu_residual -= gpu_rhs;
     std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(gpu_residual) / viennacl::linalg::norm_2(gpu_rhs) << std::endl;
-    
-    
+
+
     //
     // Reference: ILUT preconditioner:
     //
@@ -129,35 +129,35 @@ int main (int, const char **)
     viennacl::linalg::ilut_precond<MatrixType> ilut(M, viennacl::linalg::ilut_tag());
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(M, rhs, solver_tag, ilut);
-    
-    
+
+
     //
     // Test 1: SPAI with CPU:
     //
-    std::cout << "--- Test 1: CPU-based SPAI ---" << std::endl;  
+    std::cout << "--- Test 1: CPU-based SPAI ---" << std::endl;
     std::cout << " * Preconditioner setup..." << std::endl;
     viennacl::linalg::spai_precond<MatrixType> spai_cpu(M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(M, rhs, solver_tag, spai_cpu);
-    
+
     //
     // Test 2: FSPAI with CPU:
-    //      
-    std::cout << "--- Test 2: CPU-based FSPAI ---" << std::endl;  
+    //
+    std::cout << "--- Test 2: CPU-based FSPAI ---" << std::endl;
     std::cout << " * Preconditioner setup..." << std::endl;
     viennacl::linalg::fspai_precond<MatrixType> fspai_cpu(M, viennacl::linalg::fspai_tag());
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(M, rhs, solver_tag, fspai_cpu);
-    
+
     //
     // Test 3: SPAI with GPU:
-    //      
-    std::cout << "--- Test 3: GPU-based SPAI ---" << std::endl;  
+    //
+    std::cout << "--- Test 3: GPU-based SPAI ---" << std::endl;
     std::cout << " * Preconditioner setup..." << std::endl;
     viennacl::linalg::spai_precond<GPUMatrixType> spai_gpu(gpu_M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(gpu_M, gpu_rhs, solver_tag, spai_gpu);
-    
+
     return EXIT_SUCCESS;
 }
 

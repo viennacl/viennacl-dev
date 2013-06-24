@@ -12,7 +12,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -39,26 +39,26 @@ class Timer
 {
 public:
 
-	Timer()
-	{
-		QueryPerformanceFrequency(&freq);
-	}
+  Timer()
+  {
+    QueryPerformanceFrequency(&freq);
+  }
 
-	void start()
-	{
-		QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
-	}
+  void start()
+  {
+    QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
+  }
 
-	double get() const
-	{
-		LARGE_INTEGER  end_time;
-		QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
-		return (static_cast<double>(end_time.QuadPart) - static_cast<double>(start_time.QuadPart)) / static_cast<double>(freq.QuadPart);
-	}
+  double get() const
+  {
+    LARGE_INTEGER  end_time;
+    QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
+    return (static_cast<double>(end_time.QuadPart) - static_cast<double>(start_time.QuadPart)) / static_cast<double>(freq.QuadPart);
+  }
 
 
 private:
-	LARGE_INTEGER freq;
+  LARGE_INTEGER freq;
     LARGE_INTEGER start_time;
 };
 
@@ -70,27 +70,27 @@ class Timer
 {
 public:
 
-	Timer() : ts(0)
-	{}
+  Timer() : ts(0)
+  {}
 
-	void start()
-	{
-		struct timeval tval;
-		gettimeofday(&tval, NULL);
-		ts = tval.tv_sec * 1000000 + tval.tv_usec;
-	}
+  void start()
+  {
+    struct timeval tval;
+    gettimeofday(&tval, NULL);
+    ts = tval.tv_sec * 1000000 + tval.tv_usec;
+  }
 
-	double get() const
-	{
-		struct timeval tval;
-		gettimeofday(&tval, NULL);
-		int64_t end_time = tval.tv_sec * 1000000 + tval.tv_usec;
+  double get() const
+  {
+    struct timeval tval;
+    gettimeofday(&tval, NULL);
+    int64_t end_time = tval.tv_sec * 1000000 + tval.tv_usec;
 
-		return static_cast<double>(end_time-ts) / 1000000.0;
-	}
+    return static_cast<double>(end_time-ts) / 1000000.0;
+  }
 
 private:
-	int64_t ts;
+  int64_t ts;
 };
 
 

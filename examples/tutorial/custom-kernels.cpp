@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -18,7 +18,7 @@
 /*
 *
 *   Tutorial:  Use user-provided OpenCL compute kernels with ViennaCL objects
-*   
+*
 */
 
 
@@ -56,7 +56,7 @@
 //            or  result[i] <- v1[i] / v2[i]
 //            (in MATLAB notation this is something like 'result = v1 .* v2' and 'result = v1 ./ v2');
 //
-const char * my_compute_program = 
+const char * my_compute_program =
 "__kernel void elementwise_prod(\n"
 "          __global const float * vec1,\n"
 "          __global const float * vec2, \n"
@@ -105,7 +105,7 @@ int main()
   //
   viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(my_compute_program, "my_compute_program");
   // Note: Releases older than ViennaCL 1.5.0 required calls to add_kernel(). This is no longer needed, the respective interface has been removed.
-  
+
   //
   // Now we can get the kernels from the program 'my_program'.
   // (Note that first all kernels need to be registered via add_kernel() before get_kernel() can be called,
@@ -113,14 +113,14 @@ int main()
   //
   viennacl::ocl::kernel & my_kernel_mul = my_prog.get_kernel("elementwise_prod");
   viennacl::ocl::kernel & my_kernel_div = my_prog.get_kernel("elementwise_div");
-  
+
   //
   // Launch the kernel with 'vector_size' threads in one work group
   // Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary for the forth argument.
   //
-  viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));  
+  viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));
   viennacl::ocl::enqueue(my_kernel_div(vec1, vec2, result_div, static_cast<cl_uint>(vec1.size())));
-  
+
   //
   // Print the result:
   //
@@ -130,12 +130,12 @@ int main()
   std::cout << "vec1 /* vec2: " << result_div << std::endl;
   std::cout << "norm_2(vec1 .* vec2): " << viennacl::linalg::norm_2(result_mul) << std::endl;
   std::cout << "norm_2(vec1 /* vec2): " << viennacl::linalg::norm_2(result_div) << std::endl;
-  
+
   //
   //  That's it.
   //
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
-  
+
   return 0;
 }
 

@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -17,13 +17,13 @@
 
 
 /*
-* 
+*
 *   Tutorial: QR factorization of matrices from ViennaCL or Boost.uBLAS (qr.cpp and qr.cu are identical, the latter being required for compilation using CUDA nvcc)
 *
 */
 
 // activate ublas support in ViennaCL
-#define VIENNACL_WITH_UBLAS 
+#define VIENNACL_WITH_UBLAS
 
 //
 // include necessary system headers
@@ -67,12 +67,12 @@ double check(MatrixType const & qr, MatrixType const & ref)
       if (qr(i,j) != 0.0 && ref(i,j) != 0.0)
       {
         double rel_err = fabs(qr(i,j) - ref(i,j)) / fabs(ref(i,j) );
-        
+
         if (rel_err > max_error)
           max_error = rel_err;
       }
-      
-      
+
+
       if (qr(i,j) != qr(i,j))
       {
         std::cout << "!!!" << std::endl;
@@ -99,14 +99,14 @@ int main (int, const char **)
 
   std::size_t rows = 113;   //number of rows in the matrix
   std::size_t cols = 54;   //number of columns
-  
+
   //
   // Create matrices with some data
   //
   MatrixType ublas_A(rows, cols);
   MatrixType Q(rows, rows);
   MatrixType R(rows, cols);
-  
+
   // Some random data with a bit of extra weight on the diagonal
   for (std::size_t i=0; i<rows; ++i)
   {
@@ -117,26 +117,26 @@ int main (int, const char **)
 
       if (i == j)
         ublas_A(i,j) += 10.0;
-                     
+
       R(i,j) = 0.0;
     }
-    
+
     for (std::size_t j=0; j<rows; ++j)
       Q(i,j) = 0.0;
   }
-  
+
   // keep initial input matrix for comparison
   MatrixType ublas_A_backup(ublas_A);
-  
-  
+
+
   //
   // Setup the matrix in ViennaCL:
   //
   VCLVectorType dummy(10);
   VCLMatrixType vcl_A(ublas_A.size1(), ublas_A.size2());
-  
+
   viennacl::copy(ublas_A, vcl_A);
-  
+
   //
   // Compute QR factorization of A. A is overwritten with Householder vectors. Coefficients are returned and a block size of 3 is used.
   // Note that at the moment the number of columns of A must be divisible by the block size
@@ -144,33 +144,33 @@ int main (int, const char **)
 
   std::cout << "--- Boost.uBLAS ---" << std::endl;
   std::vector<ScalarType> ublas_betas = viennacl::linalg::inplace_qr(ublas_A);  //computes the QR factorization
-  
+
   //
   // A check for the correct result:
   //
-  viennacl::linalg::recoverQ(ublas_A, ublas_betas, Q, R); 
+  viennacl::linalg::recoverQ(ublas_A, ublas_betas, Q, R);
   MatrixType ublas_QR = prod(Q, R);
   double ublas_error = check(ublas_QR, ublas_A_backup);
   std::cout << "Max rel error (ublas): " << ublas_error << std::endl;
-  
+
   //
   // QR factorization in ViennaCL using Boost.uBLAS for the panel factorization
   //
   std::cout << "--- Hybrid (default) ---" << std::endl;
   viennacl::copy(ublas_A_backup, vcl_A);
   std::vector<ScalarType> hybrid_betas = viennacl::linalg::inplace_qr(vcl_A);
-  
+
 
   //
   // A check for the correct result:
   //
   viennacl::copy(vcl_A, ublas_A);
   Q.clear(); R.clear();
-  viennacl::linalg::recoverQ(ublas_A, hybrid_betas, Q, R); 
+  viennacl::linalg::recoverQ(ublas_A, hybrid_betas, Q, R);
   double hybrid_error = check(ublas_QR, ublas_A_backup);
   std::cout << "Max rel error (hybrid): " << hybrid_error << std::endl;
 
-  
+
   //
   //  That's it.
   //

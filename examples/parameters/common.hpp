@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -75,7 +75,7 @@ void record_full_timings(TimingType & timings,
                          TestData & data)
 {
   typedef typename TestData::value_type  ScalarType;
-  
+
   double result = 0;
   functor(data); //startup run (ensures kernel compilation)
   for (unsigned int work_groups = config.min_work_groups(); work_groups <= config.max_work_groups(); work_groups *= 2)           //iterate over number of work groups (compute units)
@@ -84,10 +84,10 @@ void record_full_timings(TimingType & timings,
     {
       //set parameter:
       set_kernel_params(config.program_name(), config.kernel_name(), work_groups, local_workers);
-      
+
       //std::cout << "Benchmarking kernel " << config.kernel_name() << std::endl;
       result = execute(functor, data);
-      
+
       //check for valid result: (kernels have an automatic fallback to smaller values included)
       if (!validate_result(config.program_name(), config.kernel_name(), work_groups, local_workers))
       {
@@ -107,16 +107,16 @@ void record_restricted_timings(TimingType & timings,
                                TestData & data)
 {
   typedef typename TestData::value_type  ScalarType;
-  
+
   double result = 0;
   functor(data); //startup run (ensures kernel compilation)
   for (unsigned int local_workers = config.min_local_size(); local_workers <= config.max_local_size(); local_workers *= 2)   //iterate over local thread number, up to 512
   {
     //set parameter:
     set_kernel_params(config.program_name(), config.kernel_name(), 1, local_workers);
-    
+
     result = execute(functor, data);
-    
+
     //check for valid result: (kernels have an automatic fallback to smaller values included)
     if (!validate_result(config.program_name(), config.kernel_name(), 1, local_workers))
     {
@@ -133,7 +133,7 @@ void print_best(TimingType const & timings, std::string kernel_name)
 {
   //give some feedback to stdout:
   std::cout << "Best parameter set for " << kernel_name << ": [" << timings.begin()->second.first << " global workers, " << timings.begin()->second.second << " local workers] " << timings.begin()->first << std::endl;
-  
+
 }
 
 template <typename TimingType>
@@ -177,23 +177,23 @@ class test_config
     test_config() {}
     test_config(std::string const & prog_name) : prog_(prog_name) {}
     test_config(std::string const & prog_name, std::string const & kernel_name) : prog_(prog_name), kernel_(kernel_name) {}
-    
+
     std::string const & program_name() const { return prog_; }
     void program_name(std::string const & name) { prog_ = name; }
     std::string const & kernel_name() const { return kernel_; }
     void kernel_name(std::string const & name) { kernel_ = name; }
-    
+
     unsigned int min_work_groups() const { return min_work_groups_; }
     void min_work_groups(unsigned int i) { min_work_groups_ = i; }
     unsigned int max_work_groups() const { return max_work_groups_; }
     void max_work_groups(unsigned int i) { max_work_groups_ = i; }
-    
-    
+
+
     unsigned int min_local_size() const { return min_local_size_; }
     void min_local_size(unsigned int i) { min_local_size_ = i; }
     unsigned int max_local_size() const { return max_local_size_; }
     void max_local_size(unsigned int i) { max_local_size_ = i; }
-    
+
   private:
     std::string prog_;
     std::string kernel_;
@@ -206,14 +206,14 @@ class test_config
 template <typename TimingType>
 void record_kernel_parameters(viennacl::io::parameter_database& paras, std::string kernel, TimingType& timings)
 {
-   paras.add_kernel();  
-   paras.add_data_node(viennacl::io::tag::name, kernel);   
-   paras.add_parameter();  
+   paras.add_kernel();
+   paras.add_data_node(viennacl::io::tag::name, kernel);
+   paras.add_parameter();
    paras.add_data_node(viennacl::io::tag::name, viennacl::io::val::globsize);
-   paras.add_data_node(viennacl::io::tag::value, timings.begin()->second.first);         
-   paras.add_parameter();     
+   paras.add_data_node(viennacl::io::tag::value, timings.begin()->second.first);
+   paras.add_parameter();
    paras.add_data_node(viennacl::io::tag::name, viennacl::io::val::locsize);
-   paras.add_data_node(viennacl::io::tag::value, timings.begin()->second.second);            
+   paras.add_data_node(viennacl::io::tag::value, timings.begin()->second.second);
 }
 
 

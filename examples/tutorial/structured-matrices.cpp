@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -18,7 +18,7 @@
 /*
 *
 *   Tutorial:  Handling structured dense matrices (experimental, only available with OpenCL backend)
-*   
+*
 */
 
 // include necessary system headers
@@ -42,12 +42,12 @@
 #include "boost/numeric/ublas/io.hpp"
 
 
-int main() 
+int main()
 {
   typedef float      ScalarType;
-    
+
   std::size_t size = 4;
-  
+
   //
   // Set up ublas objects
   //
@@ -57,8 +57,8 @@ int main()
   boost::numeric::ublas::matrix<ScalarType> ublas_toeplitz(size, size);
   boost::numeric::ublas::matrix<ScalarType> ublas_vandermonde(size, size);
 
-  for(std::size_t i = 0; i < size; i++) 
-    for(std::size_t j = 0; j < size; j++) 
+  for(std::size_t i = 0; i < size; i++)
+    for(std::size_t j = 0; j < size; j++)
     {
       ublas_circulant(i,j)   = static_cast<ScalarType>((i - j + size) % size);
       ublas_hankel(i,j)      = static_cast<ScalarType>((i + j) % (2 * size));
@@ -81,32 +81,32 @@ int main()
   viennacl::copy(ublas_hankel, vcl_hankel);
   viennacl::copy(ublas_toeplitz, vcl_toeplitz);
   viennacl::copy(ublas_vandermonde, vcl_vandermonde);
-  
+
   // fill vectors:
   for(std::size_t i = 0; i < size; i++)
   {
     ublas_vec[i] = ScalarType(i);
     vcl_vec[i] = ScalarType(i);
   }
-  
+
   //
   // Add matrices:
   //
   std::cout << "Circulant matrix before addition: " << vcl_circulant << std::endl << std::endl;
   vcl_circulant += vcl_circulant;
   std::cout << "Circulant matrix after addition: " << vcl_circulant << std::endl << std::endl;
-  
+
   //
   // Manipulate single entry
   //
   std::cout << "Hankel matrix before manipulation: " << vcl_hankel << std::endl << std::endl;
   vcl_hankel(1, 2) = ScalarType(3.14);
   std::cout << "Hankel matrix after manipulation: " << vcl_hankel << std::endl << std::endl;
-  
+
   std::cout << "Vandermonde matrix before manipulation: " << vcl_vandermonde << std::endl << std::endl;
   vcl_vandermonde(1) = ScalarType(1.1); //NOTE: Write access only via row index
   std::cout << "Vandermonde matrix after manipulation: " << vcl_vandermonde << std::endl << std::endl;
-  
+
   //
   // Compute matrix-vector product (FFT-accelerated)
   //
@@ -114,7 +114,7 @@ int main()
   std::cout << "Vector: " << vcl_vec << std::endl << std::endl;
   vcl_result = viennacl::linalg::prod(vcl_toeplitz, vcl_vec);
   std::cout << "Result of matrix-vector product: " << vcl_result << std::endl << std::endl;
-  
+
   //
   //  That's it.
   //

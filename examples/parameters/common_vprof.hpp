@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -26,7 +26,7 @@ void write_viennaprofiler(TimingType & timings, std::string function_prefix, std
 {
   ViennaProfiler::MySQLDB dbConn("myhost.example.com", "database", "user", "password");
   ViennaProfiler::PreciseTimer timer; // choose a timer for measuring the execution time
-  
+
   //ViennaProfiler::Host host = dbConn.getHost("pcrupp"); // create a host
   ViennaProfiler::Profiler<ViennaProfiler::MySQLDB, ViennaProfiler::PreciseTimer> myTest(dbConn, timer, "my_machine_name"); // create a Profiler
   myTest.setCollection("ViennaCL");
@@ -34,7 +34,7 @@ void write_viennaprofiler(TimingType & timings, std::string function_prefix, std
   myTest.setImplementation("default");
   myTest.setSourceCode("not available");
   myTest.setOperations(0);
-  
+
   //do a dummy start (otherwise, date is not written properly)
   myTest.start();
   myTest.stop();
@@ -47,7 +47,7 @@ void write_viennaprofiler(TimingType & timings, std::string function_prefix, std
     myTest.setExternalTiming(it->first, BENCHMARK_RUNS);
     myTest.send();
   }
-  
+
   std::cout << "Optimization for " << kernel_name << " written to ViennaProfiler." << std::endl;
 }
 
