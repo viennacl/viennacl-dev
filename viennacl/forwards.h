@@ -74,10 +74,10 @@ namespace viennacl
   struct op_prod;
   /** @brief A tag class representing division */
   struct op_div;
-  /** @brief A tag class representing element-wise multiplication of vectors or matrices */
-  struct op_element_mult;
-  /** @brief A tag class representing element-wise division of vectors or matrices */
-  struct op_element_div;
+
+  /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
+  template <typename OP>
+  struct op_element_binary;
 
   /** @brief A tag class representing inner products of two vectors */
   struct op_inner_prod;
@@ -354,11 +354,11 @@ namespace viennacl
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& output);
 
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_mult>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >
     element_prod(vector_base<T> const & v1, vector_base<T> const & v2);
 
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_div>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >
     element_div(vector_base<T> const & v1, vector_base<T> const & v2);
 
 

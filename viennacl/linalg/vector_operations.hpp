@@ -241,10 +241,10 @@ namespace viennacl
 
 
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_mult>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >
     element_prod(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_mult>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >(v1, v2);
     }
 
     template <typename V1, typename V2, typename OP, typename T>
@@ -284,10 +284,10 @@ namespace viennacl
 
 
     template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_div>
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >
     element_div(vector_base<T> const & v1, vector_base<T> const & v2)
     {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_div>(v1, v2);
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >(v1, v2);
     }
 
     template <typename V1, typename V2, typename OP, typename T>

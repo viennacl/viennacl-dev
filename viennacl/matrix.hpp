@@ -2300,29 +2300,29 @@ namespace viennacl
       //////////////////// Element-wise operations ////////////////////////////////////////
 
       // generic x = vec_expr1 .* vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_element_mult> >
+      template <typename T, typename F, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x = y .* z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           viennacl::linalg::element_op(lhs, proxy);
         }
 
         // x = y .* vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.rhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(proxy.lhs(), temp));
+          viennacl::linalg::element_op(lhs, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(proxy.lhs(), temp));
         }
 
         // x = vec_expr .* z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.lhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(temp, proxy.rhs()));
+          viennacl::linalg::element_op(lhs, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp, proxy.rhs()));
         }
 
         // x = vec_expr .* vec_expr
@@ -2330,20 +2330,20 @@ namespace viennacl
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
                                                                   const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_mult> const & proxy)
+                                                                  op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp1(proxy.lhs());
           matrix<T, F> temp2(proxy.rhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_prod(temp1, temp2));
+          viennacl::linalg::element_op(lhs, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp1, temp2));
         }
       };
 
       // generic x += vec_expr1 .* vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_mult> >
+      template <typename T, typename F, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x += y .* z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           viennacl::matrix<T, F> temp(proxy);
           lhs += temp;
@@ -2351,21 +2351,21 @@ namespace viennacl
 
         // x += y .* vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.rhs());
           matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(proxy.lhs(), temp));
+          viennacl::linalg::element_op(temp2, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(proxy.lhs(), temp));
           lhs += temp2;
         }
 
         // x += vec_expr .* z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.lhs());
           matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(temp, proxy.rhs()));
+          viennacl::linalg::element_op(temp2, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp, proxy.rhs()));
           lhs += temp2;
         }
 
@@ -2374,23 +2374,23 @@ namespace viennacl
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
                                                                   const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_mult> const & proxy)
+                                                                  op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp1(proxy.lhs());
           matrix<T, F> temp2(proxy.rhs());
           matrix<T, F> temp3(temp1.size());
-          viennacl::linalg::element_op(temp3, viennacl::linalg::element_prod(temp1, temp2));
+          viennacl::linalg::element_op(temp3, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp1, temp2));
           lhs += temp3;
         }
       };
 
       // generic x -= vec_expr1 .* vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_mult> >
+      template <typename T, typename F, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
 
         // x -= y .* z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           viennacl::matrix<T, F> temp(proxy);
           lhs -= temp;
@@ -2398,21 +2398,21 @@ namespace viennacl
 
         // x -= y .* vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.rhs());
           matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(proxy.lhs(), temp));
+          viennacl::linalg::element_op(temp2, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(proxy.lhs(), temp));
           lhs -= temp2;
         }
 
         // x -= vec_expr .* z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_mult> const & proxy)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp(proxy.lhs());
           matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_prod(temp, proxy.rhs()));
+          viennacl::linalg::element_op(temp2, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp, proxy.rhs()));
           lhs -= temp2;
         }
 
@@ -2420,153 +2420,18 @@ namespace viennacl
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_mult> const & proxy)
+                                                                     const matrix_expression<const LHS2, const RHS2, const OP2>,
+                                                                     op_element_binary<OP> > const & proxy)
         {
           matrix<T, F> temp1(proxy.lhs());
           matrix<T, F> temp2(proxy.rhs());
           matrix<T, F> temp3(temp1.size());
-          viennacl::linalg::element_op(temp3, viennacl::linalg::element_prod(temp1, temp2));
+          viennacl::linalg::element_op(temp3, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> >(temp1, temp2));
           lhs -= temp3;
         }
       };
 
 
-
-
-
-      // generic x = vec_expr1 ./ vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_element_div> >
-      {
-        // x = y ./ z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          viennacl::linalg::element_op(lhs, proxy);
-        }
-
-        // x = y ./ vec_op
-        template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.rhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(proxy.lhs(), temp));
-        }
-
-        // x = vec_op ./ z
-        template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.lhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(temp, proxy.rhs()));
-        }
-
-        // x = vec_op ./ vec_op
-        template <typename LHS1, typename RHS1, typename OP1,
-                  typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_div> const & proxy)
-        {
-          matrix<T, F> temp1(proxy.lhs());
-          matrix<T, F> temp2(proxy.rhs());
-          viennacl::linalg::element_op(lhs, viennacl::linalg::element_div(temp1, temp2));
-        }
-      };
-
-
-      // generic x += vec_expr1 ./ vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_div> >
-      {
-        // x = y /* z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          viennacl::matrix<T, F> temp(proxy);
-          lhs += temp;
-        }
-
-        // x = y /* vec_op
-        template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.rhs());
-          matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(proxy.lhs(), temp));
-          lhs += temp2;
-        }
-
-        // x = vec_op /* z
-        template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.lhs());
-          matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(temp, proxy.rhs()));
-          lhs += temp2;
-        }
-
-        // x = vec_op /* vec_op
-        template <typename LHS1, typename RHS1, typename OP1,
-                  typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_div> const & proxy)
-        {
-          matrix<T, F> temp1(proxy.lhs());
-          matrix<T, F> temp2(proxy.rhs());
-          matrix<T, F> temp3(temp1.size());
-          viennacl::linalg::element_op(temp3, viennacl::linalg::element_div(temp1, temp2));
-          lhs += temp3;
-        }
-      };
-
-
-      // generic x -= vec_expr1 ./ vec_expr2:
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_div> >
-      {
-        // x -= y /* z
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          viennacl::matrix<T, F> temp(proxy);
-          lhs -= temp;
-        }
-
-        // x -= y /* vec_op
-        template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F>, const matrix_expression<const LHS2, const RHS2, const OP2>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.rhs());
-          matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(proxy.lhs(), temp));
-          lhs -= temp2;
-        }
-
-        // x -= vec_op /* z
-        template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>, const matrix_base<T, F>, op_element_div> const & proxy)
-        {
-          matrix<T, F> temp(proxy.lhs());
-          matrix<T, F> temp2(temp.size());
-          viennacl::linalg::element_op(temp2, viennacl::linalg::element_div(temp, proxy.rhs()));
-          lhs -= temp2;
-        }
-
-        // x -= vec_op /* vec_op
-        template <typename LHS1, typename RHS1, typename OP1,
-                  typename LHS2, typename RHS2, typename OP2>
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const matrix_expression<const LHS2, const RHS2, const OP2>,
-                                                                  op_element_div> const & proxy)
-        {
-          matrix<T, F> temp1(proxy.lhs());
-          matrix<T, F> temp2(proxy.rhs());
-          matrix<T, F> temp3(temp1.size());
-          viennacl::linalg::element_op(temp3, viennacl::linalg::element_div(temp1, temp2));
-          lhs -= temp3;
-        }
-      };
 
       //////////////// Matrix - Matrix products ////////////////
 

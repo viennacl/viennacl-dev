@@ -374,7 +374,7 @@ namespace viennacl
     };
 
     template <>
-    struct is_product<viennacl::op_element_mult>
+    struct is_product<viennacl::op_element_binary<op_prod> >
     {
       enum { value = true };
     };
@@ -392,12 +392,7 @@ namespace viennacl
 
     /** \cond */
     template <>
-    struct is_division<viennacl::op_div>
-    {
-      enum { value = true };
-    };
-    template <>
-    struct is_division<viennacl::op_element_div>
+    struct is_division<viennacl::op_element_binary<op_div> >
     {
       enum { value = true };
     };
