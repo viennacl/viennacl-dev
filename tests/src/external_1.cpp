@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -64,7 +64,7 @@
   #include "viennacl/io/kernel_parameters.hpp"
   #include "viennacl/generator/custom_operation.hpp"
 #endif
-  
+
 #include "viennacl/io/matrix_market.hpp"
 
 
@@ -78,21 +78,21 @@ void other_func();
 int main()
 {
   typedef float   NumericType;
-  
+
   //doing nothing but instantiating a few types
   viennacl::scalar<NumericType>  s;
   viennacl::vector<NumericType>  v(10);
   viennacl::matrix<NumericType>  m(10, 10);
   viennacl::compressed_matrix<NumericType>  compr(10, 10);
   viennacl::coordinate_matrix<NumericType>  coord(10, 10);
-  
+
   //this is the external linkage check:
   other_func();
-  
+
    std::cout << std::endl;
    std::cout << "------- Test completed --------" << std::endl;
    std::cout << std::endl;
-   
-  
+
+
   return EXIT_SUCCESS;
 }

@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -27,7 +27,7 @@ typedef float ScalarType;
 const ScalarType EPS = 0.1;
 
 float matrix_compare(viennacl::matrix<ScalarType>& res,
-                     viennacl::matrix<ScalarType>& ref) 
+                     viennacl::matrix<ScalarType>& ref)
 {
     std::vector<ScalarType> res_std(res.internal_size());
     std::vector<ScalarType> ref_std(ref.internal_size());
@@ -77,11 +77,11 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 
     viennacl::matrix<ScalarType> w_nmf(m, k);
     viennacl::matrix<ScalarType> h_nmf(k, n);
-    
+
     viennacl::fast_copy(&stl_w[0], &stl_w[0] + stl_w.size(), w_nmf);
     viennacl::fast_copy(&stl_h[0], &stl_h[0] + stl_h.size(), h_nmf);
-    
-    
+
+
 
     viennacl::linalg::nmf_config conf;
     viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
@@ -93,7 +93,7 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 
     long iterations = static_cast<long>(conf.iters());
     printf("%6s [%lux%lux%lu] diff = %.6f (%ld iterations)\n", diff_ok ? "[[OK]]":"[FAIL]", m, k, n, diff, iterations);
-    
+
     if (!diff_ok)
       exit(EXIT_FAILURE);
 }
@@ -111,7 +111,7 @@ int main()
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
-    
+
+
   return EXIT_SUCCESS;
 }

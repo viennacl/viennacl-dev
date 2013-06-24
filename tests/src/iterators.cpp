@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -59,7 +59,7 @@ int test()
       std::cout << *iter << std::endl;
    }
 
-   // --------------------------------------------------------------------------                        
+   // --------------------------------------------------------------------------
    return retval;
 }
 
@@ -92,7 +92,7 @@ int main()
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
 
-#ifdef VIENNACL_WITH_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL
    if( viennacl::ocl::current_device().double_support() )
 #endif
    {
@@ -110,11 +110,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
-   
+
    std::cout << std::endl;
    std::cout << "------- Test completed --------" << std::endl;
    std::cout << std::endl;
-   
-   
+
+
    return retval;
 }

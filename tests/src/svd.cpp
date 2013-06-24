@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -29,7 +29,7 @@
 #include "examples/benchmarks/benchmark-utils.hpp"
 
 
-void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2) 
+void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2)
 {
   if(!f.is_open())
     throw std::invalid_argument("File is not opened");
@@ -46,9 +46,9 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 
   boost::numeric::ublas::matrix<ScalarType> h_A(A.size1(), A.size2());
 
-  for(std::size_t i = 0; i < h_A.size1(); i++) 
+  for(std::size_t i = 0; i < h_A.size1(); i++)
   {
-    for(std::size_t j = 0; j < h_A.size2(); j++) 
+    for(std::size_t j = 0; j < h_A.size2(); j++)
     {
       ScalarType val = 0.0;
       f >> val;
@@ -61,7 +61,7 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 
 
 template <typename ScalarType>
-void read_vector_body(std::fstream& f, std::vector<ScalarType>& v) 
+void read_vector_body(std::fstream& f, std::vector<ScalarType>& v)
 {
   if(!f.is_open())
     throw std::invalid_argument("File is not opened");
@@ -84,19 +84,19 @@ void random_fill(std::vector<ScalarType>& in)
 
 
 template <typename ScalarType>
-bool check_bidiag(viennacl::matrix<ScalarType>& A) 
+bool check_bidiag(viennacl::matrix<ScalarType>& A)
 {
   const ScalarType EPS = 0.0001f;
 
   std::vector<ScalarType> aA(A.size1() * A.size2());
   viennacl::fast_copy(A, &aA[0]);
 
-  for(std::size_t i = 0; i < A.size1(); i++) 
+  for(std::size_t i = 0; i < A.size1(); i++)
   {
-    for(std::size_t j = 0; j < A.size2(); j++) 
+    for(std::size_t j = 0; j < A.size2(); j++)
     {
       ScalarType val = aA[i * A.size2() + j];
-      if((fabs(val) > EPS) && (i != j) && ((i + 1) != j)) 
+      if((fabs(val) > EPS) && (i != j) && ((i + 1) != j))
       {
         std::cout << "Failed at " << i << " " << j << " " << val << std::endl;
         return false;
@@ -109,7 +109,7 @@ bool check_bidiag(viennacl::matrix<ScalarType>& A)
 
 template <typename ScalarType>
 ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
-                     viennacl::matrix<ScalarType>& ref) 
+                     viennacl::matrix<ScalarType>& ref)
 {
   std::vector<ScalarType> res_std(res.internal_size());
   std::vector<ScalarType> ref_std(ref.internal_size());
@@ -120,7 +120,7 @@ ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
   ScalarType diff = 0.0;
   ScalarType mx = 0.0;
 
-  for(std::size_t i = 0; i < res_std.size(); i++) 
+  for(std::size_t i = 0; i < res_std.size(); i++)
   {
     diff = std::max(diff, std::abs(res_std[i] - ref_std[i]));
     mx = std::max(mx, res_std[i]);
@@ -131,8 +131,8 @@ ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
 
 
 template <typename ScalarType>
-ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res, 
-                               std::vector<ScalarType>& ref) 
+ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
+                               std::vector<ScalarType>& ref)
 {
     std::vector<ScalarType> res_std(ref.size());
 
@@ -144,7 +144,7 @@ ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
 
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
-    for(std::size_t i = 0; i < ref.size(); i++) 
+    for(std::size_t i = 0; i < ref.size(); i++)
     {
         diff = std::max(diff, std::abs(res_std[i] - ref[i]));
         mx = std::max(mx, res_std[i]);
@@ -155,7 +155,7 @@ ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
 
 
 template <typename ScalarType>
-void test_svd(const std::string & fn, ScalarType EPS) 
+void test_svd(const std::string & fn, ScalarType EPS)
 {
   std::size_t sz1, sz2;
 
@@ -200,7 +200,7 @@ void test_svd(const std::string & fn, ScalarType EPS)
   ScalarType sigma_diff = sigmas_compare(Ai, sigma_ref);
   ScalarType prods_diff  = matrix_compare(result2, Aref);
 
-  bool sigma_ok = (fabs(sigma_diff) < EPS) 
+  bool sigma_ok = (fabs(sigma_diff) < EPS)
                    && (fabs(prods_diff) < std::sqrt(EPS));  //note: computing the product is not accurate down to 10^{-16}, so we allow for a higher tolerance here
 
   printf("%6s [%dx%d] %40s sigma_diff = %.6f; prod_diff = %.6f; time = %.6f\n", sigma_ok?"[[OK]]":"[FAIL]", (int)Aref.size1(), (int)Aref.size2(), fn.c_str(), sigma_diff, prods_diff, time_spend);
@@ -208,7 +208,7 @@ void test_svd(const std::string & fn, ScalarType EPS)
 
 
 template <typename ScalarType>
-void time_svd(std::size_t sz1, std::size_t sz2) 
+void time_svd(std::size_t sz1, std::size_t sz2)
 {
 
   std::vector<ScalarType> in(sz1 * sz2);
@@ -230,7 +230,7 @@ void time_svd(std::size_t sz1, std::size_t sz2)
 
 
 template <typename ScalarType>
-int test(ScalarType epsilon) 
+int test(ScalarType epsilon)
 {
 
     test_svd<ScalarType>(std::string("../../examples/testdata/svd/qr.example"), epsilon);
@@ -299,12 +299,12 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
-   
+
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
-   
+
+
    return retval;
 }
 

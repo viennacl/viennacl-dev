@@ -10,7 +10,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -48,7 +48,7 @@ void read_vectors_pair(std::istream& str,
                       std::vector<ScalarType>& output,
                       unsigned int& rows,
                       unsigned int& cols,
-                      unsigned int& batch_size) 
+                      unsigned int& batch_size)
 {
     rows = 1;
 
@@ -56,10 +56,10 @@ void read_vectors_pair(std::istream& str,
     input.resize(2 * cols * batch_size);
     output.resize(2 * cols * batch_size);
 
-    for(unsigned int i = 0; i < input.size(); i++) 
+    for(unsigned int i = 0; i < input.size(); i++)
         str >> input[i];
 
-    for(unsigned int i = 0; i < output.size(); i++) 
+    for(unsigned int i = 0; i < output.size(); i++)
         str >> output[i];
 }
 
@@ -68,7 +68,7 @@ void read_matrices_pair(std::istream& str,
                         std::vector<ScalarType>& output,
                         unsigned int& rows,
                         unsigned int& cols,
-                        unsigned int& batch_size) 
+                        unsigned int& batch_size)
 {
     batch_size = 1;
     str >> rows >> cols;
@@ -86,12 +86,12 @@ void read_matrices_pair(std::istream& str,
 }
 
 template <typename ScalarType>
-ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref) 
+ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 {
     ScalarType df = 0.0;
     ScalarType norm_ref = 0;
 
-    for(std::size_t i = 0; i < vec.size(); i++) 
+    for(std::size_t i = 0; i < vec.size(); i++)
     {
         df = df + pow(vec[i] - ref[i], 2);
         norm_ref += ref[i] * ref[i];
@@ -101,30 +101,30 @@ ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 }
 
 template <typename ScalarType>
-ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref) 
+ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 {
   ScalarType df = 0.0;
   ScalarType mx = 0.0;
   ScalarType norm_max = 0;
-  
-  for (std::size_t i = 0; i < vec.size(); i++) 
+
+  for (std::size_t i = 0; i < vec.size(); i++)
   {
     df = std::max<ScalarType>(fabs(vec[i] - ref[i]), df);
     mx = std::max<ScalarType>(fabs(vec[i]), mx);
-    
+
     if (mx > 0)
     {
       if (norm_max < df / mx)
         norm_max = df / mx;
     }
   }
-  
+
   return norm_max;
 }
 
 void convolve_ref(std::vector<ScalarType>& in1,
                   std::vector<ScalarType>& in2,
-                  std::vector<ScalarType>& out) 
+                  std::vector<ScalarType>& out)
 {
     out.resize(in1.size());
     unsigned int data_size = in1.size() >> 1;
@@ -303,7 +303,7 @@ int test_correctness(const std::string& log_tag,
     unsigned int test_size = 0;
 
     fstr >> test_size;
-    
+
     std::cout << "Test size: " << test_size << std::endl;
 
     for(unsigned int i = 0; i < test_size; i++) {
@@ -321,7 +321,7 @@ int test_correctness(const std::string& log_tag,
 
 
 
-int main() 
+int main()
 {
   std::cout << "*" << std::endl;
   std::cout << "* ViennaCL test: FFT" << std::endl;
@@ -350,7 +350,7 @@ int main()
     return EXIT_FAILURE;
 
   //2D FFT tests
-  if (test_correctness("fft:2d::radix2::sml::1_arg", 
+  if (test_correctness("fft:2d::radix2::sml::1_arg",
                         "../non-release/testdata/fft2d_radix2.data", read_matrices_pair, &opencl_2d_fft_1arg) == EXIT_FAILURE)
     return EXIT_FAILURE;
   if (test_correctness("fft:2d::direct::sml::1_arg",
@@ -360,20 +360,20 @@ int main()
                         "../non-release/testdata/fft2d_direct_big.data", read_matrices_pair, &opencl_2d_fft_1arg) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
-  if (test_correctness("fft:2d::radix2::sml::2_arg", 
+  if (test_correctness("fft:2d::radix2::sml::2_arg",
                         "../non-release/testdata/fft2d_radix2.data", read_matrices_pair, &opencl_2d_fft_2arg) == EXIT_FAILURE)
     return EXIT_FAILURE;
   if (test_correctness("fft:2d::direct::sml::2_arg",
                         "../non-release/testdata/fft2d_direct.data", read_matrices_pair, &opencl_2d_fft_2arg) == EXIT_FAILURE)
     return EXIT_FAILURE;
-  if (test_correctness("fft:2d::direct::bscalarig::2_arg", 
+  if (test_correctness("fft:2d::direct::bscalarig::2_arg",
                         "../non-release/testdata/fft2d_direct_big.data", read_matrices_pair, &opencl_2d_fft_2arg) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
+
 
   return EXIT_SUCCESS;
 }

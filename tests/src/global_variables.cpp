@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -65,18 +65,18 @@ int main()
 
   s1 = viennacl::scalar<float>(1.0f);
   s2 = viennacl::scalar<double>(1.0);
-  
+
   v1 = viennacl::vector<float>(5);
   v2 = viennacl::vector<double>(5);
 
   m1 = viennacl::matrix<float>(5, 4);
   m2 = viennacl::matrix<double>(5, 4);
-  
+
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
-   
+
+
   return EXIT_SUCCESS;
 }
 //

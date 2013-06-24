@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -24,7 +24,7 @@ M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, 
 #ifndef NDEBUG
   #define NDEBUG
 #endif
-  
+
 //#define VIENNACL_DEBUG_ALL
 #include <iostream>
 #include <fstream>
@@ -45,7 +45,7 @@ typedef float ScalarType;
 
 const ScalarType EPS = 0.00001f;
 
-void read_matrix_size(std::fstream& f, std::size_t& sz) 
+void read_matrix_size(std::fstream& f, std::size_t& sz)
 {
     if(!f.is_open())
     {
@@ -122,7 +122,7 @@ bool check_hessenberg(viennacl::matrix<ScalarType>& A_orig)
 }
 
 ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
-                            ublas::matrix<ScalarType>& ref) 
+                            ublas::matrix<ScalarType>& ref)
 {
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
@@ -139,15 +139,15 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
     return diff / mx;
 }
 
-ScalarType vector_compare(ublas::vector<ScalarType>& res, 
-                          ublas::vector<ScalarType>& ref) 
+ScalarType vector_compare(ublas::vector<ScalarType>& res,
+                          ublas::vector<ScalarType>& ref)
 {
     std::sort(ref.begin(), ref.end());
     std::sort(res.begin(), res.end());
 
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
-    for(size_t i = 0; i < ref.size(); i++) 
+    for(size_t i = 0; i < ref.size(); i++)
     {
         diff = std::max(diff, std::abs(res[i] - ref[i]));
         mx = std::max(mx, res[i]);
@@ -156,7 +156,7 @@ ScalarType vector_compare(ublas::vector<ScalarType>& res,
     return diff / mx;
 }
 
-void test_eigen(const std::string& fn, bool is_symm) 
+void test_eigen(const std::string& fn, bool is_symm)
 {
     std::cout << "Reading..." << "\n";
     std::size_t sz;
@@ -169,10 +169,10 @@ void test_eigen(const std::string& fn, bool is_symm)
     ublas::vector<ScalarType> eigen_ref_re(sz, 0), eigen_ref_im(sz, 0), eigen_re(sz, 0), eigen_im(sz, 0);
 
     read_matrix_body(f, A_input);
-    
+
     read_vector_body(f, eigen_ref_re);
-    
-    if(!is_symm)    
+
+    if(!is_symm)
         read_vector_body(f, eigen_ref_im);
 
     f.close();
@@ -180,7 +180,7 @@ void test_eigen(const std::string& fn, bool is_symm)
     A_ref = A_input;
 
     std::cout << "Calculation..." << "\n";
-    
+
     Timer timer;
     timer.start();
 
@@ -217,7 +217,7 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     is_ok = is_ok && (eigen_diff < EPS);
     is_ok = is_ok && (prods_diff < EPS);
-    
+
     // std::cout << A_ref << "\n";
     // std::cout << A_input << "\n";
     // std::cout << Q << "\n";
@@ -225,7 +225,7 @@ void test_eigen(const std::string& fn, bool is_symm)
     // std::cout << eigen_im << "\n";
     // std::cout << eigen_ref_re << "\n";
     // std::cout << eigen_ref_im << "\n";
-    
+
     // std::cout << result1 << "\n";
     // std::cout << result2 << "\n";
     // std::cout << eigen_ref << "\n";
@@ -249,6 +249,6 @@ int main()
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
+
   return EXIT_SUCCESS;
 }

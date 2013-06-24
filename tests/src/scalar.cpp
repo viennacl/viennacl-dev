@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -31,7 +31,7 @@
 // -------------------------------------------------------------
 //
 template <typename ScalarType>
-ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2) 
+ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
@@ -53,7 +53,7 @@ int test(Epsilon const& epsilon)
    viennacl::scalar<NumericT> vcl_s1;
    viennacl::scalar<NumericT> vcl_s2;
    viennacl::scalar<NumericT> vcl_s3 = 1.0;
-      
+
    vcl_s1 = s1;
 
    if( fabs(diff(s1, vcl_s1)) > epsilon )
@@ -64,7 +64,7 @@ int test(Epsilon const& epsilon)
    }
 
    vcl_s2 = s2;
-   if( fabs(diff(s2, vcl_s2)) > epsilon )   
+   if( fabs(diff(s2, vcl_s2)) > epsilon )
    {
       std::cout << "# Error at operation: vcl_s2 = s2;" << std::endl;
       std::cout << "  diff: " << fabs(diff(s2, vcl_s2)) << std::endl;
@@ -72,7 +72,7 @@ int test(Epsilon const& epsilon)
    }
 
    vcl_s3 = s3;
-   if( s3 != vcl_s3 ) 
+   if( s3 != vcl_s3 )
    {
       std::cout << "# Error at operation: vcl_s3 = s3;" << std::endl;
       std::cout << "  diff: " << s3 - vcl_s3 << std::endl;
@@ -82,7 +82,7 @@ int test(Epsilon const& epsilon)
 
    s1 += s2;
    vcl_s1 += vcl_s2;
-   if( fabs(diff(s1, vcl_s1)) > epsilon ) 
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: += " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -92,7 +92,7 @@ int test(Epsilon const& epsilon)
    s1 *= s3;
    vcl_s1 *= vcl_s3;
 
-   if( fabs(diff(s1, vcl_s1)) > epsilon )   
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: *= " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -101,7 +101,7 @@ int test(Epsilon const& epsilon)
 
    s1 -= s2;
    vcl_s1 -= vcl_s2;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )   
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: -= " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -111,7 +111,7 @@ int test(Epsilon const& epsilon)
    s1 /= s3;
    vcl_s1 /= vcl_s3;
 
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: /= " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -122,7 +122,7 @@ int test(Epsilon const& epsilon)
 
    s1 = s2 + s3;
    vcl_s1 = vcl_s2 + vcl_s3;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: + " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -131,7 +131,7 @@ int test(Epsilon const& epsilon)
 
    s1 = s2 - s3;
    vcl_s1 = vcl_s2 - vcl_s3;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: - " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -140,7 +140,7 @@ int test(Epsilon const& epsilon)
 
    s1 = s2 * s3;
    vcl_s1 = vcl_s2 * vcl_s3;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: * " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -149,7 +149,7 @@ int test(Epsilon const& epsilon)
 
    s1 = s2 / s3;
    vcl_s1 = vcl_s2 / vcl_s3;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: / " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -158,7 +158,7 @@ int test(Epsilon const& epsilon)
 
    s1 = s2 + s3 * s2 - s3 / s1;
    vcl_s1 = vcl_s2 + vcl_s3 * vcl_s2 - vcl_s3 / vcl_s1;
-   if( fabs(diff(s1, vcl_s1)) > epsilon )  
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: + * - / " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -200,7 +200,7 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-#ifdef VIENNACL_WITH_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL
    if( viennacl::ocl::current_device().double_support() )
 #endif
    {
@@ -218,12 +218,12 @@ int main()
       }
       std::cout << std::endl;
    }
-   
+
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
   std::cout << std::endl;
-   
-   
+
+
    return retval;
 }
 //

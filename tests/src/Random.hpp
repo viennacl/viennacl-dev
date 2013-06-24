@@ -10,7 +10,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -24,12 +24,12 @@
 
 inline void init()
 {
-	static bool init = false;
-	if (!init)
-	{
-		srand( (unsigned int)time(NULL) );
-		init = true;
-	}
+  static bool init = false;
+  if (!init)
+  {
+    srand( (unsigned int)time(NULL) );
+    init = true;
+  }
 }
 
 template<class TYPE>

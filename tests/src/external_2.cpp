@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -71,12 +71,12 @@
 void other_func()
 {
   typedef float   NumericType;
-  
+
   //doing nothing but instantiating a few types
   viennacl::scalar<NumericType>  s;
   viennacl::vector<NumericType>  v(10);
   viennacl::matrix<NumericType>  m(10, 10);
   viennacl::compressed_matrix<NumericType>  compr(10, 10);
   viennacl::coordinate_matrix<NumericType>  coord(10, 10);
-  
+
 }

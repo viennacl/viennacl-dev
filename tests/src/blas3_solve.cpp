@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -56,7 +56,7 @@ using namespace boost::numeric;
 // -------------------------------------------------------------
 //
 template <typename ScalarType>
-ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2) 
+ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
@@ -127,7 +127,7 @@ void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, 
    }
    else
      std::cout << " passed! " << act_diff << std::endl;
-   
+
 }
 
 
@@ -135,11 +135,11 @@ template< typename NumericT, typename Epsilon,
           typename ReferenceMatrixTypeA, typename ReferenceMatrixTypeB, typename ReferenceMatrixTypeC,
           typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC, typename MatrixTypeResult>
 int test_solve(Epsilon const& epsilon,
-              
+
               ReferenceMatrixTypeA const & A,
               ReferenceMatrixTypeB const & B_start,
               ReferenceMatrixTypeC const & C_start,
-              
+
               MatrixTypeA const & vcl_A,
               MatrixTypeB & vcl_B,
               MatrixTypeC & vcl_C,
@@ -147,18 +147,18 @@ int test_solve(Epsilon const& epsilon,
              )
 {
    int retval = EXIT_SUCCESS;
-   
-   // --------------------------------------------------------------------------            
-   
+
+   // --------------------------------------------------------------------------
+
    ReferenceMatrixTypeA result;
    ReferenceMatrixTypeC C_trans;
-   
+
    ReferenceMatrixTypeB B = B_start;
    ReferenceMatrixTypeC C = C_start;
-   
+
    MatrixTypeResult vcl_result;
-   
-   // Test: A \ B with various tags --------------------------------------------------------------------------       
+
+   // Test: A \ B with various tags --------------------------------------------------------------------------
    std::cout << "Testing A \\ B: " << std::endl;
    std::cout << " * upper_tag:      ";
    result = ublas::solve(A, B, ublas::upper_tag());
@@ -179,14 +179,14 @@ int test_solve(Epsilon const& epsilon,
    result = ublas::solve(A, B, ublas::unit_lower_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, vcl_B, viennacl::linalg::unit_lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
-   
+
    if (retval == EXIT_SUCCESS)
      std::cout << "Test A \\ B passed!" << std::endl;
-   
+
    B = B_start;
    C = C_start;
-   
-   // Test: A \ B^T --------------------------------------------------------------------------       
+
+   // Test: A \ B^T --------------------------------------------------------------------------
    std::cout << "Testing A \\ B^T: " << std::endl;
    std::cout << " * upper_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
@@ -217,14 +217,14 @@ int test_solve(Epsilon const& epsilon,
    ublas::inplace_solve(A, C_trans, ublas::unit_lower_tag());
    viennacl::linalg::inplace_solve(vcl_A, trans(vcl_C), viennacl::linalg::unit_lower_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
-   
+
    if (retval == EXIT_SUCCESS)
      std::cout << "Test A \\ B^T passed!" << std::endl;
 
    B = B_start;
    C = C_start;
-   
-   // Test: A \ B with various tags --------------------------------------------------------------------------       
+
+   // Test: A \ B with various tags --------------------------------------------------------------------------
    std::cout << "Testing A^T \\ B: " << std::endl;
    std::cout << " * upper_tag:      ";
    viennacl::copy(B, vcl_B);
@@ -249,14 +249,14 @@ int test_solve(Epsilon const& epsilon,
    result = ublas::solve(trans(A), B, ublas::unit_lower_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), vcl_B, viennacl::linalg::unit_lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
-   
+
    if (retval == EXIT_SUCCESS)
      std::cout << "Test A^T \\ B passed!" << std::endl;
-   
+
    B = B_start;
    C = C_start;
 
-   // Test: A^T \ B^T --------------------------------------------------------------------------       
+   // Test: A^T \ B^T --------------------------------------------------------------------------
    std::cout << "Testing A^T \\ B^T: " << std::endl;
    std::cout << " * upper_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
@@ -290,8 +290,8 @@ int test_solve(Epsilon const& epsilon,
 
    if (retval == EXIT_SUCCESS)
      std::cout << "Test A^T \\ B^T passed!" << std::endl;
-   
-   return retval;  
+
+   return retval;
 }
 
 
@@ -304,7 +304,7 @@ int test_solve(Epsilon const& epsilon)
 
   std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
 
-  
+
   ublas::matrix<NumericT> A(matrix_size, matrix_size);
   ublas::matrix<NumericT> B_start(matrix_size, rhs_num);
   ublas::matrix<NumericT> C_start(rhs_num, matrix_size);
@@ -315,7 +315,7 @@ int test_solve(Epsilon const& epsilon)
         A(i,j) = static_cast<NumericT>(-0.5) * random<NumericT>();
     A(i,i) = NumericT(1.0) + NumericT(2.0) * random<NumericT>(); //some extra weight on diagonal for stability
   }
-  
+
   for (std::size_t i = 0; i < B_start.size1(); ++i)
     for (std::size_t j = 0; j < B_start.size2(); ++j)
         B_start(i,j) = random<NumericT>();
@@ -323,64 +323,64 @@ int test_solve(Epsilon const& epsilon)
   for (std::size_t i = 0; i < C_start.size1(); ++i)
     for (std::size_t j = 0; j < C_start.size2(); ++j)
         C_start(i,j) = random<NumericT>();
-  
+
 
   // A
   viennacl::range range1_A(matrix_size, 2*matrix_size);
   viennacl::range range2_A(2*matrix_size, 3*matrix_size);
   viennacl::slice slice1_A(matrix_size, 2, matrix_size);
   viennacl::slice slice2_A(0, 3, matrix_size);
-  
+
   viennacl::matrix<NumericT, F_A>    vcl_A(matrix_size, matrix_size);
   viennacl::copy(A, vcl_A);
-  
+
   viennacl::matrix<NumericT, F_A>    vcl_big_range_A(4*matrix_size, 4*matrix_size);
   viennacl::matrix_range<viennacl::matrix<NumericT, F_A> > vcl_range_A(vcl_big_range_A, range1_A, range2_A);
   viennacl::copy(A, vcl_range_A);
-  
+
   viennacl::matrix<NumericT, F_A>    vcl_big_slice_A(4*matrix_size, 4*matrix_size);
   viennacl::matrix_slice<viennacl::matrix<NumericT, F_A> > vcl_slice_A(vcl_big_slice_A, slice1_A, slice2_A);
   viennacl::copy(A, vcl_slice_A);
-    
+
 
   // B
   viennacl::range range1_B(matrix_size, 2*matrix_size);
   viennacl::range range2_B(2*rhs_num, 3*rhs_num);
   viennacl::slice slice1_B(matrix_size, 2, matrix_size);
   viennacl::slice slice2_B(0, 3, rhs_num);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_B(matrix_size, rhs_num);
   viennacl::copy(B_start, vcl_B);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_big_range_B(4*matrix_size, 4*rhs_num);
   viennacl::matrix_range<viennacl::matrix<NumericT, F_B> > vcl_range_B(vcl_big_range_B, range1_B, range2_B);
   viennacl::copy(B_start, vcl_range_B);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_big_slice_B(4*matrix_size, 4*rhs_num);
   viennacl::matrix_slice<viennacl::matrix<NumericT, F_B> > vcl_slice_B(vcl_big_slice_B, slice1_B, slice2_B);
   viennacl::copy(B_start, vcl_slice_B);
-    
+
 
   // C
   viennacl::range range1_C(rhs_num, 2*rhs_num);
   viennacl::range range2_C(2*matrix_size, 3*matrix_size);
   viennacl::slice slice1_C(rhs_num, 2, rhs_num);
   viennacl::slice slice2_C(0, 3, matrix_size);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_C(rhs_num, matrix_size);
   viennacl::copy(C_start, vcl_C);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_big_range_C(4*rhs_num, 4*matrix_size);
   viennacl::matrix_range<viennacl::matrix<NumericT, F_B> > vcl_range_C(vcl_big_range_C, range1_C, range2_C);
   viennacl::copy(C_start, vcl_range_C);
-  
+
   viennacl::matrix<NumericT, F_B>    vcl_big_slice_C(4*rhs_num, 4*matrix_size);
   viennacl::matrix_slice<viennacl::matrix<NumericT, F_B> > vcl_slice_C(vcl_big_slice_C, slice1_C, slice2_C);
   viennacl::copy(C_start, vcl_slice_C);
-  
-  
+
+
   std::cout << "Now using A=matrix, B=matrix" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_A, vcl_B, vcl_C, vcl_B
                             );
@@ -388,7 +388,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=matrix, B=range" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_A, vcl_range_B, vcl_range_C, vcl_B
                             );
@@ -396,7 +396,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=matrix, B=slice" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_A, vcl_slice_B, vcl_slice_C, vcl_B
                             );
@@ -404,9 +404,9 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
 
-  
+
   std::cout << "Now using A=range, B=matrix" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_range_A, vcl_B, vcl_C, vcl_B
                             );
@@ -414,7 +414,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=range, B=range" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_range_A, vcl_range_B, vcl_range_C, vcl_B
                             );
@@ -422,7 +422,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=range, B=slice" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_range_A, vcl_slice_B, vcl_slice_C, vcl_B
                             );
@@ -431,9 +431,9 @@ int test_solve(Epsilon const& epsilon)
 
 
 
-  
+
   std::cout << "Now using A=slice, B=matrix" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_slice_A, vcl_B, vcl_C, vcl_B
                             );
@@ -441,7 +441,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=slice, B=range" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_slice_A, vcl_range_B, vcl_range_C, vcl_B
                             );
@@ -449,7 +449,7 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
   std::cout << "Now using A=slice, B=slice" << std::endl;
-  ret = test_solve<NumericT>(epsilon, 
+  ret = test_solve<NumericT>(epsilon,
                              A, B_start, C_start,
                              vcl_slice_A, vcl_slice_B, vcl_slice_C, vcl_B
                             );
@@ -457,10 +457,10 @@ int test_solve(Epsilon const& epsilon)
     return ret;
 
 
-  
-  
+
+
   return ret;
-  
+
 }
 
 
@@ -481,7 +481,7 @@ int test(Epsilon const& epsilon)
   ret = test_solve<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
-  
+
 
   std::cout << "////////////////////////////////" << std::endl;
   std::cout << "/// Now testing A=row, B=col ///" << std::endl;
@@ -496,7 +496,7 @@ int test(Epsilon const& epsilon)
   ret = test_solve<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
-  
+
   std::cout << "////////////////////////////////" << std::endl;
   std::cout << "/// Now testing A=col, B=col ///" << std::endl;
   std::cout << "////////////////////////////////" << std::endl;
@@ -504,8 +504,8 @@ int test(Epsilon const& epsilon)
   if (ret != EXIT_SUCCESS)
     return ret;
 
-  
-  
+
+
   return ret;
 }
 
@@ -542,7 +542,7 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-#ifdef VIENNACL_WITH_OPENCL   
+#ifdef VIENNACL_WITH_OPENCL
    if( viennacl::ocl::current_device().double_support() )
 #endif
    {
@@ -562,11 +562,11 @@ int main()
       std::cout << "----------------------------------------------" << std::endl;
       std::cout << std::endl;
    }
-   
+
    std::cout << std::endl;
    std::cout << "------- Test completed --------" << std::endl;
    std::cout << std::endl;
-   
-   
+
+
    return retval;
 }
