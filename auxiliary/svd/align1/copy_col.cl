@@ -13,5 +13,5 @@ __kernel void copy_col(__global float* A,
 
     for(uint i = row_start + glb_id; i < size; i += glb_sz) {
         V[i - row_start] = A[i * stride + col_start];
-    }    
+    }
 }

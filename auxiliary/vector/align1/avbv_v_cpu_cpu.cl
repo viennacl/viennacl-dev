@@ -3,17 +3,17 @@
 __kernel void avbv_v_cpu_cpu(
           __global float * vec1,
           uint4 size1,
-          
+
           float fac2,
           unsigned int options2,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * vec2,
           uint4 size2,
-          
+
           float fac3,
           unsigned int options3,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * vec3,
           uint4 size3)
-{ 
+{
   float alpha = fac2;
   if (options2 & (1 << 0))
     alpha = -alpha;

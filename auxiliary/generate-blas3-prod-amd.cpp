@@ -73,24 +73,24 @@ private:
 
 
 struct matrix_descriptor{
-	matrix_descriptor(unsigned int _alignment, bool /*_use_shared*/, bool _is_rowmajor, bool _is_transposed, std::string const & _name, std::string const & _scalartype){
-		alignment = _alignment;
-		is_rowmajor = _is_rowmajor;
-		is_transposed = _is_transposed;
-		name = _name;
-		size1 = _name+"_size1";
-		size2 = _name+"_size2";
-		internal_size1 = _name+"_internal_size1";
-		internal_size2 = _name+"_internal_size2";
-		row_inc = _name+"_stride1";
-		col_inc = _name+"_stride2";
-		row_start = _name+"_offset1";
-		col_start = _name+"_offset2";
-		scalartype = _scalartype;
-		aligned_scalartype = _scalartype; if(alignment>1) aligned_scalartype+=to_string(alignment);
-	}
-	
-	std::string arguments_string() const{
+  matrix_descriptor(unsigned int _alignment, bool /*_use_shared*/, bool _is_rowmajor, bool _is_transposed, std::string const & _name, std::string const & _scalartype){
+    alignment = _alignment;
+    is_rowmajor = _is_rowmajor;
+    is_transposed = _is_transposed;
+    name = _name;
+    size1 = _name+"_size1";
+    size2 = _name+"_size2";
+    internal_size1 = _name+"_internal_size1";
+    internal_size2 = _name+"_internal_size2";
+    row_inc = _name+"_stride1";
+    col_inc = _name+"_stride2";
+    row_start = _name+"_offset1";
+    col_start = _name+"_offset2";
+    scalartype = _scalartype;
+    aligned_scalartype = _scalartype; if(alignment>1) aligned_scalartype+=to_string(alignment);
+  }
+
+  std::string arguments_string() const{
       return " __global " + aligned_scalartype + "*"  + " " + name
                                                   + ", unsigned int " + row_start
                                                   + ", unsigned int " + col_start
@@ -100,39 +100,39 @@ struct matrix_descriptor{
                                                   + ", unsigned int " + size2
                                                   + ", unsigned int " + internal_size1
                                                   + ", unsigned int " + internal_size2;
-	}
-    
-            
-	std::string offset(std::string const & offset_i, std::string const & offset_j){
+  }
+
+
+  std::string offset(std::string const & offset_i, std::string const & offset_j){
                 if(is_rowmajor){
                     return '(' + offset_i + ')' + '*' + internal_size2 + "+ (" + offset_j + ')';
                 }
                 return '(' + offset_i + ')' + "+ (" + offset_j + ')' + '*' + internal_size1;
     }
-            
-	unsigned int alignment;
-	bool is_rowmajor;
-	bool is_transposed;
-	std::string name;
-	std::string size1;
-	std::string size2;
-	std::string internal_size1;
-	std::string internal_size2;
-	std::string row_start;
-	std::string row_inc;
-	std::string col_start;
-	std::string col_inc;
-	std::string scalartype;
-	std::string aligned_scalartype;
+
+  unsigned int alignment;
+  bool is_rowmajor;
+  bool is_transposed;
+  std::string name;
+  std::string size1;
+  std::string size2;
+  std::string internal_size1;
+  std::string internal_size2;
+  std::string row_start;
+  std::string row_inc;
+  std::string col_start;
+  std::string col_inc;
+  std::string scalartype;
+  std::string aligned_scalartype;
 };
 
 struct scalar_descriptor{
-	scalar_descriptor(std::string const & _name, std::string const & _scalartype) : name(_name), scalartype(_scalartype){ }
-	std::string name;
-	std::string scalartype;
-	std::string arguments_string() const{
-		return scalartype + " " + name;
-	}
+  scalar_descriptor(std::string const & _name, std::string const & _scalartype) : name(_name), scalartype(_scalartype){ }
+  std::string name;
+  std::string scalartype;
+  std::string arguments_string() const{
+    return scalartype + " " + name;
+  }
 };
 
 class kernel_generation_stream : public std::ostream{
@@ -169,8 +169,8 @@ public:
 private:
     unsigned int tab_count_;
 };
-    
-    
+
+
  class blas3_generator{
 static void transform_block(matrix_descriptor const & mat_infos, bool store_shared
                             , unsigned int & large_block_1, unsigned int & large_block_2
@@ -207,9 +207,9 @@ void transform_size(matrix_descriptor const & mat_infos){
 
 void declare_rhs_global_ptr(unsigned int ks_rhs,unsigned int ns_rhs,
                            unsigned int nl_rhs, std::string const & offset_n){
-		if(rhs_descriptor.is_rowmajor)
+    if(rhs_descriptor.is_rowmajor)
             for(unsigned int k = 0 ; k < ks_rhs ; ++k){
-				std::string ptr_name = rhs_descriptor.name + "_ptr_" + to_string(k);
+        std::string ptr_name = rhs_descriptor.name + "_ptr_" + to_string(k);
                 kss << "__global " << rhs_descriptor.aligned_scalartype << " * " << ptr_name << " = " << rhs_descriptor.name << " + " ;
                 if(rhs_descriptor.is_transposed) kss<< rhs_descriptor.offset(to_string(k) + " + " + offset_n + " +  get_group_id(1)*" + to_string(nl_rhs),"0");
                 else kss << rhs_descriptor.offset(to_string(k),offset_n + " +  get_group_id(1)*" + to_string(nl_rhs));
@@ -217,7 +217,7 @@ void declare_rhs_global_ptr(unsigned int ks_rhs,unsigned int ns_rhs,
             }
        else
             for(unsigned int n = 0 ; n < ns_rhs ; ++n){
-				std::string ptr_name = rhs_descriptor.name + "_ptr_" + to_string(n);
+        std::string ptr_name = rhs_descriptor.name + "_ptr_" + to_string(n);
                 kss << "__global " << rhs_descriptor.aligned_scalartype << " * " << ptr_name << " = " << rhs_descriptor.name << " +  " ;
                 if(rhs_descriptor.is_transposed)  kss << rhs_descriptor.offset(offset_n + " +  get_group_id(1)*" + to_string(nl_rhs), to_string(n));
                 else kss << rhs_descriptor.offset("0",offset_n + " +  get_group_id(1)*" + to_string(nl_rhs) + " + " + to_string(n));
@@ -229,7 +229,7 @@ void declare_lhs_global_ptr(unsigned int ms_lhs, unsigned int ks_lhs,
                            unsigned int ml_lhs, std::string const & offset_m){
          if(lhs_descriptor.is_rowmajor){
             for(unsigned int m=0; m<ms_lhs; ++m){
-				std::string ptr_name = lhs_descriptor.name + "_ptr_" + to_string(m);
+        std::string ptr_name = lhs_descriptor.name + "_ptr_" + to_string(m);
                 kss << "__global " << lhs_descriptor.aligned_scalartype << " * " << ptr_name << " = " << lhs_descriptor.name << " + ";
                 if(lhs_descriptor.is_transposed) kss << lhs_descriptor.offset(to_string(m),"get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                 else kss << lhs_descriptor.offset("get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m + "+" + to_string(m),"0");
@@ -238,7 +238,7 @@ void declare_lhs_global_ptr(unsigned int ms_lhs, unsigned int ks_lhs,
         }
         else{
             for(unsigned int k=0; k<ks_lhs; ++k){
-				std::string ptr_name = lhs_descriptor.name + "_ptr_" + to_string(k);
+        std::string ptr_name = lhs_descriptor.name + "_ptr_" + to_string(k);
                 kss << "__global " << lhs_descriptor.aligned_scalartype << " * " << ptr_name << " = " << lhs_descriptor.name << " + " ;
                 if(lhs_descriptor.is_transposed) kss << lhs_descriptor.offset("0", to_string(k) + "+" + "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m );
                 else kss << lhs_descriptor.offset( "get_group_id(0)*" + to_string(ml_lhs) + "+" + offset_m, to_string(k));
@@ -250,7 +250,7 @@ void declare_lhs_global_ptr(unsigned int ms_lhs, unsigned int ks_lhs,
 void update_rhs_global_ptr(unsigned int ks, unsigned int ns_rhs, unsigned int ks_rhs
                           ,std::string const & internal_size1_rhs,
                           std::string const & internal_size2_rhs){
-	    if(rhs_descriptor.is_rowmajor && !rhs_descriptor.is_transposed)
+      if(rhs_descriptor.is_rowmajor && !rhs_descriptor.is_transposed)
             for(unsigned int k=0 ; k<ks ; ++k)
                 kss << rhs_descriptor.name << "_ptr_" << k << " += " << ks_rhs << "*" << internal_size2_rhs << " - " << ns_rhs << ";" << std::endl;
         else if(rhs_descriptor.is_transposed && !rhs_descriptor.is_rowmajor)
@@ -261,7 +261,7 @@ void update_rhs_global_ptr(unsigned int ks, unsigned int ns_rhs, unsigned int ks
 void update_lhs_global_ptr(unsigned int ks, unsigned int ms_lhs, unsigned int ks_lhs
                           ,std::string const & internal_size1_lhs,
                           std::string const & internal_size2_lhs){
-	    if(lhs_descriptor.is_transposed && lhs_descriptor.is_rowmajor)
+      if(lhs_descriptor.is_transposed && lhs_descriptor.is_rowmajor)
             for(unsigned int m=0 ; m<ms_lhs ; ++m)
                 kss << lhs_descriptor.name << "_ptr_" << m << " += " << ks << "*" << internal_size2_lhs << " - " <<  ks_lhs << ";" << std::endl;
         else if(!lhs_descriptor.is_transposed && !lhs_descriptor.is_rowmajor)
@@ -328,57 +328,57 @@ void fetch_to_local_mem(local_memory<2> const & lmem,
 
 public:
     blas3_generator(kernel_generation_stream & _kss,
-					std::string const & scalartype,
+          std::string const & scalartype,
 
-					unsigned int _alignment,
-	
-					unsigned int _ml,
-					unsigned int _kl,
-					unsigned int _nl,
-	
-					unsigned int _ms,
-					unsigned int _ks,
-					unsigned int _ns,
-	
-					bool _use_LHS_shared,
-					bool _use_RHS_shared,
-					
-					bool _is_lhs_rowmajor,
-					bool _is_lhs_transposed,
-					
-					bool _is_rhs_rowmajor,
-					bool _is_rhs_transposed,
-					
-					bool _is_result_rowmajor) : kss(_kss), lhs_descriptor(_alignment, _use_LHS_shared, _is_lhs_rowmajor, _is_lhs_transposed, "lhs", scalartype)
-														, rhs_descriptor(_alignment, _use_RHS_shared, _is_rhs_rowmajor, _is_rhs_transposed, "rhs", scalartype)
-														, result_descriptor(_alignment, false, _is_result_rowmajor, false, "res", scalartype)
-														, alpha_descriptor("alpha",scalartype)
-														, beta_descriptor("beta",scalartype){
-						
-		alignment = _alignment;
-		ml = _ml;
-		kl = _kl;
-		nl = _nl;
-		
-		ms = _ms;
-		ks = _ks;
-		ns = _ns;
-		
-		use_LHS_shared = _use_LHS_shared;
-		use_RHS_shared = _use_RHS_shared;
-	}
+          unsigned int _alignment,
+
+          unsigned int _ml,
+          unsigned int _kl,
+          unsigned int _nl,
+
+          unsigned int _ms,
+          unsigned int _ks,
+          unsigned int _ns,
+
+          bool _use_LHS_shared,
+          bool _use_RHS_shared,
+
+          bool _is_lhs_rowmajor,
+          bool _is_lhs_transposed,
+
+          bool _is_rhs_rowmajor,
+          bool _is_rhs_transposed,
+
+          bool _is_result_rowmajor) : kss(_kss), lhs_descriptor(_alignment, _use_LHS_shared, _is_lhs_rowmajor, _is_lhs_transposed, "lhs", scalartype)
+                            , rhs_descriptor(_alignment, _use_RHS_shared, _is_rhs_rowmajor, _is_rhs_transposed, "rhs", scalartype)
+                            , result_descriptor(_alignment, false, _is_result_rowmajor, false, "res", scalartype)
+                            , alpha_descriptor("alpha",scalartype)
+                            , beta_descriptor("beta",scalartype){
+
+    alignment = _alignment;
+    ml = _ml;
+    kl = _kl;
+    nl = _nl;
+
+    ms = _ms;
+    ks = _ks;
+    ns = _ns;
+
+    use_LHS_shared = _use_LHS_shared;
+    use_RHS_shared = _use_RHS_shared;
+  }
 
     void operator()() {
 
-		kss << "__kernel void prod_" << (lhs_descriptor.is_transposed ? "T" : "A") << (rhs_descriptor.is_transposed ? "T" : "A")
+    kss << "__kernel void prod_" << (lhs_descriptor.is_transposed ? "T" : "A") << (rhs_descriptor.is_transposed ? "T" : "A")
                         << "_amd( "
                         << alpha_descriptor.arguments_string() << std::endl
-												<< "," << lhs_descriptor.arguments_string() << std::endl
-												<< "," << rhs_descriptor.arguments_string() << std::endl
-												<< "," << beta_descriptor.arguments_string() << std::endl
-												<< "," << result_descriptor.arguments_string() << ")" << std::endl;
-		kss << "{" << std::endl;
-		kss.inc_tab();
+                        << "," << lhs_descriptor.arguments_string() << std::endl
+                        << "," << rhs_descriptor.arguments_string() << std::endl
+                        << "," << beta_descriptor.arguments_string() << std::endl
+                        << "," << result_descriptor.arguments_string() << ")" << std::endl;
+    kss << "{" << std::endl;
+    kss.inc_tab();
         std::string lhs_value_scalartype;
         if(use_LHS_shared) lhs_value_scalartype = lhs_descriptor.scalartype;
         else lhs_value_scalartype = lhs_descriptor.aligned_scalartype;
@@ -425,7 +425,7 @@ public:
         transform_size(lhs_descriptor);
         transform_size(rhs_descriptor);
         transform_size(result_descriptor);
-        
+
         std::string offset_m = helper_variable(kss,false,"unsigned int", "offset_m", "get_local_id(0)*" + to_string(ms_lhs));
         std::string offset_n = helper_variable(kss,false,"unsigned int", "offset_n", "get_local_id(1)*" + to_string(ns_rhs));
         std::string block_num = helper_variable(kss,true,"unsigned int", "block_num", (lhs_descriptor.is_transposed?internal_size1_lhs:internal_size2_lhs) + '/' + to_string(kl_lhs));
@@ -625,7 +625,7 @@ public:
                         rhs_oss << "val_rhs_" << ind_rhs_1 << "_" << ind_rhs_2;
                         if(!is_vectorized_rhs && !use_RHS_shared && alignment>1) rhs_oss << ".s" << ind_s_rhs;
 
-						
+
                         kss << res_oss.str() << "+=" <<  lhs_oss.str() << "*" << rhs_oss.str() << ";" << std::endl;
 
 
@@ -729,66 +729,66 @@ public:
 private:
     kernel_generation_stream & kss;
 
-	unsigned int alignment;
-	
-	unsigned int ml;
-	unsigned int kl;
-	unsigned int nl;
-	
-	unsigned int ms;
-	unsigned int ks;
-	unsigned int ns;
-	
-	bool use_LHS_shared;
-	bool use_RHS_shared;
-	
-	matrix_descriptor lhs_descriptor;
-	matrix_descriptor rhs_descriptor;
-	matrix_descriptor result_descriptor;
-	scalar_descriptor alpha_descriptor;
-	scalar_descriptor beta_descriptor;
+  unsigned int alignment;
+
+  unsigned int ml;
+  unsigned int kl;
+  unsigned int nl;
+
+  unsigned int ms;
+  unsigned int ks;
+  unsigned int ns;
+
+  bool use_LHS_shared;
+  bool use_RHS_shared;
+
+  matrix_descriptor lhs_descriptor;
+  matrix_descriptor rhs_descriptor;
+  matrix_descriptor result_descriptor;
+  scalar_descriptor alpha_descriptor;
+  scalar_descriptor beta_descriptor;
 };
 
 int main(int args, char **argv){
-	kernel_generation_stream kss(std::cout);
-	
-	std::string scalartype = "float";
-	
-	unsigned int alignment = 4;
-	
-	unsigned int ml = 32;
-	unsigned int kl = 64;
-	unsigned int nl = 128;
-	
-	unsigned int ms = 4;
-	unsigned int ks = 8;
-	unsigned int ns = 4;
-	
+  kernel_generation_stream kss(std::cout);
+
+  std::string scalartype = "float";
+
+  unsigned int alignment = 4;
+
+  unsigned int ml = 32;
+  unsigned int kl = 64;
+  unsigned int nl = 128;
+
+  unsigned int ms = 4;
+  unsigned int ks = 8;
+  unsigned int ns = 4;
+
         if (args != 6)
         {
           std::cout << "Wrong number of arguments (" << args << " instead of 6). Aborting..." << std::endl;
           return EXIT_FAILURE;
         }
-        
-	bool use_LHS_shared = true;
-	bool use_RHS_shared = false;
-	
-	bool is_lhs_rowmajor   = (argv[1][0] == '1');
-	bool is_lhs_transposed = (argv[4][0] == '1');
-	
-	bool is_rhs_rowmajor   = (argv[2][0] == '1');
-	bool is_rhs_transposed = (argv[5][0] == '1');
-	
-	bool is_result_rowmajor = (argv[3][0] == '1');
-	
-	blas3_generator gen(kss, scalartype, alignment
-					, ml, kl, nl
-					, ms, ks, ns
-					, use_LHS_shared, use_RHS_shared,
-					 is_lhs_rowmajor, is_lhs_transposed
-					 , is_rhs_rowmajor, is_rhs_transposed
-					 , is_result_rowmajor);
-					 
-	gen();
-	
+
+  bool use_LHS_shared = true;
+  bool use_RHS_shared = false;
+
+  bool is_lhs_rowmajor   = (argv[1][0] == '1');
+  bool is_lhs_transposed = (argv[4][0] == '1');
+
+  bool is_rhs_rowmajor   = (argv[2][0] == '1');
+  bool is_rhs_transposed = (argv[5][0] == '1');
+
+  bool is_result_rowmajor = (argv[3][0] == '1');
+
+  blas3_generator gen(kss, scalartype, alignment
+          , ml, kl, nl
+          , ms, ks, ns
+          , use_LHS_shared, use_RHS_shared,
+           is_lhs_rowmajor, is_lhs_transposed
+           , is_rhs_rowmajor, is_rhs_transposed
+           , is_result_rowmajor);
+
+  gen();
+
 }

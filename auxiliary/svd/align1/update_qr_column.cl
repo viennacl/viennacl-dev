@@ -20,7 +20,7 @@ __kernel void update_qr_column(__global float* A,
             bool notlast = (k != n - 1);
 
             float p = buf[5 * k] * a_ik + buf[5 * k + 1] * a_ik_1;
-            
+
             if (notlast)
             {
                 a_ik_2 = A[(k + 2) * stride + i];
@@ -30,7 +30,7 @@ __kernel void update_qr_column(__global float* A,
 
             A[k * stride + i] = a_ik - p;
             a_ik_1 = a_ik_1 - p * buf[5 * k + 3];
-            
+
             a_ik = a_ik_1;
             a_ik_1 = a_ik_2;
         }

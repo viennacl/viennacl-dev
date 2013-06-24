@@ -4,7 +4,7 @@
 __kernel void inverse_signs(__global float* v,
                             __global float* signs,
                             uint size,
-                            uint stride 
+                            uint stride
                             )
 {
     uint glb_id_x = get_global_id(0);

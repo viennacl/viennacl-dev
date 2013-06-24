@@ -18,19 +18,19 @@
      return;
 
    //backward elimination, using U and diagonal_U
-   for (unsigned int iter = 0; iter < col_stop - col_start; ++iter) 
-   { 
+   for (unsigned int iter = 0; iter < col_stop - col_start; ++iter)
+   {
      unsigned int col = (col_stop - iter) - 1;
      result_entry = result[col] / diagonal_U[col];
-     row_start = row_jumper_U[col]; 
-     row_stop  = row_jumper_U[col + 1]; 
-     for (unsigned int buffer_index = row_start + get_local_id(0); buffer_index < row_stop; buffer_index += get_local_size(0)) 
+     row_start = row_jumper_U[col];
+     row_stop  = row_jumper_U[col + 1];
+     for (unsigned int buffer_index = row_start + get_local_id(0); buffer_index < row_stop; buffer_index += get_local_size(0))
        result[column_indices_U[buffer_index]] -= result_entry * elements_U[buffer_index];
-     barrier(CLK_GLOBAL_MEM_FENCE); 
-   } 
+     barrier(CLK_GLOBAL_MEM_FENCE);
+   }
 
    //divide result vector by diagonal:
-   for (unsigned int col = col_start + get_local_id(0); col < col_stop; col += get_local_size(0)) 
+   for (unsigned int col = col_start + get_local_id(0); col < col_stop; col += get_local_size(0))
      result[col] /= diagonal_U[col];
  };
 

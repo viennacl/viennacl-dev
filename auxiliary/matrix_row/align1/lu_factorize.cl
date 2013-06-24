@@ -4,8 +4,8 @@ __kernel void lu_factorize(
           unsigned int matrix_rows,
           unsigned int matrix_cols,
           unsigned int matrix_internal_rows,
-          unsigned int matrix_internal_cols) 
-{ 
+          unsigned int matrix_internal_cols)
+{
   float temp;
   unsigned rowi;
   unsigned rowk;
@@ -20,12 +20,12 @@ __kernel void lu_factorize(
 
       barrier(CLK_GLOBAL_MEM_FENCE);
       temp = matrix[rowi + k];
-      
+
       //parallel subtraction:
       for (unsigned int j=k+1 + get_global_id(0); j<matrix_rows; j += get_global_size(0))
         matrix[rowi + j] -= temp * matrix[rowk + j];
     }
   }
-} 
+}
 
 

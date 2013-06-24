@@ -3,12 +3,12 @@
 __kernel void av_gpu(
           __global float * vec1,
           uint4 size1,
-          
+
           __global const float * fac2,
           unsigned int options2,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * vec2,
           uint4 size2)
-{ 
+{
   float alpha = fac2[0];
   if ((options2 >> 2) > 1)
   {

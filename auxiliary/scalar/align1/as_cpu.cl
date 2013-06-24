@@ -5,7 +5,7 @@ __kernel void as_cpu(
           float fac2,
           unsigned int options2,
           __global const float * s2)
-{ 
+{
   float alpha = fac2;
   if (options2 & (1 << 0))
     alpha = -alpha;

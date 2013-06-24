@@ -18,7 +18,7 @@ __kernel void vec_mul(
     for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz)
     {
         float sum = 0;
-        
+
         uint offset = row_id;
         for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
         {
@@ -27,10 +27,10 @@ __kernel void vec_mul(
 
             if(val != 0.0f)
             {
-                int col = coords[offset];    
+                int col = coords[offset];
                 sum += (vector[col] * val);
             }
-            
+
         }
 
         result[row_id] = sum;

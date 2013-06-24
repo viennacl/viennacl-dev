@@ -14,9 +14,9 @@ __kernel void fft_radix2(__global float2* input,
 
     unsigned int glb_id = get_global_id(0);
     unsigned int glb_sz = get_global_size(0);
-	
+
 //    unsigned int base_offset = 0;
-	
+
     for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) {
         for(unsigned int tid = glb_id; tid < half_size; tid += glb_sz) {
             unsigned int group = (tid & (ss - 1));

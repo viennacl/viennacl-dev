@@ -21,7 +21,7 @@ __kernel void house_update_QR(
 
     // update of QR matrix
     // Actually, we are calculating a transpose of right matrix. This allows to avoid cache
-    // misses. 
+    // misses.
     for(uint i = grp_id; i < size2; i += grp_nm) {
         ss = 0;
         for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * QR[i * strideQ + j]);

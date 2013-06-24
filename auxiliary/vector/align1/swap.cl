@@ -10,8 +10,8 @@ __kernel void swap(
           unsigned int start2,
           unsigned int inc2,
           unsigned int size2
-          ) 
-{ 
+          )
+{
   float tmp;
   for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0))
   {
@@ -20,4 +20,4 @@ __kernel void swap(
     vec1[i*inc1+start1] = tmp;
   }
 }
- 
+

@@ -35,7 +35,7 @@ __kernel void fft_radix2_local(__global float2* input,
         }
 
         barrier(CLK_LOCAL_MEM_FENCE);
-		
+
         //performs Cooley-Tukey FFT on local array
         for(unsigned int s = 0; s < bit_size; s++) {
             unsigned int ss = 1 << s;
@@ -62,7 +62,7 @@ __kernel void fft_radix2_local(__global float2* input,
 
             barrier(CLK_LOCAL_MEM_FENCE);
         }
-		
+
         //copy local array back to global memory
         for(unsigned int p = lcl_id; p < size; p += lcl_sz) {
             input[batch_id * stride + p] = lcl_input[p];//index

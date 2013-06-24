@@ -12,7 +12,7 @@ __kernel void vandermonde_prod(__global float* vander,
             val = val + pwr * vector[j];
             pwr *= mul;
         }
-            
+
         result[i] = val;
     }
 }

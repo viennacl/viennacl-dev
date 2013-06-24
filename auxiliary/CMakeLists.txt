@@ -54,7 +54,7 @@ function(generate_blas3_prod_align1 outvar)
          WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
          VERBATIM)
       list(APPEND outfiles "${o}")
-      
+
    endforeach()
    endforeach()
    endforeach()

@@ -8,17 +8,17 @@ __kernel void scaled_rank1_update_cpu(
 
           float val,
           unsigned int options2,
-          
+
           __global const float * vec1,
           unsigned int start1,
-          unsigned int inc1,          
+          unsigned int inc1,
           unsigned int size1,
 
           __global const float * vec2,
           unsigned int start2,
-          unsigned int inc2,          
-          unsigned int size2) 
-{ 
+          unsigned int inc2,
+          unsigned int size2)
+{
   float alpha = val;
   if (options2 & (1 << 0))
     alpha = -alpha;
@@ -27,7 +27,7 @@ __kernel void scaled_rank1_update_cpu(
 
   unsigned int row_gid = get_global_id(0) / get_local_size(0);
   unsigned int col_gid = get_global_id(0) % get_local_size(0);
-  
+
   for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))
   {
     float tmp = alpha * vec1[row * inc1 + start1];

@@ -2,12 +2,12 @@
 
 __kernel void vec_mul_cpu(
           __global const unsigned int * row_indices,
-          __global const unsigned int * column_indices, 
+          __global const unsigned int * column_indices,
           __global const float * elements,
-          __global const float * vector,  
+          __global const float * vector,
           __global float * result,
-          unsigned int size) 
-{ 
+          unsigned int size)
+{
   unsigned int work_per_item = max((uint) (size / get_global_size(0)), (uint) 1);
   unsigned int row_start = get_global_id(0) * work_per_item;
   unsigned int row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) size);

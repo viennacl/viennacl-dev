@@ -2,12 +2,12 @@
 
 __kernel void vec_mul(
           __global const unsigned int * row_indices,
-          __global const uint8 * column_indices, 
+          __global const uint8 * column_indices,
           __global const float8 * elements,
-          __global const float * vector,  
+          __global const float * vector,
           __global float * result,
           unsigned int size)
-{ 
+{
   float dot_prod;
   unsigned int start, next_stop;
   uint8 col_idx;

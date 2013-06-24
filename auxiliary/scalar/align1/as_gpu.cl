@@ -5,7 +5,7 @@ __kernel void as_gpu(
           __global const float * fac2,
           unsigned int options2,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * s2)
-{ 
+{
   float alpha = fac2[0];
   if ((options2 >> 2) > 1)
   {

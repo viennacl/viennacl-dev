@@ -27,7 +27,7 @@ __kernel void bluestein_pre(__global float2* input,
         B[i] = b_i;
 
         // very bad instruction, to be fixed
-        if(i) 
+        if(i)
           B[ext_size - i] = b_i;
     }
 }

@@ -8,7 +8,7 @@ __kernel void fft_direct(__global float2* input,
 
 //    unsigned int base_offset = 0;
     const float NUM_PI = 3.14159265358979323846;
-    
+
     for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) {
         for(unsigned int k = get_global_id(0); k < size; k += get_global_size(0)) {
             float2 f = 0.0f;

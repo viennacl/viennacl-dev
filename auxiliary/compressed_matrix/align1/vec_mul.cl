@@ -2,12 +2,12 @@
 
 __kernel void vec_mul(
           __global const unsigned int * row_indices,
-          __global const unsigned int * column_indices, 
+          __global const unsigned int * column_indices,
           __global const float * elements,
-          __global const float * vector,  
+          __global const float * vector,
           __global float * result,
-          unsigned int size) 
-{ 
+          unsigned int size)
+{
   for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0))
   {
     float dot_prod = 0.0f;

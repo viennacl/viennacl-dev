@@ -3,18 +3,18 @@
 __kernel void avbv_gpu_cpu(
           __global float * vec1,
           uint4 size1,
-          
+
           __global const float * fac2,
           unsigned int options2,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * vec2,
           uint4 size2,
-          
+
           float fac3,
           unsigned int options3,  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
           __global const float * vec3,
           uint4 size3
           )
-{ 
+{
   float alpha = fac2[0];
   if ((options2 >> 2) > 1)
   {
@@ -31,7 +31,7 @@ __kernel void avbv_gpu_cpu(
     beta = -beta;
   if (options3 & (1 << 1))
     beta = ((float)(1)) / beta;
-    
+
   for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0))
     vec1[i*size1.y+size1.x] = vec2[i*size2.y+size2.x] * alpha + vec3[i*size3.y+size3.x] * beta;
 }

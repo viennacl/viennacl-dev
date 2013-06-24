@@ -1,7 +1,7 @@
 
  __kernel void block_trans_unit_lu_forward(
            __global const unsigned int * row_jumper_L,      //L part (note that L is transposed in memory)
-           __global const unsigned int * column_indices_L, 
+           __global const unsigned int * column_indices_L,
            __global const float * elements_L,
            __global const unsigned int * block_offsets,
            __global float * result,
@@ -22,10 +22,10 @@
      result_entry = result[col];
      row_stop = row_jumper_L[col + 1];
      for (unsigned int buffer_index = row_start + get_local_id(0); buffer_index < row_stop; buffer_index += get_local_size(0))
-       result[column_indices_L[buffer_index]] -= result_entry * elements_L[buffer_index]; 
+       result[column_indices_L[buffer_index]] -= result_entry * elements_L[buffer_index];
      row_start = row_stop; //for next iteration (avoid unnecessary loads from GPU RAM)
      barrier(CLK_GLOBAL_MEM_FENCE);
-   } 
+   }
 
  };
 

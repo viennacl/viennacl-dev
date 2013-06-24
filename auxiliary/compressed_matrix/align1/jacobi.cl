@@ -19,10 +19,10 @@ __kernel void jacobi(
     {
       col = column_indices[j];
       if (i == col)
-	diag = elements[j];
-      else 
-	sum += elements[j] * old_result[col]; 
-    } 
-      new_result[i] = weight * (rhs[i]-sum) / diag + (1-weight) * old_result[i]; 
-   } 
- } 
+  diag = elements[j];
+      else
+  sum += elements[j] * old_result[col];
+    }
+      new_result[i] = weight * (rhs[i]-sum) / diag + (1-weight) * old_result[i];
+   }
+ }

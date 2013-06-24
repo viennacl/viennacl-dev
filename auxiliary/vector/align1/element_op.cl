@@ -3,20 +3,20 @@
 __kernel void element_op(
           __global float * vec1,
           unsigned int start1,
-          unsigned int inc1,          
+          unsigned int inc1,
           unsigned int size1,
-          
+
           __global const float * vec2,
           unsigned int start2,
           unsigned int inc2,
-          
+
           __global const float * vec3,
           unsigned int start3,
           unsigned int inc3,
-          
+
           unsigned int is_division
           )
-{ 
+{
   if (is_division)
   {
     for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0))

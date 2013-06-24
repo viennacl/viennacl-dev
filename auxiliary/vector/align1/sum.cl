@@ -1,5 +1,5 @@
 
-// sums the array 'vec1' and writes to result. Makes use of a single work-group only. 
+// sums the array 'vec1' and writes to result. Makes use of a single work-group only.
 __kernel void sum(
           __global float * vec1,
           unsigned int start1,
@@ -7,8 +7,8 @@ __kernel void sum(
           unsigned int size1,
           unsigned int option, //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
           __local float * tmp_buffer,
-          __global float * result) 
-{ 
+          __global float * result)
+{
   float thread_sum = 0;
   for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0))
   {
@@ -17,7 +17,7 @@ __kernel void sum(
     else
       thread_sum = fmax(thread_sum, fabs(vec1[i*inc1+start1]));
   }
-  
+
   tmp_buffer[get_local_id(0)] = thread_sum;
 
   for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2)
@@ -31,7 +31,7 @@ __kernel void sum(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
   }
-  
+
   if (get_global_id(0) == 0)
   {
     if (option == 2)

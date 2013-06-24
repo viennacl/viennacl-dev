@@ -15,7 +15,7 @@ __kernel void inner_prod(
   entries_per_group = (entries_per_group == 0) ? 1 : entries_per_group;
   unsigned int group_start1 = get_group_id(0) * entries_per_group * inc1 + start1;
   unsigned int group_start2 = get_group_id(0) * entries_per_group * inc2 + start2;
-  
+
   unsigned int group_size = entries_per_group;
   if (get_group_id(0) * entries_per_group > size1)
     group_size = 0;
@@ -35,7 +35,7 @@ __kernel void inner_prod(
     if (get_local_id(0) < stride)
       tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0)+stride];
   }
-  
+
   if (get_local_id(0) == 0)
     group_buffer[get_group_id(0)] = tmp_buffer[get_local_id(0)];
 }

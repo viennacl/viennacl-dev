@@ -20,7 +20,7 @@ unsigned int float_vector1_index_norm_inf_impl(
       cur_max = tmp;
     }
   }
-  
+
   //step 2: parallel reduction:
   for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2)
   {
@@ -33,12 +33,12 @@ unsigned int float_vector1_index_norm_inf_impl(
         index_buffer[get_global_id(0)] = index_buffer[get_global_id(0)+stride];
         float_buffer[get_global_id(0)] = float_buffer[get_global_id(0)+stride];
       }
-      
+
       //index_buffer[get_global_id(0)] = float_buffer[get_global_id(0)] < float_buffer[get_global_id(0)+stride] ? index_buffer[get_global_id(0)+stride] : index_buffer[get_global_id(0)];
       //float_buffer[get_global_id(0)] = max(float_buffer[get_global_id(0)], float_buffer[get_global_id(0)+stride]);
     }
   }
-  
+
   return index_buffer[0];
 }
 
@@ -49,8 +49,8 @@ __kernel void index_norm_inf(
           unsigned int size1,
           __local float * float_buffer,
           __local unsigned int * index_buffer,
-          __global unsigned int * result) 
-{ 
+          __global unsigned int * result)
+{
   float_buffer[get_global_id(0)] = 0;
   index_buffer[get_global_id(0)] = 0;
   unsigned int tmp = float_vector1_index_norm_inf_impl(vec, start1, inc1, size1, float_buffer, index_buffer);

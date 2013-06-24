@@ -22,7 +22,7 @@ __kernel void fft_reorder(__global float2* input,
                           int batch_num) {
     unsigned int glb_id = get_global_id(0);
     unsigned int glb_sz = get_global_size(0);
-	
+
     for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) {
         for(unsigned int i = glb_id; i < size; i += glb_sz) {
             unsigned int v = get_reorder_num_2(i, bit_size);

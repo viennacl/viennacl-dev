@@ -1,7 +1,7 @@
 // Postprocessing phase of Bluestein algorithm
 __kernel void bluestein_post(__global float2* Z,
                              __global float2* out,
-                             unsigned int size) 
+                             unsigned int size)
 {
     unsigned int glb_id = get_global_id(0);
     unsigned int glb_sz = get_global_size(0);

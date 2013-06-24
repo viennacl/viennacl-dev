@@ -41,7 +41,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "B...row_major" << std::endl;
   else
     std::cout << "B...col_major" << std::endl;
-  
+
   //start OpenCL code:
   std::cout << "__kernel void prod16_";
   if (transpose_A)
@@ -52,7 +52,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "T";
   else
     std::cout << "A";
-  
+
   std::cout << "(" << std::endl;
   std::cout << "          float alpha," << std::endl;
   std::cout << "          __global const float * A," << std::endl;
@@ -146,7 +146,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   }
 
   std::cout << "  for(size_t a = aBegin, b = bBegin; a < aEnd; a += aStep, b += bStep) { " << std::endl;
-  
+
   // copy blocks of op(A) to shared memory (op(A) is column-major in shared memory then)
   std::cout << "    for(size_t i = 0; i < " << vector_size << "; i++)  " << std::endl;
   if (row_major_A && transpose_A)
@@ -229,7 +229,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
 //    std::cout << "    C[(get_global_id(0) * C_row_inc + C_row_start) * C_internal_cols + get_global_id(1) * C_col_inc + C_col_start] = Csub;" << std::endl;
 //  else
 //    std::cout << "    C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows] = Csub;" << std::endl;
-  
+
 }
 
 void printUsage()
@@ -262,7 +262,7 @@ int main(int args, char * argsv[])
     printUsage();
     exit(EXIT_FAILURE);
   }
-  
+
   //the following flags are 'true' for row_major layout
   bool layout_A;
   bool layout_B;
@@ -271,12 +271,12 @@ int main(int args, char * argsv[])
   readParameter(layout_A, argsv[1][0]);
   readParameter(layout_B, argsv[2][0]);
   readParameter(layout_C, argsv[3][0]);
-  
+
   bool transpose_A;
   bool transpose_B;
   readParameter(transpose_A, argsv[4][0]);
   readParameter(transpose_B, argsv[5][0]);
-  
-  
+
+
   printMatrixMatrixProduct(layout_A, layout_B, layout_C, transpose_A, transpose_B);
 }

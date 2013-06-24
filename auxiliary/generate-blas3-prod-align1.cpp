@@ -39,10 +39,10 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "B...row_major" << std::endl;
   else
     std::cout << "B...col_major" << std::endl;
-  
+
   if (write_cuda)
     std::cout << "template <typename T>" << std::endl;
-  
+
   //start OpenCL code:
   if (write_cuda)
     std::cout << "__global__ void prod_";
@@ -56,7 +56,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "T";
   else
     std::cout << "A";
-  
+
   std::cout << "(" << std::endl;
   if (write_cuda)
   {
@@ -133,7 +133,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "  size_t row_thread_id = get_local_id(0);" << std::endl;
     std::cout << "  size_t col_thread_id = get_local_id(1);" << std::endl;
   }
-  
+
   //traverse block row of A (taking mem layout and transpose operation into account)
   if (row_major_A && transpose_A)
   {
@@ -183,12 +183,12 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     std::cout << "  size_t block_num = (A_row_size + block_size - 1) / block_size;" << std::endl;
   else
     std::cout << "  size_t block_num = (A_col_size + block_size - 1) / block_size;" << std::endl;
-    
+
   if (write_cuda)
     std::cout << "  T Csub = 0;" << std::endl;
   else
     std::cout << "  float Csub = 0;" << std::endl;
-  
+
   //offset of the the memory access by the thread relative to the beginning of the block:
   if (row_major_A)
     std::cout << "  size_t aOffset = row_thread_id * A_col_inc + col_thread_id * A_row_inc * A_internal_cols;" << std::endl;
@@ -200,8 +200,8 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   else
     std::cout << "  size_t bOffset = row_thread_id * B_row_inc + col_thread_id * B_col_inc *  B_internal_rows;" << std::endl;
 
-  std::cout << std::endl;  
-  
+  std::cout << std::endl;
+
   std::cout << "  size_t row_thread_id_times_block_size = row_thread_id * (block_size + 1);" << std::endl;
   std::cout << "  size_t col_thread_id_times_block_size = col_thread_id * (block_size + 1);" << std::endl;
 
@@ -209,7 +209,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "           block < block_num;" << std::endl;
   std::cout << "           ++block)" << std::endl;
   std::cout << "  {" << std::endl;
-  
+
   //read block from A and check for access within matrix:
 
   if (transpose_A && row_major_A)
@@ -266,8 +266,8 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
   std::cout << "    aBegin += aStep;" << std::endl;
   std::cout << "    bBegin += bStep;" << std::endl;
   std::cout << "  }" << std::endl;
-  
-  
+
+
   if (transpose_A)
   {
     if (write_cuda)
@@ -282,7 +282,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     else
       std::cout << "  if (get_global_id(0) < A_row_size && ";
   }
-  
+
   if (transpose_B)
   {
     if (write_cuda)
@@ -297,7 +297,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
     else
       std::cout << "get_global_id(1) < B_col_size)" << std::endl;
   }
-  
+
   if (row_major_C)
   {
     if (write_cuda)
@@ -313,7 +313,7 @@ void printMatrixMatrixProduct(bool row_major_A, bool row_major_B, bool row_major
       std::cout << "    C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows] = (beta == 0) ? alpha * Csub : alpha * Csub + beta * C[get_global_id(0) * C_row_inc + C_row_start + (get_global_id(1) * C_col_inc + C_col_start) * C_internal_rows];" << std::endl;
   }
   std::cout << "}" << std::endl;
-  
+
   if (write_cuda)
     std::cout << std::endl;
 }
@@ -349,7 +349,7 @@ int main(int args, char * argsv[])
     printUsage();
     exit(EXIT_FAILURE);
   }
-  
+
   //the following flags are 'true' for row_major layout
   bool layout_A;
   bool layout_B;
@@ -358,15 +358,15 @@ int main(int args, char * argsv[])
   readParameter(layout_A, argsv[1][0]);
   readParameter(layout_B, argsv[2][0]);
   readParameter(layout_C, argsv[3][0]);
-  
+
   bool transpose_A;
   bool transpose_B;
   readParameter(transpose_A, argsv[4][0]);
   readParameter(transpose_B, argsv[5][0]);
-  
+
   bool writeCuda;
   readParameter(writeCuda, argsv[6][0]);
-  
-  
+
+
   printMatrixMatrixProduct(layout_A, layout_B, layout_C, transpose_A, transpose_B, writeCuda);
 }

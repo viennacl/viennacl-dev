@@ -3,12 +3,12 @@
 __kernel void av_cpu(
           __global float * vec1,
           uint4 size1,
-          
+
           float fac2,
           unsigned int options2,
           __global const float * vec2,
           uint4 size2)
-{ 
+{
   float alpha = fac2;
   if (options2 & (1 << 0))
     alpha = -alpha;

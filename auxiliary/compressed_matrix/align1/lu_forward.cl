@@ -1,19 +1,19 @@
 
 
 
- 
+
 // compute y in Ly = z for incomplete LU factorizations of a sparse matrix in compressed format
 __kernel void lu_forward(
           __global const unsigned int * row_indices,
-          __global const unsigned int * column_indices, 
+          __global const unsigned int * column_indices,
           __global const float * elements,
           __global float * vector,
-          unsigned int size) 
+          unsigned int size)
 {
   __local unsigned int col_index_buffer[128];
   __local float element_buffer[128];
   __local float vector_buffer[128];
-          
+
   unsigned int nnz = row_indices[size];
   unsigned int current_row = 0;
   unsigned int row_at_window_start = 0;
@@ -21,7 +21,7 @@ __kernel void lu_forward(
   float diagonal_entry;
   unsigned int loop_end = (nnz / get_local_size(0) + 1) * get_local_size(0);
   unsigned int next_row = row_indices[1];
-  
+
   for (unsigned int i = get_local_id(0); i < loop_end; i += get_local_size(0))
   {
     //load into shared memory (coalesced access):
@@ -32,9 +32,9 @@ __kernel void lu_forward(
       col_index_buffer[get_local_id(0)] = tmp;
       vector_buffer[get_local_id(0)] = vector[tmp];
     }
-    
+
     barrier(CLK_LOCAL_MEM_FENCE);
-    
+
     //now a single thread does the remaining work in shared memory:
     if (get_local_id(0) == 0)
     {
@@ -51,7 +51,7 @@ __kernel void lu_forward(
             current_vector_entry = vector[current_row];
           }
         }
-        
+
         if (current_row < size && col_index_buffer[k] < current_row) //substitute
         {
           if (col_index_buffer[k] < row_at_window_start) //use recently computed results
@@ -63,10 +63,10 @@ __kernel void lu_forward(
           diagonal_entry = element_buffer[k];
 
       } // for k
-      
+
       row_at_window_start = current_row;
     } // if (get_local_id(0) == 0)
-    
+
     barrier(CLK_GLOBAL_MEM_FENCE);
   } //for i
 }

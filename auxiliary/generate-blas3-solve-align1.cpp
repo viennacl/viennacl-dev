@@ -35,7 +35,7 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
     std::cout << "B...row_major" << std::endl;
   else
     std::cout << "B...col_major" << std::endl;
-  
+
   //start OpenCL code:
   std::cout << "__kernel void ";
   if (transpose_A)
@@ -49,7 +49,7 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
   if (transpose_B)
     std::cout << "trans_";
   std::cout << "solve";
-  
+
   std::cout << "(" << std::endl;
   std::cout << "          __global const float * A," << std::endl;
   std::cout << "          unsigned int A_start1, unsigned int A_start2," << std::endl;
@@ -89,15 +89,15 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
       std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1] /= ";
     else if (!row_major_B && !transpose_B)
       std::cout << "      B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] /= ";
-    
+
     if (row_major_A)
       std::cout << "A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)];" << std::endl;
     else
       std::cout << "A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];" << std::endl;
   }
-  
+
   std::cout << "    barrier(CLK_GLOBAL_MEM_FENCE); " << std::endl;
-  
+
   if (row_major_B && transpose_B)
     std::cout << "    temp = B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)]; " << std::endl;
   else if (row_major_B && !transpose_B)
@@ -112,7 +112,7 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
     std::cout << "    for  (unsigned int elim = get_local_id(0); elim < row; elim += get_local_size(0)) " << std::endl;
   else
     std::cout << "    for  (unsigned int elim = row + get_local_id(0) + 1; elim < A_size1; elim += get_local_size(0)) " << std::endl;
-  
+
   if (row_major_B && transpose_B)
     std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (elim * B_inc2 + B_start2)] -= temp * ";
   else if (row_major_B && !transpose_B)
@@ -121,7 +121,7 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
     std::cout << "      B[(get_group_id(0) * B_inc1 + B_start1) + (elim * B_inc2 + B_start2) * B_internal_size1] -= temp * ";
   else if (!row_major_B && !transpose_B)
     std::cout << "      B[(elim * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] -= temp * ";
-  
+
   if (row_major_A && transpose_A)
     std::cout << "A[(row * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2)];" << std::endl;
   else if (row_major_A && !transpose_A)
@@ -130,10 +130,10 @@ void printMatrixMatrixSolve(bool row_major_A, bool row_major_B,
     std::cout << "A[(row * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1];" << std::endl;
   else if (!row_major_A && !transpose_A)
     std::cout << "A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1];" << std::endl;
-  
+
   std::cout << "   }" << std::endl;
   std::cout << "}" << std::endl;
-  
+
 }
 
 void printUsage()
@@ -167,24 +167,24 @@ int main(int args, char * argsv[])
     printUsage();
     exit(EXIT_FAILURE);
   }
-  
+
   //the following flags are 'true' for row_major layout
   bool layout_A;
   bool layout_B;
 
   readParameter(layout_A, argsv[1][0]);
   readParameter(layout_B, argsv[2][0]);
-  
+
   bool transpose_A;
   bool transpose_B;
   readParameter(transpose_A, argsv[3][0]);
   readParameter(transpose_B, argsv[4][0]);
-  
+
   bool upper_solve;
   bool unit_diagonal;
   readParameter(upper_solve,   argsv[5][0]);
   readParameter(unit_diagonal, argsv[6][0]);
-  
+
   printMatrixMatrixSolve(layout_A, layout_B,
                          transpose_A, transpose_B,
                          upper_solve, unit_diagonal);
