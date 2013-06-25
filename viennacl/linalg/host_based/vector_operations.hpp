@@ -31,6 +31,7 @@
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
+#include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/traits/stride.hpp"
 
 
@@ -233,9 +234,10 @@ namespace viennacl
       */
       template <typename T, typename OP>
       void element_op(vector_base<T> & vec1,
-                      vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
-        typedef T        value_type;
+        typedef T                                              value_type;
+        typedef viennacl::linalg::detail::op_applier<op_element_binary<OP> >    OpFunctor;
 
         value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
         value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(proxy.lhs());
@@ -251,24 +253,41 @@ namespace viennacl
         std::size_t start3 = viennacl::traits::start(proxy.rhs());
         std::size_t inc3   = viennacl::traits::stride(proxy.rhs());
 
-        if (viennacl::is_product<OP>::value)
-        {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-          for (std::size_t i = 0; i < size1; ++i)
-            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_vec3[i*inc3+start3];
-        }
-        else
-        {
-#ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
-#endif
-          for (std::size_t i = 0; i < size1; ++i)
-            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_vec3[i*inc3+start3];
-        }
+        for (std::size_t i = 0; i < size1; ++i)
+          OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2], data_vec3[i*inc3+start3]);
       }
 
+      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+      *
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2, v3 and the operation
+      */
+      template <typename T, typename OP>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
+      {
+        typedef T        value_type;
+        typedef viennacl::linalg::detail::op_applier<op_element_unary<OP> >    OpFunctor;
+
+        value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+        value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(proxy.lhs());
+
+        std::size_t start1 = viennacl::traits::start(vec1);
+        std::size_t inc1   = viennacl::traits::stride(vec1);
+        std::size_t size1  = viennacl::traits::size(vec1);
+
+        std::size_t start2 = viennacl::traits::start(proxy.lhs());
+        std::size_t inc2   = viennacl::traits::stride(proxy.lhs());
+
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+        for (std::size_t i = 0; i < size1; ++i)
+          OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2]);
+      }
 
 
       ///////////////////////// Norms and inner product ///////////////////

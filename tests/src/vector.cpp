@@ -1260,6 +1260,64 @@ int test(Epsilon const& epsilon,
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << "Testing unary elementwise operations..." << std::endl;
+
+#define GENERATE_UNARY_OP_TEST(FUNCNAME) \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] = std::FUNCNAME(ublas_v2[i]); \
+  vcl_v1 = viennacl::linalg::element_##FUNCNAME(vcl_v2); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+ \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] = std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
+  vcl_v1 = viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+ \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] += std::FUNCNAME(ublas_v1[i]); \
+  vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+ \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] += std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
+  vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+ \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] -= std::FUNCNAME(ublas_v2[i]); \
+  vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v2); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+ \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] -= std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
+  vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
+ \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+
+  GENERATE_UNARY_OP_TEST(cos);
+  GENERATE_UNARY_OP_TEST(cosh);
+  GENERATE_UNARY_OP_TEST(exp);
+  GENERATE_UNARY_OP_TEST(floor);
+  GENERATE_UNARY_OP_TEST(fabs);
+  GENERATE_UNARY_OP_TEST(log);
+  GENERATE_UNARY_OP_TEST(log10);
+  GENERATE_UNARY_OP_TEST(sin);
+  GENERATE_UNARY_OP_TEST(sinh);
+  GENERATE_UNARY_OP_TEST(abs);
+  GENERATE_UNARY_OP_TEST(sqrt);
+  GENERATE_UNARY_OP_TEST(tan);
+  GENERATE_UNARY_OP_TEST(tanh);
 
   // --------------------------------------------------------------------------
   ublas_v2 = 3.1415 * ublas_v1;

@@ -321,7 +321,43 @@ namespace viennacl
       return temp1;
     }
 
+#define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
+    template <typename T> \
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> > \
+    element_##funcname(vector_base<T> const & v) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> >(v, v); \
+    } \
+    template <typename LHS, typename RHS, typename OP> \
+    viennacl::vector_expression<const vector_expression<const LHS, const RHS, OP>, \
+                                const vector_expression<const LHS, const RHS, OP>, \
+                                op_element_unary<op_##funcname> > \
+    element_##funcname(vector_expression<const LHS, const RHS, OP> const & proxy) \
+    { \
+      return viennacl::vector_expression<const vector_expression<const LHS, const RHS, OP>, \
+                                         const vector_expression<const LHS, const RHS, OP>, \
+                                         op_element_unary<op_##funcname> >(proxy, proxy); \
+    } \
 
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(abs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(acos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(asin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(atan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(ceil)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cosh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(exp)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(fabs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(floor)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log10)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sinh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sqrt)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tanh)
+
+#undef VIENNACL_MAKE_UNARY_ELEMENT_OP
 
     ///////////////////////// Norms and inner product ///////////////////
 

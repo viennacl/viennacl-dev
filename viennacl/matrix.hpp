@@ -2431,6 +2431,72 @@ namespace viennacl
         }
       };
 
+      //////////////// unary expressions
+
+      template <typename T, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
+      {
+        // x = OP(y)
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> > const & proxy)
+        {
+          viennacl::linalg::element_op(lhs, proxy);
+        }
+
+        // x = OP(vec_expr)
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  op_element_unary<OP> > const & proxy)
+        {
+          vector<T> temp(proxy.rhs());
+          viennacl::linalg::element_op(lhs, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> >(temp, temp));
+        }
+      };
+
+      template <typename T, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
+      {
+        // x += OP(y)
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> > const & proxy)
+        {
+          vector<T> temp(proxy);
+          lhs += temp;
+        }
+
+        // x += OP(vec_expr)
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  op_element_unary<OP> > const & proxy)
+        {
+          vector<T> temp(proxy.rhs());
+          viennacl::linalg::element_op(temp, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> >(temp, temp)); // inplace operation is safe here
+          lhs += temp;
+        }
+      };
+
+      template <typename T, typename LHS, typename RHS, typename OP>
+      struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
+      {
+        // x -= OP(y)
+        static void apply(vector_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> > const & proxy)
+        {
+          vector<T> temp(proxy);
+          lhs -= temp;
+        }
+
+        // x -= OP(vec_expr)
+        template <typename LHS2, typename RHS2, typename OP2>
+        static void apply(vector_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  const matrix_expression<const LHS2, const RHS2, OP2>,
+                                                                  op_element_unary<OP> > const & proxy)
+        {
+          vector<T> temp(proxy.rhs());
+          viennacl::linalg::element_op(temp, viennacl::matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> >(temp, temp)); // inplace operation is safe here
+          lhs -= temp;
+        }
+      };
+
 
 
       //////////////// Matrix - Matrix products ////////////////
