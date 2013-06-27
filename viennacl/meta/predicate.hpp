@@ -392,6 +392,12 @@ namespace viennacl
 
     /** \cond */
     template <>
+    struct is_division<viennacl::op_div>
+    {
+      enum { value = true };
+    };
+
+    template <>
     struct is_division<viennacl::op_element_binary<op_div> >
     {
       enum { value = true };
