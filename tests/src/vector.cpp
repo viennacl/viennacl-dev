@@ -1263,47 +1263,69 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing unary elementwise operations..." << std::endl;
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
+  ublas_v2 = 3.1415 * ublas_v1; \
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
+  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] = std::FUNCNAME(ublas_v2[i]); \
   vcl_v1 = viennacl::linalg::element_##FUNCNAME(vcl_v2); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 = " << #FUNCNAME << "(v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] = std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
   vcl_v1 = viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 = " << #FUNCNAME << "(v1 + v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] += std::FUNCNAME(ublas_v1[i]); \
   vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 += " << #FUNCNAME << "(v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] += std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
   vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 += " << #FUNCNAME << "(v1 + v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] -= std::FUNCNAME(ublas_v2[i]); \
   vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v2); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 -= " << #FUNCNAME << "(v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
  \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
     ublas_v1[i] -= std::FUNCNAME(ublas_v1[i] + ublas_v2[i]); \
   vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  { \
+    std::cout << "Failure at v1 -= " << #FUNCNAME << "(v1 + v2)" << std::endl; \
     return EXIT_FAILURE; \
+  } \
 
   GENERATE_UNARY_OP_TEST(cos);
   GENERATE_UNARY_OP_TEST(cosh);
@@ -1314,7 +1336,8 @@ int test(Epsilon const& epsilon,
   GENERATE_UNARY_OP_TEST(log10);
   GENERATE_UNARY_OP_TEST(sin);
   GENERATE_UNARY_OP_TEST(sinh);
-  GENERATE_UNARY_OP_TEST(abs);
+  GENERATE_UNARY_OP_TEST(fabs);
+  //GENERATE_UNARY_OP_TEST(abs); //OpenCL allows abs on integers only
   GENERATE_UNARY_OP_TEST(sqrt);
   GENERATE_UNARY_OP_TEST(tan);
   GENERATE_UNARY_OP_TEST(tanh);

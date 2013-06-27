@@ -83,28 +83,28 @@ namespace viennacl
   template <typename OP>
   struct op_element_unary;
 
-  struct op_abs;
-  struct op_acos;
-  struct op_asin;
-  struct op_atan;
-  struct op_atan2;
-  struct op_ceil;
-  struct op_cos;
-  struct op_cosh;
-  struct op_exp;
-  struct op_fabs;
-  struct op_fdim;
-  struct op_floor;
-  struct op_fmax;
-  struct op_fmin;
-  struct op_fmod;
-  struct op_log;
-  struct op_log10;
-  struct op_sin;
-  struct op_sinh;
-  struct op_sqrt;
-  struct op_tan;
-  struct op_tanh;
+  struct op_abs {};
+  struct op_acos {};
+  struct op_asin {};
+  struct op_atan {};
+  struct op_atan2 {};
+  struct op_ceil {};
+  struct op_cos {};
+  struct op_cosh {};
+  struct op_exp {};
+  struct op_fabs {};
+  struct op_fdim {};
+  struct op_floor {};
+  struct op_fmax {};
+  struct op_fmin {};
+  struct op_fmod {};
+  struct op_log {};
+  struct op_log10 {};
+  struct op_sin {};
+  struct op_sinh {};
+  struct op_sqrt {};
+  struct op_tan {};
+  struct op_tanh {};
 
   /** @brief A tag class representing inner products of two vectors */
   struct op_inner_prod;

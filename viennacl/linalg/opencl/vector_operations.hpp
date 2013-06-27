@@ -31,6 +31,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/kernels/vector_kernels.h"
+#include "viennacl/linalg/kernels/vector_element_kernels.h"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"
@@ -273,7 +274,7 @@ namespace viennacl
                               );
       }
 
-      ///////////////////////// Elementwise operations /////////////
+      ///////////////////////// Binary Elementwise operations /////////////
 
       /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
       *
@@ -282,7 +283,7 @@ namespace viennacl
       */
       template <typename T, typename OP>
       void element_op(vector_base<T> & vec1,
-                      vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -306,6 +307,64 @@ namespace viennacl
                                  cl_uint(viennacl::traits::stride(proxy.rhs())),
 
                                  cl_uint(viennacl::is_division<OP>::value))
+                              );
+      }
+
+      ///////////////////////// Unary Elementwise operations /////////////
+
+      namespace detail
+      {
+        inline std::string op_to_string(op_abs)   { return "abs";   }
+        inline std::string op_to_string(op_acos)  { return "acos";  }
+        inline std::string op_to_string(op_asin)  { return "asin";  }
+        inline std::string op_to_string(op_ceil)  { return "ceil";  }
+        inline std::string op_to_string(op_cos)   { return "cos";   }
+        inline std::string op_to_string(op_cosh)  { return "cosh";  }
+        inline std::string op_to_string(op_exp)   { return "exp";   }
+        inline std::string op_to_string(op_fabs)  { return "fabs";  }
+        inline std::string op_to_string(op_floor) { return "floor"; }
+        inline std::string op_to_string(op_log)   { return "log";   }
+        inline std::string op_to_string(op_log10) { return "log10"; }
+        inline std::string op_to_string(op_sin)   { return "sin";   }
+        inline std::string op_to_string(op_sinh)  { return "sinh";  }
+        inline std::string op_to_string(op_sqrt)  { return "sqrt";  }
+        inline std::string op_to_string(op_tan)   { return "tan";   }
+        inline std::string op_to_string(op_tanh)  { return "tanh";  }
+      }
+
+      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+      *
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2, v3 and the operation
+      */
+      template <typename T, typename OP>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
+      {
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        viennacl::linalg::kernels::vector_element<T, 1>::init(ctx);
+
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign");
+
+        viennacl::ocl::packed_cl_uint size_vec1;
+        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
+        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
+        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
+        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
+
+        viennacl::ocl::packed_cl_uint size_vec2;
+        size_vec2.start  = cl_uint(viennacl::traits::start(proxy.lhs()));
+        size_vec2.stride = cl_uint(viennacl::traits::stride(proxy.lhs()));
+        size_vec2.size   = cl_uint(viennacl::traits::size(proxy.lhs()));
+        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(proxy.lhs()));
+
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+                                 size_vec1,
+                                 viennacl::traits::opencl_handle(proxy.lhs()),
+                                 size_vec2)
                               );
       }
 
