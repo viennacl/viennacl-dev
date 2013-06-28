@@ -622,7 +622,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("vector_swap_kernel");
       }
 
-      ///////////////////////// Elementwise operations /////////////
+      ///////////////////////// Binary Elementwise operations /////////////
 
       template <typename T>
       __global__ void element_op_kernel(T * vec1,
@@ -669,7 +669,7 @@ namespace viennacl
       */
       template <typename T, typename OP>
       void element_op(vector_base<T> & vec1,
-                      vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
         typedef T        value_type;
 
@@ -690,6 +690,442 @@ namespace viennacl
                                        );
         VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
       }
+
+      ///////////////////////// Unary Elementwise operations /////////////
+
+// Note: Trying to automate things with macros or template metaprogramming failed (preprocessor with nvcc did not work as expected), so this is terribly hand-rolled code
+// Question (Karl Rupp): Why is CUDA code always such a hassle when trying to use it in a library context?
+
+      // acos
+      template <typename T> __global__ void vec_element_acos_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = acos(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_acos> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_acos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_acos_kernel");
+      }
+
+      // asin
+      template <typename T> __global__ void vec_element_asin_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = asin(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_asin> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_asin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_asin_kernel");
+      }
+
+
+      // atan
+      template <typename T> __global__ void vec_element_atan_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = atan(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_atan> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_atan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_atan_kernel");
+      }
+
+
+      // ceil
+      template <typename T> __global__ void vec_element_ceil_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = ceil(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_ceil> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_ceil_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_ceil_kernel");
+      }
+
+
+      // cos
+      template <typename T> __global__ void vec_element_cos_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = cos(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_cos> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_cos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_cos_kernel");
+      }
+
+
+      // cosh
+      template <typename T> __global__ void vec_element_cosh_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = cosh(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_cosh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_cosh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_cosh_kernel");
+      }
+
+
+      // exp
+      template <typename T> __global__ void vec_element_exp_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = exp(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_exp> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_exp_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_exp_kernel");
+      }
+
+
+      // fabs
+      template <typename T> __global__ void vec_element_fabs_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = fabs(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_fabs> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_fabs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_fabs_kernel");
+      }
+
+
+      // floor
+      template <typename T> __global__ void vec_element_floor_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = floor(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_floor> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_floor_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_floor_kernel");
+      }
+
+
+      // log
+      template <typename T> __global__ void vec_element_log_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = log(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_log> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_log_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_log_kernel");
+      }
+
+
+      // log10
+      template <typename T> __global__ void vec_element_log10_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = log10(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_log10> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_log10_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_log10_kernel");
+      }
+
+
+      // sin
+      template <typename T> __global__ void vec_element_sin_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = sin(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sin> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_sin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_sin_kernel");
+      }
+
+
+      // sinh
+      template <typename T> __global__ void vec_element_sinh_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = sinh(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sinh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_sinh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_sinh_kernel");
+      }
+
+
+      // sqrt
+      template <typename T> __global__ void vec_element_sqrt_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = sqrt(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sqrt> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_sqrt_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_sqrt_kernel");
+      }
+
+
+      // tan
+      template <typename T> __global__ void vec_element_tan_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = tan(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_tan> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_tan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_tan_kernel");
+      }
+
+
+      // tanh
+      template <typename T> __global__ void vec_element_tanh_kernel(
+          T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
+          T const * vec2, unsigned int start2, unsigned int inc2)
+      {
+        for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size1; i += gridDim.x * blockDim.x)
+          vec1[i*inc1+start1] = tanh(vec2[i*inc2+start2]);
+      }
+
+      template <typename T>
+      void element_op(vector_base<T> & vec1,
+                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_tanh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        vec_element_tanh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                              static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                              static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
+                                             );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("vec_element_tanh_kernel");
+      }
+
 
 
       ///////////////////////// Norms and inner product ///////////////////
