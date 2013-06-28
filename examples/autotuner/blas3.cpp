@@ -67,50 +67,10 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
 }
 
 
-template<class NumericT, class OpT, class ConfigT, class MatType>
-
-void benchmark(OpT const & operation, viennacl::generator::code_generation::profile_id const & id, ConfigT conf, MatType & A, MatType & B, MatType & C,
-                    std::list<viennacl::generator::code_generation::matrix_product_profile> & fastest_firsts){
-    typedef std::map<double, viennacl::generator::code_generation::matrix_product_profile> timings_t;
-    timings_t timings;
-    unsigned int size;
-
-    std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(512,70));
-    rounds_config.push_back(std::make_pair(4096,20));
-    for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
-        unsigned int k = std::distance(rounds_config.begin(),it);
-        timings.clear();
-        size=it->first;
-        unsigned int n_keep=it->second;
-        A.resize(size,size,false);
-        B.resize(size,size,false);
-        C.resize(size,size,false);
-        viennacl::backend::finish();
-        fill_matrix<NumericT>(A,B,C);
-        viennacl::backend::finish();
-        if(k==0)
-            viennacl::generator::autotune::benchmark(timings,operation,id,conf);
-        else{
-            viennacl::generator::autotune::benchmark(timings,operation,id,fastest_firsts);
-        }
-        fastest_firsts.clear();
-        viennacl::backend::finish();
-        for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
-            unsigned int n = std::distance(timings.begin(),itt);
-            if(n>n_keep) break;
-            fastest_firsts.push_back(itt->second);
-            if(std::distance(rounds_config.begin(),it)==(int)rounds_config.size()-1){
-//                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << itt->second << std::endl;
-            }
-        }
-    }
-}
-
-
-
 template<class NumericT>
 void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
+    using namespace viennacl::generator::code_generation;
+    typedef std::map<double, viennacl::generator::code_generation::matrix_product_profile> timings_t;
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
@@ -125,30 +85,67 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
     conf.add_tuning_param("rhs_storage",0,0,&viennacl::generator::autotune::inc::add_one);
     conf.add_tuning_param("unroll",1,1,&viennacl::generator::autotune::inc::mul_by_two);
 
-    viennacl::matrix<NumericT> vcl_A(1,1);
-    viennacl::matrix<NumericT> vcl_B(1,1);
-    viennacl::matrix<NumericT> vcl_C(1,1);
 
-    viennacl::generator::matrix<viennacl::matrix<NumericT> > A(vcl_A);
-    viennacl::generator::matrix<viennacl::matrix<NumericT> > B(vcl_B);
-    viennacl::generator::matrix<viennacl::matrix<NumericT> > C(vcl_C);
-
+    timings_t timings;
     std::list<viennacl::generator::code_generation::matrix_product_profile> fastest_firsts;
 
-    using namespace viennacl::generator::code_generation;
+    std::list<std::pair<unsigned int, unsigned int> > rounds_config;
+    rounds_config.push_back(std::make_pair(512,70));
+    rounds_config.push_back(std::make_pair(4096,20));
 
-    if(is_lhs_trans)
-      if(is_rhs_trans)
-        benchmark<NumericT>(A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
-      else
-        benchmark<NumericT>(A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
-    else
-      if(is_rhs_trans)
-        benchmark<NumericT>(A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
-      else
-        benchmark<NumericT>(A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
+    for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
+        unsigned int k = std::distance(rounds_config.begin(),it);
+        timings.clear();
+        unsigned int size=it->first;
+        unsigned int n_keep=it->second;
+        viennacl::matrix<NumericT> vcl_A(size,size);
+        viennacl::matrix<NumericT> vcl_B(size,size);
+        viennacl::matrix<NumericT> vcl_C(size,size);
 
+        fill_matrix<NumericT>(vcl_A,vcl_B,vcl_C);
+
+        viennacl::generator::matrix<viennacl::matrix<NumericT> > A(vcl_A);
+        viennacl::generator::matrix<viennacl::matrix<NumericT> > B(vcl_B);
+        viennacl::generator::matrix<viennacl::matrix<NumericT> > C(vcl_C);
+        viennacl::backend::finish();
+
+        if(k==0){
+          if(is_lhs_trans)
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),conf);
+            else
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),conf);
+          else
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),conf);
+            else
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),conf);
+        }
+        else{
+          if(is_lhs_trans)
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),fastest_firsts);
+            else
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),fastest_firsts);
+          else
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),fastest_firsts);
+            else
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),fastest_firsts);
+        }
+        fastest_firsts.clear();
+        viennacl::backend::finish();
+        for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
+            unsigned int n = std::distance(timings.begin(),itt);
+            if(n>n_keep) break;
+            fastest_firsts.push_back(itt->second);
+            if(std::distance(rounds_config.begin(),it)==(int)rounds_config.size()-1){
+//                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << itt->second << std::endl;
+            }
+        }
+    }
 }
+
 
 int main(int argc, char* argv[]){
     std::vector<std::string> args(argv,argv+argc);
