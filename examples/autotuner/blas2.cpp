@@ -96,6 +96,8 @@ int main(){
             std::cout << "-- Tv" << std::endl;
             autotune<float>(true);
 
+            std::cout << "-----------------" << std::endl;
+
             std::cout << "scalartype : double" << std::endl;
             std::cout << "-- Av" << std::endl;
             autotune<double>(false);

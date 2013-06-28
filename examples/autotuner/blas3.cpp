@@ -124,14 +124,14 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
         else{
           if(is_lhs_trans)
             if(is_rhs_trans)
-              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),fastest_firsts);
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),fastest_firsts, sizeof(NumericT));
             else
-              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),fastest_firsts);
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),fastest_firsts, sizeof(NumericT));
           else
             if(is_rhs_trans)
-              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),fastest_firsts);
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),fastest_firsts, sizeof(NumericT));
             else
-              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),fastest_firsts);
+              viennacl::generator::autotune::benchmark(timings,A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),fastest_firsts, sizeof(NumericT));
         }
         fastest_firsts.clear();
         viennacl::backend::finish();

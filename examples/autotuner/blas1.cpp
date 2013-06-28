@@ -65,8 +65,9 @@ void autotune(){
     viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),std::make_pair(viennacl::generator::code_generation::dot,sizeof(ScalarType)),conf);
     std::cout << std::endl;
     std::cout << "Best Profile: " << timings.begin()->first << "s" << std::endl;
-    std::cout << timings.begin()->second.num_groups() << std::endl;
-    std::cout << timings.begin()->second.group_size() << std::endl;
+    std::cout << "Num Groups : " << timings.begin()->second.num_groups() << std::endl;
+    std::cout << "Group Size : " << timings.begin()->second.group_size() << std::endl;
+    std::cout << std::endl;
 }
 
 int main(){
@@ -82,9 +83,10 @@ int main(){
       viennacl::ocl::switch_device(*it);
             std::cout << "-------------------" << std::endl;
             std::cout << it->name()<< std::endl;
-      std::cout << "-------------------" << std::endl;
+             std::cout << "-------------------" << std::endl;
             std::cout << "float:" << std::endl;
             autotune<float>();
+            std::cout << "-------------------" << std::endl;
             std::cout << "double:" << std::endl;
             autotune<double>();
     }

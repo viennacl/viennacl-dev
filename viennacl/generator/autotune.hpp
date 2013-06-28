@@ -260,8 +260,6 @@ namespace viennacl{
       template<class OpT, class ConfigT>
       void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, code_generation::profile_id const & id, ConfigT & config){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-        if(config.is_invalid(dev)==false)
-          benchmark_impl(timings,dev,op,id,config.get_current());
 
         unsigned int n=0, n_conf = 0;
         while(config.has_next()){
@@ -270,26 +268,37 @@ namespace viennacl{
           ++n_conf;
         }
 
-        std::cout << "Benchmarking over " << n_conf << " valid kernels" << std::endl;
-
         config.reset();
         while(config.has_next()){
           config.update();
           if(config.is_invalid(dev)) continue;
-          std::cout << '\r' << (float)(n++)*100/n_conf << "%" << std::flush;
+          ++n;
+          std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
           benchmark_impl(timings,dev,op,id,config.get_current());
         }
+
+        std::cout << std::endl;
       }
 
       /** @brief Fills a timing map for a given operation and a list of profiles */
       template<class OpT, class ProfT>
-      void benchmark(std::map<double, ProfT> & timings, OpT const & op, code_generation::profile_id const & id, std::list<ProfT> const & profiles){
+      void benchmark(std::map<double, ProfT> & timings, OpT const & op, code_generation::profile_id const & id, std::list<ProfT> const & profiles, size_t scalartype_size){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-          std::cout << '.' << std::flush;
-          benchmark_impl<OpT>(timings,dev,op,id,*it);
 
+        unsigned int n=0;
+        unsigned int n_conf = 0;
+
+        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
+          if(it->is_invalid(dev,scalartype_size)) continue;
+          ++n_conf;
         }
+
+        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
+          if(it->is_invalid(dev,scalartype_size)) continue;
+          std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
+          benchmark_impl<OpT>(timings,dev,op,id,*it);
+        }
+
         std::cout << std::endl;
       }
 
