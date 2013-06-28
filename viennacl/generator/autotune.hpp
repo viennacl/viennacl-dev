@@ -260,7 +260,8 @@ namespace viennacl{
       template<class OpT, class ConfigT>
       void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, code_generation::profile_id const & id, ConfigT & config){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-        if(config.is_invalid(dev)==false)  benchmark_impl(timings,dev,op,id,config.get_current());
+        if(config.is_invalid(dev)==false)
+          benchmark_impl(timings,dev,op,id,config.get_current());
 
         unsigned int n=0, n_conf = 0;
         while(config.has_next()){

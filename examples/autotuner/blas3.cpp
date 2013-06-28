@@ -140,7 +140,20 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
             if(std::distance(rounds_config.begin(),it)==(int)rounds_config.size()-1){
-//                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << itt->second << std::endl;
+                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << std::endl;
+                std::cout << "ML : " << itt->second.ml() << std::endl;
+                std::cout << "NL : " << itt->second.nl() << std::endl;
+                std::cout << "KL : " << itt->second.kl() << std::endl;
+
+                std::cout << "MS : " << itt->second.ms() << std::endl;
+                std::cout << "NS : " << itt->second.ns() << std::endl;
+                std::cout << "KS : " << itt->second.ks() << std::endl;
+
+                std::cout << "Unroll : " << itt->second.unroll() << std::endl;
+
+                std::cout << "LHS Shared : " << std::boolalpha << itt->second.use_LHS_shared() << std::endl;
+                std::cout << "RHS Shared : " << std::boolalpha << itt->second.use_RHS_shared() << std::endl;
+
             }
         }
     }
