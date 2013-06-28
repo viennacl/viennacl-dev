@@ -31,6 +31,7 @@
 
 #include "viennacl/generator/forwards.h"
 #include "viennacl/generator/code_generation.hpp"
+#include "viennacl/generator/builtin_database.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
 
@@ -213,15 +214,16 @@ namespace viennacl{
 
       /** @brief Add the timing value for a given profile and an operation */
       template<class OpT, class ProfileT>
-      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, OpT const & operation, ProfileT const & prof){
+      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, OpT const & operation, code_generation::profile_id const & id, ProfileT const & prof){
 
         Timer t;
 
         unsigned int n_runs = 10;
 
         //Skips if use too much local memory.
-        viennacl::generator::custom_operation op(operation);
-        op.override_model(prof);
+        viennacl::generator::custom_operation op;
+        op.add(operation);
+        op.force_profile(id,prof);
         viennacl::ocl::program & pgm = op.program();
         viennacl::ocl::kernel & k = pgm.get_kernel("_k0");
 
@@ -235,7 +237,7 @@ namespace viennacl{
         size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
         if( (prof.local_work_size().first*prof.local_work_size().second) % prefered_workgroup_size_multiple > 0) return;
 
-        op.execute();
+        op.execute(true);
         viennacl::backend::finish();
 
         double exec_time = 0;
@@ -256,9 +258,9 @@ namespace viennacl{
        * @param op the given operation
        * @param the given config */
       template<class OpT, class ConfigT>
-      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, ConfigT & config){
+      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, code_generation::profile_id const & id, ConfigT & config){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-        if(config.is_invalid(dev)==false)  benchmark_impl(timings,dev,op,config.get_current());
+        if(config.is_invalid(dev)==false)  benchmark_impl(timings,dev,op,id,config.get_current());
 
         unsigned int n=0, n_conf = 0;
         while(config.has_next()){
@@ -274,17 +276,17 @@ namespace viennacl{
           config.update();
           if(config.is_invalid(dev)) continue;
           std::cout << '\r' << (float)(n++)*100/n_conf << "%" << std::flush;
-          benchmark_impl(timings,dev,op,config.get_current());
+          benchmark_impl(timings,dev,op,id,config.get_current());
         }
       }
 
       /** @brief Fills a timing map for a given operation and a list of profiles */
       template<class OpT, class ProfT>
-      void benchmark(std::map<double, ProfT> & timings, OpT const & op, std::list<ProfT> const & profiles){
+      void benchmark(std::map<double, ProfT> & timings, OpT const & op, code_generation::profile_id const & id, std::list<ProfT> const & profiles){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
           std::cout << '.' << std::flush;
-          benchmark_impl<OpT>(timings,dev,op,*it);
+          benchmark_impl<OpT>(timings,dev,op,id,*it);
 
         }
         std::cout << std::endl;

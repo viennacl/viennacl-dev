@@ -48,7 +48,7 @@ namespace viennacl{
       class generator_base{
         private:
           virtual void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss) = 0;
-        private:
+
           void init(){
             if(shared_infos_.empty())
               for(std::list< tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >::iterator it = expressions_.begin() ; it != expressions_.end() ; ++it)
@@ -58,14 +58,16 @@ namespace viennacl{
           virtual void update_profile_state(){ }
 
         protected:
-
-          generator_base(profile_base * prof, unsigned int n_kernels=1) : prof_(prof), n_kernels_(n_kernels){          }
+          generator_base(unsigned int n_kernels=1) : n_kernels_(n_kernels){          }
 
         public:
 
-
           void add_expression(symbolic_binary_expression_tree_infos_base * p){
             expressions_.push_back(tools::shared_ptr<symbolic_binary_expression_tree_infos_base>(p));
+          }
+
+          void set_profile(profile_base const * prof){
+            prof_ = prof;
           }
 
           void enqueue(unsigned int & n, viennacl::ocl::program & pgm){
@@ -126,7 +128,7 @@ namespace viennacl{
         private:
           std::vector< std::pair<symbolic_datastructure *, tools::shared_ptr<shared_symbolic_infos_t> > > shared_infos_;
         protected:
-          viennacl::tools::shared_ptr<profile_base> prof_;
+          profile_base const * prof_;
           std::list< tools::shared_ptr<symbolic_binary_expression_tree_infos_base> >  expressions_;
           unsigned int n_kernels_;
       };

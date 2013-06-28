@@ -23,7 +23,7 @@ static const unsigned int size = 2048;
 
 template<class ScalarType>
 struct blas2_config{
-    typedef viennacl::generator::code_generation::gemv::profile profile_t;
+    typedef viennacl::generator::code_generation::vector_reduction_profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         return profile_t(params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
     }
@@ -35,12 +35,12 @@ struct blas2_config{
 
 
 
-template<class ScalarType, class Layout, class BoostLayout>
-void autotune(){
+template<class ScalarType>
+void autotune(bool trans){
     typedef viennacl::generator::vector<ScalarType> vec;
-    typedef viennacl::generator::matrix<viennacl::matrix<ScalarType, Layout> > mat;
+    typedef viennacl::generator::matrix<viennacl::matrix<ScalarType, viennacl::row_major> > mat;
     std::vector<ScalarType> cpu_v1(size), cpu_v3(size);
-    boost::numeric::ublas::matrix<ScalarType, BoostLayout> cpu_m2(size,size);
+    boost::numeric::ublas::matrix<ScalarType, boost::numeric::ublas::row_major> cpu_m2(size,size);
     for(unsigned int i=0; i<size; ++i){
         cpu_v1[i]=0;
         cpu_v3[i]=rand()/(ScalarType)RAND_MAX;
@@ -50,7 +50,7 @@ void autotune(){
     }
 
     viennacl::vector<ScalarType> v1(size), v3(size);
-    viennacl::matrix<ScalarType, Layout> m2(size,size);
+    viennacl::matrix<ScalarType, viennacl::row_major> m2(size,size);
     viennacl::copy(cpu_v1,v1);
     viennacl::copy(cpu_m2,m2);
     viennacl::copy(cpu_v3,v3);
@@ -64,9 +64,15 @@ void autotune(){
     conf.add_tuning_param("local_size1",1,max_size,&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("local_size2",1,max_size,&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("num_groups",4,1024,&viennacl::generator::autotune::inc::mul_by_two);
-    viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(mat(m2),vec(v3)),conf);
+    if(trans)
+      viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(viennacl::generator::trans(mat(m2)),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvTv, sizeof(ScalarType)),conf);
+    else
+      viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(mat(m2),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvAv, sizeof(ScalarType)),conf);
     std::cout << std::endl;
-    std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
+    std::cout << "Best Profile: " << timings.begin()->first << std::endl;
+    std::cout << "M : " << timings.begin()->second.m() << std::endl;
+    std::cout << "K : " << timings.begin()->second.k() << std::endl;
+    std::cout << "Num Groups 0 : " << timings.begin()->second.num_groups_0() << std::endl;
 }
 
 int main(){
@@ -85,16 +91,16 @@ int main(){
       std::cout << "-------------------" << std::endl;
 
             std::cout << "scalartype : float" << std::endl;
-            std::cout << "-- Layout : row-major" << std::endl;
-            autotune<float, viennacl::row_major, boost::numeric::ublas::row_major>();
-            std::cout << "-- Layout : column-major" << std::endl;
-            autotune<float, viennacl::column_major, boost::numeric::ublas::column_major>();
+            std::cout << "-- Av " << std::endl;
+            autotune<float>(false);
+            std::cout << "-- Tv" << std::endl;
+            autotune<float>(true);
 
             std::cout << "scalartype : double" << std::endl;
-            std::cout << "-- Layout : row-major" << std::endl;
-            autotune<double, viennacl::row_major, boost::numeric::ublas::row_major>();
-            std::cout << "-- Layout : column-major" << std::endl;
-            autotune<double, viennacl::column_major, boost::numeric::ublas::column_major>();
+            std::cout << "-- Av" << std::endl;
+            autotune<double>(false);
+            std::cout << "-- Tv" << std::endl;
+            autotune<double>(true);
     }
   }
 

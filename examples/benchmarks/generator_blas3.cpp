@@ -55,8 +55,8 @@
 #define SIZE_INC 256
 #define MAX_SIZE 7936
 
-template<typename ScalarType, class FB, class FC>
-double run_benchmark(size_t matrix_size)
+template<typename ScalarType>
+double run_benchmark(size_t matrix_size, bool is_lhs_trans, bool is_rhs_trans)
 {
 
     //
@@ -84,9 +84,9 @@ double run_benchmark(size_t matrix_size)
     viennacl::matrix<ScalarType,FB> vcl_B(matrix_size, matrix_size);
     viennacl::matrix<ScalarType,FC> vcl_C(matrix_size, matrix_size);
 
-    typedef viennacl::generator::matrix< viennacl::matrix<ScalarType> > dma_t;
-    typedef viennacl::generator::matrix< viennacl::matrix<ScalarType,FB> > dmb_t;
-    typedef viennacl::generator::matrix< viennacl::matrix<ScalarType,FC> > dmc_t;
+    viennacl::generator::matrix< viennacl::matrix<ScalarType> > A(vcl_A);
+    viennacl::generator::matrix< viennacl::matrix<ScalarType> > B(vcl_B);
+    viennacl::generator::matrix< viennacl::matrix<ScalarType> > C(vcl_C);
 
     viennacl::fast_copy(&(stl_B[0]),
                         &(stl_B[0]) + stl_B.size(),
@@ -96,7 +96,16 @@ double run_benchmark(size_t matrix_size)
                         vcl_C);
 
     viennacl::generator::custom_operation op;
-    op.add(dma_t(vcl_A) = viennacl::generator::prod(dmb_t(vcl_B), dmc_t(vcl_C)));
+    if(is_lhs_trans)
+      if(is_rhs_trans)
+        op.add(A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)));
+      else
+        op.add(A = viennacl::generator::prod(viennacl::generator::trans(B), C));
+    else
+      if(is_rhs_trans)
+        op.add(A = viennacl::generator::prod(B, viennacl::generator::trans(C)));
+      else
+        op.add(A = viennacl::generator::prod(B, C));
     op.program();
     op.execute();
     viennacl::backend::finish();
@@ -156,18 +165,18 @@ int main(int argc, char* argv[]){
                     double exec_time = 0;
                     if(scalartype=="float"){
                         switch(layout){
-                        case 0 : exec_time = run_benchmark<float,viennacl::row_major,viennacl::row_major>(size); break;
-                        case 1 : exec_time = run_benchmark<float,viennacl::column_major,viennacl::row_major>(size); break;
-                        case 2 : exec_time = run_benchmark<float,viennacl::row_major,viennacl::column_major>(size); break;
-                        case 3 : exec_time = run_benchmark<float,viennacl::column_major,viennacl::column_major>(size); break;
+                        case 0 : exec_time = run_benchmark<float>(size,false,false); break;
+                        case 1 : exec_time = run_benchmark<float>(size,true,false); break;
+                        case 2 : exec_time = run_benchmark<float>(size,false,true); break;
+                        case 3 : exec_time = run_benchmark<float>(size,true,true); break;
                         }
                     }
                     else if(scalartype=="double"){
                         switch(layout){
-                        case 0 : exec_time = run_benchmark<double,viennacl::row_major,viennacl::row_major>(size); break;
-                        case 1 : exec_time = run_benchmark<double,viennacl::column_major,viennacl::row_major>(size); break;
-                        case 2 : exec_time = run_benchmark<double,viennacl::row_major,viennacl::column_major>(size); break;
-                        case 3 : exec_time = run_benchmark<double,viennacl::column_major,viennacl::column_major>(size); break;
+                        case 0 : exec_time = run_benchmark<double>(size,false,false); break;
+                        case 1 : exec_time = run_benchmark<double>(size,true,false); break;
+                        case 2 : exec_time = run_benchmark<double>(size,false,true); break;
+                        case 3 : exec_time = run_benchmark<double>(size,true,true); break;
                         }
                     }
                     else{

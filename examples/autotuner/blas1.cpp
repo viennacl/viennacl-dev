@@ -23,7 +23,7 @@ static const unsigned int size = 1024*1024;
 
 template<class ScalarType>
 struct dot_config{
-    typedef viennacl::generator::code_generation::inner_product::profile profile_t;
+    typedef viennacl::generator::code_generation::scalar_reduction_profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         return profile_t(params.at("alignment").current(),params.at("group_size").current(),params.at("num_groups").current());
     }
@@ -62,9 +62,11 @@ void autotune(){
     conf.add_tuning_param("alignment",1,8,&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("group_size",8,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()),&viennacl::generator::autotune::inc::mul_by_two);
     conf.add_tuning_param("num_groups",8,1024,&viennacl::generator::autotune::inc::mul_by_two);
-    viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),conf);
+    viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),std::make_pair(viennacl::generator::code_generation::dot,sizeof(ScalarType)),conf);
     std::cout << std::endl;
-    std::cout << "Best Profile: " << timings.begin()->second << " => " << timings.begin()->first << std::endl;
+    std::cout << "Best Profile: " << timings.begin()->first << "s" << std::endl;
+    std::cout << timings.begin()->second.num_groups() << std::endl;
+    std::cout << timings.begin()->second.group_size() << std::endl;
 }
 
 int main(){

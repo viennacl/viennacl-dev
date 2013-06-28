@@ -58,20 +58,34 @@ namespace viennacl{
        */
       class operations_handler{
         private:
-          enum operation_type{
-            none = 0,
-            saxpy_vector = 1,
-            saxpy_matrix = 2,
-            scalar_reduction = 3,
-            vector_reduction = 4,
-            matrix_product = 5
-          };
+          profile_base const * get_profile(code_generation::profile_id const & key) const {
+            //Check forced profiles
+            {
+              std::map< profile_id, tools::shared_ptr<profile_base> >::const_iterator it = forced_profiles_.find(key);
+              if(it!=forced_profiles_.end())
+                return it->second.get();
+            }
 
+            //Fallback on builtin database
+            {
+              cl_device_id id = viennacl::ocl::current_device().id();
+              code_generation::builtin_database_t::iterator it = code_generation::builtin_database.find(std::make_pair(ocl::info<CL_DEVICE_VENDOR_ID>(id), ocl::info<CL_DEVICE_TYPE>(id)));
+              if(it!=code_generation::builtin_database.end()){
+                code_generation::builtin_database_t::value_type::second_type::iterator it2 = it->second.find(key);
+                if(it2!=it->second.end())
+                  return it2->second;
+              }
+            }
+
+            //Fallback on default
+            return code_generation::default_profiles.at(key.first);
+          }
 
         public:
 
-          operations_handler(){
-            last_operation_ = none;
+          template<class PROF>
+          void force_profile(code_generation::profile_id const & id, PROF const & prof){
+            forced_profiles_.insert(std::make_pair(id, tools::shared_ptr<profile_base>(new PROF(prof))));
           }
 
           //SAXPY VECTOR
@@ -79,11 +93,12 @@ namespace viennacl{
           typename viennacl::enable_if<viennacl::generator::result_of::is_saxpy_vector_operation<T>::value,void>::type
           add(T const & op){
              representation_ << typeid(T).name();
-             if(last_operation_!=saxpy_vector){
-               operations_.push_back(tools::shared_ptr<saxpy_vector_generator>(new saxpy_vector_generator(new saxpy_vector_profile())));
+             code_generation::profile_id new_operation = std::make_pair(code_generation::axpy, sizeof(typename T::ScalarType));
+             if(new_operation!=last_operation_){
+               operations_.push_back(std::make_pair(tools::shared_ptr<saxpy_vector_generator>(new saxpy_vector_generator()),new_operation));
+               last_operation_=new_operation;
              }
-             static_cast<saxpy_vector_generator*>(operations_.back().get())->add_expression(new T(op));
-             last_operation_=saxpy_vector;
+             static_cast<saxpy_vector_generator*>(operations_.back().first.get())->add_expression(new T(op));
           }
 
           //SAXPY MATRIX
@@ -91,10 +106,12 @@ namespace viennacl{
           typename viennacl::enable_if<viennacl::generator::result_of::is_saxpy_matrix_operation<T>::value,void>::type
           add(T const & op){
              representation_ << typeid(T).name();
-             if(last_operation_!=saxpy_matrix)
-               operations_.push_back(tools::shared_ptr<saxpy_matrix_generator>(new saxpy_matrix_generator(new saxpy_matrix_profile())));
-             static_cast<saxpy_matrix_generator*>(operations_.back().get())->add_expression(new T(op));
-             last_operation_=saxpy_matrix;
+             code_generation::profile_id new_operation = std::make_pair(code_generation::aXpY, sizeof(typename T::ScalarType));
+             if(new_operation!=last_operation_){
+               operations_.push_back(std::make_pair(tools::shared_ptr<saxpy_matrix_generator>(new saxpy_matrix_generator()),new_operation));
+               last_operation_=new_operation;
+             }
+             static_cast<saxpy_matrix_generator*>(operations_.back().first.get())->add_expression(new T(op));
           }
 
           //SCALAR REDUCTION
@@ -102,10 +119,12 @@ namespace viennacl{
           typename viennacl::enable_if<viennacl::generator::result_of::is_scalar_reduction_operation<T>::value,void>::type
           add(T const & op){
              representation_ << typeid(T).name();
-             if(last_operation_!=scalar_reduction)
-               operations_.push_back(tools::shared_ptr<scalar_reduction_generator>(new scalar_reduction_generator(new scalar_reduction_profile())));
-             static_cast<scalar_reduction_generator*>(operations_.back().get())->add_expression(new T(op));
-             last_operation_=scalar_reduction;
+             code_generation::profile_id new_operation = std::make_pair(code_generation::dot, sizeof(typename T::ScalarType));
+             if(new_operation!=last_operation_){
+               operations_.push_back(std::make_pair(tools::shared_ptr<scalar_reduction_generator>(new scalar_reduction_generator()),new_operation));
+               last_operation_=new_operation;
+             }
+             static_cast<scalar_reduction_generator*>(operations_.back().first.get())->add_expression(new T(op));
           }
 
           //VECTOR REDUCTION
@@ -113,9 +132,27 @@ namespace viennacl{
           typename viennacl::enable_if<viennacl::generator::result_of::is_vector_reduction_operation<T>::value,void>::type
           add(T const & op){
              representation_ << typeid(T).name();
-             operations_.push_back(tools::shared_ptr<vector_reduction_generator>(new vector_reduction_generator(new vector_reduction_profile())));
-             static_cast<vector_reduction_generator*>(operations_.back().get())->add_expression(new T(op));
-             last_operation_ = vector_reduction;
+             code_generation::profile_id new_operation;
+             bool is_lhs_transposed = result_of::is_transposed<typename T::Rhs::Lhs>::value;
+             bool is_lhs_row_major = result_of::is_row_major<typename T::Rhs::Lhs>::value;
+             if(is_lhs_transposed){
+               if(is_lhs_row_major)
+                 new_operation.first = code_generation::gemvTv;
+               else
+                 new_operation.first = code_generation::gemvAv;
+             }
+             else{
+               if(is_lhs_row_major)
+                 new_operation.first = code_generation::gemvAv;
+               else
+                 new_operation.first = code_generation::gemvTv;
+             }
+             new_operation.second = sizeof(typename T::ScalarType);
+             if(new_operation!=last_operation_){
+               operations_.push_back(std::make_pair(tools::shared_ptr<vector_reduction_generator>(new vector_reduction_generator()),new_operation));
+               last_operation_=new_operation;
+             }
+             static_cast<vector_reduction_generator*>(operations_.back().first.get())->add_expression(new T(op));
           }
 
           //MATRIX PRODUCT
@@ -123,10 +160,68 @@ namespace viennacl{
           typename viennacl::enable_if<viennacl::generator::result_of::is_matrix_product_operation<T>::value,void>::type
           add(T const & op){
              representation_ << typeid(T).name();
-             operations_.push_back(tools::shared_ptr<matrix_product_generator>(new matrix_product_generator(new matrix_product_profile())));
-             static_cast<matrix_product_generator*>(operations_.back().get())->add_expression(new T(op));
-             last_operation_ = matrix_product;
+             code_generation::profile_id new_operation;
+             bool is_lhs_transposed = result_of::is_transposed<typename T::Rhs::Lhs>::value;
+             bool is_lhs_row_major = result_of::is_row_major<typename T::Rhs::Lhs>::value;
+             bool is_rhs_transposed = result_of::is_transposed<typename T::Rhs::Rhs>::value;
+             bool is_rhs_row_major = result_of::is_row_major<typename T::Rhs::Rhs>::value;
+
+             if(is_lhs_transposed)
+               if(is_lhs_row_major)
+                 if(is_rhs_transposed)
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmTT;
+                   else
+                     new_operation.first = code_generation::gemmTA;
+                 else
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmTA;
+                   else
+                     new_operation.first = code_generation::gemmTT;
+               else
+                 if(is_rhs_transposed)
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmAT;
+                   else
+                     new_operation.first = code_generation::gemmAA;
+                 else
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmAA;
+                   else
+                     new_operation.first = code_generation::gemmAT;
+             else
+               if(is_lhs_row_major)
+                 if(is_rhs_transposed)
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmAT;
+                   else
+                     new_operation.first = code_generation::gemmAA;
+                 else
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmAA;
+                   else
+                     new_operation.first = code_generation::gemmAT;
+               else
+                 if(is_rhs_transposed)
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmTT;
+                   else
+                     new_operation.first = code_generation::gemmTA;
+                 else
+                   if(is_rhs_row_major)
+                     new_operation.first = code_generation::gemmTA;
+                   else
+                     new_operation.first = code_generation::gemmTT;
+
+             new_operation.second = sizeof(typename T::ScalarType);
+             if(new_operation!=last_operation_){
+               operations_.push_back(std::make_pair(tools::shared_ptr<matrix_product_generator>(new matrix_product_generator()),new_operation));
+               last_operation_=new_operation;
+             }
+             static_cast<matrix_product_generator*>(operations_.back().first.get())->add_expression(new T(op));
           }
+
+
 
           std::string representation(){
             return representation_.str();
@@ -134,8 +229,9 @@ namespace viennacl{
 
           void enqueue(viennacl::ocl::program & pgm){
             unsigned int n=0;
-            for(std::list<tools::shared_ptr<generator_base> >::iterator it = operations_.begin() ; it != operations_.end() ; ++it){
-              (*it)->enqueue(n, pgm);
+            for(std::list< std::pair<tools::shared_ptr<generator_base>, code_generation::profile_id > >::iterator it = operations_.begin() ; it != operations_.end() ; ++it){
+              it->first->set_profile(get_profile(it->second));
+              it->first->enqueue(n, pgm);
             }
           }
 
@@ -148,15 +244,17 @@ namespace viennacl{
             kss <<  "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
             kss <<  "#endif\n";
             unsigned int kernel_counter = 0;
-            for(std::list<tools::shared_ptr<generator_base> >::const_iterator it = operations_.begin() ; it != operations_.end() ; ++it){
-              (*it)->generate(kernel_counter,kss);
+            for(std::list< std::pair<tools::shared_ptr<generator_base>, code_generation::profile_id > >::const_iterator it = operations_.begin() ; it != operations_.end() ; ++it){
+              it->first->set_profile(get_profile(it->second));
+              it->first->generate(kernel_counter,kss);
             }
             return oss.str();
           }
 
         private:
-          std::list< tools::shared_ptr<generator_base> > operations_;
-          operation_type last_operation_;
+          std::list< std::pair<tools::shared_ptr<generator_base>, code_generation::profile_id > > operations_;
+           std::map< profile_id, tools::shared_ptr<profile_base> > forced_profiles_;
+          code_generation::profile_id last_operation_;
           std::ostringstream representation_;
       };
 

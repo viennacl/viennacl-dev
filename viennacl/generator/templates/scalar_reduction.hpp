@@ -46,16 +46,6 @@ namespace viennacl{
 
         class scalar_reduction_profile : public profile_base{
           public:
-
-            /** @brief The default constructor : GROUP_SIZE = 128 ; NUM_GROUPS = 128 */
-            scalar_reduction_profile(){
-              group_size_=128;
-              num_groups_=128;
-
-              current_group_size_ = group_size_;
-              current_num_groups_ = num_groups_;
-            }
-
             /** @brief The user constructor */
             scalar_reduction_profile(unsigned int vectorization, unsigned int group_size, unsigned int num_groups) : profile_base(vectorization){
               group_size_ = group_size;
@@ -72,7 +62,11 @@ namespace viennacl{
               return current_group_size_;
             }
 
-            void set_state(unsigned int i) {
+            unsigned int num_groups() const {
+              return num_groups_;
+            }
+
+            void set_state(unsigned int i) const {
               if(i==0){
                 current_group_size_ = group_size_;
                 current_num_groups_ = num_groups_;
@@ -84,30 +78,26 @@ namespace viennacl{
             }
 
             /** @brief Configure the NDRange of a given kernel for this profile */
-            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               k.local_work_size(0,current_group_size_);
               k.global_work_size(0,current_group_size_*current_num_groups_);
             }
 
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
-            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return profile_base::is_invalid(dev,current_group_size_*scalartype_size);
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const {
+              return profile_base::invalid_base(dev,current_group_size_*scalartype_size);
             }
 
           private:
             unsigned int group_size_;
             unsigned int num_groups_;
 
-            unsigned int current_group_size_;
-            unsigned int current_num_groups_;
+            mutable unsigned int current_group_size_;
+            mutable unsigned int current_num_groups_;
         };
 
         class scalar_reduction_generator: public generator_base{
-
-          public:
-            scalar_reduction_generator(scalar_reduction_profile * prof): generator_base(prof,2){ }
-
           private:
             void compute_reductions_samesize(utils::kernel_generation_stream& kss, std::map<binary_operator const *, symbolic_local_memory<1> > const & lmems){
               unsigned int size = lmems.begin()->second.size();
@@ -120,7 +110,7 @@ namespace viennacl{
             }
 
             void generate_body_impl(unsigned int kernel_id, utils::kernel_generation_stream& kss){
-              scalar_reduction_profile * casted_prof = static_cast<scalar_reduction_profile *>(prof_.get());
+              scalar_reduction_profile const * casted_prof = static_cast<scalar_reduction_profile const *>(prof_);
               std::list<symbolic_scalar_reduction_base*>  inner_prods;
               std::list<symbolic_vector_base *>  vectors;
               std::list<symbolic_pointer_scalar_base *> gpu_scalars;

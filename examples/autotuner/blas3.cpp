@@ -26,7 +26,7 @@ typedef std::vector<cl_device_id> cl_devices_type;
 
 template<class ScalarType>
 struct blas3_config{
-    typedef viennacl::generator::code_generation::gemm::profile profile_t;
+    typedef viennacl::generator::code_generation::matrix_product_profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         return profile_t(params.at("ml").current(), params.at("kl").current(), params.at("nl").current(),
                          params.at("ms").current(), params.at("ks").current(), params.at("ns").current(),
@@ -67,11 +67,11 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
 }
 
 
-template<class NumericT, class OpT, class ConfigT, class MatTypeA, class MatTypeB, class MatTypeC>
+template<class NumericT, class OpT, class ConfigT, class MatType>
 
-void benchmark(OpT const & operation, ConfigT conf, MatTypeA & A, MatTypeB & B, MatTypeC & C,
-                    std::list<viennacl::generator::code_generation::gemm::profile> & fastest_firsts){
-    typedef std::map<double, viennacl::generator::code_generation::gemm::profile> timings_t;
+void benchmark(OpT const & operation, viennacl::generator::code_generation::profile_id const & id, ConfigT conf, MatType & A, MatType & B, MatType & C,
+                    std::list<viennacl::generator::code_generation::matrix_product_profile> & fastest_firsts){
+    typedef std::map<double, viennacl::generator::code_generation::matrix_product_profile> timings_t;
     timings_t timings;
     unsigned int size;
 
@@ -90,9 +90,9 @@ void benchmark(OpT const & operation, ConfigT conf, MatTypeA & A, MatTypeB & B, 
         fill_matrix<NumericT>(A,B,C);
         viennacl::backend::finish();
         if(k==0)
-            viennacl::generator::autotune::benchmark(timings,operation,conf);
+            viennacl::generator::autotune::benchmark(timings,operation,id,conf);
         else{
-            viennacl::generator::autotune::benchmark(timings,operation,fastest_firsts);
+            viennacl::generator::autotune::benchmark(timings,operation,id,fastest_firsts);
         }
         fastest_firsts.clear();
         viennacl::backend::finish();
@@ -101,45 +101,16 @@ void benchmark(OpT const & operation, ConfigT conf, MatTypeA & A, MatTypeB & B, 
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
             if(std::distance(rounds_config.begin(),it)==(int)rounds_config.size()-1){
-                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << itt->second << std::endl;
+//                std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << itt->second << std::endl;
             }
         }
     }
 }
 
 
-template<class F>
-struct opposite_layout;
 
-template<>
-struct opposite_layout<viennacl::row_major> { typedef viennacl::column_major type;};
-
-template<>
-struct opposite_layout<viennacl::column_major> { typedef viennacl::row_major type;};
-
-
-
-template<class NumericT, class FB, class FC>
-void run_autotune(){
-
-    using viennacl::generator::prod;
-
-    typedef viennacl::matrix<NumericT, FB> VclMatB1;
-    typedef viennacl::matrix<NumericT, FC> VclMatC1;
-
-    typedef viennacl::matrix<NumericT, typename opposite_layout<FB>::type> VclMatB2;
-    typedef viennacl::matrix<NumericT, typename opposite_layout<FC>::type> VclMatC2;
-
-    typedef viennacl::matrix<NumericT, viennacl::row_major> VclMatA1;
-    typedef viennacl::matrix<NumericT, viennacl::column_major> VclMatA2;
-
-    typedef viennacl::generator::matrix<VclMatA1> dma1_t;
-    typedef viennacl::generator::matrix<VclMatB1> dmb1_t;
-    typedef viennacl::generator::matrix<VclMatC1> dmc1_t;
-
-    typedef viennacl::generator::matrix<VclMatA2> dma2_t;
-    typedef viennacl::generator::matrix<VclMatB2> dmb2_t;
-    typedef viennacl::generator::matrix<VclMatC2> dmc2_t;
+template<class NumericT>
+void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
@@ -154,22 +125,28 @@ void run_autotune(){
     conf.add_tuning_param("rhs_storage",0,0,&viennacl::generator::autotune::inc::add_one);
     conf.add_tuning_param("unroll",1,1,&viennacl::generator::autotune::inc::mul_by_two);
 
-    VclMatA1 A1(1,1);
-    VclMatB1 B1(1,1);
-    VclMatC1 C1(1,1);
+    viennacl::matrix<NumericT> vcl_A(1,1);
+    viennacl::matrix<NumericT> vcl_B(1,1);
+    viennacl::matrix<NumericT> vcl_C(1,1);
 
-    VclMatA2 A2(1,1);
-    VclMatB2 B2(1,1);
-    VclMatC2 C2(1,1);
+    viennacl::generator::matrix<viennacl::matrix<NumericT> > A(vcl_A);
+    viennacl::generator::matrix<viennacl::matrix<NumericT> > B(vcl_B);
+    viennacl::generator::matrix<viennacl::matrix<NumericT> > C(vcl_C);
 
-    std::list<viennacl::generator::code_generation::gemm::profile> fastest_firsts;
+    std::list<viennacl::generator::code_generation::matrix_product_profile> fastest_firsts;
 
+    using namespace viennacl::generator::code_generation;
 
-    //------------AA------------
-    std::cout << "Getting best parameters..." << std::endl;
-    benchmark<NumericT>(dma1_t(A1) = prod(dmb1_t(B1),dmc1_t(C1)),conf,A1,B1,C1,fastest_firsts);
-    //--------------------------
-
+    if(is_lhs_trans)
+      if(is_rhs_trans)
+        benchmark<NumericT>(A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)), std::make_pair(gemmTT,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
+      else
+        benchmark<NumericT>(A = viennacl::generator::prod(viennacl::generator::trans(B), C), std::make_pair(gemmTA,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
+    else
+      if(is_rhs_trans)
+        benchmark<NumericT>(A = viennacl::generator::prod(B, viennacl::generator::trans(C)), std::make_pair(gemmAT,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
+      else
+        benchmark<NumericT>(A = viennacl::generator::prod(B, C), std::make_pair(gemmAA,sizeof(NumericT)),conf,vcl_A,vcl_B,vcl_C,fastest_firsts);
 
 }
 
@@ -212,29 +189,29 @@ int main(int argc, char* argv[]){
                 std::cout << "-------------------" << std::endl;
                 switch(layout){
                 case 0:
-                    std::cout << "====== Step 1 : Row - Row and alikes =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float,viennacl::row_major,viennacl::row_major>();
-                    else if(scalartype=="double") run_autotune<double,viennacl::row_major,viennacl::row_major>();
+                    std::cout << "====== Step 1 : AA =====" << std::endl;
+                    if(scalartype=="float") run_autotune<float>(false,false);
+                    else if(scalartype=="double") run_autotune<double>(false,false);
                     break;
 
 
                 case 1:
-                    std::cout << "====== Step 3 : Column - Row and alikes =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float,viennacl::column_major,viennacl::row_major>();
-                    else if(scalartype=="double") run_autotune<double,viennacl::column_major,viennacl::row_major>();
+                    std::cout << "====== Step 3 : TA =====" << std::endl;
+                    if(scalartype=="float") run_autotune<float>(true,false);
+                    else if(scalartype=="double") run_autotune<double>(true,false);
                     break;
 
 
                 case 2:
-                    std::cout << "====== Step 2 : Row - Column and alikes =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float,viennacl::row_major,viennacl::column_major>();
-                    else if(scalartype=="double") run_autotune<double,viennacl::row_major,viennacl::column_major>();
+                    std::cout << "====== Step 2 : AT =====" << std::endl;
+                    if(scalartype=="float") run_autotune<float>(false,true);
+                    else if(scalartype=="double") run_autotune<double>(false,true);
                     break;
 
                 case 3:
-                    std::cout << "====== Step 4 : Column - Column and alikes =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float,viennacl::column_major,viennacl::column_major>();
-                    else if(scalartype=="double") run_autotune<double,viennacl::column_major,viennacl::column_major>();
+                    std::cout << "====== Step 4 : TT =====" << std::endl;
+                    if(scalartype=="float") run_autotune<float>(true,true);
+                    else if(scalartype=="double") run_autotune<double>(true,true);
                     break;
                 }
 

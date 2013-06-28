@@ -41,7 +41,7 @@ namespace viennacl{
         protected:
           typedef unsigned int size_type;
         protected:
-          bool is_invalid(viennacl::ocl::device const & dev, size_t lmem_used){
+          bool invalid_base(viennacl::ocl::device const & dev, size_t lmem_used) const{
             //Query profile informations
             std::pair<size_t, size_t> workgroup_size = local_work_size();
 
@@ -58,12 +58,12 @@ namespace viennacl{
                 || lmem_used>lmem_available;
           }
         public:
-          profile_base() : vectorization_(1){ }
           profile_base(unsigned int vectorization) : vectorization_(vectorization){ }
-          virtual void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base * p) = 0;
+          virtual void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base * p) const = 0;
           unsigned int vectorization() const{ return vectorization_; }
           virtual std::pair<size_t,size_t> local_work_size() const = 0;
-          virtual void set_state(unsigned int i) { }
+          virtual bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const = 0;
+          virtual void set_state(unsigned int i) const { }
           virtual ~profile_base(){ }
         protected:
           unsigned int vectorization_;

@@ -43,29 +43,6 @@ namespace viennacl{
           class matrix_product_profile : public profile_base{
           public:
 
-            /** @brief The default constructor
-             *
-             *  ML = KL = NL = 32
-             *  MS = KS = NS = 4
-             *  LHS stored to local memory, RHS not
-             *  Unroll = 1
-             */
-            matrix_product_profile(){
-              ml_ = 32;
-              kl_ = 32;
-              nl_ = 32;
-
-              ms_ = 4;
-              ks_ = 4;
-              ns_ = 4;
-
-              use_LHS_shared_ = true;
-              use_RHS_shared_ = false;
-
-              unroll_ = 1;
-            }
-
-
             /** @brief The user constructor */
             matrix_product_profile(unsigned int ml, unsigned int kl, unsigned int nl
                     , unsigned int ms, unsigned int ks, unsigned int ns
@@ -80,7 +57,7 @@ namespace viennacl{
             }
 
             /** @brief Configure the NDRange of a given kernel for this profile */
-            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               symbolic_matrix_base* mat = dynamic_cast<symbolic_matrix_base*>(p);
               k.local_work_size(0, ml_/ms_);
               k.global_work_size(0, mat->real_size1()/ms_);
@@ -122,12 +99,12 @@ namespace viennacl{
 
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
-            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const {
               //Query profile informations
               size_t lmem_used = 0;
               if(use_LHS_shared()) lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
               if(use_RHS_shared()) lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
-              return  profile_base::is_invalid(dev,lmem_used)
+              return  profile_base::invalid_base(dev,lmem_used)
                   || vectorization_ > ms_
                   || vectorization_ > ks_
                   || vectorization_ > ns_
@@ -153,9 +130,6 @@ namespace viennacl{
 
 
         class matrix_product_generator : public generator_base{
-
-          public:
-            matrix_product_generator(matrix_product_profile * kernel_config): generator_base(kernel_config) { }
 
           private:
             static void transform_block(symbolic_matrix_base const & mat_infos, bool is_transposed, bool store_shared
@@ -389,7 +363,7 @@ namespace viennacl{
             }
 
             void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
-              matrix_product_profile * casted_prof = static_cast<matrix_product_profile *>(prof_.get());
+              matrix_product_profile const * casted_prof = static_cast<matrix_product_profile const *>(prof_);
 
               std::list<symbolic_matrix_matrix_product_base*> matmat_prods;
               std::list<symbolic_matrix_base *>  matrices;

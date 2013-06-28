@@ -46,12 +46,6 @@ namespace viennacl{
         class saxpy_vector_profile : public profile_base{
           public:
 
-            /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
-            saxpy_vector_profile(){
-              loop_unroll_ = 1;
-              group_size_ = 128;
-            }
-
             /** @brief The user constructor */
             saxpy_vector_profile(unsigned int vectorization, unsigned int loop_unroll, size_t group_size0) : profile_base(vectorization){
               loop_unroll_ = loop_unroll;
@@ -69,25 +63,16 @@ namespace viennacl{
             }
 
             /** @brief Configure the NDRange of a given kernel for this profile */
-            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               symbolic_vector_base * vec = dynamic_cast<symbolic_vector_base*>(p);
               k.local_work_size(0,group_size_);
               k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(vec->real_size()/(vectorization_*loop_unroll_),group_size_)); //Note: now using for-loop for good performance on CPU
             }
 
-            /** @brief Returns the representation string of this profile */
-            std::string repr() const{
-              std::ostringstream oss;
-              oss << "V" << vectorization_
-                  <<  "U" << loop_unroll_
-                   << "GROUP" << group_size_;
-              return oss.str();
-            }
-
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
-            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return profile_base::is_invalid(dev,0);
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const {
+              return profile_base::invalid_base(dev,0);
             }
 
           private:
@@ -96,12 +81,9 @@ namespace viennacl{
         };
 
         class saxpy_vector_generator : public generator_base{
-          public:
-            saxpy_vector_generator(saxpy_vector_profile * prof) : generator_base(prof) { }
-
           private:
             void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
-              saxpy_vector_profile * casted_prof = static_cast<saxpy_vector_profile *>(prof_.get());
+              saxpy_vector_profile const * casted_prof = static_cast<saxpy_vector_profile const *>(prof_);
 
               symbolic_vector_base * first_vector = static_cast<symbolic_vector_base*>(&(*expressions_.begin())->lhs());
               unsigned int n_unroll = casted_prof->loop_unroll();

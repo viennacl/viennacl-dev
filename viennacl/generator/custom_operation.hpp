@@ -28,6 +28,7 @@
 #include "viennacl/generator/symbolic_types.hpp"
 #include "viennacl/generator/overloads.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
+#include "builtin_database.hpp"
 #include <bitset>
 
 namespace viennacl
@@ -40,24 +41,11 @@ namespace viennacl
     class custom_operation
     {
       public :
-
-        /** @brief Default Constructor */
-        custom_operation(){ }
-
         /** @brief Add an operation to the operations list */
         template<class T>
         void add(T const & op){
           operations_manager_.add(op);
         }
-
-//        /** @brief Forces the code generator to use a particular profile to generate the operations corresponding to T
-//         *
-//         * @tparam T profile type
-//         */
-//        template<class T>
-//        void override_model(T const & o){
-//          operations_manager_.override_model(o);
-//        }
 
         std::string source_code() const{
           return operations_manager_.get_source_code();
@@ -76,21 +64,22 @@ namespace viennacl
           return viennacl::ocl::current_context().get_program(program_name);
         }
 
+        /** @brief Force a profile for a given operation */
+        template<class PROF>
+        void force_profile(code_generation::profile_id const & id, PROF const & prof){
+          operations_manager_.force_profile(id,prof);
+        }
+
         /** @brief Executes the given operation
          *  Compiles the program if not previously done
          */
-        void execute(){
-            viennacl::ocl::program & pgm = program();
-            operations_manager_.enqueue(pgm);
-//            std::cout << operations_manager_.get_source_code() << std::endl;
-//          operations_manager_.bind_arguments(kernels_infos_);
-//          viennacl::ocl::program & pgm = program();
-//          for(std::map<std::string, generator::code_generation::kernel_wrapper>::iterator it = kernels_infos_.begin() ; it != kernels_infos_.end() ; ++it){
-//            viennacl::ocl::kernel& k = pgm.get_kernel(it->first);
-//            it->second.enqueue(k);
-//            it->second.config_nd_range(k);
-//            viennacl::ocl::enqueue(k);
-//          }
+        void execute(bool force_compilation = false){
+          std::string program_name = operations_manager_.representation();
+          if(force_compilation){
+            viennacl::ocl::current_context().delete_program(program_name);
+          }
+          viennacl::ocl::program & pgm = program();
+          operations_manager_.enqueue(pgm);
         }
 
       private:

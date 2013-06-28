@@ -32,6 +32,21 @@ namespace viennacl{
 
     namespace result_of{
 
+      template<class T>
+      struct is_transposed{ enum { value = 0 }; };
+
+      template<class SUB>
+      struct is_transposed<viennacl::generator::unary_matrix_expression<SUB, trans_type> >{ enum { value = 1 }; };
+
+      template<class T>
+      struct is_row_major{ enum { value = 0 }; };
+
+      template<class SUB>
+      struct is_row_major<viennacl::generator::unary_matrix_expression<SUB, trans_type> >{ enum { value = is_row_major<SUB>::value }; };
+
+      template<class ScalarType, class ELEMENT_ACCESSOR, class ROW_INDEX, class COL_INDEX>
+      struct is_row_major<viennacl::generator::symbolic_matrix<viennacl::matrix<ScalarType, viennacl::row_major>, ELEMENT_ACCESSOR, ROW_INDEX, COL_INDEX > >{ enum { value = 1 }; };
+
       //Binary Expressions
 
       template<class T>

@@ -341,6 +341,19 @@ namespace viennacl
           return prog;
         }
 
+        /** @brief Delete the program with the provided name */
+        void delete_program(std::string const & name){
+          for (ProgramContainer::iterator it = programs_.begin();
+                it != programs_.end();
+                ++it)
+          {
+            if (it->name() == name){
+              programs_.erase(it);
+              return;
+            }
+          }
+        }
+
         /** @brief Returns the program with the provided name */
         viennacl::ocl::program & get_program(std::string const & name)
         {

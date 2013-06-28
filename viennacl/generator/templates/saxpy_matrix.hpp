@@ -45,11 +45,6 @@ namespace viennacl{
         class saxpy_matrix_profile : public profile_base{
           public:
 
-            /** @brief The default constructor : Unroll factor : 1, Group size : 128. */
-            saxpy_matrix_profile(){
-              group_size_ = 128;
-            }
-
             /** @brief The user constructor */
             saxpy_matrix_profile(unsigned int vectorization, size_t group_size0) : profile_base(vectorization){
               group_size_ = group_size0;
@@ -61,7 +56,7 @@ namespace viennacl{
             }
 
             /** @brief Configure the NDRange of a given kernel for this profile */
-            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               symbolic_matrix_base * mat = dynamic_cast<symbolic_matrix_base*>(p);
               k.local_work_size(0,group_size_);
               k.global_work_size(0,viennacl::tools::roundUpToNextMultiple<cl_uint>(mat->real_size1()*mat->real_size2()/vectorization_,group_size_));
@@ -69,8 +64,8 @@ namespace viennacl{
 
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
-            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return profile_base::is_invalid(dev,0);
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const {
+              return profile_base::invalid_base(dev,0);
             }
 
           private:
@@ -78,9 +73,6 @@ namespace viennacl{
         };
 
         class saxpy_matrix_generator : public generator_base{
-          public:
-            saxpy_matrix_generator(saxpy_matrix_profile * prof): generator_base(prof) { }
-
           private:
             void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
               symbolic_matrix_base * first_matrix = static_cast<symbolic_matrix_base*>(&(*expressions_.begin())->lhs());

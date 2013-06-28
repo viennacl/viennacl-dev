@@ -45,15 +45,8 @@ namespace viennacl{
         class vector_reduction_profile : public profile_base{
           public:
 
-            /** @brief The default constructor. M = 1, K = 16, NUM_GROUPS_0 = 64 */
-            vector_reduction_profile(){
-              m_ = 1;
-              k_ = 16;
-              num_groups_0_ = 64;
-            }
-
             /** @brief The user constructor */
-            vector_reduction_profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : m_(m), k_(k), num_groups_0_(num_groups_0){ }
+            vector_reduction_profile(unsigned int m, unsigned int k, unsigned int num_groups_0) : profile_base(1), m_(m), k_(k), num_groups_0_(num_groups_0){ }
 
             /** @brief Returns M */
             unsigned int m() const { return m_; }
@@ -71,7 +64,7 @@ namespace viennacl{
             }
 
             /** @brief Configure the NDRange of a given kernel for this profile */
-            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p){
+            void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               k.local_work_size(0,m_);
               k.local_work_size(1,k_);
               k.global_work_size(0,m_*num_groups_0_);
@@ -90,8 +83,8 @@ namespace viennacl{
 
             /** @brief returns whether or not the profile leads to undefined behavior on particular device
              *  @param dev the given device*/
-            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size){
-              return profile_base::is_invalid(dev,m_*(k_+1)*scalartype_size)
+            bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const {
+              return profile_base::invalid_base(dev,m_*(k_+1)*scalartype_size)
                   || vectorization_ > m_
                   || vectorization_ > k_;
             }
@@ -105,16 +98,9 @@ namespace viennacl{
 
 
         class vector_reduction_generator : public generator_base{
-          public:
-            vector_reduction_generator(vector_reduction_profile * prof): generator_base(prof)
-            {
-
-            }
-
           private:
-
             void generate_body_impl(unsigned int i, utils::kernel_generation_stream& kss){
-              vector_reduction_profile * casted_prof = static_cast<vector_reduction_profile *>(prof_.get());
+              vector_reduction_profile const * casted_prof = static_cast<vector_reduction_profile const *>(prof_);
 
               std::list<symbolic_matrix_base *>  matrices;
               std::list<vector_reduction_base *>  prods;
