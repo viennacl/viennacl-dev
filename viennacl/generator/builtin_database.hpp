@@ -106,7 +106,7 @@ namespace viennacl{
           tmp.insert(std::make_pair(std::make_pair(dot,8), new scalar_reduction_profile(2,64,512)));
 
           //BLAS2
-          tmp.insert(std::make_pair(std::make_pair(gemvAv,4), new vector_reduction_profile(1,256,1024)));
+          tmp.insert(std::make_pair(std::make_pair(gemvAv,4), new vector_reduction_profile(1,256,1023)));
           tmp.insert(std::make_pair(std::make_pair(gemvTv,4), new vector_reduction_profile(64,4,64)));
 
           tmp.insert(std::make_pair(std::make_pair(gemvAv,8), new vector_reduction_profile(1,128,1024)));

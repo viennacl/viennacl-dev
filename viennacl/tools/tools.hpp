@@ -128,6 +128,20 @@ namespace viennacl
     }
 
 
+    /** @brief Rounds an integer to the previous multiple of another integer
+    *
+    * @tparam INT_TYPE  The integer type
+    * @param to_reach   The integer to be rounded down (floor operation)
+    * @param base       The base
+    * @return The biggest multiple of 'base' such that to_reach >= base
+    */
+    template <class INT_TYPE>
+    INT_TYPE roundDownToPreviousMultiple(INT_TYPE to_reach, INT_TYPE base)
+    {
+      if (to_reach % base == 0) return to_reach;
+      return (to_reach / base) * base;
+    }
+
     /** @brief Create a double precision kernel out of a single precision kernel
     *
     * @param source          The source string

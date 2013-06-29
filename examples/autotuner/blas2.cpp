@@ -60,16 +60,31 @@ void autotune(bool trans){
     size_t max_size = viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id());
     std::map<double,typename blas2_config<ScalarType>::profile_t> timings;
     viennacl::generator::autotune::tuning_config< blas2_config<ScalarType> > conf;
-    //conf.add_tuning_param("alignment",1,1);
-    conf.add_tuning_param("local_size1",1,max_size,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("local_size2",1,max_size,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("num_groups",4,1024,&viennacl::generator::autotune::inc::mul_by_two);
+
+    std::vector<int> alignments;
+    std::vector<int> local_sizes1;
+    std::vector<int> local_sizes2;
+    std::vector<int> num_groups;
+
+    alignments.push_back(1);
+    for(unsigned int s = 1 ; s <= max_size ; s*=2)
+      local_sizes1.push_back(s);
+    for(unsigned int s = 1 ; s <= max_size ; s*=2)
+      local_sizes2.push_back(s);
+    for(unsigned int g = 16 ; g <= 1024 ; g+=16)
+      num_groups.push_back(g);
+
+    conf.add_tuning_param("alignment",alignments);
+    conf.add_tuning_param("local_size1",local_sizes1);
+    conf.add_tuning_param("local_size2",local_sizes2);
+    conf.add_tuning_param("num_groups",num_groups);
+
     if(trans)
       viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(viennacl::generator::trans(mat(m2)),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvTv, sizeof(ScalarType)),conf);
     else
       viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(mat(m2),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvAv, sizeof(ScalarType)),conf);
     std::cout << std::endl;
-    std::cout << "Best Profile: " << timings.begin()->first << std::endl;
+    std::cout << "Best Profile: " << std::setprecision(5) <<  timings.begin()->first << "s" << "\t|\t" << 1e-9*size*(2*size-1)/timings.begin()->first << " GFLOPs" << std::endl;
     std::cout << "M : " << timings.begin()->second.m() << std::endl;
     std::cout << "K : " << timings.begin()->second.k() << std::endl;
     std::cout << "Num Groups 0 : " << timings.begin()->second.num_groups_0() << std::endl;

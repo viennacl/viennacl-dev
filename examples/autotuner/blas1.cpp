@@ -59,9 +59,18 @@ void autotune(){
     std::map<double, typename dot_config<ScalarType>::profile_t> timings;
     std::cout << "* Tuning DOT" << std::endl;
     viennacl::generator::autotune::tuning_config<dot_config<ScalarType> > conf;
-    conf.add_tuning_param("alignment",1,8,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("group_size",8,viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()),&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("num_groups",8,1024,&viennacl::generator::autotune::inc::mul_by_two);
+    std::vector<int> alignments;
+    std::vector<int> group_sizes;
+    std::vector<int> num_groups;
+    for(unsigned int a = 1; a <= 8 ; a*=2)
+      alignments.push_back(a);
+    for(unsigned int i = 16; i <= viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id()) ; i*=2)
+      group_sizes.push_back(i);
+    for(unsigned int g = 16 ; g <= 1024 ; g *= 2)
+      num_groups.push_back(g);
+    conf.add_tuning_param("alignment",alignments);
+    conf.add_tuning_param("group_size",group_sizes);
+    conf.add_tuning_param("num_groups",num_groups);
     viennacl::generator::autotune::benchmark(timings,scal(s) = viennacl::generator::inner_prod(vec(v1), vec(v2)),std::make_pair(viennacl::generator::code_generation::dot,sizeof(ScalarType)),conf);
     std::cout << std::endl;
     std::cout << "Best Profile: " << timings.begin()->first << "s" << std::endl;

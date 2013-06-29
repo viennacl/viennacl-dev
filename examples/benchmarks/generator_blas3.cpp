@@ -22,11 +22,9 @@
 */
 
 //disable debug mechanisms to have a fair benchmark environment
-#ifndef NDEBUG
 #define NDEBUG
-#endif
 
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 
 //
 // include necessary system headers
@@ -160,7 +158,7 @@ int main(int argc, char* argv[]){
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
                 std::cout << "Running GEMM for : " << scalartype << std::endl;
 
-                std::cout << "#Size \t Execution Time" << std::endl;
+                std::cout << "#Size \t GFLOPs" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
                     double exec_time = 0;
                     if(scalartype=="float"){
@@ -183,7 +181,7 @@ int main(int argc, char* argv[]){
                         std::cerr << "Unknown Scalartype ... Aborting" << std::endl;
                         exit(EXIT_FAILURE);
                     }
-                    std::cout << size << "\t" << exec_time << std::endl;
+                    std::cout << size << "\t" << 2*pow(size/1000.0d,3)/exec_time << std::endl;
                 }
             }
         }
