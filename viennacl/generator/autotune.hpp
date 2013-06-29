@@ -35,6 +35,7 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
 
+#include <thread>
 
 namespace viennacl{
 
@@ -110,16 +111,6 @@ namespace viennacl{
 
 #endif
 
-      /** @brief Presets on how to increment the tuning parameter */
-      struct inc{
-
-          /** @brief the parameter for the next optimization profile will be multiplied by 2 */
-          static void mul_by_two(unsigned int & val) { val*=2 ; }
-
-          /** @brief the parameter for the next optimization profile will be added 1 */
-          static void add_one(unsigned int & val) { val+=1; }
-
-      };
 
       /** @brief class for a tuning parameter */
       class tuning_param{
@@ -131,29 +122,37 @@ namespace viennacl{
            *  @param max maximal value
            *  @param policy for increasing the tuning parameter
            */
-          tuning_param(unsigned int min, unsigned int max, void (*inc)(unsigned int &)) : current_(min), min_max_(min,max), inc_(inc){ }
+          tuning_param(std::vector<int> const & values) : values_(values){
+              reset();
+          }
 
           /** @brief Returns true if the parameter has reached its maximum value */
-          bool is_max() const { return current_ >= min_max_.second; }
+          bool is_max() const {
+            return current_ ==  (values_.end()-1);
+          }
 
           /** @brief Increments the parameter */
           bool inc(){
-            inc_(current_);
-            if(current_<=min_max_.second) return false;
-            current_=min_max_.first;
-            return true; //has been reset
+            ++current_;
+            if(current_ != values_.end())
+              return false;
+            reset();
+            return true;
           }
 
           /** @brief Returns the current value of the parameter */
-          unsigned int current() const{ return current_; }
+          int current() const{
+              return *current_;
+          }
 
           /** @brief Resets the parameter to its minimum value */
-          void reset() { current_ = min_max_.first; }
+          void reset() {
+              current_ = values_.begin();
+          }
 
         private:
-          unsigned int current_;
-          std::pair<unsigned int, unsigned int> min_max_;
-          void (*inc_)(unsigned int &);
+          std::vector<int>::const_iterator current_;
+          std::vector<int> values_;
       };
 
       /** @brief Tuning configuration
@@ -175,20 +174,23 @@ namespace viennacl{
           typedef typename ConfigT::profile_t profile_t;
 
           /** @brief Add a tuning parameter to the config */
-          void add_tuning_param(std::string const & name, unsigned int min, unsigned int max, void (*inc)(unsigned int &)){
-            params_.insert(std::make_pair(name,tuning_param(min,max,inc)));
+          void add_tuning_param(std::string const & name, std::vector<int> const & values){
+            params_.insert(std::make_pair(name,values));
           }
 
           /** @brief Returns true if the tuning config has still not explored all its possibilities */
           bool has_next() const{
             bool res = false;
-            for(typename params_t::const_iterator it = params_.begin() ; it != params_.end() ; ++it) res = res || !it->second.is_max();
+            for(typename params_t::const_iterator it = params_.begin() ; it != params_.end() ; ++it)
+              res = res || !it->second.is_max();
             return res;
           }
 
           /** @brief Update the parameters of the config */
           void update(){
-            for(typename params_t::iterator it = params_.begin() ; it != params_.end() ; ++it) if(it->second.inc()==false) break;
+            for(typename params_t::iterator it = params_.begin() ; it != params_.end() ; ++it)
+              if(it->second.inc()==false)
+                break;
           }
 
           /** @brief Returns true if the compilation/execution of the underlying profile has an undefined behavior */

@@ -359,6 +359,8 @@ namespace viennacl{
           if(already_enqueued.insert(std::make_pair(handle,n_arg)).second==true){
             std::string name = "arg"+utils::to_string(n_arg++);
             kss << address_space << ' ' << utils::print_type<ScalarType>::value() ;
+            if(vector>1)
+              kss << vector;
             kss << "* " << name << ",";
           }
           return "arg"+utils::to_string(already_enqueued.at(handle));

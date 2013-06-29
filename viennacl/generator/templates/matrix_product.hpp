@@ -24,6 +24,8 @@
  * Kernel template for the matrix product operation
 */
 
+#include "viennacl/tools/tools.hpp"
+
 #include "viennacl/generator/templates/generator_base.hpp"
 #include "viennacl/generator/templates/profile_base.hpp"
 
@@ -59,9 +61,11 @@ namespace viennacl{
             /** @brief Configure the NDRange of a given kernel for this profile */
             void config_nd_range(viennacl::ocl::kernel & k, symbolic_expression_tree_base* p) const {
               symbolic_matrix_base* mat = dynamic_cast<symbolic_matrix_base*>(p);
-              k.local_work_size(0, ml_/ms_);
+              size_t group1 = ml_/ms_;
+              size_t group2 = nl_/ns_;
+              k.local_work_size(0, group1);
               k.global_work_size(0, mat->real_size1()/ms_);
-              k.local_work_size(1, nl_/ns_);
+              k.local_work_size(1, group2);
               k.global_work_size(1, mat->real_size2()/ns_);
             }
 
@@ -111,6 +115,10 @@ namespace viennacl{
                   || ms_ > ml_
                   || ks_ > kl_
                   || ns_ > nl_;
+            }
+
+            virtual void display(std::ostream & os) const{
+              os << ml_ << "\t" << kl_ << "\t" << nl_ << "\t" << ms_ << "\t" << ks_ << "\t" << ns_ << "\t" << use_LHS_shared_ << "\t" << use_RHS_shared_ << "\t" << unroll_ ;
             }
 
           private:

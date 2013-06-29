@@ -65,6 +65,7 @@ namespace viennacl{
           virtual bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const = 0;
           virtual void set_state(unsigned int i) const { }
           virtual ~profile_base(){ }
+//          virtual display(std::ostream & os) = 0;
         protected:
           unsigned int vectorization_;
       };

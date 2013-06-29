@@ -74,24 +74,35 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    conf.add_tuning_param("ml",16,256,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("kl",16,256,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("nl",16,256,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ms",2,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ks",2,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("ns",2,16,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("vector",1,4,&viennacl::generator::autotune::inc::mul_by_two);
-    conf.add_tuning_param("lhs_storage",1,1,&viennacl::generator::autotune::inc::add_one);
-    conf.add_tuning_param("rhs_storage",0,0,&viennacl::generator::autotune::inc::add_one);
-    conf.add_tuning_param("unroll",1,1,&viennacl::generator::autotune::inc::mul_by_two);
+    std::vector<int> ml; for(unsigned int i=16 ; i<=128 ; i+=16) ml.push_back(i);
+    std::vector<int> kl; for(unsigned int i=16 ; i<=128 ; i+=16) kl.push_back(i);
+    std::vector<int> nl; for(unsigned int i=16 ; i<=128 ; i+=16) nl.push_back(i);
+    std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
+    std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
+    std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
+    std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
+    std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
+    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
+    std::vector<int> unroll; unroll.push_back(1);
+
+    conf.add_tuning_param("ml",ml);
+    conf.add_tuning_param("kl",kl);
+    conf.add_tuning_param("nl",nl);
+    conf.add_tuning_param("ms",ms);
+    conf.add_tuning_param("ks",ks);
+    conf.add_tuning_param("ns",ns);
+    conf.add_tuning_param("vector",vector);
+    conf.add_tuning_param("lhs_storage",lhs_storage);
+    conf.add_tuning_param("rhs_storage",rhs_storage);
+    conf.add_tuning_param("unroll",unroll);
 
 
     timings_t timings;
     std::list<viennacl::generator::code_generation::matrix_product_profile> fastest_firsts;
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(512,70));
-    rounds_config.push_back(std::make_pair(4096,20));
+    rounds_config.push_back(std::make_pair(512,10));
+//    rounds_config.push_back(std::make_pair(2048,10));
 
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
         unsigned int k = std::distance(rounds_config.begin(),it);
@@ -140,6 +151,7 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
             if(std::distance(rounds_config.begin(),it)==(int)rounds_config.size()-1){
+                std::cout << "-----------" << std::endl;
                 std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << std::endl;
                 std::cout << "ML : " << itt->second.ml() << std::endl;
                 std::cout << "NL : " << itt->second.nl() << std::endl;
