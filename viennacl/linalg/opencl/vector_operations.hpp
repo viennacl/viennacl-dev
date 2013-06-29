@@ -30,6 +30,7 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
+#include "viennacl/linalg/opencl/common.hpp"
 #include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/linalg/kernels/vector_element_kernels.h"
 #include "viennacl/meta/predicate.hpp"
@@ -312,30 +313,10 @@ namespace viennacl
 
       ///////////////////////// Unary Elementwise operations /////////////
 
-      namespace detail
-      {
-        inline std::string op_to_string(op_abs)   { return "abs";   }
-        inline std::string op_to_string(op_acos)  { return "acos";  }
-        inline std::string op_to_string(op_asin)  { return "asin";  }
-        inline std::string op_to_string(op_ceil)  { return "ceil";  }
-        inline std::string op_to_string(op_cos)   { return "cos";   }
-        inline std::string op_to_string(op_cosh)  { return "cosh";  }
-        inline std::string op_to_string(op_exp)   { return "exp";   }
-        inline std::string op_to_string(op_fabs)  { return "fabs";  }
-        inline std::string op_to_string(op_floor) { return "floor"; }
-        inline std::string op_to_string(op_log)   { return "log";   }
-        inline std::string op_to_string(op_log10) { return "log10"; }
-        inline std::string op_to_string(op_sin)   { return "sin";   }
-        inline std::string op_to_string(op_sinh)  { return "sinh";  }
-        inline std::string op_to_string(op_sqrt)  { return "sqrt";  }
-        inline std::string op_to_string(op_tan)   { return "tan";   }
-        inline std::string op_to_string(op_tanh)  { return "tanh";  }
-      }
-
-      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
       *
       * @param vec1   The result vector (or -range, or -slice)
-      * @param proxy  The proxy object holding v2, v3 and the operation
+      * @param proxy  The proxy object holding v2 and the operation
       */
       template <typename T, typename OP>
       void element_op(vector_base<T> & vec1,

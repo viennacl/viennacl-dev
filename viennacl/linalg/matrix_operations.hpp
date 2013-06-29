@@ -432,6 +432,171 @@ namespace viennacl
     }
 
 
+    ///////////////////////// Elementwise operations /////////////
+
+
+
+    /** @brief Implementation of the element-wise operation A = B .* C and A = B ./ C for matrices (using MATLAB syntax). Don't use this function directly, use element_prod() and element_div().
+    *
+    * @param A      The result matrix (or -range, or -slice)
+    * @param proxy  The proxy object holding B, C, and the operation
+    */
+    template <typename T, typename F, typename OP>
+    void element_op(matrix_base<T, F> & A,
+                    matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, OP> const & proxy)
+    {
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy)) && bool("Size check failed at A = element_op(B): size1(A) != size1(B)"));
+      assert( (viennacl::traits::size2(A) == viennacl::traits::size2(proxy)) && bool("Size check failed at A = element_op(B): size2(A) != size2(B)"));
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::element_op(A, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(A, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(A, proxy);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
+
+
+
+    template <typename T, typename F>
+    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_prod> >
+    element_prod(matrix_base<T, F> const & A, matrix_base<T, F> const & B)
+    {
+      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_prod> >(A, B);
+    }
+
+    template <typename M1, typename M2, typename OP, typename T, typename F>
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
+                                const matrix_base<T, F>,
+                                op_element_binary<op_prod> >
+    element_prod(matrix_expression<const M1, const M2, OP> const & proxy, matrix_base<T, F> const & B)
+    {
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
+                                         const matrix_base<T, F>,
+                                         op_element_binary<op_prod> >(proxy, B);
+    }
+
+    template <typename T, typename F, typename M2, typename M3, typename OP>
+    viennacl::matrix_expression<const matrix_base<T, F>,
+                                const matrix_expression<const M2, const M3, OP>,
+                                op_element_binary<op_prod> >
+    element_prod(matrix_base<T, F> const & A, matrix_expression<const M2, const M3, OP> const & proxy)
+    {
+      return viennacl::matrix_expression<const matrix_base<T, F>,
+                                         const matrix_expression<const M2, const M3, OP>,
+                                         op_element_binary<op_prod> >(A, proxy);
+    }
+
+    template <typename M1, typename M2, typename OP1,
+              typename M3, typename M4, typename OP2>
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
+                                const matrix_expression<const M3, const M4, OP2>,
+                                op_element_binary<op_prod> >
+    element_prod(matrix_expression<const M1, const M2, OP1> const & proxy1,
+                 matrix_expression<const M3, const M4, OP2> const & proxy2)
+    {
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
+                                         const matrix_expression<const M3, const M4, OP2>,
+                                         op_element_binary<op_prod> >(proxy1, proxy2);
+    }
+
+
+
+
+    template <typename T, typename F>
+    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_div> >
+    element_div(matrix_base<T, F> const & A, matrix_base<T, F> const & B)
+    {
+      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_div> >(A, B);
+    }
+
+    template <typename M1, typename M2, typename OP, typename T, typename F>
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
+                                const matrix_base<T, F>,
+                                op_element_binary<op_div> >
+    element_div(matrix_expression<const M1, const M2, OP> const & proxy, matrix_base<T, F> const & B)
+    {
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
+                                         const matrix_base<T, F>,
+                                         op_element_binary<op_div> >(proxy, B);
+    }
+
+    template <typename T, typename F, typename M2, typename M3, typename OP>
+    viennacl::matrix_expression<const matrix_base<T, F>,
+                                const matrix_expression<const M2, const M3, OP>,
+                                op_element_binary<op_div> >
+    element_div(matrix_base<T, F> const & A, matrix_expression<const M2, const M3, OP> const & proxy)
+    {
+      return viennacl::matrix_expression<const matrix_base<T, F>,
+                                         const matrix_expression<const M2, const M3, OP>,
+                                         op_element_binary<op_div> >(A, proxy);
+    }
+
+    template <typename M1, typename M2, typename OP1,
+              typename M3, typename M4, typename OP2>
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
+                                const matrix_expression<const M3, const M4, OP2>,
+                                op_element_binary<op_div> >
+    element_div(matrix_expression<const M1, const M2, OP1> const & proxy1,
+                matrix_expression<const M3, const M4, OP2> const & proxy2)
+    {
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
+                                         const matrix_expression<const M3, const M4, OP2>,
+                                         op_element_binary<op_div> >(proxy1, proxy2);
+    }
+
+
+
+#define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
+    template <typename T, typename F> \
+    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_##funcname> > \
+    element_##funcname(matrix_base<T, F> const & A) \
+    { \
+      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_##funcname> >(A, A); \
+    } \
+    template <typename LHS, typename RHS, typename OP> \
+    viennacl::matrix_expression<const matrix_expression<const LHS, const RHS, OP>, \
+                                const matrix_expression<const LHS, const RHS, OP>, \
+                                op_element_unary<op_##funcname> > \
+    element_##funcname(matrix_expression<const LHS, const RHS, OP> const & proxy) \
+    { \
+      return viennacl::matrix_expression<const matrix_expression<const LHS, const RHS, OP>, \
+                                         const matrix_expression<const LHS, const RHS, OP>, \
+                                         op_element_unary<op_##funcname> >(proxy, proxy); \
+    } \
+
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(abs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(acos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(asin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(atan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(ceil)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cosh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(exp)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(fabs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(floor)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log10)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sinh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sqrt)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tanh)
+
+#undef VIENNACL_MAKE_UNARY_ELEMENT_OP
 
 
     //

@@ -506,6 +506,400 @@ namespace viennacl
           A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1] = alpha;
       }
 
+      //
+      // unary element-wise operations
+      //
+
+      // abs
+      template <typename T>
+      __global__ void matrix_col_element_abs_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = abs(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // acos
+      template <typename T>
+      __global__ void matrix_col_element_acos_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = acos(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // asin
+      template <typename T>
+      __global__ void matrix_col_element_asin_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = asin(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // atan
+      template <typename T>
+      __global__ void matrix_col_element_atan_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = atan(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // ceil
+      template <typename T>
+      __global__ void matrix_col_element_ceil_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = ceil(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // cos
+      template <typename T>
+      __global__ void matrix_col_element_cos_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = cos(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // cosh
+      template <typename T>
+      __global__ void matrix_col_element_cosh_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = cosh(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // exp
+      template <typename T>
+      __global__ void matrix_col_element_exp_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = exp(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // fabs
+      template <typename T>
+      __global__ void matrix_col_element_fabs_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = fabs(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // floor
+      template <typename T>
+      __global__ void matrix_col_element_floor_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = floor(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // log
+      template <typename T>
+      __global__ void matrix_col_element_log_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = log(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // log10
+      template <typename T>
+      __global__ void matrix_col_element_log10_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = log10(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // sin
+      template <typename T>
+      __global__ void matrix_col_element_sin_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = sin(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // sinh
+      template <typename T>
+      __global__ void matrix_col_element_sinh_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = sinh(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // sqrt
+      template <typename T>
+      __global__ void matrix_col_element_sqrt_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = sqrt(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // tan
+      template <typename T>
+      __global__ void matrix_col_element_tan_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = tan(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
+
+      // tanh
+      template <typename T>
+      __global__ void matrix_col_element_tanh_kernel(
+                T * A,
+                unsigned int A_start1, unsigned int A_start2,
+                unsigned int A_inc1,   unsigned int A_inc2,
+                unsigned int A_size1,  unsigned int A_size2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+
+                const T * B,
+                unsigned int B_start1, unsigned int B_start2,
+                unsigned int B_inc1,   unsigned int B_inc2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2)
+      {
+        unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
+        unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
+
+        for (unsigned int col = col_gid; col < A_size2; col += gridDim.x)
+          for (unsigned int row = row_gid; row < A_size1; row += blockDim.x)
+            A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] = tanh(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]);
+      }
+
 
 
       //

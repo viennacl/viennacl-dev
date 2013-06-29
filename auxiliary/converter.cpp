@@ -391,7 +391,9 @@ int main(int , char **)
     createHeaders("ell_matrix");
     createHeaders("hyb_matrix");
     createHeaders("matrix_row");
+    createHeaders("matrix_row_element");
     createHeaders("matrix_col");
+    createHeaders("matrix_col_element");
     createHeaders("matrix_prod_row_row_row");
     createHeaders("matrix_prod_row_row_col");
     createHeaders("matrix_prod_row_col_row");

@@ -39,9 +39,12 @@
 #include "viennacl/traits/stride.hpp"
 #include "viennacl/tools/matrix_kernel_class_deducer.hpp"
 #include "viennacl/tools/matrix_prod_kernel_class_deducer.hpp"
+#include "viennacl/linalg/opencl/common.hpp"
 #include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/linalg/kernels/matrix_row_kernels.h"
+#include "viennacl/linalg/kernels/matrix_row_element_kernels.h"
 #include "viennacl/linalg/kernels/matrix_col_kernels.h"
+#include "viennacl/linalg/kernels/matrix_col_element_kernels.h"
 
 #include "viennacl/linalg/kernels/matrix_prod_col_col_col_kernels.h"
 #include "viennacl/linalg/kernels/matrix_prod_col_col_row_kernels.h"
@@ -255,6 +258,52 @@ namespace viennacl
                                 )
                               );
       }
+
+
+      //
+      ///////////////////////// Element-wise operation //////////////////////////////////
+      //
+
+      // Binary operations A = B .* C and A = B ./ C
+
+      // Unary operations
+
+      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
+      *
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2 and the operation
+      */
+      template <typename T, typename F, typename OP>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<OP> > const & proxy)
+      {
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+
+        if (viennacl::is_row_major<F>::value == true)
+          viennacl::linalg::kernels::matrix_row_element<T, 1>::init(ctx);
+        else
+          viennacl::linalg::kernels::matrix_col_element<T, 1>::init(ctx);
+
+        viennacl::ocl::kernel & k = (viennacl::is_row_major<F>::value == true) ?
+                                      ctx.get_kernel(viennacl::linalg::kernels::matrix_row_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign")
+                                    : ctx.get_kernel(viennacl::linalg::kernels::matrix_col_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign");
+
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                                 cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
+                                 cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+                                 cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+                                 cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+
+                                 viennacl::traits::opencl_handle(proxy.lhs()),
+                                 cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
+                                 cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
+                                 cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())))
+                              );
+      }
+
 
       //
       /////////////////////////   matrix-vector products /////////////////////////////////

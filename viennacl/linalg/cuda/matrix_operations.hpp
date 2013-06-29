@@ -319,6 +319,693 @@ namespace viennacl
       }
 
       //
+      /////////////////////////   unary element-wise operations    /////////////////////////////////
+      //
+
+      // Note: Due to CUDA vs C-proprocessor interference (concatenation seems to be broken in at least CUDA 4.2),
+      //       we could not find a more 'automatic' way of generating the overloads below...
+
+      // abs
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_abs> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_abs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_abs_kernel");
+        }
+        else
+        {
+          matrix_col_element_abs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_abs_kernel");
+        }
+      }
+
+
+      // acos
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_acos> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_acos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_acos_kernel");
+        }
+        else
+        {
+          matrix_col_element_acos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_acos_kernel");
+        }
+      }
+
+
+      // asin
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_asin> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_asin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_asin_kernel");
+        }
+        else
+        {
+          matrix_col_element_asin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_sin_kernel");
+        }
+      }
+
+
+      // atan
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_atan> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_atan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_atan_kernel");
+        }
+        else
+        {
+          matrix_col_element_atan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_atan_kernel");
+        }
+      }
+
+
+      // ceil
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_ceil> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_ceil_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_ceil_kernel");
+        }
+        else
+        {
+          matrix_col_element_ceil_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_ceil_kernel");
+        }
+      }
+
+
+      // cos
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_cos> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_cos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_cos_kernel");
+        }
+        else
+        {
+          matrix_col_element_cos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_cos_kernel");
+        }
+      }
+
+
+      // cosh
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_cosh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_cosh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_cosh_kernel");
+        }
+        else
+        {
+          matrix_col_element_cosh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_cosh_kernel");
+        }
+      }
+
+
+      // exp
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_exp> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_exp_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_exp_kernel");
+        }
+        else
+        {
+          matrix_col_element_exp_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_exp_kernel");
+        }
+      }
+
+
+      // fabs
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_fabs> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_fabs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_fabs_kernel");
+        }
+        else
+        {
+          matrix_col_element_fabs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_fabs_kernel");
+        }
+      }
+
+
+      // floor
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_floor> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_floor_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_floor_kernel");
+        }
+        else
+        {
+          matrix_col_element_floor_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_floor_kernel");
+        }
+      }
+
+
+      // log
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_log> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_log_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_log_kernel");
+        }
+        else
+        {
+          matrix_col_element_log_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_log_kernel");
+        }
+      }
+
+
+      // log10
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_log10> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_log10_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_log10_kernel");
+        }
+        else
+        {
+          matrix_col_element_log10_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_log10_kernel");
+        }
+      }
+
+
+      // sin
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sin> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_sin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_sin_kernel");
+        }
+        else
+        {
+          matrix_col_element_sin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_sin_kernel");
+        }
+      }
+
+
+      // sinh
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sinh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_sinh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_sinh_kernel");
+        }
+        else
+        {
+          matrix_col_element_sinh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_sinh_kernel");
+        }
+      }
+
+
+      // sqrt
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sqrt> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_sqrt_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_sqrt_kernel");
+        }
+        else
+        {
+          matrix_col_element_sqrt_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_sqrt_kernel");
+        }
+      }
+
+
+      // tan
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_tan> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_tan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_tan_kernel");
+        }
+        else
+        {
+          matrix_col_element_tan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+            static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+            static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+            detail::cuda_arg<value_type>(proxy.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_tan_kernel");
+        }
+      }
+
+
+      // tanh
+      template <typename T, typename F>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_tanh> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          matrix_row_element_tanh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_element_tanh_kernel");
+        }
+        else
+        {
+          matrix_col_element_tanh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+           static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+           static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+           static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+           detail::cuda_arg<value_type>(proxy.lhs()),
+           static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+           static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs()))
+          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_element_tanh_kernel");
+        }
+      }
+
+
+      //
       /////////////////////////   matrix-vector products /////////////////////////////////
       //
 

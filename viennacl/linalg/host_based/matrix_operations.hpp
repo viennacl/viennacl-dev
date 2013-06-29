@@ -34,6 +34,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
 
 namespace viennacl
@@ -344,6 +345,64 @@ namespace viennacl
           wrapper_A(row, row) = alpha;
       }
 
+
+      //
+      ///////////////////////// Element-wise operation //////////////////////////////////
+      //
+
+      // Binary operations A = B .* C and A = B ./ C
+
+      // Unary operations
+
+      // A = op(B)
+      template <typename NumericT, typename F, typename OP>
+      void element_op(matrix_base<NumericT, F> & A,
+                      matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_element_unary<OP> > const & proxy)
+      {
+        typedef NumericT        value_type;
+        typedef viennacl::linalg::detail::op_applier<op_element_unary<OP> >    OpFunctor;
+
+        value_type       * data_A = detail::extract_raw_pointer<value_type>(A);
+        value_type const * data_B = detail::extract_raw_pointer<value_type>(proxy.lhs());
+
+        std::size_t A_start1 = viennacl::traits::start1(A);
+        std::size_t A_start2 = viennacl::traits::start2(A);
+        std::size_t A_inc1   = viennacl::traits::stride1(A);
+        std::size_t A_inc2   = viennacl::traits::stride2(A);
+        std::size_t A_size1  = viennacl::traits::size1(A);
+        std::size_t A_size2  = viennacl::traits::size2(A);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+        std::size_t B_start1 = viennacl::traits::start1(proxy.lhs());
+        std::size_t B_start2 = viennacl::traits::start2(proxy.lhs());
+        std::size_t B_inc1   = viennacl::traits::stride1(proxy.lhs());
+        std::size_t B_inc2   = viennacl::traits::stride2(proxy.lhs());
+        std::size_t B_internal_size1  = viennacl::traits::internal_size1(proxy.lhs());
+        std::size_t B_internal_size2  = viennacl::traits::internal_size2(proxy.lhs());
+
+        detail::matrix_array_wrapper<value_type,       typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+        if (detail::is_row_major(typename F::orientation_category()))
+        {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
+          for (std::size_t row = 0; row < A_size1; ++row)
+            for (std::size_t col = 0; col < A_size2; ++col)
+              OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
+        }
+        else
+        {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
+          for (std::size_t col = 0; col < A_size2; ++col)
+            for (std::size_t row = 0; row < A_size1; ++row)
+              OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
+        }
+      }
 
 
 
