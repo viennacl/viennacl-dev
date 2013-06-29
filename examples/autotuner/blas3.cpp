@@ -1,7 +1,7 @@
 #define VIENNACL_WITH_OPENCL
 
-//#define VIENNACL_DEBUG_BUILD
-//#define VIENNACL_DEBUG_ALL
+#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_ALL
 
 #define NDEBUG
 
@@ -77,9 +77,9 @@ void run_autotune(bool is_lhs_trans, bool is_rhs_trans){
     std::vector<int> ml; for(unsigned int i=16 ; i<=16 ; i+=16) ml.push_back(i);
     std::vector<int> kl; for(unsigned int i=16 ; i<=16 ; i+=16) kl.push_back(i);
     std::vector<int> nl; for(unsigned int i=16 ; i<=16 ; i+=16) nl.push_back(i);
-    std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
-    std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
-    std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
+    std::vector<int> ms; for(unsigned int i=2 ; i<= 2 ; i*=2) ms.push_back(i);
+    std::vector<int> ks; for(unsigned int i=4 ; i<= 8 ; i*=2) ks.push_back(i);
+    std::vector<int> ns; for(unsigned int i=2 ; i<= 2 ; i*=2) ns.push_back(i);
     std::vector<int> vector; for(unsigned int i=2 ; i<=2 ; i*=2) vector.push_back(i);
     std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
     std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
