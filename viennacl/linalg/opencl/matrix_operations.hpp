@@ -265,6 +265,45 @@ namespace viennacl
       //
 
       // Binary operations A = B .* C and A = B ./ C
+      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
+      *
+      * @param vec1   The result vector (or -range, or -slice)
+      * @param proxy  The proxy object holding v2 and the operation
+      */
+      template <typename T, typename F, typename OP>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
+      {
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+
+        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<T, F> >::ResultType    KernelClass;
+        KernelClass::init(ctx);
+
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "element_op");
+
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                                cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
+                                cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+                                cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+                                cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+
+                                viennacl::traits::opencl_handle(proxy.lhs()),
+                                cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
+                                cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
+                                cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                viennacl::traits::opencl_handle(proxy.rhs()),
+                                cl_uint(viennacl::traits::start1(proxy.rhs())),           cl_uint(viennacl::traits::start2(proxy.rhs())),
+                                cl_uint(viennacl::traits::stride1(proxy.rhs())),          cl_uint(viennacl::traits::stride2(proxy.rhs())),
+                                cl_uint(viennacl::traits::internal_size1(proxy.rhs())),   cl_uint(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                cl_uint(viennacl::is_division<OP>::value))
+                              );
+      }
+
 
       // Unary operations
 

@@ -319,6 +319,64 @@ namespace viennacl
       }
 
       //
+      /////////////////////////   binary element-wise operations    /////////////////////////////////
+      //
+
+
+      template <typename T, typename F, typename OP>
+      void element_op(matrix_base<T, F> & A,
+                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
+      {
+        typedef T        value_type;
+
+        if (viennacl::is_row_major<F>::value)
+        {
+          element_op_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+                                              static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                              detail::cuda_arg<value_type>(proxy.rhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                              static_cast<unsigned int>(viennacl::is_division<OP>::value)
+                                            );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_row_kernel");
+        }
+        else
+        {
+          element_op_col_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
+                                              static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                              detail::cuda_arg<value_type>(proxy.lhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                              detail::cuda_arg<value_type>(proxy.rhs()),
+                                              static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                              static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                              static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                              static_cast<unsigned int>(viennacl::is_division<OP>::value)
+                                            );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
+        }
+
+      }
+
+      //
       /////////////////////////   unary element-wise operations    /////////////////////////////////
       //
 

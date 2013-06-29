@@ -358,6 +358,170 @@ int run_test(double epsilon,
     return EXIT_FAILURE;
 
 
+
+  std::cout << "Testing elementwise multiplication..." << std::endl;
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142);
+  ublas_A = 3.1415 * ublas_B;
+  viennacl::copy(ublas_A, vcl_A);
+  viennacl::copy(ublas_B, vcl_B);
+  viennacl::copy(ublas_B, vcl_B);
+  ublas_A = ublas::element_prod(ublas_A, ublas_B);
+  vcl_A = viennacl::linalg::element_prod(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_prod(ublas_A, ublas_B);
+  vcl_A += viennacl::linalg::element_prod(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_prod(ublas_A, ublas_B);
+  vcl_A -= viennacl::linalg::element_prod(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_prod(ublas_A + ublas_B, ublas_B);
+  vcl_A = viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_prod(ublas_A + ublas_B, ublas_B);
+  vcl_A += viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_prod(ublas_A + ublas_B, ublas_B);
+  vcl_A -= viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_prod(ublas_A, ublas_B + ublas_A);
+  vcl_A = viennacl::linalg::element_prod(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_prod(ublas_A, ublas_B + ublas_A);
+  vcl_A += viennacl::linalg::element_prod(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_prod(ublas_A, ublas_B + ublas_A);
+  vcl_A -= viennacl::linalg::element_prod(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_prod(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A = viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_prod(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A += viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_prod(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A -= viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142);
+  ublas_A = 3.1415 * ublas_B;
+  viennacl::copy(ublas_A, vcl_A);
+  viennacl::copy(ublas_B, vcl_B);
+  viennacl::copy(ublas_B, vcl_B);
+
+  ublas_A = ublas::element_div(ublas_A, ublas_B);
+  vcl_A = viennacl::linalg::element_div(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_div(ublas_A, ublas_B);
+  vcl_A += viennacl::linalg::element_div(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_div(ublas_A, ublas_B);
+  vcl_A -= viennacl::linalg::element_div(vcl_A, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_div(ublas_A + ublas_B, ublas_B);
+  vcl_A = viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_div(ublas_A + ublas_B, ublas_B);
+  vcl_A += viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_div(ublas_A + ublas_B, ublas_B);
+  vcl_A -= viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_div(ublas_A, ublas_B + ublas_A);
+  vcl_A = viennacl::linalg::element_div(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_div(ublas_A, ublas_B + ublas_A);
+  vcl_A += viennacl::linalg::element_div(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_div(ublas_A, ublas_B + ublas_A);
+  vcl_A -= viennacl::linalg::element_div(vcl_A, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  ublas_A = ublas::element_div(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A = viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A += ublas::element_div(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A += viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A -= ublas::element_div(ublas_A + ublas_B, ublas_B + ublas_A);
+  vcl_A -= viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B + vcl_A);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
   std::cout << "Testing unary elementwise operations..." << std::endl;
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
