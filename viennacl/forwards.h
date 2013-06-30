@@ -58,30 +58,30 @@ namespace viennacl
 
 
   /** @brief A tag class representing assignment */
-  struct op_assign;
+  struct op_assign {};
   /** @brief A tag class representing inplace addition */
-  struct op_inplace_add;
+  struct op_inplace_add {};
   /** @brief A tag class representing inplace subtraction */
-  struct op_inplace_sub;
+  struct op_inplace_sub {};
 
   /** @brief A tag class representing addition */
-  struct op_add;
+  struct op_add {};
   /** @brief A tag class representing subtraction */
-  struct op_sub;
+  struct op_sub {};
   /** @brief A tag class representing multiplication by a scalar */
-  struct op_mult;
+  struct op_mult {};
   /** @brief A tag class representing matrix-vector products */
-  struct op_prod;
+  struct op_prod {};
   /** @brief A tag class representing division */
-  struct op_div;
+  struct op_div {};
 
   /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
   template <typename OP>
-  struct op_element_binary;
+  struct op_element_binary {};
 
   /** @brief A tag class representing element-wise unary operations (like sin()) on vectors or matrices */
   template <typename OP>
-  struct op_element_unary;
+  struct op_element_unary {};
 
   struct op_abs {};
   struct op_acos {};
