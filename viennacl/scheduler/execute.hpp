@@ -27,6 +27,10 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/linalg/vector_operations.hpp"
 
+#include "viennacl/scheduler/execute_vector_assign.hpp"
+#include "viennacl/scheduler/execute_vector_inplace_add.hpp"
+#include "viennacl/scheduler/execute_vector_inplace_sub.hpp"
+
 namespace viennacl
 {
   namespace scheduler
@@ -38,22 +42,53 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      // dispatch a lot over here:
-      if (   expr[0].lhs_type_ == VECTOR_FLOAT_TYPE
-          && expr[0].op_type_  == OPERATION_BINARY_ASSIGN_TYPE
-          && expr[0].rhs_type_ == VECTOR_FLOAT_TYPE)
+      switch (expr[0].lhs_type_family_)
       {
-        viennacl::vector_base<float>       & x = *(expr[0].lhs_.vector_float_);
-        viennacl::vector_base<float> const & y = *(expr[0].rhs_.vector_float_);
-        viennacl::linalg::av(x, y, 1.0, 1, false, false);
-      }
-      else if (   expr[0].lhs_type_ == VECTOR_DOUBLE_TYPE
-               && expr[0].op_type_  == OPERATION_BINARY_ASSIGN_TYPE
-               && expr[0].rhs_type_ == VECTOR_DOUBLE_TYPE)
-      {
-        viennacl::vector_base<double>       & x = *(expr[0].lhs_.vector_double_);
-        viennacl::vector_base<double> const & y = *(expr[0].rhs_.vector_double_);
-        viennacl::linalg::av(x, y, 1.0, 1, false, false);
+        case VECTOR_TYPE_FAMILY:
+          switch (expr[0].op_type_)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              execute_vector_assign(s); break;
+            case OPERATION_BINARY_INPLACE_ADD_TYPE:
+              execute_vector_inplace_add(s); break;
+            case OPERATION_BINARY_INPLACE_SUB_TYPE:
+              execute_vector_inplace_sub(s); break;
+            default:
+              throw "invalid vector operation";
+          }
+          break;
+
+/*
+        case MATRIX_COL_TYPE_FAMILY:
+          switch (expr[0].op_type_)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              execute_matrix_col_assign(s); break;
+            case OPERATION_BINARY_INPLACE_ADD_TYPE:
+              execute_matrix_col_inplace_add(s); break;
+            case OPERATION_BINARY_INPLACE_SUB_TYPE:
+              execute_matrix_col_inplace_sub(s); break;
+            default:
+              throw "invalid vector operation";
+          }
+          break;
+
+        case MATRIX_ROW_TYPE_FAMILY:
+          switch (expr[0].op_type_)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              execute_matrix_row_assign(s); break;
+            case OPERATION_BINARY_INPLACE_ADD_TYPE:
+              execute_matrix_row_inplace_add(s); break;
+            case OPERATION_BINARY_INPLACE_SUB_TYPE:
+              execute_matrix_row_inplace_sub(s); break;
+            default:
+              throw "invalid vector operation";
+          }
+          break;
+*/
+        default:
+          throw "unsupported lvalue encountered in scheduler";
       }
     }
 

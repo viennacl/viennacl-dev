@@ -113,6 +113,8 @@ int check(T1 const & t1, T2 const & t2, double epsilon)
     std::cout << "# Error! Relative difference: " << temp << std::endl;
     retval = EXIT_FAILURE;
   }
+  else
+    std::cout << "PASSED!" << std::endl;
   return retval;
 }
 
@@ -175,17 +177,54 @@ int test(Epsilon const& epsilon,
 
   // --------------------------------------------------------------------------
 
-  std::cout << "Testing assignments..." << std::endl;
+  std::cout << "Testing simple assignments..." << std::endl;
 
+  {
   ublas_v1 = ublas_v2;
-
-  // build scheduler expression
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2); // same as vcl_v1 = vcl_v2;
-
   viennacl::scheduler::execute(my_statement);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+  }
+
+  {
+  ublas_v1 += ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), vcl_v2); // same as vcl_v1 += vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  ublas_v1 -= ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_sub(), vcl_v2); // same as vcl_v1 -= vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "Testing composite assignments..." << std::endl;
+  {
+  ublas_v1 = ublas_v1 + ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 + vcl_v2); // same as vcl_v1 = vcl_v1 + vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  ublas_v1 = ublas_v1 - ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 - vcl_v2); // same as vcl_v1 = vcl_v1 - vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
 
   // --------------------------------------------------------------------------
   return retval;

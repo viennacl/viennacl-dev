@@ -209,6 +209,30 @@ namespace viennacl
       MATRIX_COL_DOUBLE_TYPE
     };
 
+    namespace result_of
+    {
+      template <typename T>
+      struct vector_type_for_scalar {};
+
+#define VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(TYPE, ENUMVALUE) \
+      template <> struct vector_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; };
+
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(char,           VECTOR_CHAR_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned char,  VECTOR_UCHAR_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(short,          VECTOR_SHORT_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned short, VECTOR_USHORT_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(int,            VECTOR_INT_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned int,   VECTOR_UINT_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(long,           VECTOR_LONG_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned long,  VECTOR_ULONG_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(float,          VECTOR_FLOAT_TYPE);
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         VECTOR_DOUBLE_TYPE);
+
+#undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+    }
+
+
+
     /** @brief A union representing the 'data' for the LHS operand of the respective node.
       *
       * If it represents a compound expression, the union holds the array index within the respective statement array.
@@ -286,8 +310,6 @@ namespace viennacl
     } lhs_rhs_element;
 
 
-
-
     /** @brief Main datastructure for an node in the statement tree */
     struct statement_node
     {
@@ -328,28 +350,34 @@ namespace viennacl
 
       private:
 
+        // TODO: add integer vector overloads here
+        void assign_element(lhs_rhs_element & element_, viennacl::vector_base<float>  const & t) { element_.vector_float_  = const_cast<viennacl::vector_base<float> *>(&t); }
+        void assign_element(lhs_rhs_element & element_, viennacl::vector_base<double> const & t) { element_.vector_double_ = const_cast<viennacl::vector_base<double> *>(&t); }
+
+        template <typename T>
         std::size_t add_element(std::size_t next_free,
                                 statement_node_type_family & type_family_,
                                 statement_node_type        & type_,
                                 lhs_rhs_element            & element_,
-                                viennacl::vector_base<float> const & t)
+                                viennacl::vector_base<T> const & t)
         {
           type_family_           = VECTOR_TYPE_FAMILY;
-          type_                  = VECTOR_FLOAT_TYPE;
-          element_.vector_float_ = const_cast<viennacl::vector_base<float> *>(&t);
+          type_                  = statement_node_type(result_of::vector_type_for_scalar<T>::value);
+          assign_element(element_, t);
           return next_free;
         }
 
+        template <typename LHS, typename RHS, typename OP>
         std::size_t add_element(std::size_t next_free,
                                 statement_node_type_family & type_family_,
                                 statement_node_type        & type_,
                                 lhs_rhs_element            & element_,
-                                viennacl::vector_base<double> const & t)
+                                viennacl::vector_expression<LHS, RHS, OP> const & t)
         {
-          type_family_            = VECTOR_TYPE_FAMILY;
-          type_                   = VECTOR_DOUBLE_TYPE;
-          element_.vector_double_ = const_cast<viennacl::vector_base<double> *>(&t);
-          return next_free;
+          type_family_           = COMPOSITE_OPERATION_FAMILY;
+          type_                  = COMPOSITE_OPERATION_TYPE;
+          element_.node_index_   = next_free;
+          return add_node(next_free, next_free + 1, t);
         }
 
         template <typename T>
@@ -370,6 +398,17 @@ namespace viennacl
                              array_[current_index].rhs_type_,
                              array_[current_index].rhs_,
                              t);
+        }
+
+        template <typename LHS, typename OP, typename RHS>
+        std::size_t add_node(std::size_t current_index, std::size_t next_free, viennacl::vector_expression<LHS, RHS, OP> const & proxy)
+        {
+          // set OP:
+          array_[current_index].op_family_ = operation_node_type_family(result_of::op_type_info<OP>::family);
+          array_[current_index].op_type_   = operation_node_type(result_of::op_type_info<OP>::id);
+
+          // set LHS and RHS:
+          return add_rhs(current_index, add_lhs(current_index, next_free, proxy.lhs()), proxy.rhs());
         }
 
         container_type   array_;

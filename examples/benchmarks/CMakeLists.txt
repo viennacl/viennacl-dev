@@ -1,5 +1,5 @@
 # Targets using CPU-based execution
-foreach(bench blas3)
+foreach(bench blas3 scheduler)
    add_executable(${bench}bench-cpu ${bench}.cpp)
 endforeach()
 
