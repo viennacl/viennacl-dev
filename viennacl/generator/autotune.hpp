@@ -35,8 +35,6 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
 
-#include <thread>
-
 namespace viennacl{
 
   namespace generator{
