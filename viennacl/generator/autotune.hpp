@@ -28,6 +28,7 @@
 #include <ctime>
 #include <iomanip>
 #include <cmath>
+#include <iterator>
 
 #include "viennacl/generator/forwards.h"
 #include "viennacl/generator/code_generation.hpp"
@@ -126,13 +127,13 @@ namespace viennacl{
 
           /** @brief Returns true if the parameter has reached its maximum value */
           bool is_max() const {
-            return current_ ==  (values_.end()-1);
+            return current_ ==  (values_.size()-1);
           }
 
           /** @brief Increments the parameter */
           bool inc(){
-            ++current_;
-            if(current_ != values_.end())
+            ++current_ ;
+            if(current_ < values_.size() )
               return false;
             reset();
             return true;
@@ -140,17 +141,17 @@ namespace viennacl{
 
           /** @brief Returns the current value of the parameter */
           int current() const{
-              return *current_;
+              return values_[current_];
           }
 
           /** @brief Resets the parameter to its minimum value */
           void reset() {
-              current_ = values_.begin();
+              current_ = 0;
           }
 
         private:
-          std::vector<int>::const_iterator current_;
           std::vector<int> values_;
+          unsigned int current_;
       };
 
       /** @brief Tuning configuration
