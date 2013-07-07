@@ -329,9 +329,12 @@ namespace viennacl
     namespace result_of{
 
       template<class T> struct num_nodes { enum { value = 0 }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< vector_expression<LHS, OP, RHS> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< matrix_expression<LHS, OP, RHS> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< scalar_expression<LHS, OP, RHS> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< const vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< const matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template<class LHS, class OP, class RHS> struct num_nodes< const scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
 
     }
 
