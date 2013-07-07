@@ -40,7 +40,6 @@
 #include "viennacl/tools/matrix_kernel_class_deducer.hpp"
 #include "viennacl/tools/matrix_prod_kernel_class_deducer.hpp"
 #include "viennacl/linalg/opencl/common.hpp"
-#include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/linalg/kernels/matrix_row_kernels.h"
 #include "viennacl/linalg/kernels/matrix_row_element_kernels.h"
 #include "viennacl/linalg/kernels/matrix_col_kernels.h"

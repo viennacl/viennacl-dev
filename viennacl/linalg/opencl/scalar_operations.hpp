@@ -29,7 +29,6 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/kernels/scalar_kernels.h"
-#include "viennacl/linalg/kernels/vector_kernels.h"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"

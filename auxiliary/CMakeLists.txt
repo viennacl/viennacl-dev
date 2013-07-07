@@ -5,7 +5,6 @@ add_executable(generate-blas3-prod-align1   generate-blas3-prod-align1.cpp)
 add_executable(generate-blas3-prod16-align1 generate-blas3-prod16-align1.cpp)
 add_executable(generate-blas3-prod-amd      generate-blas3-prod-amd.cpp)
 add_executable(generate-matrix-element-ops  generate-matrix-element-ops.cpp)
-add_executable(generate-vector-element-ops  generate-vector-element-ops.cpp)
 
 function(generate_blas3_prod_align1 outvar)
    set(crstr_0 col)
@@ -183,28 +182,6 @@ endfunction()
 
 generate_matrix_ops_align1(MATRIX_ELEMENT_SRCS)
 
-# Vector element wise operations
-function(generate_vector_ops_align1 outvar)
-   set(outfiles)
-
-      set(d "${CMAKE_CURRENT_BINARY_DIR}")
-      set(d "${d}/vector_element")
-      set(d "${d}/align1")
-      file(MAKE_DIRECTORY "${d}")
-      set(o "${d}/ops.cl")
-      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
-      add_custom_command(OUTPUT "${o}"
-         COMMAND generate-vector-element-ops > "${o}"
-         COMMENT "Generating ${ro}"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-         VERBATIM)
-      list(APPEND outfiles "${o}")
-   set(${outvar} "${outfiles}" PARENT_SCOPE)
-endfunction()
-
-generate_vector_ops_align1(VECTOR_ELEMENT_SRCS)
-
-
 set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/block_trans_lu_backward.cl
    compressed_matrix/align1/block_trans_unit_lu_forward.cl
@@ -299,29 +276,6 @@ set(SCALAR_SRCS
    scalar/align1/asbs_s_gpu_cpu.cl
    scalar/align1/asbs_s_gpu_gpu.cl)
 
-set(VECTOR_SRCS
-   vector/align1/av_cpu.cl
-   vector/align1/av_gpu.cl
-   vector/align1/avbv_cpu_cpu.cl
-   vector/align1/avbv_cpu_gpu.cl
-   vector/align1/avbv_gpu_cpu.cl
-   vector/align1/avbv_gpu_gpu.cl
-   vector/align1/avbv_v_cpu_cpu.cl
-   vector/align1/avbv_v_cpu_gpu.cl
-   vector/align1/avbv_v_gpu_cpu.cl
-   vector/align1/avbv_v_gpu_gpu.cl
-   vector/align1/assign_cpu.cl
-   vector/align1/diag_precond.cl
-   vector/align1/element_op.cl
-   vector/align1/index_norm_inf.cl
-   vector/align1/inner_prod.cl
-   vector/align1/norm.cl
-   vector/align1/plane_rotation.cl
-   vector/align1/sum.cl
-   vector/align1/swap.cl
-   vector/align4/dummy
-   vector/align16/dummy)
-
 set(FFT_SRCS
    fft/align1/bluestein_post.cl
    fft/align1/bluestein_pre.cl
@@ -381,7 +335,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS VECTOR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -389,7 +343,6 @@ foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS
    list(APPEND CL_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${f}")
 endforeach()
 list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
-list(APPEND CL_SRCS ${MATRIX_ELEMENT_SRCS} ${VECTOR_ELEMENT_SRCS})
 
 configure_file(converter.cpp ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp @ONLY)
 add_executable(converter ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp)
@@ -419,8 +372,6 @@ foreach(d
       matrix_solve_row_col
       matrix_solve_row_row
       scalar
-      vector
-      vector_element
       fft
       svd
       spai

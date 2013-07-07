@@ -224,7 +224,7 @@ int main()
   // -----------------------------------------
 
   //set up test config:
-  conf.program_name(viennacl::linalg::kernels::vector<float, 1>::program_name());
+  conf.program_name(viennacl::linalg::opencl::kernels::vector<float>::program_name());
 
   run_vector_benchmark<float>(conf, paras);
 
@@ -240,7 +240,7 @@ int main()
    paras.add_data_node(viennacl::io::tag::numeric, viennacl::io::val::dbl);
    paras.add_data_node(viennacl::io::tag::alignment, "1");
 
-    conf.program_name(viennacl::linalg::kernels::vector<double, 1>::program_name());
+    conf.program_name(viennacl::linalg::opencl::kernels::vector<double>::program_name());
    // -----------------------------------------
     run_vector_benchmark<double>(conf, paras);
   }

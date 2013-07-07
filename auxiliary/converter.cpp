@@ -407,8 +407,6 @@ int main(int , char **)
     createHeaders("matrix_solve_row_col");
     createHeaders("matrix_solve_row_row");
     createHeaders("scalar");
-    createHeaders("vector");
-    createHeaders("vector_element");
     createHeaders("fft");
     createHeaders("rand");
     createHeaders("svd");

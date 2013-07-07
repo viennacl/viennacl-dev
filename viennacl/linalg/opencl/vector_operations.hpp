@@ -31,8 +31,8 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/opencl/common.hpp"
-#include "viennacl/linalg/kernels/vector_kernels.h"
-#include "viennacl/linalg/kernels/vector_element_kernels.h"
+#include "viennacl/linalg/opencl/kernels/vector.hpp"
+#include "viennacl/linalg/opencl/kernels/vector_element.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/traits/size.hpp"
@@ -58,13 +58,13 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(),
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
@@ -102,7 +102,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -121,7 +121,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
@@ -168,7 +168,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -187,7 +187,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
@@ -234,9 +234,9 @@ namespace viennacl
       void vector_assign(vector_base<T> & vec1, const T & alpha)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "assign_cpu");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
@@ -260,9 +260,9 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "swap");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "swap");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -290,9 +290,9 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector_element<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "element_op");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), "element_op");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
@@ -326,9 +326,9 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector_element<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector_element<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), detail::op_to_string(OP()) + "_assign");
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -366,12 +366,12 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
               && bool("Incompatible vector sizes in inner_prod_impl()!"));
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "inner_prod");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "inner_prod");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
 
@@ -418,7 +418,7 @@ namespace viennacl
         inner_prod_impl(vec1, vec2, temp);
 
         // Step 2: Sum partial results:
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -487,9 +487,9 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "norm");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "norm");
 
         assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
 
@@ -529,7 +529,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 1);
 
         // Step 2: Compute the partial reduction using OpenCL
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -600,7 +600,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 2);
 
         // Step 2: Reduction via OpenCL
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
@@ -671,7 +671,7 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 0);
 
         //part 2: parallel reduction of reduced kernel:
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "sum");
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
         ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, work_groups);
 
@@ -729,11 +729,11 @@ namespace viennacl
       cl_uint index_norm_inf(vector_base<T> const & vec)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         viennacl::ocl::handle<cl_mem> h = ctx.create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "index_norm_inf");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "index_norm_inf");
         //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
 
         //TODO: Use multi-group kernel for large vector sizes
@@ -771,10 +771,10 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::kernels::vector<T, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::vector<T, 1>::program_name(), "plane_rotation");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "plane_rotation");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),

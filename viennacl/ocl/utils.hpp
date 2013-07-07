@@ -23,6 +23,7 @@
 */
 
 #include <vector>
+#include <string>
 #include "viennacl/ocl/backend.hpp"
 #include "viennacl/ocl/device.hpp"
 
@@ -49,8 +50,29 @@ namespace viennacl
       }
     };
 
+    template <typename T>
+    struct type_to_string;
 
+    template <>
+    struct type_to_string<float>
+    {
+      static std::string apply() { return "float"; }
+    };
 
+    template <>
+    struct type_to_string<double>
+    {
+      static std::string apply() { return "double"; }
+    };
+
+    template <typename T>
+    void append_double_precision_pragma(viennacl::ocl::context const & /*ctx*/, std::string & /*source*/) {}
+
+    template <>
+    void append_double_precision_pragma<double>(viennacl::ocl::context const & ctx, std::string & source)
+    {
+      source.append("#pragma OPENCL EXTENSION " + ctx.current_device().double_support_extension() + " : enable\n\n");
+    }
   } //ocl
 } //viennacl
 #endif
