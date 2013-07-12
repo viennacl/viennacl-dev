@@ -229,6 +229,45 @@ namespace viennacl
       VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         VECTOR_DOUBLE_TYPE);
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+
+      template <typename T, typename F>
+      struct matrix_type_for_scalar_and_layout {};
+
+#define VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(TYPE, LAYOUT, ENUMVALUE) \
+      template <> struct matrix_type_for_scalar_and_layout<TYPE, LAYOUT> { enum { value = ENUMVALUE }; };
+
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::column_major, MATRIX_COL_CHAR_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::column_major, MATRIX_COL_UCHAR_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::column_major, MATRIX_COL_SHORT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::column_major, MATRIX_COL_USHORT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::column_major, MATRIX_COL_INT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::column_major, MATRIX_COL_UINT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::column_major, MATRIX_COL_LONG_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::column_major, MATRIX_COL_ULONG_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::column_major, MATRIX_COL_FLOAT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::column_major, MATRIX_COL_DOUBLE_TYPE);
+
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::row_major, MATRIX_ROW_CHAR_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::row_major, MATRIX_ROW_UCHAR_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::row_major, MATRIX_ROW_SHORT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::row_major, MATRIX_ROW_USHORT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::row_major, MATRIX_ROW_INT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::row_major, MATRIX_ROW_UINT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::row_major, MATRIX_ROW_LONG_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::row_major, MATRIX_ROW_ULONG_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::row_major, MATRIX_ROW_FLOAT_TYPE);
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::row_major, MATRIX_ROW_DOUBLE_TYPE);
+
+#undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+
+      template <typename F>
+      struct matrix_family {};
+
+      template <> struct matrix_family<viennacl::row_major   > { enum { value = MATRIX_ROW_TYPE_FAMILY }; };
+      template <> struct matrix_family<viennacl::column_major> { enum { value = MATRIX_COL_TYPE_FAMILY }; };
+
+
+
     }
 
 
@@ -326,15 +365,16 @@ namespace viennacl
       // note: since operation tags are state-less, no 'op_' object is needed here.
     };
 
-    namespace result_of{
+    namespace result_of
+    {
 
-      template<class T> struct num_nodes { enum { value = 0 }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< const vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< const matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
-      template<class LHS, class OP, class RHS> struct num_nodes< const scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class T> struct num_nodes { enum { value = 0 }; };
+      template <class LHS, class OP, class RHS> struct num_nodes<       vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class LHS, class OP, class RHS> struct num_nodes< const vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class LHS, class OP, class RHS> struct num_nodes<       matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class LHS, class OP, class RHS> struct num_nodes< const matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class LHS, class OP, class RHS> struct num_nodes<       scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      template <class LHS, class OP, class RHS> struct num_nodes< const scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
 
     }
 
@@ -343,6 +383,8 @@ namespace viennacl
       public:
         typedef statement_node              value_type;
         typedef std::vector<value_type>     container_type;
+
+        statement(container_type const & custom_array) : array_(custom_array) {}
 
         template <typename LHS, typename OP, typename RHS>
         statement(LHS & lhs, OP const & op, RHS const & rhs) : array_(1 + result_of::num_nodes<RHS>::value)
@@ -362,9 +404,19 @@ namespace viennacl
 
       private:
 
+        ///////////// Vector node helper ////////////////
         // TODO: add integer vector overloads here
         void assign_element(lhs_rhs_element & element_, viennacl::vector_base<float>  const & t) { element_.vector_float_  = const_cast<viennacl::vector_base<float> *>(&t); }
         void assign_element(lhs_rhs_element & element_, viennacl::vector_base<double> const & t) { element_.vector_double_ = const_cast<viennacl::vector_base<double> *>(&t); }
+
+        ///////////// Matrix node helper ////////////////
+        // TODO: add integer matrix overloads here
+        void assign_element(lhs_rhs_element & element_, viennacl::matrix_base<float,  viennacl::column_major> const & t) { element_.matrix_col_float_  = const_cast<viennacl::matrix_base<float,  viennacl::column_major> *>(&t); }
+        void assign_element(lhs_rhs_element & element_, viennacl::matrix_base<float,  viennacl::row_major>    const & t) { element_.matrix_row_float_  = const_cast<viennacl::matrix_base<float,  viennacl::row_major>    *>(&t); }
+        void assign_element(lhs_rhs_element & element_, viennacl::matrix_base<double, viennacl::column_major> const & t) { element_.matrix_col_double_ = const_cast<viennacl::matrix_base<double, viennacl::column_major> *>(&t); }
+        void assign_element(lhs_rhs_element & element_, viennacl::matrix_base<double, viennacl::row_major>    const & t) { element_.matrix_row_double_ = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
+
+        //////////// Tree leaves (terminals) ////////////////////
 
         template <typename T>
         std::size_t add_element(std::size_t next_free,
@@ -379,6 +431,23 @@ namespace viennacl
           return next_free;
         }
 
+        template <typename T, typename F>
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & type_family_,
+                                statement_node_type        & type_,
+                                lhs_rhs_element            & element_,
+                                viennacl::matrix_base<T, F> const & t)
+        {
+          type_family_           = statement_node_type_family(result_of::matrix_family<F>::value);
+          type_                  = statement_node_type(result_of::matrix_type_for_scalar_and_layout<T, F>::value);
+          assign_element(element_, t);
+          return next_free;
+        }
+
+
+        //////////// Tree nodes (non-terminals) ////////////////////
+
+
         template <typename LHS, typename RHS, typename OP>
         std::size_t add_element(std::size_t next_free,
                                 statement_node_type_family & type_family_,
@@ -391,6 +460,23 @@ namespace viennacl
           element_.node_index_   = next_free;
           return add_node(next_free, next_free + 1, t);
         }
+
+        template <typename LHS, typename RHS, typename OP>
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & type_family_,
+                                statement_node_type        & type_,
+                                lhs_rhs_element            & element_,
+                                viennacl::matrix_expression<LHS, RHS, OP> const & t)
+        {
+          type_family_           = COMPOSITE_OPERATION_FAMILY;
+          type_                  = COMPOSITE_OPERATION_TYPE;
+          element_.node_index_   = next_free;
+          return add_node(next_free, next_free + 1, t);
+        }
+
+
+        //////////// Helper routines ////////////////////
+
 
         template <typename T>
         std::size_t add_lhs(std::size_t current_index, std::size_t next_free, T const & t)
@@ -412,8 +498,22 @@ namespace viennacl
                              t);
         }
 
+        //////////// Internal interfaces ////////////////////
+
+
         template <typename LHS, typename OP, typename RHS>
         std::size_t add_node(std::size_t current_index, std::size_t next_free, viennacl::vector_expression<LHS, RHS, OP> const & proxy)
+        {
+          // set OP:
+          array_[current_index].op_family_ = operation_node_type_family(result_of::op_type_info<OP>::family);
+          array_[current_index].op_type_   = operation_node_type(result_of::op_type_info<OP>::id);
+
+          // set LHS and RHS:
+          return add_rhs(current_index, add_lhs(current_index, next_free, proxy.lhs()), proxy.rhs());
+        }
+
+        template <typename LHS, typename OP, typename RHS>
+        std::size_t add_node(std::size_t current_index, std::size_t next_free, viennacl::matrix_expression<LHS, RHS, OP> const & proxy)
         {
           // set OP:
           array_[current_index].op_family_ = operation_node_type_family(result_of::op_type_info<OP>::family);

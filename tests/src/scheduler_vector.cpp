@@ -34,6 +34,7 @@
 //#define VIENNACL_DEBUG_ALL
 #define VIENNACL_WITH_UBLAS 1
 #include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
 #include "viennacl/vector_proxy.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/norm_1.hpp"

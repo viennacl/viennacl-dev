@@ -31,6 +31,14 @@
 #include "viennacl/scheduler/execute_vector_inplace_add.hpp"
 #include "viennacl/scheduler/execute_vector_inplace_sub.hpp"
 
+#include "viennacl/scheduler/execute_matrix_col_assign.hpp"
+#include "viennacl/scheduler/execute_matrix_col_inplace_add.hpp"
+#include "viennacl/scheduler/execute_matrix_col_inplace_sub.hpp"
+
+#include "viennacl/scheduler/execute_matrix_row_assign.hpp"
+#include "viennacl/scheduler/execute_matrix_row_inplace_add.hpp"
+#include "viennacl/scheduler/execute_matrix_row_inplace_sub.hpp"
+
 namespace viennacl
 {
   namespace scheduler
@@ -58,7 +66,6 @@ namespace viennacl
           }
           break;
 
-/*
         case MATRIX_COL_TYPE_FAMILY:
           switch (expr[0].op_type_)
           {
@@ -86,7 +93,7 @@ namespace viennacl
               throw "invalid vector operation";
           }
           break;
-*/
+
         default:
           throw "unsupported lvalue encountered in scheduler";
       }

@@ -29,6 +29,7 @@
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/scheduler/execute.hpp"

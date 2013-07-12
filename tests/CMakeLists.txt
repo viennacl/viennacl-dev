@@ -5,7 +5,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 foreach(PROG blas3_prod blas3_solve iterators
              global_variables
              matrix-vector matrix
-             scalar scheduler sparse
+             scalar scheduler_matrix scheduler_vector sparse
              vector)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    add_test(${PROG}-cpu ${PROG}-test-cpu)
