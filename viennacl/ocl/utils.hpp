@@ -69,7 +69,7 @@ namespace viennacl
     void append_double_precision_pragma(viennacl::ocl::context const & /*ctx*/, std::string & /*source*/) {}
 
     template <>
-    void append_double_precision_pragma<double>(viennacl::ocl::context const & ctx, std::string & source)
+    inline void append_double_precision_pragma<double>(viennacl::ocl::context const & ctx, std::string & source)
     {
       source.append("#pragma OPENCL EXTENSION " + ctx.current_device().double_support_extension() + " : enable\n\n");
     }
