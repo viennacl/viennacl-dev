@@ -1162,8 +1162,8 @@ int main (int, const char **)
   std::cout << "  eps:     " << epsilon << std::endl;
   std::cout << "  numeric: float" << std::endl;
   std::cout << " --- row-major ---" << std::endl;
-  //if (run_test<viennacl::row_major, float>(epsilon) != EXIT_SUCCESS)
-  //  return EXIT_FAILURE;
+  if (run_test<viennacl::row_major, float>(epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
   std::cout << " --- column-major ---" << std::endl;
   if (run_test<viennacl::column_major, float>(epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
