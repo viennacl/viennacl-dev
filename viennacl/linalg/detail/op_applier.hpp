@@ -60,7 +60,7 @@ namespace viennacl
       { \
         template <typename T> \
         static void apply(T & result, T const & x) { using namespace std; result = funcname(x); } \
-      }; \
+      }
 
       VIENNACL_MAKE_UNARY_OP_APPLIER(abs);
       VIENNACL_MAKE_UNARY_OP_APPLIER(acos);
