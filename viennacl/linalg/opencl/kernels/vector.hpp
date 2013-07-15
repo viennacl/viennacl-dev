@@ -232,47 +232,74 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_inner_prod(StringType & source, std::string const & numeric_string)
+        void generate_inner_prod(StringType & source, std::string const & numeric_string, std::size_t vector_num)
         {
-          source.append("__kernel void inner_prod( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * vec2, \n");
-          source.append("          unsigned int start2, \n");
-          source.append("          unsigned int inc2, \n");
-          source.append("          unsigned int size2, \n");
+          std::stringstream ss;
+          ss << vector_num;
+          std::string vector_num_string = ss.str();
+
+          source.append("__kernel void inner_prod"); source.append(vector_num_string); source.append("( \n");
+          source.append("          __global const "); source.append(numeric_string); source.append(" * x, \n");
+          source.append("          uint4 params_x, \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("          __global const "); source.append(numeric_string); source.append(" * y"); source.append(ss.str()); source.append(", \n");
+            source.append("          uint4 params_y"); source.append(ss.str()); source.append(", \n");
+          }
           source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
           source.append("{ \n");
-          source.append("  unsigned int entries_per_group = get_local_size(0) * (size1-1) / get_global_size(0) + 1; \n");
-          source.append("  entries_per_group = (entries_per_group == 0) ? 1 : entries_per_group; \n");
-          source.append("  unsigned int group_start1 = get_group_id(0) * entries_per_group * inc1 + start1; \n");
-          source.append("  unsigned int group_start2 = get_group_id(0) * entries_per_group * inc2 + start2; \n");
-
-          source.append("  unsigned int group_size = entries_per_group; \n");
-          source.append("  if (get_group_id(0) * entries_per_group > size1) \n");
-          source.append("    group_size = 0; \n");
-          source.append("  else if ((get_group_id(0) + 1) * entries_per_group > size1) \n");
-          source.append("    group_size = size1 - get_group_id(0) * entries_per_group; \n");
+          source.append("  unsigned int entries_per_thread = (params_x.z - 1) / get_global_size(0) + 1; \n");
+          source.append("  unsigned int vec_start_index = get_group_id(0) * get_local_size(0) * entries_per_thread; \n");
+          source.append("  unsigned int vec_stop_index  = min((unsigned int)((get_group_id(0) + 1) * get_local_size(0) * entries_per_thread), params_x.z); \n");
 
           // compute partial results within group:
-          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
-          source.append("  for (unsigned int i = get_local_id(0); i < group_size; i += get_local_size(0)) \n");
-          source.append("    tmp += vec1[i*inc1 + group_start1] * vec2[i*inc2 + group_start2]; \n");
-          source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("  "); source.append(numeric_string); source.append(" tmp"); source.append(ss.str()); source.append(" = 0; \n");
+          }
+          source.append("  for (unsigned int i = vec_start_index + get_local_id(0); i < vec_stop_index; i += get_local_size(0)) { \n");
+          source.append("    ");  source.append(numeric_string); source.append(" val_x = x[i*params_x.y + params_x.x]; \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("    tmp"); source.append(ss.str()); source.append(" += val_x * y"); source.append(ss.str()); source.append("[i * params_y"); source.append(ss.str()); source.append(".y + params_y"); source.append(ss.str()); source.append(".x]; \n");
+          }
+          source.append("  } \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("  tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] = tmp"); source.append(ss.str()); source.append("; \n");
+          }
 
           // now run reduction:
           source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
           source.append("  { \n");
           source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_local_id(0) < stride) \n");
-          source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0)+stride]; \n");
+          source.append("    if (get_local_id(0) < stride) { \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("      tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] += tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0) + stride]; \n");
+          }
+          source.append("    } \n");
           source.append("  } \n");
 
-          source.append("  if (get_local_id(0) == 0) \n");
-          source.append("    group_buffer[get_group_id(0)] = tmp_buffer[get_local_id(0)]; \n");
+          source.append("  if (get_local_id(0) == 0) { \n");
+          for (std::size_t i=0; i<vector_num; ++i)
+          {
+            ss.str("");
+            ss << i;
+            source.append("    group_buffer[get_group_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] = tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)]; \n");
+          }
+          source.append("  } \n");
           source.append("} \n");
 
         }
@@ -497,7 +524,8 @@ namespace viennacl
               generate_swap(source, numeric_string);
               generate_assign_cpu(source, numeric_string);
 
-              generate_inner_prod(source, numeric_string);
+              generate_inner_prod(source, numeric_string, 1);
+              generate_inner_prod(source, numeric_string, 2);
               generate_norm(source, numeric_string);
               generate_sum(source, numeric_string);
               generate_index_norm_inf(source, numeric_string);
