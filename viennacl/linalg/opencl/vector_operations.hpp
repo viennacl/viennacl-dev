@@ -487,9 +487,9 @@ namespace viennacl
         viennacl::ocl::kernel & inner_prod_kernel_8 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod8");
 
         std::size_t current_index = 0;
-        while (current_index < vec_tuple.size())
+        while (current_index < vec_tuple.const_size())
         {
-          switch (vec_tuple.size() - current_index)
+          switch (vec_tuple.const_size() - current_index)
           {
             case 7:
             case 6:
@@ -575,10 +575,8 @@ namespace viennacl
             case 1:
             {
               vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
-              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
               viennacl::ocl::enqueue(inner_prod_kernel_1( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
-                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
                                                           viennacl::ocl::local_mem(sizeof(T) * 1 * inner_prod_kernel_1.local_work_size()),
                                                           viennacl::traits::opencl_handle(temp)
                                                         ) );
