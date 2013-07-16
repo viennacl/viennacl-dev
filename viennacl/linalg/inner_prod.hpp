@@ -155,6 +155,19 @@ namespace viennacl
                                           viennacl::op_inner_prod >(vector1, vector2);
     }
 
+
+    // Multiple inner products:
+    template< typename NumericT>
+    viennacl::vector_expression< const vector_base<NumericT>, const vector_tuple<NumericT>, viennacl::op_inner_prod >
+    inner_prod(vector_base<NumericT> const & x,
+               vector_tuple<NumericT> const & y_tuple)
+    {
+      return viennacl::vector_expression< const vector_base<NumericT>,
+                                          const vector_tuple<NumericT>,
+                                          viennacl::op_inner_prod >(x, y_tuple);
+    }
+
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif

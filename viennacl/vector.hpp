@@ -415,7 +415,7 @@ namespace viennacl
       }
 
       template <typename LHS, typename RHS, typename OP>
-      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(proxy.size()), start_(0), stride_(1)
+      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(viennacl::traits::size(proxy)), start_(0), stride_(1)
       {
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (size_ > 0)
@@ -985,7 +985,7 @@ namespace viennacl
 #endif
 
     template <typename LHS, typename RHS, typename OP>
-    vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(proxy.size(), viennacl::traits::active_handle_id(proxy))
+    vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(viennacl::traits::size(proxy), viennacl::traits::active_handle_id(proxy))
     {
       self_type::operator=(proxy);
     }
@@ -1142,10 +1142,10 @@ namespace viennacl
       }
 
       std::size_t size()       const { return non_const_vectors_.size(); }
-      std::size_t const_size() const { return const_vectors_.size(); }
+      std::size_t const_size() const { return     const_vectors_.size(); }
 
-      VectorType       &       at(std::size_t i) const { return *non_const_vectors_.at(i); }
-      VectorType const & const_at(std::size_t i) const { return     *const_vectors_.at(i); }
+      VectorType       &       at(std::size_t i) const { return *(non_const_vectors_.at(i)); }
+      VectorType const & const_at(std::size_t i) const { return     *(const_vectors_.at(i)); }
 
   private:
     std::vector<VectorType const *>   const_vectors_;
@@ -1869,6 +1869,16 @@ namespace viennacl
         static void apply(vector_base<T> & lhs, vector_base<T> const & rhs)
         {
           viennacl::linalg::av(lhs, rhs, T(1), 1, false, false);
+        }
+      };
+
+      // x = inner_prod(z, {y0, y1, ...})
+      template <typename T>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> >
+      {
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> const & rhs)
+        {
+          viennacl::linalg::inner_prod_impl(rhs.lhs(), rhs.rhs(), lhs);
         }
       };
 

@@ -503,6 +503,39 @@ namespace viennacl
 
 
 
+    /** @brief Computes the inner products <x, y1>, <x, y2>, ..., <x, y_N> and writes the result to a (sub-)vector
+     *
+     * @param x       The common vector
+     * @param y_tuple A collection of vector, all of the same size.
+     * @param result  The result scalar (on the gpu). Needs to match the number of elements in y_tuple
+     */
+    template <typename T>
+    void inner_prod_impl(vector_base<T> const & x,
+                         vector_tuple<T> const & y_tuple,
+                         vector_base<T> & result)
+    {
+      assert( x.size() == y_tuple.const_at(0).size() && bool("Size mismatch") );
+      assert( result.size() == y_tuple.const_size() && bool("Number of elements does not match result size") );
+
+      switch (viennacl::traits::handle(x).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::inner_prod_impl(x, y_tuple, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inner_prod_impl(x, y_tuple, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::inner_prod_impl(x, y_tuple, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
 
 
     /** @brief Computes the l^1-norm of a vector - dispatcher interface

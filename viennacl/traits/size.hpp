@@ -198,6 +198,12 @@ namespace viennacl
       return size(proxy.lhs());
     }
 
+    template <typename LHS, typename RHS>
+    vcl_size_t size(vector_expression<LHS, const vector_tuple<RHS>, op_inner_prod> const & proxy)
+    {
+      return proxy.rhs().const_size();
+    }
+
     /** \endcond */
 
 
