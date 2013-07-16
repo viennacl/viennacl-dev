@@ -1194,6 +1194,7 @@ namespace viennacl
 
         for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
         {
+          __syncthreads();
           if (threadIdx.x < stride)
           {
             if (option > 0)
@@ -1201,7 +1202,6 @@ namespace viennacl
             else
               tmp_buffer[threadIdx.x] = fmax(tmp_buffer[threadIdx.x], tmp_buffer[threadIdx.x + stride]);
           }
-          __syncthreads();
         }
 
         if (threadIdx.x == 0)
@@ -1291,6 +1291,441 @@ namespace viennacl
         for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
       }
+
+      ///////////////////////////////////
+
+#define VIENNACL_MDOT_WORKGROUP_SIZE  128
+#define VIENNACL_MDOT_WORKGROUP_NUM   128
+      // M = 2:
+      template <typename NumericT>
+      __global__ void inner_prod_2_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
+                                          const NumericT *y0, unsigned int start0, unsigned int stride0,
+                                          const NumericT *y1, unsigned int start1, unsigned int stride1,
+                                          NumericT *group_results)
+      {
+        __shared__ NumericT tmp_buffer[2*VIENNACL_MDOT_WORKGROUP_SIZE];
+        unsigned int entries_per_thread = (sizex - 1) / (blockDim.x * gridDim.x) + 1;
+        unsigned int vec_start_index = blockIdx.x * blockDim.x * entries_per_thread;
+        unsigned int vec_stop_index  = min((blockIdx.x + 1) * blockDim.x * entries_per_thread, sizex); // don't go beyond size of x
+
+        NumericT entry_x    = 0;
+        NumericT group_sum0 = 0;
+        NumericT group_sum1 = 0;
+        for (unsigned int i = vec_start_index + threadIdx.x; i < vec_stop_index; i += blockDim.x) {
+          entry_x     = x[i * stridex + startx];   // load only once from global memory!
+          group_sum0 += entry_x * y0[i * stride0 + start0];
+          group_sum1 += entry_x * y1[i * stride1 + start1];
+        }
+        tmp_buffer[threadIdx.x]              = group_sum0;
+        tmp_buffer[threadIdx.x + blockDim.x] = group_sum1;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2) {
+          __syncthreads();
+          if (threadIdx.x < stride) {
+            tmp_buffer[threadIdx.x             ] += tmp_buffer[threadIdx.x+stride             ];
+            tmp_buffer[threadIdx.x + blockDim.x] += tmp_buffer[threadIdx.x+stride + blockDim.x];
+          }
+        }
+
+        // write result of group to group_results
+        if (threadIdx.x == 0) {
+          group_results[blockIdx.x]             = tmp_buffer[0];
+          group_results[blockIdx.x + gridDim.x] = tmp_buffer[blockDim.x];
+        }
+      }
+
+      // M = 3:
+      template <typename NumericT>
+      __global__ void inner_prod_3_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
+                                          const NumericT *y0, unsigned int start0, unsigned int stride0,
+                                          const NumericT *y1, unsigned int start1, unsigned int stride1,
+                                          const NumericT *y2, unsigned int start2, unsigned int stride2,
+                                          NumericT *group_results)
+      {
+        __shared__ NumericT tmp_buffer[3*VIENNACL_MDOT_WORKGROUP_SIZE];
+        unsigned int entries_per_thread = (sizex - 1) / (blockDim.x * gridDim.x) + 1;
+        unsigned int vec_start_index = blockIdx.x * blockDim.x * entries_per_thread;
+        unsigned int vec_stop_index  = min((blockIdx.x + 1) * blockDim.x * entries_per_thread, sizex); // don't go beyond vec size
+
+        NumericT entry_x    = 0;
+        NumericT group_sum0 = 0;
+        NumericT group_sum1 = 0;
+        NumericT group_sum2 = 0;
+        for (unsigned int i = vec_start_index + threadIdx.x; i < vec_stop_index; i += blockDim.x) {
+          entry_x     = x[i * stridex + startx];   // load only once from global memory!
+          group_sum0 += entry_x * y0[i * stride0 + start0];
+          group_sum1 += entry_x * y1[i * stride1 + start1];
+          group_sum2 += entry_x * y2[i * stride2 + start2];
+        }
+        tmp_buffer[threadIdx.x]                  = group_sum0;
+        tmp_buffer[threadIdx.x +     blockDim.x] = group_sum1;
+        tmp_buffer[threadIdx.x + 2 * blockDim.x] = group_sum2;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2) {
+          __syncthreads();
+          if (threadIdx.x < stride) {
+            tmp_buffer[threadIdx.x                 ] += tmp_buffer[threadIdx.x+stride                 ];
+            tmp_buffer[threadIdx.x +     blockDim.x] += tmp_buffer[threadIdx.x+stride +     blockDim.x];
+            tmp_buffer[threadIdx.x + 2 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 2 * blockDim.x];
+          }
+        }
+
+        // write result of group to group_results
+        if (threadIdx.x == 0) {
+          group_results[blockIdx.x                ] = tmp_buffer[0];
+          group_results[blockIdx.x +     gridDim.x] = tmp_buffer[    blockDim.x];
+          group_results[blockIdx.x + 2 * gridDim.x] = tmp_buffer[2 * blockDim.x];
+        }
+      }
+
+      // M = 4:
+      template <typename NumericT>
+      __global__ void inner_prod_4_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
+                                          const NumericT *y0, unsigned int start0, unsigned int stride0,
+                                          const NumericT *y1, unsigned int start1, unsigned int stride1,
+                                          const NumericT *y2, unsigned int start2, unsigned int stride2,
+                                          const NumericT *y3, unsigned int start3, unsigned int stride3,
+                                          NumericT *group_results)
+      {
+        __shared__ NumericT tmp_buffer[4*VIENNACL_MDOT_WORKGROUP_SIZE];
+        unsigned int entries_per_thread = (sizex - 1) / (blockDim.x * gridDim.x) + 1;
+        unsigned int vec_start_index = blockIdx.x * blockDim.x * entries_per_thread;
+        unsigned int vec_stop_index  = min((blockIdx.x + 1) * blockDim.x * entries_per_thread, sizex); // don't go beyond vec size
+
+        NumericT entry_x    = 0;
+        NumericT group_sum0 = 0;
+        NumericT group_sum1 = 0;
+        NumericT group_sum2 = 0;
+        NumericT group_sum3 = 0;
+        for (unsigned int i = vec_start_index + threadIdx.x; i < vec_stop_index; i += blockDim.x) {
+          entry_x     = x[i * stridex + startx];   // load only once from global memory!
+          group_sum0 += entry_x * y0[i * stride0 + start0];
+          group_sum1 += entry_x * y1[i * stride1 + start1];
+          group_sum2 += entry_x * y2[i * stride2 + start2];
+          group_sum3 += entry_x * y3[i * stride3 + start3];
+        }
+        tmp_buffer[threadIdx.x]                  = group_sum0;
+        tmp_buffer[threadIdx.x +     blockDim.x] = group_sum1;
+        tmp_buffer[threadIdx.x + 2 * blockDim.x] = group_sum2;
+        tmp_buffer[threadIdx.x + 3 * blockDim.x] = group_sum3;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2) {
+          __syncthreads();
+          if (threadIdx.x < stride) {
+            tmp_buffer[threadIdx.x                 ] += tmp_buffer[threadIdx.x+stride                 ];
+            tmp_buffer[threadIdx.x +     blockDim.x] += tmp_buffer[threadIdx.x+stride +     blockDim.x];
+            tmp_buffer[threadIdx.x + 2 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 2 * blockDim.x];
+            tmp_buffer[threadIdx.x + 3 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 3 * blockDim.x];
+          }
+        }
+
+        // write result of group to group_results
+        if (threadIdx.x == 0) {
+          group_results[blockIdx.x                ] = tmp_buffer[0];
+          group_results[blockIdx.x +     gridDim.x] = tmp_buffer[    blockDim.x];
+          group_results[blockIdx.x + 2 * gridDim.x] = tmp_buffer[2 * blockDim.x];
+          group_results[blockIdx.x + 3 * gridDim.x] = tmp_buffer[3 * blockDim.x];
+        }
+      }
+
+      // M = 8:
+      template <typename NumericT>
+      __global__ void inner_prod_8_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
+                                          const NumericT *y0, unsigned int start0, unsigned int stride0,
+                                          const NumericT *y1, unsigned int start1, unsigned int stride1,
+                                          const NumericT *y2, unsigned int start2, unsigned int stride2,
+                                          const NumericT *y3, unsigned int start3, unsigned int stride3,
+                                          const NumericT *y4, unsigned int start4, unsigned int stride4,
+                                          const NumericT *y5, unsigned int start5, unsigned int stride5,
+                                          const NumericT *y6, unsigned int start6, unsigned int stride6,
+                                          const NumericT *y7, unsigned int start7, unsigned int stride7,
+                                          NumericT *group_results)
+      {
+        __shared__ NumericT tmp_buffer[8*VIENNACL_MDOT_WORKGROUP_SIZE];
+        unsigned int entries_per_thread = (sizex - 1) / (blockDim.x * gridDim.x) + 1;
+        unsigned int vec_start_index = blockIdx.x * blockDim.x * entries_per_thread;
+        unsigned int vec_stop_index  = min((blockIdx.x + 1) * blockDim.x * entries_per_thread, sizex); // don't go beyond vec size
+
+        NumericT entry_x    = 0;
+        NumericT group_sum0 = 0;
+        NumericT group_sum1 = 0;
+        NumericT group_sum2 = 0;
+        NumericT group_sum3 = 0;
+        NumericT group_sum4 = 0;
+        NumericT group_sum5 = 0;
+        NumericT group_sum6 = 0;
+        NumericT group_sum7 = 0;
+        for (unsigned int i = vec_start_index + threadIdx.x; i < vec_stop_index; i += blockDim.x) {
+          entry_x     = x[i * stridex + startx];   // load only once from global memory!
+          group_sum0 += entry_x * y0[i * stride0 + start0];
+          group_sum1 += entry_x * y1[i * stride1 + start1];
+          group_sum2 += entry_x * y2[i * stride2 + start2];
+          group_sum3 += entry_x * y3[i * stride3 + start3];
+          group_sum4 += entry_x * y4[i * stride4 + start4];
+          group_sum5 += entry_x * y5[i * stride5 + start5];
+          group_sum6 += entry_x * y6[i * stride6 + start6];
+          group_sum7 += entry_x * y7[i * stride7 + start7];
+        }
+        tmp_buffer[threadIdx.x]                  = group_sum0;
+        tmp_buffer[threadIdx.x +     blockDim.x] = group_sum1;
+        tmp_buffer[threadIdx.x + 2 * blockDim.x] = group_sum2;
+        tmp_buffer[threadIdx.x + 3 * blockDim.x] = group_sum3;
+        tmp_buffer[threadIdx.x + 4 * blockDim.x] = group_sum4;
+        tmp_buffer[threadIdx.x + 5 * blockDim.x] = group_sum5;
+        tmp_buffer[threadIdx.x + 6 * blockDim.x] = group_sum6;
+        tmp_buffer[threadIdx.x + 7 * blockDim.x] = group_sum7;
+
+        // parallel reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2) {
+          __syncthreads();
+          if (threadIdx.x < stride) {
+            tmp_buffer[threadIdx.x                 ] += tmp_buffer[threadIdx.x+stride                 ];
+            tmp_buffer[threadIdx.x +     blockDim.x] += tmp_buffer[threadIdx.x+stride +     blockDim.x];
+            tmp_buffer[threadIdx.x + 2 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 2 * blockDim.x];
+            tmp_buffer[threadIdx.x + 3 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 3 * blockDim.x];
+            tmp_buffer[threadIdx.x + 4 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 4 * blockDim.x];
+            tmp_buffer[threadIdx.x + 5 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 5 * blockDim.x];
+            tmp_buffer[threadIdx.x + 6 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 6 * blockDim.x];
+            tmp_buffer[threadIdx.x + 7 * blockDim.x] += tmp_buffer[threadIdx.x+stride + 7 * blockDim.x];
+          }
+        }
+
+        // write result of group to group_results
+        if (threadIdx.x == 0) {
+          group_results[blockIdx.x                ] = tmp_buffer[0];
+          group_results[blockIdx.x +     gridDim.x] = tmp_buffer[    blockDim.x];
+          group_results[blockIdx.x + 2 * gridDim.x] = tmp_buffer[2 * blockDim.x];
+          group_results[blockIdx.x + 3 * gridDim.x] = tmp_buffer[3 * blockDim.x];
+          group_results[blockIdx.x + 4 * gridDim.x] = tmp_buffer[4 * blockDim.x];
+          group_results[blockIdx.x + 5 * gridDim.x] = tmp_buffer[5 * blockDim.x];
+          group_results[blockIdx.x + 6 * gridDim.x] = tmp_buffer[6 * blockDim.x];
+          group_results[blockIdx.x + 7 * gridDim.x] = tmp_buffer[7 * blockDim.x];
+        }
+      }
+
+      // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+      template <typename T>
+      __global__ void vector_multi_sum_kernel(
+                T const * vec1,
+                T * result,
+                unsigned int start_result,
+                unsigned int inc_result)
+      {
+        __shared__ T tmp_buffer[VIENNACL_MDOT_WORKGROUP_SIZE];
+
+        tmp_buffer[threadIdx.x] = vec1[threadIdx.x + blockIdx.x * VIENNACL_MDOT_WORKGROUP_SIZE];
+
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          __syncthreads();
+          if (threadIdx.x < stride)
+            tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x + stride];
+        }
+
+        if (threadIdx.x == 0)
+          result[start_result + inc_result * blockIdx.x] = tmp_buffer[0];
+      }
+
+      template <typename T>
+      void inner_prod_impl(vector_base<T> const & x,
+                           vector_tuple<T> const & vec_tuple,
+                           vector_base<T> & result)
+      {
+        typedef T        value_type;
+
+        static viennacl::vector<value_type> temp(8 * VIENNACL_MDOT_WORKGROUP_NUM);
+
+        std::size_t current_index = 0;
+        while (vec_tuple.size() > current_index)
+        {
+          switch (vec_tuple.size() - current_index)
+          {
+            case 7:
+            case 6:
+            case 5:
+            case 4:
+            {
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index);
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
+              vector_base<T> const & y3 = vec_tuple.const_at(current_index + 3);
+
+              inner_prod_4_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
+                                    VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::size(x)),
+                                                                     detail::cuda_arg<value_type>(y0),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y0)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y0)),
+                                                                     detail::cuda_arg<value_type>(y1),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y1)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y1)),
+                                                                     detail::cuda_arg<value_type>(y2),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y2)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y2)),
+                                                                     detail::cuda_arg<value_type>(y3),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y3)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y3)),
+                                                                     detail::cuda_arg<value_type>(temp)
+                                                                    );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_4_kernel");
+              vector_multi_sum_kernel<<<4, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
+                                                                          detail::cuda_arg<value_type>(result),
+                                                                          static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
+                                                                          static_cast<unsigned int>(viennacl::traits::stride(result))
+                                                                         );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("vector_multi_sum_kernel");
+            }
+              current_index += 4;
+              break;
+            case 3:
+            {
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index);
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
+
+              inner_prod_3_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
+                                    VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::size(x)),
+                                                                     detail::cuda_arg<value_type>(y0),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y0)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y0)),
+                                                                     detail::cuda_arg<value_type>(y1),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y1)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y1)),
+                                                                     detail::cuda_arg<value_type>(y2),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y2)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y2)),
+                                                                     detail::cuda_arg<value_type>(temp)
+                                                                    );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_3_kernel");
+              vector_multi_sum_kernel<<<3, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
+                                                                          detail::cuda_arg<value_type>(result),
+                                                                          static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
+                                                                          static_cast<unsigned int>(viennacl::traits::stride(result))
+                                                                         );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("vector_multi_sum_kernel");
+            }
+              current_index += 3;
+              break;
+            case 2:
+            {
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index);
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+
+              inner_prod_2_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
+                                    VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::size(x)),
+                                                                     detail::cuda_arg<value_type>(y0),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y0)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y0)),
+                                                                     detail::cuda_arg<value_type>(y1),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y1)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y1)),
+                                                                     detail::cuda_arg<value_type>(temp)
+                                                                    );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_2_kernel");
+              vector_multi_sum_kernel<<<2, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
+                                                                          detail::cuda_arg<value_type>(result),
+                                                                          static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
+                                                                          static_cast<unsigned int>(viennacl::traits::stride(result))
+                                                                         );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("vector_multi_sum_kernel");
+            }
+              current_index += 2;
+              break;
+            case 1:
+            {
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index);
+              inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(x),
+                                              static_cast<unsigned int>(viennacl::traits::start(x)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(x)),
+                                              static_cast<unsigned int>(viennacl::traits::size(x)),
+                                              detail::cuda_arg<value_type>(y0),
+                                              static_cast<unsigned int>(viennacl::traits::start(y0)),
+                                              static_cast<unsigned int>(viennacl::traits::stride(y0)),
+                                              static_cast<unsigned int>(viennacl::traits::size(y0)),
+                                              detail::cuda_arg<value_type>(temp)
+                                             );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
+
+              vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                            static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                            static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                            static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                            static_cast<unsigned int>(1),
+                                            detail::cuda_arg<value_type>(result) + viennacl::traits::stride(result) * current_index );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
+            }
+              current_index += 1;
+              break;
+
+            default:
+            {
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index);
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
+              vector_base<T> const & y3 = vec_tuple.const_at(current_index + 3);
+              vector_base<T> const & y4 = vec_tuple.const_at(current_index + 4);
+              vector_base<T> const & y5 = vec_tuple.const_at(current_index + 5);
+              vector_base<T> const & y6 = vec_tuple.const_at(current_index + 6);
+              vector_base<T> const & y7 = vec_tuple.const_at(current_index + 7);
+
+              inner_prod_8_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
+                                    VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(x)),
+                                                                     static_cast<unsigned int>(viennacl::traits::size(x)),
+                                                                     detail::cuda_arg<value_type>(y0),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y0)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y0)),
+                                                                     detail::cuda_arg<value_type>(y1),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y1)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y1)),
+                                                                     detail::cuda_arg<value_type>(y2),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y2)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y2)),
+                                                                     detail::cuda_arg<value_type>(y3),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y3)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y3)),
+                                                                     detail::cuda_arg<value_type>(y4),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y4)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y4)),
+                                                                     detail::cuda_arg<value_type>(y5),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y5)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y5)),
+                                                                     detail::cuda_arg<value_type>(y6),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y6)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y6)),
+                                                                     detail::cuda_arg<value_type>(y7),
+                                                                     static_cast<unsigned int>(viennacl::traits::start(y7)),
+                                                                     static_cast<unsigned int>(viennacl::traits::stride(y7)),
+                                                                     detail::cuda_arg<value_type>(temp)
+                                                                    );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_8_kernel");
+              vector_multi_sum_kernel<<<8, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
+                                                                          detail::cuda_arg<value_type>(result),
+                                                                          static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
+                                                                          static_cast<unsigned int>(viennacl::traits::stride(result))
+                                                                         );
+              VIENNACL_CUDA_LAST_ERROR_CHECK("vector_multi_sum_kernel");
+            }
+              current_index += 8;
+              break;
+          }
+        }
+      }
+
+#undef VIENNACL_MDOT_WORKGROUP_NUM
+#undef VIENNACL_MDOT_WORKGROUP_SIZE
 
       ///////////////////////////////////
 
