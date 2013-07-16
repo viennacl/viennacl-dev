@@ -1539,9 +1539,9 @@ namespace viennacl
         static viennacl::vector<value_type> temp(8 * VIENNACL_MDOT_WORKGROUP_NUM);
 
         std::size_t current_index = 0;
-        while (vec_tuple.size() > current_index)
+        while (vec_tuple.const_size() > current_index)
         {
-          switch (vec_tuple.size() - current_index)
+          switch (vec_tuple.const_size() - current_index)
           {
             case 7:
             case 6:
@@ -1660,9 +1660,9 @@ namespace viennacl
               vector_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
                                             static_cast<unsigned int>(viennacl::traits::start(temp)),
                                             static_cast<unsigned int>(viennacl::traits::stride(temp)),
-                                            static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                            static_cast<unsigned int>(128),
                                             static_cast<unsigned int>(1),
-                                            detail::cuda_arg<value_type>(result) + viennacl::traits::stride(result) * current_index );
+                                            detail::cuda_arg<value_type>(result) + viennacl::traits::stride(result) * current_index + viennacl::traits::start(result));
               VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
             }
               current_index += 1;
