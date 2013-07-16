@@ -398,9 +398,9 @@ namespace viennacl
 
           source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
           source.append("  { \n");
+          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    if (get_local_id(0) < stride) \n");
           source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("  } \n");
 
           source.append("  if (get_local_id(0) == 0) \n");
@@ -435,6 +435,7 @@ namespace viennacl
 
           source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
           source.append("  { \n");
+          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    if (get_local_id(0) < stride) \n");
           source.append("    { \n");
           source.append("      if (option > 0) \n");
@@ -442,7 +443,6 @@ namespace viennacl
           source.append("      else \n");
           source.append("        tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0) + stride]); \n");
           source.append("    } \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("  } \n");
 
           source.append("  if (get_global_id(0) == 0) \n");
