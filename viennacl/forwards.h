@@ -152,6 +152,9 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class vector;
 
+  template <typename ScalarT>
+  class vector_tuple;
+
   //the following forwards are needed for GMRES
   template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void copy(CPU_ITERATOR const & cpu_begin,

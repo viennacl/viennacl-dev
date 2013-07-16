@@ -1067,6 +1067,82 @@ namespace viennacl
 
   }; //vector
 
+  template <typename ScalarT>
+  class vector_tuple
+  {
+    typedef vector_base<ScalarT>   VectorType;
+
+  public:
+      // 2 vectors
+
+      vector_tuple(VectorType const & v0, VectorType const & v1) : const_vectors_(2), non_const_vectors_()
+      {
+        const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1;
+      }
+      vector_tuple(VectorType       & v0, VectorType       & v1) : const_vectors_(2), non_const_vectors_(2)
+      {
+        const_vectors_[0] = &v0; non_const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1; non_const_vectors_[1] = &v1;
+      }
+
+      // 3 vectors
+
+      vector_tuple(VectorType const & v0, VectorType const & v2, VectorType const & v1) : const_vectors_(3), non_const_vectors_()
+      {
+        const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1;
+        const_vectors_[2] = &v2;
+      }
+      vector_tuple(VectorType       & v0, VectorType       & v2, VectorType       & v1) : const_vectors_(3), non_const_vectors_(3)
+      {
+        const_vectors_[0] = &v0; non_const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1; non_const_vectors_[1] = &v1;
+        const_vectors_[2] = &v2; non_const_vectors_[2] = &v2;
+      }
+
+      // add more overloads here
+
+      // generic interface:
+
+      vector_tuple(std::vector<VectorType const *> const & vecs) : const_vectors_(vecs.size()), non_const_vectors_()
+      {
+        for (std::size_t i=0; i<vecs.size(); ++i)
+          const_vectors_[i] = vecs[i];
+      }
+
+      vector_tuple(std::vector<VectorType *> const & vecs) : const_vectors_(vecs.size()), non_const_vectors_(vecs.size())
+      {
+        for (std::size_t i=0; i<vecs.size(); ++i)
+        {
+              const_vectors_[i] = vecs[i];
+          non_const_vectors_[i] = vecs[i];
+        }
+      }
+
+      std::size_t size()       const { return non_const_vectors_.size(); }
+      std::size_t const_size() const { return const_vectors_.size(); }
+
+      VectorType       *       at(std::size_t i) const { return non_const_vectors_.at(i); }
+      VectorType const * const_at(std::size_t i) const { return     const_vectors_.at(i); }
+
+  private:
+    std::vector<VectorType const *>   const_vectors_;
+    std::vector<VectorType *>         non_const_vectors_;
+  };
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1) { return vector_tuple<ScalarT>(v0, v1); }
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1) { return vector_tuple<ScalarT>(v0, v1); }
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+
 
   //
   //////////////////// Copy from GPU to CPU //////////////////////////////////
