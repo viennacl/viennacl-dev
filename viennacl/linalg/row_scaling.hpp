@@ -185,7 +185,7 @@ namespace viennacl
         template <unsigned int ALIGNMENT>
         void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
         {
-          assert(viennacl::traits::size1(diag_M.size()) == viennacl::traits::size(vec) && bool("Size mismatch"));
+          assert(viennacl::traits::size(diag_M) == viennacl::traits::size(vec) && bool("Size mismatch"));
           vec = element_div(vec, diag_M);
         }
 
