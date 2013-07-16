@@ -1092,17 +1092,34 @@ namespace viennacl
 
       // 3 vectors
 
-      vector_tuple(VectorType const & v0, VectorType const & v2, VectorType const & v1) : const_vectors_(3), non_const_vectors_()
+      vector_tuple(VectorType const & v0, VectorType const & v1, VectorType const & v2) : const_vectors_(3), non_const_vectors_()
       {
         const_vectors_[0] = &v0;
         const_vectors_[1] = &v1;
         const_vectors_[2] = &v2;
       }
-      vector_tuple(VectorType       & v0, VectorType       & v2, VectorType       & v1) : const_vectors_(3), non_const_vectors_(3)
+      vector_tuple(VectorType       & v0, VectorType       & v1, VectorType       & v2) : const_vectors_(3), non_const_vectors_(3)
       {
         const_vectors_[0] = &v0; non_const_vectors_[0] = &v0;
         const_vectors_[1] = &v1; non_const_vectors_[1] = &v1;
         const_vectors_[2] = &v2; non_const_vectors_[2] = &v2;
+      }
+
+      // 4 vectors
+
+      vector_tuple(VectorType const & v0, VectorType const & v1, VectorType const & v2, VectorType const & v3) : const_vectors_(4), non_const_vectors_()
+      {
+        const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1;
+        const_vectors_[2] = &v2;
+        const_vectors_[3] = &v3;
+      }
+      vector_tuple(VectorType       & v0, VectorType       & v1, VectorType       & v2, VectorType       & v3) : const_vectors_(4), non_const_vectors_(4)
+      {
+        const_vectors_[0] = &v0; non_const_vectors_[0] = &v0;
+        const_vectors_[1] = &v1; non_const_vectors_[1] = &v1;
+        const_vectors_[2] = &v2; non_const_vectors_[2] = &v2;
+        const_vectors_[3] = &v3; non_const_vectors_[3] = &v3;
       }
 
       // add more overloads here
@@ -1135,18 +1152,69 @@ namespace viennacl
     std::vector<VectorType *>         non_const_vectors_;
   };
 
+  // 2 args
   template <typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1) { return vector_tuple<ScalarT>(v0, v1); }
 
   template <typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1) { return vector_tuple<ScalarT>(v0, v1); }
 
+  // 3 args
   template <typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
 
   template <typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
 
+  // 4 args
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2, vector_base<ScalarT> const & v3)
+  {
+    return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  }
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2, vector_base<ScalarT>       & v3)
+  {
+    return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  }
+
+  // 5 args
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0,
+                            vector_base<ScalarT> const & v1,
+                            vector_base<ScalarT> const & v2,
+                            vector_base<ScalarT> const & v3,
+                            vector_base<ScalarT> const & v4)
+  {
+    typedef vector_base<ScalarT> const *       VectorPointerType;
+    std::vector<VectorPointerType> vec(5);
+    vec[0] = &v0;
+    vec[1] = &v1;
+    vec[2] = &v2;
+    vec[3] = &v3;
+    vec[4] = &v4;
+    return vector_tuple<ScalarT>(vec);
+  }
+
+  template <typename ScalarT>
+  vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
+                            vector_base<ScalarT> & v1,
+                            vector_base<ScalarT> & v2,
+                            vector_base<ScalarT> & v3,
+                            vector_base<ScalarT> & v4)
+  {
+    typedef vector_base<ScalarT> *       VectorPointerType;
+    std::vector<VectorPointerType> vec(5);
+    vec[0] = &v0;
+    vec[1] = &v1;
+    vec[2] = &v2;
+    vec[3] = &v3;
+    vec[4] = &v4;
+    return vector_tuple<ScalarT>(vec);
+  }
+
+  // TODO: Add more arguments to tie() here. Maybe use some preprocessor magic to accomplish this.
 
   //
   //////////////////// Copy from GPU to CPU //////////////////////////////////
