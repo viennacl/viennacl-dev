@@ -87,7 +87,11 @@ namespace viennacl
       typedef vcl_size_t         size_type;
       typedef SCALARTYPE const & const_reference;
 
-      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
+      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val)
+#ifdef VIENNACL_WITH_OPENCL
+                                                  , ctx_(&viennacl::ocl::current_context())
+#endif
+      {}
 
 #ifdef VIENNACL_WITH_OPENCL
       scalar_vector(size_type s, SCALARTYPE val, viennacl::ocl::context const & ctx) : size_(s), value_(val), ctx_(&ctx) {}
