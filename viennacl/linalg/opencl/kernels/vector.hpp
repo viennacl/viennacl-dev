@@ -297,7 +297,7 @@ namespace viennacl
           {
             ss.str("");
             ss << i;
-            source.append("    group_buffer[get_group_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] = tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)]; \n");
+            source.append("    group_buffer[get_group_id(0) + "); source.append(ss.str()); source.append(" * get_num_groups(0)] = tmp_buffer["); source.append(ss.str()); source.append(" * get_local_size(0)]; \n");
           }
           source.append("  } \n");
           source.append("} \n");
@@ -379,6 +379,32 @@ namespace viennacl
 
           source.append("  if (get_local_id(0) == 0) \n");
           source.append("    group_buffer[get_group_id(0)] = tmp; \n");
+          source.append("} \n");
+
+        }
+
+        template <typename StringType>
+        void generate_inner_prod_sum(StringType & source, std::string const & numeric_string)
+        {
+          // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+          source.append("__kernel void sum_inner_prod( \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
+          source.append("          unsigned int start_result, \n");
+          source.append("          unsigned int inc_result) \n");
+          source.append("{ \n");
+          source.append("  tmp_buffer[get_local_id(0)] = vec1[get_global_id(0)]; \n");
+
+          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+          source.append("  { \n");
+          source.append("    if (get_local_id(0) < stride) \n");
+          source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
+          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+          source.append("  } \n");
+
+          source.append("  if (get_local_id(0) == 0) \n");
+          source.append("    result[start_result + inc_result * get_group_id(0)] = tmp_buffer[0]; \n");
           source.append("} \n");
 
         }
@@ -525,10 +551,48 @@ namespace viennacl
               generate_assign_cpu(source, numeric_string);
 
               generate_inner_prod(source, numeric_string, 1);
-              generate_inner_prod(source, numeric_string, 2);
               generate_norm(source, numeric_string);
               generate_sum(source, numeric_string);
               generate_index_norm_inf(source, numeric_string);
+
+              std::string prog_name = program_name();
+              #ifdef VIENNACL_BUILD_INFO
+              std::cout << "Creating program " << prog_name << std::endl;
+              #endif
+              ctx.add_program(source, prog_name);
+              init_done[ctx.handle().get()] = true;
+            } //if
+          } //init
+        };
+
+        // class with kernels for multiple inner products.
+        template <class TYPE>
+        struct vector_multi_inner_prod
+        {
+          static std::string program_name()
+          {
+            return viennacl::ocl::type_to_string<TYPE>::apply() + "_vector_multi";
+          }
+
+          static void init(viennacl::ocl::context & ctx)
+          {
+            viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
+            std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
+
+            static std::map<cl_context, bool> init_done;
+            if (!init_done[ctx.handle().get()])
+            {
+              std::string source;
+              source.reserve(8192);
+
+              viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
+
+              generate_inner_prod(source, numeric_string, 2);
+              generate_inner_prod(source, numeric_string, 3);
+              generate_inner_prod(source, numeric_string, 4);
+              generate_inner_prod(source, numeric_string, 8);
+
+              generate_inner_prod_sum(source, numeric_string);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

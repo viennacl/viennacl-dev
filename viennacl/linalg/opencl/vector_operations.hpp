@@ -440,6 +440,202 @@ namespace viennacl
                               );
       }
 
+      namespace detail
+      {
+        template <typename ScalarT>
+        viennacl::ocl::packed_cl_uint make_layout(vector_base<ScalarT> const & vec)
+        {
+          viennacl::ocl::packed_cl_uint ret;
+          ret.start           = cl_uint(viennacl::traits::start(vec));
+          ret.stride          = cl_uint(viennacl::traits::stride(vec));
+          ret.size            = cl_uint(viennacl::traits::size(vec));
+          ret.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+          return ret;
+        }
+      }
+
+      /** @brief Computes multiple inner products where one argument is common to all inner products. <x, y1>, <x, y2>, ..., <x, yN>
+      *
+      * @param vec1 The first vector
+      * @param vec2 The second vector
+      * @param result The result scalar (on the gpu)
+      */
+      template <typename T>
+      void inner_prod_impl(vector_base<T> const & x,
+                           vector_tuple<T> const & vec_tuple,
+                           vector_base<T> & result)
+      {
+        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
+        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::init(ctx);
+
+        std::size_t work_groups = 128;
+
+        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
+        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        temp.resize(8 * work_groups, ctx); // bring default-constructed vectors to the correct size:
+
+        viennacl::ocl::packed_cl_uint layout_x = detail::make_layout(x);
+
+        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "sum_inner_prod");
+        viennacl::ocl::kernel & inner_prod_kernel_1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "inner_prod1");
+        viennacl::ocl::kernel & inner_prod_kernel_2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod2");
+        viennacl::ocl::kernel & inner_prod_kernel_3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod3");
+        viennacl::ocl::kernel & inner_prod_kernel_4 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod4");
+        viennacl::ocl::kernel & inner_prod_kernel_8 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod8");
+
+        std::size_t current_index = 0;
+        while (current_index < vec_tuple.size())
+        {
+          switch (vec_tuple.size() - current_index)
+          {
+            case 7:
+            case 6:
+            case 5:
+            case 4:
+            {
+              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
+              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
+              vector_base<T> const & y3 = *(vec_tuple.const_at(current_index + 3));
+              viennacl::ocl::enqueue(inner_prod_kernel_4( viennacl::traits::opencl_handle(x), layout_x,
+                                                         viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
+                                                         viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
+                                                         viennacl::traits::opencl_handle(y2), detail::make_layout(y2),
+                                                         viennacl::traits::opencl_handle(y3), detail::make_layout(y3),
+                                                         viennacl::ocl::local_mem(sizeof(T) * 4 * inner_prod_kernel_4.local_work_size()),
+                                                         viennacl::traits::opencl_handle(temp)
+                                                        ) );
+
+              ksum.local_work_size(0, work_groups);
+              ksum.global_work_size(0, 4 * work_groups);
+              viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                          viennacl::ocl::local_mem(sizeof(T) * 4 * ksum.local_work_size()),
+                                          viennacl::traits::opencl_handle(result),
+                                          cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
+                                          cl_uint(viennacl::traits::stride(result))
+                                          )
+                                    );
+            }
+              current_index += 4;
+              break;
+
+            case 3:
+            {
+              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
+              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
+              viennacl::ocl::enqueue(inner_prod_kernel_3( viennacl::traits::opencl_handle(x), layout_x,
+                                                          viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
+                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
+                                                          viennacl::traits::opencl_handle(y2), detail::make_layout(y2),
+                                                          viennacl::ocl::local_mem(sizeof(T) * 3 * inner_prod_kernel_3.local_work_size()),
+                                                          viennacl::traits::opencl_handle(temp)
+                                                         ) );
+
+              ksum.local_work_size(0, work_groups);
+              ksum.global_work_size(0, 3 * work_groups);
+              viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                          viennacl::ocl::local_mem(sizeof(T) * 3 * ksum.local_work_size()),
+                                          viennacl::traits::opencl_handle(result),
+                                          cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
+                                          cl_uint(viennacl::traits::stride(result))
+                                          )
+                                    );
+            }
+              current_index += 3;
+              break;
+
+            case 2:
+            {
+              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
+              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              viennacl::ocl::enqueue(inner_prod_kernel_2( viennacl::traits::opencl_handle(x), layout_x,
+                                                          viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
+                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
+                                                          viennacl::ocl::local_mem(sizeof(T) * 2 * inner_prod_kernel_2.local_work_size()),
+                                                          viennacl::traits::opencl_handle(temp)
+                                                        ) );
+
+              ksum.local_work_size(0, work_groups);
+              ksum.global_work_size(0, 2 * work_groups);
+              viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                          viennacl::ocl::local_mem(sizeof(T) * 2 * ksum.local_work_size()),
+                                          viennacl::traits::opencl_handle(result),
+                                          cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
+                                          cl_uint(viennacl::traits::stride(result))
+                                          )
+                                    );
+            }
+              current_index += 2;
+              break;
+
+            case 1:
+            {
+              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
+              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              viennacl::ocl::enqueue(inner_prod_kernel_1( viennacl::traits::opencl_handle(x), layout_x,
+                                                          viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
+                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
+                                                          viennacl::ocl::local_mem(sizeof(T) * 1 * inner_prod_kernel_1.local_work_size()),
+                                                          viennacl::traits::opencl_handle(temp)
+                                                        ) );
+
+              ksum.local_work_size(0, work_groups);
+              ksum.global_work_size(0, 1 * work_groups);
+              viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                          viennacl::ocl::local_mem(sizeof(T) * 1 * ksum.local_work_size()),
+                                          viennacl::traits::opencl_handle(result),
+                                          cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
+                                          cl_uint(viennacl::traits::stride(result))
+                                          )
+                                    );
+            }
+              current_index += 1;
+              break;
+
+            default: //8 or more vectors
+            {
+              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
+              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
+              vector_base<T> const & y3 = *(vec_tuple.const_at(current_index + 3));
+              vector_base<T> const & y4 = *(vec_tuple.const_at(current_index + 4));
+              vector_base<T> const & y5 = *(vec_tuple.const_at(current_index + 5));
+              vector_base<T> const & y6 = *(vec_tuple.const_at(current_index + 6));
+              vector_base<T> const & y7 = *(vec_tuple.const_at(current_index + 7));
+              viennacl::ocl::enqueue(inner_prod_kernel_8( viennacl::traits::opencl_handle(x), layout_x,
+                                                          viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
+                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
+                                                          viennacl::traits::opencl_handle(y2), detail::make_layout(y2),
+                                                          viennacl::traits::opencl_handle(y3), detail::make_layout(y3),
+                                                          viennacl::traits::opencl_handle(y4), detail::make_layout(y4),
+                                                          viennacl::traits::opencl_handle(y5), detail::make_layout(y5),
+                                                          viennacl::traits::opencl_handle(y6), detail::make_layout(y6),
+                                                          viennacl::traits::opencl_handle(y7), detail::make_layout(y7),
+                                                          viennacl::ocl::local_mem(sizeof(T) * 8 * inner_prod_kernel_8.local_work_size()),
+                                                          viennacl::traits::opencl_handle(temp)
+                                                        ) );
+
+              ksum.local_work_size(0, work_groups);
+              ksum.global_work_size(0, 8 * work_groups);
+              viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                          viennacl::ocl::local_mem(sizeof(T) * 8 * ksum.local_work_size()),
+                                          viennacl::traits::opencl_handle(result),
+                                          cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
+                                          cl_uint(viennacl::traits::stride(result))
+                                          )
+                                    );
+            }
+              current_index += 8;
+              break;
+          }
+        }
+
+      }
+
 
       //implementation of inner product:
       //namespace {
