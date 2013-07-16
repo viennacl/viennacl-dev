@@ -1123,8 +1123,8 @@ namespace viennacl
       std::size_t size()       const { return non_const_vectors_.size(); }
       std::size_t const_size() const { return const_vectors_.size(); }
 
-      VectorType       *       at(std::size_t i) const { return non_const_vectors_.at(i); }
-      VectorType const * const_at(std::size_t i) const { return     const_vectors_.at(i); }
+      VectorType       &       at(std::size_t i) const { return *non_const_vectors_.at(i); }
+      VectorType const & const_at(std::size_t i) const { return     *const_vectors_.at(i); }
 
   private:
     std::vector<VectorType const *>   const_vectors_;

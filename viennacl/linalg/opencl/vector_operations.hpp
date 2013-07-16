@@ -496,10 +496,10 @@ namespace viennacl
             case 5:
             case 4:
             {
-              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
-              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
-              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
-              vector_base<T> const & y3 = *(vec_tuple.const_at(current_index + 3));
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
+              vector_base<T> const & y3 = vec_tuple.const_at(current_index + 3);
               viennacl::ocl::enqueue(inner_prod_kernel_4( viennacl::traits::opencl_handle(x), layout_x,
                                                          viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
@@ -524,9 +524,9 @@ namespace viennacl
 
             case 3:
             {
-              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
-              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
-              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
               viennacl::ocl::enqueue(inner_prod_kernel_3( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
@@ -550,8 +550,8 @@ namespace viennacl
 
             case 2:
             {
-              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
-              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
               viennacl::ocl::enqueue(inner_prod_kernel_2( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
@@ -574,8 +574,8 @@ namespace viennacl
 
             case 1:
             {
-              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
-              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
               viennacl::ocl::enqueue(inner_prod_kernel_1( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
@@ -598,14 +598,14 @@ namespace viennacl
 
             default: //8 or more vectors
             {
-              vector_base<T> const & y0 = *(vec_tuple.const_at(current_index    ));
-              vector_base<T> const & y1 = *(vec_tuple.const_at(current_index + 1));
-              vector_base<T> const & y2 = *(vec_tuple.const_at(current_index + 2));
-              vector_base<T> const & y3 = *(vec_tuple.const_at(current_index + 3));
-              vector_base<T> const & y4 = *(vec_tuple.const_at(current_index + 4));
-              vector_base<T> const & y5 = *(vec_tuple.const_at(current_index + 5));
-              vector_base<T> const & y6 = *(vec_tuple.const_at(current_index + 6));
-              vector_base<T> const & y7 = *(vec_tuple.const_at(current_index + 7));
+              vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
+              vector_base<T> const & y1 = vec_tuple.const_at(current_index + 1);
+              vector_base<T> const & y2 = vec_tuple.const_at(current_index + 2);
+              vector_base<T> const & y3 = vec_tuple.const_at(current_index + 3);
+              vector_base<T> const & y4 = vec_tuple.const_at(current_index + 4);
+              vector_base<T> const & y5 = vec_tuple.const_at(current_index + 5);
+              vector_base<T> const & y6 = vec_tuple.const_at(current_index + 6);
+              vector_base<T> const & y7 = vec_tuple.const_at(current_index + 7);
               viennacl::ocl::enqueue(inner_prod_kernel_8( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
