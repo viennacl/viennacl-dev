@@ -209,7 +209,7 @@ namespace viennacl
       {
         unsigned int size =  mem.size();
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Setting local memory kernel argument at pos " << pos << " for kernel " << name_ << std::endl;
+        std::cout << "ViennaCL: Setting local memory kernel argument of size " << size << " bytes at pos " << pos << " for kernel " << name_ << std::endl;
         #endif
         cl_int err = clSetKernelArg(handle_.get(), pos, size, 0);
         VIENNACL_ERR_CHECK(err);
