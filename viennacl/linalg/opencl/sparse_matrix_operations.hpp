@@ -89,6 +89,74 @@ namespace viennacl
       }
 
 
+      /** @brief Carries out sparse_matrix-matrix multiplication first matrix being compressed
+      *
+      * Implementation of the convenience expression result = prod(sp_mat, d_mat);
+      *
+      * @param sp_mat     The sparse matrix
+      * @param d_mat      The dense matrix
+      * @param result     The result matrix
+      */
+      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
+                     const viennacl::matrix_base<TYPE, F> & d_mat,
+                           viennacl::matrix_base<TYPE, F> & result) {
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
+        viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "d_mat_mul");
+
+        viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(d_mat),
+                                 cl_uint(viennacl::traits::start1(d_mat)),          cl_uint(viennacl::traits::start2(d_mat)),
+                                 cl_uint(viennacl::traits::stride1(d_mat)),         cl_uint(viennacl::traits::stride2(d_mat)),
+                                 cl_uint(viennacl::traits::size1(d_mat)),           cl_uint(viennacl::traits::size2(d_mat)),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat)),  cl_uint(viennacl::traits::internal_size2(d_mat)),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
+                                 viennacl::ocl::local_mem( sizeof(TYPE) * d_mat.size1() ),
+                                 viennacl::ocl::local_mem( sizeof(unsigned int) * d_mat.size1() ) ));
+
+      }
+
+      /** @brief Carries out matrix-trans(matrix) multiplication first matrix being compressed
+      *          and the second transposed
+      *
+      * Implementation of the convenience expression result = prod(sp_mat, d_mat);
+      *
+      * @param sp_mat             The sparse matrix
+      * @param trans(d_mat)       The transposed dense matrix
+      * @param result             The result matrix
+      */
+      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F>,
+                                                        const viennacl::matrix_base<TYPE, F>,
+                                                        viennacl::op_trans > & d_mat,
+                      viennacl::matrix_base<TYPE, F> & result) {
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
+        viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::init(ctx);
+        viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::compressed_matrix<TYPE, ALIGNMENT>::program_name(), "d_tr_mat_mul");
+
+        viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(d_mat.lhs()),
+                                 cl_uint(viennacl::traits::start1(d_mat.lhs())),          cl_uint(viennacl::traits::start2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::stride1(d_mat.lhs())),         cl_uint(viennacl::traits::stride2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::size1(d_mat.lhs())),           cl_uint(viennacl::traits::size2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat.lhs())),  cl_uint(viennacl::traits::internal_size2(d_mat.lhs())),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
+                                 viennacl::ocl::local_mem( sizeof(TYPE) * d_mat.lhs().size2() ),
+                                 viennacl::ocl::local_mem( sizeof(unsigned int) * d_mat.lhs().size2() ) ));
+      }
+
 
 
       // triangular solvers

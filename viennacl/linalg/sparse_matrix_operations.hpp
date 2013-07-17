@@ -115,6 +115,84 @@ namespace viennacl
     }
 
 
+    // A * B
+    /** @brief Carries out matrix-matrix multiplication first matrix being sparse
+    *
+    * Implementation of the convenience expression result = prod(sp_mat, d_mat);
+    *
+    * @param sp_mat   The sparse matrix
+    * @param d_mat    The dense matrix
+    * @param result   The result matrix (dense)
+    */
+    template<typename SparseMatrixType, class ScalarType, typename F1>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+    prod_impl(const SparseMatrixType & sp_mat,
+              const viennacl::matrix_base<ScalarType, F1> & d_mat,
+                    viennacl::matrix_base<ScalarType, F1> & result)
+    {
+      assert( (sp_mat.size1() == result.size1()) && bool("Size check failed for compressed matrix - dense matrix product: size1(sp_mat) != size1(result)"));
+      assert( (sp_mat.size2() == d_mat.size1()) && bool("Size check failed for compressed matrix - dense matrix product: size2(sp_mat) != size1(d_mat)"));
+
+      switch (viennacl::traits::handle(sp_mat).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::prod_impl(sp_mat, d_mat, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(sp_mat, d_mat, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::prod_impl(sp_mat, d_mat, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
+    // A * transpose(B)
+    /** @brief Carries out matrix-matrix multiplication first matrix being sparse, and the second transposed
+    *
+    * Implementation of the convenience expression result = prod(sp_mat, d_mat);
+    *
+    * @param sp_mat   The sparse matrix
+    * @param d_mat    The dense matrix (transposed)
+    * @param result   The result matrix (dense)
+    */
+    template<typename SparseMatrixType, class ScalarType, typename F1>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+    prod_impl(const SparseMatrixType & sp_mat,
+              const viennacl::matrix_expression<const viennacl::matrix_base<ScalarType, F1>,
+                                                const viennacl::matrix_base<ScalarType, F1>,
+                                                viennacl::op_trans>& d_mat,
+                    viennacl::matrix_base<ScalarType, F1> & result)
+    {
+      assert( (sp_mat.size1() == result.size1()) && bool("Size check failed for compressed matrix - dense matrix product: size1(sp_mat) != size1(result)"));
+      assert( (sp_mat.size2() == d_mat.size1()) && bool("Size check failed for compressed matrix - dense matrix product: size2(sp_mat) != size1(d_mat)"));
+
+      switch (viennacl::traits::handle(sp_mat).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::prod_impl(sp_mat, d_mat, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(sp_mat, d_mat, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::prod_impl(sp_mat, d_mat, result);
+          break;
+#endif
+        default:
+          throw "not implemented";
+      }
+    }
+
     /** @brief Carries out triangular inplace solves
     *
     * @param mat    The matrix
