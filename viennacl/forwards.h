@@ -107,22 +107,22 @@ namespace viennacl
   struct op_tanh {};
 
   /** @brief A tag class representing inner products of two vectors */
-  struct op_inner_prod;
+  struct op_inner_prod {};
 
   /** @brief A tag class representing the 1-norm of a vector */
-  struct op_norm_1;
+  struct op_norm_1 {};
 
   /** @brief A tag class representing the 2-norm of a vector */
-  struct op_norm_2;
+  struct op_norm_2 {};
 
   /** @brief A tag class representing the 2-norm of a vector */
-  struct op_norm_inf;
+  struct op_norm_inf {};
 
   /** @brief A tag class representing transposed matrices */
-  struct op_trans;
+  struct op_trans {};
 
   /** @brief A tag class representing sign flips (for scalars only. Vectors and matrices use the standard multiplication by the scalar -1.0) */
-  struct op_flip_sign;
+  struct op_flip_sign {};
 
   //forward declaration of basic types:
   template<class TYPE>
