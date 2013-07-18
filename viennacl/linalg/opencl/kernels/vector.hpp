@@ -37,6 +37,46 @@ namespace viennacl
           avbv_scalar_type b;
         };
 
+        // just returns the for-loop
+        template <typename StringType>
+        void generate_avbv_impl2(StringType & source, std::string const & numeric_string, avbv_config const & cfg, bool mult_alpha, bool mult_beta)
+        {
+          source.append("    for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
+          if (cfg.with_stride_and_range)
+          {
+            source.append("      vec1[i*size1.y+size1.x] "); source.append(cfg.assign_op); source.append(" vec2[i*size2.y+size2.x] ");
+            if (mult_alpha)
+              source.append("* alpha ");
+            else
+              source.append("/ alpha ");
+            if (cfg.b != VIENNACL_AVBV_NONE)
+            {
+              source.append("+ vec3[i*size3.y+size3.x] ");
+              if (mult_beta)
+                source.append("* beta");
+              else
+                source.append("/ beta");
+            }
+          }
+          else
+          {
+            source.append("    vec1[i] "); source.append(cfg.assign_op); source.append(" vec2[i] ");
+            if (mult_alpha)
+              source.append("* alpha ");
+            else
+              source.append("/ alpha ");
+            if (cfg.b != VIENNACL_AVBV_NONE)
+            {
+              source.append("+ vec3[i] ");
+              if (mult_beta)
+                source.append("* beta");
+              else
+                source.append("/ beta");
+            }
+          }
+          source.append("; \n");
+        }
+
         template <typename StringType>
         void generate_avbv_impl(StringType & source, std::string const & numeric_string, avbv_config const & cfg)
         {
@@ -98,8 +138,6 @@ namespace viennacl
           }
           source.append("  if (options2 & (1 << 0)) \n");
           source.append("    alpha = -alpha; \n");
-          source.append("  if (options2 & (1 << 1)) \n");
-          source.append("    alpha = (("); source.append(numeric_string); source.append(")(1)) / alpha; \n");
           source.append(" \n");
 
           if (cfg.b == VIENNACL_AVBV_CPU)
@@ -114,24 +152,32 @@ namespace viennacl
           {
             source.append("  if (options3 & (1 << 0)) \n");
             source.append("    beta = -beta; \n");
-            source.append("  if (options3 & (1 << 1)) \n");
-            source.append("    beta = (("); source.append(numeric_string); source.append(")(1)) / beta; \n");
             source.append(" \n");
           }
-          source.append("  for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
-          if (cfg.with_stride_and_range)
+          source.append("  if (options2 & (1 << 1)) { \n");
+          if (cfg.b != VIENNACL_AVBV_NONE)
           {
-            source.append("    vec1[i*size1.y+size1.x] "); source.append(cfg.assign_op); source.append(" vec2[i*size2.y+size2.x] * alpha");
-            if (cfg.b != VIENNACL_AVBV_NONE)
-              source.append("+ vec3[i*size3.y+size3.x] * beta; \n");
+            source.append("    if (options3 & (1 << 1)) {\n");
+            generate_avbv_impl2(source, numeric_string, cfg, false, false);
+            source.append("    } else {\n");
+            generate_avbv_impl2(source, numeric_string, cfg, false, true);
+            source.append("    } \n");
           }
           else
+            generate_avbv_impl2(source, numeric_string, cfg, false, true);
+          source.append("  } else { \n");
+          if (cfg.b != VIENNACL_AVBV_NONE)
           {
-            source.append("    vec1[i] "); source.append(cfg.assign_op); source.append(" vec2[i] * alpha");
-            if (cfg.b != VIENNACL_AVBV_NONE)
-              source.append("+ vec3[i] * beta; \n");
+            source.append("    if (options3 & (1 << 1)) {\n");
+            generate_avbv_impl2(source, numeric_string, cfg, true, false);
+            source.append("    } else {\n");
+            generate_avbv_impl2(source, numeric_string, cfg, true, true);
+            source.append("    } \n");
           }
-          source.append("; \n}  \n");
+          else
+            generate_avbv_impl2(source, numeric_string, cfg, true, true);
+          source.append("  } \n");
+          source.append("} \n");
         }
 
         template <typename StringType>
@@ -308,6 +354,8 @@ namespace viennacl
         template <typename StringType>
         void generate_norm(StringType & source, std::string const & numeric_string)
         {
+          bool is_float_or_double = (numeric_string == "float" || numeric_string == "double");
+
           source.append(numeric_string); source.append(" impl_norm( \n");
           source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
           source.append("          unsigned int start1, \n");
@@ -320,7 +368,10 @@ namespace viennacl
           source.append("  if (norm_selector == 1) \n"); //norm_1
           source.append("  { \n");
           source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
-          source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
+          if (is_float_or_double)
+            source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
+          else
+            source.append("      tmp += abs(vec[i*inc1 + start1]); \n");
           source.append("  } \n");
           source.append("  else if (norm_selector == 2) \n"); //norm_2
           source.append("  { \n");
@@ -334,7 +385,10 @@ namespace viennacl
           source.append("  else if (norm_selector == 0) \n"); //norm_inf
           source.append("  { \n");
           source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
-          source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
+          if (is_float_or_double)
+            source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
+          else
+            source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
           source.append("  } \n");
 
           source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
@@ -355,7 +409,10 @@ namespace viennacl
           source.append("  { \n");
           source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    if (get_local_id(0) < stride) \n");
-          source.append("      tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+          if (is_float_or_double)
+            source.append("      tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+          else
+            source.append("      tmp_buffer[get_local_id(0)] = max(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
           source.append("  } \n");
 
           source.append("  return tmp_buffer[0]; \n");
@@ -425,12 +482,17 @@ namespace viennacl
           source.append("          __global "); source.append(numeric_string); source.append(" * result) \n");
           source.append("{ \n");
           source.append("  "); source.append(numeric_string); source.append(" thread_sum = 0; \n");
+          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
           source.append("  for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0)) \n");
           source.append("  { \n");
           source.append("    if (option > 0) \n");
           source.append("      thread_sum += vec1[i*inc1+start1]; \n");
           source.append("    else \n");
-          source.append("      thread_sum = fmax(thread_sum, fabs(vec1[i*inc1+start1])); \n");
+          source.append("    { \n");
+          source.append("      tmp = vec1[i*inc1+start1]; \n");
+          source.append("      tmp = (tmp < 0) ? -tmp : tmp; \n");
+          source.append("      thread_sum = (thread_sum > tmp) ? thread_sum : tmp; \n");
+          source.append("    } \n");
           source.append("  } \n");
 
           source.append("  tmp_buffer[get_local_id(0)] = thread_sum; \n");
@@ -443,16 +505,19 @@ namespace viennacl
           source.append("      if (option > 0) \n");
           source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
           source.append("      else \n");
-          source.append("        tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0) + stride]); \n");
+          source.append("        tmp_buffer[get_local_id(0)] = (tmp_buffer[get_local_id(0)] > tmp_buffer[get_local_id(0) + stride]) ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
           source.append("    } \n");
           source.append("  } \n");
           source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
 
           source.append("  if (get_global_id(0) == 0) \n");
           source.append("  { \n");
-          source.append("    if (option == 2) \n");
-          source.append("      *result = sqrt(tmp_buffer[0]); \n");
-          source.append("    else \n");
+          if (numeric_string == "float" || numeric_string == "double")
+          {
+            source.append("    if (option == 2) \n");
+            source.append("      *result = sqrt(tmp_buffer[0]); \n");
+            source.append("    else \n");
+          }
           source.append("      *result = tmp_buffer[0]; \n");
           source.append("  } \n");
           source.append("} \n");
@@ -476,7 +541,10 @@ namespace viennacl
           source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
           source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
           source.append("  { \n");
-          source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
+          if (numeric_string == "float" || numeric_string == "double")
+            source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
+          else
+            source.append("    tmp = abs(vec[i*inc1+start1]); \n");
           source.append("    if (cur_max < tmp) \n");
           source.append("    { \n");
           source.append("      entry_buffer[get_global_id(0)] = tmp; \n");

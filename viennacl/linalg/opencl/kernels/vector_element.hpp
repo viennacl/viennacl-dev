@@ -101,22 +101,29 @@ namespace viennacl
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
               // unary operations
-              generate_vector_unary_element_ops(source, numeric_string, "acos");
-              generate_vector_unary_element_ops(source, numeric_string, "asin");
-              generate_vector_unary_element_ops(source, numeric_string, "atan");
-              generate_vector_unary_element_ops(source, numeric_string, "ceil");
-              generate_vector_unary_element_ops(source, numeric_string, "cos");
-              generate_vector_unary_element_ops(source, numeric_string, "cosh");
-              generate_vector_unary_element_ops(source, numeric_string, "exp");
-              generate_vector_unary_element_ops(source, numeric_string, "fabs");
-              generate_vector_unary_element_ops(source, numeric_string, "floor");
-              generate_vector_unary_element_ops(source, numeric_string, "log");
-              generate_vector_unary_element_ops(source, numeric_string, "log10");
-              generate_vector_unary_element_ops(source, numeric_string, "sin");
-              generate_vector_unary_element_ops(source, numeric_string, "sinh");
-              generate_vector_unary_element_ops(source, numeric_string, "sqrt");
-              generate_vector_unary_element_ops(source, numeric_string, "tan");
-              generate_vector_unary_element_ops(source, numeric_string, "tanh");
+              if (numeric_string == "float" || numeric_string == "double")
+              {
+                generate_vector_unary_element_ops(source, numeric_string, "acos");
+                generate_vector_unary_element_ops(source, numeric_string, "asin");
+                generate_vector_unary_element_ops(source, numeric_string, "atan");
+                generate_vector_unary_element_ops(source, numeric_string, "ceil");
+                generate_vector_unary_element_ops(source, numeric_string, "cos");
+                generate_vector_unary_element_ops(source, numeric_string, "cosh");
+                generate_vector_unary_element_ops(source, numeric_string, "exp");
+                generate_vector_unary_element_ops(source, numeric_string, "fabs");
+                generate_vector_unary_element_ops(source, numeric_string, "floor");
+                generate_vector_unary_element_ops(source, numeric_string, "log");
+                generate_vector_unary_element_ops(source, numeric_string, "log10");
+                generate_vector_unary_element_ops(source, numeric_string, "sin");
+                generate_vector_unary_element_ops(source, numeric_string, "sinh");
+                generate_vector_unary_element_ops(source, numeric_string, "sqrt");
+                generate_vector_unary_element_ops(source, numeric_string, "tan");
+                generate_vector_unary_element_ops(source, numeric_string, "tanh");
+              }
+              else
+              {
+                generate_vector_unary_element_ops(source, numeric_string, "abs");
+              }
 
               // binary operations
               generate_vector_binary_element_ops(source, numeric_string);

@@ -50,6 +50,10 @@ namespace viennacl
     }
 
     /** \cond */
+    inline char   handle(char val)   { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline short  handle(short val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline int    handle(int val)    { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline long   handle(long val)   { return val; }  //for unification purposes when passing CPU-scalars to kernels
     inline float  handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
     inline double handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
@@ -166,8 +170,14 @@ namespace viennacl
       return viennacl::traits::handle(obj).opencl_handle();
     }
 
-    inline float  opencl_handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline double opencl_handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_char  opencl_handle(char   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_short opencl_handle(short  val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_int   opencl_handle(int    val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_long  opencl_handle(long   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline float    opencl_handle(float  val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline double   opencl_handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+
+
 #endif
 
 

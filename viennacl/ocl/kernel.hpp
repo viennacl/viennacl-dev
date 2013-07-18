@@ -168,9 +168,19 @@ namespace viennacl
       void arg(unsigned int pos, cl_ulong val)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Setting int precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        std::cout << "ViennaCL: Setting ulong precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
         #endif
         cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_ulong), (void*)&val);
+        VIENNACL_ERR_CHECK(err);
+      }
+
+      /** @brief Sets an unsigned long argument at the provided position */
+      void arg(unsigned int pos, cl_long val)
+      {
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting long precision kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_long), (void*)&val);
         VIENNACL_ERR_CHECK(err);
       }
 

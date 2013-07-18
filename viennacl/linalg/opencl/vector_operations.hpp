@@ -986,8 +986,8 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(vec2)),
                                  cl_uint(viennacl::traits::stride(vec2)),
                                  cl_uint(viennacl::traits::size(vec2)),
-                                 alpha,
-                                 beta)
+                                 viennacl::traits::opencl_handle(alpha),
+                                 viennacl::traits::opencl_handle(beta))
                               );
       }
 
