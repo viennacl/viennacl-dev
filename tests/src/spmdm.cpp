@@ -19,7 +19,7 @@
 
 // Must be set if you want to use ViennaCL algorithms on ublas objects
 #define VIENNACL_WITH_UBLAS 1
-#define VIENNACL_WITH_OPENCL 1
+//#define VIENNACL_WITH_OPENCL 1
 //#define VIENNACL_WITH_CUDA 1
 //#define VIENNACL_DEBUG_KERNEL 1
 //#define VIENNACL_BUILD_INFO 1
@@ -39,7 +39,6 @@
 
 // Some helper functions for this tutorial:
 #include "Random.hpp"
-#include "vector-io.hpp"
 
 
 using namespace boost::numeric;
@@ -49,7 +48,8 @@ int main()
 {
   typedef float       ScalarType;
   
-  std::size_t size = 300, size1, size2;
+  std::size_t size = 1024, size1, size2;
+  int retVal  = EXIT_SUCCESS;
 
   ublas::compressed_matrix<ScalarType> u_lhs(size/2, size);
   viennacl::compressed_matrix<ScalarType> lhs(size/2, size);
@@ -104,6 +104,7 @@ int main()
     for (unsigned int j = 0; j < size2; j++)
       if ( abs(temp(i,j) - u_result(i,j)) > eps ) {
         std::cout << "!!Verification failed at " << i <<" : "<< j  << "(expected: " << u_result(i,j) << " get: " << temp(i,j) << " )" << std::endl;
+        retVal = EXIT_FAILURE;
         goto next_test;
       }
 
@@ -125,6 +126,7 @@ int main()
     for (unsigned int j = 0; j < size2; j++)
       if ( abs(temp(i,j) - u_result(i,j)) > eps ) {
         std::cout << "!!Verification failed at " << i <<" : "<< j  << "(expected: " << u_result(i,j) << " get: " << temp(i,j) << " )" << std::endl;
+        retVal = EXIT_FAILURE;
         goto stop;
       }
 
@@ -132,5 +134,5 @@ int main()
 
   stop:
 
-  return 0;
+  return retVal;
 }

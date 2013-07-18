@@ -116,10 +116,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
                                  cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
                                  cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
-                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
-                                 viennacl::ocl::local_mem( sizeof(TYPE) * d_mat.size1() ),
-                                 viennacl::ocl::local_mem( sizeof(unsigned int) * d_mat.size1() ) ));
-
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)) ));
       }
 
       /** @brief Carries out matrix-trans(matrix) multiplication first matrix being compressed
@@ -152,9 +149,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
                                  cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
                                  cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
-                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
-                                 viennacl::ocl::local_mem( sizeof(TYPE) * d_mat.lhs().size2() ),
-                                 viennacl::ocl::local_mem( sizeof(unsigned int) * d_mat.lhs().size2() ) ));
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)) ) );
       }
 
 

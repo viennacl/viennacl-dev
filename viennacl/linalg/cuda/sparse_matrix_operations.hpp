@@ -188,33 +188,32 @@ namespace viennacl
                 unsigned int result_internal_rows,
                 unsigned int result_internal_cols) {
 
-        extern __shared__ T sh_data[];
-        T* sh_elements = (T*)(sh_data);
-        unsigned int* sh_col_indices = (unsigned int*)(sh_elements + d_mat_row_size);
-
         for (unsigned int row  = blockIdx.x; row  < result_row_size; row += gridDim.x) {
 
           unsigned int row_start = sp_mat_row_indices[row];
           unsigned int row_end = sp_mat_row_indices[row+1];
 
-          for (unsigned int x = threadIdx.x; x < (row_end - row_start); x += blockDim.x) {
-            sh_elements[x] = sp_mat_elements[x + row_start];
-            sh_col_indices[x] = sp_mat_col_indices[x + row_start];
-          }
+          for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
-          __syncthreads();
+            float r = 0;
+            
+            for (unsigned int k = row_start; k < row_end; k++) {
 
-          for (unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
-            T temp = (T)0;
-            for (unsigned int k = 0; k < (row_end - row_start); k++) {
-              temp += sh_elements[k] *
-                  d_mat[ (d_mat_row_start + sh_col_indices[k] * d_mat_row_inc) * d_mat_internal_cols +
-                          d_mat_col_start + col * d_mat_col_inc ];
+              unsigned int j = sp_mat_col_indices[k];
+              float x = sp_mat_elements[k];
+
+              float y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols +
+                                d_mat_col_start + col * d_mat_col_inc ];
+
+              r += x * y;
             }
+
             result [ (result_row_start + row * result_row_inc) * result_internal_cols +
-                      result_col_start + col * result_col_inc ] = temp;
+                      result_col_start + col * result_col_inc ] = r;
           }
+
         }
+
       }
 
 
@@ -230,8 +229,7 @@ namespace viennacl
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
                      const viennacl::matrix_base<TYPE, F> & d_mat,
                            viennacl::matrix_base<TYPE, F> & result) {
-        compressed_matrix_d_mat_mul_kernel<<<128, 128,
-            (sizeof(TYPE)+sizeof(unsigned int)) * static_cast<unsigned int>(viennacl::traits::size1(d_mat))>>>
+        compressed_matrix_d_mat_mul_kernel<<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                        detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
@@ -276,33 +274,31 @@ namespace viennacl
                 unsigned int result_internal_rows,
                 unsigned int result_internal_cols) {
 
-        extern __shared__ T sh_data[];
-        T* sh_elements = (T*)(sh_data);
-        unsigned int* sh_col_indices = (unsigned int*)(sh_elements + d_mat_row_size);
-
         for (unsigned int row  = blockIdx.x; row  < result_row_size; row += gridDim.x) {
 
           unsigned int row_start = sp_mat_row_indices[row];
           unsigned int row_end = sp_mat_row_indices[row+1];
 
-          for (unsigned int x = threadIdx.x; x < (row_end - row_start); x += blockDim.x) {
-            sh_elements[x] = sp_mat_elements[x + row_start];
-            sh_col_indices[x] = sp_mat_col_indices[x + row_start];
-          }
+          for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
-          __syncthreads();
+            float r = 0;
+            
+            for (unsigned int k = row_start; k < row_end; k++) {
 
-          for (unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
-            T temp = (T)0;
-            for (unsigned int k = 0; k < (row_end - row_start); k++) {
-              temp += sh_elements[k] *
-                  d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols +
-                          d_mat_col_start + sh_col_indices[k] * d_mat_col_inc ];
+              unsigned int j = sp_mat_col_indices[k];
+              float x = sp_mat_elements[k];
+
+              float y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols +
+                                d_mat_col_start + j * d_mat_col_inc ];
+
+              r += x * y;
             }
+
             result [ (result_row_start + row * result_row_inc) * result_internal_cols +
-                      result_col_start + col * result_col_inc ] = temp;
+                      result_col_start + col * result_col_inc ] = r;
           }
         }
+
       }
 
       /** @brief Carries out matrix-trans(matrix) multiplication first matrix being compressed
@@ -321,8 +317,7 @@ namespace viennacl
                                                         viennacl::op_trans > & d_mat,
                       viennacl::matrix_base<TYPE, F> & result) {
 
-        compressed_matrix_d_tr_mat_mul_kernel<<<128, 128,
-            (sizeof(TYPE)+sizeof(unsigned int)) * static_cast<unsigned int>(viennacl::traits::size1(d_mat))>>>
+        compressed_matrix_d_tr_mat_mul_kernel<<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                        detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),

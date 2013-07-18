@@ -6,7 +6,8 @@ foreach(PROG blas3_prod blas3_solve iterators
              global_variables
              matrix-vector matrix
              scalar scheduler_matrix scheduler_vector sparse
-             vector vector_multi_inner_prod)
+             vector vector_multi_inner_prod
+             spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    add_test(${PROG}-cpu ${PROG}-test-cpu)
 endforeach(PROG)
@@ -19,7 +20,8 @@ if (ENABLE_OPENCL)
                global_variables
                matrix-vector matrix nmf qr-method
                scalar sparse structured-matrices svd
-               vector vector_multi_inner_prod)
+               vector vector_multi_inner_prod
+               spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
      add_test(${PROG}-opencl ${PROG}-test-opencl)
@@ -41,7 +43,8 @@ if (ENABLE_CUDA)
                global_variables
                matrix-vector matrix
                scalar sparse
-               vector vector_multi_inner_prod)
+               vector vector_multi_inner_prod
+               spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
      add_test(${PROG}-cuda ${PROG}-test-cuda)
   endforeach(PROG)
