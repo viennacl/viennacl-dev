@@ -44,17 +44,17 @@ namespace viennacl
     //  enum { value = false };
     //};
 
-    template <>
-    struct is_cpu_scalar<float>
-    {
-      enum { value = true };
-    };
+    template <> struct is_cpu_scalar<char>           { enum { value = true }; };
+    template <> struct is_cpu_scalar<unsigned char>  { enum { value = true }; };
+    template <> struct is_cpu_scalar<short>          { enum { value = true }; };
+    template <> struct is_cpu_scalar<unsigned short> { enum { value = true }; };
+    template <> struct is_cpu_scalar<int>            { enum { value = true }; };
+    template <> struct is_cpu_scalar<unsigned int>   { enum { value = true }; };
+    template <> struct is_cpu_scalar<long>           { enum { value = true }; };
+    template <> struct is_cpu_scalar<unsigned long>  { enum { value = true }; };
+    template <> struct is_cpu_scalar<float>          { enum { value = true }; };
+    template <> struct is_cpu_scalar<double>         { enum { value = true }; };
 
-    template <>
-    struct is_cpu_scalar<double>
-    {
-      enum { value = true };
-    };
 
     //
     // is_scalar: checks for viennacl::scalar
