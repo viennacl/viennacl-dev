@@ -64,8 +64,6 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         std::size_t start1 = viennacl::traits::start(vec1);
         std::size_t inc1   = viennacl::traits::stride(vec1);
@@ -74,11 +72,22 @@ namespace viennacl
         std::size_t start2 = viennacl::traits::start(vec2);
         std::size_t inc2   = viennacl::traits::stride(vec2);
 
+        if (reciprocal_alpha)
+        {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+          #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
-          data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha;
+          for (std::size_t i = 0; i < size1; ++i)
+            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha;
+        }
+        else
+        {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+          for (std::size_t i = 0; i < size1; ++i)
+            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha;
+        }
       }
 
 
@@ -96,14 +105,10 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         value_type data_beta = beta;
         if (flip_sign_beta)
           data_beta = -data_beta;
-        if (reciprocal_beta)
-          data_beta = static_cast<value_type>(1) / data_beta;
 
         std::size_t start1 = viennacl::traits::start(vec1);
         std::size_t inc1   = viennacl::traits::stride(vec1);
@@ -115,11 +120,44 @@ namespace viennacl
         std::size_t start3 = viennacl::traits::start(vec3);
         std::size_t inc3   = viennacl::traits::stride(vec3);
 
+        if (reciprocal_alpha)
+        {
+          if (reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
-          data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
+          }
+        }
+        else
+        {
+          if (reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+          }
+        }
       }
 
 
@@ -137,14 +175,10 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         value_type data_beta = beta;
         if (flip_sign_beta)
           data_beta = -data_beta;
-        if (reciprocal_beta)
-          data_beta = static_cast<value_type>(1) / data_beta;
 
         std::size_t start1 = viennacl::traits::start(vec1);
         std::size_t inc1   = viennacl::traits::stride(vec1);
@@ -156,11 +190,44 @@ namespace viennacl
         std::size_t start3 = viennacl::traits::start(vec3);
         std::size_t inc3   = viennacl::traits::stride(vec3);
 
+        if (reciprocal_alpha)
+        {
+          if (reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
-          data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
+          }
+        }
+        else
+        {
+          if (reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+            for (std::size_t i = 0; i < size1; ++i)
+              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+          }
+        }
       }
 
 
@@ -451,7 +518,7 @@ namespace viennacl
 
         // Note: No max() reduction in OpenMP yet
         for (std::size_t i = 0; i < size1; ++i)
-          temp = std::max(temp, std::fabs(data_vec1[i*inc1+start1]));
+          temp = std::max<value_type>(temp, std::fabs(data_vec1[i*inc1+start1]));
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }

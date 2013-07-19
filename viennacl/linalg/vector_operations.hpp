@@ -621,7 +621,7 @@ namespace viennacl
     void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                     S2 & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
       norm_1_cpu(temp, result);
     }
 
@@ -709,7 +709,7 @@ namespace viennacl
     void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                     S2 & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
       norm_2_cpu(temp, result);
     }
 
@@ -797,7 +797,7 @@ namespace viennacl
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result)
     {
-      viennacl::vector<typename viennacl::result_of::cpu_value_type<S2>::type> temp = vec;
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
       norm_inf_cpu(temp, result);
     }
 

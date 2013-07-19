@@ -341,7 +341,7 @@ namespace viennacl
       typedef vector_base<SCALARTYPE>         self_type;
 
     public:
-      typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      typedef scalar<SCALARTYPE>                                value_type;
       typedef SCALARTYPE                                        cpu_value_type;
       typedef backend::mem_handle                               handle_type;
       typedef SizeType                                        size_type;
@@ -746,10 +746,10 @@ namespace viennacl
 
       /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
       */
-      vector_expression< const self_type, const SCALARTYPE, op_mult>
+      vector_expression< const self_type, const SCALARTYPE, op_div>
       operator / (SCALARTYPE value) const
       {
-        return vector_expression< const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(1.0) / value);
+        return vector_expression< const self_type, const SCALARTYPE, op_div>(*this, value);
       }
 
 
@@ -1030,13 +1030,6 @@ namespace viennacl
     using base_type::operator=;
     using base_type::operator+=;
     using base_type::operator-=;
-
-    /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
-    vector_expression<const vector_base<SCALARTYPE>, const SCALARTYPE, op_mult> operator-() const
-    {
-      return vector_expression<const vector_base<SCALARTYPE>, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
-    }
-
 
     //enlarge or reduce allocated memory and set unused memory to zero
     /** @brief Resizes the allocated memory for the vector. Pads the memory to be a multiple of 'ALIGNMENT'
@@ -1783,7 +1776,19 @@ namespace viennacl
     return vector_expression< const vector_base<T>, const S1, op_mult>(vec, value);
   }
 
-  /** @brief Scales the vector by a GPU scalar 'alpha' and returns an expression template
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a host scalar (possibly integer)
+  *
+  * @param value   The host scalar (float or double)
+  * @param vec     A ViennaCL vector
+  */
+  template <typename T>
+  vector_expression< const vector_base<T>, const T, op_mult>
+  operator * (T const & value, vector_base<T> const & vec)
+  {
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+  }
+
+  /** @brief Scales the vector by a scalar 'alpha' and returns an expression template
   */
   template <typename T, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
@@ -1791,6 +1796,13 @@ namespace viennacl
   operator * (vector_base<T> const & vec, S1 const & value)
   {
     return vector_expression< const vector_base<T>, const S1, op_mult>(vec, value);
+  }
+
+  template <typename T>
+  vector_expression< const vector_base<T>, const T, op_mult>
+  operator * (vector_base<T> const & vec, T const & value)
+  {
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
   }
 
   /** @brief Operator overload for the multiplication of a vector expression with a scalar from the right, e.g. (beta * vec1) * alpha. Here, beta * vec1 is wrapped into a vector_expression and then multiplied with alpha from the right.
@@ -1820,7 +1832,6 @@ namespace viennacl
   {
     return viennacl::vector_expression<const vector_expression<LHS, RHS, OP>, const S1, op_mult>(proxy, val);
   }
-
 
   //
   // operator /

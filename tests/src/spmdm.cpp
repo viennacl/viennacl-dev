@@ -49,7 +49,6 @@ int main()
   typedef float       ScalarType;
   
   std::size_t size = 1024, size1, size2;
-  int retVal  = EXIT_SUCCESS;
 
   ublas::compressed_matrix<ScalarType> u_lhs(size/2, size);
   viennacl::compressed_matrix<ScalarType> lhs(size/2, size);
@@ -104,13 +103,11 @@ int main()
     for (unsigned int j = 0; j < size2; j++)
       if ( abs(temp(i,j) - u_result(i,j)) > eps ) {
         std::cout << "!!Verification failed at " << i <<" : "<< j  << "(expected: " << u_result(i,j) << " get: " << temp(i,j) << " )" << std::endl;
-        retVal = EXIT_FAILURE;
-        goto next_test;
+        return EXIT_FAILURE;
       }
 
   std::cout << "Everything went well!" << std::endl;
 
-  next_test:
   std::cout << std::endl << "dense transposed rhs:" << std::endl;
 
   u_result = ublas::prod( u_lhs, ublas::trans(u_rhs2));
@@ -126,13 +123,10 @@ int main()
     for (unsigned int j = 0; j < size2; j++)
       if ( abs(temp(i,j) - u_result(i,j)) > eps ) {
         std::cout << "!!Verification failed at " << i <<" : "<< j  << "(expected: " << u_result(i,j) << " get: " << temp(i,j) << " )" << std::endl;
-        retVal = EXIT_FAILURE;
-        goto stop;
+        return EXIT_FAILURE;
       }
 
   std::cout << "Everything went well!" << std::endl;
 
-  stop:
-
-  return retVal;
+  return EXIT_SUCCESS;
 }

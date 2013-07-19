@@ -27,6 +27,8 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/linalg/vector_operations.hpp"
 
+#include "viennacl/scheduler/execute_scalar_assign.hpp"
+
 #include "viennacl/scheduler/execute_vector_assign.hpp"
 #include "viennacl/scheduler/execute_vector_inplace_add.hpp"
 #include "viennacl/scheduler/execute_vector_inplace_sub.hpp"
@@ -52,6 +54,16 @@ namespace viennacl
 
       switch (expr[0].lhs_type_family_)
       {
+        case SCALAR_TYPE_FAMILY:
+          switch (expr[0].op_type_)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              execute_scalar_assign(s); break;
+            default:
+              throw "invalid scalar operation";
+          }
+          break;
+
         case VECTOR_TYPE_FAMILY:
           switch (expr[0].op_type_)
           {

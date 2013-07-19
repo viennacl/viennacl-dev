@@ -226,6 +226,42 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "Testing reductions..." << std::endl;
+  {
+  cpu_result = inner_prod(ublas_v1, ublas_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2)); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = norm_1(ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = norm_2(ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = norm_inf(ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
 
   // --------------------------------------------------------------------------
   return retval;

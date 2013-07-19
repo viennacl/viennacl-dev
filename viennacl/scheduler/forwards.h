@@ -59,6 +59,9 @@ namespace viennacl
       OPERATION_UNARY_SQRT_TYPE,
       OPERATION_UNARY_TAN_TYPE,
       OPERATION_UNARY_TANH_TYPE,
+      OPERATION_UNARY_NORM_1_TYPE,
+      OPERATION_UNARY_NORM_2_TYPE,
+      OPERATION_UNARY_NORM_INF_TYPE,
 
       // binary expression
       OPERATION_BINARY_ASSIGN_TYPE,
@@ -69,7 +72,8 @@ namespace viennacl
       OPERATION_BINARY_PROD_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
       OPERATION_BINARY_ELEMENT_MULT_TYPE,
-      OPERATION_BINARY_ELEMENT_DIV_TYPE
+      OPERATION_BINARY_ELEMENT_DIV_TYPE,
+      OPERATION_BINARY_INNER_PROD_TYPE
     };
 
 
@@ -100,6 +104,9 @@ namespace viennacl
       template <> struct op_type_info<op_element_unary<op_sqrt>  > { enum { id = OPERATION_UNARY_SQRT_TYPE,  family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_unary<op_tan>   > { enum { id = OPERATION_UNARY_TAN_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_unary<op_tanh>  > { enum { id = OPERATION_UNARY_TANH_TYPE,  family = OPERATION_UNARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_norm_1                  > { enum { id = OPERATION_UNARY_NORM_1_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_norm_2                  > { enum { id = OPERATION_UNARY_NORM_2_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_norm_inf                > { enum { id = OPERATION_UNARY_NORM_INF_TYPE, family = OPERATION_UNARY_TYPE_FAMILY }; };
 
       // binary operations
       template <> struct op_type_info<op_assign>                   { enum { id = OPERATION_BINARY_ASSIGN_TYPE,       family = OPERATION_BINARY_TYPE_FAMILY }; };
@@ -111,6 +118,7 @@ namespace viennacl
       template <> struct op_type_info<op_mult>                     { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_mult> > { enum { id = OPERATION_BINARY_ELEMENT_MULT_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_inner_prod>               { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY }; };
 
     } // namespace result_of
 
@@ -211,6 +219,24 @@ namespace viennacl
 
     namespace result_of
     {
+      ///////////// scalar type ID deduction /////////////
+
+      template <typename T>
+      struct scalar_type {};
+
+      template <> struct scalar_type<char>           { enum { value = SCALAR_CHAR_TYPE   }; };
+      template <> struct scalar_type<unsigned char>  { enum { value = SCALAR_UCHAR_TYPE  }; };
+      template <> struct scalar_type<short>          { enum { value = SCALAR_SHORT_TYPE  }; };
+      template <> struct scalar_type<unsigned short> { enum { value = SCALAR_USHORT_TYPE }; };
+      template <> struct scalar_type<int>            { enum { value = SCALAR_INT_TYPE    }; };
+      template <> struct scalar_type<unsigned int>   { enum { value = SCALAR_UINT_TYPE   }; };
+      template <> struct scalar_type<long>           { enum { value = SCALAR_LONG_TYPE   }; };
+      template <> struct scalar_type<unsigned long>  { enum { value = SCALAR_ULONG_TYPE  }; };
+      template <> struct scalar_type<float>          { enum { value = SCALAR_FLOAT_TYPE  }; };
+      template <> struct scalar_type<double>         { enum { value = SCALAR_DOUBLE_TYPE }; };
+
+      ///////////// vector type ID deduction /////////////
+
       template <typename T>
       struct vector_type_for_scalar {};
 
@@ -229,6 +255,8 @@ namespace viennacl
       VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         VECTOR_DOUBLE_TYPE);
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+
+      ///////////// matrix type ID deduction /////////////
 
       template <typename T, typename F>
       struct matrix_type_for_scalar_and_layout {};
@@ -404,6 +432,11 @@ namespace viennacl
 
       private:
 
+        ///////////// Scalar node helper ////////////////
+        // TODO: add integer vector overloads here
+        void assign_element(lhs_rhs_element & element_, viennacl::scalar<float>  const & t) { element_.scalar_float_  = const_cast<viennacl::scalar<float> *>(&t); }
+        void assign_element(lhs_rhs_element & element_, viennacl::scalar<double> const & t) { element_.scalar_double_ = const_cast<viennacl::scalar<double> *>(&t); }
+
         ///////////// Vector node helper ////////////////
         // TODO: add integer vector overloads here
         void assign_element(lhs_rhs_element & element_, viennacl::vector_base<float>  const & t) { element_.vector_float_  = const_cast<viennacl::vector_base<float> *>(&t); }
@@ -417,6 +450,20 @@ namespace viennacl
         void assign_element(lhs_rhs_element & element_, viennacl::matrix_base<double, viennacl::row_major>    const & t) { element_.matrix_row_double_ = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
 
         //////////// Tree leaves (terminals) ////////////////////
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & type_family_,
+                                statement_node_type        & type_,
+                                lhs_rhs_element            & element_,
+                                viennacl::scalar<T> const & t)
+        {
+          type_family_           = SCALAR_TYPE_FAMILY;
+          type_                  = statement_node_type(result_of::scalar_type<T>::value);
+          assign_element(element_, t);
+          return next_free;
+        }
+
 
         template <typename T>
         std::size_t add_element(std::size_t next_free,
@@ -447,6 +494,18 @@ namespace viennacl
 
         //////////// Tree nodes (non-terminals) ////////////////////
 
+        template <typename LHS, typename RHS, typename OP>
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & type_family_,
+                                statement_node_type        & type_,
+                                lhs_rhs_element            & element_,
+                                viennacl::scalar_expression<LHS, RHS, OP> const & t)
+        {
+          type_family_           = COMPOSITE_OPERATION_FAMILY;
+          type_                  = COMPOSITE_OPERATION_TYPE;
+          element_.node_index_   = next_free;
+          return add_node(next_free, next_free + 1, t);
+        }
 
         template <typename LHS, typename RHS, typename OP>
         std::size_t add_element(std::size_t next_free,
@@ -500,20 +559,8 @@ namespace viennacl
 
         //////////// Internal interfaces ////////////////////
 
-
-        template <typename LHS, typename OP, typename RHS>
-        std::size_t add_node(std::size_t current_index, std::size_t next_free, viennacl::vector_expression<LHS, RHS, OP> const & proxy)
-        {
-          // set OP:
-          array_[current_index].op_family_ = operation_node_type_family(result_of::op_type_info<OP>::family);
-          array_[current_index].op_type_   = operation_node_type(result_of::op_type_info<OP>::id);
-
-          // set LHS and RHS:
-          return add_rhs(current_index, add_lhs(current_index, next_free, proxy.lhs()), proxy.rhs());
-        }
-
-        template <typename LHS, typename OP, typename RHS>
-        std::size_t add_node(std::size_t current_index, std::size_t next_free, viennacl::matrix_expression<LHS, RHS, OP> const & proxy)
+        template <template <typename, typename, typename> class ExpressionT, typename LHS, typename RHS, typename OP>
+        std::size_t add_node(std::size_t current_index, std::size_t next_free, ExpressionT<LHS, RHS, OP> const & proxy)
         {
           // set OP:
           array_[current_index].op_family_ = operation_node_type_family(result_of::op_type_info<OP>::family);

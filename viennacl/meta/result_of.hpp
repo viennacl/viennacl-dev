@@ -268,6 +268,55 @@ namespace viennacl
       };
 
       template <>
+      struct cpu_value_type<char>
+      {
+        typedef char    type;
+      };
+
+      template <>
+      struct cpu_value_type<unsigned char>
+      {
+        typedef unsigned char    type;
+      };
+
+      template <>
+      struct cpu_value_type<short>
+      {
+        typedef short    type;
+      };
+
+      template <>
+      struct cpu_value_type<unsigned short>
+      {
+        typedef unsigned short    type;
+      };
+
+      template <>
+      struct cpu_value_type<int>
+      {
+        typedef int    type;
+      };
+
+      template <>
+      struct cpu_value_type<unsigned int>
+      {
+        typedef unsigned int    type;
+      };
+
+      template <>
+      struct cpu_value_type<long>
+      {
+        typedef int    type;
+      };
+
+      template <>
+      struct cpu_value_type<unsigned long>
+      {
+        typedef unsigned long    type;
+      };
+
+
+      template <>
       struct cpu_value_type<float>
       {
         typedef float    type;
@@ -432,6 +481,19 @@ namespace viennacl
         typedef T &    type;
       };
 
+#define VIENNACL_REFERENCE_IF_NONSCALAR_INT(TNAME) \
+      template <> struct reference_if_nonscalar<TNAME>                { typedef                TNAME  type; }; \
+      template <> struct reference_if_nonscalar<const TNAME>          { typedef          const TNAME  type; }; \
+      template <> struct reference_if_nonscalar<unsigned TNAME>       { typedef       unsigned TNAME  type; }; \
+      template <> struct reference_if_nonscalar<const unsigned TNAME> { typedef const unsigned TNAME  type; };
+
+      VIENNACL_REFERENCE_IF_NONSCALAR_INT(char)
+      VIENNACL_REFERENCE_IF_NONSCALAR_INT(short)
+      VIENNACL_REFERENCE_IF_NONSCALAR_INT(int)
+      VIENNACL_REFERENCE_IF_NONSCALAR_INT(long)
+
+#undef VIENNACL_REFERENCE_IF_NONSCALAR_INT
+
       template <>
       struct reference_if_nonscalar<float>
       {
@@ -455,6 +517,7 @@ namespace viennacl
       {
         typedef const double    type;
       };
+
       /** \endcond */
 
       //OpenCL equivalent type
