@@ -2503,9 +2503,9 @@ namespace viennacl
 
       // C = A * B
       template <typename T, typename F, typename F1, typename F2>
-      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> >
       {
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
         }
@@ -2515,11 +2515,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_base<T, F1>,
                                                                          const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                         op_prod> >
+                                                                         op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
         }
@@ -2529,11 +2529,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                          const matrix_base<T, F2>,
-                                                                         op_prod> >
+                                                                         op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_base<T, F2>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
         }
@@ -2543,11 +2543,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                          const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                         op_prod> >
+                                                                         op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
         }
@@ -2556,9 +2556,9 @@ namespace viennacl
 
       // C += A * B
       template <typename T, typename F, typename F1, typename F2>
-      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> >
       {
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
         }
@@ -2568,11 +2568,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_base<T, F1>,
                                                                               const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
         }
@@ -2582,11 +2582,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                               const matrix_base<T, F2>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_base<T, F2>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
         }
@@ -2596,11 +2596,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                               const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
         }
@@ -2609,9 +2609,9 @@ namespace viennacl
 
       // C -= A * B
       template <typename T, typename F, typename F1, typename F2>
-      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> >
+      struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> >
       {
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_prod> const & rhs)
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F2>, op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
         }
@@ -2621,11 +2621,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_base<T, F1>,
                                                                               const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_base<T, F1>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
         }
@@ -2635,11 +2635,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                               const matrix_base<T, F2>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_base<T, F2>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
         }
@@ -2649,11 +2649,11 @@ namespace viennacl
       template <typename T, typename F, typename F1, typename F2>
       struct op_executor<matrix_base<T, F>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                               const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                              op_prod> >
+                                                                              op_mat_mat_prod> >
       {
         static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const matrix_base<T, F1>, const matrix_base<T, F1>, op_trans>,
                                                                      const matrix_expression<const matrix_base<T, F2>, const matrix_base<T, F2>, op_trans>,
-                                                                     op_prod> const & rhs)
+                                                                     op_mat_mat_prod> const & rhs)
         {
           viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
         }

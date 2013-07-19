@@ -69,7 +69,8 @@ namespace viennacl
       OPERATION_BINARY_INPLACE_SUB_TYPE,
       OPERATION_BINARY_ADD_TYPE,
       OPERATION_BINARY_SUB_TYPE,
-      OPERATION_BINARY_PROD_TYPE,
+      OPERATION_BINARY_MAT_VEC_PROD_TYPE,
+      OPERATION_BINARY_MAT_MAT_PROD_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
       OPERATION_BINARY_ELEMENT_MULT_TYPE,
       OPERATION_BINARY_ELEMENT_DIV_TYPE,
@@ -114,7 +115,8 @@ namespace viennacl
       template <> struct op_type_info<op_inplace_sub>              { enum { id = OPERATION_BINARY_INPLACE_SUB_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_add>                      { enum { id = OPERATION_BINARY_ADD_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_sub>                      { enum { id = OPERATION_BINARY_SUB_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY }; };
-      template <> struct op_type_info<op_prod>                     { enum { id = OPERATION_BINARY_PROD_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_prod>                     { enum { id = OPERATION_BINARY_MAT_VEC_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_mat_mat_prod>             { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_mult>                     { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_mult> > { enum { id = OPERATION_BINARY_ELEMENT_MULT_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };

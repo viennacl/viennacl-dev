@@ -141,7 +141,7 @@ namespace viennacl
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<T1,
                                                                  T1, op_trans>,
                                const viennacl::matrix_base<ScalarType, F2>,
-                               viennacl::op_prod>
+                               viennacl::op_mat_mat_prod>
     {
       static std::size_t size1(viennacl::matrix_expression<T1,
                                                            T1,
@@ -160,7 +160,7 @@ namespace viennacl
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType, F1>,
                                const viennacl::matrix_expression<T2,
                                                                  T2, op_trans>,
-                               viennacl::op_prod>
+                               viennacl::op_mat_mat_prod>
     {
       static std::size_t size1(viennacl::matrix_base<ScalarType, F1> const & lhs,
                                viennacl::matrix_expression<T2,
@@ -182,7 +182,7 @@ namespace viennacl
                                                                  T1, op_trans>,
                                const viennacl::matrix_expression<T2,
                                                                  T2, op_trans>,
-                               viennacl::op_prod>
+                               viennacl::op_mat_mat_prod>
     {
       typedef viennacl::matrix_expression<T1, T1, op_trans>   LHSType;
       typedef viennacl::matrix_expression<T2, T2, op_trans>   RHSType;
