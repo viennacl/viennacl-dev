@@ -122,8 +122,8 @@ namespace viennacl
           ScalarType dot_prod = 0;
           std::size_t row_end = row_buffer[row+1];
           for (std::size_t i = row_buffer[row]; i < row_end; ++i)
-            dot_prod += elements[i] * vec_buf[col_buffer[i]];
-          result_buf[row] = dot_prod;
+            dot_prod += elements[i] * vec_buf[col_buffer[i] * vec.stride() + vec.start()];
+          result_buf[row * result.stride() + result.start()] = dot_prod;
         }
 
       }
