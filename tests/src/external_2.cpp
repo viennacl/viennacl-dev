@@ -66,7 +66,7 @@
 #endif
 
 #include "viennacl/io/matrix_market.hpp"
-
+#include "viennacl/scheduler/execute.hpp"
 
 void other_func()
 {

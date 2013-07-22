@@ -33,15 +33,15 @@ namespace viennacl
   {
 
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    void execute_matrix_col_inplace_add_composite(statement const & s)
+    inline void execute_matrix_col_inplace_add_composite(statement const & s)
     {
       throw "TODO";
     }
 
     /** @brief Deals with A += B  for a matrix B */
-    void execute_matrix_col_inplace_add_matrix(statement const & s)
+    inline void execute_matrix_col_inplace_add_matrix(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 
@@ -66,9 +66,9 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    void execute_matrix_col_inplace_add(statement const & s)
+    inline void execute_matrix_col_inplace_add(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 

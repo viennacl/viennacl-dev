@@ -46,9 +46,9 @@ namespace viennacl
   namespace scheduler
   {
 
-    void execute(statement const & s)
+    inline void execute(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 

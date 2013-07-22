@@ -33,15 +33,15 @@ namespace viennacl
   {
 
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    void execute_vector_inplace_add_composite(statement const & s)
+    inline void execute_vector_inplace_add_composite(statement const & s)
     {
       throw "TODO";
     }
 
     /** @brief Deals with x = y  for a vector y */
-    void execute_vector_inplace_add_vector(statement const & s)
+    inline void execute_vector_inplace_add_vector(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 
@@ -66,9 +66,9 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    void execute_vector_inplace_add(statement const & s)
+    inline void execute_vector_inplace_add(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 
