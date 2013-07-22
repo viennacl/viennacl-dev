@@ -388,7 +388,9 @@ namespace viennacl
           if (is_float_or_double)
             source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
           else
+          {
             source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
+          }
           source.append("  } \n");
 
           source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
