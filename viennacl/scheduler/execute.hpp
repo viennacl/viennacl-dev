@@ -60,7 +60,7 @@ namespace viennacl
             case OPERATION_BINARY_ASSIGN_TYPE:
               execute_scalar_assign(s); break;
             default:
-              throw "invalid scalar operation";
+              throw statement_not_supported_exception("Scalar operation does not use '=' in head node.");
           }
           break;
 
@@ -74,7 +74,7 @@ namespace viennacl
             case OPERATION_BINARY_INPLACE_SUB_TYPE:
               execute_vector_inplace_sub(s); break;
             default:
-              throw "invalid vector operation";
+              throw statement_not_supported_exception("Vector operation does not use '=', '+=' or '-=' in head node.");
           }
           break;
 
@@ -88,7 +88,7 @@ namespace viennacl
             case OPERATION_BINARY_INPLACE_SUB_TYPE:
               execute_matrix_col_inplace_sub(s); break;
             default:
-              throw "invalid vector operation";
+              throw statement_not_supported_exception("Column-major matrix operation does not use '=', '+=' or '-=' in head node.");
           }
           break;
 
@@ -102,12 +102,12 @@ namespace viennacl
             case OPERATION_BINARY_INPLACE_SUB_TYPE:
               execute_matrix_row_inplace_sub(s); break;
             default:
-              throw "invalid vector operation";
+              throw statement_not_supported_exception("Row-major matrix operation does not use '=', '+=' or '-=' in head node.");
           }
           break;
 
         default:
-          throw "unsupported lvalue encountered in scheduler";
+          throw statement_not_supported_exception("Unsupported lvalue encountered in head node.");
       }
     }
 

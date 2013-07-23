@@ -57,7 +57,7 @@ namespace viennacl
           viennacl::linalg::inner_prod_impl(y, z, s);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with inner product of the provided arguments");
       }
       else if (expr[1].op_type_  == OPERATION_UNARY_NORM_1_TYPE)
       {
@@ -77,7 +77,7 @@ namespace viennacl
           viennacl::linalg::norm_1_impl(x, s);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with norm_1 of the provided arguments");
       }
       else if (expr[1].op_type_  == OPERATION_UNARY_NORM_2_TYPE)
       {
@@ -97,7 +97,7 @@ namespace viennacl
           viennacl::linalg::norm_2_impl(x, s);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with norm_2 of the provided arguments");
       }
       else if (expr[1].op_type_  == OPERATION_UNARY_NORM_INF_TYPE)
       {
@@ -117,10 +117,10 @@ namespace viennacl
           viennacl::linalg::norm_inf_impl(x, s);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with norm_inf of the provided arguments");
       }
       else
-        throw "TODO";
+        throw statement_not_supported_exception("Unsupported operation for scalar.");
     }
 
     /** @brief Generic dispatcher */
@@ -136,7 +136,7 @@ namespace viennacl
           execute_scalar_assign_composite(s);
           break;
         default:
-          throw "invalid rvalue in vector assignment";
+          throw statement_not_supported_exception("Unsupported rvalue on root node for operation on scalar.");
       }
     }
 

@@ -61,7 +61,7 @@ namespace viennacl
                                  z, 1.0, 1, false, false);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with addition of vectors");
       }
       else if (expr[1].op_type_  == OPERATION_BINARY_SUB_TYPE)
       {
@@ -88,10 +88,10 @@ namespace viennacl
                                  z, -1.0, 1, false, false);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with subtraction of vectors");
       }
       else
-        throw "TODO";
+        throw statement_not_supported_exception("Unsupported binary operator for vector operations");
     }
 
     /** @brief Deals with x = y  for a vector y */
@@ -116,7 +116,7 @@ namespace viennacl
                              y, 1.0, 1, false, false);
       }
       else
-        throw "not yet supported!";  //TODO: Add conversion routines
+        throw statement_not_supported_exception("Unsupported assignment to vector");
     }
 
     /** @brief Generic dispatcher */
@@ -135,7 +135,7 @@ namespace viennacl
           execute_vector_assign_vector(s);
           break;
         default:
-          throw "invalid rvalue in vector assignment";
+          throw statement_not_supported_exception("Invalid rvalue encountered in vector assignment");
       }
     }
 

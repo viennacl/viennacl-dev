@@ -61,7 +61,7 @@ namespace viennacl
                                  C, 1.0, 1, false, false);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with addition of row-major matrix");
       }
       else if (expr[1].op_type_  == OPERATION_BINARY_SUB_TYPE)
       {
@@ -88,10 +88,10 @@ namespace viennacl
                                  C, -1.0, 1, false, false);
         }
         else
-          throw "TODO";
+          throw statement_not_supported_exception("Cannot deal with subtraction of row-major matrix");
       }
       else
-        throw "TODO";
+        throw statement_not_supported_exception("Unsupported binary operator for row-major matrix operations");
     }
 
     /** @brief Deals with A = B  for a matrix B */
@@ -116,7 +116,7 @@ namespace viennacl
                              B, 1.0, 1, false, false);
       }
       else
-        throw "not yet supported!";  //TODO: Add conversion routines
+        throw statement_not_supported_exception("Unsupported assignment to row-major matrix");
     }
 
     /** @brief Generic dispatcher */
@@ -135,7 +135,7 @@ namespace viennacl
           execute_matrix_row_assign_matrix(s);
           break;
         default:
-          throw "invalid rvalue in vector assignment";
+          throw statement_not_supported_exception("Invalid rvalue encountered in row-major matrix assignment");
       }
     }
 

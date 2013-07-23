@@ -30,6 +30,21 @@ namespace viennacl
   namespace scheduler
   {
 
+    /** @brief Exception for the case the scheduler is unable to deal with the operation */
+    class statement_not_supported_exception : public std::exception
+    {
+    public:
+      statement_not_supported_exception() : message_() {}
+      statement_not_supported_exception(std::string message) : message_("ViennaCL: Internal error: The scheduler encountered a problem with the operation provided: " + message) {}
+
+      virtual const char* what() const throw() { return message_.c_str(); }
+
+      virtual ~statement_not_supported_exception() throw() {}
+    private:
+      std::string message_;
+    };
+
+
     /** @brief Optimization enum for grouping operations into unary or binary operations. Just for optimization of lookups. */
     enum operation_node_type_family
     {

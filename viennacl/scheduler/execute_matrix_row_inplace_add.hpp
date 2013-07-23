@@ -35,7 +35,7 @@ namespace viennacl
     /** @brief Deals with x = RHS where RHS is a vector expression */
     inline void execute_matrix_row_inplace_add_composite(statement const & s)
     {
-      throw "TODO";
+      throw statement_not_supported_exception("Composite inplace-additions for row-major matrices not supported yet");
     }
 
     /** @brief Deals with A += B  for a matrix B */
@@ -62,7 +62,7 @@ namespace viennacl
                                B,  1.0, 1, false, false);
       }
       else
-        throw "not yet supported!";
+        throw statement_not_supported_exception("Unsupported rvalue for inplace-add to row-major matrix");
     }
 
     /** @brief Generic dispatcher */
@@ -81,7 +81,7 @@ namespace viennacl
           execute_matrix_row_inplace_add_matrix(s);
           break;
         default:
-          throw "invalid rvalue in vector assignment";
+          throw statement_not_supported_exception("Invalid rvalue encountered in column-major matrix inplace-add");
       }
     }
 

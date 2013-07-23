@@ -35,7 +35,7 @@ namespace viennacl
     /** @brief Deals with x = RHS where RHS is a vector expression */
     inline void execute_vector_inplace_add_composite(statement const & s)
     {
-      throw "TODO";
+      throw statement_not_supported_exception("Composite inplace-additions for vectors not supported yet");
     }
 
     /** @brief Deals with x = y  for a vector y */
@@ -62,7 +62,7 @@ namespace viennacl
                                y,  1.0, 1, false, false);
       }
       else
-        throw "not yet supported!";
+        throw statement_not_supported_exception("Unsupported rvalue for inplace-add to vector");
     }
 
     /** @brief Generic dispatcher */
@@ -81,7 +81,7 @@ namespace viennacl
           execute_vector_inplace_add_vector(s);
           break;
         default:
-          throw "invalid rvalue in vector assignment";
+          throw statement_not_supported_exception("Invalid rvalue encountered in vector inplace-add");
       }
     }
 
