@@ -298,17 +298,13 @@ namespace viennacl
         }
 
 #if 1
-        // TODO: would like to switch queue by finding it in queues_ and
-        // switching device if necessary
-
-        /** @brief If the supplied device is used within the context, it becomes the current active device. */
+        /** @brief If the supplied command_queue is used within the context, it becomes the current active command_queue, the command_queue's device becomes current active device. */
         void switch_queue(viennacl::ocl::command_queue const & q)
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Setting new current queue for context " << h_ << std::endl;
           #endif
           bool found = false;
-          //std::map< cl_device_id, std::vector< viennacl::ocl::command_queue> >
           typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
 
           // For each device:
