@@ -62,6 +62,11 @@ namespace viennacl
           return *this;
         }
 
+        bool operator==(command_queue const & other) const
+        {
+          return handle_ == other.handle_;
+        }
+
         /** @brief Waits until all kernels in the queue have finished their execution */
         void finish() const
         {
