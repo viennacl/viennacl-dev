@@ -32,9 +32,9 @@ namespace viennacl
   namespace scheduler
   {
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    void execute_vector_assign_composite(statement const & s)
+    inline void execute_vector_assign_composite(statement const & s)
     {
-      typename statement::container_type const & expr = s.array();
+      statement::container_type const & expr = s.array();
 
       if (expr[1].op_type_  == OPERATION_BINARY_ADD_TYPE)
       {
@@ -95,9 +95,9 @@ namespace viennacl
     }
 
     /** @brief Deals with x = y  for a vector y */
-    void execute_vector_assign_vector(statement const & s)
+    inline void execute_vector_assign_vector(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 
@@ -120,9 +120,9 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    void execute_vector_assign(statement const & s)
+    inline void execute_vector_assign(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 

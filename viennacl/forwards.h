@@ -72,6 +72,8 @@ namespace viennacl
   struct op_mult {};
   /** @brief A tag class representing matrix-vector products */
   struct op_prod {};
+  /** @brief A tag class representing matrix-matrix products */
+  struct op_mat_mat_prod {};
   /** @brief A tag class representing division */
   struct op_div {};
 

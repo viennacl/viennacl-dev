@@ -181,7 +181,7 @@ int main(int argc, char* argv[]){
                         std::cerr << "Unknown Scalartype ... Aborting" << std::endl;
                         exit(EXIT_FAILURE);
                     }
-                    std::cout << size << "\t" << 2*pow(size/1000.0d,3)/exec_time << std::endl;
+                    std::cout << size << "\t" << 2*pow(size/static_cast<double>(1000.0),3)/exec_time << std::endl;
                 }
             }
         }

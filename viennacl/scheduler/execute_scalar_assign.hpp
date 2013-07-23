@@ -32,9 +32,9 @@ namespace viennacl
   namespace scheduler
   {
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    void execute_scalar_assign_composite(statement const & s)
+    inline void execute_scalar_assign_composite(statement const & s)
     {
-      typename statement::container_type const & expr = s.array();
+      statement::container_type const & expr = s.array();
 
       if (expr[1].op_type_  == OPERATION_BINARY_INNER_PROD_TYPE)
       {
@@ -124,9 +124,9 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    void execute_scalar_assign(statement const & s)
+    inline void execute_scalar_assign(statement const & s)
     {
-      typedef typename statement::container_type   StatementContainer;
+      typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 

@@ -138,14 +138,14 @@ namespace viennacl
     template< typename NumericT, typename F1, typename F2>
     viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
                                  const viennacl::matrix_base<NumericT, F2>,
-                                 viennacl::op_prod >
+                                 viennacl::op_mat_mat_prod >
     prod(viennacl::matrix_base<NumericT, F1> const & A,
          viennacl::matrix_base<NumericT, F2> const & B)
     {
       // std::cout << "viennacl .. " << std::endl;
       return viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
                                           const viennacl::matrix_base<NumericT, F2>,
-                                          viennacl::op_prod >(A, B);
+                                          viennacl::op_mat_mat_prod >(A, B);
     }
 
     // right factor is transposed:
@@ -154,7 +154,7 @@ namespace viennacl
                                  const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
                                                                    const viennacl::matrix_base<NumericT, F2>,
                                                                    op_trans>,
-                                 viennacl::op_prod >
+                                 viennacl::op_mat_mat_prod >
     prod(viennacl::matrix_base<NumericT, F1> const & A,
          viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
                                      const viennacl::matrix_base<NumericT, F2>,
@@ -165,7 +165,7 @@ namespace viennacl
                                           const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
                                                                             const viennacl::matrix_base<NumericT, F2>,
                                                                             op_trans>,
-                                          viennacl::op_prod >(A, B);
+                                          viennacl::op_mat_mat_prod >(A, B);
     }
 
     // left factor transposed:
@@ -174,7 +174,7 @@ namespace viennacl
                                                                    const viennacl::matrix_base<NumericT, F1>,
                                                                    op_trans>,
                                  const viennacl::matrix_base<NumericT, F2>,
-                                 viennacl::op_prod >
+                                 viennacl::op_mat_mat_prod >
     prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
                                      const viennacl::matrix_base<NumericT, F1>,
                                      op_trans> const & A,
@@ -185,7 +185,7 @@ namespace viennacl
                                                                             const viennacl::matrix_base<NumericT, F1>,
                                                                             op_trans>,
                                           const viennacl::matrix_base<NumericT, F2>,
-                                          viennacl::op_prod >(A, B);
+                                          viennacl::op_mat_mat_prod >(A, B);
     }
 
 
@@ -197,7 +197,7 @@ namespace viennacl
                                  const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
                                                                    const viennacl::matrix_base<NumericT, F2>,
                                                                    op_trans>,
-                                 viennacl::op_prod >
+                                 viennacl::op_mat_mat_prod >
     prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
                                      const viennacl::matrix_base<NumericT, F1>,
                                      op_trans> const & A,
@@ -212,7 +212,7 @@ namespace viennacl
                                           const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
                                                                             const viennacl::matrix_base<NumericT, F2>,
                                                                             op_trans>,
-                                          viennacl::op_prod >(A, B);
+                                          viennacl::op_mat_mat_prod >(A, B);
     }
 
 

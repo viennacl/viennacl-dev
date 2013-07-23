@@ -121,19 +121,24 @@ namespace viennacl
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
                 const T * elements,
-                const T * vector,
+                const T * x,
+                unsigned int start_x,
+                unsigned int inc_x,
+                unsigned int size_x,
                 T * result,
-                unsigned int size)
+                unsigned int start_result,
+                unsigned int inc_result,
+                unsigned int size_result)
       {
         for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                          row  < size;
+                          row  < size_result;
                           row += gridDim.x * blockDim.x)
         {
           T dot_prod = (T)0;
           unsigned int row_end = row_indices[row+1];
           for (unsigned int i = row_indices[row]; i < row_end; ++i)
-            dot_prod += elements[i] * vector[column_indices[i]];
-          result[row] = dot_prod;
+            dot_prod += elements[i] * x[column_indices[i] * inc_x + start_x];
+          result[row * inc_result + start_result] = dot_prod;
         }
       }
 
@@ -158,8 +163,13 @@ namespace viennacl
                                                        detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                                        detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
                                                        detail::cuda_arg<ScalarType>(vec),
+                                                       static_cast<unsigned int>(vec.start()),
+                                                       static_cast<unsigned int>(vec.stride()),
+                                                       static_cast<unsigned int>(vec.size()),
                                                        detail::cuda_arg<ScalarType>(result),
-                                                       static_cast<unsigned int>(mat.size1())
+                                                       static_cast<unsigned int>(result.start()),
+                                                       static_cast<unsigned int>(result.stride()),
+                                                       static_cast<unsigned int>(result.size())
                                                       );
         VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
       }
