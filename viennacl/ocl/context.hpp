@@ -52,7 +52,8 @@ namespace viennacl
                     device_type_(CL_DEVICE_TYPE_DEFAULT),
                     current_device_id_(0),
                     default_device_num_(1),
-                    pf_index_(0) {}
+                    pf_index_(0),
+                    current_queue_id_(0) {}
 
         //////// Get and set default number of devices per context */
         /** @brief Returns the maximum number of devices to be set up for the context */
@@ -226,7 +227,11 @@ namespace viennacl
           std::cout << "ViennaCL: Adding new queue for device " << dev << " to context " << h_ << std::endl;
           #endif
           cl_int err;
+#ifdef VIENNACL_PROFILING_ENABLED
+          viennacl::ocl::handle<cl_command_queue> temp(clCreateCommandQueue(h_.get(), dev, CL_QUEUE_PROFILING_ENABLE, &err), *this);
+#else
           viennacl::ocl::handle<cl_command_queue> temp(clCreateCommandQueue(h_.get(), dev, 0, &err), *this);
+#endif
           VIENNACL_ERR_CHECK(err);
 
           queues_[dev].push_back(viennacl::ocl::command_queue(temp));
@@ -238,7 +243,7 @@ namespace viennacl
         //get queue for default device:
         viennacl::ocl::command_queue & get_queue()
         {
-          return queues_[devices_[current_device_id_].id()][0];
+          return queues_[devices_[current_device_id_].id()][current_queue_id_];
         }
 
         viennacl::ocl::command_queue const & get_queue() const
@@ -248,14 +253,14 @@ namespace viennacl
           // find queue:
           QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
           if (it != queues_.end())
-            return (it->second)[0];
+            return (it->second)[current_queue_id_];
 
           std::cerr << "ViennaCL: FATAL ERROR: Could not obtain current command queue!" << std::endl;
           std::cout << "Number of queues in context: " << queues_.size() << std::endl;
           std::cout << "Number of devices in context: " << devices_.size() << std::endl;
           throw "queue not found!";
 
-          return (it->second)[0];
+          return (it->second)[current_queue_id_];
         }
 
         //get a particular queue:
@@ -277,6 +282,52 @@ namespace viennacl
 
           return queues_[devices_[device_index].id()][i];
         }
+
+        /** @brief Returns the current device */
+        // TODO: work out the const issues
+        viennacl::ocl::command_queue const & current_queue() //const
+        {
+          return queues_[devices_[current_device_id_].id()][current_queue_id_];
+        }
+
+        /** @brief Switches the current device to the i-th device in this context */
+        void switch_queue(std::size_t i)
+        {
+          assert(i < queues_[devices_[current_device_id_].id()].size() && bool("In class 'context': Provided queue index out of range for device!"));
+          current_queue_id_ = i;
+        }
+
+#if 1
+        /** @brief If the supplied command_queue is used within the context, it becomes the current active command_queue, the command_queue's device becomes current active device. */
+        void switch_queue(viennacl::ocl::command_queue const & q)
+        {
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Setting new current queue for context " << h_ << std::endl;
+          #endif
+          bool found = false;
+          typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
+
+          // For each device:
+          unsigned int j = 0;
+          for (QueueContainer::const_iterator it=queues_.begin(); it != queues_.end(); it++,j++)
+          {
+              const std::vector<viennacl::ocl::command_queue> & qv = (it->second);
+              // For each queue candidate
+              for (std::size_t i=0; i<qv.size(); ++i)
+              {
+                  if (qv[i] == q)
+                  {
+                      found = true;
+                      current_device_id_ = j;
+                      current_queue_id_ = i;
+                      break;
+                  }
+              }
+          }
+          if (found == false)
+            std::cerr << "ViennaCL: Warning: Could not set queue " << q.handle().get() << " for context." << std::endl;
+        }
+#endif
 
         /////////////////// create program ///////////////////////////////
         /** @brief Adds a program to the context
@@ -564,6 +615,7 @@ namespace viennacl
         std::map< cl_device_id, std::vector< viennacl::ocl::command_queue> > queues_;
         std::string build_options_;
         std::size_t pf_index_;
+        unsigned int current_queue_id_;
     }; //context
 
 
