@@ -398,16 +398,35 @@ int test(Epsilon const& epsilon)
   std::cout << "Testing products: ublas" << std::endl;
   ublas::compressed_matrix<NumericT> ublas_matrix2(5, 4);
   ublas_matrix2(0, 0) = 2.0; ublas_matrix2(0, 2) = -1.0;
-  ublas_matrix2(1, 0) = 2.0; ublas_matrix2(1, 2) = -1.0;
-  ublas_matrix2(2, 1) = 2.0; ublas_matrix2(2, 2) = -1.0;
-  ublas_matrix2(3, 2) = 2.0; ublas_matrix2(3, 3) = -1.0;
-  ublas_matrix2(4, 1) = 2.0; ublas_matrix2(4, 2) = -1.0;
+  ublas_matrix2(1, 0) = 3.0; ublas_matrix2(1, 2) = -5.0;
+  ublas_matrix2(2, 1) = 5.0; ublas_matrix2(2, 2) = -2.0;
+  ublas_matrix2(3, 2) = 1.0; ublas_matrix2(3, 3) = -6.0;
+  ublas_matrix2(4, 1) = 7.0; ublas_matrix2(4, 2) = -5.0;
   project(result, ublas::slice(1, 3, 5))     = ublas::prod(ublas_matrix2, project(rhs, ublas::slice(3, 2, 4)));
 
   std::cout << "Testing products: compressed_matrix" << std::endl;
   viennacl::compressed_matrix<NumericT> vcl_compressed_matrix2(ublas_matrix2.size1(), ublas_matrix2.size2());
   viennacl::copy(ublas_matrix2, vcl_compressed_matrix2);
+  viennacl::vector<NumericT> vec(4);
+  vec(0) = rhs(3);
+  vec(1) = rhs(5);
+  vec(2) = rhs(7);
+  vec(3) = rhs(9);
   viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, viennacl::project(vcl_rhs, viennacl::slice(3, 2, 4)));
+
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+  vcl_result(1) = 1.0;
+  vcl_result(4) = 1.0;
+  vcl_result(7) = 1.0;
+  vcl_result(10) = 1.0;
+  vcl_result(13) = 1.0;
+
+  viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, vec);
 
   if( std::fabs(diff(result, vcl_result)) > epsilon )
   {
