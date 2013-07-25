@@ -26,6 +26,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/matrix_size_deducer.hpp"
 #include "viennacl/meta/result_of.hpp"
@@ -1673,6 +1674,28 @@ namespace viennacl
         }
       };
 
+      template <typename T, typename F, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_prod> >
+      {
+        template < typename SparseMatrixType >
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const SparseMatrixType,
+                                                                     const viennacl::matrix_base<T, F>,
+                                                                     viennacl::op_prod> const & proxy)
+        {
+          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
+        }
+
+        template < typename SparseMatrixType >
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const SparseMatrixType,
+                                                                     const viennacl::matrix_expression< const viennacl::matrix_base<T, F>,
+                                                                                                        const viennacl::matrix_base<T, F>,
+                                                                                                        viennacl::op_trans >,
+                                                                     viennacl::op_prod> const & proxy)
+        {
+          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
+        }
+
+      };
 
       // generic x += vec_expr1 + vec_expr2:
       template <typename T, typename F, typename LHS, typename RHS>
