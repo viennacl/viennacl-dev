@@ -95,7 +95,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
         //std::cout << "Neighbor: "      << i-1 << ": " << v1[i-1] << " vs. " << v2_cpu[i-1] << std::endl;
         std::cout << "Error at entry " << i   << ": " << v1[i]   << " vs. " << v2_cpu[i]   << std::endl;
         //std::cout << "Neighbor: "      << i+1 << ": " << v1[i+1] << " vs. " << v2_cpu[i+1] << std::endl;
-        exit(0);
+        exit(EXIT_FAILURE);
       }
    }
 
@@ -163,6 +163,55 @@ ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & 
   }
 
   return error;
+}
+
+
+template <typename NumericT, typename VCL_MatrixT, typename Epsilon, typename UblasVectorT, typename VCLVectorT>
+int strided_matrix_vector_product_test(Epsilon epsilon,
+                                        UblasVectorT & result, UblasVectorT const & rhs,
+                                        VCLVectorT & vcl_result, VCLVectorT & vcl_rhs)
+{
+    int retval = EXIT_SUCCESS;
+
+    ublas::compressed_matrix<NumericT> ublas_matrix2(5, 4);
+    ublas_matrix2(0, 0) = 2.0; ublas_matrix2(0, 2) = -1.0;
+    ublas_matrix2(1, 0) = 3.0; ublas_matrix2(1, 2) = -5.0;
+    ublas_matrix2(2, 1) = 5.0; ublas_matrix2(2, 2) = -2.0;
+    ublas_matrix2(3, 2) = 1.0; ublas_matrix2(3, 3) = -6.0;
+    ublas_matrix2(4, 1) = 7.0; ublas_matrix2(4, 2) = -5.0;
+    project(result, ublas::slice(1, 3, 5))     = ublas::prod(ublas_matrix2, project(rhs, ublas::slice(3, 2, 4)));
+
+    VCL_MatrixT vcl_compressed_matrix2;
+    viennacl::copy(ublas_matrix2, vcl_compressed_matrix2);
+    viennacl::vector<NumericT> vec(4);
+    vec(0) = rhs(3);
+    vec(1) = rhs(5);
+    vec(2) = rhs(7);
+    vec(3) = rhs(9);
+    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, viennacl::project(vcl_rhs, viennacl::slice(3, 2, 4)));
+
+    if( std::fabs(diff(result, vcl_result)) > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-vector product with stided vectors, part 1" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+      retval = EXIT_FAILURE;
+    }
+    vcl_result(1) = 1.0;
+    vcl_result(4) = 1.0;
+    vcl_result(7) = 1.0;
+    vcl_result(10) = 1.0;
+    vcl_result(13) = 1.0;
+
+    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, vec);
+
+    if( std::fabs(diff(result, vcl_result)) > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-vector product with strided vectors, part 2" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+      retval = EXIT_FAILURE;
+    }
+
+    return retval;
 }
 
 
@@ -395,45 +444,10 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
-  std::cout << "Testing products: ublas" << std::endl;
-  ublas::compressed_matrix<NumericT> ublas_matrix2(5, 4);
-  ublas_matrix2(0, 0) = 2.0; ublas_matrix2(0, 2) = -1.0;
-  ublas_matrix2(1, 0) = 3.0; ublas_matrix2(1, 2) = -5.0;
-  ublas_matrix2(2, 1) = 5.0; ublas_matrix2(2, 2) = -2.0;
-  ublas_matrix2(3, 2) = 1.0; ublas_matrix2(3, 3) = -6.0;
-  ublas_matrix2(4, 1) = 7.0; ublas_matrix2(4, 2) = -5.0;
-  project(result, ublas::slice(1, 3, 5))     = ublas::prod(ublas_matrix2, project(rhs, ublas::slice(3, 2, 4)));
-
-  std::cout << "Testing products: compressed_matrix" << std::endl;
-  viennacl::compressed_matrix<NumericT> vcl_compressed_matrix2(ublas_matrix2.size1(), ublas_matrix2.size2());
-  viennacl::copy(ublas_matrix2, vcl_compressed_matrix2);
-  viennacl::vector<NumericT> vec(4);
-  vec(0) = rhs(3);
-  vec(1) = rhs(5);
-  vec(2) = rhs(7);
-  vec(3) = rhs(9);
-  viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, viennacl::project(vcl_rhs, viennacl::slice(3, 2, 4)));
-
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
-  {
-    std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
-    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
-  }
-  vcl_result(1) = 1.0;
-  vcl_result(4) = 1.0;
-  vcl_result(7) = 1.0;
-  vcl_result(10) = 1.0;
-  vcl_result(13) = 1.0;
-
-  viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, vec);
-
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
-  {
-    std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
-    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
-  }
+  std::cout << "Testing products: compressed_matrix, strided vectors" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::compressed_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  if (retval != EXIT_SUCCESS)
+    return retval;
 
   //
   // Triangular solvers for A \ b:
@@ -648,6 +662,12 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
+  std::cout << "Testing products: coordinate_matrix, strided vectors" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::coordinate_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  if (retval != EXIT_SUCCESS)
+    return retval;
+
+
   //std::cout << "Copying ell_matrix" << std::endl;
   viennacl::copy(ublas_matrix, vcl_ell_matrix);
   ublas_matrix.clear();
@@ -655,6 +675,7 @@ int test(Epsilon const& epsilon)
 
 
   std::cout << "Testing products: ell_matrix" << std::endl;
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
   vcl_result.clear();
   vcl_result = viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
   //viennacl::linalg::prod_impl(vcl_ell_matrix, vcl_rhs, vcl_result);
@@ -669,6 +690,11 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
+  std::cout << "Testing products: ell_matrix, strided vectors" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::ell_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  if (retval != EXIT_SUCCESS)
+    return retval;
+
 
   //std::cout << "Copying hyb_matrix" << std::endl;
   viennacl::copy(ublas_matrix, vcl_hyb_matrix);
@@ -677,6 +703,7 @@ int test(Epsilon const& epsilon)
   viennacl::copy(ublas_matrix, vcl_hyb_matrix);
 
   std::cout << "Testing products: hyb_matrix" << std::endl;
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
   vcl_result.clear();
   vcl_result = viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs);
   //viennacl::linalg::prod_impl(vcl_hyb_matrix, vcl_rhs, vcl_result);
@@ -690,6 +717,11 @@ int test(Epsilon const& epsilon)
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
     retval = EXIT_FAILURE;
   }
+
+  std::cout << "Testing products: hyb_matrix, strided vectors" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::hyb_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  if (retval != EXIT_SUCCESS)
+    return retval;
 
 
   // --------------------------------------------------------------------------

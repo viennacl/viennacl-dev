@@ -486,6 +486,18 @@ namespace viennacl
 
         result.clear();
 
+        viennacl::ocl::packed_cl_uint layout_vec;
+        layout_vec.start  = cl_uint(viennacl::traits::start(vec));
+        layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
+        layout_vec.size   = cl_uint(viennacl::traits::size(vec));
+        layout_vec.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+
+        viennacl::ocl::packed_cl_uint layout_result;
+        layout_result.start  = cl_uint(viennacl::traits::start(result));
+        layout_result.stride = cl_uint(viennacl::traits::stride(result));
+        layout_result.size   = cl_uint(viennacl::traits::size(result));
+        layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
+
         //std::cout << "prod(coordinate_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::program_name(), "vec_mul");
@@ -497,7 +509,9 @@ namespace viennacl
         //k.global_work_size(0, thread_num);  //Only one work group
         viennacl::ocl::enqueue(k(mat.handle12().opencl_handle(), mat.handle().opencl_handle(), mat.handle3().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
+                                 layout_vec,
                                  viennacl::traits::opencl_handle(result),
+                                 layout_result,
                                  viennacl::ocl::local_mem(sizeof(cl_uint)*thread_num),
                                  viennacl::ocl::local_mem(sizeof(SCALARTYPE)*thread_num)) );
 
@@ -520,6 +534,18 @@ namespace viennacl
         viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::init(ctx);
         result.clear();
 
+        viennacl::ocl::packed_cl_uint layout_vec;
+        layout_vec.start  = cl_uint(viennacl::traits::start(vec));
+        layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
+        layout_vec.size   = cl_uint(viennacl::traits::size(vec));
+        layout_vec.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+
+        viennacl::ocl::packed_cl_uint layout_result;
+        layout_result.start  = cl_uint(viennacl::traits::start(result));
+        layout_result.stride = cl_uint(viennacl::traits::stride(result));
+        layout_result.size   = cl_uint(viennacl::traits::size(result));
+        layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
+
         std::stringstream ss;
         ss << "vec_mul_" << 1;//(ALIGNMENT != 1?4:1);
         viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
@@ -533,7 +559,9 @@ namespace viennacl
         viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(),
                                  mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
+                                 layout_vec,
                                  viennacl::traits::opencl_handle(result),
+                                 layout_result,
                                  cl_uint(mat.size1()),
                                  cl_uint(mat.size2()),
                                  cl_uint(mat.internal_size1()),
@@ -562,6 +590,18 @@ namespace viennacl
 
         result.clear();
 
+        viennacl::ocl::packed_cl_uint layout_vec;
+        layout_vec.start  = cl_uint(viennacl::traits::start(vec));
+        layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
+        layout_vec.size   = cl_uint(viennacl::traits::size(vec));
+        layout_vec.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+
+        viennacl::ocl::packed_cl_uint layout_result;
+        layout_result.start  = cl_uint(viennacl::traits::start(result));
+        layout_result.stride = cl_uint(viennacl::traits::stride(result));
+        layout_result.size   = cl_uint(viennacl::traits::size(result));
+        layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
+
         viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
 
         unsigned int thread_num = 256;
@@ -576,7 +616,9 @@ namespace viennacl
                                  mat.handle4().opencl_handle(),
                                  mat.handle5().opencl_handle(),
                                  viennacl::traits::opencl_handle(vec),
+                                 layout_vec,
                                  viennacl::traits::opencl_handle(result),
+                                 layout_result,
                                  cl_uint(mat.size1()),
                                  cl_uint(mat.internal_size1()),
                                  cl_uint(mat.ell_nnz()),

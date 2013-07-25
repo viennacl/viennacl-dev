@@ -4,8 +4,10 @@ __kernel void vec_mul(
           __global const uint2 * coords, //(row_index, column_index)
           __global const float * elements,
           __global const uint  * group_boundaries,
-          __global const float * vector,
+          __global const float * x,
+          uint4 layout_x,
           __global float * result,
+          uint4 layout_result,
           __local unsigned int * shared_rows,
           __local float * inter_results)
 {
@@ -23,7 +25,7 @@ __kernel void vec_mul(
     local_index = group_start + k * get_local_size(0) + get_local_id(0);
 
     tmp = (local_index < group_end) ? coords[local_index] : (uint2) 0;
-    val = (local_index < group_end) ? elements[local_index] * vector[tmp.y] : 0;
+    val = (local_index < group_end) ? elements[local_index] * x[tmp.y * layout_x.y + layout_x.x] : 0;
 
     //check for carry from previous loop run:
     if (get_local_id(0) == 0 && k > 0)
@@ -31,7 +33,7 @@ __kernel void vec_mul(
       if (tmp.x == shared_rows[last_index])
         val += inter_results[last_index];
       else
-        result[shared_rows[last_index]] = inter_results[last_index];
+        result[shared_rows[last_index] * layout_result.y + layout_result.x] = inter_results[last_index];
     }
 
     //segmented parallel reduction begin
@@ -54,12 +56,12 @@ __kernel void vec_mul(
         shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1] &&
         inter_results[get_local_id(0)] != 0)
     {
-      result[tmp.x] = inter_results[get_local_id(0)];
+      result[tmp.x * layout_result.y + layout_result.x] = inter_results[get_local_id(0)];
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
   } //for k
 
   if (get_local_id(0) == last_index && inter_results[last_index] != 0)
-    result[tmp.x] = inter_results[last_index];
+    result[tmp.x * layout_result.y + layout_result.x] = inter_results[last_index];
 }

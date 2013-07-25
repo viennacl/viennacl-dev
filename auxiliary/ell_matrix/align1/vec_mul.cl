@@ -3,8 +3,10 @@
 __kernel void vec_mul(
     __global const unsigned int * coords,
     __global const float * elements,
-    __global const float * vector,
+    __global const float * x,
+    uint4 layout_x,
     __global float * result,
+    uint4 layout_result,
     unsigned int row_num,
     unsigned int col_num,
     unsigned int internal_row_num,
@@ -28,11 +30,11 @@ __kernel void vec_mul(
             if(val != 0.0f)
             {
                 int col = coords[offset];
-                sum += (vector[col] * val);
+                sum += (x[col * layout_x.y + layout_x.x] * val);
             }
 
         }
 
-        result[row_id] = sum;
+        result[row_id * layout_result.y + layout_result.x] = sum;
     }
 }

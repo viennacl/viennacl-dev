@@ -5,10 +5,10 @@ __kernel void vec_mul(
     const __global uint* csr_rows,
     const __global uint* csr_cols,
     const __global float* csr_elements,
-    const __global float * vector,
-
+    const __global float * x,
+    uint4 layout_x,
     __global float * result,
-
+    uint4 layout_result,
     unsigned int row_num,
     unsigned int internal_row_num,
     unsigned int items_per_row,
@@ -31,7 +31,7 @@ __kernel void vec_mul(
             if(val != 0.0f)
             {
                 int col = ell_coords[offset];
-                sum += (vector[col] * val);
+                sum += (x[col * layout_x.y + layout_x.x] * val);
             }
 
         }
@@ -41,9 +41,9 @@ __kernel void vec_mul(
 
         for(uint item_id = col_begin; item_id < col_end; item_id++)
         {
-            sum += (vector[csr_cols[item_id]] * csr_elements[item_id]);
+            sum += (x[csr_cols[item_id] * layout_x.y + layout_x.x] * csr_elements[item_id]);
         }
 
-        result[row_id] = sum;
+        result[row_id * layout_result.y + layout_result.x] = sum;
     }
 }
