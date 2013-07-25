@@ -57,9 +57,9 @@ int main()
   // This requires the following expression graph:
   //
   //             ( = )
-  //            /     \
+  //            /      |
   //    vcl_vec3      ( + )
-  //                 /     \
+  //                 /     |
   //           vcl_vec1    vcl_vec2
   //
   // One expression node consists of two leaves and the operation connecting the two.

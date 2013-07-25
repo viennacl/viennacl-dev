@@ -54,8 +54,6 @@ int run_benchmark()
   Timer timer;
   double exec_time;
 
-  ScalarType std_result = 0;
-
   std::vector<ScalarType> std_vec1(BENCHMARK_VECTOR_SIZE);
   std::vector<ScalarType> std_vec2(BENCHMARK_VECTOR_SIZE);
   std::vector<ScalarType> std_vec3(BENCHMARK_VECTOR_SIZE);
