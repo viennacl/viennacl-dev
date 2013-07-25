@@ -174,6 +174,179 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
       }
 
+      template <typename T>
+      __global__ void compressed_matrix_d_mat_mul_kernel(
+                const unsigned int * sp_mat_row_indices,
+                const unsigned int * sp_mat_col_indices,
+                const T * sp_mat_elements,
+                const T * d_mat,
+                unsigned int d_mat_row_start,
+                unsigned int d_mat_col_start,
+                unsigned int d_mat_row_inc,
+                unsigned int d_mat_col_inc,
+                unsigned int d_mat_row_size,
+                unsigned int d_mat_col_size,
+                unsigned int d_mat_internal_rows,
+                unsigned int d_mat_internal_cols,
+                T * result,
+                unsigned int result_row_start,
+                unsigned int result_col_start,
+                unsigned int result_row_inc,
+                unsigned int result_col_inc,
+                unsigned int result_row_size,
+                unsigned int result_col_size,
+                unsigned int result_internal_rows,
+                unsigned int result_internal_cols) {
+
+        for (unsigned int row  = blockIdx.x; row  < result_row_size; row += gridDim.x) {
+
+          unsigned int row_start = sp_mat_row_indices[row];
+          unsigned int row_end = sp_mat_row_indices[row+1];
+
+          for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
+
+            float r = 0;
+            
+            for (unsigned int k = row_start; k < row_end; k++) {
+
+              unsigned int j = sp_mat_col_indices[k];
+              float x = sp_mat_elements[k];
+
+              float y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols +
+                                d_mat_col_start + col * d_mat_col_inc ];
+
+              r += x * y;
+            }
+
+            result [ (result_row_start + row * result_row_inc) * result_internal_cols +
+                      result_col_start + col * result_col_inc ] = r;
+          }
+
+        }
+
+      }
+
+
+      /** @brief Carries out sparse_matrix-dense_matrix multiplication first matrix being compressed
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param sp_mat   The sparse matrix
+      * @param d_mat    The dense matrix
+      * @param result   The result matrix
+      */
+      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
+                     const viennacl::matrix_base<TYPE, F> & d_mat,
+                           viennacl::matrix_base<TYPE, F> & result) {
+        compressed_matrix_d_mat_mul_kernel<<<128, 128>>>
+                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                       detail::cuda_arg<TYPE>(d_mat),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                       detail::cuda_arg<TYPE>(result),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                      );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+      }
+
+
+      template <typename T>
+      __global__ void compressed_matrix_d_tr_mat_mul_kernel(
+                const unsigned int * sp_mat_row_indices,
+                const unsigned int * sp_mat_col_indices,
+                const T * sp_mat_elements,
+                const T * d_mat,
+                unsigned int d_mat_row_start,
+                unsigned int d_mat_col_start,
+                unsigned int d_mat_row_inc,
+                unsigned int d_mat_col_inc,
+                unsigned int d_mat_row_size,
+                unsigned int d_mat_col_size,
+                unsigned int d_mat_internal_rows,
+                unsigned int d_mat_internal_cols,
+                T * result,
+                unsigned int result_row_start,
+                unsigned int result_col_start,
+                unsigned int result_row_inc,
+                unsigned int result_col_inc,
+                unsigned int result_row_size,
+                unsigned int result_col_size,
+                unsigned int result_internal_rows,
+                unsigned int result_internal_cols) {
+
+        for (unsigned int row  = blockIdx.x; row  < result_row_size; row += gridDim.x) {
+
+          unsigned int row_start = sp_mat_row_indices[row];
+          unsigned int row_end = sp_mat_row_indices[row+1];
+
+          for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
+
+            float r = 0;
+            
+            for (unsigned int k = row_start; k < row_end; k++) {
+
+              unsigned int j = sp_mat_col_indices[k];
+              float x = sp_mat_elements[k];
+
+              float y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols +
+                                d_mat_col_start + j * d_mat_col_inc ];
+
+              r += x * y;
+            }
+
+            result [ (result_row_start + row * result_row_inc) * result_internal_cols +
+                      result_col_start + col * result_col_inc ] = r;
+          }
+        }
+
+      }
+
+      /** @brief Carries out matrix-trans(matrix) multiplication first matrix being compressed
+      *          and the second transposed
+      *
+      * Implementation of the convenience expression result = prod(sp_mat, d_mat);
+      *
+      * @param sp_mat             The sparse matrix
+      * @param trans(d_mat)       The transposed dense matrix
+      * @param result             The result matrix
+      */
+      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F>,
+                                                        const viennacl::matrix_base<TYPE, F>,
+                                                        viennacl::op_trans > & d_mat,
+                      viennacl::matrix_base<TYPE, F> & result) {
+
+        compressed_matrix_d_tr_mat_mul_kernel<<<128, 128>>>
+                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                       detail::cuda_arg<TYPE>(d_mat.lhs()),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                       detail::cuda_arg<TYPE>(result),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                      );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+      }
+
 
       //
       // triangular solves for compressed_matrix

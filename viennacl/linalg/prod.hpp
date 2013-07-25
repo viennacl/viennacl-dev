@@ -266,6 +266,41 @@ namespace viennacl
                                op_prod >(mat, vec);
     }
 
+    template< typename SparseMatrixType, typename SCALARTYPE, typename F1>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
+                                  viennacl::matrix_expression<const SparseMatrixType,
+                                                              const matrix_base < SCALARTYPE, F1 >,
+                                                              op_prod >
+                                 >::type
+    prod(const SparseMatrixType & sp_mat,
+         const viennacl::matrix_base<SCALARTYPE, F1> & d_mat)
+    {
+      return viennacl::matrix_expression<const SparseMatrixType,
+                                         const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                         op_prod >(sp_mat, d_mat);
+    }
+
+    // right factor is transposed
+    template< typename SparseMatrixType, typename SCALARTYPE, typename F1 >
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
+                                  viennacl::matrix_expression< const SparseMatrixType,
+                                                               const viennacl::matrix_expression<const viennacl::matrix_base<SCALARTYPE, F1>,
+                                                                                                 const viennacl::matrix_base<SCALARTYPE, F1>,
+                                                                                                 op_trans>,
+                                                               viennacl::op_prod >
+                                  >::type
+    prod(const SparseMatrixType & A,
+         viennacl::matrix_expression<const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                     const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                     op_trans> const & B)
+    {
+      return viennacl::matrix_expression< const SparseMatrixType,
+                                          const viennacl::matrix_expression<const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                                                            const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                                                            op_trans>,
+                                          viennacl::op_prod >(A, B);
+    }
+
     template<typename StructuredMatrixType, class SCALARTYPE>
     typename viennacl::enable_if< viennacl::is_any_dense_structured_matrix<StructuredMatrixType>::value,
                                   vector_expression<const StructuredMatrixType,
