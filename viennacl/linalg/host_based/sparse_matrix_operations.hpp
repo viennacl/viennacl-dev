@@ -927,10 +927,11 @@ namespace viennacl
         unsigned int const * coord_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle12());
 
         for (std::size_t i = 0; i< result.size(); ++i)
-          result_buf[i] = 0;
+          result_buf[i * result.stride() + result.start()] = 0;
 
         for (std::size_t i = 0; i < mat.nnz(); ++i)
-          result_buf[coord_buffer[2*i]] += elements[i] * vec_buf[coord_buffer[2*i+1]];
+          result_buf[coord_buffer[2*i] * result.stride() + result.start()]
+            += elements[i] * vec_buf[coord_buffer[2*i+1] * vec.stride() + vec.start()];
       }
 
 
@@ -955,24 +956,23 @@ namespace viennacl
         ScalarType   const * elements     = detail::extract_raw_pointer<ScalarType>(mat.handle());
         unsigned int const * coords       = detail::extract_raw_pointer<unsigned int>(mat.handle2());
 
-
         for(std::size_t row = 0; row < mat.size1(); ++row)
         {
           ScalarType sum = 0;
 
           for(unsigned int item_id = 0; item_id < mat.internal_maxnnz(); ++item_id)
           {
-            std::size_t offset = row + item_id * mat.internal_size2();
+            std::size_t offset = row + item_id * mat.internal_size1();
             ScalarType val = elements[offset];
 
             if(val != 0)
             {
               unsigned int col = coords[offset];
-              sum += (vec_buf[col] * val);
+              sum += (vec_buf[col * vec.stride() + vec.start()] * val);
             }
           }
 
-          result_buf[row] = sum;
+          result_buf[row * result.stride() + result.start()] = sum;
         }
       }
 
@@ -1010,13 +1010,13 @@ namespace viennacl
           //
           for(unsigned int item_id = 0; item_id < mat.internal_ellnnz(); ++item_id)
           {
-            std::size_t offset = row + item_id * mat.internal_size2();
+            std::size_t offset = row + item_id * mat.internal_size1();
             ScalarType val = elements[offset];
 
             if(val != 0)
             {
               unsigned int col = coords[offset];
-              sum += (vec_buf[col] * val);
+              sum += (vec_buf[col * vec.stride() + vec.start()] * val);
             }
           }
 
@@ -1028,10 +1028,10 @@ namespace viennacl
 
           for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
           {
-              sum += (vec_buf[csr_col_buffer[item_id]] * csr_elements[item_id]);
+              sum += (vec_buf[csr_col_buffer[item_id] * vec.stride() + vec.start()] * csr_elements[item_id]);
           }
 
-          result_buf[row] = sum;
+          result_buf[row * result.stride() + result.start()] = sum;
         }
 
       }
