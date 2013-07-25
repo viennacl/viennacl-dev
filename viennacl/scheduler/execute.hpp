@@ -52,10 +52,10 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      switch (expr[0].lhs_type_family_)
+      switch (expr[0].lhs_type_family)
       {
         case SCALAR_TYPE_FAMILY:
-          switch (expr[0].op_type_)
+          switch (expr[0].op_type)
           {
             case OPERATION_BINARY_ASSIGN_TYPE:
               execute_scalar_assign(s); break;
@@ -65,7 +65,7 @@ namespace viennacl
           break;
 
         case VECTOR_TYPE_FAMILY:
-          switch (expr[0].op_type_)
+          switch (expr[0].op_type)
           {
             case OPERATION_BINARY_ASSIGN_TYPE:
               execute_vector_assign(s); break;
@@ -79,7 +79,7 @@ namespace viennacl
           break;
 
         case MATRIX_COL_TYPE_FAMILY:
-          switch (expr[0].op_type_)
+          switch (expr[0].op_type)
           {
             case OPERATION_BINARY_ASSIGN_TYPE:
               execute_matrix_col_assign(s); break;
@@ -93,7 +93,7 @@ namespace viennacl
           break;
 
         case MATRIX_ROW_TYPE_FAMILY:
-          switch (expr[0].op_type_)
+          switch (expr[0].op_type)
           {
             case OPERATION_BINARY_ASSIGN_TYPE:
               execute_matrix_row_assign(s); break;

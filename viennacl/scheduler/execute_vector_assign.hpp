@@ -36,26 +36,26 @@ namespace viennacl
     {
       statement::container_type const & expr = s.array();
 
-      if (expr[1].op_type_  == OPERATION_BINARY_ADD_TYPE)
+      if (expr[1].op_type  == OPERATION_BINARY_ADD_TYPE)
       {
-        if (expr[0].lhs_type_ == VECTOR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE
-            && expr[1].rhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == VECTOR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE
+            && expr[1].rhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::vector_base<float>       & x = *(expr[0].lhs_.vector_float_);
-          viennacl::vector_base<float> const & y = *(expr[1].lhs_.vector_float_);
-          viennacl::vector_base<float> const & z = *(expr[1].rhs_.vector_float_);
+          viennacl::vector_base<float>       & x = *(expr[0].lhs.vector_float);
+          viennacl::vector_base<float> const & y = *(expr[1].lhs.vector_float);
+          viennacl::vector_base<float> const & z = *(expr[1].rhs.vector_float);
           viennacl::linalg::avbv(x,
                                  y, 1.0, 1, false, false,
                                  z, 1.0, 1, false, false);
         }
-        else if (expr[0].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::vector_base<double>       & x = *(expr[0].lhs_.vector_double_);
-          viennacl::vector_base<double> const & y = *(expr[1].lhs_.vector_double_);
-          viennacl::vector_base<double> const & z = *(expr[1].rhs_.vector_double_);
+          viennacl::vector_base<double>       & x = *(expr[0].lhs.vector_double);
+          viennacl::vector_base<double> const & y = *(expr[1].lhs.vector_double);
+          viennacl::vector_base<double> const & z = *(expr[1].rhs.vector_double);
           viennacl::linalg::avbv(x,
                                  y, 1.0, 1, false, false,
                                  z, 1.0, 1, false, false);
@@ -63,26 +63,26 @@ namespace viennacl
         else
           throw statement_not_supported_exception("Cannot deal with addition of vectors");
       }
-      else if (expr[1].op_type_  == OPERATION_BINARY_SUB_TYPE)
+      else if (expr[1].op_type  == OPERATION_BINARY_SUB_TYPE)
       {
-        if (expr[0].lhs_type_ == VECTOR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE
-            && expr[1].rhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == VECTOR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE
+            && expr[1].rhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::vector_base<float>       & x = *(expr[0].lhs_.vector_float_);
-          viennacl::vector_base<float> const & y = *(expr[1].lhs_.vector_float_);
-          viennacl::vector_base<float> const & z = *(expr[1].rhs_.vector_float_);
+          viennacl::vector_base<float>       & x = *(expr[0].lhs.vector_float);
+          viennacl::vector_base<float> const & y = *(expr[1].lhs.vector_float);
+          viennacl::vector_base<float> const & z = *(expr[1].rhs.vector_float);
           viennacl::linalg::avbv(x,
                                  y,  1.0, 1, false, false,
                                  z, -1.0, 1, false, false);
         }
-        else if (expr[0].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::vector_base<double>       & x = *(expr[0].lhs_.vector_double_);
-          viennacl::vector_base<double> const & y = *(expr[1].lhs_.vector_double_);
-          viennacl::vector_base<double> const & z = *(expr[1].rhs_.vector_double_);
+          viennacl::vector_base<double>       & x = *(expr[0].lhs.vector_double);
+          viennacl::vector_base<double> const & y = *(expr[1].lhs.vector_double);
+          viennacl::vector_base<double> const & z = *(expr[1].rhs.vector_double);
           viennacl::linalg::avbv(x,
                                  y,  1.0, 1, false, false,
                                  z, -1.0, 1, false, false);
@@ -101,17 +101,17 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      if (expr[0].lhs_type_ == VECTOR_FLOAT_TYPE && expr[0].rhs_type_ == VECTOR_FLOAT_TYPE)
+      if (expr[0].lhs_type == VECTOR_FLOAT_TYPE && expr[0].rhs_type == VECTOR_FLOAT_TYPE)
       {
-        viennacl::vector_base<float>       & x = *(expr[0].lhs_.vector_float_);
-        viennacl::vector_base<float> const & y = *(expr[0].rhs_.vector_float_);
+        viennacl::vector_base<float>       & x = *(expr[0].lhs.vector_float);
+        viennacl::vector_base<float> const & y = *(expr[0].rhs.vector_float);
         viennacl::linalg::av(x,
                              y, 1.0, 1, false, false);
       }
-      else if (expr[0].lhs_type_ == VECTOR_DOUBLE_TYPE && expr[0].rhs_type_ == VECTOR_DOUBLE_TYPE)
+      else if (expr[0].lhs_type == VECTOR_DOUBLE_TYPE && expr[0].rhs_type == VECTOR_DOUBLE_TYPE)
       {
-        viennacl::vector_base<double>       & x = *(expr[0].lhs_.vector_double_);
-        viennacl::vector_base<double> const & y = *(expr[0].rhs_.vector_double_);
+        viennacl::vector_base<double>       & x = *(expr[0].lhs.vector_double);
+        viennacl::vector_base<double> const & y = *(expr[0].rhs.vector_double);
         viennacl::linalg::av(x,
                              y, 1.0, 1, false, false);
       }
@@ -126,7 +126,7 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      switch (expr[0].rhs_type_family_)
+      switch (expr[0].rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
           execute_vector_assign_composite(s);

@@ -36,84 +36,84 @@ namespace viennacl
     {
       statement::container_type const & expr = s.array();
 
-      if (expr[1].op_type_  == OPERATION_BINARY_INNER_PROD_TYPE)
+      if (expr[1].op_type  == OPERATION_BINARY_INNER_PROD_TYPE)
       {
-        if (expr[0].lhs_type_ == SCALAR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE
-            && expr[1].rhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == SCALAR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE
+            && expr[1].rhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::scalar<float>            & s = *(expr[0].lhs_.scalar_float_);
-          viennacl::vector_base<float> const & y = *(expr[1].lhs_.vector_float_);
-          viennacl::vector_base<float> const & z = *(expr[1].rhs_.vector_float_);
+          viennacl::scalar<float>            & s = *(expr[0].lhs.scalar_float);
+          viennacl::vector_base<float> const & y = *(expr[1].lhs.vector_float);
+          viennacl::vector_base<float> const & z = *(expr[1].rhs.vector_float);
           viennacl::linalg::inner_prod_impl(y, z, s);
         }
-        else if (expr[0].lhs_type_ == SCALAR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == SCALAR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::scalar<double>            & s = *(expr[0].lhs_.scalar_double_);
-          viennacl::vector_base<double> const & y = *(expr[1].lhs_.vector_double_);
-          viennacl::vector_base<double> const & z = *(expr[1].rhs_.vector_double_);
+          viennacl::scalar<double>            & s = *(expr[0].lhs.scalar_double);
+          viennacl::vector_base<double> const & y = *(expr[1].lhs.vector_double);
+          viennacl::vector_base<double> const & z = *(expr[1].rhs.vector_double);
           viennacl::linalg::inner_prod_impl(y, z, s);
         }
         else
           throw statement_not_supported_exception("Cannot deal with inner product of the provided arguments");
       }
-      else if (expr[1].op_type_  == OPERATION_UNARY_NORM_1_TYPE)
+      else if (expr[1].op_type  == OPERATION_UNARY_NORM_1_TYPE)
       {
-        if (expr[0].lhs_type_ == SCALAR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == SCALAR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::scalar<float>            & s = *(expr[0].lhs_.scalar_float_);
-          viennacl::vector_base<float> const & x = *(expr[1].lhs_.vector_float_);
+          viennacl::scalar<float>            & s = *(expr[0].lhs.scalar_float);
+          viennacl::vector_base<float> const & x = *(expr[1].lhs.vector_float);
           viennacl::linalg::norm_1_impl(x, s);
         }
-        else if (expr[0].lhs_type_ == SCALAR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == SCALAR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::scalar<double>            & s = *(expr[0].lhs_.scalar_double_);
-          viennacl::vector_base<double> const & x = *(expr[1].lhs_.vector_double_);
+          viennacl::scalar<double>            & s = *(expr[0].lhs.scalar_double);
+          viennacl::vector_base<double> const & x = *(expr[1].lhs.vector_double);
           viennacl::linalg::norm_1_impl(x, s);
         }
         else
           throw statement_not_supported_exception("Cannot deal with norm_1 of the provided arguments");
       }
-      else if (expr[1].op_type_  == OPERATION_UNARY_NORM_2_TYPE)
+      else if (expr[1].op_type  == OPERATION_UNARY_NORM_2_TYPE)
       {
-        if (expr[0].lhs_type_ == SCALAR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == SCALAR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::scalar<float>            & s = *(expr[0].lhs_.scalar_float_);
-          viennacl::vector_base<float> const & x = *(expr[1].lhs_.vector_float_);
+          viennacl::scalar<float>            & s = *(expr[0].lhs.scalar_float);
+          viennacl::vector_base<float> const & x = *(expr[1].lhs.vector_float);
           viennacl::linalg::norm_2_impl(x, s);
         }
-        else if (expr[0].lhs_type_ == SCALAR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == SCALAR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::scalar<double>            & s = *(expr[0].lhs_.scalar_double_);
-          viennacl::vector_base<double> const & x = *(expr[1].lhs_.vector_double_);
+          viennacl::scalar<double>            & s = *(expr[0].lhs.scalar_double);
+          viennacl::vector_base<double> const & x = *(expr[1].lhs.vector_double);
           viennacl::linalg::norm_2_impl(x, s);
         }
         else
           throw statement_not_supported_exception("Cannot deal with norm_2 of the provided arguments");
       }
-      else if (expr[1].op_type_  == OPERATION_UNARY_NORM_INF_TYPE)
+      else if (expr[1].op_type  == OPERATION_UNARY_NORM_INF_TYPE)
       {
-        if (expr[0].lhs_type_ == SCALAR_FLOAT_TYPE
-            && expr[1].lhs_type_ == VECTOR_FLOAT_TYPE)
+        if (expr[0].lhs_type == SCALAR_FLOAT_TYPE
+            && expr[1].lhs_type == VECTOR_FLOAT_TYPE)
         {
-          viennacl::scalar<float>            & s = *(expr[0].lhs_.scalar_float_);
-          viennacl::vector_base<float> const & x = *(expr[1].lhs_.vector_float_);
+          viennacl::scalar<float>            & s = *(expr[0].lhs.scalar_float);
+          viennacl::vector_base<float> const & x = *(expr[1].lhs.vector_float);
           viennacl::linalg::norm_inf_impl(x, s);
         }
-        else if (expr[0].lhs_type_ == SCALAR_DOUBLE_TYPE
-                 && expr[1].lhs_type_ == VECTOR_DOUBLE_TYPE
-                 && expr[1].rhs_type_ == VECTOR_DOUBLE_TYPE)
+        else if (expr[0].lhs_type == SCALAR_DOUBLE_TYPE
+                 && expr[1].lhs_type == VECTOR_DOUBLE_TYPE
+                 && expr[1].rhs_type == VECTOR_DOUBLE_TYPE)
         {
-          viennacl::scalar<double>            & s = *(expr[0].lhs_.scalar_double_);
-          viennacl::vector_base<double> const & x = *(expr[1].lhs_.vector_double_);
+          viennacl::scalar<double>            & s = *(expr[0].lhs.scalar_double);
+          viennacl::vector_base<double> const & x = *(expr[1].lhs.vector_double);
           viennacl::linalg::norm_inf_impl(x, s);
         }
         else
@@ -130,7 +130,7 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      switch (expr[0].rhs_type_family_)
+      switch (expr[0].rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
           execute_scalar_assign_composite(s);

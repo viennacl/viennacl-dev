@@ -75,34 +75,34 @@ int main()
   ////// First node //////
 
   // specify LHS of first node, i.e. vcl_vec3:
-  expression_nodes[0].lhs_type_family_   = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[0].lhs_type_          = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
-  expression_nodes[0].lhs_.vector_float_ = &vcl_vec3;                                 // provide pointer to vcl_vec3;
+  expression_nodes[0].lhs_type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
+  expression_nodes[0].lhs_type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[0].lhs.vector_float = &vcl_vec3;                                 // provide pointer to vcl_vec3;
 
   // specify assignment operation for this node:
-  expression_nodes[0].op_family_         = viennacl::scheduler::OPERATION_BINARY_TYPE_FAMILY; // this is a binary operation, so both LHS and RHS operands are important
-  expression_nodes[0].op_type_           = viennacl::scheduler::OPERATION_BINARY_ASSIGN_TYPE; // assignment operation: '='
+  expression_nodes[0].op_family        = viennacl::scheduler::OPERATION_BINARY_TYPE_FAMILY; // this is a binary operation, so both LHS and RHS operands are important
+  expression_nodes[0].op_type          = viennacl::scheduler::OPERATION_BINARY_ASSIGN_TYPE; // assignment operation: '='
 
   // specify RHS: Just refer to the second node:
-  expression_nodes[0].rhs_type_family_   = viennacl::scheduler::COMPOSITE_OPERATION_FAMILY; // this links to another node
-  expression_nodes[0].rhs_type_          = viennacl::scheduler::COMPOSITE_OPERATION_TYPE;   // this links to another node
-  expression_nodes[0].rhs_.node_index_   = 1;                                               // index of the other node
+  expression_nodes[0].rhs_type_family  = viennacl::scheduler::COMPOSITE_OPERATION_FAMILY; // this links to another node
+  expression_nodes[0].rhs_type         = viennacl::scheduler::COMPOSITE_OPERATION_TYPE;   // this links to another node
+  expression_nodes[0].rhs.node_index   = 1;                                               // index of the other node
 
   ////// Second node //////
 
   // LHS
-  expression_nodes[1].lhs_type_family_   = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[1].lhs_type_          = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
-  expression_nodes[1].lhs_.vector_float_ = &vcl_vec1;                                 // provide pointer to vcl_vec1
+  expression_nodes[1].lhs_type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
+  expression_nodes[1].lhs_type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[1].lhs.vector_float = &vcl_vec1;                                 // provide pointer to vcl_vec1
 
   // OP
-  expression_nodes[1].op_family_         = viennacl::scheduler::OPERATION_BINARY_TYPE_FAMILY; // this is a binary operation, so both LHS and RHS operands are important
-  expression_nodes[1].op_type_           = viennacl::scheduler::OPERATION_BINARY_ADD_TYPE;    // assignment operation: '='
+  expression_nodes[1].op_family        = viennacl::scheduler::OPERATION_BINARY_TYPE_FAMILY; // this is a binary operation, so both LHS and RHS operands are important
+  expression_nodes[1].op_type          = viennacl::scheduler::OPERATION_BINARY_ADD_TYPE;    // assignment operation: '='
 
   // RHS
-  expression_nodes[1].rhs_type_family_   = viennacl::scheduler::VECTOR_TYPE_FAMILY;  // family of vectors
-  expression_nodes[1].rhs_type_          = viennacl::scheduler::VECTOR_FLOAT_TYPE;   // vector consisting of floats
-  expression_nodes[1].rhs_.vector_float_ = &vcl_vec2;                                // provide pointer to vcl_vec2
+  expression_nodes[1].rhs_type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;  // family of vectors
+  expression_nodes[1].rhs_type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;   // vector consisting of floats
+  expression_nodes[1].rhs.vector_float = &vcl_vec2;                                // provide pointer to vcl_vec2
 
 
   // create the full statement (aka. single line of code such as vcl_vec3 = vcl_vec1 + vcl_vec2):

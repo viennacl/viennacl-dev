@@ -45,18 +45,18 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      if (expr[0].lhs_type_ == VECTOR_FLOAT_TYPE && expr[0].rhs_type_ == VECTOR_FLOAT_TYPE)
+      if (expr[0].lhs_type == VECTOR_FLOAT_TYPE && expr[0].rhs_type == VECTOR_FLOAT_TYPE)
       {
-        viennacl::vector_base<float>       & x = *(expr[0].lhs_.vector_float_);
-        viennacl::vector_base<float> const & y = *(expr[0].rhs_.vector_float_);
+        viennacl::vector_base<float>       & x = *(expr[0].lhs.vector_float);
+        viennacl::vector_base<float> const & y = *(expr[0].rhs.vector_float);
         viennacl::linalg::avbv(x,
                                x,  1.0, 1, false, false,
                                y, -1.0, 1, false, false);
       }
-      else if (expr[0].lhs_type_ == VECTOR_DOUBLE_TYPE && expr[0].rhs_type_ == VECTOR_DOUBLE_TYPE)
+      else if (expr[0].lhs_type == VECTOR_DOUBLE_TYPE && expr[0].rhs_type == VECTOR_DOUBLE_TYPE)
       {
-        viennacl::vector_base<double>       & x = *(expr[0].lhs_.vector_double_);
-        viennacl::vector_base<double> const & y = *(expr[0].rhs_.vector_double_);
+        viennacl::vector_base<double>       & x = *(expr[0].lhs.vector_double);
+        viennacl::vector_base<double> const & y = *(expr[0].rhs.vector_double);
         viennacl::linalg::avbv(x,
                                x,  1.0, 1, false, false,
                                y, -1.0, 1, false, false);
@@ -72,7 +72,7 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      switch (expr[0].rhs_type_family_)
+      switch (expr[0].rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
           execute_vector_inplace_sub_composite(s);
