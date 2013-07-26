@@ -124,7 +124,6 @@ namespace viennacl
                 const T * x,
                 unsigned int start_x,
                 unsigned int inc_x,
-                unsigned int size_x,
                 T * result,
                 unsigned int start_result,
                 unsigned int inc_result,
@@ -165,7 +164,6 @@ namespace viennacl
                                                        detail::cuda_arg<ScalarType>(vec),
                                                        static_cast<unsigned int>(vec.start()),
                                                        static_cast<unsigned int>(vec.stride()),
-                                                       static_cast<unsigned int>(vec.size()),
                                                        detail::cuda_arg<ScalarType>(result),
                                                        static_cast<unsigned int>(result.start()),
                                                        static_cast<unsigned int>(result.stride()),
@@ -206,7 +204,7 @@ namespace viennacl
           for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
             float r = 0;
-            
+
             for (unsigned int k = row_start; k < row_end; k++) {
 
               unsigned int j = sp_mat_col_indices[k];
@@ -292,7 +290,7 @@ namespace viennacl
           for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
             float r = 0;
-            
+
             for (unsigned int k = row_start; k < row_end; k++) {
 
               unsigned int j = sp_mat_col_indices[k];
@@ -777,8 +775,13 @@ namespace viennacl
       __global__ void coordinate_matrix_vec_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                        const T * elements,
                                                        const unsigned int * group_boundaries,
-                                                       const T * vector,
-                                                             T * result)
+                                                       const T * x,
+                                                       unsigned int start_x,
+                                                       unsigned int inc_x,
+                                                             T * result,
+                                                       unsigned int start_result,
+                                                       unsigned int inc_result
+                                                       )
       {
         __shared__ unsigned int shared_rows[128];
         __shared__ T inter_results[128];
@@ -797,7 +800,7 @@ namespace viennacl
           local_index = group_start + k * blockDim.x + threadIdx.x;
 
           tmp = (local_index < group_end) ? ((const uint2 *)coords)[local_index] : ::make_uint2(0, 0);
-          val = (local_index < group_end) ? elements[local_index] * vector[tmp.y] : 0;
+          val = (local_index < group_end) ? elements[local_index] * x[tmp.y * inc_x + start_x] : 0;
 
           //check for carry from previous loop run:
           if (threadIdx.x == 0 && k > 0)
@@ -805,7 +808,7 @@ namespace viennacl
             if (tmp.x == shared_rows[last_index])
               val += inter_results[last_index];
             else
-              result[shared_rows[last_index]] += inter_results[last_index];
+              result[shared_rows[last_index] * inc_result + start_result] += inter_results[last_index];
           }
 
           //segmented parallel reduction begin
@@ -828,14 +831,14 @@ namespace viennacl
               shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1] &&
               inter_results[threadIdx.x] != 0)
           {
-            result[tmp.x] += inter_results[threadIdx.x];
+            result[tmp.x * inc_result + start_result] += inter_results[threadIdx.x];
           }
 
           __syncthreads();
         } //for k
 
         if (threadIdx.x == last_index && inter_results[last_index] != 0)
-          result[tmp.x] += inter_results[last_index];
+          result[tmp.x * inc_result + start_result] += inter_results[last_index];
       }
 
 
@@ -854,11 +857,17 @@ namespace viennacl
       {
         result.clear();
 
+        assert(layout_vec.start == 0 && layout_vec.stride == 1 && layout_result.start == 0 && layout_result.stride == 1 && bool("Vector strides unsupported for COO using CUDA"));
+
         coordinate_matrix_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(mat.handle12().cuda_handle()),
                                                       detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
                                                       detail::cuda_arg<ScalarType>(vec),
-                                                      detail::cuda_arg<ScalarType>(result)
+                                                      static_cast<unsigned int>(vec.start()),
+                                                      static_cast<unsigned int>(vec.stride()),
+                                                      detail::cuda_arg<ScalarType>(result),
+                                                      static_cast<unsigned int>(result.start()),
+                                                      static_cast<unsigned int>(result.stride())
                                                      );
         VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_vec_mul_kernel");
       }
@@ -874,8 +883,12 @@ namespace viennacl
       template <typename T>
       __global__ void ell_matrix_vec_mul_kernel(const unsigned int * coords,
                                                 const T * elements,
-                                                const T * vector,
+                                                const T * x,
+                                                unsigned int start_x,
+                                                unsigned int inc_x,
                                                       T * result,
+                                                unsigned int start_result,
+                                                unsigned int inc_result,
                                                 unsigned int row_num,
                                                 unsigned int col_num,
                                                 unsigned int internal_row_num,
@@ -898,11 +911,11 @@ namespace viennacl
             if(val != (T)0)
             {
               int col = coords[offset];
-              sum += (vector[col] * val);
+              sum += (x[col * inc_x + start_x] * val);
             }
           }
 
-          result[row_id] = sum;
+          result[row_id * inc_result + start_result] = sum;
         }
       }
 
@@ -923,7 +936,11 @@ namespace viennacl
         ell_matrix_vec_mul_kernel<<<256, 128>>>(detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(vec),
+                                                static_cast<unsigned int>(vec.start()),
+                                                static_cast<unsigned int>(vec.stride()),
                                                 detail::cuda_arg<ScalarType>(result),
+                                                static_cast<unsigned int>(result.start()),
+                                                static_cast<unsigned int>(result.stride()),
                                                 static_cast<unsigned int>(mat.size1()),
                                                 static_cast<unsigned int>(mat.size2()),
                                                 static_cast<unsigned int>(mat.internal_size1()),
@@ -946,8 +963,12 @@ namespace viennacl
                                                 const unsigned int * csr_rows,
                                                 const unsigned int * csr_cols,
                                                 const T * csr_elements,
-                                                const T * vector,
+                                                const T * x,
+                                                unsigned int start_x,
+                                                unsigned int inc_x,
                                                       T * result,
+                                                unsigned int start_result,
+                                                unsigned int inc_result,
                                                 unsigned int row_num,
                                                 unsigned int internal_row_num,
                                                 unsigned int items_per_row,
@@ -970,7 +991,7 @@ namespace viennacl
             if(val != 0.0f)
             {
               int col = ell_coords[offset];
-              sum += (vector[col] * val);
+              sum += (x[col * inc_x + start_x] * val);
             }
           }
 
@@ -979,10 +1000,10 @@ namespace viennacl
 
           for(uint item_id = col_begin; item_id < col_end; item_id++)
           {
-            sum += (vector[csr_cols[item_id]] * csr_elements[item_id]);
+            sum += (x[csr_cols[item_id] * inc_x + start_x] * csr_elements[item_id]);
           }
 
-          result[row_id] = sum;
+          result[row_id * inc_result + start_result] = sum;
         }
       }
 
@@ -1007,7 +1028,11 @@ namespace viennacl
                                                 detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(mat.handle5().cuda_handle()),
                                                 detail::cuda_arg<ScalarType>(vec),
+                                                static_cast<unsigned int>(vec.start()),
+                                                static_cast<unsigned int>(vec.stride()),
                                                 detail::cuda_arg<ScalarType>(result),
+                                                static_cast<unsigned int>(result.start()),
+                                                static_cast<unsigned int>(result.stride()),
                                                 static_cast<unsigned int>(mat.size1()),
                                                 static_cast<unsigned int>(mat.internal_size1()),
                                                 static_cast<unsigned int>(mat.ell_nnz()),

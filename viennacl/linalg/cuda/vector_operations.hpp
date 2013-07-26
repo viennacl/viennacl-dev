@@ -772,7 +772,7 @@ namespace viennacl
                                            T alpha)
       {
         for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
-                          i < internal_size1;
+                          i < size1;
                           i += gridDim.x * blockDim.x)
           vec1[i*inc1+start1] =  (i < size1) ? alpha : 0;
       }

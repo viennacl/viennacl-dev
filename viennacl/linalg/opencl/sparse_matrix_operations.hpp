@@ -505,6 +505,8 @@ namespace viennacl
 
         k.local_work_size(0, thread_num);
 
+        assert(layout_vec.start == 0 && layout_vec.stride == 1 && layout_result.start == 0 && layout_result.stride == 1 && bool("Vector strides unsupported for COO using OpenCL"));
+
         k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
         //k.global_work_size(0, thread_num);  //Only one work group
         viennacl::ocl::enqueue(k(mat.handle12().opencl_handle(), mat.handle().opencl_handle(), mat.handle3().opencl_handle(),
