@@ -427,6 +427,7 @@ namespace viennacl
     {
       public:
         typedef statement_node              value_type;
+        typedef viennacl::vcl_size_t        size_type;
         typedef std::vector<value_type>     container_type;
 
         statement(container_type const & custom_array) : array_(custom_array) {}
@@ -446,6 +447,8 @@ namespace viennacl
         }
 
         container_type const & array() const { return array_; }
+
+        size_type root() const { return 0; }
 
       private:
 

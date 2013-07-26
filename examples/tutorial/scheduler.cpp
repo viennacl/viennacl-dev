@@ -31,6 +31,7 @@
 #include "viennacl/matrix.hpp"
 
 #include "viennacl/scheduler/execute.hpp"
+#include "viennacl/scheduler/io.hpp"
 
 int main()
 {
@@ -107,6 +108,9 @@ int main()
 
   // create the full statement (aka. single line of code such as vcl_vec3 = vcl_vec1 + vcl_vec2):
   viennacl::scheduler::statement vec_addition(expression_nodes);
+
+  // print it
+  std::cout << vec_addition << std::endl;
 
   // run it
   viennacl::scheduler::execute(vec_addition);
