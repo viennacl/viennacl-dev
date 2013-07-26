@@ -857,7 +857,7 @@ namespace viennacl
       {
         result.clear();
 
-        assert(layout_vec.start == 0 && layout_vec.stride == 1 && layout_result.start == 0 && layout_result.stride == 1 && bool("Vector strides unsupported for COO using CUDA"));
+        assert(vec.start() == 0 && vec.stride() == 1 && result.start() == 0 && result.stride() == 1 && bool("Vector strides unsupported for COO using CUDA"));
 
         coordinate_matrix_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(mat.handle12().cuda_handle()),
                                                       detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
