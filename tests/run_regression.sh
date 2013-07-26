@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/bash
 
 INPUT=$1
 BUILDFOLDER=../build
@@ -21,7 +21,7 @@ if [ "$INPUT" != "" ]; then
       cd $BUILDFOLDER
       cmake ..
       # build and submit results to online cdash service
-      make Nightly -j$CORES
+      make Nightly
       echo ""
       echo "regression result is available here:"
       echo "----------------------------------------------"
@@ -44,7 +44,7 @@ else
    cd $BUILDFOLDER
    cmake ..
    # plain build without submit
-   make -j$CORES
+   make
    make test
 fi
 
