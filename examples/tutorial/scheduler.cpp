@@ -97,7 +97,7 @@ int main()
 
   // OP
   expression_nodes[1].op_family        = viennacl::scheduler::OPERATION_BINARY_TYPE_FAMILY; // this is a binary operation, so both LHS and RHS operands are important
-  expression_nodes[1].op_type          = viennacl::scheduler::OPERATION_BINARY_ADD_TYPE;    // assignment operation: '='
+  expression_nodes[1].op_type          = viennacl::scheduler::OPERATION_BINARY_ADD_TYPE;    // addition operation: '+'
 
   // RHS
   expression_nodes[1].rhs_type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;  // family of vectors
