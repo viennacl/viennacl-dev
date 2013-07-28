@@ -40,13 +40,13 @@
 #endif
 
 viennacl::scalar<float>  s1;
-viennacl::scalar<double> s2;
+viennacl::scalar<int> s2;
 
 viennacl::vector<float>  v1;
-viennacl::vector<double> v2;
+viennacl::vector<int> v2;
 
 viennacl::matrix<float>  m1;
-viennacl::matrix<double> m2;
+//viennacl::matrix<int> m2;
 
 // TODO: Add checks for other types
 
@@ -64,13 +64,13 @@ int main()
   std::cout << std::endl;
 
   s1 = viennacl::scalar<float>(1.0f);
-  s2 = viennacl::scalar<double>(1.0);
+  s2 = viennacl::scalar<int>(1.0);
 
   v1 = viennacl::vector<float>(5);
-  v2 = viennacl::vector<double>(5);
+  v2 = viennacl::vector<int>(5);
 
   m1 = viennacl::matrix<float>(5, 4);
-  m2 = viennacl::matrix<double>(5, 4);
+  //m2 = viennacl::matrix<int>(5, 4);
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
