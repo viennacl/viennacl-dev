@@ -133,6 +133,8 @@ int test(Epsilon const& epsilon,
 
   NumericT                    cpu_result = 42.0;
   viennacl::scalar<NumericT>  gpu_result = 43.0;
+  NumericT                    alpha      = 3.1415;
+  NumericT                    beta       = 2.7172;
 
   //
   // Initializer:
@@ -218,8 +220,8 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
   {
-  ublas_v1 = ublas_v1 + ublas_v2 + ublas_v1 + ublas_v2;
-  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 + vcl_v2 + vcl_v1 + vcl_v2); // same as vcl_v1 = vcl_v1 + vcl_v2 + vcl_v1 + vcl_v2;
+  ublas_v1 += alpha * ublas_v1 - beta * ublas_v2 + ublas_v1 / beta - ublas_v2 / alpha;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), alpha * vcl_v1 - beta * vcl_v2 + vcl_v1 / beta - vcl_v2 / alpha); // same as vcl_v1 += alpha * vcl_v1 - beta * vcl_v2 + beta * vcl_v1 - alpha * vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)

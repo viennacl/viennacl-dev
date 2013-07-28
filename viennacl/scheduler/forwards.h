@@ -134,6 +134,7 @@ namespace viennacl
       template <> struct op_type_info<op_prod>                     { enum { id = OPERATION_BINARY_MAT_VEC_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_mat_mat_prod>             { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_mult>                     { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_div>                      { enum { id = OPERATION_BINARY_DIV_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_mult> > { enum { id = OPERATION_BINARY_ELEMENT_MULT_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_inner_prod>               { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY }; };
@@ -462,6 +463,10 @@ namespace viennacl
       private:
 
         ///////////// Scalar node helper ////////////////
+
+        void assign_element(lhs_rhs_element & elem, float  const & t) { elem.host_float  = t; }
+        void assign_element(lhs_rhs_element & elem, double const & t) { elem.host_double = t; }
+
         // TODO: add integer vector overloads here
         void assign_element(lhs_rhs_element & elem, viennacl::scalar<float>  const & t) { elem.scalar_float  = const_cast<viennacl::scalar<float> *>(&t); }
         void assign_element(lhs_rhs_element & elem, viennacl::scalar<double> const & t) { elem.scalar_double = const_cast<viennacl::scalar<double> *>(&t); }
@@ -479,6 +484,30 @@ namespace viennacl
         void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::row_major>    const & t) { elem.matrix_row_double = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
 
         //////////// Tree leaves (terminals) ////////////////////
+
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & node_type_family,
+                                statement_node_type        & node_type,
+                                lhs_rhs_element            & elem,
+                                float const & t)
+        {
+          node_type_family = HOST_SCALAR_TYPE_FAMILY;
+          node_type        = HOST_SCALAR_FLOAT_TYPE;
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        std::size_t add_element(std::size_t next_free,
+                                statement_node_type_family & node_type_family,
+                                statement_node_type        & node_type,
+                                lhs_rhs_element            & elem,
+                                double const & t)
+        {
+          node_type_family = HOST_SCALAR_TYPE_FAMILY;
+          node_type        = HOST_SCALAR_DOUBLE_TYPE;
+          assign_element(elem, t);
+          return next_free;
+        }
 
         template <typename T>
         std::size_t add_element(std::size_t next_free,

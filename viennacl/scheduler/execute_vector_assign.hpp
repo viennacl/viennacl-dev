@@ -66,11 +66,11 @@ namespace viennacl
 
 
     // forward declaration
-    inline void execute_vector_assign(statement const & s, statement_node const & root_node);
+    inline void execute_vector(statement const & s, statement_node const & root_node);
 
 
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    inline void execute_vector_assign_composite(statement const & s, statement_node const & root_node)
+    inline void execute_vector_composite(statement const & s, statement_node const & root_node)
     {
       statement::container_type const & expr = s.array();
 
@@ -86,9 +86,26 @@ namespace viennacl
           lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type; u.data = root_node.lhs;
           lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = leaf.lhs_type;      v.data = leaf.lhs;
           lhs_rhs_element_2 w; w.type_family = VECTOR_TYPE_FAMILY; w.type = leaf.rhs_type;      w.data = leaf.rhs;
-          detail::avbv(u,
-                       v, 1.0, 1, false, false,
-                       w, 1.0, 1, false, flip_sign_z);
+          switch (root_node.op_type)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              detail::avbv(u,
+                           v, 1.0, 1, false, false,
+                           w, 1.0, 1, false, flip_sign_z);
+              break;
+            case OPERATION_BINARY_INPLACE_ADD_TYPE:
+              detail::avbv_v(u,
+                             v, 1.0, 1, false, false,
+                             w, 1.0, 1, false, flip_sign_z);
+              break;
+            case OPERATION_BINARY_INPLACE_SUB_TYPE:
+              detail::avbv_v(u,
+                             v, 1.0, 1, false, true,
+                             w, 1.0, 1, false, !flip_sign_z);
+              break;
+            default:
+              throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+          }
         }
         else if (  leaf.lhs_type_family == COMPOSITE_OPERATION_FAMILY
                 && leaf.rhs_type_family == VECTOR_TYPE_FAMILY) // x = (y) + z, y being a subtree itself, z being a vector
@@ -108,9 +125,26 @@ namespace viennacl
               lhs_rhs_element_2 alpha; alpha.type_family = y.rhs_type_family; alpha.type = y.rhs_type;     alpha.data = y.rhs;
 
               bool is_division = (y.op_type == OPERATION_BINARY_DIV_TYPE);
-              detail::avbv(u,
-                           v, alpha, 1, is_division, false,
-                           w,   1.0, 1, false,       flip_sign_z);
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v, alpha, 1, is_division, false,
+                               w,   1.0, 1, false,       flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v, alpha, 1, is_division, false,
+                                 w,   1.0, 1, false,       flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v, alpha, 1, is_division, true,
+                                 w,   1.0, 1, false,       !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
             }
             else // no built-in kernel, we use a temporary.
             {
@@ -129,15 +163,32 @@ namespace viennacl
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
-              execute_vector_assign(s, new_root_y);
+              execute_vector(s, new_root_y);
 
               // now add:
               lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type;  u.data = root_node.lhs;
               lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = new_root_y.lhs_type; v.data = new_root_y.lhs;
               lhs_rhs_element_2 w; w.type_family = VECTOR_TYPE_FAMILY; w.type = leaf.rhs_type;       w.data = leaf.rhs;
-              detail::avbv(u,
-                           v, 1.0, 1, false, false,
-                           w, 1.0, 1, false, flip_sign_z);
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v, 1.0, 1, false, false,
+                               w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, false,
+                                 w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, true,
+                                 w, 1.0, 1, false, !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
 
               detail::delete_vector_on_lhs(new_root_y);
             }
@@ -164,9 +215,26 @@ namespace viennacl
               lhs_rhs_element_2 beta;   beta.type_family = z.rhs_type_family;  beta.type = z.rhs_type;      beta.data = z.rhs;
 
               bool is_division = (z.op_type == OPERATION_BINARY_DIV_TYPE);
-              detail::avbv(u,
-                           v,  1.0, 1, false, false,
-                           w, beta, 1, is_division, flip_sign_z);
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v,  1.0, 1, false, false,
+                               w, beta, 1, is_division, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v,  1.0, 1, false, false,
+                                 w, beta, 1, is_division, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v,  1.0, 1, false, true,
+                                 w, beta, 1, is_division, !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
             }
             else // no built-in kernel, we use a temporary.
             {
@@ -185,15 +253,32 @@ namespace viennacl
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
-              execute_vector_assign(s, new_root_z);
+              execute_vector(s, new_root_z);
 
               // now add:
               lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type;  u.data = root_node.lhs;
               lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = leaf.rhs_type;       v.data = leaf.lhs;
               lhs_rhs_element_2 w; w.type_family = VECTOR_TYPE_FAMILY; w.type = new_root_z.lhs_type; w.data = new_root_z.lhs;
-              detail::avbv(u,
-                           v, 1.0, 1, false, false,
-                           w, 1.0, 1, false, flip_sign_z);
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v, 1.0, 1, false, false,
+                               w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, false,
+                                 w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, true,
+                                 w, 1.0, 1, false, !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
 
               detail::delete_vector_on_lhs(new_root_z);
             }
@@ -221,15 +306,35 @@ namespace viennacl
             {
               lhs_rhs_element_2 u;         u.type_family = VECTOR_TYPE_FAMILY;    u.type = root_node.lhs_type; u.data = root_node.lhs;
               lhs_rhs_element_2 v;         v.type_family = VECTOR_TYPE_FAMILY;    v.type = y.lhs_type;         v.data = y.lhs;
-              lhs_rhs_element_2 w;         w.type_family = VECTOR_TYPE_FAMILY;    w.type = z.rhs_type;         w.data = z.rhs;
+              lhs_rhs_element_2 w;         w.type_family = VECTOR_TYPE_FAMILY;    w.type = z.lhs_type;         w.data = z.lhs;
               lhs_rhs_element_2 alpha; alpha.type_family = y.rhs_type_family; alpha.type = y.rhs_type;     alpha.data = y.rhs;
               lhs_rhs_element_2 beta;   beta.type_family = z.rhs_type_family;  beta.type = z.rhs_type;      beta.data = z.rhs;
 
               bool is_division_y = (y.op_type == OPERATION_BINARY_DIV_TYPE);
               bool is_division_z = (z.op_type == OPERATION_BINARY_DIV_TYPE);
-              detail::avbv(u,
-                           v, alpha, 1, is_division_y, false,
-                           w,  beta, 1, is_division_z, flip_sign_z);
+              std::cout << "type u: " << u.type << std::endl;
+              std::cout << "type v: " << v.type << std::endl;
+              std::cout << "type w: " << w.type << std::endl;
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v, alpha, 1, is_division_y, false,
+                               w,  beta, 1, is_division_z, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v, alpha, 1, is_division_y, false,
+                                 w,  beta, 1, is_division_z, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v, alpha, 1, is_division_y, true,
+                                 w,  beta, 1, is_division_z, !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
             }
             else // no built-in kernel, we use a temporary.
             {
@@ -248,7 +353,7 @@ namespace viennacl
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
-              execute_vector_assign(s, new_root_y);
+              execute_vector(s, new_root_y);
 
               statement_node new_root_z;
 
@@ -265,15 +370,33 @@ namespace viennacl
 
               // work on subexpression:
               // TODO: Catch exception, free temporaries, then rethrow
-              execute_vector_assign(s, new_root_z);
+              execute_vector(s, new_root_z);
 
               // now add:
               lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type;  u.data = root_node.lhs;
-              lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = new_root_y.rhs_type; v.data = new_root_y.lhs;
+              lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = new_root_y.lhs_type; v.data = new_root_y.lhs;
               lhs_rhs_element_2 w; w.type_family = VECTOR_TYPE_FAMILY; w.type = new_root_z.lhs_type; w.data = new_root_z.lhs;
-              detail::avbv(u,
-                           v, 1.0, 1, false, false,
-                           w, 1.0, 1, false, flip_sign_z);
+
+              switch (root_node.op_type)
+              {
+                case OPERATION_BINARY_ASSIGN_TYPE:
+                  detail::avbv(u,
+                               v, 1.0, 1, false, false,
+                               w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, false,
+                                 w, 1.0, 1, false, flip_sign_z);
+                  break;
+                case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                  detail::avbv_v(u,
+                                 v, 1.0, 1, false, true,
+                                 w, 1.0, 1, false, !flip_sign_z);
+                  break;
+                default:
+                  throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+              }
 
               detail::delete_vector_on_lhs(new_root_y);
               detail::delete_vector_on_lhs(new_root_z);
@@ -285,29 +408,81 @@ namespace viennacl
         else
           throw statement_not_supported_exception("Cannot deal with addition of vectors");
       }
+      else if (leaf.op_type  == OPERATION_BINARY_MULT_TYPE || leaf.op_type  == OPERATION_BINARY_DIV_TYPE) // x = y * / alpha;
+      {
+        if (   leaf.lhs_type_family == VECTOR_TYPE_FAMILY
+            && (leaf.rhs_type_family == SCALAR_TYPE_FAMILY || leaf.rhs_type_family == HOST_SCALAR_TYPE_FAMILY))
+        {
+          lhs_rhs_element_2 u;         u.type_family = VECTOR_TYPE_FAMILY;       u.type = root_node.lhs_type;     u.data = root_node.lhs;
+          lhs_rhs_element_2 v;         v.type_family = VECTOR_TYPE_FAMILY;       v.type =      leaf.lhs_type;     v.data = leaf.lhs;
+          lhs_rhs_element_2 alpha; alpha.type_family = leaf.rhs_type_family; alpha.type =      leaf.rhs_type; alpha.data = leaf.rhs;
+
+          bool is_division = (leaf.op_type  == OPERATION_BINARY_DIV_TYPE);
+          switch (root_node.op_type)
+          {
+            case OPERATION_BINARY_ASSIGN_TYPE:
+              detail::av(u,
+                         v, alpha, 1, is_division, false);
+              break;
+            case OPERATION_BINARY_INPLACE_ADD_TYPE:
+              detail::avbv(u,
+                           u,   1.0, 1, false,       false,
+                           v, alpha, 1, is_division, false);
+              break;
+            case OPERATION_BINARY_INPLACE_SUB_TYPE:
+              detail::avbv(u,
+                           u,   1.0, 1, false,       false,
+                           v, alpha, 1, is_division, true);
+              break;
+            default:
+              throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+          }
+
+        }
+        else
+          throw statement_not_supported_exception("Unsupported binary operator for OPERATION_BINARY_MULT_TYPE || OPERATION_BINARY_DIV_TYPE on leaf node.");
+      }
       else
         throw statement_not_supported_exception("Unsupported binary operator for vector operations");
     }
 
     /** @brief Deals with x = y  for a vector y */
-    inline void execute_vector_assign_vector(statement const & s, statement_node const & root_node)
+    inline void execute_vector_vector(statement const &, statement_node const & root_node)
     {
       lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type; u.data = root_node.lhs;
       lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = root_node.rhs_type; v.data = root_node.rhs;
-      detail::av(u,
-                 v, 1.0, 1, false, false);
+      switch (root_node.op_type)
+      {
+        case OPERATION_BINARY_ASSIGN_TYPE:
+          detail::av(u,
+                     v, 1.0, 1, false, false);
+          break;
+        case OPERATION_BINARY_INPLACE_ADD_TYPE:
+          detail::avbv(u,
+                       u, 1.0, 1, false, false,
+                       v, 1.0, 1, false, false);
+          break;
+        case OPERATION_BINARY_INPLACE_SUB_TYPE:
+          detail::avbv(u,
+                       u, 1.0, 1, false, false,
+                       v, 1.0, 1, false, true);
+          break;
+        default:
+          throw statement_not_supported_exception("Unsupported binary operator for vector operation in root note (should be =, +=, or -=)");
+      }
+
     }
 
     /** @brief Generic dispatcher */
-    inline void execute_vector_assign(statement const & s, statement_node const & root_node)
+    inline void execute_vector(statement const & s, statement_node const & root_node)
     {
       switch (root_node.rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
-          execute_vector_assign_composite(s, root_node);
+          execute_vector_composite(s, root_node);
           break;
         case VECTOR_TYPE_FAMILY:
-          execute_vector_assign_vector(s, root_node);
+          execute_vector_vector(s, root_node);
           break;
         default:
           throw statement_not_supported_exception("Invalid rvalue encountered in vector assignment");

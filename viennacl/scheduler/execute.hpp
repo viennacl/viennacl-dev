@@ -30,8 +30,6 @@
 #include "viennacl/scheduler/execute_scalar_assign.hpp"
 
 #include "viennacl/scheduler/execute_vector_assign.hpp"
-#include "viennacl/scheduler/execute_vector_inplace_add.hpp"
-#include "viennacl/scheduler/execute_vector_inplace_sub.hpp"
 
 #include "viennacl/scheduler/execute_matrix_col_assign.hpp"
 #include "viennacl/scheduler/execute_matrix_col_inplace_add.hpp"
@@ -65,17 +63,7 @@ namespace viennacl
             break;
 
           case VECTOR_TYPE_FAMILY:
-            switch (root_node.op_type)
-            {
-              case OPERATION_BINARY_ASSIGN_TYPE:
-                execute_vector_assign(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_ADD_TYPE:
-                execute_vector_inplace_add(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_SUB_TYPE:
-                execute_vector_inplace_sub(s, root_node); break;
-              default:
-                throw statement_not_supported_exception("Vector operation does not use '=', '+=' or '-=' in head node.");
-            }
+            execute_vector(s, root_node); break;
             break;
 
           case MATRIX_COL_TYPE_FAMILY:
