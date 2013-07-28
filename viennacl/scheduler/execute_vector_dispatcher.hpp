@@ -27,6 +27,7 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
+#include "viennacl/scheduler/execute_util.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 
 namespace viennacl
@@ -35,30 +36,6 @@ namespace viennacl
   {
     namespace detail
     {
-      // helper routines for extracting the scalar type
-      inline float convert_to_float(float f) { return f; }
-      inline float convert_to_float(lhs_rhs_element const & el)
-      {
-        if (el.type == HOST_SCALAR_FLOAT_TYPE)
-          return el.host_float;
-        if (el.type == SCALAR_FLOAT_TYPE)
-          return *el.scalar_float;
-
-        throw statement_not_supported_exception("Cannot convert to float");
-      }
-
-      // helper routines for extracting the scalar type
-      inline double convert_to_double(double d) { return d; }
-      inline double convert_to_double(lhs_rhs_element const & el)
-      {
-        if (el.type == HOST_SCALAR_DOUBLE_TYPE)
-          return el.host_double;
-        if (el.type == SCALAR_DOUBLE_TYPE)
-          return *el.scalar_double;
-
-        throw statement_not_supported_exception("Cannot convert to double");
-      }
-
       /** @brief Wrapper for viennacl::linalg::av(), taking care of the argument unwrapping */
       template <typename ScalarType1>
       void av(lhs_rhs_element & vec1,

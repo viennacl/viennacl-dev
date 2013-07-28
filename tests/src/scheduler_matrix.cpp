@@ -232,6 +232,16 @@ int run_test(double epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "Composite assignments: ";
+  {
+  ublas_C += alpha * ublas_A - beta * ublas_B + ublas_A / beta - ublas_B / alpha;
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_inplace_add(), alpha * vcl_A - beta * vcl_B + vcl_A / beta - vcl_B / alpha); // same as vcl_C += alpha * vcl_A - beta * vcl_B + vcl_A / beta - vcl_B / alpha;
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+  }
+
 
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;

@@ -28,16 +28,8 @@
 #include "viennacl/linalg/vector_operations.hpp"
 
 #include "viennacl/scheduler/execute_scalar_assign.hpp"
-
 #include "viennacl/scheduler/execute_vector_assign.hpp"
-
-#include "viennacl/scheduler/execute_matrix_col_assign.hpp"
-#include "viennacl/scheduler/execute_matrix_col_inplace_add.hpp"
-#include "viennacl/scheduler/execute_matrix_col_inplace_sub.hpp"
-
-#include "viennacl/scheduler/execute_matrix_row_assign.hpp"
-#include "viennacl/scheduler/execute_matrix_row_inplace_add.hpp"
-#include "viennacl/scheduler/execute_matrix_row_inplace_sub.hpp"
+#include "viennacl/scheduler/execute_matrix.hpp"
 
 namespace viennacl
 {
@@ -64,35 +56,10 @@ namespace viennacl
 
           case VECTOR_TYPE_FAMILY:
             execute_vector(s, root_node); break;
-            break;
 
           case MATRIX_COL_TYPE_FAMILY:
-            switch (root_node.op.type)
-            {
-              case OPERATION_BINARY_ASSIGN_TYPE:
-                execute_matrix_col_assign(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_ADD_TYPE:
-                execute_matrix_col_inplace_add(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_SUB_TYPE:
-                execute_matrix_col_inplace_sub(s, root_node); break;
-              default:
-                throw statement_not_supported_exception("Column-major matrix operation does not use '=', '+=' or '-=' in head node.");
-            }
-            break;
-
           case MATRIX_ROW_TYPE_FAMILY:
-            switch (root_node.op.type)
-            {
-              case OPERATION_BINARY_ASSIGN_TYPE:
-                execute_matrix_row_assign(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_ADD_TYPE:
-                execute_matrix_row_inplace_add(s, root_node); break;
-              case OPERATION_BINARY_INPLACE_SUB_TYPE:
-                execute_matrix_row_inplace_sub(s, root_node); break;
-              default:
-                throw statement_not_supported_exception("Row-major matrix operation does not use '=', '+=' or '-=' in head node.");
-            }
-            break;
+            execute_matrix(s, root_node); break;
 
           default:
             throw statement_not_supported_exception("Unsupported lvalue encountered in head node.");
