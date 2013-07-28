@@ -87,6 +87,7 @@ namespace viennacl
       OPERATION_BINARY_MAT_VEC_PROD_TYPE,
       OPERATION_BINARY_MAT_MAT_PROD_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
+      OPERATION_BINARY_DIV_TYPE,     // vector/matrix divided by scalar
       OPERATION_BINARY_ELEMENT_MULT_TYPE,
       OPERATION_BINARY_ELEMENT_DIV_TYPE,
       OPERATION_BINARY_INNER_PROD_TYPE
@@ -392,6 +393,14 @@ namespace viennacl
       viennacl::matrix_base<double,         viennacl::column_major>    *matrix_col_double;
 
     } lhs_rhs_element;
+
+    struct lhs_rhs_element_2
+    {
+      statement_node_type_family   type_family;
+      statement_node_type          type;
+
+      lhs_rhs_element              data;
+    };
 
 
     /** @brief Main datastructure for an node in the statement tree */
