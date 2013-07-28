@@ -45,7 +45,7 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      if (expr[0].lhs_type == MATRIX_ROW_FLOAT_TYPE && expr[0].rhs_type == MATRIX_ROW_FLOAT_TYPE)
+      if (expr[0].lhs.type == MATRIX_ROW_FLOAT_TYPE && expr[0].rhs.type == MATRIX_ROW_FLOAT_TYPE)
       {
         viennacl::matrix_base<float, viennacl::row_major>       & A = *(expr[0].lhs.matrix_row_float);
         viennacl::matrix_base<float, viennacl::row_major> const & B = *(expr[0].rhs.matrix_row_float);
@@ -53,7 +53,7 @@ namespace viennacl
                                A,  1.0, 1, false, false,
                                B,  1.0, 1, false, false);
       }
-      else if (expr[0].lhs_type == MATRIX_ROW_DOUBLE_TYPE && expr[0].rhs_type == MATRIX_ROW_DOUBLE_TYPE)
+      else if (expr[0].lhs.type == MATRIX_ROW_DOUBLE_TYPE && expr[0].rhs.type == MATRIX_ROW_DOUBLE_TYPE)
       {
         viennacl::matrix_base<double, viennacl::row_major>       & A = *(expr[0].lhs.matrix_row_double);
         viennacl::matrix_base<double, viennacl::row_major> const & B = *(expr[0].rhs.matrix_row_double);
@@ -72,7 +72,7 @@ namespace viennacl
 
       StatementContainer const & expr = s.array();
 
-      switch (expr[0].rhs_type_family)
+      switch (expr[0].rhs.type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
           execute_matrix_row_inplace_add_composite(s, root_node);

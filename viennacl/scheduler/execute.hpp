@@ -50,10 +50,10 @@ namespace viennacl
       {
         typedef statement::container_type   StatementContainer;
 
-        switch (root_node.lhs_type_family)
+        switch (root_node.lhs.type_family)
         {
           case SCALAR_TYPE_FAMILY:
-            switch (root_node.op_type)
+            switch (root_node.op.type)
             {
               case OPERATION_BINARY_ASSIGN_TYPE:
                 execute_scalar_assign(s, root_node); break;
@@ -67,7 +67,7 @@ namespace viennacl
             break;
 
           case MATRIX_COL_TYPE_FAMILY:
-            switch (root_node.op_type)
+            switch (root_node.op.type)
             {
               case OPERATION_BINARY_ASSIGN_TYPE:
                 execute_matrix_col_assign(s, root_node); break;
@@ -81,7 +81,7 @@ namespace viennacl
             break;
 
           case MATRIX_ROW_TYPE_FAMILY:
-            switch (root_node.op_type)
+            switch (root_node.op.type)
             {
               case OPERATION_BINARY_ASSIGN_TYPE:
                 execute_matrix_row_assign(s, root_node); break;

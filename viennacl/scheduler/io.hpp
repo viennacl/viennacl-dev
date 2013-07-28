@@ -40,12 +40,11 @@ namespace viennacl
 #define VIENNACL_TRANSLATE_OP_TO_STRING(NAME)   case NAME: return #NAME;
 
       /** @brief Helper routine for converting the operation enums to string */
-      std::string to_string(viennacl::scheduler::operation_node_type_family family,
-                            viennacl::scheduler::operation_node_type type)
+      std::string to_string(viennacl::scheduler::op_element op_elem)
       {
-        if (family == OPERATION_UNARY_TYPE_FAMILY)
+        if (op_elem.type_family == OPERATION_UNARY_TYPE_FAMILY)
         {
-          switch (type)
+          switch (op_elem.type)
           {
             VIENNACL_TRANSLATE_OP_TO_STRING(OPERATION_UNARY_ABS_TYPE)
             VIENNACL_TRANSLATE_OP_TO_STRING(OPERATION_UNARY_ACOS_TYPE)
@@ -71,9 +70,9 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert unary operation to string");
           }
         }
-        else if (family == OPERATION_BINARY_TYPE_FAMILY)
+        else if (op_elem.type_family == OPERATION_BINARY_TYPE_FAMILY)
         {
-          switch (type)
+          switch (op_elem.type)
           {
             VIENNACL_TRANSLATE_OP_TO_STRING(OPERATION_BINARY_ASSIGN_TYPE)
             VIENNACL_TRANSLATE_OP_TO_STRING(OPERATION_BINARY_INPLACE_ADD_TYPE)
@@ -100,24 +99,22 @@ namespace viennacl
 #define VIENNACL_TRANSLATE_ELEMENT_TO_STRING(NAME, ELEMENT)   case NAME: ss << "(" << element.ELEMENT << ")"; return #NAME + ss.str();
 
       /** @brief Helper routine converting the enum and union values inside a statement node to a string */
-      std::string to_string(viennacl::scheduler::statement_node_type_family family,
-                            viennacl::scheduler::statement_node_type        type,
-                            viennacl::scheduler::lhs_rhs_element            element)
+      std::string to_string(viennacl::scheduler::lhs_rhs_element element)
       {
         std::stringstream ss;
 
-        if (family == COMPOSITE_OPERATION_FAMILY)
+        if (element.type_family == COMPOSITE_OPERATION_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             VIENNACL_TRANSLATE_ELEMENT_TO_STRING(COMPOSITE_OPERATION_TYPE, node_index)
 
             default: throw statement_not_supported_exception("Cannot convert composite operation type to string");
           }
         }
-        else if (family == HOST_SCALAR_TYPE_FAMILY)
+        else if (element.type_family == HOST_SCALAR_TYPE_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_CHAR_TYPE,   host_char)
             VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_UCHAR_TYPE,  host_uchar)
@@ -133,9 +130,9 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert host scalar type to string");
           }
         }
-        else if (family == SCALAR_TYPE_FAMILY)
+        else if (element.type_family == SCALAR_TYPE_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_CHAR_TYPE,   scalar_char)
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_UCHAR_TYPE,  scalar_uchar)
@@ -152,9 +149,9 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert scalar type to string");
           }
         }
-        else if (family == VECTOR_TYPE_FAMILY)
+        else if (element.type_family == VECTOR_TYPE_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_CHAR_TYPE,   vector_char)
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_UCHAR_TYPE,  vector_uchar)
@@ -171,9 +168,9 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert vector type to string");
           }
         }
-        else if (family == MATRIX_ROW_TYPE_FAMILY)
+        else if (element.type_family == MATRIX_ROW_TYPE_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_CHAR_TYPE,   matrix_row_char)
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_UCHAR_TYPE,  matrix_row_uchar)
@@ -190,9 +187,9 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert row-major matrix type to string");
           }
         }
-        else if (family == MATRIX_COL_TYPE_FAMILY)
+        else if (element.type_family == MATRIX_COL_TYPE_FAMILY)
         {
-          switch (type)
+          switch (element.type)
           {
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_CHAR_TYPE,   matrix_col_char)
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_UCHAR_TYPE,  matrix_col_uchar)
@@ -221,9 +218,9 @@ namespace viennacl
     /** @brief Print a single statement_node. Non-recursive */
     std::ostream & operator<<(std::ostream & os, viennacl::scheduler::statement_node const & s_node)
     {
-      os << "LHS: " << detail::to_string(s_node.lhs_type_family, s_node.lhs_type, s_node.lhs) << ", "
-         << "OP: "  << detail::to_string(s_node.op_family,       s_node.op_type) << ", "
-         << "RHS: " << detail::to_string(s_node.rhs_type_family, s_node.rhs_type, s_node.rhs);
+      os << "LHS: " << detail::to_string(s_node.lhs) << ", "
+         << "OP: "  << detail::to_string(s_node.op) << ", "
+         << "RHS: " << detail::to_string(s_node.rhs);
 
       return os;
     }
@@ -248,10 +245,10 @@ namespace viennacl
 
         os << "Node " << node_index << ": " << current_node << std::endl;
 
-        if (current_node.lhs_type_family == COMPOSITE_OPERATION_FAMILY)
+        if (current_node.lhs.type_family == COMPOSITE_OPERATION_FAMILY)
           print_node(os, s, current_node.lhs.node_index, indent+1);
 
-        if (current_node.rhs_type_family == COMPOSITE_OPERATION_FAMILY)
+        if (current_node.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
           print_node(os, s, current_node.rhs.node_index, indent+1);
       }
     }
