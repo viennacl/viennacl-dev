@@ -56,10 +56,10 @@ int run_benchmark()
 
   std::vector<ScalarType> std_vec1(BENCHMARK_VECTOR_SIZE);
   std::vector<ScalarType> std_vec2(BENCHMARK_VECTOR_SIZE);
-  std::vector<ScalarType> std_vec3(BENCHMARK_VECTOR_SIZE);
   viennacl::vector<ScalarType> vcl_vec1(BENCHMARK_VECTOR_SIZE);
   viennacl::vector<ScalarType> vcl_vec2(BENCHMARK_VECTOR_SIZE);
-  viennacl::vector<ScalarType> vcl_vec3(BENCHMARK_VECTOR_SIZE);
+  ScalarType alpha = ScalarType(1.1415);
+  ScalarType beta  = ScalarType(0.97172);
 
 
   ///////////// Vector operations /////////////////
@@ -77,12 +77,12 @@ int run_benchmark()
   viennacl::copy(std_vec2, vcl_vec2);
 
   viennacl::backend::finish();
-  vcl_vec2 = vcl_vec1 + vcl_vec2;
+  vcl_vec2 = alpha * vcl_vec1 + beta * vcl_vec2;
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    vcl_vec2 = vcl_vec1 + vcl_vec2;
+    vcl_vec2 = alpha * vcl_vec1 + beta * vcl_vec2;
   }
   viennacl::backend::finish();
   exec_time = timer.get();
@@ -93,7 +93,7 @@ int run_benchmark()
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    viennacl::scheduler::statement   my_statement(vcl_vec2, viennacl::op_assign(), vcl_vec1 + vcl_vec2); // same as vcl_v1 = vcl_v1 + vcl_v2;
+    viennacl::scheduler::statement   my_statement(vcl_vec2, viennacl::op_assign(), alpha * vcl_vec1 + beta * vcl_vec2); // same as vcl_v1 = alpha * vcl_vec1 + beta * vcl_vec2;
     viennacl::scheduler::execute(my_statement);
   }
   viennacl::backend::finish();
@@ -101,7 +101,7 @@ int run_benchmark()
   std::cout << "Execution time per operation, with scheduler including statement generation: " << exec_time / BENCHMARK_RUNS << " sec" << std::endl;
   std::cout << "Result: " << vcl_vec2[0] << std::endl;
 
-  viennacl::scheduler::statement   my_statement(vcl_vec2, viennacl::op_assign(), vcl_vec1 + vcl_vec2); // same as vcl_v1 = vcl_v1 + vcl_v2;
+  viennacl::scheduler::statement   my_statement(vcl_vec2, viennacl::op_assign(), alpha * vcl_vec1 + beta * vcl_vec2); // same as vcl_v1 = alpha * vcl_vec1 + beta * vcl_vec2;
   viennacl::backend::finish();
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
