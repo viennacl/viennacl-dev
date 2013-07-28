@@ -42,6 +42,7 @@
 #include "viennacl/linalg/norm_inf.hpp"
 
 #include "viennacl/scheduler/execute.hpp"
+#include "viennacl/scheduler/io.hpp"
 
 #include "Random.hpp"
 
@@ -211,6 +212,14 @@ int test(Epsilon const& epsilon,
   {
   ublas_v1 = ublas_v1 + ublas_v2;
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 + vcl_v2); // same as vcl_v1 = vcl_v1 + vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+  {
+  ublas_v1 = ublas_v1 + ublas_v2 + ublas_v1 + ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 + vcl_v2 + vcl_v1 + vcl_v2); // same as vcl_v1 = vcl_v1 + vcl_v2 + vcl_v1 + vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)

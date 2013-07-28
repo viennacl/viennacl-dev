@@ -25,7 +25,7 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/linalg/vector_operations.hpp"
+#include "viennacl/scheduler/execute_vector_dispatcher.hpp"
 
 namespace viennacl
 {
@@ -33,52 +33,31 @@ namespace viennacl
   {
 
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    inline void execute_vector_inplace_add_composite(statement const & s)
+    inline void execute_vector_inplace_add_composite(statement const & s, statement_node const & root_node)
     {
       throw statement_not_supported_exception("Composite inplace-additions for vectors not supported yet");
     }
 
     /** @brief Deals with x = y  for a vector y */
-    inline void execute_vector_inplace_add_vector(statement const & s)
+    inline void execute_vector_inplace_add_vector(statement const & s, statement_node const & root_node)
     {
-      typedef statement::container_type   StatementContainer;
-
-      StatementContainer const & expr = s.array();
-
-      if (expr[0].lhs_type == VECTOR_FLOAT_TYPE && expr[0].rhs_type == VECTOR_FLOAT_TYPE)
-      {
-        viennacl::vector_base<float>       & x = *(expr[0].lhs.vector_float);
-        viennacl::vector_base<float> const & y = *(expr[0].rhs.vector_float);
-        viennacl::linalg::avbv(x,
-                               x,  1.0, 1, false, false,
-                               y,  1.0, 1, false, false);
-      }
-      else if (expr[0].lhs_type == VECTOR_DOUBLE_TYPE && expr[0].rhs_type == VECTOR_DOUBLE_TYPE)
-      {
-        viennacl::vector_base<double>       & x = *(expr[0].lhs.vector_double);
-        viennacl::vector_base<double> const & y = *(expr[0].rhs.vector_double);
-        viennacl::linalg::avbv(x,
-                               x,  1.0, 1, false, false,
-                               y,  1.0, 1, false, false);
-      }
-      else
-        throw statement_not_supported_exception("Unsupported rvalue for inplace-add to vector");
+      lhs_rhs_element_2 u; u.type_family = VECTOR_TYPE_FAMILY; u.type = root_node.lhs_type; u.data = root_node.lhs;
+      lhs_rhs_element_2 v; v.type_family = VECTOR_TYPE_FAMILY; v.type = root_node.rhs_type; v.data = root_node.rhs;
+      detail::avbv(u,
+                   u, 1.0, 1, false, false,
+                   v, 1.0, 1, false, false);
     }
 
     /** @brief Generic dispatcher */
-    inline void execute_vector_inplace_add(statement const & s)
+    inline void execute_vector_inplace_add(statement const & s, statement_node const & root_node)
     {
-      typedef statement::container_type   StatementContainer;
-
-      StatementContainer const & expr = s.array();
-
-      switch (expr[0].rhs_type_family)
+      switch (root_node.rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
-          execute_vector_inplace_add_composite(s);
+          execute_vector_inplace_add_composite(s, root_node);
           break;
         case VECTOR_TYPE_FAMILY:
-          execute_vector_inplace_add_vector(s);
+          execute_vector_inplace_add_vector(s, root_node);
           break;
         default:
           throw statement_not_supported_exception("Invalid rvalue encountered in vector inplace-add");

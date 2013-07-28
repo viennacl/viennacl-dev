@@ -46,69 +46,76 @@ namespace viennacl
   namespace scheduler
   {
 
+    namespace detail
+    {
+      inline void execute_impl(statement const & s, statement_node const & root_node)
+      {
+        typedef statement::container_type   StatementContainer;
+
+        switch (root_node.lhs_type_family)
+        {
+          case SCALAR_TYPE_FAMILY:
+            switch (root_node.op_type)
+            {
+              case OPERATION_BINARY_ASSIGN_TYPE:
+                execute_scalar_assign(s, root_node); break;
+              default:
+                throw statement_not_supported_exception("Scalar operation does not use '=' in head node.");
+            }
+            break;
+
+          case VECTOR_TYPE_FAMILY:
+            switch (root_node.op_type)
+            {
+              case OPERATION_BINARY_ASSIGN_TYPE:
+                execute_vector_assign(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                execute_vector_inplace_add(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                execute_vector_inplace_sub(s, root_node); break;
+              default:
+                throw statement_not_supported_exception("Vector operation does not use '=', '+=' or '-=' in head node.");
+            }
+            break;
+
+          case MATRIX_COL_TYPE_FAMILY:
+            switch (root_node.op_type)
+            {
+              case OPERATION_BINARY_ASSIGN_TYPE:
+                execute_matrix_col_assign(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                execute_matrix_col_inplace_add(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                execute_matrix_col_inplace_sub(s, root_node); break;
+              default:
+                throw statement_not_supported_exception("Column-major matrix operation does not use '=', '+=' or '-=' in head node.");
+            }
+            break;
+
+          case MATRIX_ROW_TYPE_FAMILY:
+            switch (root_node.op_type)
+            {
+              case OPERATION_BINARY_ASSIGN_TYPE:
+                execute_matrix_row_assign(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_ADD_TYPE:
+                execute_matrix_row_inplace_add(s, root_node); break;
+              case OPERATION_BINARY_INPLACE_SUB_TYPE:
+                execute_matrix_row_inplace_sub(s, root_node); break;
+              default:
+                throw statement_not_supported_exception("Row-major matrix operation does not use '=', '+=' or '-=' in head node.");
+            }
+            break;
+
+          default:
+            throw statement_not_supported_exception("Unsupported lvalue encountered in head node.");
+        }
+      }
+    }
+
     inline void execute(statement const & s)
     {
-      typedef statement::container_type   StatementContainer;
-
-      StatementContainer const & expr = s.array();
-
-      switch (expr[0].lhs_type_family)
-      {
-        case SCALAR_TYPE_FAMILY:
-          switch (expr[0].op_type)
-          {
-            case OPERATION_BINARY_ASSIGN_TYPE:
-              execute_scalar_assign(s); break;
-            default:
-              throw statement_not_supported_exception("Scalar operation does not use '=' in head node.");
-          }
-          break;
-
-        case VECTOR_TYPE_FAMILY:
-          switch (expr[0].op_type)
-          {
-            case OPERATION_BINARY_ASSIGN_TYPE:
-              execute_vector_assign(s); break;
-            case OPERATION_BINARY_INPLACE_ADD_TYPE:
-              execute_vector_inplace_add(s); break;
-            case OPERATION_BINARY_INPLACE_SUB_TYPE:
-              execute_vector_inplace_sub(s); break;
-            default:
-              throw statement_not_supported_exception("Vector operation does not use '=', '+=' or '-=' in head node.");
-          }
-          break;
-
-        case MATRIX_COL_TYPE_FAMILY:
-          switch (expr[0].op_type)
-          {
-            case OPERATION_BINARY_ASSIGN_TYPE:
-              execute_matrix_col_assign(s); break;
-            case OPERATION_BINARY_INPLACE_ADD_TYPE:
-              execute_matrix_col_inplace_add(s); break;
-            case OPERATION_BINARY_INPLACE_SUB_TYPE:
-              execute_matrix_col_inplace_sub(s); break;
-            default:
-              throw statement_not_supported_exception("Column-major matrix operation does not use '=', '+=' or '-=' in head node.");
-          }
-          break;
-
-        case MATRIX_ROW_TYPE_FAMILY:
-          switch (expr[0].op_type)
-          {
-            case OPERATION_BINARY_ASSIGN_TYPE:
-              execute_matrix_row_assign(s); break;
-            case OPERATION_BINARY_INPLACE_ADD_TYPE:
-              execute_matrix_row_inplace_add(s); break;
-            case OPERATION_BINARY_INPLACE_SUB_TYPE:
-              execute_matrix_row_inplace_sub(s); break;
-            default:
-              throw statement_not_supported_exception("Row-major matrix operation does not use '=', '+=' or '-=' in head node.");
-          }
-          break;
-
-        default:
-          throw statement_not_supported_exception("Unsupported lvalue encountered in head node.");
-      }
+      // simply start execution from the root node:
+      detail::execute_impl(s, s.array()[s.root()]);
     }
 
 

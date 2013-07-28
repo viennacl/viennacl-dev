@@ -32,7 +32,7 @@ namespace viennacl
   namespace scheduler
   {
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    inline void execute_matrix_row_assign_composite(statement const & s)
+    inline void execute_matrix_row_assign_composite(statement const & s, statement_node const & root_node)
     {
       statement::container_type const & expr = s.array();
 
@@ -95,7 +95,7 @@ namespace viennacl
     }
 
     /** @brief Deals with A = B  for a matrix B */
-    inline void execute_matrix_row_assign_matrix(statement const & s)
+    inline void execute_matrix_row_assign_matrix(statement const & s, statement_node const & root_node)
     {
       typedef statement::container_type   StatementContainer;
 
@@ -120,7 +120,7 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    inline void execute_matrix_row_assign(statement const & s)
+    inline void execute_matrix_row_assign(statement const & s, statement_node const & root_node)
     {
       typedef statement::container_type   StatementContainer;
 
@@ -129,10 +129,10 @@ namespace viennacl
       switch (expr[0].rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
-          execute_matrix_row_assign_composite(s);
+          execute_matrix_row_assign_composite(s, root_node);
           break;
         case MATRIX_ROW_TYPE_FAMILY:
-          execute_matrix_row_assign_matrix(s);
+          execute_matrix_row_assign_matrix(s, root_node);
           break;
         default:
           throw statement_not_supported_exception("Invalid rvalue encountered in row-major matrix assignment");

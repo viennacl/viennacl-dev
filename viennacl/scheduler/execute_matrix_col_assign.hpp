@@ -32,7 +32,7 @@ namespace viennacl
   namespace scheduler
   {
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    inline void execute_matrix_col_assign_composite(statement const & s)
+    inline void execute_matrix_col_assign_composite(statement const & s, statement_node const & root_node)
     {
       statement::container_type const & expr = s.array();
 
@@ -95,23 +95,23 @@ namespace viennacl
     }
 
     /** @brief Deals with A = B  for a matrix B */
-    inline void execute_matrix_col_assign_matrix(statement const & s)
+    inline void execute_matrix_col_assign_matrix(statement const & s, statement_node const & root_node)
     {
       typedef statement::container_type   StatementContainer;
 
       StatementContainer const & expr = s.array();
 
-      if (expr[0].lhs_type == MATRIX_COL_FLOAT_TYPE && expr[0].rhs_type == MATRIX_COL_FLOAT_TYPE)
+      if (root_node.lhs_type == MATRIX_COL_FLOAT_TYPE && root_node.rhs_type == MATRIX_COL_FLOAT_TYPE)
       {
-        viennacl::matrix_base<float, viennacl::column_major>       & A = *(expr[0].lhs.matrix_col_float);
-        viennacl::matrix_base<float, viennacl::column_major> const & B = *(expr[0].rhs.matrix_col_float);
+        viennacl::matrix_base<float, viennacl::column_major>       & A = *(root_node.lhs.matrix_col_float);
+        viennacl::matrix_base<float, viennacl::column_major> const & B = *(root_node.rhs.matrix_col_float);
         viennacl::linalg::am(A,
                              B, 1.0, 1, false, false);
       }
-      else if (expr[0].lhs_type == MATRIX_COL_DOUBLE_TYPE && expr[0].rhs_type == MATRIX_COL_DOUBLE_TYPE)
+      else if (root_node.lhs_type == MATRIX_COL_DOUBLE_TYPE && root_node.rhs_type == MATRIX_COL_DOUBLE_TYPE)
       {
-        viennacl::matrix_base<double, viennacl::column_major>       & A = *(expr[0].lhs.matrix_col_double);
-        viennacl::matrix_base<double, viennacl::column_major> const & B = *(expr[0].rhs.matrix_col_double);
+        viennacl::matrix_base<double, viennacl::column_major>       & A = *(root_node.lhs.matrix_col_double);
+        viennacl::matrix_base<double, viennacl::column_major> const & B = *(root_node.rhs.matrix_col_double);
         viennacl::linalg::am(A,
                              B, 1.0, 1, false, false);
       }
@@ -120,19 +120,15 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    inline void execute_matrix_col_assign(statement const & s)
+    inline void execute_matrix_col_assign(statement const & s, statement_node const & root_node)
     {
-      typedef statement::container_type   StatementContainer;
-
-      StatementContainer const & expr = s.array();
-
-      switch (expr[0].rhs_type_family)
+      switch (root_node.rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
-          execute_matrix_col_assign_composite(s);
+          execute_matrix_col_assign_composite(s, root_node);
           break;
         case MATRIX_COL_TYPE_FAMILY:
-          execute_matrix_col_assign_matrix(s);
+          execute_matrix_col_assign_matrix(s, root_node);
           break;
         default:
           throw statement_not_supported_exception("Invalid rvalue encountered in column-major matrix assignment");

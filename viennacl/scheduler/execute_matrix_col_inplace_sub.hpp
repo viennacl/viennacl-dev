@@ -33,13 +33,13 @@ namespace viennacl
   {
 
     /** @brief Deals with x = RHS where RHS is a vector expression */
-    inline void execute_matrix_col_inplace_sub_composite(statement const & s)
+    inline void execute_matrix_col_inplace_sub_composite(statement const & s, statement_node const & root_node)
     {
       throw statement_not_supported_exception("Composite inplace-subtractions for column-major matrices not supported yet");
     }
 
     /** @brief Deals with A -= B  for a matrix B */
-    inline void execute_matrix_col_inplace_sub_matrix(statement const & s)
+    inline void execute_matrix_col_inplace_sub_matrix(statement const & s, statement_node const & root_node)
     {
       typedef statement::container_type   StatementContainer;
 
@@ -66,7 +66,7 @@ namespace viennacl
     }
 
     /** @brief Generic dispatcher */
-    inline void execute_matrix_col_inplace_sub(statement const & s)
+    inline void execute_matrix_col_inplace_sub(statement const & s, statement_node const & root_node)
     {
       typedef statement::container_type   StatementContainer;
 
@@ -75,10 +75,10 @@ namespace viennacl
       switch (expr[0].rhs_type_family)
       {
         case COMPOSITE_OPERATION_FAMILY:
-          execute_matrix_col_inplace_sub_composite(s);
+          execute_matrix_col_inplace_sub_composite(s, root_node);
           break;
         case MATRIX_COL_TYPE_FAMILY:
-          execute_matrix_col_inplace_sub_matrix(s);
+          execute_matrix_col_inplace_sub_matrix(s, root_node);
           break;
         default:
           throw statement_not_supported_exception("Invalid rvalue encountered in column-major matrix inplace-sub");
