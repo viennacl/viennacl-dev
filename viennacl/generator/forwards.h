@@ -20,28 +20,47 @@
 
 
 /** @file viennacl/generator/forwards.h
- * Forward declarations for the generator
+    @brief Forwards declaration
 */
 
+#include <map>
+#include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
 
   namespace generator{
 
-    class custom_operation;
-    class symbolic_expression_tree_base;
-    class symbolic_kernel_argument;
-    class symbolic_datastructure;
-
-    template<typename ScalarType> class vector;
-    template<typename ScalarType> class scalar;
-    template<class VCL_MATRIX> class matrix;
-
     namespace utils{
       class kernel_generation_stream;
+    }
+
+    namespace detail{
+
+      using namespace viennacl::scheduler;
+
+      enum node_type{
+        LHS_NODE_TYPE,
+        PARENT_TYPE,
+        RHS_NODE_TYPE
+      };
+
+      class mapped_container;
+
+      typedef std::pair<std::size_t, node_type> index_info;
+      typedef std::map< index_info, tools::shared_ptr<detail::mapped_container> > mapping_type;
+
+
+      template<class TraversalFunctor>
+      static void traverse(scheduler::statement::container_type const & array, TraversalFunctor const & fun, bool deep_traversal, index_info const & key = std::make_pair(0, PARENT_TYPE));
+      static std::string generate(std::pair<std::string, std::string> const & index, mapped_container const & s);
+      static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_container & s);
+      static const char * generate(scheduler::operation_node_type arg);
+
+
     }
 
   }
 
 }
-#endif // FORWARDS_H
+#endif

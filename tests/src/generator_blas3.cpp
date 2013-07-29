@@ -48,8 +48,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "examples/tutorial/Random.hpp"
-#include "viennacl/generator/custom_operation.hpp"
-
+#include "viennacl/generator/generate.hpp"
 #include "list"
 //
 // -------------------------------------------------------------
@@ -128,14 +127,34 @@ int test_prod(Epsilon const& epsilon,
    int retval = EXIT_SUCCESS;
    NumericT act_diff = 0;
 
+   std::cout << "Testing C = A * B ..." << std::endl;
+   {
+       C     = viennacl::linalg::prod(A, B);
+
+       viennacl::generator::code_generator op;
+       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,vcl_B)));
+       viennacl::generator::enqueue(op);
+       viennacl::backend::finish();
+       act_diff = fabs(diff(C, vcl_C));
+       if( act_diff > epsilon )
+       {
+         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+         std::cout << "  diff: " << act_diff << std::endl;
+         retval = EXIT_FAILURE;
+       }
+       else
+         std::cout << "Test C = A * B passed!" << std::endl;
+   }
+
+
    std::cout << "Testing C = trans(A) * B ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(trans(A_trans), B);
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),vcl_B));
-       op.execute();
+       viennacl::generator::code_generator op;
+       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),vcl_B)));
+       viennacl::generator::enqueue(op);
        viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
+       act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -148,11 +167,11 @@ int test_prod(Epsilon const& epsilon,
    std::cout << "Testing C = A * trans(B) ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(A,trans(B_trans));
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(vcl_A,trans(vcl_B_trans)));
-       op.execute();
+       viennacl::generator::code_generator op;
+       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans))));
+       viennacl::generator::enqueue(op);
        viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
+       act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -165,11 +184,11 @@ int test_prod(Epsilon const& epsilon,
    std::cout << "Testing C = trans(A) * trans(B) ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),trans(vcl_B_trans)));
-       op.execute();
+       viennacl::generator::code_generator op;
+       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans))));
+       viennacl::generator::enqueue(op);
        viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
+       act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -181,23 +200,6 @@ int test_prod(Epsilon const& epsilon,
 
 
 
-   std::cout << "Testing C = (A+A) * B ..." << std::endl;
-   {
-       ReferenceMatrixTypeA newA(A+A);
-       C     = viennacl::linalg::prod(newA, B);
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(vcl_A+vcl_A,vcl_B));
-       op.execute();
-       viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
-       if( act_diff > epsilon )
-       {
-         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         std::cout << "  diff: " << act_diff << std::endl;
-         retval = EXIT_FAILURE;
-       }
-       else std::cout << "Test C = (A+A) * B passed!" << std::endl;
-   }
 
 
    return retval;
@@ -209,22 +211,14 @@ int test_prod(Epsilon const& epsilon)
   int ret;
 
   long matrix_size1 = 1*max_large_block_size;
-  long matrix_size2 = 2*max_large_block_size;
-  long matrix_size3 = 3*max_large_block_size;
-
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_A> > DummyMatrixA;
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_B> > DummyMatrixB;
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_C> > DummyMatrixC;
+  long matrix_size2 = 1*max_large_block_size;
+  long matrix_size3 = 1*max_large_block_size;
 
   // --------------------------------------------------------------------------
 
   // ublas reference:
   ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, 3.1415);
-
   ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, 42.0);
-
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 
   //fill A and B:
@@ -236,10 +230,7 @@ int test_prod(Epsilon const& epsilon)
         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
 
   ublas::matrix<NumericT>     A_trans = trans(A);
-  ublas::matrix<NumericT> big_A_trans = trans(big_A);
-
   ublas::matrix<NumericT>     B_trans = trans(B);
-  ublas::matrix<NumericT> big_B_trans = trans(big_B);
 
   //
   // ViennaCL objects
@@ -250,27 +241,21 @@ int test_prod(Epsilon const& epsilon)
   // A
   viennacl::matrix<NumericT, F_A>    vcl_A(matrix_size1, matrix_size2);
   viennacl::copy(A, vcl_A);
-  DummyMatrixA dummy_vcl_A(vcl_A);
 
   // A^T
   viennacl::matrix<NumericT, F_A>    vcl_A_trans(matrix_size2, matrix_size1);
   viennacl::copy(A_trans, vcl_A_trans);
-  DummyMatrixA dummy_vcl_A_trans(vcl_A_trans);
-
 
   // B
   viennacl::matrix<NumericT, F_B>    vcl_B(matrix_size2, matrix_size3);
   viennacl::copy(B, vcl_B);
-  DummyMatrixB dummy_vcl_B(vcl_B);
 
   // B^T
   viennacl::matrix<NumericT, F_B>    vcl_B_trans(matrix_size3, matrix_size2);
   viennacl::copy(B_trans, vcl_B_trans);
-  DummyMatrixB dummy_vcl_B_trans(vcl_B_trans);
 
   // C
   viennacl::matrix<NumericT, F_C>    vcl_C(matrix_size1, matrix_size3);
-  DummyMatrixC dummy_vcl_C(vcl_C);
 
   std::cout << "--- Part 1: Testing matrix-matrix products ---" << std::endl;
 
@@ -283,9 +268,9 @@ int test_prod(Epsilon const& epsilon)
   std::cout << "Now using A=matrix, B=matrix, C=matrix" << std::endl;
   ret = test_prod<NumericT>(epsilon,
                             A, A_trans, B, B_trans, C,
-                            dummy_vcl_A, dummy_vcl_A_trans,
-                            dummy_vcl_B, dummy_vcl_B_trans,
-                            dummy_vcl_C);
+                            vcl_A, vcl_A_trans,
+                            vcl_B, vcl_B_trans,
+                            vcl_C);
   if (ret != EXIT_SUCCESS)
     return ret;
 

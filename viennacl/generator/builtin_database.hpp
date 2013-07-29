@@ -25,14 +25,8 @@
 */
 
 #include <string>
-
 #include <map>
-#include <typeinfo>
-#include "viennacl/matrix.hpp"
-#include "viennacl/vector.hpp"
-#include "viennacl/scalar.hpp"
-#include "viennacl/generator/symbolic_types.hpp"
-#include "viennacl/generator/overloads.hpp"
+
 #include "viennacl/generator/templates/matrix_product.hpp"
 #include "viennacl/generator/templates/vector_reduction.hpp"
 #include "viennacl/generator/templates/scalar_reduction.hpp"

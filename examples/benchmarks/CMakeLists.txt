@@ -14,7 +14,9 @@ endif (ENABLE_UBLAS)
 # Targets using OpenCL
 if (ENABLE_OPENCL)
 
-  foreach(bench generator_blas1 generator_blas2 generator_blas3 blas3 opencl)
+  foreach(bench
+        #generator_blas1 generator_blas2 generator_blas3
+        blas3 opencl)
     add_executable(${bench}bench-opencl ${bench}.cpp)
     target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
     set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
