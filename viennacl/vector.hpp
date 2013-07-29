@@ -1483,29 +1483,29 @@ namespace viennacl
   * @param val  The vector that should be printed
   */
   template <typename T>
-  std::ostream & operator<<(std::ostream & s, vector_base<T> const & val)
+  std::ostream & operator<<(std::ostream & os, vector_base<T> const & val)
   {
     std::vector<T> tmp(val.size());
     viennacl::copy(val.begin(), val.end(), tmp.begin());
-    std::cout << "[" << val.size() << "](";
+    os << "[" << val.size() << "](";
     for (typename std::vector<T>::size_type i=0; i<val.size(); ++i)
     {
       if (i > 0)
-        s << ",";
-      s << tmp[i];
+        os << ",";
+      os << tmp[i];
     }
-    std::cout << ")";
-    return s;
+    os << ")";
+    return os;
   }
 
   template <typename LHS, typename RHS, typename OP>
-  std::ostream & operator<<(std::ostream & s, vector_expression<LHS, RHS, OP> const & proxy)
+  std::ostream & operator<<(std::ostream & os, vector_expression<LHS, RHS, OP> const & proxy)
 
   {
     typedef typename viennacl::result_of::cpu_value_type<typename LHS::value_type>::type ScalarType;
     viennacl::vector<ScalarType> result = proxy;
-    s << result;
-    return s;
+    os << result;
+    return os;
   }
 
   /** @brief Swaps the contents of two vectors, data is copied
