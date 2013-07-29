@@ -2432,7 +2432,7 @@ namespace viennacl
         typedef T       value_type;
 
         viennacl::backend::mem_handle h;
-        viennacl::backend::memory_create(h, sizeof(unsigned int));
+        viennacl::backend::memory_create(h, sizeof(unsigned int), viennacl::traits::context(vec1));
 
         index_norm_inf_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(vec1),
                                           static_cast<unsigned int>(viennacl::traits::start(vec1)),

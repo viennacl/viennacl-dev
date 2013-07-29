@@ -27,6 +27,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/backend/mem_handle.hpp"
 #include "viennacl/context.hpp"
+#include "viennacl/traits/handle.hpp"
 #include "viennacl/backend/util.hpp"
 
 #include "viennacl/backend/cpu_ram.hpp"
@@ -113,11 +114,12 @@ namespace viennacl
       }
     }
 
+    /*
     inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
     {
       viennacl::context  ctx(default_memory_type());
       memory_create(handle, size_in_bytes, ctx, host_ptr);
-    }
+    }*/
 
 
     /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' to memory starting at address 'dst_buffer + dst_offset'.
@@ -500,7 +502,7 @@ namespace viennacl
         if (handle_dst.raw_size() == buffer_dst.raw_size())
           viennacl::backend::memory_write(handle_dst, 0, buffer_dst.raw_size(), buffer_dst.get());
         else
-          viennacl::backend::memory_create(handle_dst, buffer_dst.raw_size(), buffer_dst.get());
+          viennacl::backend::memory_create(handle_dst, buffer_dst.raw_size(), viennacl::traits::context(handle_dst), buffer_dst.get());
 
       }
       else
@@ -519,7 +521,7 @@ namespace viennacl
                 if (handle_dst.raw_size() == handle_src.raw_size())
                   viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), handle_src.ram_handle().get());
                 else
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), handle_src.ram_handle().get());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst), handle_src.ram_handle().get());
                 break;
 
               default:
@@ -532,19 +534,19 @@ namespace viennacl
             {
               case MAIN_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
                 break;
 
               case OPENCL_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
                 break;
 
               case CUDA_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 buffer.resize(handle_src, handle_src.raw_size() / element_size_src);
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
                 viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
@@ -560,13 +562,13 @@ namespace viennacl
             {
               case MAIN_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), handle_dst.ram_handle().get());
                 break;
 
               case OPENCL_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 buffer.resize(handle_src, handle_src.raw_size() / element_size_src);
                 viennacl::backend::memory_read(handle_src, 0, handle_src.raw_size(), buffer.get());
                 viennacl::backend::memory_write(handle_dst, 0, handle_src.raw_size(), buffer.get());
@@ -574,7 +576,7 @@ namespace viennacl
 
               case CUDA_MEMORY:
                 if (handle_dst.raw_size() != handle_src.raw_size())
-                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size());
+                  viennacl::backend::memory_create(handle_dst, handle_src.raw_size(), viennacl::traits::context(handle_dst));
                 viennacl::backend::memory_copy(handle_src, handle_dst, 0, 0, handle_src.raw_size());
                 break;
 

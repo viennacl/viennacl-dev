@@ -167,10 +167,10 @@ namespace viennacl
             //
             // Wrap in memory_handles:
             //
-            viennacl::backend::memory_create(row_index_arrays.back(), elim_row_index_array.raw_size(),                  elim_row_index_array.get());
-            viennacl::backend::memory_create(row_buffers.back(),      elim_row_buffer.raw_size(),                       elim_row_buffer.get());
-            viennacl::backend::memory_create(col_buffers.back(),      elim_col_buffer.raw_size(),                       elim_col_buffer.get());
-            viennacl::backend::memory_create(element_buffers.back(),  sizeof(ScalarType) * elim_elements_buffer.size(), &(elim_elements_buffer[0]));
+            viennacl::backend::memory_create(row_index_arrays.back(), elim_row_index_array.raw_size(),                  viennacl::traits::context(row_index_arrays.back()), elim_row_index_array.get());
+            viennacl::backend::memory_create(row_buffers.back(),      elim_row_buffer.raw_size(),                       viennacl::traits::context(row_buffers.back()),      elim_row_buffer.get());
+            viennacl::backend::memory_create(col_buffers.back(),      elim_col_buffer.raw_size(),                       viennacl::traits::context(col_buffers.back()),      elim_col_buffer.get());
+            viennacl::backend::memory_create(element_buffers.back(),  sizeof(ScalarType) * elim_elements_buffer.size(), viennacl::traits::context(element_buffers.back()),  &(elim_elements_buffer[0]));
           }
 
           // Print some info:

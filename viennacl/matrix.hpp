@@ -32,6 +32,7 @@
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/rand/utils.hpp"
+#include "viennacl/traits/handle.hpp"
 
 namespace viennacl
 {
@@ -46,16 +47,19 @@ namespace viennacl
       typedef vcl_size_t         size_type;
       typedef SCALARTYPE const & const_reference;
 
-      identity_matrix(size_type s) : size_(s), diag_(1), off_diag_(0) {}
+      identity_matrix(size_type s, viennacl::context ctx = viennacl::context()) : size_(s), diag_(1), off_diag_(0), ctx_(ctx) {}
 
       size_type size1() const { return size_; }
       size_type size2() const { return size_; }
       const_reference operator()(size_type i, size_type j) const { return (i == j) ? diag_ : off_diag_; }
 
+      viennacl::context context() const { return ctx_; }
+
     private:
       size_type size_;
       SCALARTYPE diag_;
       SCALARTYPE off_diag_;
+      viennacl::context ctx_;
   };
 
 
@@ -67,16 +71,19 @@ namespace viennacl
       typedef vcl_size_t         size_type;
       typedef SCALARTYPE const & const_reference;
 
-      zero_matrix(size_type s1, size_type s2) : size1_(s1), size2_(s2), val_(0) {}
+      zero_matrix(size_type s1, size_type s2, viennacl::context ctx = viennacl::context()) : size1_(s1), size2_(s2), val_(0), ctx_(ctx) {}
 
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
       const_reference operator()(size_type /*i*/, size_type /*j*/) const { return val_; }
 
+      viennacl::context context() const { return ctx_; }
+
     private:
       size_type size1_;
       size_type size2_;
       SCALARTYPE val_;
+      viennacl::context ctx_;
   };
 
 
@@ -88,16 +95,19 @@ namespace viennacl
       typedef vcl_size_t         size_type;
       typedef SCALARTYPE const & const_reference;
 
-      scalar_matrix(size_type s1, size_type s2, const_reference val) : size1_(s1), size2_(s2), value_(val) {}
+      scalar_matrix(size_type s1, size_type s2, const_reference val, viennacl::context ctx = viennacl::context()) : size1_(s1), size2_(s2), value_(val), ctx_(ctx) {}
 
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
       const_reference operator()(size_type /*i*/, size_type /*j*/) const { return value_; }
 
+      viennacl::context context() const { return ctx_; }
+
     private:
       size_type size1_;
       size_type size2_;
       SCALARTYPE value_;
+      viennacl::context ctx_;
   };
 
 
@@ -203,27 +213,18 @@ namespace viennacl
       * @param rows     Number of rows
       * @param columns  Number of columns
       */
-      explicit matrix_base(size_type rows, size_type columns)
+      explicit matrix_base(size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
           : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
       {
         if (rows > 0 && columns > 0)
         {
           std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
         }
       }
 
-      explicit matrix_base(size_type rows, size_type columns, viennacl::memory_types mem_type)
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
-      {
-        elements_.switch_active_handle_id(mem_type);
-        if (rows > 0 && columns > 0)
-        {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
-        }
-      }
 
+      /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
       explicit matrix_base(viennacl::backend::mem_handle & h,
                            size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
                            size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2)
@@ -240,7 +241,7 @@ namespace viennacl
       {
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (internal_size() > 0)
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
 
         self_type::operator=(proxy);
       }
@@ -249,11 +250,12 @@ namespace viennacl
 
       self_type & operator=(const self_type & other)  //enables implicit conversions
       {
-    if (internal_size() == 0){
-      if (other.internal_size() == 0)
-        return *this;
-      resize(other.size1(), other.size2(), false);
-    }
+        if (internal_size() == 0)
+        {
+          if (other.internal_size() == 0)
+            return *this;
+          resize(other.size1(), other.size2(), false);
+        }
 
         viennacl::linalg::am(*this,
                              other, cpu_value_type(1.0), 1, false, false);
@@ -290,7 +292,7 @@ namespace viennacl
           size2_ = viennacl::traits::size2(proxy);
           internal_size1_ = size1_;
           internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
         }
 
         if (internal_size() > 0)
@@ -334,7 +336,7 @@ namespace viennacl
                                   proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
 
         // write back
-        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp_trans[0]));
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
 
         return *this;
       }
@@ -380,7 +382,7 @@ namespace viennacl
           internal_size1_ = size1_;
           internal_size2_ = size2_;
           if (internal_size() > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
 
         if (internal_size() > 0)
@@ -405,7 +407,7 @@ namespace viennacl
           internal_size1_ = size1_;
           internal_size2_ = size2_;
           if (internal_size() > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
 
         if (internal_size() > 0)
@@ -427,7 +429,7 @@ namespace viennacl
           internal_size1_ = size1_;
           internal_size2_ = size2_;
           if (internal_size() > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
 
         if (internal_size() > 0)
@@ -594,7 +596,7 @@ namespace viennacl
           size2_ = columns;
           internal_size1_ = size1_;
           internal_size2_ = size2_;
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), &(new_entries[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), viennacl::traits::context(elements_), &(new_entries[0]));
         }
         else //discard old entries:
         {
@@ -605,7 +607,7 @@ namespace viennacl
 
           std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1)
                                                 * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(new_entries[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_), &(new_entries[0]));
         }
       }
 
@@ -645,7 +647,7 @@ namespace viennacl
       * @param rows     Number of rows
       * @param columns  Number of columns
       */
-      explicit matrix(size_type rows, size_type columns) : base_type(rows, columns) {}
+      explicit matrix(size_type rows, size_type columns, viennacl::context ctx = viennacl::context()) : base_type(rows, columns, ctx) {}
 
   #ifdef VIENNACL_WITH_OPENCL
       explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type (rows, columns)
@@ -664,34 +666,34 @@ namespace viennacl
       matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy) {}
 
       /** @brief Creates the matrix from the supplied identity matrix. */
-      matrix(identity_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2())
+      matrix(identity_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2(), m.context())
       {
         if (base_type::internal_size() > 0)
           base_type::operator=(m);
       }
 
       /** @brief Creates the matrix from the supplied zero matrix. */
-      matrix(zero_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2())
+      matrix(zero_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2(), m.context())
       {
         if (base_type::internal_size() > 0)
           base_type::operator=(m);
       }
 
       /** @brief Creates the matrix from the supplied scalar matrix. */
-      matrix(scalar_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2())
+      matrix(scalar_matrix<SCALARTYPE> const & m) : base_type(m.size1(), m.size2(), m.context())
       {
         if (base_type::internal_size() > 0)
           base_type::operator=(m);
       }
 
-      matrix(const base_type & other) : base_type(other.size1(), other.size2(), viennacl::traits::active_handle_id(other))
+      matrix(const base_type & other) : base_type(other.size1(), other.size2(), viennacl::traits::context(other))
       {
         base_type::operator=(other);
       }
 
 
       //copy constructor:
-      matrix(const self_type & other) : base_type(other.size1(), other.size2(), viennacl::traits::active_handle_id(other))
+      matrix(const self_type & other) : base_type(other.size1(), other.size2(), viennacl::traits::context(other))
       {
         base_type::operator=(other);
       }
@@ -818,7 +820,7 @@ namespace viennacl
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
     }
 
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), &(data[0]));
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
     //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
     //std::cout << "Size at end: " << gpu_matrix.size1() << ", " << gpu_matrix.size2() << std::endl;
   }
@@ -858,7 +860,7 @@ namespace viennacl
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[i][j];
     }
 
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), &(data[0]));
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
     //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
   }
 
@@ -877,7 +879,7 @@ namespace viennacl
                   SCALARTYPE * cpu_matrix_end,
                   matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
   {
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * (cpu_matrix_end - cpu_matrix_begin), cpu_matrix_begin);
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * (cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
     /*gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                           sizeof(SCALARTYPE) * (cpu_matrix_end - cpu_matrix_begin),
                                                                           cpu_matrix_begin);*/
@@ -917,7 +919,7 @@ namespace viennacl
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
     }
 
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(float) * data.size(), &(data[0]));
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(float) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
     //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
   }
 
@@ -953,7 +955,7 @@ namespace viennacl
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
     }
 
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(double) * data.size(), &(data[0]));
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(double) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
     //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
   }
   #endif
@@ -991,7 +993,7 @@ namespace viennacl
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[i][j];
     }
 
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), &(data[0]));
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
     //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
   }
   #endif

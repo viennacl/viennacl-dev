@@ -51,6 +51,8 @@ namespace viennacl
 
       explicit context(viennacl::memory_types mtype) : mem_type_(mtype)
       {
+        if (mem_type_ == MEMORY_NOT_INITIALIZED)
+          mem_type_ = viennacl::backend::default_memory_type();
 #ifdef VIENNACL_WITH_OPENCL
         if (mem_type_ == OPENCL_MEMORY)
           ocl_context_ptr_ = &viennacl::ocl::current_context();

@@ -28,6 +28,7 @@
 #include "viennacl/backend/memory.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/linalg/scalar_operations.hpp"
+#include "viennacl/traits/handle.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
 #include "viennacl/ocl/backend.hpp"
@@ -227,9 +228,9 @@ namespace viennacl
       scalar() {}
 
       /** @brief Allocates the memory for the scalar and sets it to the supplied value. */
-      scalar(SCALARTYPE val)
+      scalar(SCALARTYPE val, viennacl::context ctx = viennacl::context())
       {
-        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), &val);
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), ctx, &val);
       }
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -251,7 +252,7 @@ namespace viennacl
       scalar(scalar_expression<T1, T2, OP> const & proxy)
       {
         val_.switch_active_handle_id(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
-        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+        viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), viennacl::traits::context(proxy));
         *this = proxy;
       }
 
@@ -263,7 +264,7 @@ namespace viennacl
         {
           //copy value:
           val_.switch_active_handle_id(other.handle().get_active_handle_id());
-          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), viennacl::traits::context(other));
           viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
         }
       }
@@ -282,7 +283,7 @@ namespace viennacl
       /** @brief Assigns a vector entry. */
       self_type & operator= (entry_proxy<SCALARTYPE> const & other)
       {
-        init_if_necessary(other.handle().get_active_handle_id());
+        init_if_necessary(viennacl::traits::context(other));
         viennacl::backend::memory_copy(other.handle(), val_, other.index() * sizeof(SCALARTYPE), 0, sizeof(SCALARTYPE));
         return *this;
       }
@@ -290,14 +291,14 @@ namespace viennacl
       /** @brief Assigns the value from another scalar. */
       self_type & operator= (scalar<SCALARTYPE> const & other)
       {
-        init_if_necessary(other.handle().get_active_handle_id());
+        init_if_necessary(viennacl::traits::context(other));
         viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(SCALARTYPE));
         return *this;
       }
 
       self_type & operator= (float cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         //copy value:
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
@@ -307,7 +308,7 @@ namespace viennacl
 
       self_type & operator= (double cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -316,7 +317,7 @@ namespace viennacl
 
       self_type & operator= (long cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -325,7 +326,7 @@ namespace viennacl
 
       self_type & operator= (unsigned long cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -334,7 +335,7 @@ namespace viennacl
 
       self_type & operator= (int cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -343,7 +344,7 @@ namespace viennacl
 
       self_type & operator= (unsigned int cpu_other)
       {
-        init_if_necessary(backend::default_memory_type());
+        init_if_necessary(viennacl::context());
 
         SCALARTYPE value = static_cast<SCALARTYPE>(cpu_other);
         viennacl::backend::memory_write(val_, 0, sizeof(SCALARTYPE), &value);
@@ -354,7 +355,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
       {
-        init_if_necessary(viennacl::traits::active_handle_id(proxy));
+        init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::inner_prod_impl(proxy.lhs(), proxy.rhs(), *this);
         return *this;
@@ -364,7 +365,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
       {
-        init_if_necessary(viennacl::traits::active_handle_id(proxy));
+        init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::norm_1_impl(proxy.lhs(), *this);
         return *this;
@@ -374,7 +375,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
       {
-        init_if_necessary(viennacl::traits::active_handle_id(proxy));
+        init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::norm_2_impl(proxy.lhs(), *this);
         return *this;
@@ -384,7 +385,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
       {
-        init_if_necessary(viennacl::traits::active_handle_id(proxy));
+        init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::norm_inf_impl(proxy.lhs(), *this);
         return *this;
@@ -394,7 +395,7 @@ namespace viennacl
       template <typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
       {
-        init_if_necessary(viennacl::traits::active_handle_id(proxy));
+        init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::as(*this, proxy.lhs(), SCALARTYPE(-1.0), 1, false, true);
         return *this;
@@ -665,12 +666,11 @@ namespace viennacl
 
     private:
 
-      void init_if_necessary(viennacl::memory_types new_type_if_init)
+      void init_if_necessary(viennacl::context ctx)
       {
         if (val_.get_active_handle_id() == viennacl::MEMORY_NOT_INITIALIZED)
         {
-          val_.switch_active_handle_id(new_type_if_init);
-          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE));
+          viennacl::backend::memory_create(val_, sizeof(SCALARTYPE), ctx);
         }
       }
 

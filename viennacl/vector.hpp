@@ -366,18 +366,7 @@ namespace viennacl
                            size_type vec_size, size_type vec_start, difference_type vec_stride) : size_(vec_size), start_(vec_start), stride_(vec_stride), elements_(h) {}
 
       /** @brief Creates a vector and allocates the necessary memory */
-      explicit vector_base(size_type vec_size) : size_(vec_size), start_(0), stride_(1)
-      {
-        if (size_ > 0)
-        {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
-          pad();
-        }
-      }
-
-      /** @brief Creates a vector and allocates the necessary memory */
-      explicit vector_base(size_type vec_size, viennacl::context ctx) : size_(vec_size), start_(0), stride_(1)
+      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context()) : size_(vec_size), start_(0), stride_(1)
       {
         if (size_ > 0)
         {
@@ -387,16 +376,17 @@ namespace viennacl
         }
       }
 
-    /** @brief Creates the vector from the supplied random vector. */
-    /*template<class DISTRIBUTION>
-    vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
-    {
-      if(size_ > 0)
+
+      /** @brief Creates the vector from the supplied random vector. */
+      /*template<class DISTRIBUTION>
+      vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
       {
-        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-        rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,v.distribution,0,size_);
-      }
-    } */
+        if(size_ > 0)
+        {
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,v.distribution,0,size_);
+        }
+      } */
 
       template <typename LHS, typename RHS, typename OP>
       explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(viennacl::traits::size(proxy)), start_(0), stride_(1)

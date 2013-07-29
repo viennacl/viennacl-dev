@@ -128,8 +128,8 @@ namespace viennacl
           }
         }
 
-        viennacl::backend::memory_create(gpu_matrix.handle2(), coords.raw_size(), coords.get());
-        viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
+        viennacl::backend::memory_create(gpu_matrix.handle2(), coords.raw_size(),                   traits::context(gpu_matrix.handle2()), coords.get());
+        viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * elements.size(), traits::context(gpu_matrix.handle()), &(elements[0]));
       }
     }
 

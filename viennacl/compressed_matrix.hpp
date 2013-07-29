@@ -439,17 +439,34 @@ namespace viennacl
         * @param rows     Number of rows
         * @param cols     Number of columns
         * @param nonzeros Optional number of nonzeros for memory preallocation
+        * @param ctx      Context in which to create the matrix. Uses the default context if omitted
         */
-        explicit compressed_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0) : rows_(rows), cols_(cols), nonzeros_(nonzeros)
+        explicit compressed_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0, viennacl::context ctx = viennacl::context())
+          : rows_(rows), cols_(cols), nonzeros_(nonzeros)
         {
           if (rows > 0)
           {
-            viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1));
+            viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1), ctx);
           }
           if (nonzeros > 0)
           {
-            viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * nonzeros);
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros);
+            viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * nonzeros, ctx);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, ctx);
+          }
+        }
+
+        /** @brief Construction of a compressed matrix with the supplied number of rows and columns. If the number of nonzeros is positive, memory is allocated
+        *
+        * @param rows     Number of rows
+        * @param cols     Number of columns
+        * @param ctx      Context in which to create the matrix
+        */
+        explicit compressed_matrix(std::size_t rows, std::size_t cols, viennacl::context ctx)
+          : rows_(rows), cols_(cols), nonzeros_(0)
+        {
+          if (rows > 0)
+          {
+            viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1), ctx);
           }
         }
 
@@ -508,7 +525,8 @@ namespace viennacl
                  const SCALARTYPE * elements,
                  std::size_t rows,
                  std::size_t cols,
-                 std::size_t nonzeros)
+                 std::size_t nonzeros,
+                 viennacl::context ctx = viennacl::context())
         {
           assert( (rows > 0)     && bool("Error in compressed_matrix::set(): Number of rows must be larger than zero!"));
           assert( (cols > 0)     && bool("Error in compressed_matrix::set(): Number of columns must be larger than zero!"));
@@ -516,13 +534,13 @@ namespace viennacl
           //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
 
           //row_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(row_buffer_).element_size() * (rows + 1), row_jumper);
+          viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(row_buffer_).element_size() * (rows + 1), ctx, row_jumper);
 
           //col_buffer_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(col_buffer_).element_size() * nonzeros, col_buffer);
+          viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>(col_buffer_).element_size() * nonzeros, ctx, col_buffer);
 
           //elements_.switch_active_handle_id(viennacl::backend::OPENCL_MEMORY);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, elements);
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, ctx, elements);
 
           nonzeros_ = nonzeros;
           rows_ = rows;
@@ -540,8 +558,8 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
 
             viennacl::backend::typesafe_host_array<unsigned int> size_deducer(col_buffer_);
-            viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros);
-            viennacl::backend::memory_create(elements_,   sizeof(SCALARTYPE) * new_nonzeros);
+            viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros, viennacl::traits::context(col_buffer_));
+            viennacl::backend::memory_create(elements_,   sizeof(SCALARTYPE) * new_nonzeros,          viennacl::traits::context(col_buffer_));
 
             viennacl::backend::memory_copy(col_buffer_old, col_buffer_, 0, 0, size_deducer.element_size() * nonzeros_);
             viennacl::backend::memory_copy(elements_old,   elements_,   0, 0, sizeof(SCALARTYPE)* nonzeros_);

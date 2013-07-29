@@ -179,12 +179,12 @@ namespace viennacl
         for (std::size_t i=0; i<csr_cols.size(); ++i)
           csr_cols_for_gpu.set(i, csr_cols[i]);
 
-        viennacl::backend::memory_create(gpu_matrix.ell_coords_,   ell_coords.raw_size(), ell_coords.get());
-        viennacl::backend::memory_create(gpu_matrix.ell_elements_, sizeof(SCALARTYPE) * ell_elements.size(), &(ell_elements[0]));
+        viennacl::backend::memory_create(gpu_matrix.ell_coords_,   ell_coords.raw_size(),                    traits::context(gpu_matrix.ell_coords_), ell_coords.get());
+        viennacl::backend::memory_create(gpu_matrix.ell_elements_, sizeof(SCALARTYPE) * ell_elements.size(), traits::context(gpu_matrix.ell_elements_), &(ell_elements[0]));
 
-        viennacl::backend::memory_create(gpu_matrix.csr_rows_,     csr_rows.raw_size(),         csr_rows.get());
-        viennacl::backend::memory_create(gpu_matrix.csr_cols_,     csr_cols_for_gpu.raw_size(), csr_cols_for_gpu.get());
-        viennacl::backend::memory_create(gpu_matrix.csr_elements_, sizeof(SCALARTYPE) * csr_elements.size(), &(csr_elements[0]));
+        viennacl::backend::memory_create(gpu_matrix.csr_rows_,     csr_rows.raw_size(),                      traits::context(gpu_matrix.csr_rows_), csr_rows.get());
+        viennacl::backend::memory_create(gpu_matrix.csr_cols_,     csr_cols_for_gpu.raw_size(),              traits::context(gpu_matrix.csr_cols_), csr_cols_for_gpu.get());
+        viennacl::backend::memory_create(gpu_matrix.csr_elements_, sizeof(SCALARTYPE) * csr_elements.size(), traits::context(gpu_matrix.csr_elements_), &(csr_elements[0]));
       }
     }
 

@@ -413,7 +413,7 @@ namespace viennacl
             block_indices_uint.set(2*i + 1, block_indices_[i].second);
           }
 
-          viennacl::backend::memory_create(gpu_block_indices, block_indices_uint.raw_size(), block_indices_uint.get());
+          viennacl::backend::memory_create(gpu_block_indices, block_indices_uint.raw_size(), viennacl::traits::context(gpu_block_indices), block_indices_uint.get());
 
           blocks_to_device(mat.size1());
 

@@ -103,9 +103,9 @@ namespace viennacl
         for (std::size_t i=0; i<group_boundaries.size(); ++i)
           std::cout << group_boundaries[i] << std::endl;*/
 
-        viennacl::backend::memory_create(gpu_matrix.group_boundaries_, group_boundaries.raw_size(), group_boundaries.get());
-        viennacl::backend::memory_create(gpu_matrix.coord_buffer_,         coord_buffer.raw_size(),     coord_buffer.get());
-        viennacl::backend::memory_create(gpu_matrix.elements_,  sizeof(SCALARTYPE)*elements.size(),         &(elements[0]));
+        viennacl::backend::memory_create(gpu_matrix.group_boundaries_, group_boundaries.raw_size(), traits::context(gpu_matrix.group_boundaries_), group_boundaries.get());
+        viennacl::backend::memory_create(gpu_matrix.coord_buffer_,         coord_buffer.raw_size(), traits::context(gpu_matrix.coord_buffer_),     coord_buffer.get());
+        viennacl::backend::memory_create(gpu_matrix.elements_,  sizeof(SCALARTYPE)*elements.size(), traits::context(gpu_matrix.elements_),         &(elements[0]));
       }
     }
 
@@ -193,14 +193,14 @@ namespace viennacl
         * @param cols     Number of columns
         * @param nonzeros Optional number of nonzeros for memory preallocation
         */
-        coordinate_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0) :
+        coordinate_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0, viennacl::context ctx = viennacl::context()) :
           rows_(rows), cols_(cols), nonzeros_(nonzeros)
         {
           if (nonzeros > 0)
           {
-            viennacl::backend::memory_create(group_boundaries_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (group_num_ + 1));
-            viennacl::backend::memory_create(coord_buffer_,     viennacl::backend::typesafe_host_array<unsigned int>().element_size() * 2 * internal_nnz());
-            viennacl::backend::memory_create(elements_,         sizeof(SCALARTYPE) * internal_nnz());
+            viennacl::backend::memory_create(group_boundaries_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (group_num_ + 1), ctx);
+            viennacl::backend::memory_create(coord_buffer_,     viennacl::backend::typesafe_host_array<unsigned int>().element_size() * 2 * internal_nnz(), ctx);
+            viennacl::backend::memory_create(elements_,         sizeof(SCALARTYPE) * internal_nnz(), ctx);
           }
         }
 
@@ -216,8 +216,8 @@ namespace viennacl
 
             std::size_t internal_new_nnz = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_nonzeros, ALIGNMENT);
             viennacl::backend::typesafe_host_array<unsigned int> size_deducer(coord_buffer_);
-            viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz);
-            viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz);
+            viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz, viennacl::traits::context(coord_buffer_));
+            viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz,             viennacl::traits::context(elements_));
 
             viennacl::backend::memory_copy(coord_buffer_old, coord_buffer_, 0, 0, size_deducer.element_size() * 2 * nonzeros_);
             viennacl::backend::memory_copy(elements_old,     elements_,     0, 0, sizeof(SCALARTYPE)  * nonzeros_);
