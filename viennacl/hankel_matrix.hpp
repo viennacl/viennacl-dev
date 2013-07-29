@@ -81,7 +81,7 @@ namespace viennacl {
         *
         *   @return OpenCL handle
         */
-        viennacl::ocl::handle<cl_mem> handle() const { return elements_.handle(); }
+        handle_type const & handle() const { return elements_.handle(); }
 
         /**
          * @brief Returns an internal viennacl::toeplitz_matrix, which represents a Hankel matrix elements

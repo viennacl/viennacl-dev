@@ -81,7 +81,7 @@ namespace viennacl
         *
         *   @return OpenCL handle
         */
-        handle_type handle() const { return elements_.handle(); }
+        handle_type const & handle() const { return elements_.handle(); }
 
         /**
          * @brief Returns an internal viennacl::vector, which represents a circulant matrix elements
