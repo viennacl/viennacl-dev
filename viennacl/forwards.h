@@ -361,6 +361,7 @@ namespace viennacl
     , CUDA_MEMORY
   };
 
+  class context;
 
   namespace tools
   {

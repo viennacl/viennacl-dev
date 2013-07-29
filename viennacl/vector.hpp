@@ -33,6 +33,8 @@
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/rand/utils.hpp"
+#include "viennacl/context.hpp"
+#include "viennacl/traits/handle.hpp"
 
 namespace viennacl
 {
@@ -46,7 +48,7 @@ namespace viennacl
     public:
       typedef vcl_size_t        size_type;
 
-      unit_vector(size_type s, size_type ind) : size_(s), index_(ind)
+      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : size_(s), index_(ind), ctx_(ctx)
       {
         assert( (ind < s) && bool("Provided index out of range!") );
       }
@@ -54,9 +56,12 @@ namespace viennacl
       size_type size() const { return size_; }
       size_type index() const { return index_; }
 
+      viennacl::context context() const { return ctx_; }
+
     private:
       size_type size_;
       size_type index_;
+      viennacl::context ctx_;
   };
 
 
@@ -68,14 +73,17 @@ namespace viennacl
       typedef vcl_size_t        size_type;
       typedef SCALARTYPE        const_reference;
 
-      zero_vector(size_type s) : size_(s) {}
+      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : size_(s), ctx_(ctx) {}
 
       size_type size() const { return size_; }
       const_reference operator()(size_type /*i*/) const { return 0; }
       const_reference operator[](size_type /*i*/) const { return 0; }
 
+      viennacl::context context() const { return ctx_; }
+
     private:
       size_type size_;
+      viennacl::context ctx_;
   };
 
 
@@ -87,30 +95,20 @@ namespace viennacl
       typedef vcl_size_t         size_type;
       typedef SCALARTYPE const & const_reference;
 
-      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val)
-#ifdef VIENNACL_WITH_OPENCL
-                                                  , ctx_(&viennacl::ocl::current_context())
-#endif
-      {}
+      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
 
-#ifdef VIENNACL_WITH_OPENCL
-      scalar_vector(size_type s, SCALARTYPE val, viennacl::ocl::context const & ctx) : size_(s), value_(val), ctx_(&ctx) {}
-#endif
+      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx) : size_(s), value_(val), ctx_(ctx) {}
 
       size_type size() const { return size_; }
       const_reference operator()(size_type /*i*/) const { return value_; }
       const_reference operator[](size_type /*i*/) const { return value_; }
 
-#ifdef VIENNACL_WITH_OPENCL
-      viennacl::ocl::context const & context() const { return *ctx_; }
-#endif
+      viennacl::context context() const { return ctx_; }
 
     private:
       size_type size_;
       SCALARTYPE value_;
-#ifdef VIENNACL_WITH_OPENCL
-      viennacl::ocl::context const * ctx_;
-#endif
+      viennacl::context ctx_;
   };
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -378,18 +376,16 @@ namespace viennacl
         }
       }
 
-#ifdef VIENNACL_WITH_OPENCL
-      /** @brief Creates a vector in the provided OpenCL context and allocates the necessary memory */
-      explicit vector_base(size_type vec_size, viennacl::ocl::context const & ctx) : size_(vec_size), start_(0), stride_(1)
+      /** @brief Creates a vector and allocates the necessary memory */
+      explicit vector_base(size_type vec_size, viennacl::context ctx) : size_(vec_size), start_(0), stride_(1)
       {
         if (size_ > 0)
         {
           std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]), static_cast<const void *>(&ctx));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
           pad();
         }
       }
-#endif
 
     /** @brief Creates the vector from the supplied random vector. */
     /*template<class DISTRIBUTION>
@@ -402,26 +398,13 @@ namespace viennacl
       }
     } */
 
-      /** @brief Creates a buffer of size 'vec_size' in the specified memory domain an uses this as the active domain */
-      explicit vector_base(size_type vec_size, viennacl::memory_types mem_type) : size_(vec_size), start_(0), stride_(1)
-      {
-        elements_.switch_active_handle_id(mem_type);
-        if (size_ > 0)
-        {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
-          pad();
-        }
-      }
-
       template <typename LHS, typename RHS, typename OP>
       explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(viennacl::traits::size(proxy)), start_(0), stride_(1)
       {
-        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (size_ > 0)
         {
           std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), &(temp[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp[0]));
           pad();
         }
         self_type::operator=(proxy);
@@ -446,7 +429,7 @@ namespace viennacl
           {
             size_ = vec.size();
             elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
           }
 
           viennacl::linalg::av(*this,
@@ -471,7 +454,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = viennacl::traits::size(proxy);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
           pad();
         }
 
@@ -493,7 +476,7 @@ namespace viennacl
           size_ = v1.size();
           if (size_ > 0)
           {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
             pad();
           }
         }
@@ -514,7 +497,7 @@ namespace viennacl
         {
           size_ = v.size();
           if (size_ > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
         }
 
         if (size_ > 0)
@@ -536,7 +519,7 @@ namespace viennacl
         {
           size_ = v.size();
           if (size_ > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
         }
 
         if (size_ > 0)
@@ -555,7 +538,7 @@ namespace viennacl
         {
           size_ = v.size();
           if (size_ > 0)
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
         }
 
         if (size_ > 0)
@@ -877,25 +860,23 @@ namespace viennacl
       */
       void resize(size_type new_size, bool preserve = true)
       {
-        resize_impl(new_size, preserve, NULL);
+        resize_impl(new_size, viennacl::traits::context(*this), preserve);
       }
 
-#ifdef VIENNACL_WITH_OPENCL
       /** @brief Resizes the allocated memory for the vector. Convenience function for setting an OpenCL context in case reallocation is needed
       *
       *  @param new_size  The new size of the vector
       *  @param ctx       The context within which the new memory should be allocated
       *  @param preserve  If true, old entries of the vector are preserved, otherwise eventually discarded.
       */
-      void resize(size_type new_size, viennacl::ocl::context const & ctx, bool preserve = true)
+      void resize(size_type new_size, viennacl::context ctx, bool preserve = true)
       {
-        resize_impl(new_size, preserve, static_cast<const void *>(&ctx));
+        resize_impl(new_size, ctx, preserve);
       }
-#endif
 
     private:
 
-      void resize_impl(size_type new_size, bool preserve = true, const void * locality_info = NULL)
+      void resize_impl(size_type new_size, viennacl::context ctx, bool preserve = true)
       {
         assert(new_size > 0 && bool("Positive size required when resizing vector!"));
 
@@ -911,7 +892,7 @@ namespace viennacl
 
           if (new_internal_size != internal_size())
           {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size, NULL, locality_info);
+            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size, ctx, NULL);
           }
 
           fast_copy(temp, *this);
@@ -956,6 +937,8 @@ namespace viennacl
     */
     explicit vector(size_type vec_size) : base_type(vec_size) {}
 
+    explicit vector(size_type vec_size, viennacl::context & ctx) : base_type(vec_size, ctx) {}
+
 #ifdef VIENNACL_WITH_OPENCL
     /** @brief Create a vector from existing OpenCL memory
     *
@@ -985,18 +968,15 @@ namespace viennacl
 #endif
 
     template <typename LHS, typename RHS, typename OP>
-    vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(viennacl::traits::size(proxy), viennacl::traits::active_handle_id(proxy))
-    {
-      self_type::operator=(proxy);
-    }
+    vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(proxy) {}
 
-    vector(const base_type & v) : base_type(v.size(), v.handle().get_active_handle_id())
+    vector(const base_type & v) : base_type(v.size(), viennacl::traits::context(v))
     {
       if (v.size() > 0)
         base_type::operator=(v);
     }
 
-    vector(const self_type & v) : base_type(v.size(), v.handle().get_active_handle_id())
+    vector(const self_type & v) : base_type(v.size(), viennacl::traits::context(v))
     {
       if (v.size() > 0)
         base_type::operator=(v);
@@ -1010,18 +990,14 @@ namespace viennacl
     }
 
     /** @brief Creates the vector from the supplied zero vector. */
-    vector(zero_vector<SCALARTYPE> const & v) : base_type(v.size())
+    vector(zero_vector<SCALARTYPE> const & v) : base_type(v.size(), v.context())
     {
       if (v.size() > 0)
         viennacl::linalg::vector_assign(*this, SCALARTYPE(0.0));
     }
 
     /** @brief Creates the vector from the supplied scalar vector. */
-    vector(scalar_vector<SCALARTYPE> const & v) : base_type(v.size()
-#ifdef VIENNACL_WITH_OPENCL
-                                                            , v.context()
-#endif
-                                                            )
+    vector(scalar_vector<SCALARTYPE> const & v) : base_type(v.size(), v.context())
     {
       if (v.size() > 0)
         viennacl::linalg::vector_assign(*this, v[0]);
@@ -1042,12 +1018,10 @@ namespace viennacl
       base_type::resize(new_size, preserve);
     }
 
-#ifdef VIENNACL_WITH_OPENCL
-    void resize(size_type new_size, viennacl::ocl::context const & ctx, bool preserve = true)
+    void resize(size_type new_size, viennacl::context ctx, bool preserve = true)
     {
       base_type::resize(new_size, ctx, preserve);
     }
-#endif
 
     /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy
     */

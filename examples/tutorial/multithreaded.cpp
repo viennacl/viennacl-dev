@@ -49,14 +49,19 @@ void thread_func(std::string * message, std::size_t thread_id) //Note: using ref
 {
   std::size_t N = 10;
 
-  viennacl::vector<T> u = viennacl::scalar_vector<T>(N, 1.0 * (thread_id + 1), viennacl::ocl::get_context(thread_id));
-  viennacl::vector<T> v = viennacl::scalar_vector<T>(N, 2.0 * (thread_id + 1), viennacl::ocl::get_context(thread_id));
+  viennacl::context ctx(viennacl::ocl::get_context(thread_id));
+  viennacl::vector<T> u = viennacl::scalar_vector<T>(N, 1.0 * (thread_id + 1), ctx);
+  viennacl::vector<T> v = viennacl::scalar_vector<T>(N, 2.0 * (thread_id + 1), ctx);
+  viennacl::vector<T> w = u + v;
+  viennacl::vector<T> x(u);
 
   u += v;
   T result = viennacl::linalg::norm_2(u);
 
   std::stringstream ss;
   ss << "Result of thread " << thread_id << " on device " << viennacl::ocl::get_context(thread_id).devices()[0].name() << ": " << result << std::endl;
+  ss << "  w: " << w << std::endl;
+  ss << "  x: " << x << std::endl;
   *message = ss.str();
 }
 

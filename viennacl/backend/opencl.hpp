@@ -53,7 +53,7 @@ namespace viennacl
        */
       inline cl_mem memory_create(viennacl::ocl::context const & ctx, std::size_t size_in_bytes, const void * host_ptr = NULL)
       {
-        //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << std::endl;
+        //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << " in context " << &ctx << std::endl;
         return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
       }
 

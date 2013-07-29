@@ -26,6 +26,7 @@
 #include <cassert>
 #include "viennacl/forwards.h"
 #include "viennacl/backend/mem_handle.hpp"
+#include "viennacl/context.hpp"
 #include "viennacl/backend/util.hpp"
 
 #include "viennacl/backend/cpu_ram.hpp"
@@ -80,12 +81,12 @@ namespace viennacl
     * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
     *
     */
-    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL, const void * mem_domain_info = NULL)
+    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
     {
       if (size_in_bytes > 0)
       {
         if (handle.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
-          handle.switch_active_handle_id(default_memory_type());
+          handle.switch_active_handle_id(ctx.memory_type());
 
         switch(handle.get_active_handle_id())
         {
@@ -95,10 +96,7 @@ namespace viennacl
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
-            if (mem_domain_info)
-              handle.opencl_handle().context(*static_cast<viennacl::ocl::context const *>(mem_domain_info));
-            else
-              handle.opencl_handle().context(viennacl::ocl::current_context());
+            handle.opencl_handle().context(ctx.opencl_context());
             handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
             handle.raw_size(size_in_bytes);
             break;
@@ -115,6 +113,11 @@ namespace viennacl
       }
     }
 
+    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
+    {
+      viennacl::context  ctx(default_memory_type());
+      memory_create(handle, size_in_bytes, ctx, host_ptr);
+    }
 
 
     /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' to memory starting at address 'dst_buffer + dst_offset'.
