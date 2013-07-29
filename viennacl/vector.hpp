@@ -833,9 +833,9 @@ namespace viennacl
         }
       }
 
-      void switch_memory_domain(viennacl::memory_types new_domain)
+      void switch_memory_context(viennacl::context new_ctx)
       {
-        viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
       }
 
       //TODO: Think about implementing the following public member functions
@@ -927,7 +927,7 @@ namespace viennacl
     */
     explicit vector(size_type vec_size) : base_type(vec_size) {}
 
-    explicit vector(size_type vec_size, viennacl::context & ctx) : base_type(vec_size, ctx) {}
+    explicit vector(size_type vec_size, viennacl::context ctx) : base_type(vec_size, ctx) {}
 
 #ifdef VIENNACL_WITH_OPENCL
     /** @brief Create a vector from existing OpenCL memory
@@ -1021,9 +1021,9 @@ namespace viennacl
       return *this;
     }
 
-    void switch_memory_domain(viennacl::memory_types new_domain)
+    void switch_memory_context(viennacl::context new_ctx)
     {
-      base_type::switch_memory_domain(new_domain);
+      base_type::switch_memory_context(new_ctx);
     }
 
   }; //vector

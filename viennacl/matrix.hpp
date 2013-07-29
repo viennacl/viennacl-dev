@@ -551,9 +551,9 @@ namespace viennacl
         elements_ = h;
       }
 
-      void switch_memory_domain(viennacl::memory_types new_domain)
+      void switch_memory_context(viennacl::context new_ctx)
       {
-        viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
       }
 
 

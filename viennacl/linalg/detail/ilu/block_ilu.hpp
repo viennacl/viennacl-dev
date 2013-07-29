@@ -193,9 +193,8 @@ namespace viennacl
       private:
         void init(MatrixType const & A)
         {
-
-          viennacl::compressed_matrix<ScalarType> mat;
-          viennacl::switch_memory_domain(mat, viennacl::MAIN_MEMORY);
+          viennacl::context host_context(viennacl::MAIN_MEMORY);
+          viennacl::compressed_matrix<ScalarType> mat(host_context);
 
           viennacl::copy(A, mat);
 
@@ -209,13 +208,12 @@ namespace viennacl
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
             std::size_t block_nnz  = row_buffer[block_indices_[i].second] - row_buffer[block_indices_[i].first];
-            viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz);
-            viennacl::switch_memory_domain(mat_block, viennacl::MAIN_MEMORY);
+            viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz, host_context);
 
             detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
 
             // Step 2: Precondition blocks:
-            viennacl::switch_memory_domain(LU_blocks[i], viennacl::MAIN_MEMORY);
+            viennacl::switch_memory_context(LU_blocks[i], host_context);
             preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
           }
 
@@ -269,9 +267,9 @@ namespace viennacl
                          ) : tag_(tag),
                              block_indices_(num_blocks),
                              gpu_block_indices(),
-                             gpu_L_trans(0,0),
-                             gpu_U_trans(0,0),
-                             gpu_D(mat.size1()),
+                             gpu_L_trans(0,0, viennacl::traits::context(mat)),
+                             gpu_U_trans(0,0, viennacl::traits::context(mat)),
+                             gpu_D(mat.size1(), viennacl::traits::context(mat)),
                              LU_blocks(num_blocks)
         {
           // Set up vector of block indices:
@@ -295,10 +293,10 @@ namespace viennacl
                           index_vector_type const & block_boundaries
                          ) : tag_(tag),
                              block_indices_(block_boundaries),
-                             gpu_block_indices(),
-                             gpu_L_trans(0,0),
-                             gpu_U_trans(0,0),
-                             gpu_D(0),
+                             gpu_block_indices(viennacl::traits::context(mat)),
+                             gpu_L_trans(0,0,viennacl::traits::context(mat)),
+                             gpu_U_trans(0,0,viennacl::traits::context(mat)),
+                             gpu_D(0,viennacl::traits::context(mat)),
                              LU_blocks(block_boundaries.size())
         {
           //initialize preconditioner:
@@ -370,8 +368,8 @@ namespace viennacl
         {
           std::vector< std::map<unsigned int, ScalarType> > temp;
 
-          viennacl::compressed_matrix<ScalarType> mat;
-          viennacl::switch_memory_domain(mat, viennacl::MAIN_MEMORY);
+          viennacl::context host_context(viennacl::MAIN_MEMORY);
+          viennacl::compressed_matrix<ScalarType> mat(host_context);
 
           //mat = A;
           viennacl::copy(A, temp);
@@ -387,13 +385,12 @@ namespace viennacl
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
             std::size_t block_nnz  = row_buffer[block_indices_[i].second] - row_buffer[block_indices_[i].first];
-            viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz);
-            viennacl::switch_memory_domain(mat_block, viennacl::MAIN_MEMORY);
+            viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz, host_context);
 
             detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
 
             // Step 2: Precondition blocks:
-            viennacl::switch_memory_domain(LU_blocks[i], viennacl::MAIN_MEMORY);
+            viennacl::switch_memory_context(LU_blocks[i], host_context);
             preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
           }
 
@@ -401,10 +398,9 @@ namespace viennacl
            * copy resulting preconditioner back to GPU:
            */
 
-          gpu_block_indices.switch_active_handle_id(viennacl::memory_domain(A));
-          viennacl::switch_memory_domain(gpu_L_trans, viennacl::memory_domain(A));
-          viennacl::switch_memory_domain(gpu_U_trans, viennacl::memory_domain(A));
-          viennacl::switch_memory_domain(gpu_D, viennacl::memory_domain(A));
+          viennacl::switch_memory_context(gpu_L_trans, viennacl::traits::context(A));
+          viennacl::switch_memory_context(gpu_U_trans, viennacl::traits::context(A));
+          viennacl::switch_memory_context(gpu_D, viennacl::traits::context(A));
 
           viennacl::backend::typesafe_host_array<unsigned int> block_indices_uint(gpu_block_indices, 2 * block_indices_.size());
           for (std::size_t i=0; i<block_indices_.size(); ++i)
@@ -413,7 +409,7 @@ namespace viennacl
             block_indices_uint.set(2*i + 1, block_indices_[i].second);
           }
 
-          viennacl::backend::memory_create(gpu_block_indices, block_indices_uint.raw_size(), viennacl::traits::context(gpu_block_indices), block_indices_uint.get());
+          viennacl::backend::memory_create(gpu_block_indices, block_indices_uint.raw_size(), viennacl::traits::context(A), block_indices_uint.get());
 
           blocks_to_device(mat.size1());
 

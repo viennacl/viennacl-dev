@@ -106,7 +106,7 @@ namespace viennacl
         typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
 
       public:
-        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(mat.size1())
+        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(mat.size1(), viennacl::traits::context(mat))
         {
           init(mat);
         }

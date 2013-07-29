@@ -129,7 +129,7 @@ namespace viennacl
         typedef typename MatrixType::value_type      ScalarType;
 
       public:
-        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LLT(mat.size1(), mat.size2())
+        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LLT(mat.size1(), mat.size2(), viennacl::context(viennacl::MAIN_MEMORY))
         {
             //initialize preconditioner:
             //std::cout << "Start CPU precond" << std::endl;
@@ -152,7 +152,8 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          viennacl::switch_memory_domain(LLT, viennacl::MAIN_MEMORY);
+          viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(LLT, host_ctx);
 
           viennacl::copy(mat, LLT);
           viennacl::linalg::precondition(LLT, tag_);
@@ -173,7 +174,7 @@ namespace viennacl
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
       public:
-        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LLT(mat.size1(), mat.size2())
+        ichol0_precond(MatrixType const & mat, ichol0_tag const & tag) : tag_(tag), LLT(mat.size1(), mat.size2(), viennacl::traits::context(mat))
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
@@ -183,26 +184,29 @@ namespace viennacl
 
         void apply(vector<ScalarType> & vec) const
         {
-          if (viennacl::memory_domain(vec) != viennacl::MAIN_MEMORY)
+          if (viennacl::traits::context(vec).memory_type() != viennacl::MAIN_MEMORY)
           {
-            viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
-            viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
+            viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+            viennacl::context old_ctx = viennacl::traits::context(vec);
+
+            viennacl::switch_memory_context(vec, host_ctx);
             viennacl::linalg::inplace_solve(trans(LLT), vec, lower_tag());
-            viennacl::linalg::inplace_solve(LLT, vec, upper_tag());
-            viennacl::switch_memory_domain(vec, old_memory_location);
+            viennacl::linalg::inplace_solve(      LLT , vec, upper_tag());
+            viennacl::switch_memory_context(vec, old_ctx);
           }
           else //apply ILU0 directly:
           {
             // Note: L is stored in a column-oriented fashion, i.e. transposed w.r.t. the row-oriented layout. Thus, the factorization A = L L^T holds L in the upper triangular part of A.
             viennacl::linalg::inplace_solve(trans(LLT), vec, lower_tag());
-            viennacl::linalg::inplace_solve(LLT, vec, upper_tag());
+            viennacl::linalg::inplace_solve(      LLT , vec, upper_tag());
           }
         }
 
       private:
         void init(MatrixType const & mat)
         {
-          viennacl::switch_memory_domain(LLT, viennacl::MAIN_MEMORY);
+          viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(LLT, host_ctx);
           LLT = mat;
 
           viennacl::linalg::precondition(LLT, tag_);

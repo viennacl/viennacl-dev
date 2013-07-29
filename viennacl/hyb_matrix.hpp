@@ -42,10 +42,27 @@ namespace viennacl
 
         hyb_matrix() : csr_threshold_(SCALARTYPE(0.8)), rows_(0), cols_(0) {}
 
-        //hyb_matrix(std::size_t row_num, std::size_t col_num) : csr_threshold_(0.8), rows_(row_num), cols_(col_num)
-        //{
-        //  viennacl::linalg::kernels::hyb_matrix<SCALARTYPE, ALIGNMENT>::init();
-        //}
+        hyb_matrix(viennacl::context ctx) : csr_threshold_(SCALARTYPE(0.8)), rows_(0), cols_(0)
+        {
+            ell_coords_.switch_active_handle_id(ctx.memory_type());
+          ell_elements_.switch_active_handle_id(ctx.memory_type());
+
+              csr_rows_.switch_active_handle_id(ctx.memory_type());
+              csr_cols_.switch_active_handle_id(ctx.memory_type());
+          csr_elements_.switch_active_handle_id(ctx.memory_type());
+
+#ifdef VIENNACL_WITH_OPENCL
+          if (ctx.memory_type() == OPENCL_MEMORY)
+          {
+              ell_coords_.opencl_handle().context(ctx.opencl_context());
+            ell_elements_.opencl_handle().context(ctx.opencl_context());
+
+                csr_rows_.opencl_handle().context(ctx.opencl_context());
+                csr_cols_.opencl_handle().context(ctx.opencl_context());
+            csr_elements_.opencl_handle().context(ctx.opencl_context());
+          }
+#endif
+        }
 
         SCALARTYPE  csr_threshold()  const { return csr_threshold_; }
         void csr_threshold(SCALARTYPE thr) { csr_threshold_ = thr; }
@@ -261,7 +278,7 @@ namespace viennacl
               // check for the special case x = A * x
               if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
               {
-                viennacl::vector<T> temp(rhs.lhs().size1());
+                viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
                 viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
                 lhs = temp;
               }
@@ -275,7 +292,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs += temp;
             }
@@ -286,7 +303,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs -= temp;
             }
@@ -299,19 +316,19 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, lhs);
             }
         };
 
         // x = A * vec_op
         template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
-        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const hyb_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
+        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const hyb_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
-            static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
+            static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
+              viennacl::vector<T> temp_result(lhs.size(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs += temp_result;
             }
@@ -323,8 +340,8 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
+              viennacl::vector<T> temp_result(lhs.size(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs -= temp_result;
             }

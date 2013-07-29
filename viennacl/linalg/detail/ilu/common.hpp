@@ -120,15 +120,19 @@ namespace viennacl
           if (num_tainted_cols > 0)
           {
             row_index_arrays.push_back(viennacl::backend::mem_handle());
+            viennacl::backend::switch_memory_context<unsigned int>(row_index_arrays.back(), viennacl::traits::context(LU));
             viennacl::backend::typesafe_host_array<unsigned int> elim_row_index_array(row_index_arrays.back(), num_tainted_cols);
 
             row_buffers.push_back(viennacl::backend::mem_handle());
+            viennacl::backend::switch_memory_context<unsigned int>(row_buffers.back(), viennacl::traits::context(LU));
             viennacl::backend::typesafe_host_array<unsigned int> elim_row_buffer(row_buffers.back(), num_tainted_cols + 1);
 
             col_buffers.push_back(viennacl::backend::mem_handle());
+            viennacl::backend::switch_memory_context<unsigned int>(col_buffers.back(), viennacl::traits::context(LU));
             viennacl::backend::typesafe_host_array<unsigned int> elim_col_buffer(col_buffers.back(), num_entries);
 
             element_buffers.push_back(viennacl::backend::mem_handle());
+            viennacl::backend::switch_memory_context<ScalarType>(element_buffers.back(), viennacl::traits::context(LU));
             std::vector<ScalarType> elim_elements_buffer(num_entries);
 
             row_elimination_num_list.push_back(num_tainted_cols);

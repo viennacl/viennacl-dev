@@ -94,12 +94,12 @@ namespace viennacl
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       //std::cout << "Starting CG" << std::endl;
       std::size_t problem_size = viennacl::traits::size(rhs);
-      VectorType result(problem_size);
+      VectorType result = rhs;
       viennacl::traits::clear(result);
 
       VectorType residual = rhs;
       VectorType p = rhs;
-      VectorType tmp(problem_size);
+      VectorType tmp = rhs;
 
       CPU_ScalarType ip_rr = viennacl::linalg::inner_prod(rhs,rhs);
       CPU_ScalarType alpha;
@@ -160,11 +160,11 @@ namespace viennacl
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       unsigned int problem_size = viennacl::traits::size(rhs);
 
-      VectorType result(problem_size);
+      VectorType result = rhs;
       viennacl::traits::clear(result);
 
       VectorType residual = rhs;
-      VectorType tmp(problem_size);
+      VectorType tmp = rhs;
       VectorType z = rhs;
 
       precond.apply(z);

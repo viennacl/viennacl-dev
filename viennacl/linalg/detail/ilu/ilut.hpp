@@ -274,8 +274,9 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
+          viennacl::context host_context(viennacl::MAIN_MEMORY);
           viennacl::compressed_matrix<ScalarType> temp;
-          viennacl::switch_memory_domain(temp, viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(temp, host_context);
 
           viennacl::copy(mat, temp);
 
@@ -283,7 +284,7 @@ namespace viennacl
 
           viennacl::linalg::precondition(temp, LU_temp, tag_);
 
-          viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(LU, host_context);
           viennacl::copy(LU_temp, LU);
         }
 
@@ -335,11 +336,12 @@ namespace viennacl
             }
             else
             {
-              viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
-              viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
+              viennacl::context host_context(viennacl::MAIN_MEMORY);
+              viennacl::context old_context = viennacl::traits::context(vec);
+              viennacl::switch_memory_context(vec, host_context);
               viennacl::linalg::inplace_solve(LU, vec, unit_lower_tag());
               viennacl::linalg::inplace_solve(LU, vec, upper_tag());
-              viennacl::switch_memory_domain(vec, old_memory_location);
+              viennacl::switch_memory_context(vec, old_context);
             }
           }
           else //apply ILUT directly:
@@ -352,18 +354,19 @@ namespace viennacl
       private:
         void init(MatrixType const & mat)
         {
-          viennacl::switch_memory_domain(LU, viennacl::MAIN_MEMORY);
+          viennacl::context host_context(viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(LU, host_context);
 
           std::vector< std::map<unsigned int, ScalarType> > LU_temp(mat.size1());
 
-          if (viennacl::memory_domain(mat) == viennacl::MAIN_MEMORY)
+          if (viennacl::traits::context(mat).memory_type() == viennacl::MAIN_MEMORY)
           {
             viennacl::linalg::precondition(mat, LU_temp, tag_);
           }
           else //we need to copy to CPU
           {
             viennacl::compressed_matrix<ScalarType> cpu_mat(mat.size1(), mat.size2());
-            viennacl::switch_memory_domain(cpu_mat, viennacl::MAIN_MEMORY);
+            viennacl::switch_memory_context(cpu_mat, host_context);
 
             cpu_mat = mat;
 
@@ -379,7 +382,7 @@ namespace viennacl
           // multifrontal part:
           //
 
-          viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::MAIN_MEMORY);
+          viennacl::switch_memory_context(multifrontal_U_diagonal_, host_context);
           multifrontal_U_diagonal_.resize(LU.size1(), false);
           host_based::detail::row_info(LU, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
 
@@ -409,47 +412,47 @@ namespace viennacl
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_index_arrays_.begin();
                                                                              it != multifrontal_L_row_index_arrays_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_buffers_.begin();
                                                                              it != multifrontal_L_row_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_col_buffers_.begin();
                                                                              it != multifrontal_L_col_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_element_buffers_.begin();
                                                                              it != multifrontal_L_element_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<ScalarType>(*it, viennacl::traits::context(mat));
 
 
           // U:
 
-          viennacl::switch_memory_domain(multifrontal_U_diagonal_, viennacl::memory_domain(mat));
+          viennacl::switch_memory_context(multifrontal_U_diagonal_, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_index_arrays_.begin();
                                                                              it != multifrontal_U_row_index_arrays_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_buffers_.begin();
                                                                              it != multifrontal_U_row_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_col_buffers_.begin();
                                                                              it != multifrontal_U_col_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<unsigned int>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
           for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_element_buffers_.begin();
                                                                              it != multifrontal_U_element_buffers_.end();
                                                                            ++it)
-            viennacl::backend::switch_memory_domain<ScalarType>(*it, viennacl::memory_domain(mat));
+            viennacl::backend::switch_memory_context<ScalarType>(*it, viennacl::traits::context(mat));
 
 
         }
