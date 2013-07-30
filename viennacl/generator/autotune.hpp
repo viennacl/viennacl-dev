@@ -30,10 +30,11 @@
 #include <cmath>
 #include <iterator>
 
-#include "viennacl/generator/builtin_database.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
-#include "viennacl/generator/timer.hpp"
+#include "viennacl/scheduler/forwards.h"
+#include "viennacl/generator/generate.hpp"
+#include "viennacl/generator/builtin_database.hpp"
 
 namespace viennacl{
 
@@ -146,20 +147,20 @@ namespace viennacl{
 
       /** @brief Add the timing value for a given profile and an operation */
       template<class OpT, class ProfileT>
-      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, OpT const & operation, code_generation::profile_id const & id, ProfileT const & prof){
+      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, viennacl::scheduler::statement const & operation, code_generation::profile_id const & id, ProfileT const & prof){
 
         Timer t;
 
         unsigned int n_runs = 10;
 
         //Skips if use too much local memory.
-        viennacl::generator::custom_operation op;
-        op.add(operation);
-        op.force_profile(id,prof);
-        viennacl::ocl::program & pgm = op.program();
-        viennacl::ocl::kernel & k = pgm.get_kernel("_k0");
+        std::list<viennacl::ocl::kernel *> kernels;
+        viennacl::generator::code_generator gen;
+        gen.add(operation);
+        viennacl::generator::get_configured_program(gen, kernels);
+//        op.force_profile(id,prof);
 
-
+        viennacl::ocl::kernel & k = *kernels.front();
         //Anticipates kernel failure
         size_t max_workgroup_size = viennacl::ocl::info<CL_KERNEL_WORK_GROUP_SIZE>(k,dev);
         std::pair<size_t,size_t> work_group_sizes = prof.local_work_size();

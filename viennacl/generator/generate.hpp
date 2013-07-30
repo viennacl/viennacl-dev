@@ -281,7 +281,7 @@ namespace viennacl{
 
     };
 
-    static void enqueue(viennacl::generator::code_generator const & generator){
+    static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels){
       char* program_name = (char*)malloc(256*sizeof(char));
       generator.make_program_name(program_name);
       if(!viennacl::ocl::current_context().has_program(program_name)){
@@ -293,8 +293,12 @@ namespace viennacl{
         viennacl::ocl::current_context().add_program(source_code, program_name);
       }
       viennacl::ocl::program & p = viennacl::ocl::current_context().get_program(program_name);
-      std::list<viennacl::ocl::kernel*> kernels;
       generator.configure_program(p, kernels);
+      return p;
+    }
+    static void enqueue(viennacl::generator::code_generator const & generator){
+      std::list<viennacl::ocl::kernel*> kernels;
+      viennacl::ocl::program & p = get_program(generator, kernels);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
         viennacl::ocl::enqueue(**it, (*it)->context().get_queue());
       }

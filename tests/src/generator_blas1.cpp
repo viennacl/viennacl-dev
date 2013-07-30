@@ -92,6 +92,14 @@ double diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
     return s - gs;
 }
 
+
+void execute_statement(viennacl::scheduler::statement const & s){
+  generator::code_generator gen;
+  gen.add(viennacl::scheduler::statement(s);
+  viennacl::generator::enqueue(gen);
+  viennacl::backend::finish();
+}
+
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
@@ -127,38 +135,24 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::copy (cy, y);
     viennacl::copy (cz, z);
 
-    // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------      
 
-    {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        generator::code_generator gen;
-        gen.add(viennacl::scheduler::statement(w, viennacl::op_assign(), x + y));
-        viennacl::generator::enqueue(gen);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
-
-    {
-        std::cout << "y = w + x ..." << std::endl;
-        cy = cw + cx;
-        generator::code_generator gen;
-        gen.add(viennacl::scheduler::statement(y, viennacl::op_assign(), w + x));
-        viennacl::generator::enqueue(gen);
-        viennacl::backend::finish();
-        CHECK_RESULT(cy, y, y = w + x);
-    }
+    std::cout << "w = x + y ..." << std::endl;
+    cw = cx + cy;
+    execute_statement(viennacl::scheduler::statement(w, viennacl::op_assign(), x + y));
+    CHECK_RESULT(cw, w, w = x + y);
 
 
-    {
-        std::cout << "x = y + w ..." << std::endl;
-        cx = cy + cw;
-        generator::code_generator gen;
-        gen.add(viennacl::scheduler::statement(x, viennacl::op_assign(), y + w));
-        viennacl::generator::enqueue(gen);
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, x = y + w);
-    }
+    std::cout << "y = w + x ..." << std::endl;
+    cy = cw + cx;
+    execute_statement(viennacl::scheduler::statement(y, viennacl::op_assign(), w + x));
+    CHECK_RESULT(cy, y, y = w + x);
+
+    std::cout << "x = y + w ..." << std::endl;
+    cx = cy + cw;
+    execute_statement(viennacl::scheduler::statement(x, viennacl::op_assign(), y + w));
+    CHECK_RESULT(cx, x, x = y + w);
+
 
 
 //    {
