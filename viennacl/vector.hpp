@@ -38,78 +38,99 @@
 
 namespace viennacl
 {
-  //
-  // Initializer types
-  //
-  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class unit_vector
+
+  template<typename SCALARTYPE>
+  class symbolic_vector_base
   {
-    public:
+    protected:
       typedef vcl_size_t        size_type;
+      symbolic_vector_base(size_type s, std::size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
+      symbolic_vector_base(size_type s, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
 
-      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : size_(s), index_(ind), ctx_(ctx)
-      {
-        assert( (ind < s) && bool("Provided index out of range!") );
-      }
-
-      size_type size() const { return size_; }
-      size_type index() const { return index_; }
+    public:
+      typedef SCALARTYPE const & const_reference;
 
       viennacl::context context() const { return ctx_; }
 
-    private:
+      size_type size() const { return size_; }
+
+      SCALARTYPE  value() const { return value_.first; }
+
+      bool is_value_static() const { return value_.second; }
+
+      std::size_t index() const { return index_.second; }
+
+      bool has_index() const { return index_.first; }
+
+      SCALARTYPE operator()(size_type i) const {
+        if(index_.first)
+          return (i==index_.second)?value_.first:0;
+        return value_.first;
+      }
+
+      SCALARTYPE operator[](size_type i) const {
+        if(index_.first)
+          return (i==index_.second)?value_.first:0;
+        return
+            value_.first;
+      }
+
+    protected:
       size_type size_;
-      size_type index_;
+      std::pair<bool, std::size_t> index_;
+      std::pair<SCALARTYPE, bool> value_;
       viennacl::context ctx_;
   };
 
-
-  /** @brief Represents a vector consisting of zeros only. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
+  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise.*/
   template <typename SCALARTYPE>
-  class zero_vector
+  class unit_vector : public symbolic_vector_base<SCALARTYPE>
   {
+      typedef symbolic_vector_base<SCALARTYPE> base_type;
     public:
-      typedef vcl_size_t        size_type;
+      typedef typename base_type::size_type size_type;
+      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(1,true), ctx)
+      {
+        assert( (ind < s) && bool("Provided index out of range!") );
+      }
+  };
+
+
+  /** @brief Represents a vector consisting of zeros only. */
+  template <typename SCALARTYPE>
+  class zero_vector : public symbolic_vector_base<SCALARTYPE>
+  {
+      typedef symbolic_vector_base<SCALARTYPE> base_type;
+    public:
+      typedef typename base_type::size_type size_type;
       typedef SCALARTYPE        const_reference;
+      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(0,true), ctx) {}
+  };
 
-      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : size_(s), ctx_(ctx) {}
-
-      size_type size() const { return size_; }
-      const_reference operator()(size_type /*i*/) const { return 0; }
-      const_reference operator[](size_type /*i*/) const { return 0; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size_;
-      viennacl::context ctx_;
+  /** @brief Represents a vector consisting of ones only. */
+  template <typename SCALARTYPE>
+  class one_vector : public symbolic_vector_base<SCALARTYPE>
+  {
+      typedef symbolic_vector_base<SCALARTYPE> base_type;
+    public:
+      typedef typename base_type::size_type size_type;
+      typedef SCALARTYPE        const_reference;
+      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(1,true), ctx) {}
   };
 
 
   /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
   template <typename SCALARTYPE>
-  class scalar_vector
+  class scalar_vector : public symbolic_vector_base<SCALARTYPE>
   {
+      typedef symbolic_vector_base<SCALARTYPE> base_type;
     public:
-      typedef vcl_size_t         size_type;
+      typedef typename base_type::size_type size_type;
       typedef SCALARTYPE const & const_reference;
 
-      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
-
-      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx) : size_(s), value_(val), ctx_(ctx) {}
-
-      size_type size() const { return size_; }
-      const_reference operator()(size_type /*i*/) const { return value_; }
-      const_reference operator[](size_type /*i*/) const { return value_; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size_;
-      SCALARTYPE value_;
-      viennacl::context ctx_;
+      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(val,false), ctx) {}
   };
+
 
 #ifdef VIENNACL_WITH_OPENCL
   template<class SCALARTYPE, class DISTRIBUTION>

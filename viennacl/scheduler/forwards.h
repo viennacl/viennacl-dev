@@ -74,11 +74,13 @@ namespace viennacl
       OPERATION_UNARY_SQRT_TYPE,
       OPERATION_UNARY_TAN_TYPE,
       OPERATION_UNARY_TANH_TYPE,
+      OPERATION_UNARY_TRANS_TYPE,
       OPERATION_UNARY_NORM_1_TYPE,
       OPERATION_UNARY_NORM_2_TYPE,
       OPERATION_UNARY_NORM_INF_TYPE,
 
       // binary expression
+      OPERATION_BINARY_ACCESS_TYPE,
       OPERATION_BINARY_ASSIGN_TYPE,
       OPERATION_BINARY_INPLACE_ADD_TYPE,
       OPERATION_BINARY_INPLACE_SUB_TYPE,
@@ -124,6 +126,7 @@ namespace viennacl
       template <> struct op_type_info<op_norm_1                  > { enum { id = OPERATION_UNARY_NORM_1_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_norm_2                  > { enum { id = OPERATION_UNARY_NORM_2_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_norm_inf                > { enum { id = OPERATION_UNARY_NORM_INF_TYPE, family = OPERATION_UNARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_trans                   > { enum { id = OPERATION_UNARY_TRANS_TYPE, family = OPERATION_UNARY_TYPE_FAMILY }; };
 
       // binary operations
       template <> struct op_type_info<op_assign>                   { enum { id = OPERATION_BINARY_ASSIGN_TYPE,       family = OPERATION_BINARY_TYPE_FAMILY }; };
@@ -160,9 +163,15 @@ namespace viennacl
       // vector:
       VECTOR_TYPE_FAMILY,
 
+      // symbolic vector:
+      SYMBOLIC_VECTOR_TYPE_FAMILY,
+
       // matrices:
       MATRIX_ROW_TYPE_FAMILY,
-      MATRIX_COL_TYPE_FAMILY
+      MATRIX_COL_TYPE_FAMILY,
+
+      // symbolic matrix:
+      SYMBOLIC_MATRIX_TYPE_FAMILY
     };
 
     /** @brief Encodes the type of a node in the statement tree. */
@@ -209,6 +218,19 @@ namespace viennacl
       VECTOR_FLOAT_TYPE,
       VECTOR_DOUBLE_TYPE,
 
+      // symbolic vector:
+      SYMBOLIC_VECTOR_CHAR_TYPE,
+      SYMBOLIC_VECTOR_UCHAR_TYPE,
+      SYMBOLIC_VECTOR_SHORT_TYPE,
+      SYMBOLIC_VECTOR_USHORT_TYPE,
+      SYMBOLIC_VECTOR_INT_TYPE,
+      SYMBOLIC_VECTOR_UINT_TYPE,
+      SYMBOLIC_VECTOR_LONG_TYPE,
+      SYMBOLIC_VECTOR_ULONG_TYPE,
+      SYMBOLIC_VECTOR_HALF_TYPE,
+      SYMBOLIC_VECTOR_FLOAT_TYPE,
+      SYMBOLIC_VECTOR_DOUBLE_TYPE,
+
       // matrix, row major:
       MATRIX_ROW_CHAR_TYPE,
       MATRIX_ROW_UCHAR_TYPE,
@@ -233,7 +255,20 @@ namespace viennacl
       MATRIX_COL_ULONG_TYPE,
       MATRIX_COL_HALF_TYPE,
       MATRIX_COL_FLOAT_TYPE,
-      MATRIX_COL_DOUBLE_TYPE
+      MATRIX_COL_DOUBLE_TYPE,
+
+      // symbolic matrix:
+      SYMBOLIC_MATRIX_CHAR_TYPE,
+      SYMBOLIC_MATRIX_UCHAR_TYPE,
+      SYMBOLIC_MATRIX_SHORT_TYPE,
+      SYMBOLIC_MATRIX_USHORT_TYPE,
+      SYMBOLIC_MATRIX_INT_TYPE,
+      SYMBOLIC_MATRIX_UINT_TYPE,
+      SYMBOLIC_MATRIX_LONG_TYPE,
+      SYMBOLIC_MATRIX_ULONG_TYPE,
+      SYMBOLIC_MATRIX_HALF_TYPE,
+      SYMBOLIC_MATRIX_FLOAT_TYPE,
+      SYMBOLIC_MATRIX_DOUBLE_TYPE
     };
 
     namespace result_of
@@ -275,6 +310,26 @@ namespace viennacl
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
 
+      ///////////// symbolic vector ID deduction /////////
+
+      template <typename T>
+      struct symbolic_vector_type_for_scalar {};
+#define VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(TYPE, ENUMVALUE) \
+      template <> struct symbolic_vector_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; }
+
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(char,           SYMBOLIC_VECTOR_CHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned char,  SYMBOLIC_VECTOR_UCHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(short,          SYMBOLIC_VECTOR_SHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned short, SYMBOLIC_VECTOR_USHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(int,            SYMBOLIC_VECTOR_INT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned int,   SYMBOLIC_VECTOR_UINT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(long,           SYMBOLIC_VECTOR_LONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned long,  SYMBOLIC_VECTOR_ULONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(float,          SYMBOLIC_VECTOR_FLOAT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(double,         SYMBOLIC_VECTOR_DOUBLE_TYPE);
+
+#undef VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING
+
       ///////////// matrix type ID deduction /////////////
 
       template <typename T, typename F>
@@ -306,6 +361,28 @@ namespace viennacl
       VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::row_major, MATRIX_ROW_DOUBLE_TYPE)
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+
+      ///////// symbolic matrix ID deduction ///////
+
+      template <typename T>
+      struct symbolic_matrix_type_for_scalar{};
+
+#define VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(TYPE, ENUMVALUE) \
+      template <> struct symbolic_matrix_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; }
+
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(char,           SYMBOLIC_MATRIX_CHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned char,  SYMBOLIC_MATRIX_UCHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(short,          SYMBOLIC_MATRIX_SHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned short, SYMBOLIC_MATRIX_USHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(int,            SYMBOLIC_MATRIX_INT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned int,   SYMBOLIC_MATRIX_UINT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(long,           SYMBOLIC_MATRIX_LONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned long,  SYMBOLIC_MATRIX_ULONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(float,          SYMBOLIC_MATRIX_FLOAT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(double,         SYMBOLIC_MATRIX_DOUBLE_TYPE);
+#undef VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING
+
+
 
       template <typename F>
       struct matrix_family {};
@@ -376,6 +453,18 @@ namespace viennacl
         viennacl::vector_base<float>            *vector_float;
         viennacl::vector_base<double>           *vector_double;
 
+        // symbolic vectors:
+        //viennacl::symbolic_vector_base<char>             *symbolic_vector_char;
+         //viennacl::symbolic_vector_base<unsigned char>    *symbolic_vector_uchar;
+         //viennacl::symbolic_vector_base<short>            *symbolic_vector_short;
+         //viennacl::symbolic_vector_base<unsigned short>   *symbolic_vector_ushort;
+         //viennacl::symbolic_vector_base<int>              *symbolic_vector_int;
+         //viennacl::symbolic_vector_base<unsigned int>     *symbolic_vector_uint;
+         //viennacl::symbolic_vector_base<long>             *symbolic_vector_long;
+         //viennacl::symbolic_vector_base<unsigned long>    *symbolic_vector_ulong;
+         viennacl::symbolic_vector_base<float>            *symbolic_vector_float;
+         viennacl::symbolic_vector_base<double>           *symbolic_vector_double;
+
         // row-major matrices:
         //viennacl::matrix_base<char>             *matrix_row_char;
         //viennacl::matrix_base<unsigned char>    *matrix_row_uchar;
@@ -399,6 +488,17 @@ namespace viennacl
         //viennacl::matrix_base<unsigned long,  viennacl::column_major>    *matrix_col_ulong;
         viennacl::matrix_base<float,          viennacl::column_major>    *matrix_col_float;
         viennacl::matrix_base<double,         viennacl::column_major>    *matrix_col_double;
+
+        //viennacl::symbolic_matrix_base<char>             *symbolic_matrix_char;
+        //viennacl::symbolic_matrix_base<unsigned char>    *symbolic_matrix_uchar;
+        //viennacl::symbolic_matrix_base<short>            *symbolic_matrix_short;
+        //viennacl::symbolic_matrix_base<unsigned short>   *symbolic_matrix_ushort;
+        //viennacl::symbolic_matrix_base<int>              *symbolic_matrix_int;
+        //viennacl::symbolic_matrix_base<unsigned int>     *symbolic_matrix_uint;
+        //viennacl::symbolic_matrix_base<long>             *symbolic_matrix_long;
+        //viennacl::symbolic_matrix_base<unsigned long>    *symbolic_matrix_ulong;
+        viennacl::symbolic_matrix_base<float>            *symbolic_matrix_float;
+        viennacl::symbolic_matrix_base<double>           *symbolic_matrix_double;
 
       };
     };

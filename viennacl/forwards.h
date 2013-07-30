@@ -148,6 +148,15 @@ namespace viennacl
   template <typename SCALARTYPE>
   class zero_vector;
 
+  template <typename SCALARTYPE>
+  class unit_vector;
+
+  template <typename SCALARTYPE>
+  class one_vector;
+
+  template <typename SCALARTYPE>
+  class scalar_vector;
+
   template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
 
@@ -234,6 +243,15 @@ namespace viennacl
 
   template <class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
   class matrix;
+
+  template <class SCALARTYPE>
+  class identity_matrix;
+
+  template <class SCALARTYPE>
+  class zero_matrix;
+
+  template <class SCALARTYPE>
+  class scalar_matrix;
 
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class compressed_matrix;

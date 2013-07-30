@@ -40,7 +40,7 @@
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
-#include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/generate.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
     if ( float delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
@@ -96,10 +96,6 @@ template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
 
-    typedef viennacl::generator::vector<NumericT> vec;
-    typedef viennacl::generator::scalar<NumericT> scal;
-
-
     unsigned int size = 128;
 
     ublas::vector<NumericT> cw(size);
@@ -136,108 +132,109 @@ int test_vector ( Epsilon const& epsilon) {
     {
         std::cout << "w = x + y ..." << std::endl;
         cw = cx + cy;
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + vec(y));
-        op.execute();
+        generator::code_generator gen;
+        gen.add(viennacl::scheduler::statement(w, viennacl::op_assign(), x + y));
+        viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);
     }
 
     {
-        std::cout << "x = w + y ..." << std::endl;
-        cx = cw + cy;
-        generator::custom_operation op;
-        op.add(vec(x) = vec(w) + vec(y));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, x = w + y);
-    }
-
-    {
         std::cout << "y = w + x ..." << std::endl;
         cy = cw + cx;
-        generator::custom_operation op;
-        op.add(vec(y) = vec(w) + vec(x));
-        op.execute();
+        generator::code_generator gen;
+        gen.add(viennacl::scheduler::statement(y, viennacl::op_assign(), w + x));
+        viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
-        CHECK_RESULT(cx, x, y = w + x);
+        CHECK_RESULT(cy, y, y = w + x);
     }
 
 
     {
-        std::cout << "w = x > 0.42" << std::endl;
-        for(unsigned int i=0 ; i < size ; ++i){
-            cw(i) = cx(i) > (NumericT)0.42;
-        }
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) > (NumericT)0.42);
-        op.execute();
+        std::cout << "x = y + w ..." << std::endl;
+        cx = cy + cw;
+        generator::code_generator gen;
+        gen.add(viennacl::scheduler::statement(x, viennacl::op_assign(), y + w));
+        viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x > 1)
+        CHECK_RESULT(cx, x, x = y + w);
     }
 
-    {
-        std::cout << "w = -w ..." << std::endl;
-        cw = -cw;
-        generator::custom_operation op;
-        op.add(vec(w) = -vec(w));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cw,w, w=-w);
-    }
 
-    {
-        std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
-        for(unsigned int i=0 ; i<size; ++i){
-            int ind1 = std::max((int)i - 5, 0);
-            int ind2 = std::min(i + 3, size-1);
-            cw(i) = cx(i) + cx(ind1) + cx(ind2);
-        }
-        generator::custom_operation op;
-        op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
-    }
+//    {
+//        std::cout << "w = x > 0.42" << std::endl;
+//        for(unsigned int i=0 ; i < size ; ++i){
+//            cw(i) = cx(i) > (NumericT)0.42;
+//        }
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) > (NumericT)0.42);
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = x > 1)
+//    }
 
-    {
-        std::cout << "s = inner_prod(x,y)..." << std::endl;
-        s = 0;
-        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-        generator::custom_operation op;
-        op.add(scal(gs)= generator::inner_prod(vec(x), vec(y)));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(s,gs, s=inner_prod(x,y));
-    }
+//    {
+//        std::cout << "w = -w ..." << std::endl;
+//        cw = -cw;
+//        generator::custom_operation op;
+//        op.add(vec(w) = -vec(w));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw,w, w=-w);
+//    }
 
-    {
-        std::cout << "s = max(x)..." << std::endl;
-        s = *std::max_element(cx.begin(),cx.end());
-        generator::custom_operation op;
-        op.add(scal(gs)= generator::reduce<generator::fmax_type>(vec(x)));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(s,gs, s=max(x));
-    }
+//    {
+//        std::cout << "w = x + shift(x,-5) + shift(x,3) ..." << std::endl;
+//        for(unsigned int i=0 ; i<size; ++i){
+//            int ind1 = std::max((int)i - 5, 0);
+//            int ind2 = std::min(i + 3, size-1);
+//            cw(i) = cx(i) + cx(ind1) + cx(ind2);
+//        }
+//        generator::custom_operation op;
+//        op.add(vec(w) = vec(x) + generator::shift(vec(x),-5) + generator::shift(vec(x),3));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw,w, w = x + shift(x,-5) + shift(x,3) );
+//    }
 
-    {
-        std::cout << "Multiline ..." << std::endl;
-        viennacl::generator::custom_operation op;
-        op.add(vec(w) = vec(x) - vec(y));
-        op.add(vec(y) = element_prod(vec(w), vec(z)));
-        op.add(vec(z) = vec(x) + vec(z));
-        op.execute();
-        viennacl::backend::finish();
-        for(unsigned int i=0 ; i < size ; ++i){
-            cw(i) = cx(i) - cy(i);
-            cy(i) = cw(i)*cz(i);
-            cz(i) = cx(i) + cz(i);
-        }
-        CHECK_RESULT(cw, w, Multiline);
-        CHECK_RESULT(cy, y, Multiline);
-        CHECK_RESULT(cz, z, Multiline);
-    }
+//    {
+//        std::cout << "s = inner_prod(x,y)..." << std::endl;
+//        s = 0;
+//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
+//        generator::custom_operation op;
+//        op.add(scal(gs)= generator::inner_prod(vec(x), vec(y)));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s,gs, s=inner_prod(x,y));
+//    }
+
+//    {
+//        std::cout << "s = max(x)..." << std::endl;
+//        s = *std::max_element(cx.begin(),cx.end());
+//        generator::custom_operation op;
+//        op.add(scal(gs)= generator::reduce<generator::fmax_type>(vec(x)));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s,gs, s=max(x));
+//    }
+
+//    {
+//        std::cout << "Multiline ..." << std::endl;
+//        viennacl::generator::custom_operation op;
+//        op.add(vec(w) = vec(x) - vec(y));
+//        op.add(vec(y) = element_prod(vec(w), vec(z)));
+//        op.add(vec(z) = vec(x) + vec(z));
+//        op.execute();
+//        viennacl::backend::finish();
+//        for(unsigned int i=0 ; i < size ; ++i){
+//            cw(i) = cx(i) - cy(i);
+//            cy(i) = cw(i)*cz(i);
+//            cz(i) = cx(i) + cz(i);
+//        }
+//        CHECK_RESULT(cw, w, Multiline);
+//        CHECK_RESULT(cy, y, Multiline);
+//        CHECK_RESULT(cz, z, Multiline);
+//    }
 
     return retval;
 }
@@ -256,9 +253,6 @@ int test_matrix ( Epsilon const& epsilon) {
 
     unsigned int n_rep1 = size1/pattern_size1;
     unsigned int n_rep2 = size2/pattern_size2;
-
-    typedef viennacl::generator::matrix<viennacl::matrix<NumericT,Layout> > mat;
-    typedef viennacl::generator::vector<NumericT> vec;
 
     ublas::matrix<NumericT> cA(size1,size2);
     ublas::matrix<NumericT> cB(size1,size2);
@@ -302,104 +296,103 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cx,x);
     viennacl::copy(cPattern,pattern);
 
-
     {
-        std::cout << "C = diag(x) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i){
-          for(unsigned int j = 0 ; j < size2 ; ++j){
-            cC(i,j) = (i==j)?cx[i]:0;
-          }
-        }
-        generator::custom_operation op;
-        op.add(mat(C) = generator::diag(vec(x)));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C = diag(x))
+      std::cout << "C = A + B ..." << std::endl;
+      cC     = ( cA + cB );
+      generator::code_generator gen;
+      gen.add(viennacl::scheduler::statement(C, viennacl::op_assign(), A + B));
+      generator::enqueue(gen);
+      viennacl::backend::finish();
+      CHECK_RESULT(cC, C, C=A+B)
     }
 
-    {
-        std::cout << "x = diag(C) ..." << std::endl;
-        for(unsigned int i = 0; i < size1 ; ++i){
-            cx(i) = cA(i,i);
-        }
-        generator::custom_operation op;
-        op.add(vec(x) = generator::diag(mat(A)));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cx,x, x = diag(A));
-    }
+//    {
+//        std::cout << "C = diag(x) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i){
+//          for(unsigned int j = 0 ; j < size2 ; ++j){
+//            cC(i,j) = (i==j)?cx[i]:0;
+//          }
+//        }
+//        generator::custom_operation op;
+//        op.add(mat(C) = generator::diag(vec(x)));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cC, C, C = diag(x))
+//    }
 
-    {
-        std::cout << "C = A + B ..." << std::endl;
-        cC     = ( cA + cB );
-        generator::custom_operation op;
-        op.add(mat(C) = mat(A) + mat(B));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C=A+B)
-    }
+//    {
+//        std::cout << "x = diag(C) ..." << std::endl;
+//        for(unsigned int i = 0; i < size1 ; ++i){
+//            cx(i) = cA(i,i);
+//        }
+//        generator::custom_operation op;
+//        op.add(vec(x) = generator::diag(mat(A)));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx,x, x = diag(A));
+//    }
 
-    {
-        std::cout << "C = repmat(P, M, N) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
-        generator::custom_operation op;
-        op.add(mat(C) = generator::repmat(mat(pattern),n_rep1,n_rep2));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C = repmat(P, M, N))
-    }
+//    {
+//        std::cout << "C = repmat(P, M, N) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
+//        generator::custom_operation op;
+//        op.add(mat(C) = generator::repmat(mat(pattern),n_rep1,n_rep2));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cC, C, C = repmat(P, M, N))
+//    }
 
-    {
-        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = cx(i);
-        generator::custom_operation op;
-        op.add(mat(C) = generator::repmat(vec(x),1, C.size2()));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
-    }
+//    {
+//        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = cx(i);
+//        generator::custom_operation op;
+//        op.add(mat(C) = generator::repmat(vec(x),1, C.size2()));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+//    }
 
-    {
-        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = cx(j);
-        generator::custom_operation op;
-        op.add(mat(C) = generator::trans(generator::repmat(vec(x),1,C.size2())));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
-    }
+//    {
+//        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = cx(j);
+//        generator::custom_operation op;
+//        op.add(mat(C) = generator::trans(generator::repmat(vec(x),1,C.size2())));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cC, C, C = repmat(x, 1, N))
+//    }
 
 
-    {
-        std::cout << "C = -A ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = -cA(i,j);
-        generator::custom_operation op;
-        op.add(mat(C) = -mat(A));
-        op.execute();
-        viennacl::backend::finish();
+//    {
+//        std::cout << "C = -A ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = -cA(i,j);
+//        generator::custom_operation op;
+//        op.add(mat(C) = -mat(A));
+//        op.execute();
+//        viennacl::backend::finish();
 
-        CHECK_RESULT(cC, C, C = -A)
-    }
+//        CHECK_RESULT(cC, C, C = -A)
+//    }
 
-    {
-        std::cout << "C = 1/(1+EXP(-A)) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i)
-            for(unsigned int j = 0 ; j < size2 ; ++j)
-                cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
-        generator::custom_operation op;
-        op.add(mat(C) = 1.0f/(1.0f+generator::exp(-mat(A))));
-        op.execute();
-        viennacl::backend::finish();
-        CHECK_RESULT(cC, C, C = 1/(1+EXP(-A)))
-    }
+//    {
+//        std::cout << "C = 1/(1+EXP(-A)) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size1 ; ++i)
+//            for(unsigned int j = 0 ; j < size2 ; ++j)
+//                cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
+//        generator::custom_operation op;
+//        op.add(mat(C) = 1.0f/(1.0f+generator::exp(-mat(A))));
+//        op.execute();
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cC, C, C = 1/(1+EXP(-A)))
+//    }
 
 
     return retval;

@@ -98,6 +98,58 @@ namespace viennacl
     //};
 
     //
+      // is_any_vector : checks for either vector_base or symbolic_vector_base
+      //
+      template<typename T>
+      struct is_any_vector { enum { value = 0 }; };
+  #define VIENNACL_MAKE_ANY_VECTOR_TRUE(type) template<> struct is_any_vector< type > { enum { value = 1 }; };
+  #define VIENNACL_MAKE_FOR_ALL_SCALARTYPE(type) \
+    VIENNACL_MAKE_ANY_VECTOR_TRUE(type<float>)\
+    VIENNACL_MAKE_ANY_VECTOR_TRUE(type<double>)
+
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_range)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_slice)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::unit_vector)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_vector)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::one_vector)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_vector)
+
+  #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
+  #undef VIENNACL_MAKE_ANY_VECTOR_TRUE
+
+
+      //
+      // is_any_matrix : checks for either matrix_base or symbolic_matrix_base
+      //
+      template<typename T>
+      struct is_any_dense_matrix { enum { value = 0 }; };
+  #define VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE)\
+    template<> struct is_any_dense_matrix< TYPE > { enum { value = 1 }; };
+
+  #define VIENNACL_MAKE_FOR_ALL_SCALARTYPE(TYPE) \
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float>)\
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double>)
+
+  #define COMMA ,
+  #define VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(TYPE) \
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::row_major>)\
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::row_major>)\
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::column_major>)\
+    VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::column_major>)
+
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix)
+  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_range)
+  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_slice)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::identity_matrix)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_matrix)
+      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_matrix)
+
+  #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT
+  #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
+  #undef VIENNACL_MAKE_ANY_MATRIX_TRUE
+
+    //
     // is_row_major
     //
     //template <typename T>
