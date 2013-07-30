@@ -54,7 +54,7 @@ namespace viennacl
     template<typename ScalarType>
     void precondition(viennacl::compressed_matrix<ScalarType> & A, ichol0_tag const & /* tag */)
     {
-      assert( (viennacl::memory_domain(A) == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ICHOL0") );
+      assert( (viennacl::traits::context(A).memory_type() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ICHOL0") );
 
       ScalarType         * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(A.handle());
       unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
