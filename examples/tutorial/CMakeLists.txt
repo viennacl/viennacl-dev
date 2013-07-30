@@ -14,7 +14,7 @@ endforeach()
 
 if(ENABLE_UBLAS)
    include_directories(${Boost_INCLUDE_DIRS})
-   foreach(tut blas2 blas3 iterative-ublas lanczos least-squares matrix-range multithreaded power-iter qr sparse vector-range)
+   foreach(tut blas2 blas3 iterative-ublas lanczos least-squares matrix-range power-iter qr sparse vector-range)
       add_executable(${tut} ${tut}.cpp)
       target_link_libraries(${tut} ${Boost_LIBRARIES})
       if (ENABLE_OPENCL)
@@ -50,7 +50,7 @@ endif()
 # Part 2: Tutorials which work only with OpenCL enabled:
 #
 if (ENABLE_OPENCL)
-  foreach(tut custom-kernels custom-context fft viennacl-info)
+  foreach(tut custom-kernels custom-context fft multithreaded multithreaded_cg viennacl-info)
     add_executable(${tut} ${tut}.cpp)
     target_link_libraries(${tut} ${OPENCL_LIBRARIES})
     set_target_properties(${tut} PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
