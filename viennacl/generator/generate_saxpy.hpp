@@ -43,6 +43,7 @@ namespace viennacl{
     class vector_saxpy : public template_base{
       public:
         class profile : public template_base::profile{
+            friend class vector_saxpy;
           public:
             profile(unsigned int v, std::size_t gs, std::size_t ng, bool d) : template_base::profile(v, 1), group_size_(gs), num_groups_(ng), global_decomposition_(d){ }
 
@@ -61,7 +62,7 @@ namespace viennacl{
 
               scheduler::statement_node first_node = statements.front().array()[0];
               viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs.type, first_node.lhs, utils::size_fun());
-              k.arg(n_arg++, cl_uint(N));
+              k.arg(n_arg++, cl_uint(N/vectorization_));
             }
             void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
@@ -86,12 +87,12 @@ namespace viennacl{
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
             for(detail::mapping_type::reverse_iterator it2 = it->rbegin() ; it2 != it->rend() ; ++it2)
               if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(it2->second.get()))
-                p->fetch( std::make_pair("i","0"), fetched, stream);
+                p->fetch( std::make_pair("i","0"), profile_.vectorization_, fetched, stream);
 
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
               std::string str;
-              detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i","0"), str, mapping_[i++]), false);
+              detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping_[i++]), false);
               stream << str << ";" << std::endl;
           }
 
@@ -113,6 +114,7 @@ namespace viennacl{
     class matrix_saxpy : public template_base{
       public:
         class profile : public template_base::profile{
+            friend class matrix_saxpy;
           public:
             profile(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : template_base::profile(v, 1), group_size1_(gs1), group_size2_(gs2), num_groups1_(ng1), num_groups2_(ng2), global_decomposition_(d){ }
 
@@ -174,12 +176,12 @@ namespace viennacl{
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
             for(detail::mapping_type::reverse_iterator it2 = it->rbegin() ; it2 != it->rend() ; ++it2)
               if(detail::mapped_matrix * p = dynamic_cast<detail::mapped_matrix *>(it2->second.get()))
-                p->fetch(std::make_pair("i", "j"),fetched, stream);
+                p->fetch(std::make_pair("i", "j"), profile_.vectorization_, fetched, stream);
 
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             std::string str;
-            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i", "j"), str, mapping_[i++]), false);
+            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping_[i++]), false);
             stream << str << ";" << std::endl;
           }
 

@@ -25,6 +25,9 @@
 
 #include <set>
 
+#include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
+
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/forwards.h"
@@ -36,6 +39,7 @@
 #include "viennacl/generator/generate_utils.hpp"
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/generator/mapped_types.hpp"
+
 
 namespace viennacl{
 

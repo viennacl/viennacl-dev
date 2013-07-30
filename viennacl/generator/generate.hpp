@@ -115,7 +115,6 @@ namespace viennacl{
               is_in_prod = true;
           }
 
-
           if(node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
             ++n_scalar_reduce;
           if(node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
@@ -234,6 +233,25 @@ namespace viennacl{
         }
 
 
+        void force_profile(vector_saxpy::profile const & profile){
+          vector_saxpy_profile_ = profile;
+        }
+
+        void force_profile(matrix_saxpy::profile const & profile){
+          matrix_saxpy_profile_ = profile;
+        }
+
+        void force_profile(scalar_reduction::profile const & profile){
+          scalar_reduction_profile_ = profile;
+        }
+
+        void force_profile(vector_reduction::profile const & profile){
+          vector_reduction_profile_ = profile;
+        }
+
+        void force_profile(matrix_product::profile const & profile){
+          matrix_product_profile_ = profile;
+        }
 
         std::string make_program_string() const {
           utils::kernel_generation_stream stream;
@@ -255,6 +273,7 @@ namespace viennacl{
                 matrix_saxpy(it->second, matrix_saxpy_profile_)(stream);
                 break;
               case SCALAR_REDUCE:
+
                 scalar_reduction(it->second, scalar_reduction_profile_)(stream);
                 break;
               case VECTOR_REDUCE:
@@ -278,13 +297,12 @@ namespace viennacl{
         scalar_reduction::profile scalar_reduction_profile_;
         vector_reduction::profile vector_reduction_profile_;
         matrix_product::profile matrix_product_profile_;
-
     };
 
-    static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels){
+    static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
       char* program_name = (char*)malloc(256*sizeof(char));
       generator.make_program_name(program_name);
-      if(!viennacl::ocl::current_context().has_program(program_name)){
+      if(force_recompilation || !viennacl::ocl::current_context().has_program(program_name)){
         std::string source_code = generator.make_program_string();
     #ifdef VIENNACL_DEBUG_BUILD
         std::cout << "Building " << program_name << "..." << std::endl;
@@ -296,9 +314,9 @@ namespace viennacl{
       generator.configure_program(p, kernels);
       return p;
     }
-    static void enqueue(viennacl::generator::code_generator const & generator){
+    static void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
-      viennacl::ocl::program & p = get_program(generator, kernels);
+      viennacl::ocl::program & p = get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
         viennacl::ocl::enqueue(**it, (*it)->context().get_queue());
       }

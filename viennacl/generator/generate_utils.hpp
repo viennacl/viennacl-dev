@@ -72,11 +72,12 @@ namespace viennacl{
       class expression_generation_traversal : public traversal_functor{
         private:
           std::pair<std::string, std::string> index_string_;
+          int vector_element_;
           std::string & str_;
           mapping_type const & mapping_;
         public:
-          expression_generation_traversal(std::pair<std::string, std::string> const & index, std::string & str, mapping_type const & mapping) : index_string_(index), str_(str), mapping_(mapping){ }
-          void call_on_leaf(index_info const & key, statement_node const & node,  statement::container_type const * array) const { str_ += generate(index_string_,*mapping_.at(key)); }
+          expression_generation_traversal(std::pair<std::string, std::string> const & index, int vector_element, std::string & str, mapping_type const & mapping) : index_string_(index), vector_element_(vector_element), str_(str), mapping_(mapping){ }
+          void call_on_leaf(index_info const & key, statement_node const & node,  statement::container_type const * array) const { str_ += generate(index_string_, vector_element_, *mapping_.at(key)); }
           void call_on_op(operation_node_type_family, operation_node_type type) const {
             if(type!=scheduler::OPERATION_UNARY_TRANS_TYPE)
               str_ += detail::generate(type);
@@ -89,12 +90,13 @@ namespace viennacl{
         private:
           std::set<std::string> & fetched_;
           std::pair<std::string, std::string> index_string_;
+          unsigned int vectorization_;
           utils::kernel_generation_stream & stream_;
           mapping_type const & mapping_;
         public:
-          fetch_traversal(std::set<std::string> & fetched, std::pair<std::string, std::string> const & index, utils::kernel_generation_stream & stream, mapping_type const & mapping) : fetched_(fetched), index_string_(index), stream_(stream), mapping_(mapping){ }
+          fetch_traversal(std::set<std::string> & fetched, std::pair<std::string, std::string> const & index, unsigned int vectorization, utils::kernel_generation_stream & stream, mapping_type const & mapping) : fetched_(fetched), index_string_(index), vectorization_(vectorization), stream_(stream), mapping_(mapping){ }
           void call_on_leaf(index_info const & key, statement_node const & node,  statement::container_type const * array) const {
-            fetch(index_string_, fetched_, stream_, *mapping_.at(key));
+            fetch(index_string_, vectorization_, fetched_, stream_, *mapping_.at(key));
           }
       };
 

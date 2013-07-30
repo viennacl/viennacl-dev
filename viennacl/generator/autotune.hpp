@@ -36,6 +36,8 @@
 #include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/builtin_database.hpp"
 
+#include "viennacl/tools/timer.hpp"
+
 namespace viennacl{
 
   namespace generator{
@@ -146,10 +148,10 @@ namespace viennacl{
       };
 
       /** @brief Add the timing value for a given profile and an operation */
-      template<class OpT, class ProfileT>
-      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, viennacl::scheduler::statement const & operation, code_generation::profile_id const & id, ProfileT const & prof){
+      template<class ProfileT>
+      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, viennacl::scheduler::statement const & operation, ProfileT const & prof){
 
-        Timer t;
+        tools::Timer t;
 
         unsigned int n_runs = 10;
 
@@ -157,26 +159,27 @@ namespace viennacl{
         std::list<viennacl::ocl::kernel *> kernels;
         viennacl::generator::code_generator gen;
         gen.add(operation);
-        viennacl::generator::get_configured_program(gen, kernels);
-//        op.force_profile(id,prof);
+        gen.force_profile(prof);
+        viennacl::generator::get_configured_program(gen, kernels, true);
 
         viennacl::ocl::kernel & k = *kernels.front();
         //Anticipates kernel failure
         size_t max_workgroup_size = viennacl::ocl::info<CL_KERNEL_WORK_GROUP_SIZE>(k,dev);
-        std::pair<size_t,size_t> work_group_sizes = prof.local_work_size();
-        if(work_group_sizes.first*work_group_sizes.second > max_workgroup_size)  return;
+        size_t size1, size2;
+        prof.set_local_sizes(size1, size2, 0);
+        if(size1*size2 > max_workgroup_size)  return;
 
-        //Doesn't execute because it would likelily be a waste of time
-        size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
-        if( (prof.local_work_size().first*prof.local_work_size().second) % prefered_workgroup_size_multiple > 0) return;
+//        //Doesn't execute because it would likelily be a waste of time
+//        size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
+//        if( (size1*size2) % prefered_workgroup_size_multiple > 0) return;
 
-        op.execute(true);
+        viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
 
         double exec_time = 0;
         t.start();
-        for(unsigned int n=0; n<n_runs ; ++n){
-          op.execute();
+        for(unsigned int n=0; n<0 ; ++n){
+          generator::enqueue(gen);
         }
         viennacl::backend::finish();
         exec_time = t.get()/(float)n_runs;
@@ -190,8 +193,8 @@ namespace viennacl{
        * @param timings the timings to fill
        * @param op the given operation
        * @param the given config */
-      template<class OpT, class ConfigT>
-      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, OpT const & op, code_generation::profile_id const & id, ConfigT & config){
+      template<class ConfigT>
+      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, scheduler::statement const & op, ConfigT & config, size_t scalartype_size){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         unsigned int n=0, n_conf = 0;
@@ -207,7 +210,7 @@ namespace viennacl{
           if(config.is_invalid(dev)) continue;
           ++n;
           std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
-          benchmark_impl(timings,dev,op,id,config.get_current());
+          benchmark_impl(timings,dev,op,config.get_current());
         }
 
         std::cout << std::endl;
@@ -215,7 +218,7 @@ namespace viennacl{
 
       /** @brief Fills a timing map for a given operation and a list of profiles */
       template<class OpT, class ProfT>
-      void benchmark(std::map<double, ProfT> & timings, OpT const & op, code_generation::profile_id const & id, std::list<ProfT> const & profiles, size_t scalartype_size){
+      void benchmark(std::map<double, ProfT> & timings, OpT const & op, std::list<ProfT> const & profiles, size_t scalartype_size){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         unsigned int n=0;
@@ -229,7 +232,7 @@ namespace viennacl{
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
           if(it->is_invalid(dev,scalartype_size)) continue;
           std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
-          benchmark_impl<OpT>(timings,dev,op,id,*it);
+          benchmark_impl<OpT>(timings,dev,op,*it);
         }
 
         std::cout << std::endl;

@@ -163,20 +163,20 @@ namespace viennacl{
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
             if(is_lhs_transposed)
-              detail::traverse(*exprs[k]->lhs().array, detail::fetch_traversal(fetched, std::make_pair("c","r"), stream, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
+              detail::traverse(*exprs[k]->lhs().array, detail::fetch_traversal(fetched, std::make_pair("c","r"), profile_.vectorization_, stream, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
             else
-              detail::traverse(*exprs[k]->lhs().array, detail::fetch_traversal(fetched, std::make_pair("r","c"), stream, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
+              detail::traverse(*exprs[k]->lhs().array, detail::fetch_traversal(fetched, std::make_pair("r","c"), profile_.vectorization_, stream, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
-            detail::traverse(*exprs[k]->rhs().array, detail::fetch_traversal(fetched, std::make_pair("c","0"), stream, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
+            detail::traverse(*exprs[k]->rhs().array, detail::fetch_traversal(fetched, std::make_pair("c","0"), profile_.vectorization_, stream, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
 
 
           //Update sums;
           for(std::size_t k = 0 ; k < exprs.size() ; ++k){
             std::string expr_str;
-            detail::traverse(*exprs[k]->lhs().array, detail::expression_generation_traversal(std::make_pair("r","c"), expr_str, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
+            detail::traverse(*exprs[k]->lhs().array, detail::expression_generation_traversal(std::make_pair("r","c"), -1, expr_str, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
             expr_str += "*";
-            detail::traverse(*exprs[k]->rhs().array, detail::expression_generation_traversal(std::make_pair("c","0"), expr_str, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
+            detail::traverse(*exprs[k]->rhs().array, detail::expression_generation_traversal(std::make_pair("c","0"), -1, expr_str, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
             stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
           }
 
@@ -213,7 +213,7 @@ namespace viennacl{
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             std::string str;
-            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("r","0"), str, mapping_[i++]), false);
+            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping_[i++]), false);
             stream << str << ";" << std::endl;
           }
           stream.dec_tab();
