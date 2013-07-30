@@ -1,11 +1,11 @@
 # Targets using CPU-based execution
-foreach(bench blas3 scheduler)
+foreach(bench blas3 copy scheduler vector)
    add_executable(${bench}bench-cpu ${bench}.cpp)
 endforeach()
 
 if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
-    foreach(bench sparse solver vector)
+    foreach(bench sparse solver)
       add_executable(${bench}bench-cpu ${bench}.cpp)
     endforeach()
 endif (ENABLE_UBLAS)
@@ -14,7 +14,7 @@ endif (ENABLE_UBLAS)
 # Targets using OpenCL
 if (ENABLE_OPENCL)
 
-  foreach(bench generator_blas1 generator_blas2 generator_blas3 blas3 opencl)
+  foreach(bench blas3 copy generator_blas1 generator_blas2 generator_blas3 opencl vector)
     add_executable(${bench}bench-opencl ${bench}.cpp)
     target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
     set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
@@ -22,7 +22,7 @@ if (ENABLE_OPENCL)
 
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
-     foreach(bench sparse solver vector)
+     foreach(bench sparse solver)
        add_executable(${bench}bench-opencl ${bench}.cpp)
        target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
        set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
@@ -34,13 +34,13 @@ endif (ENABLE_OPENCL)
 # Targets using CUDA
 if (ENABLE_CUDA)
 
-  foreach(bench blas3)
+  foreach(bench blas3 copy vector)
      cuda_add_executable(${bench}bench-cuda ${bench}.cu)
   endforeach()
 
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
-     foreach(bench sparse solver vector)
+     foreach(bench sparse solver)
        cuda_add_executable(${bench}bench-cuda ${bench}.cu)
      endforeach()
   endif (ENABLE_UBLAS)
