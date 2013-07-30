@@ -211,7 +211,8 @@ namespace viennacl
     inline void memory_write(mem_handle & dst_buffer,
                              std::size_t dst_offset,
                              std::size_t bytes_to_write,
-                             const void * ptr)
+                             const void * ptr,
+                             bool async = false)
     {
       if (bytes_to_write > 0)
       {
@@ -222,12 +223,12 @@ namespace viennacl
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
-            opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr);
+            opencl::memory_write(dst_buffer.opencl_handle(), dst_offset, bytes_to_write, ptr, async);
             break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
           case CUDA_MEMORY:
-            cuda::memory_write(dst_buffer.cuda_handle(), dst_offset, bytes_to_write, ptr);
+            cuda::memory_write(dst_buffer.cuda_handle(), dst_offset, bytes_to_write, ptr, async);
             break;
 #endif
           default:
@@ -248,7 +249,8 @@ namespace viennacl
     inline void memory_read(mem_handle const & src_buffer,
                             std::size_t src_offset,
                             std::size_t bytes_to_read,
-                            void * ptr)
+                            void * ptr,
+                            bool async = false)
     {
       //finish(); //Fixes some issues with AMD APP SDK. However, might sacrifice a few percents of performance in some cases.
 
@@ -261,12 +263,12 @@ namespace viennacl
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
-            opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr);
+            opencl::memory_read(src_buffer.opencl_handle(), src_offset, bytes_to_read, ptr, async);
             break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
           case CUDA_MEMORY:
-            cuda::memory_read(src_buffer.cuda_handle(), src_offset, bytes_to_read, ptr);
+            cuda::memory_read(src_buffer.cuda_handle(), src_offset, bytes_to_read, ptr, async);
             break;
 #endif
           default:

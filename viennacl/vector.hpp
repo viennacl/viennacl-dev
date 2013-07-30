@@ -1220,12 +1220,54 @@ namespace viennacl
   /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   *
   * @param gpu_vec    A gpu vector.
-  * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
+  * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
   */
   template <typename NumericT, typename CPUVECTOR>
   void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+  }
+
+
+  /** @brief Asynchronous version of fast_copy(), copying data from device to host. The host iterator cpu_begin needs to reside in a linear piece of memory, such as e.g. for std::vector.
+  *
+  * This method allows for overlapping data transfer with host computation and returns immediately if the gpu vector has a unit-stride.
+  * In order to wait for the transfer to complete, use viennacl::backend::finish().
+  * Note that data pointed to by cpu_begin must not be modified prior to completion of the transfer.
+  *
+  * @param gpu_begin  GPU iterator pointing to the beginning of the gpu vector (STL-like)
+  * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
+  * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
+  */
+  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  void async_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
+                  const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+                  CPU_ITERATOR cpu_begin )
+  {
+    if (gpu_begin != gpu_end)
+    {
+      if (gpu_begin.stride() == 1)
+      {
+        viennacl::backend::memory_read(gpu_begin.handle(),
+                                       sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                       sizeof(SCALARTYPE)*gpu_begin.stride() * (gpu_end - gpu_begin),
+                                       &(*cpu_begin),
+                                       true);
+      }
+      else // no async copy possible, so fall-back to fast_copy
+        fast_copy(gpu_begin, gpu_end, cpu_begin);
+    }
+  }
+
+  /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+  *
+  * @param gpu_vec    A gpu vector.
+  * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
+  */
+  template <typename NumericT, typename CPUVECTOR>
+  void async_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
+  {
+    viennacl::async_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   }
 
 
@@ -1351,6 +1393,47 @@ namespace viennacl
   void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
   {
     viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+  }
+
+  /** @brief Asynchronous version of fast_copy(), copying data from host to device. The host iterator cpu_begin needs to reside in a linear piece of memory, such as e.g. for std::vector.
+  *
+  * This method allows for overlapping data transfer with host computation and returns immediately if the gpu vector has a unit-stride.
+  * In order to wait for the transfer to complete, use viennacl::backend::finish().
+  * Note that data pointed to by cpu_begin must not be modified prior to completion of the transfer.
+  *
+  * @param cpu_begin  CPU iterator pointing to the beginning of the cpu vector (STL-like)
+  * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
+  * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
+  */
+  template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  void async_copy(CPU_ITERATOR const & cpu_begin,
+                  CPU_ITERATOR const & cpu_end,
+                  vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
+  {
+    if (cpu_end - cpu_begin > 0)
+    {
+      if (gpu_begin.stride() == 1)
+      {
+        viennacl::backend::memory_write(gpu_begin.handle(),
+                                        sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                        sizeof(SCALARTYPE)*gpu_begin.stride() * (cpu_end - cpu_begin), &(*cpu_begin),
+                                        true);
+      }
+      else // fallback to blocking copy. There's nothing we can do to prevent this
+        fast_copy(cpu_begin, cpu_end, gpu_begin);
+    }
+  }
+
+
+  /** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+  *
+  * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
+  * @param gpu_vec    The gpu vector.
+  */
+  template <typename CPUVECTOR, typename NumericT>
+  void async_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
+  {
+    viennacl::async_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
   }
 
   //from cpu to gpu. Safe assumption: cpu_vector does not necessarily occupy a linear memory segment, but is not larger than the allocated memory on the GPU

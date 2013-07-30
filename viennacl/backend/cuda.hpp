@@ -135,14 +135,21 @@ namespace viennacl
       inline void memory_write(handle_type & dst_buffer,
                                std::size_t dst_offset,
                                std::size_t bytes_to_copy,
-                               const void * ptr)
+                               const void * ptr,
+                               bool async = false)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-        cudaMemcpy(reinterpret_cast<char *>(dst_buffer.get()) + dst_offset,
-                   reinterpret_cast<const char *>(ptr),
-                   bytes_to_copy,
-                   cudaMemcpyHostToDevice);
+        if (async)
+          cudaMemcpyAsync(reinterpret_cast<char *>(dst_buffer.get()) + dst_offset,
+                          reinterpret_cast<const char *>(ptr),
+                          bytes_to_copy,
+                          cudaMemcpyHostToDevice);
+        else
+          cudaMemcpy(reinterpret_cast<char *>(dst_buffer.get()) + dst_offset,
+                     reinterpret_cast<const char *>(ptr),
+                     bytes_to_copy,
+                     cudaMemcpyHostToDevice);
       }
 
 
@@ -156,14 +163,21 @@ namespace viennacl
       inline void memory_read(handle_type const & src_buffer,
                               std::size_t src_offset,
                               std::size_t bytes_to_copy,
-                              void * ptr)
+                              void * ptr,
+                              bool async = false)
       {
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-        cudaMemcpy(reinterpret_cast<char *>(ptr),
-                   reinterpret_cast<char *>(src_buffer.get()) + src_offset,
-                   bytes_to_copy,
-                   cudaMemcpyDeviceToHost);
+        if (async)
+          cudaMemcpyAsync(reinterpret_cast<char *>(ptr),
+                          reinterpret_cast<char *>(src_buffer.get()) + src_offset,
+                          bytes_to_copy,
+                          cudaMemcpyDeviceToHost);
+        else
+          cudaMemcpy(reinterpret_cast<char *>(ptr),
+                     reinterpret_cast<char *>(src_buffer.get()) + src_offset,
+                     bytes_to_copy,
+                     cudaMemcpyDeviceToHost);
       }
 
     } //cuda
