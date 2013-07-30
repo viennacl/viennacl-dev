@@ -1598,8 +1598,8 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static const unsigned int work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        const unsigned int work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
@@ -1614,7 +1614,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2239,8 +2239,8 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
         detail::vector_sum_kernel_launcher<T>::apply(temp, 1, result);
@@ -2257,13 +2257,13 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2284,8 +2284,8 @@ namespace viennacl
       {
         typedef T       value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
 
@@ -2303,12 +2303,12 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
 
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2331,8 +2331,8 @@ namespace viennacl
       {
         typedef T      value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
         detail::vector_sum_kernel_launcher<T>::apply(temp, 0, result);
@@ -2351,12 +2351,12 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
 
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
