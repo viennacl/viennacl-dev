@@ -17,7 +17,7 @@
 
 /*
 *
-*   Tutorial:  Use ViennaCL within user-defined (i.e. your own) OpenCL contexts
+*   Tutorial:  Use ViennaCL within user-provided memory buffers on the host
 *
 */
 
@@ -26,6 +26,7 @@
 // include necessary system headers
 //
 #include <iostream>
+#include <cstdlib>
 #include <string>
 
 //
@@ -47,7 +48,7 @@ int main()
   typedef float       ScalarType;
 
   //
-  // Part 1: Allocate some CUDA memory
+  // Part 1: Allocate some buffers on the host
   //
   std::size_t size = 10;
 
@@ -60,19 +61,20 @@ int main()
   std::cout << std::endl;
 
   //
-  // Part 2: Now do the same within ViennaCL
+  // Part 2: Now do the same computations within ViennaCL
   //
 
+  // wrap host buffer within ViennaCL vectors:
   viennacl::vector<ScalarType> vcl_vec1(&(host_x[0]), size, viennacl::MAIN_MEMORY); // Third parameter specifies that this is CUDA memory rather than host memory
   viennacl::vector<ScalarType> vcl_vec2(&(host_y[0]), size, viennacl::MAIN_MEMORY); // Third parameter specifies that this is CUDA memory rather than host memory
 
+  // reset values to 0 and 1, respectively
   vcl_vec1 = viennacl::scalar_vector<ScalarType>(size, ScalarType(1.0));
   vcl_vec2 = viennacl::scalar_vector<ScalarType>(size, ScalarType(2.0));
 
   vcl_vec1 += vcl_vec2;
 
-  std::cout << "Result with ViennaCL: ";
-  std::cout << vcl_vec1 << std::endl;
+  std::cout << "Result with ViennaCL: " << vcl_vec1 << std::endl;
 
   //
   //  That's it.
