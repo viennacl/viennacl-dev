@@ -133,7 +133,7 @@ namespace viennacl {
         }
 
     private:
-        vandermonde_matrix(vandermonde_matrix const & t) {}
+        vandermonde_matrix(vandermonde_matrix const &) {}
         vandermonde_matrix & operator=(vandermonde_matrix const & t);
 
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;

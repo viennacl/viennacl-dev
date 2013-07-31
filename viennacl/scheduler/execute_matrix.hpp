@@ -408,7 +408,7 @@ namespace viennacl
     }
 
     /** @brief Deals with A = B  for a matrix B */
-    inline void execute_matrix_matrix(statement const & s, statement_node const & root_node)
+    inline void execute_matrix_matrix(statement const & /*s*/, statement_node const & root_node)
     {
       lhs_rhs_element u = root_node.lhs;
       lhs_rhs_element v = root_node.rhs;

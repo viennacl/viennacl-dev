@@ -197,7 +197,7 @@ namespace viennacl
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
-                                 viennacl::traits::opencl_handle(s1))
+                                 viennacl::traits::opencl_handle(s2))
                               );
       }
 

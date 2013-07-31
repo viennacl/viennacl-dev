@@ -93,7 +93,6 @@ namespace viennacl
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       //std::cout << "Starting CG" << std::endl;
-      std::size_t problem_size = viennacl::traits::size(rhs);
       VectorType result = rhs;
       viennacl::traits::clear(result);
 
@@ -158,7 +157,6 @@ namespace viennacl
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      unsigned int problem_size = viennacl::traits::size(rhs);
 
       VectorType result = rhs;
       viennacl::traits::clear(result);

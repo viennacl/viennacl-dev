@@ -142,7 +142,7 @@ namespace viennacl {
         }
 
     private:
-        toeplitz_matrix(toeplitz_matrix const & t) {}
+        toeplitz_matrix(toeplitz_matrix const &) {}
         toeplitz_matrix & operator=(toeplitz_matrix const & t);
 
 

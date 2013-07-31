@@ -39,7 +39,7 @@ namespace viennacl
 
         // just returns the for-loop
         template <typename StringType>
-        void generate_avbv_impl2(StringType & source, std::string const & numeric_string, avbv_config const & cfg, bool mult_alpha, bool mult_beta)
+        void generate_avbv_impl2(StringType & source, std::string const & /*numeric_string*/, avbv_config const & cfg, bool mult_alpha, bool mult_beta)
         {
           source.append("    for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
           if (cfg.with_stride_and_range)

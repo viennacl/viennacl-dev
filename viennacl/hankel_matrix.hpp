@@ -134,7 +134,7 @@ namespace viennacl {
         }
 
     private:
-        hankel_matrix(hankel_matrix const & t) {}
+        hankel_matrix(hankel_matrix const &) {}
         hankel_matrix & operator=(hankel_matrix const & t);
 
         toeplitz_matrix<SCALARTYPE, ALIGNMENT> elements_;

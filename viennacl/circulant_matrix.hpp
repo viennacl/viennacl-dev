@@ -138,7 +138,7 @@ namespace viennacl
         }
 
     private:
-        circulant_matrix(circulant_matrix const & t) {}
+        circulant_matrix(circulant_matrix const &) {}
         circulant_matrix & operator=(circulant_matrix const & t);
 
         viennacl::vector<SCALARTYPE, ALIGNMENT> elements_;

@@ -40,13 +40,13 @@ namespace viennacl
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
-      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, unsigned int & row, unsigned int & col) { ++row; }
+      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & row, unsigned int & /*col*/) { ++row; }
     };
 
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::col_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
-      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, unsigned int & row, unsigned int & col) { ++col; }
+      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & /*row*/, unsigned int & col) { ++col; }
     };
     /** \endcond */
 

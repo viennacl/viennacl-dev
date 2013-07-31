@@ -1014,7 +1014,14 @@ namespace viennacl
         viennacl::linalg::vector_assign(*this, v[0]);
     }
 
-    using base_type::operator=;
+    // the following is used to circumvent an issue with Clang 3.0 when 'using base_type::operator=;' directly
+    template <typename T>
+    self_type & operator=(T const & other)
+    {
+      base_type::operator=(other);
+      return *this;
+    }
+
     using base_type::operator+=;
     using base_type::operator-=;
 

@@ -219,7 +219,7 @@ namespace viennacl
         switch(dst_buffer.get_active_handle_id())
         {
           case MAIN_MEMORY:
-            cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr);
+            cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr, async);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:
@@ -259,7 +259,7 @@ namespace viennacl
         switch(src_buffer.get_active_handle_id())
         {
           case MAIN_MEMORY:
-            cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr);
+            cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr, async);
             break;
 #ifdef VIENNACL_WITH_OPENCL
           case OPENCL_MEMORY:

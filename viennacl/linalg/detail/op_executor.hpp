@@ -27,7 +27,7 @@ namespace viennacl
     namespace detail
     {
       template <typename T, typename B>
-      bool op_aliasing(vector_base<T> const & lhs, B const & b)
+      bool op_aliasing(vector_base<T> const & /*lhs*/, B const & /*b*/)
       {
         return false;
       }
@@ -46,7 +46,7 @@ namespace viennacl
 
 
       template <typename T, typename F, typename B>
-      bool op_aliasing(matrix_base<T, F> const & lhs, B const & b)
+      bool op_aliasing(matrix_base<T, F> const & /*lhs*/, B const & /*b*/)
       {
         return false;
       }

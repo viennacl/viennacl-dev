@@ -433,7 +433,7 @@ namespace viennacl
         std::size_t inc_result   = viennacl::traits::stride(result);
 
         for (std::size_t j=0; j < vec_tuple.const_size(); ++j)
-          result[j] = temp[j];  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+          result[j * inc_result + start_result] = temp[j];  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
 
 

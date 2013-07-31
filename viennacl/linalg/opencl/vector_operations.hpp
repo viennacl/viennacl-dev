@@ -746,8 +746,6 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
         std::size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
@@ -811,8 +809,6 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
         std::size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
@@ -876,8 +872,6 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
         std::size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
