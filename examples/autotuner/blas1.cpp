@@ -27,7 +27,7 @@ template<class ScalarType>
 struct dot_config{
     typedef viennacl::generator::scalar_reduction::profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-      return profile_t(params.at("alignment").current(),params.at("group_size").current(),params.at("num_groups").current(), params.at("global_decomposition").current());
+      return profile_t(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), params.at("global_decomposition").current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         profile_t prof = create_profile(params);
@@ -58,18 +58,18 @@ void autotune(){
     std::map<double, typename dot_config<ScalarType>::profile_t> timings;
     std::cout << "* Tuning DOT" << std::endl;
     viennacl::generator::autotune::tuning_config<dot_config<ScalarType> > conf;
-    std::vector<int> alignments;
+    std::vector<int> vectorizations;
     std::vector<int> group_sizes;
     std::vector<int> num_groups;
     std::vector<int> global_decompositions;
     for(unsigned int a = 1; a <= 8 ; a*=2)
-      alignments.push_back(a);
+      vectorizations.push_back(a);
     for(unsigned int g = 16 ; g <= 1024 ; g *= 2)
       num_groups.push_back(g);
     for(unsigned int i = 16; i <= viennacl::ocl::current_device().max_work_group_size() ; i*=2)
       group_sizes.push_back(i);
     global_decompositions.push_back(0); global_decompositions.push_back(1);
-    conf.add_tuning_param("alignment",alignments);
+    conf.add_tuning_param("vectorization",vectorizations);
     conf.add_tuning_param("group_size",group_sizes);
     conf.add_tuning_param("num_groups",num_groups);
     conf.add_tuning_param("global_decomposition", global_decompositions);

@@ -217,8 +217,8 @@ namespace viennacl{
       }
 
       /** @brief Fills a timing map for a given operation and a list of profiles */
-      template<class OpT, class ProfT>
-      void benchmark(std::map<double, ProfT> & timings, OpT const & op, std::list<ProfT> const & profiles, size_t scalartype_size){
+      template< class ProfT>
+      void benchmark(std::map<double, ProfT> & timings, scheduler::statement const & op, std::list<ProfT> const & profiles, size_t scalartype_size){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         unsigned int n=0;
@@ -232,7 +232,7 @@ namespace viennacl{
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
           if(it->is_invalid(dev,scalartype_size)) continue;
           std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
-          benchmark_impl<OpT>(timings,dev,op,*it);
+          benchmark_impl(timings,dev,op,*it);
         }
 
         std::cout << std::endl;
