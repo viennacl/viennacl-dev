@@ -422,6 +422,24 @@ namespace viennacl
 
       }
 
+#ifdef VIENNACL_WITH_OPENCL
+      /** @brief Create a vector from existing OpenCL memory
+      *
+      * Note: The provided memory must take an eventual ALIGNMENT into account, i.e. existing_mem must be at least of size internal_size()!
+      * This is trivially the case with the default alignment, but should be considered when using vector<> with an alignment parameter not equal to 1.
+      *
+      * @param existing_mem   An OpenCL handle representing the memory
+      * @param vec_size       The size of the vector.
+      */
+      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context()) : size_(vec_size), start_(start), stride_(stride)
+      {
+        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+        elements_.opencl_handle() = existing_mem;
+        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        elements_.opencl_handle().context(ctx.opencl_context());
+        elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
+      }
+#endif
       /** @brief Creates the vector from the supplied random vector. */
       /*template<class DISTRIBUTION>
       vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
@@ -987,16 +1005,7 @@ namespace viennacl
     * @param existing_mem   An OpenCL handle representing the memory
     * @param vec_size       The size of the vector.
     */
-    explicit vector(cl_mem existing_mem, size_type vec_size) : base_type(vec_size)
-    {
-      viennacl::backend::mem_handle h;
-      h.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-      h.opencl_handle() = existing_mem;
-      h.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-      h.raw_size(sizeof(SCALARTYPE) * vec_size);
-
-      base_type::set_handle(h);
-    }
+    explicit vector(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1) : base_type(existing_mem, vec_size, start, stride) {}
 
     /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT') and the OpenCL context provided
     *

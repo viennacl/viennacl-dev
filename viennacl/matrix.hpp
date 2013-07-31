@@ -275,6 +275,20 @@ namespace viennacl
         self_type::operator=(proxy);
       }
 
+#ifdef VIENNACL_WITH_OPENCL
+      explicit matrix_base(cl_mem mem, size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
+        : size1_(rows), size2_(columns),
+          start1_(0), start2_(0),
+          stride1_(1), stride2_(1),
+          internal_size1_(rows), internal_size2_(columns)
+      {
+        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+        elements_.opencl_handle() = mem;
+        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        elements_.opencl_handle().context(ctx.opencl_context());
+        elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
+      }
+#endif
 
 
       self_type & operator=(const self_type & other)  //enables implicit conversions
@@ -678,18 +692,9 @@ namespace viennacl
       */
       explicit matrix(size_type rows, size_type columns, viennacl::context ctx = viennacl::context()) : base_type(rows, columns, ctx) {}
 
-  #ifdef VIENNACL_WITH_OPENCL
-      explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type (rows, columns)
-      {
-        viennacl::backend::mem_handle h;
-        h.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-        h.opencl_handle() = mem;
-        h.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        h.raw_size(sizeof(SCALARTYPE)*base_type::internal_size());
-
-        base_type::set_handle(h);
-      }
-  #endif
+#ifdef VIENNACL_WITH_OPENCL
+      explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type(mem, rows, columns) {}
+#endif
 
       template <typename LHS, typename RHS, typename OP>
       matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy) {}
