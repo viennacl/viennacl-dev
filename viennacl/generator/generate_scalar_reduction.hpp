@@ -49,17 +49,24 @@ namespace viennacl{
         static void fill_scalartypes(statements_type statements, std::vector<const char *> & res){
           res.reserve(statements.size());
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            switch(it->array()[0].lhs.type){
-              case scheduler::SCALAR_FLOAT_TYPE:
+	    if (it->array()[0].lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
+	    {
+	      switch(it->array()[0].lhs.type){
+              case scheduler::FLOAT_TYPE:
                 res.push_back("float");
                 break;
-              case scheduler::SCALAR_DOUBLE_TYPE:
+              case scheduler::DOUBLE_TYPE:
                 res.push_back("double");
                 break;
               default:
                 res.push_back("");
                 break;
-            }
+	      }
+	    }
+	    else
+	    {
+	      res.push_back("");
+	    }
           }
         }
 
@@ -83,9 +90,10 @@ namespace viennacl{
                   scheduler::statement::container_type const & exprs = it->array();
                   std::size_t size_of_scalartype;
                   const char * scalartype_name;
+		  if (exprs[0].lhs.type_family != scheduler::SCALAR_TYPE_FAMILY) throw "not implemented";
                   switch(exprs[0].lhs.type){
-                    case scheduler::SCALAR_FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
-                    case scheduler::SCALAR_DOUBLE_TYPE: scalartype_name = "double"; size_of_scalartype = sizeof(double); break;
+                    case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
+                    case scheduler::DOUBLE_TYPE: scalartype_name = "double"; size_of_scalartype = sizeof(double); break;
                     default: throw "not implemented"; break;
                   }
                   for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){

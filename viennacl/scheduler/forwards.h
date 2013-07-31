@@ -179,96 +179,18 @@ namespace viennacl
     {
       COMPOSITE_OPERATION_TYPE,
 
-      // host scalars:
-      HOST_SCALAR_CHAR_TYPE,
-      HOST_SCALAR_UCHAR_TYPE,
-      HOST_SCALAR_SHORT_TYPE,
-      HOST_SCALAR_USHORT_TYPE,
-      HOST_SCALAR_INT_TYPE,
-      HOST_SCALAR_UINT_TYPE,
-      HOST_SCALAR_LONG_TYPE,
-      HOST_SCALAR_ULONG_TYPE,
-      HOST_SCALAR_HALF_TYPE,
-      HOST_SCALAR_FLOAT_TYPE,
-      HOST_SCALAR_DOUBLE_TYPE,
+      CHAR_TYPE,
+      UCHAR_TYPE,
+      SHORT_TYPE,
+      USHORT_TYPE,
+      INT_TYPE,
+      UINT_TYPE,
+      LONG_TYPE,
+      ULONG_TYPE,
+      HALF_TYPE,
+      FLOAT_TYPE,
+      DOUBLE_TYPE
 
-      // device scalars:
-      SCALAR_CHAR_TYPE,
-      SCALAR_UCHAR_TYPE,
-      SCALAR_SHORT_TYPE,
-      SCALAR_USHORT_TYPE,
-      SCALAR_INT_TYPE,
-      SCALAR_UINT_TYPE,
-      SCALAR_LONG_TYPE,
-      SCALAR_ULONG_TYPE,
-      SCALAR_HALF_TYPE,
-      SCALAR_FLOAT_TYPE,
-      SCALAR_DOUBLE_TYPE,
-
-      // vector:
-      VECTOR_CHAR_TYPE,
-      VECTOR_UCHAR_TYPE,
-      VECTOR_SHORT_TYPE,
-      VECTOR_USHORT_TYPE,
-      VECTOR_INT_TYPE,
-      VECTOR_UINT_TYPE,
-      VECTOR_LONG_TYPE,
-      VECTOR_ULONG_TYPE,
-      VECTOR_HALF_TYPE,
-      VECTOR_FLOAT_TYPE,
-      VECTOR_DOUBLE_TYPE,
-
-      // symbolic vector:
-      SYMBOLIC_VECTOR_CHAR_TYPE,
-      SYMBOLIC_VECTOR_UCHAR_TYPE,
-      SYMBOLIC_VECTOR_SHORT_TYPE,
-      SYMBOLIC_VECTOR_USHORT_TYPE,
-      SYMBOLIC_VECTOR_INT_TYPE,
-      SYMBOLIC_VECTOR_UINT_TYPE,
-      SYMBOLIC_VECTOR_LONG_TYPE,
-      SYMBOLIC_VECTOR_ULONG_TYPE,
-      SYMBOLIC_VECTOR_HALF_TYPE,
-      SYMBOLIC_VECTOR_FLOAT_TYPE,
-      SYMBOLIC_VECTOR_DOUBLE_TYPE,
-
-      // matrix, row major:
-      MATRIX_ROW_CHAR_TYPE,
-      MATRIX_ROW_UCHAR_TYPE,
-      MATRIX_ROW_SHORT_TYPE,
-      MATRIX_ROW_USHORT_TYPE,
-      MATRIX_ROW_INT_TYPE,
-      MATRIX_ROW_UINT_TYPE,
-      MATRIX_ROW_LONG_TYPE,
-      MATRIX_ROW_ULONG_TYPE,
-      MATRIX_ROW_HALF_TYPE,
-      MATRIX_ROW_FLOAT_TYPE,
-      MATRIX_ROW_DOUBLE_TYPE,
-
-      // matrix, row major:
-      MATRIX_COL_CHAR_TYPE,
-      MATRIX_COL_UCHAR_TYPE,
-      MATRIX_COL_SHORT_TYPE,
-      MATRIX_COL_USHORT_TYPE,
-      MATRIX_COL_INT_TYPE,
-      MATRIX_COL_UINT_TYPE,
-      MATRIX_COL_LONG_TYPE,
-      MATRIX_COL_ULONG_TYPE,
-      MATRIX_COL_HALF_TYPE,
-      MATRIX_COL_FLOAT_TYPE,
-      MATRIX_COL_DOUBLE_TYPE,
-
-      // symbolic matrix:
-      SYMBOLIC_MATRIX_CHAR_TYPE,
-      SYMBOLIC_MATRIX_UCHAR_TYPE,
-      SYMBOLIC_MATRIX_SHORT_TYPE,
-      SYMBOLIC_MATRIX_USHORT_TYPE,
-      SYMBOLIC_MATRIX_INT_TYPE,
-      SYMBOLIC_MATRIX_UINT_TYPE,
-      SYMBOLIC_MATRIX_LONG_TYPE,
-      SYMBOLIC_MATRIX_ULONG_TYPE,
-      SYMBOLIC_MATRIX_HALF_TYPE,
-      SYMBOLIC_MATRIX_FLOAT_TYPE,
-      SYMBOLIC_MATRIX_DOUBLE_TYPE
     };
 
     namespace result_of
@@ -278,16 +200,16 @@ namespace viennacl
       template <typename T>
       struct scalar_type {};
 
-      template <> struct scalar_type<char>           { enum { value = SCALAR_CHAR_TYPE   }; };
-      template <> struct scalar_type<unsigned char>  { enum { value = SCALAR_UCHAR_TYPE  }; };
-      template <> struct scalar_type<short>          { enum { value = SCALAR_SHORT_TYPE  }; };
-      template <> struct scalar_type<unsigned short> { enum { value = SCALAR_USHORT_TYPE }; };
-      template <> struct scalar_type<int>            { enum { value = SCALAR_INT_TYPE    }; };
-      template <> struct scalar_type<unsigned int>   { enum { value = SCALAR_UINT_TYPE   }; };
-      template <> struct scalar_type<long>           { enum { value = SCALAR_LONG_TYPE   }; };
-      template <> struct scalar_type<unsigned long>  { enum { value = SCALAR_ULONG_TYPE  }; };
-      template <> struct scalar_type<float>          { enum { value = SCALAR_FLOAT_TYPE  }; };
-      template <> struct scalar_type<double>         { enum { value = SCALAR_DOUBLE_TYPE }; };
+      template <> struct scalar_type<char>           { enum { value = CHAR_TYPE   }; };
+      template <> struct scalar_type<unsigned char>  { enum { value = UCHAR_TYPE  }; };
+      template <> struct scalar_type<short>          { enum { value = SHORT_TYPE  }; };
+      template <> struct scalar_type<unsigned short> { enum { value = USHORT_TYPE }; };
+      template <> struct scalar_type<int>            { enum { value = INT_TYPE    }; };
+      template <> struct scalar_type<unsigned int>   { enum { value = UINT_TYPE   }; };
+      template <> struct scalar_type<long>           { enum { value = LONG_TYPE   }; };
+      template <> struct scalar_type<unsigned long>  { enum { value = ULONG_TYPE  }; };
+      template <> struct scalar_type<float>          { enum { value = FLOAT_TYPE  }; };
+      template <> struct scalar_type<double>         { enum { value = DOUBLE_TYPE }; };
 
       ///////////// vector type ID deduction /////////////
 
@@ -297,16 +219,16 @@ namespace viennacl
 #define VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(TYPE, ENUMVALUE) \
       template <> struct vector_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; };
 
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(char,           VECTOR_CHAR_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned char,  VECTOR_UCHAR_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(short,          VECTOR_SHORT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned short, VECTOR_USHORT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(int,            VECTOR_INT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned int,   VECTOR_UINT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(long,           VECTOR_LONG_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned long,  VECTOR_ULONG_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(float,          VECTOR_FLOAT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         VECTOR_DOUBLE_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(char,           CHAR_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned char,  UCHAR_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(short,          SHORT_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned short, USHORT_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(int,            INT_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned int,   UINT_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(long,           LONG_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned long,  ULONG_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(float,          FLOAT_TYPE)
+      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         DOUBLE_TYPE)
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
 
@@ -317,16 +239,16 @@ namespace viennacl
 #define VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(TYPE, ENUMVALUE) \
       template <> struct symbolic_vector_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; }
 
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(char,           SYMBOLIC_VECTOR_CHAR_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned char,  SYMBOLIC_VECTOR_UCHAR_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(short,          SYMBOLIC_VECTOR_SHORT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned short, SYMBOLIC_VECTOR_USHORT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(int,            SYMBOLIC_VECTOR_INT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned int,   SYMBOLIC_VECTOR_UINT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(long,           SYMBOLIC_VECTOR_LONG_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned long,  SYMBOLIC_VECTOR_ULONG_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(float,          SYMBOLIC_VECTOR_FLOAT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(double,         SYMBOLIC_VECTOR_DOUBLE_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(char,           CHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned char,  UCHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(short,          SHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned short, USHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(int,            INT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned int,   UINT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(long,           LONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(unsigned long,  ULONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(float,          FLOAT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING(double,         DOUBLE_TYPE);
 
 #undef VIENNACL_GENERATE_SYMBOLIC_VECTOR_TYPE_MAPPING
 
@@ -338,27 +260,27 @@ namespace viennacl
 #define VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(TYPE, LAYOUT, ENUMVALUE) \
       template <> struct matrix_type_for_scalar_and_layout<TYPE, LAYOUT> { enum { value = ENUMVALUE }; };
 
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::column_major, MATRIX_COL_CHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::column_major, MATRIX_COL_UCHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::column_major, MATRIX_COL_SHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::column_major, MATRIX_COL_USHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::column_major, MATRIX_COL_INT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::column_major, MATRIX_COL_UINT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::column_major, MATRIX_COL_LONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::column_major, MATRIX_COL_ULONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::column_major, MATRIX_COL_FLOAT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::column_major, MATRIX_COL_DOUBLE_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::column_major, CHAR_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::column_major, UCHAR_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::column_major, SHORT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::column_major, USHORT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::column_major, INT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::column_major, UINT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::column_major, LONG_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::column_major, ULONG_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::column_major, FLOAT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::column_major, DOUBLE_TYPE)
 
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::row_major, MATRIX_ROW_CHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::row_major, MATRIX_ROW_UCHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::row_major, MATRIX_ROW_SHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::row_major, MATRIX_ROW_USHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::row_major, MATRIX_ROW_INT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::row_major, MATRIX_ROW_UINT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::row_major, MATRIX_ROW_LONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::row_major, MATRIX_ROW_ULONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::row_major, MATRIX_ROW_FLOAT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::row_major, MATRIX_ROW_DOUBLE_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::row_major, CHAR_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::row_major, UCHAR_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::row_major, SHORT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::row_major, USHORT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::row_major, INT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::row_major, UINT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::row_major, LONG_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::row_major, ULONG_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::row_major, FLOAT_TYPE)
+      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::row_major, DOUBLE_TYPE)
 
 #undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
 
@@ -370,16 +292,16 @@ namespace viennacl
 #define VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(TYPE, ENUMVALUE) \
       template <> struct symbolic_matrix_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; }
 
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(char,           SYMBOLIC_MATRIX_CHAR_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned char,  SYMBOLIC_MATRIX_UCHAR_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(short,          SYMBOLIC_MATRIX_SHORT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned short, SYMBOLIC_MATRIX_USHORT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(int,            SYMBOLIC_MATRIX_INT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned int,   SYMBOLIC_MATRIX_UINT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(long,           SYMBOLIC_MATRIX_LONG_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned long,  SYMBOLIC_MATRIX_ULONG_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(float,          SYMBOLIC_MATRIX_FLOAT_TYPE);
-      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(double,         SYMBOLIC_MATRIX_DOUBLE_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(char,           CHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned char,  UCHAR_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(short,          SHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned short, USHORT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(int,            INT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned int,   UINT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(long,           LONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(unsigned long,  ULONG_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(float,          FLOAT_TYPE);
+      VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING(double,         DOUBLE_TYPE);
 #undef VIENNACL_GENERATE_SYMBOLIC_MATRIX_TYPE_MAPPING
 
 
@@ -585,7 +507,7 @@ namespace viennacl
                                 float const &     t)
         {
           elem.type_family = HOST_SCALAR_TYPE_FAMILY;
-          elem.type        = HOST_SCALAR_FLOAT_TYPE;
+          elem.type        = FLOAT_TYPE;
           elem.host_float  = t;
           return next_free;
         }
@@ -595,7 +517,7 @@ namespace viennacl
                                 double const &    t)
         {
           elem.type_family = HOST_SCALAR_TYPE_FAMILY;
-          elem.type        = HOST_SCALAR_DOUBLE_TYPE;
+          elem.type        = DOUBLE_TYPE;
           elem.host_double = t;
           return next_free;
         }

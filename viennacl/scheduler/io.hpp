@@ -116,16 +116,16 @@ namespace viennacl
         {
           switch (element.type)
           {
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_CHAR_TYPE,   host_char)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_UCHAR_TYPE,  host_uchar)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_SHORT_TYPE,  host_short)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_USHORT_TYPE, host_ushort)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_INT_TYPE,    host_int)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_UINT_TYPE,   host_uint)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_LONG_TYPE,   host_long)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_ULONG_TYPE,  host_ulong)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_FLOAT_TYPE,  host_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HOST_SCALAR_DOUBLE_TYPE, host_double)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   host_char)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  host_uchar)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  host_short)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, host_ushort)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    host_int)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   host_uint)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   host_long)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  host_ulong)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  host_float)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, host_double)
 
             default: throw statement_not_supported_exception("Cannot convert host scalar type to string");
           }
@@ -134,17 +134,17 @@ namespace viennacl
         {
           switch (element.type)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_CHAR_TYPE,   scalar_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_UCHAR_TYPE,  scalar_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_SHORT_TYPE,  scalar_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_USHORT_TYPE, scalar_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_INT_TYPE,    scalar_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_UINT_TYPE,   scalar_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_LONG_TYPE,   scalar_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_ULONG_TYPE,  scalar_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_HALF_TYPE,   scalar_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_FLOAT_TYPE,  scalar_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SCALAR_DOUBLE_TYPE, scalar_double)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   scalar_char)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  scalar_uchar)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  scalar_short)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, scalar_ushort)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    scalar_int)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   scalar_uint)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   scalar_long)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  scalar_ulong)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   scalar_half)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  scalar_float)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, scalar_double)
 
             default: throw statement_not_supported_exception("Cannot convert scalar type to string");
           }
@@ -153,17 +153,17 @@ namespace viennacl
         {
           switch (element.type)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_CHAR_TYPE,   vector_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_UCHAR_TYPE,  vector_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_SHORT_TYPE,  vector_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_USHORT_TYPE, vector_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_INT_TYPE,    vector_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_UINT_TYPE,   vector_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_LONG_TYPE,   vector_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_ULONG_TYPE,  vector_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_HALF_TYPE,   vector_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_FLOAT_TYPE,  vector_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(VECTOR_DOUBLE_TYPE, vector_double)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   vector_char)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  vector_uchar)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  vector_short)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, vector_ushort)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    vector_int)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   vector_uint)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   vector_long)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  vector_ulong)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   vector_half)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  vector_float)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, vector_double)
 
             default: throw statement_not_supported_exception("Cannot convert vector type to string");
           }
@@ -172,17 +172,17 @@ namespace viennacl
         {
           switch (element.type)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_CHAR_TYPE,   matrix_row_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_UCHAR_TYPE,  matrix_row_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_SHORT_TYPE,  matrix_row_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_USHORT_TYPE, matrix_row_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_INT_TYPE,    matrix_row_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_UINT_TYPE,   matrix_row_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_LONG_TYPE,   matrix_row_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_ULONG_TYPE,  matrix_row_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_HALF_TYPE,   matrix_row_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_FLOAT_TYPE,  matrix_row_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_ROW_DOUBLE_TYPE, matrix_row_double)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_row_char)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_row_uchar)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_row_short)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_row_ushort)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_row_int)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_row_uint)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_row_long)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_row_ulong)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_row_half)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_row_float)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_row_double)
 
             default: throw statement_not_supported_exception("Cannot convert row-major matrix type to string");
           }
@@ -191,17 +191,17 @@ namespace viennacl
         {
           switch (element.type)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_CHAR_TYPE,   matrix_col_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_UCHAR_TYPE,  matrix_col_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_SHORT_TYPE,  matrix_col_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_USHORT_TYPE, matrix_col_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_INT_TYPE,    matrix_col_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_UINT_TYPE,   matrix_col_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_LONG_TYPE,   matrix_col_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_ULONG_TYPE,  matrix_col_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_HALF_TYPE,   matrix_col_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_FLOAT_TYPE,  matrix_col_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(MATRIX_COL_DOUBLE_TYPE, matrix_col_double)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_col_char)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_col_uchar)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_col_short)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_col_ushort)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_col_int)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_col_uint)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_col_long)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_col_ulong)
+            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_col_half)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_col_float)
+            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_col_double)
 
             default: throw statement_not_supported_exception("Cannot convert column-major matrix type to string");
           }

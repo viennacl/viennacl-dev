@@ -77,7 +77,7 @@ int main()
 
   // specify LHS of first node, i.e. vcl_vec3:
   expression_nodes[0].lhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[0].lhs.type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[0].lhs.type         = viennacl::scheduler::FLOAT_TYPE;    // vector consisting of floats
   expression_nodes[0].lhs.vector_float = &vcl_vec3;                                 // provide pointer to vcl_vec3;
 
   // specify assignment operation for this node:
@@ -93,7 +93,7 @@ int main()
 
   // LHS
   expression_nodes[1].lhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[1].lhs.type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[1].lhs.type         = viennacl::scheduler::FLOAT_TYPE;    // vector consisting of floats
   expression_nodes[1].lhs.vector_float = &vcl_vec1;                                 // provide pointer to vcl_vec1
 
   // OP
@@ -102,7 +102,7 @@ int main()
 
   // RHS
   expression_nodes[1].rhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;  // family of vectors
-  expression_nodes[1].rhs.type         = viennacl::scheduler::VECTOR_FLOAT_TYPE;   // vector consisting of floats
+  expression_nodes[1].rhs.type         = viennacl::scheduler::FLOAT_TYPE;   // vector consisting of floats
   expression_nodes[1].rhs.vector_float = &vcl_vec2;                                // provide pointer to vcl_vec2
 
 

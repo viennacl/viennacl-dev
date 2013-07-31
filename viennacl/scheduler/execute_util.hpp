@@ -38,9 +38,11 @@ namespace viennacl
       inline float convert_to_float(float f) { return f; }
       inline float convert_to_float(lhs_rhs_element const & el)
       {
-        if (el.type == HOST_SCALAR_FLOAT_TYPE)
+        if (el.type_family == HOST_SCALAR_TYPE_FAMILY
+	    && el.type == FLOAT_TYPE)
           return el.host_float;
-        if (el.type == SCALAR_FLOAT_TYPE)
+        if (el.type_family == SCALAR_TYPE_FAMILY
+	    && el.type == FLOAT_TYPE)
           return *el.scalar_float;
 
         throw statement_not_supported_exception("Cannot convert to float");
@@ -50,9 +52,11 @@ namespace viennacl
       inline double convert_to_double(double d) { return d; }
       inline double convert_to_double(lhs_rhs_element const & el)
       {
-        if (el.type == HOST_SCALAR_DOUBLE_TYPE)
+        if (el.type_family == HOST_SCALAR_TYPE_FAMILY
+	    && el.type == DOUBLE_TYPE)
           return el.host_double;
-        if (el.type == SCALAR_DOUBLE_TYPE)
+        if (el.type_family == SCALAR_TYPE_FAMILY
+	    && el.type == DOUBLE_TYPE)
           return *el.scalar_double;
 
         throw statement_not_supported_exception("Cannot convert to double");
@@ -62,12 +66,15 @@ namespace viennacl
 
       inline void new_vector(lhs_rhs_element & elem, std::size_t size)
       {
+	if (elem.type_family != VECTOR_TYPE_FAMILY)
+	  throw statement_not_supported_exception("Not constructing a vector from a non-vector type");
+
         switch (elem.type)
         {
-          case VECTOR_FLOAT_TYPE:
+          case FLOAT_TYPE:
             elem.vector_float = new viennacl::vector<float>(size);
             return;
-          case VECTOR_DOUBLE_TYPE:
+          case DOUBLE_TYPE:
             elem.vector_double = new viennacl::vector<double>(size);
             return;
           default:
@@ -77,12 +84,15 @@ namespace viennacl
 
       inline void delete_vector(lhs_rhs_element & elem)
       {
+	if (elem.type_family != VECTOR_TYPE_FAMILY)
+	  throw statement_not_supported_exception("Not attempting to delete a vector on a non-vector type");
+
         switch (elem.type)
         {
-          case VECTOR_FLOAT_TYPE:
+          case FLOAT_TYPE:
             delete elem.vector_float;
             return;
-          case VECTOR_DOUBLE_TYPE:
+          case DOUBLE_TYPE:
             delete elem.vector_double;
             return;
           default:
@@ -94,46 +104,78 @@ namespace viennacl
 
       inline void new_matrix(lhs_rhs_element & elem, std::size_t size1, std::size_t size2)
       {
-        switch (elem.type)
-        {
-          case MATRIX_ROW_FLOAT_TYPE:
+	if (elem.type_family == MATRIX_ROW_TYPE_FAMILY)
+	{
+	  switch (elem.type)
+	  {
+	  case FLOAT_TYPE:
             elem.matrix_row_float = new viennacl::matrix<float, viennacl::row_major>(size1, size2);
             return;
-          case MATRIX_COL_FLOAT_TYPE:
-            elem.matrix_col_float = new viennacl::matrix<float, viennacl::column_major>(size1, size2);
-            return;
-
-          case MATRIX_ROW_DOUBLE_TYPE:
+	    
+          case DOUBLE_TYPE:
             elem.matrix_row_double = new viennacl::matrix<double, viennacl::row_major>(size1, size2);
             return;
-          case MATRIX_COL_DOUBLE_TYPE:
+
+          default:
+            throw statement_not_supported_exception("Invalid matrix type for matrix construction");
+	  }
+        }
+	else if (elem.type_family == MATRIX_COL_TYPE_FAMILY)
+	{
+	  switch (elem.type)
+	  {
+          case FLOAT_TYPE:
+            elem.matrix_col_float = new viennacl::matrix<float, viennacl::column_major>(size1, size2);
+            return;
+	    
+          case DOUBLE_TYPE:
             elem.matrix_col_double = new viennacl::matrix<double, viennacl::column_major>(size1, size2);
             return;
 
           default:
-            throw statement_not_supported_exception("Invalid vector type for vector construction");
-        }
+            throw statement_not_supported_exception("Invalid matrix type for matrix construction");
+	  }
+	}
+	else
+	{
+	  throw statement_not_supported_exception("Invalid matrix type for matrix construction");
+	}
       }
 
       inline void delete_matrix(lhs_rhs_element & elem)
       {
-        switch (elem.type)
-        {
-          case MATRIX_ROW_FLOAT_TYPE:
+	if (elem.type_family == MATRIX_ROW_TYPE_FAMILY)
+	{
+	  switch (elem.type)
+	  {
+          case FLOAT_TYPE:
             delete elem.matrix_row_float;
             return;
-          case MATRIX_COL_FLOAT_TYPE:
-            delete elem.matrix_col_float;
-            return;
-          case MATRIX_ROW_DOUBLE_TYPE:
+          case DOUBLE_TYPE:
             delete elem.matrix_row_double;
             return;
-          case MATRIX_COL_DOUBLE_TYPE:
+          default:
+            throw statement_not_supported_exception("Invalid matrix type for matrix destruction");
+	  }
+	}
+	else if (elem.type_family == MATRIX_COL_TYPE_FAMILY)
+	{
+	  switch (elem.type)
+	  {
+          case FLOAT_TYPE:
+            delete elem.matrix_col_float;
+            return;
+          case DOUBLE_TYPE:
             delete elem.matrix_col_double;
             return;
           default:
-            throw statement_not_supported_exception("Invalid vector type for vector destruction");
-        }
+            throw statement_not_supported_exception("Invalid matrix type for matrix destruction");
+	  }
+	}
+	else
+	{
+	  throw statement_not_supported_exception("Invalid matrix type for matrix destruction");
+	}
       }
 
     } // namespace detail

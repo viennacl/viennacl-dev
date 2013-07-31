@@ -45,13 +45,13 @@ namespace viennacl
 
         switch (vec1.type)
         {
-          case VECTOR_FLOAT_TYPE:
-            assert(vec2.type == VECTOR_FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+          case FLOAT_TYPE:
+            assert(vec2.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::av(*vec1.vector_float,
                                  *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
-          case VECTOR_DOUBLE_TYPE:
-            assert(vec2.type == VECTOR_DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+          case DOUBLE_TYPE:
+            assert(vec2.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::av(*vec1.vector_double,
                                  *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
@@ -70,14 +70,14 @@ namespace viennacl
 
         switch (vec1.type)
         {
-          case VECTOR_FLOAT_TYPE:
-            assert(vec2.type == VECTOR_FLOAT_TYPE && vec3.type == VECTOR_FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+          case FLOAT_TYPE:
+            assert(vec2.type == FLOAT_TYPE && vec3.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv(*vec1.vector_float,
                                    *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                    *vec3.vector_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
-          case VECTOR_DOUBLE_TYPE:
-            assert(vec2.type == VECTOR_DOUBLE_TYPE && vec3.type == VECTOR_DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+          case DOUBLE_TYPE:
+            assert(vec2.type == DOUBLE_TYPE && vec3.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv(*vec1.vector_double,
                                    *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                    *vec3.vector_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
@@ -97,14 +97,14 @@ namespace viennacl
 
         switch (vec1.type)
         {
-          case VECTOR_FLOAT_TYPE:
-            assert(vec2.type == VECTOR_FLOAT_TYPE && vec3.type == VECTOR_FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+          case FLOAT_TYPE:
+            assert(vec2.type == FLOAT_TYPE && vec3.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv_v(*vec1.vector_float,
                                      *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                      *vec3.vector_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
-          case VECTOR_DOUBLE_TYPE:
-            assert(vec2.type == VECTOR_DOUBLE_TYPE && vec3.type == VECTOR_DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+          case DOUBLE_TYPE:
+            assert(vec2.type == DOUBLE_TYPE && vec3.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv_v(*vec1.vector_double,
                                      *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                      *vec3.vector_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
