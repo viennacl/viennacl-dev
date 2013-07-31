@@ -4,7 +4,7 @@
 #
 # Part 1: Tutorials which work without OpenCL as well:
 #
-foreach(tut bandwidth-reduction blas1 scheduler)
+foreach(tut bandwidth-reduction blas1 scheduler wrap-host-buffer)
    add_executable(${tut} ${tut}.cpp)
    if (ENABLE_OPENCL)
      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
@@ -75,7 +75,7 @@ endif (ENABLE_OPENCL)
 #
 
 if (ENABLE_CUDA)
-  foreach(tut blas1)
+  foreach(tut blas1 wrap-cuda-buffer)
     cuda_add_executable(${tut}-cuda ${tut}.cu)
   endforeach()
 
