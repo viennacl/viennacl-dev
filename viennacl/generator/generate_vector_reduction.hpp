@@ -60,6 +60,12 @@ namespace viennacl{
               s2 = k_;
             }
 
+            unsigned int m() const { return m_; }
+
+            unsigned int k() const { return k_; }
+
+            unsigned int num_groups() const { return num_groups_; }
+
             void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
 
               configure_local_sizes(kernel, kernel_id);

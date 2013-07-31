@@ -1,6 +1,6 @@
 #define VIENNACL_WITH_OPENCL
-#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_BUILD
 
 #include <iostream>
 #include "CL/cl.hpp"
@@ -62,13 +62,13 @@ void autotune(){
     std::vector<int> group_sizes;
     std::vector<int> num_groups;
     std::vector<int> global_decompositions;
-    for(unsigned int a = 1; a <= 1 ; a*=2)
+    for(unsigned int a = 1; a <= 8 ; a*=2)
       alignments.push_back(a);
-    for(unsigned int g = 64 ; g <= 64 ; g *= 2)
+    for(unsigned int g = 16 ; g <= 1024 ; g *= 2)
       num_groups.push_back(g);
-    for(unsigned int i = 16; i <= 32; i*=2)
+    for(unsigned int i = 16; i <= viennacl::ocl::current_device().max_work_group_size() ; i*=2)
       group_sizes.push_back(i);
-    global_decompositions.push_back(1);
+    global_decompositions.push_back(0); global_decompositions.push_back(1);
     conf.add_tuning_param("alignment",alignments);
     conf.add_tuning_param("group_size",group_sizes);
     conf.add_tuning_param("num_groups",num_groups);

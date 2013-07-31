@@ -169,9 +169,9 @@ namespace viennacl{
         prof.set_local_sizes(size1, size2, 0);
         if(size1*size2 > max_workgroup_size)  return;
 
-//        //Doesn't execute because it would likelily be a waste of time
-//        size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
-//        if( (size1*size2) % prefered_workgroup_size_multiple > 0) return;
+        //Doesn't execute because it would likelily be a waste of time
+        size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
+        if( (size1*size2) % prefered_workgroup_size_multiple > 0) return;
 
         viennacl::generator::enqueue(gen);
         viennacl::backend::finish();

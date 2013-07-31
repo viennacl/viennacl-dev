@@ -9,7 +9,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
-#include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/autotune.hpp"
 
 #define N_RUNS 5
@@ -23,9 +23,9 @@ static const unsigned int size = 2048;
 
 template<class ScalarType>
 struct blas2_config{
-    typedef viennacl::generator::code_generation::vector_reduction_profile profile_t;
+    typedef viennacl::generator::vector_reduction::profile profile_t;
     static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        return profile_t(params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
+      return profile_t(params.at("vectorization").current(), params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
         profile_t prof = create_profile(params);
@@ -37,8 +37,6 @@ struct blas2_config{
 
 template<class ScalarType>
 void autotune(bool trans){
-    typedef viennacl::generator::vector<ScalarType> vec;
-    typedef viennacl::generator::matrix<viennacl::matrix<ScalarType, viennacl::row_major> > mat;
     std::vector<ScalarType> cpu_v1(size), cpu_v3(size);
     boost::numeric::ublas::matrix<ScalarType, boost::numeric::ublas::row_major> cpu_m2(size,size);
     for(unsigned int i=0; i<size; ++i){
@@ -61,12 +59,12 @@ void autotune(bool trans){
     std::map<double,typename blas2_config<ScalarType>::profile_t> timings;
     viennacl::generator::autotune::tuning_config< blas2_config<ScalarType> > conf;
 
-    std::vector<int> alignments;
+    std::vector<int> vectorization;
     std::vector<int> local_sizes1;
     std::vector<int> local_sizes2;
     std::vector<int> num_groups;
 
-    alignments.push_back(1);
+    vectorization.push_back(1);
     for(unsigned int s = 1 ; s <= max_size ; s*=2)
       local_sizes1.push_back(s);
     for(unsigned int s = 1 ; s <= max_size ; s*=2)
@@ -74,20 +72,20 @@ void autotune(bool trans){
     for(unsigned int g = 16 ; g <= 1024 ; g+=16)
       num_groups.push_back(g);
 
-    conf.add_tuning_param("alignment",alignments);
+    conf.add_tuning_param("vectorization",vectorization);
     conf.add_tuning_param("local_size1",local_sizes1);
     conf.add_tuning_param("local_size2",local_sizes2);
     conf.add_tuning_param("num_groups",num_groups);
 
     if(trans)
-      viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(viennacl::generator::trans(mat(m2)),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvTv, sizeof(ScalarType)),conf);
+      viennacl::generator::autotune::benchmark(timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(m2), v3)),conf,sizeof(ScalarType));
     else
-      viennacl::generator::autotune::benchmark(timings,vec(v1) = prod(mat(m2),vec(v3)),std::make_pair(viennacl::generator::code_generation::gemvAv, sizeof(ScalarType)),conf);
+      viennacl::generator::autotune::benchmark(timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(m2, v3)),conf,sizeof(ScalarType));
     std::cout << std::endl;
     std::cout << "Best Profile: " << std::setprecision(5) <<  timings.begin()->first << "s" << "\t|\t" << 1e-9*size*(2*size-1)/timings.begin()->first << " GFLOPs" << std::endl;
     std::cout << "M : " << timings.begin()->second.m() << std::endl;
     std::cout << "K : " << timings.begin()->second.k() << std::endl;
-    std::cout << "Num Groups 0 : " << timings.begin()->second.num_groups_0() << std::endl;
+    std::cout << "Num Groups 0 : " << timings.begin()->second.num_groups() << std::endl;
 }
 
 int main(){

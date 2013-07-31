@@ -302,7 +302,9 @@ namespace viennacl{
     static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
       char* program_name = (char*)malloc(256*sizeof(char));
       generator.make_program_name(program_name);
-      if(force_recompilation || !viennacl::ocl::current_context().has_program(program_name)){
+      if(force_recompilation)
+        viennacl::ocl::current_context().delete_program(program_name);
+      if(!viennacl::ocl::current_context().has_program(program_name)){
         std::string source_code = generator.make_program_string();
     #ifdef VIENNACL_DEBUG_BUILD
         std::cout << "Building " << program_name << "..." << std::endl;
