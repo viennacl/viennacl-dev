@@ -55,7 +55,7 @@ namespace viennacl{
             /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : template_base::profile(vectorization, 1), m_(m), k_(k), num_groups_(num_groups){ }
 
-            void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t kernel_id) const{
+            void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
               s1 = m_;
               s2 = k_;
             }
@@ -113,7 +113,7 @@ namespace viennacl{
               }
             }
 
-            void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
+            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
             }
@@ -126,7 +126,7 @@ namespace viennacl{
       public:
         vector_reduction(template_base::statements_type const & s, profile const & p) : template_base(s, profile_), profile_(p){ }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream) const{
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream) const{
 
           std::vector<detail::mapped_vector_reduction*> exprs;
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it){

@@ -250,8 +250,8 @@ int test_matrix ( Epsilon const& epsilon) {
     unsigned int pattern_size1 = 256;
     unsigned int pattern_size2 = 128;
 
-    unsigned int n_rep1 = size1/pattern_size1;
-    unsigned int n_rep2 = size2/pattern_size2;
+//    unsigned int n_rep1 = size1/pattern_size1;
+//    unsigned int n_rep2 = size2/pattern_size2;
 
     ublas::matrix<NumericT> cA(size1,size2);
     ublas::matrix<NumericT> cB(size1,size2);

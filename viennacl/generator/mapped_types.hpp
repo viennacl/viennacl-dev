@@ -47,15 +47,15 @@ namespace viennacl{
               index_info index;
           };
           virtual std::string generate_default(std::pair<std::string, std::string> const & index) const = 0;
-          virtual std::string append_vector_size(std::string const & scalartype, unsigned int vector_size) const { return scalartype; }
+          virtual std::string append_vector_size(std::string const & scalartype, unsigned int) const { return scalartype; }
 
         public:
           mapped_container(std::string const & scalartype) : scalartype_(scalartype){          }
-          virtual std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size) const{ return str; }
+          virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str, unsigned int) const{ return str; }
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }
-          virtual std::string generate(std::pair<std::string, std::string> const & index, int vector_element) const{
+          virtual std::string generate(std::pair<std::string, std::string> const & index, int) const{
             if(!access_name_.empty())
               return access_name_;
             else
@@ -72,7 +72,7 @@ namespace viennacl{
           mapped_binary_leaf(std::string const & scalartype) : mapped_container(scalartype){ }
           node_info lhs() const { return lhs_; }
           node_info rhs() const { return rhs_; }
-          std::string generate_default(std::pair<std::string, std::string> const & index) const { return "";}
+          std::string generate_default(std::pair<std::string, std::string> const &) const { return "";}
         protected:
           node_info lhs_;
           node_info rhs_;
@@ -107,11 +107,11 @@ namespace viennacl{
       /** @brief Mapping of a host scalar to a generator class */
       class mapped_host_scalar : public mapped_container{
           friend class map_functor;
-          std::string generate_default(std::pair<std::string, std::string> const & index) const{ return name_;  }
+          std::string generate_default(std::pair<std::string, std::string> const &) const{ return name_;  }
         public:
           mapped_host_scalar(std::string const & scalartype) : mapped_container(scalartype){ }
           std::string const & name() { return name_; }
-          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size) const{
+          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int) const{
             if(already_generated.insert(name_).second)
               str += detail::generate_value_kernel_argument(scalartype_, name_);
             return str;
@@ -124,7 +124,7 @@ namespace viennacl{
       /** @brief Base class for datastructures passed by pointer */
       class mapped_handle : public mapped_container{
           virtual std::string offset(std::pair<std::string, std::string> const & index) const = 0;
-          virtual void append_optional_arguments(std::string & str) const{ }
+          virtual void append_optional_arguments(std::string &) const{ }
           std::string generate_default(std::pair<std::string, std::string> const & index) const{ return name_  + '[' + offset(index) + ']'; }
         public:
           mapped_handle(std::string const & scalartype) : mapped_container(scalartype){ }
@@ -168,7 +168,7 @@ namespace viennacl{
       class mapped_scalar : public mapped_handle{
           friend class map_functor;
         private:
-          std::string offset(std::pair<std::string, std::string> const & index)  const { return "0"; }
+          std::string offset(std::pair<std::string, std::string> const &)  const { return "0"; }
         public:
           mapped_scalar(std::string const & scalartype) : mapped_handle(scalartype){ }
       };
@@ -285,10 +285,10 @@ namespace viennacl{
           bool is_value_static_;
         public:
           mapped_symbolic_vector(std::string const & scalartype) : mapped_container(scalartype){ }
-          std::string generate_default(std::pair<std::string, std::string> const & index) const{
+          std::string generate_default(std::pair<std::string, std::string> const & /*index*/) const{
             return value_name_;
           }
-          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size) const{
+          std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str, unsigned int /*vector_size*/) const{
             if(!value_name_.empty())
               str += detail::generate_value_kernel_argument(scalartype_, value_name_);
             if(!index_name_.empty())
@@ -304,10 +304,10 @@ namespace viennacl{
           bool is_diag_;
         public:
           mapped_symbolic_matrix(std::string const & scalartype) : mapped_container(scalartype){ }
-          std::string generate_default(std::pair<std::string, std::string> const & index) const{
+          std::string generate_default(std::pair<std::string, std::string> const & /* index */) const{
             return value_name_;
           }
-          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size) const{
+          std::string & append_kernel_arguments(std::set<std::string> & /*already generated*/, std::string & str, unsigned int /*vector size*/) const{
             if(!value_name_.empty())
               str += detail::generate_value_kernel_argument(scalartype_, value_name_);
             return str;

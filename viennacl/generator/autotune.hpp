@@ -178,7 +178,7 @@ namespace viennacl{
 
         double exec_time = 0;
         t.start();
-        for(unsigned int n=0; n<0 ; ++n){
+        for(unsigned int n=0; n<n_runs ; ++n){
           generator::enqueue(gen);
         }
         viennacl::backend::finish();
@@ -194,7 +194,7 @@ namespace viennacl{
        * @param op the given operation
        * @param the given config */
       template<class ConfigT>
-      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, scheduler::statement const & op, ConfigT & config, size_t scalartype_size){
+      void benchmark(std::map<double, typename ConfigT::profile_t> & timings, scheduler::statement const & op, ConfigT & config, size_t /*scalartype_size*/){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         unsigned int n=0, n_conf = 0;

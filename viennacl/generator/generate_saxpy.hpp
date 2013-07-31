@@ -47,7 +47,7 @@ namespace viennacl{
           public:
             profile(unsigned int v, std::size_t gs, std::size_t ng, bool d) : template_base::profile(v, 1), group_size_(gs), num_groups_(ng), global_decomposition_(d){ }
 
-            void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t kernel_id) const{
+            void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t/* kernel_id*/) const{
               size1 = group_size_;
               size2 = 1;
             }
@@ -64,7 +64,7 @@ namespace viennacl{
               viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs.type, first_node.lhs, utils::size_fun());
               k.arg(n_arg++, cl_uint(N/vectorization_));
             }
-            void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
+            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
             }
 
@@ -77,7 +77,7 @@ namespace viennacl{
       public:
         vector_saxpy(template_base::statements_type const & s, profile const & p) : template_base(s,  profile_), profile_(p){ }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -118,18 +118,18 @@ namespace viennacl{
           public:
             profile(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : template_base::profile(v, 1), group_size1_(gs1), group_size2_(gs2), num_groups1_(ng1), num_groups2_(ng2), global_decomposition_(d){ }
 
-            void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t kernel_id) const{
+            void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
               s1 = group_size1_;
               s2 = group_size2_;
             }
 
-            void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+            void configure_range_enqueue_arguments(std::size_t /*kernel_id*/, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
               scheduler::statement_node first_node = statements.front().array()[0];
               k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size1_fun())));
               k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size2_fun())));
             }
 
-            void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
+            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
             }
@@ -154,7 +154,7 @@ namespace viennacl{
       public:
         matrix_saxpy(template_base::statements_type const & s, profile const & p) : template_base(s,  profile_), profile_(p){ }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream) const {
 
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it){
             for(detail::mapping_type::iterator iit = it->begin() ; iit != it->end() ; ++iit){

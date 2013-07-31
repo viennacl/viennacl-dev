@@ -82,7 +82,7 @@ namespace viennacl{
 
             unsigned int unroll() const { return unroll_; }
 
-            void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t kernel_id) const{
+            void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t /*kernel_id*/) const{
               size1 = ml_/ms_;
               size2 = nl_/ns_;
             }
@@ -141,7 +141,7 @@ namespace viennacl{
             static std::string size2() { return "K"; }
             static std::string size3() { return "N"; }
 
-            void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
+            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "K");
@@ -331,7 +331,7 @@ namespace viennacl{
 
         }
 
-        void core(std::size_t idx, utils::kernel_generation_stream& stream) const{
+        void core(std::size_t /*idx*/, utils::kernel_generation_stream& stream) const{
 
           bool use_lhs_shared = profile_.use_lhs_shared_;
           bool use_rhs_shared = profile_.use_rhs_shared_;

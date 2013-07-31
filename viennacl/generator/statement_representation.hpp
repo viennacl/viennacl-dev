@@ -108,6 +108,10 @@ namespace viennacl{
           result_type operator()(symbolic_vector_base<ScalarType> const & vec) const {
             *ptr_++='s'; //symbolic
             *ptr_++='v'; //vector
+            if(vec.is_value_static())
+              *ptr_++='v'; //value
+            if(vec.has_index())
+              *ptr_++='i';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
@@ -133,6 +137,8 @@ namespace viennacl{
           result_type operator()(symbolic_matrix_base<ScalarType> const & mat) const {
             *ptr_++='s'; //symbolic
             *ptr_++='m'; //matrix
+            if(mat.is_value_static())
+              *ptr_++='v'; //value
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 

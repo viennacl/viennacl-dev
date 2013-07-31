@@ -46,9 +46,9 @@ namespace viennacl{
 
         class profile{
           protected:
-            virtual bool invalid_impl(viennacl::ocl::device const & dev, size_t scalartype_size) const{ return false; }
+            virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
 
-            virtual std::size_t lmem_used(std::size_t scalartype_size) const { return 0; }
+            virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
 
             void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t kernel_id) const {
               std::size_t lsize1, lsize2;

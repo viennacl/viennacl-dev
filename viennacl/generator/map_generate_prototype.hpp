@@ -25,6 +25,9 @@
 
 #include <set>
 
+#include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
+
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/forwards.h"
@@ -130,8 +133,12 @@ namespace viennacl{
 
           //Symbolic matrix mapping
           template<class ScalarType>
-          result_type operator()(symbolic_matrix_base<ScalarType> const & vec) const {
+          result_type operator()(symbolic_matrix_base<ScalarType> const & mat) const {
             mapped_symbolic_matrix * p = new mapped_symbolic_matrix(utils::type_to_string<ScalarType>::value());
+
+            if(mat.is_value_static()==false)
+              p->value_name_ = create_name(current_arg_, memory_, NULL);
+
             return p;
           }
 

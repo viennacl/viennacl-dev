@@ -81,9 +81,9 @@ namespace viennacl{
       typedef std::pair<profile_type, size_t> profile_id;
       typedef std::map<device_key, std::map<profile_id, template_base::profile const * > > builtin_database_t;
 
-      static  builtin_database_t make_database(){
+//      static  builtin_database_t make_database(){
 
-        builtin_database_t res;
+//        builtin_database_t res;
 
 //        //AMD GPUs
 //        {
@@ -198,8 +198,8 @@ namespace viennacl{
 //      static builtin_database_t builtin_database = make_database();
 //      static std::map<profile_type, profile_base const * > default_profiles = make_default_profiles();
 
-        return res;
-    }
+//        return res;
+//    }
 
   }
 

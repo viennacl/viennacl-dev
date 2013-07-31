@@ -107,8 +107,9 @@ namespace viennacl{
 
           //Symbolic matrix mapping
           template<class ScalarType>
-          result_type operator()(symbolic_matrix_base<ScalarType> const & vec) const {
-
+          result_type operator()(symbolic_matrix_base<ScalarType> const & mat) const {
+            if(mat.is_value_static()==false)
+              kernel_.arg(current_arg_++, mat.value());
           }
 
         private:

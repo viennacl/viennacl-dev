@@ -318,7 +318,7 @@ namespace viennacl{
     }
     static void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
-      viennacl::ocl::program & p = get_configured_program(generator, kernels, force_recompilation);
+      get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
         viennacl::ocl::enqueue(**it, (*it)->context().get_queue());
       }

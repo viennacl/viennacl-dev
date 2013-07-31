@@ -134,7 +134,7 @@ namespace viennacl{
             /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : template_base::profile(vectorization, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
 
-            void set_local_sizes(std::size_t& s1, std::size_t& s2, std::size_t kernel_id) const{
+            void set_local_sizes(std::size_t& s1, std::size_t& s2, std::size_t /*kernel_id*/) const{
               s1 = group_size_;
               s2 = 1;
             }

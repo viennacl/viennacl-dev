@@ -44,7 +44,7 @@ namespace viennacl{
       }
 
       static std::string generate_pointer_kernel_argument(std::string const & address_space, std::string const & scalartype, std::string const & name){
-        return "__global " +  scalartype + "* " + name + ",";
+        return address_space +  scalartype + "* " + name + ",";
       }
 
       static const char * generate(operation_node_type type){
@@ -64,7 +64,7 @@ namespace viennacl{
 
       class traversal_functor{
         public:
-          void call_on_op(operation_node_type_family, operation_node_type type) const { }
+          void call_on_op(operation_node_type_family, operation_node_type) const { }
           void call_before_expansion() const { }
           void call_after_expansion() const { }
       };
@@ -77,7 +77,7 @@ namespace viennacl{
           mapping_type const & mapping_;
         public:
           expression_generation_traversal(std::pair<std::string, std::string> const & index, int vector_element, std::string & str, mapping_type const & mapping) : index_string_(index), vector_element_(vector_element), str_(str), mapping_(mapping){ }
-          void call_on_leaf(index_info const & key, statement_node const & node,  statement::container_type const * array) const { str_ += generate(index_string_, vector_element_, *mapping_.at(key)); }
+          void call_on_leaf(index_info const & key, statement_node const &,  statement::container_type const *) const { str_ += generate(index_string_, vector_element_, *mapping_.at(key)); }
           void call_on_op(operation_node_type_family, operation_node_type type) const {
             if(type!=scheduler::OPERATION_UNARY_TRANS_TYPE)
               str_ += detail::generate(type);
@@ -95,7 +95,7 @@ namespace viennacl{
           mapping_type const & mapping_;
         public:
           fetch_traversal(std::set<std::string> & fetched, std::pair<std::string, std::string> const & index, unsigned int vectorization, utils::kernel_generation_stream & stream, mapping_type const & mapping) : fetched_(fetched), index_string_(index), vectorization_(vectorization), stream_(stream), mapping_(mapping){ }
-          void call_on_leaf(index_info const & key, statement_node const & node,  statement::container_type const * array) const {
+          void call_on_leaf(index_info const & key, statement_node const &,  statement::container_type const *) const {
             fetch(index_string_, vectorization_, fetched_, stream_, *mapping_.at(key));
           }
       };
