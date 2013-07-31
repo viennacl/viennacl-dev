@@ -157,9 +157,9 @@ int test( Epsilon const& epsilon) {
 
     {
         std::cout << "x = trans(A)*y..." << std::endl;
-        cy     =  ublas::prod(trans(cA),cx);
+        cx     =  ublas::prod(trans(cA),cy);
         generator::code_generator generator;
-        generator.add(viennacl::scheduler::statement(y, viennacl::op_assign(), viennacl::linalg::prod(trans(A),x)));
+        generator.add(viennacl::scheduler::statement(x, viennacl::op_assign(), viennacl::linalg::prod(trans(A),y)));
         generator::enqueue(generator);
         viennacl::backend::finish();
         CHECK_RESULT(cx,x,x=trans(A)*y)

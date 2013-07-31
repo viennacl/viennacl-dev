@@ -44,7 +44,7 @@ namespace viennacl{
       }
 
       static std::string generate_pointer_kernel_argument(std::string const & address_space, std::string const & scalartype, std::string const & name){
-        return address_space +  scalartype + "* " + name + ",";
+        return address_space +  " " + scalartype + "* " + name + ",";
       }
 
       static const char * generate(operation_node_type type){
