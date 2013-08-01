@@ -55,12 +55,10 @@ namespace viennacl{
             void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
               configure_local_sizes(k, kernel_id);
 
-              std::size_t gsize1 = group_size_*num_groups_;
-              std::size_t gsize2 = 1;
-              k.global_work_size(0,gsize1);
-              k.global_work_size(1,gsize2);
+              k.global_work_size(0,group_size_*num_groups_);
+              k.global_work_size(1,1);
 
-              scheduler::statement_node first_node = statements.front().array()[0];
+              scheduler::statement_node const & first_node = statements.front().second;
               viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs.type, first_node.lhs, utils::size_fun());
               k.arg(n_arg++, cl_uint(N/vectorization_));
             }
@@ -85,20 +83,20 @@ namespace viennacl{
           //Fetches entries to registers
           std::set<std::string>  fetched;
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
-            for(detail::mapping_type::reverse_iterator it2 = it->rbegin() ; it2 != it->rend() ; ++it2)
-              if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(it2->second.get()))
+            for(detail::mapping_type::reverse_iterator iit = it->rbegin() ; iit != it->rend() ; ++iit)
+              if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(iit->second.get()))
                 p->fetch( std::make_pair("i","0"), profile_.vectorization_, fetched, stream);
 
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
               std::string str;
-              detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping_[i++]), false);
+              detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping_[i++]), false);
               stream << str << ";" << std::endl;
           }
 
           //Writes back
-          for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
-            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(it->at(std::make_pair(0,detail::LHS_NODE_TYPE)).get()))
+          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
+            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(mapping_.at(std::distance(statements_.begin(),it)).at(std::make_pair(&it->second, detail::LHS_NODE_TYPE)).get()))
               p->write_back( std::make_pair("i", "0"), fetched, stream);
 
           stream.dec_tab();
@@ -123,8 +121,13 @@ namespace viennacl{
               s2 = group_size2_;
             }
 
-            void configure_range_enqueue_arguments(std::size_t /*kernel_id*/, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
-              scheduler::statement_node first_node = statements.front().array()[0];
+            void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+              configure_local_sizes(k, kernel_id);
+
+              k.global_work_size(0,group_size1_*num_groups1_);
+              k.global_work_size(1,group_size2_*num_groups2_);
+
+              scheduler::statement_node const & first_node = statements.front().second;
               k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size1_fun())));
               k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size2_fun())));
             }
@@ -170,7 +173,6 @@ namespace viennacl{
           stream << "{" << std::endl;
           stream.inc_tab();
 
-
           //Fetches entries to registers
           std::set<std::string>  fetched;
           for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
@@ -178,17 +180,19 @@ namespace viennacl{
               if(detail::mapped_matrix * p = dynamic_cast<detail::mapped_matrix *>(it2->second.get()))
                 p->fetch(std::make_pair("i", "j"), profile_.vectorization_, fetched, stream);
 
+
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             std::string str;
-            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping_[i++]), false);
+            detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping_[i++]), false);
             stream << str << ";" << std::endl;
           }
 
           //Writes back
-          for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it)
-            if(detail::mapped_matrix * p = dynamic_cast<detail::mapped_matrix *>(it->at(std::make_pair(0,detail::LHS_NODE_TYPE)).get()))
+          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
+            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(mapping_.at(std::distance(statements_.begin(),it)).at(std::make_pair(&it->second,detail::LHS_NODE_TYPE)).get()))
               p->write_back(std::make_pair("i", "j"), fetched, stream);
+          }
 
           stream.dec_tab();
           stream << "}" << std::endl;

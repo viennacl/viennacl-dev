@@ -89,7 +89,7 @@ namespace viennacl{
 
             void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
               //set M, N
-              scheduler::statement_node first_node = statements.front().array()[0];
+              scheduler::statement_node const & first_node = statements.front().second;
               unsigned int M = utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size1_fun());
               unsigned int N = utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size2_fun());
 
@@ -105,7 +105,7 @@ namespace viennacl{
 
               //K
               for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-                scheduler::statement::container_type exprs = it->array();
+                scheduler::statement::container_type exprs = it->first.array();
                 for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
                   if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
                     scheduler::statement_node const * current_node = &(*iit);
@@ -343,43 +343,42 @@ namespace viennacl{
           unsigned int ns = profile_.ns_;
           unsigned int unroll = profile_.unroll_;
 
-          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping_[0].at(std::make_pair(0,detail::LHS_NODE_TYPE)).get());
+          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping_.at(0).at(std::make_pair(&statements_.front().second,detail::LHS_NODE_TYPE)).get());
           detail::mapped_matrix const * lhs = NULL;
           detail::mapped_matrix const * rhs = NULL;
           bool is_lhs_transposed = false;
           bool is_rhs_transposed = false;
 
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            scheduler::statement::container_type exprs = it->array();
-            std::size_t i = std::distance(statements_.begin(), it);
-            for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
-              if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
-                std::size_t j = std::distance(exprs.begin(), iit);
 
+          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
+            scheduler::statement::container_type const & exprs = it->first.array();
+            std::size_t i = std::distance(statements_.begin(), it);
+            for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
+              if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
                 if(iit->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_lhs_transposed = true;
-                  lhs = (detail::mapped_matrix const *)mapping_[i][std::make_pair(iit->lhs.node_index,detail::LHS_NODE_TYPE)].get();
+                  lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
                 }
                 else{
-                  lhs = (detail::mapped_matrix const *)mapping_[i][std::make_pair(j, detail::LHS_NODE_TYPE)].get();
                   is_lhs_transposed = false;
+                  lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
                 }
 
                 if(iit->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_rhs_transposed = true;
-                  rhs = (detail::mapped_matrix const *)mapping_[i][std::make_pair(iit->rhs.node_index,detail::RHS_NODE_TYPE)].get();
+                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::RHS_NODE_TYPE)).get();
                 }
                 else{
-                  rhs = (detail::mapped_matrix const *)mapping_[i][std::make_pair(j, detail::RHS_NODE_TYPE)].get();
                   is_rhs_transposed = false;
+                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
                 }
 
               }
             }
           }
 
-          if(profile_.vectorization_>1){
 
+          if(profile_.vectorization_>1){
             if(assigned->is_row_major())
               assigned->bind_sizes("M", "N/"+utils::to_string(profile_.vectorization_));
             else
@@ -413,7 +412,6 @@ namespace viennacl{
           bool is_lhs_rowmajor = lhs->is_row_major();
           bool is_rhs_rowmajor = rhs->is_row_major();
           bool is_result_rowmajor = assigned->is_row_major();
-
 
           std::string lhs_value_scalartype;
           if(use_lhs_shared)

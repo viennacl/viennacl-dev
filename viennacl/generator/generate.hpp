@@ -58,8 +58,6 @@ namespace viennacl{
 
 
 
-
-
     class code_generator{
       private:
         typedef std::pair<expression_type_family, generator::template_base::statements_type> representation_node_type;
@@ -70,12 +68,12 @@ namespace viennacl{
           first.insert(first.end(), second.begin(), second.end());
         }
 
-        static expression_type_family type_family_of(typename statement::container_type const & expr){
+        static expression_type_family type_family_of(scheduler::statement const & s, scheduler::statement_node const & root_node){
           unsigned int n_scalar_reduce = 0, n_vector_reduce = 0, n_matrix_matrix_product = 0;
-          if(is_invalid(expr, n_scalar_reduce, n_vector_reduce, n_matrix_matrix_product)){
+          if(is_invalid(s, root_node, n_scalar_reduce, n_vector_reduce, n_matrix_matrix_product)){
             return INVALID_EXPRESSION;
           }
-          switch(expr[0].lhs.type_family){
+          switch(root_node.lhs.type_family){
             case VECTOR_TYPE_FAMILY :
               if(n_vector_reduce>0)
                 return VECTOR_REDUCE;
@@ -101,13 +99,13 @@ namespace viennacl{
           }
         }
 
-        static bool is_invalid(statement::container_type const & expr, unsigned int & n_scalar_reduce, unsigned int & n_vector_reduce, unsigned int & n_mat_mat_prod, unsigned int root_index = 0, bool is_in_prod = false){
-          statement_node const & node = expr[root_index];
+        static bool is_invalid(scheduler::statement const & statement, scheduler::statement_node const & root_node, unsigned int & n_scalar_reduce, unsigned int & n_vector_reduce, unsigned int & n_mat_mat_prod, bool is_in_prod = false){
+          scheduler::statement::container_type const & expr = statement.array();
 
           //Nested prod not allowed
-          if(node.op.type == OPERATION_BINARY_INNER_PROD_TYPE
-             ||node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE
-             ||node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+          if(root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE
+             ||root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE
+             ||root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
           {
             if(is_in_prod)
               return true;
@@ -115,11 +113,11 @@ namespace viennacl{
               is_in_prod = true;
           }
 
-          if(node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
+          if(root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
             ++n_scalar_reduce;
-          if(node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+          if(root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
             ++n_vector_reduce;
-          if(node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+          if(root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
             ++n_mat_mat_prod;
 
           //More than one n_* is nonzero
@@ -134,12 +132,12 @@ namespace viennacl{
             return true;
           }
 
-          if(node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            if(is_invalid(expr, n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, node.lhs.node_index, is_in_prod)==true)
+          if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(is_invalid(statement, expr[root_node.lhs.node_index], n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, is_in_prod)==true)
               return true;
 
-          if(node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            if(is_invalid(expr, n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, node.rhs.node_index, is_in_prod)==true)
+          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(is_invalid(statement, expr[root_node.rhs.node_index], n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, is_in_prod)==true)
               return true;
 
           return false;
@@ -161,7 +159,7 @@ namespace viennacl{
 
             std::set<void *> memory;
             for(typename StatementsType::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-              detail::enqueue_statement(*it, memory, current_arg, k);
+              detail::enqueue_statement(it->first, it->second, memory, current_arg, k);
             }
 
 
@@ -179,19 +177,19 @@ namespace viennacl{
           statements_.reserve(16);
         }
 
-        bool add(scheduler::statement const & s) {
-          expression_type_family expr_type = type_family_of(s.array());
+        bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {
+          expression_type_family expr_type = type_family_of(statement,root_node);
 
           if(expr_type==INVALID_EXPRESSION)
             return false;
 
           if(statements_.empty())
-            statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,s)));
+            statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,std::make_pair(statement, root_node))));
           else
             if(statements_.back().first == expr_type)
-              statements_.back().second.push_back(s);
+              statements_.back().second.push_back(std::make_pair(statement, root_node));
             else
-              statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,s)));
+              statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,std::make_pair(statement, root_node))));
           return true;
         }
 
@@ -225,8 +223,8 @@ namespace viennacl{
           unsigned int current_arg = 0;
           void* memory[64] = {NULL};
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            for(std::vector<scheduler::statement>::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
-              detail::statement_representation(*iit, memory, current_arg, program_name);
+            for(template_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
+              detail::statement_representation(iit->first, iit->second, memory, current_arg, program_name);
             }
           }
           *program_name='\0';
@@ -316,12 +314,19 @@ namespace viennacl{
       generator.configure_program(p, kernels);
       return p;
     }
+
     static void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
       get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
         viennacl::ocl::enqueue(**it, (*it)->context().get_queue());
       }
+    }
+
+    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
+      generator::code_generator gen;
+      gen.add(s,root_node);
+      viennacl::generator::enqueue(gen);
     }
 
   }

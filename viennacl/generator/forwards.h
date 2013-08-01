@@ -24,6 +24,7 @@
 */
 
 #include <map>
+#include <list>
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
 
@@ -41,19 +42,19 @@ namespace viennacl{
 
       enum node_type{
         LHS_NODE_TYPE,
-        PARENT_TYPE,
+        PARENT_NODE_TYPE,
         RHS_NODE_TYPE
       };
 
       class mapped_container;
 
-      typedef std::pair<std::size_t, node_type> index_info;
-      typedef std::map< index_info, tools::shared_ptr<detail::mapped_container> > mapping_type;
-
+      typedef std::pair<scheduler::statement_node const *, node_type> key_type;
+      typedef std::map<key_type, tools::shared_ptr<detail::mapped_container> > mapping_type;
 
       template<class TraversalFunctor>
-      static void traverse(scheduler::statement::container_type const & array, TraversalFunctor const & fun, bool deep_traversal, index_info const & key = std::make_pair(0, PARENT_TYPE));
+      static void traverse(scheduler::statement const & statement, scheduler::statement_node_type const & root_node, TraversalFunctor const & fun, bool prod_as_tree, bool recurse_lhs = true, bool recurse_rhs = true);
       static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_container const & s);
+      static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_container const & s);
       static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_container & s);
       static const char * generate(scheduler::operation_node_type arg);
 

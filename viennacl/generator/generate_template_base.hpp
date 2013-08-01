@@ -42,7 +42,7 @@ namespace viennacl{
     /** @brief Base class for an optimization profile */
     class template_base{
       public:
-        typedef std::vector<scheduler::statement> statements_type;
+        typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_type;
 
         class profile{
           protected:
@@ -105,10 +105,8 @@ namespace viennacl{
           std::set<std::string> already_generated;
           profile_.kernel_arguments(statements_, prototype);
           detail::map_all_statements(statements_.begin(), statements_.end(), mapping_);
-          for(std::size_t i = 0 ; i < mapping_.size() ; ++i){
-            for(detail::mapping_type::iterator it = mapping_[i].begin() ; it != mapping_[i].end() ; ++it){
-              it->second->append_kernel_arguments(already_generated, prototype, profile_.vectorization());
-            }
+          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
+            detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, profile_.vectorization(), mapping_[std::distance(statements_.begin(), it)]), true, true, true);
           }
           prototype.erase(prototype.size()-1); //Last comma pruned
           return prototype;

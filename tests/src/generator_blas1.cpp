@@ -94,13 +94,6 @@ double diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
 }
 
 
-void execute_statement(viennacl::scheduler::statement const & s){
-  generator::code_generator gen;
-  gen.add(viennacl::scheduler::statement(s));
-  viennacl::generator::enqueue(gen);
-  viennacl::backend::finish();
-}
-
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     int retval = EXIT_SUCCESS;
@@ -138,28 +131,42 @@ int test_vector ( Epsilon const& epsilon) {
 
     // --------------------------------------------------------------------------      
 
-//    std::cout << "w = x + y ..." << std::endl;
-//    cw = cx + cy;
-//    execute_statement(viennacl::scheduler::statement(w, viennacl::op_assign(), x + y));
-//    CHECK_RESULT(cw, w, w = x + y);
+    {
+    std::cout << "w = x + y ..." << std::endl;
+    cw = cx + cy;
+    viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
+    generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    CHECK_RESULT(cw, w, w = x + y);
+    }
 
+    {
+    std::cout << "y = w + x ..." << std::endl;
+    cy = cw + cx;
+    viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
+    generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    CHECK_RESULT(cy, y, y = w + x);
+    }
 
-//    std::cout << "y = w + x ..." << std::endl;
-//    cy = cw + cx;
-//    execute_statement(viennacl::scheduler::statement(y, viennacl::op_assign(), w + x));
-//    CHECK_RESULT(cy, y, y = w + x);
+    {
+    std::cout << "x = y + w ..." << std::endl;
+    cx = cy + cw;
+    viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
+    generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    CHECK_RESULT(cx, x, x = y + w);
+    }
 
-//    std::cout << "x = y + w ..." << std::endl;
-//    cx = cy + cw;
-//    execute_statement(viennacl::scheduler::statement(x, viennacl::op_assign(), y + w));
-//    CHECK_RESULT(cx, x, x = y + w);
-
+    {
     std::cout << "s = inner_prod(x,y)..." << std::endl;
     s = 0;
     for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-    execute_statement(viennacl::scheduler::statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y)));
+    viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
+    generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
     CHECK_RESULT(s, gs, s = inner_prod(x,y));
-
+    }
 //    {
 //        std::cout << "w = x > 0.42" << std::endl;
 //        for(unsigned int i=0 ; i < size ; ++i){
@@ -298,9 +305,8 @@ int test_matrix ( Epsilon const& epsilon) {
     {
       std::cout << "C = A + B ..." << std::endl;
       cC     = ( cA + cB );
-      generator::code_generator gen;
-      gen.add(viennacl::scheduler::statement(C, viennacl::op_assign(), A + B));
-      generator::enqueue(gen);
+      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
+      generator::generate_enqueue_statement(statement, statement.array()[0]);
       viennacl::backend::finish();
       CHECK_RESULT(cC, C, C=A+B)
     }
@@ -461,43 +467,44 @@ int main(int argc, char* argv[]){
                         return retval;
               }
 
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "## Test :: Matrix" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
 
-                {
-                    double epsilon = 1.0E-4;
-                    std::cout << "# Testing setup:" << std::endl;
+              std::cout << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "## Test :: Matrix" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
 
-                    std::cout << "  numeric: float" << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    std::cout << "  Row-Major"      << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    retval = test_matrix<float, viennacl::row_major> (epsilon);
+              {
+                  double epsilon = 1.0E-4;
+                  std::cout << "# Testing setup:" << std::endl;
 
-                    std::cout << "  --------------" << std::endl;
-                    std::cout << "  Column-Major"      << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    retval &= test_matrix<float, viennacl::column_major> (epsilon);
+                  std::cout << "  numeric: float" << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Row-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval = test_matrix<float, viennacl::row_major> (epsilon);
 
-                    std::cout << "  numeric: double" << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    std::cout << "  Row-Major"      << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    retval = test_matrix<double, viennacl::row_major> (epsilon);
+//                  std::cout << "  --------------" << std::endl;
+//                  std::cout << "  Column-Major"      << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  retval &= test_matrix<float, viennacl::column_major> (epsilon);
 
-                    std::cout << "  --------------" << std::endl;
-                    std::cout << "  Column-Major"      << std::endl;
-                    std::cout << "  --------------" << std::endl;
-                    retval &= test_matrix<double, viennacl::column_major> (epsilon);
+//                  std::cout << "  numeric: double" << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  std::cout << "  Row-Major"      << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  retval = test_matrix<double, viennacl::row_major> (epsilon);
 
-                    if ( retval == EXIT_SUCCESS )
-                        std::cout << "# Test passed" << std::endl;
-                    else
-                        return retval;
-                }
+//                  std::cout << "  --------------" << std::endl;
+//                  std::cout << "  Column-Major"      << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
+
+                  if ( retval == EXIT_SUCCESS )
+                      std::cout << "# Test passed" << std::endl;
+                  else
+                      return retval;
+              }
 
             }
         }

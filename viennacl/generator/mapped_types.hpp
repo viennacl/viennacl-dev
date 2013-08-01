@@ -41,10 +41,10 @@ namespace viennacl{
       class mapped_container{
         protected:
           struct node_info{
-              node_info() : mapping(NULL), array(NULL) { }
+              node_info() : mapping(NULL), statement(NULL), root_node(NULL) { }
               mapping_type const * mapping;
-              statement::container_type const * array;
-              index_info index;
+              scheduler::statement const * statement;
+              scheduler::statement_node const * root_node;
           };
           virtual std::string generate_default(std::pair<std::string, std::string> const & index) const = 0;
           virtual std::string append_vector_size(std::string const & scalartype, unsigned int) const { return scalartype; }
@@ -70,12 +70,12 @@ namespace viennacl{
       class mapped_binary_leaf : public mapped_container{
         public:
           mapped_binary_leaf(std::string const & scalartype) : mapped_container(scalartype){ }
-          node_info lhs() const { return lhs_; }
-          node_info rhs() const { return rhs_; }
+          mapping_type const & mapping() const { return *info_.mapping; }
+          scheduler::statement const & statement() const { return *info_.statement; }
+          scheduler::statement_node const & root_node() const { return *info_.root_node; }
           std::string generate_default(std::pair<std::string, std::string> const &) const { return "";}
         protected:
-          node_info lhs_;
-          node_info rhs_;
+          node_info info_;
       };
 
       class mapped_matrix_product : public mapped_binary_leaf{
@@ -196,9 +196,9 @@ namespace viennacl{
       class mapped_vector : public mapped_buffer{
           friend class map_functor;
           std::string offset(std::pair<std::string, std::string> const & index) const {
-            if(access_node_.array){
+            if(info_.statement){
               std::string str;
-              detail::traverse(*access_node_.array, detail::expression_generation_traversal(index, -1, str, *access_node_.mapping), true, access_node_.index);
+              detail::traverse(*info_.statement, *info_.root_node, detail::expression_generation_traversal(index, -1, str, *info_.mapping), true, false, true);
               return str;
             }
             else
@@ -216,7 +216,8 @@ namespace viennacl{
         public:
           mapped_vector(std::string const & scalartype) : mapped_buffer(scalartype){ }
         private:
-          node_info access_node_;
+          node_info info_;
+
           std::string start_name_;
           std::string stride_name_;
           std::string shift_name_;
@@ -321,6 +322,10 @@ namespace viennacl{
       static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_container & s){
         if(mapped_handle * p = dynamic_cast<mapped_handle  *>(&s))
           p->fetch(index, vectorization, fetched, stream);
+      }
+
+      static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_container const & s){
+        return s.append_kernel_arguments(already_generated, str, vector_size);
       }
 
     }

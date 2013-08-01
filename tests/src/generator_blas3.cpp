@@ -131,9 +131,8 @@ int test_prod(Epsilon const& epsilon,
    {
        C     = viennacl::linalg::prod(A, B);
 
-       viennacl::generator::code_generator op;
-       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,vcl_B)));
-       viennacl::generator::enqueue(op);
+       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,vcl_B));
+       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
@@ -150,9 +149,8 @@ int test_prod(Epsilon const& epsilon,
    std::cout << "Testing C = trans(A) * B ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(trans(A_trans), B);
-       viennacl::generator::code_generator op;
-       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),vcl_B)));
-       viennacl::generator::enqueue(op);
+       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),vcl_B));
+       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
@@ -167,9 +165,8 @@ int test_prod(Epsilon const& epsilon,
    std::cout << "Testing C = A * trans(B) ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(A,trans(B_trans));
-       viennacl::generator::code_generator op;
-       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans))));
-       viennacl::generator::enqueue(op);
+       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)));
+       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
@@ -184,9 +181,8 @@ int test_prod(Epsilon const& epsilon,
    std::cout << "Testing C = trans(A) * trans(B) ..." << std::endl;
    {
        C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-       viennacl::generator::code_generator op;
-       op.add(viennacl::scheduler::statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans))));
-       viennacl::generator::enqueue(op);
+       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)));
+       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
        act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )

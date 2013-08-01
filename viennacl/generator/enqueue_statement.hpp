@@ -118,17 +118,17 @@ namespace viennacl{
           viennacl::ocl::kernel & kernel_;
       };
 
-      static void enqueue_statement(scheduler::statement const & statement, std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel){
-          scheduler::statement::container_type expr = statement.array();
-          for(std::size_t i = 0 ; i < expr.size() ; ++i){
-            scheduler::statement_node node = expr[i];
+      static void enqueue_statement(scheduler::statement const & statement, scheduler::statement_node const & root_node, std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel){
+        if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+          enqueue_statement(statement, statement.array()[root_node.lhs.node_index], memory, current_arg, kernel);
+        else
+          utils::call_on_element(root_node.lhs.type_family, root_node.lhs.type, root_node.lhs, enqueue_functor(memory, current_arg, kernel));
 
-            if(node.lhs.type_family!=COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(node.lhs.type_family, node.lhs.type, node.lhs, enqueue_functor(memory, current_arg, kernel));
+        if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
+          enqueue_statement(statement, statement.array()[root_node.rhs.node_index], memory, current_arg, kernel);
+        else
+          utils::call_on_element(root_node.rhs.type_family, root_node.rhs.type, root_node.rhs, enqueue_functor(memory, current_arg, kernel));
 
-            if(node.rhs.type_family!=COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(node.rhs.type_family, node.rhs.type, node.rhs, enqueue_functor(memory, current_arg, kernel));
-          }
       }
 
     }

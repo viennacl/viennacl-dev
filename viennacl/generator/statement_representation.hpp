@@ -148,10 +148,10 @@ namespace viennacl{
           char *& ptr_;
       };
 
-      static void statement_representation(scheduler::statement const & statement, void* (&memory)[64], unsigned int & current_arg, char*& ptr){
+      static void statement_representation(scheduler::statement const & statement, scheduler::statement_node const & root_node, void* (&memory)[64], unsigned int & current_arg, char*& ptr){
           scheduler::statement::container_type expr = statement.array();
           for(std::size_t i = 0 ; i < expr.size() ; ++i){
-            scheduler::statement_node node = expr[i];
+            scheduler::statement_node  const & node = expr[i];
             if(node.lhs.type_family!=COMPOSITE_OPERATION_FAMILY){
               utils::call_on_element(node.lhs.type_family, node.lhs.type, node.lhs, representation_functor(memory, current_arg, ptr));
             }

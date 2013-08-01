@@ -49,16 +49,16 @@ namespace viennacl{
         static void fill_scalartypes(statements_type statements, std::vector<const char *> & res){
           res.reserve(statements.size());
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-	    if (it->array()[0].lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
-	    {
-	      switch(it->array()[0].lhs.type){
-              case scheduler::FLOAT_TYPE:
-                res.push_back("float");
-                break;
-              case scheduler::DOUBLE_TYPE:
-                res.push_back("double");
-                break;
-              default:
+            if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
+            {
+              switch(it->second.lhs.type){
+                case scheduler::FLOAT_TYPE:
+                  res.push_back("float");
+                  break;
+                case scheduler::DOUBLE_TYPE:
+                  res.push_back("double");
+                  break;
+                default:
                 res.push_back("");
                 break;
 	      }
@@ -87,16 +87,16 @@ namespace viennacl{
                 temporaries_.reserve(statements.size());
                 //set temporary buffer argument
                 for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-                  scheduler::statement::container_type const & exprs = it->array();
+                  scheduler::statement::container_type const & array = it->first.array();
                   std::size_t size_of_scalartype;
                   const char * scalartype_name;
-		  if (exprs[0].lhs.type_family != scheduler::SCALAR_TYPE_FAMILY) throw "not implemented";
-                  switch(exprs[0].lhs.type){
+                  if (array[0].lhs.type_family != scheduler::SCALAR_TYPE_FAMILY) throw "not implemented";
+                  switch(array[0].lhs.type){
                     case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
                     case scheduler::DOUBLE_TYPE: scalartype_name = "double"; size_of_scalartype = sizeof(double); break;
                     default: throw "not implemented"; break;
                   }
-                  for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
+                  for(scheduler::statement::container_type::const_iterator iit = array.begin() ; iit != array.end() ; ++iit){
                     if(iit->op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                       temporaries_.push_back(std::make_pair(scalartype_name, viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*size_of_scalartype)));
                     }
@@ -105,7 +105,7 @@ namespace viennacl{
               }
             }
 
-            void set_size_argument(viennacl::scheduler::statement const & s, unsigned int & n_arg, viennacl::ocl::kernel & k) const {
+            void set_size_argument(viennacl::scheduler::statement const & s, viennacl::scheduler::statement_node const & root_node, unsigned int & n_arg, viennacl::ocl::kernel & k) const {
               scheduler::statement::container_type exprs = s.array();
               for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
                 if(it->op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
@@ -169,7 +169,7 @@ namespace viennacl{
               }
 
               //set arguments
-              set_size_argument(statements.front(), n_arg, k);
+              set_size_argument(statements.front().first, statements.front().second, n_arg, k);
               for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it){
                 k.arg(n_arg++, it->second);
               }
@@ -219,8 +219,8 @@ namespace viennacl{
           std::set<std::string>  fetched;
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k){
-            detail::traverse(*exprs[k]->lhs().array, detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
-            detail::traverse(*exprs[k]->rhs().array, detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
+            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, exprs[k]->mapping()), true, true, false);
+            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, exprs[k]->mapping()), true, false, true);
           }
 
 
@@ -229,20 +229,21 @@ namespace viennacl{
             if(profile_.vectorization_ > 1){
               for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
                 std::string expr_str;
-                detail::traverse(*exprs[k]->lhs().array, detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
+                detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, exprs[k]->mapping()), true, true, false);
                 expr_str += "*";
-                detail::traverse(*exprs[k]->rhs().array, detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
+                detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, exprs[k]->mapping()), true, false, true);
                 stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
               }
             }
             else{
               std::string expr_str;
-              detail::traverse(*exprs[k]->lhs().array, detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, *exprs[k]->lhs().mapping), false, exprs[k]->lhs().index);
+              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, exprs[k]->mapping()), true, true, false);
               expr_str += "*";
-              detail::traverse(*exprs[k]->rhs().array, detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, *exprs[k]->rhs().mapping), false, exprs[k]->rhs().index);
+              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, exprs[k]->mapping()), true, false, true);
               stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
             }
           }
+
 
           stream.dec_tab();
           stream << "}" << std::endl;
@@ -322,7 +323,7 @@ namespace viennacl{
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             std::string str;
-            detail::traverse(it->array(), detail::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping_[i++]), false);
+            detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping_[i++]), false);
             stream << str << ";" << std::endl;
           }
 
