@@ -260,7 +260,7 @@ namespace viennacl
           std::cout << "Number of devices in context: " << devices_.size() << std::endl;
           throw "queue not found!";
 
-          return (it->second)[current_queue_id_];
+          //return (it->second)[current_queue_id_];
         }
 
         //get a particular queue:
