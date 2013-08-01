@@ -104,7 +104,7 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
   vcl_amg.setup();
 
   std::cout << " * CG solver (ublas types)..." << std::endl;
-  run_solver(ublas_matrix, ublas_vec, ublas_result, cg_solver, ublas_amg);
+  //run_solver(ublas_matrix, ublas_vec, ublas_result, cg_solver, ublas_amg);
 
   std::cout << " * CG solver (ViennaCL types)..." << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, vcl_amg);
@@ -122,7 +122,23 @@ int main()
   std::cout << "----------------------------------------------" << std::endl;
 
 #ifdef VIENNACL_WITH_OPENCL
+  // Optional: Customize OpenCL backend
+  viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
+  std::vector<viennacl::ocl::device> const & devices = pf.devices();
+
+  // Optional: Set first device to first context:
+  viennacl::ocl::setup_context(0, devices[0]);
+
+  // Optional: Set second device for second context (use the same device for the second context if only one device available):
+  if (devices.size() > 1)
+    viennacl::ocl::setup_context(1, devices[1]);
+  else
+    viennacl::ocl::setup_context(1, devices[0]);
+
   std::cout << viennacl::ocl::current_device().info() << std::endl;
+  viennacl::context ctx(viennacl::ocl::get_context(1));
+#else
+  viennacl::context ctx;
 #endif
 
   typedef float    ScalarType;  // feel free to change this to double if supported by your device
@@ -158,9 +174,9 @@ int main()
     return 0;
   }
 
-  viennacl::vector<ScalarType> vcl_vec(ublas_vec.size());
-  viennacl::vector<ScalarType> vcl_result(ublas_vec.size());
-  viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec.size(), ublas_vec.size());
+  viennacl::vector<ScalarType> vcl_vec(ublas_vec.size(), ctx);
+  viennacl::vector<ScalarType> vcl_result(ublas_vec.size(), ctx);
+  viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec.size(), ublas_vec.size(), ctx);
 
   // Copy to GPU
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
