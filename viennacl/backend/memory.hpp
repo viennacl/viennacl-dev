@@ -108,6 +108,9 @@ namespace viennacl
             handle.raw_size(size_in_bytes);
             break;
 #endif
+          case MEMORY_NOT_INITIALIZED:
+            throw "not initialised!";
+	    break;
           default:
             throw "unknown memory handle!";
         }
@@ -158,6 +161,9 @@ namespace viennacl
             cuda::memory_copy(src_buffer.cuda_handle(), dst_buffer.cuda_handle(), src_offset, dst_offset, bytes_to_copy);
             break;
 #endif
+          case MEMORY_NOT_INITIALIZED:
+	    throw "not initialised!";
+	    break;
           default:
             throw "unknown memory handle!";
         }
@@ -194,6 +200,9 @@ namespace viennacl
           dst_buffer.raw_size(src_buffer.raw_size());
           break;
 #endif
+        case MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "unknown memory handle!";
       }
@@ -231,6 +240,9 @@ namespace viennacl
             cuda::memory_write(dst_buffer.cuda_handle(), dst_offset, bytes_to_write, ptr, async);
             break;
 #endif
+          case MEMORY_NOT_INITIALIZED:
+	    throw "not initialised!";
+	    break;
           default:
             throw "unknown memory handle!";
         }
@@ -271,6 +283,9 @@ namespace viennacl
             cuda::memory_read(src_buffer.cuda_handle(), src_offset, bytes_to_read, ptr, async);
             break;
 #endif
+          case MEMORY_NOT_INITIALIZED:
+	    throw "not initialised!";
+	    break;
           default:
             throw "unknown memory handle!";
         }

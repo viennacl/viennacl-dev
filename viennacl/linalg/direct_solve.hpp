@@ -71,6 +71,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(A, B, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -104,6 +107,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(A, proxy_B, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -138,6 +144,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(proxy_A, B, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -171,6 +180,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -203,6 +215,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(mat, vec, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -236,6 +251,9 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(proxy, vec, SOLVERTAG());
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }

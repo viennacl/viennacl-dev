@@ -66,6 +66,9 @@ namespace viennacl
           viennacl::linalg::cuda::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -101,6 +104,9 @@ namespace viennacl
                                        vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -136,6 +142,9 @@ namespace viennacl
                                          vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -165,6 +174,9 @@ namespace viennacl
           viennacl::linalg::cuda::vector_assign(vec1, alpha);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -196,6 +208,9 @@ namespace viennacl
           viennacl::linalg::cuda::vector_swap(vec1, vec2);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -232,6 +247,9 @@ namespace viennacl
           viennacl::linalg::cuda::element_op(vec1, proxy);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -392,6 +410,9 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -462,6 +483,9 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_cpu(vec1, vec2, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -532,6 +556,9 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_impl(x, y_tuple, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -562,6 +589,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_1_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -607,6 +637,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_1_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -652,6 +685,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_2_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -695,6 +731,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_2_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -740,6 +779,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_inf_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -783,6 +825,9 @@ namespace viennacl
           viennacl::linalg::cuda::norm_inf_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -825,6 +870,9 @@ namespace viennacl
         case viennacl::CUDA_MEMORY:
           return viennacl::linalg::cuda::index_norm_inf(vec);
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
@@ -871,6 +919,9 @@ namespace viennacl
           viennacl::linalg::cuda::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+	  throw "not initialised!";
+	  break;
         default:
           throw "not implemented";
       }
