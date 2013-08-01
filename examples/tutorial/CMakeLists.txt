@@ -88,3 +88,15 @@ if (ENABLE_CUDA)
 
 endif (ENABLE_CUDA)
 
+#
+# Part 4: Tutorials on using the shared C-library
+#
+if(ENABLE_CUDA)
+ if(ENABLE_OPENCL)
+  include_directories(${PROJECT_SOURCE_DIR}/libviennacl/include/)
+  cuda_add_executable(libviennacl libviennacl.cu)
+  target_link_libraries(libviennacl viennacl)
+  set_target_properties(libviennacl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL -DVIENNACL_WITH_CUDA")
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DVIENNACL_WITH_OPENCL)
+ endif(ENABLE_OPENCL)
+endif(ENABLE_CUDA)
