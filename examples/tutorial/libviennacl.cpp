@@ -49,6 +49,7 @@ int main()
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_x), 1, 2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_y), 0, 2);
 
+  std::cout << " --- Host ---" << std::endl;
   std::cout << "host_x: " << host_x << std::endl;
   std::cout << "host_y: " << host_y << std::endl;
 
@@ -66,6 +67,7 @@ int main()
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 2,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_y), 1, 2);
 
+  std::cout << " --- CUDA ---" << std::endl;
   std::cout << "cuda_x: " << cuda_x << std::endl;
   std::cout << "cuda_y: " << cuda_y << std::endl;
 #endif
@@ -74,6 +76,7 @@ int main()
   // Part 3: OpenCL-based execution
   //
 
+#ifdef VIENNACL_WITH_OPENCL
   std::size_t context_id = 0;
   viennacl::vector<float> opencl_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
   viennacl::vector<float> opencl_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
@@ -86,9 +89,10 @@ int main()
                       viennacl::traits::opencl_handle(opencl_x).get(), 1, 2,
                       viennacl::traits::opencl_handle(opencl_y).get(), 1, 2);
 
+  std::cout << " --- OpenCL ---" << std::endl;
   std::cout << "opencl_x: " << opencl_x << std::endl;
   std::cout << "opencl_y: " << opencl_y << std::endl;
-
+#endif
 
   //
   //  That's it.
