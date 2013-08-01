@@ -260,7 +260,7 @@ namespace viennacl{
                 return '(' + i + ')' + '*' + size2_ + "+ (" + j + ')';
             else
               if(i=="0")
-                return  "(" + i + ')' + '*' + size1_;
+                return  "(" + j + ')' + '*' + size1_;
               else
                 return  '(' + i + ')' + "+ (" + j + ')' + '*' + size1_;
           }
