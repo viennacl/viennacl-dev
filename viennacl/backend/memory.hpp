@@ -109,10 +109,10 @@ namespace viennacl
             break;
 #endif
           case MEMORY_NOT_INITIALIZED:
-            throw "not initialised!";
-	    break;
+            throw memory_exception("not initialised!");
+            break;
           default:
-            throw "unknown memory handle!";
+            throw memory_exception("unknown memory handle!");
         }
       }
     }
@@ -162,10 +162,10 @@ namespace viennacl
             break;
 #endif
           case MEMORY_NOT_INITIALIZED:
-	    throw "not initialised!";
-	    break;
+            throw memory_exception("not initialised!");
+            break;
           default:
-            throw "unknown memory handle!";
+            throw memory_exception("unknown memory handle!");
         }
       }
     }
@@ -201,10 +201,10 @@ namespace viennacl
           break;
 #endif
         case MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "unknown memory handle!";
+          throw memory_exception("unknown memory handle!");
       }
     }
 
@@ -241,10 +241,10 @@ namespace viennacl
             break;
 #endif
           case MEMORY_NOT_INITIALIZED:
-	    throw "not initialised!";
+            throw memory_exception("not initialised!");
 	    break;
           default:
-            throw "unknown memory handle!";
+            throw memory_exception("unknown memory handle!");
         }
       }
     }
@@ -284,10 +284,10 @@ namespace viennacl
             break;
 #endif
           case MEMORY_NOT_INITIALIZED:
-	    throw "not initialised!";
+            throw memory_exception("not initialised!");
 	    break;
           default:
-            throw "unknown memory handle!";
+            throw memory_exception("unknown memory handle!");
         }
       }
     }

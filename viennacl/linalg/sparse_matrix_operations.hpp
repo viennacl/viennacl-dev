@@ -67,10 +67,10 @@ namespace viennacl
             break;
 #endif
           case viennacl::MEMORY_NOT_INITIALIZED:
-	    throw "not initialised!";
-	    break;
+            throw memory_exception("not initialised!");
+            break;
           default:
-            throw "not implemented";
+            throw memory_exception("not implemented");
         }
       }
 
@@ -113,10 +113,10 @@ namespace viennacl
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -155,10 +155,10 @@ namespace viennacl
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -198,10 +198,10 @@ namespace viennacl
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -236,10 +236,10 @@ namespace viennacl
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -275,10 +275,10 @@ namespace viennacl
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
-	  throw "not initialised!";
-	  break;
+          throw memory_exception("not initialised!");
+          break;
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -314,10 +314,10 @@ namespace viennacl
             break;
   #endif
           case viennacl::MEMORY_NOT_INITIALIZED:
-	    throw "not initialised!";
-	    break;
+            throw memory_exception("not initialised!");
+            break;
           default:
-            throw "not implemented";
+            throw memory_exception("not implemented");
         }
       }
 

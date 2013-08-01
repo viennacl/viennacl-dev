@@ -385,6 +385,21 @@ namespace viennacl
     , OPENCL_MEMORY
     , CUDA_MEMORY
   };
+  
+  /** @brief Exception class in case of memory errors */
+  class memory_exception : public std::exception
+  {
+  public:
+    memory_exception() : message_() {}
+    memory_exception(std::string message) : message_("ViennaCL: Internal memory error: " + message) {}
+
+    virtual const char* what() const throw() { return message_.c_str(); }
+
+    virtual ~memory_exception() throw() {}
+  private:
+    std::string message_;
+  };
+
 
   class context;
 
