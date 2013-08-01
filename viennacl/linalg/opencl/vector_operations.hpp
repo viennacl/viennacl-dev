@@ -231,7 +231,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T>
-      void vector_assign(vector_base<T> & vec1, const T & alpha)
+      void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
@@ -239,10 +239,12 @@ namespace viennacl
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
                                                     viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+
+        cl_uint size = up_to_internal_size ? cl_uint(vec1.internal_size()) : cl_uint(viennacl::traits::size(vec1));
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
                                  cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
+                                 size,
                                  cl_uint(vec1.internal_size()),     //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
                                  viennacl::traits::opencl_handle(T(alpha)) )
                               );

@@ -157,21 +157,21 @@ namespace viennacl
     * @param alpha  The value to be assigned
     */
     template <typename T>
-    void vector_assign(vector_base<T> & vec1, const T & alpha)
+    void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::vector_assign(vec1, alpha);
+          viennacl::linalg::host_based::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::vector_assign(vec1, alpha);
+          viennacl::linalg::opencl::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::vector_assign(vec1, alpha);
+          viennacl::linalg::cuda::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

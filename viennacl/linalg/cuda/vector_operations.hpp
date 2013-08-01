@@ -783,7 +783,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T, typename S1>
-      void vector_assign(vector_base<T> & vec1, const S1 & alpha)
+      void vector_assign(vector_base<T> & vec1, const S1 & alpha, bool up_to_internal_size = false)
       {
         typedef T        value_type;
 
@@ -791,10 +791,12 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
+        unsigned int size = up_to_internal_size ? static_cast<unsigned int>(vec1.internal_size()) : static_cast<unsigned int>(viennacl::traits::size(vec1));
+
         vector_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                            static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                            static_cast<unsigned int>(viennacl::traits::stride(vec1)),
-                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                           size,
                                            static_cast<unsigned int>(vec1.internal_size()),  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
                                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );

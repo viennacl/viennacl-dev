@@ -391,9 +391,8 @@ namespace viennacl
       {
         if (size_ > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
-          pad();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+          clear();
         }
       }
 
@@ -456,9 +455,8 @@ namespace viennacl
       {
         if (size_ > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp[0]));
-          pad();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+          clear();
         }
         self_type::operator=(proxy);
       }
@@ -483,6 +481,7 @@ namespace viennacl
             size_ = vec.size();
             elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
+            pad();
           }
 
           viennacl::linalg::av(*this,
@@ -591,7 +590,10 @@ namespace viennacl
         {
           size_ = v.size();
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            pad();
+          }
         }
 
         if (size_ > 0)
@@ -862,7 +864,7 @@ namespace viennacl
       */
       void clear()
       {
-        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0));
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
       }
 
       viennacl::memory_types memory_domain() const
@@ -892,7 +894,7 @@ namespace viennacl
         if (internal_size() != size())
         {
           std::vector<SCALARTYPE> pad(internal_size() - size());
-          viennacl::backend::memory_write(elements_, 0, sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
+          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * pad.size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
         }
       }
 
@@ -950,6 +952,7 @@ namespace viennacl
 
           fast_copy(temp, *this);
           size_ = new_size;
+          pad();
         }
 
       }
