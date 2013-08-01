@@ -371,7 +371,7 @@ namespace viennacl
           viennacl::context host_context(viennacl::MAIN_MEMORY);
           viennacl::compressed_matrix<ScalarType> mat(host_context);
 
-          //mat = A;
+          //mat = A;  //TODO: Get this working again! Otherwise huge overhead in conversion.
           viennacl::copy(A, temp);
           viennacl::copy(temp, mat);
 
@@ -458,8 +458,10 @@ namespace viennacl
           //
           // Move data to GPU:
           //
-          viennacl::copy(L_transposed, gpu_L_trans);
-          viennacl::copy(U_transposed, gpu_U_trans);
+          tools::const_sparse_matrix_adapter<ScalarType, unsigned int> adapted_L_transposed(L_transposed, matrix_size, matrix_size);
+          tools::const_sparse_matrix_adapter<ScalarType, unsigned int> adapted_U_transposed(U_transposed, matrix_size, matrix_size);
+          viennacl::copy(adapted_L_transposed, gpu_L_trans);
+          viennacl::copy(adapted_U_transposed, gpu_U_trans);
           viennacl::copy(entries_D, gpu_D);
         }
 
