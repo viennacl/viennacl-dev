@@ -53,8 +53,7 @@ namespace viennacl
         public:
             typedef typename std::map<unsigned int, ScalarType>::iterator iterator;
             typedef typename std::map<unsigned int, ScalarType>::const_iterator const_iterator;
-            sparse_vector(){
-            }
+            sparse_vector() {}
 
             /** @brief Set the index of the vector in the original matrix
              * May only be called once.

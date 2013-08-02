@@ -80,7 +80,7 @@ namespace viennacl
               iteration_limit_(iteration_limit),
               residual_threshold_(residual_threshold),
               is_static_(is_static),
-              is_right_(is_right) {};
+              is_right_(is_right) {}
 
               double getResidualNormThreshold() const
               { return residual_norm_threshold_; }

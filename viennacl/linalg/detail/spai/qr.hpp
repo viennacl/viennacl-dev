@@ -194,7 +194,8 @@ namespace viennacl
           * @param b beta
           */
           template<typename MatrixType, typename VectorType, typename ScalarType>
-          void householder_vector(const MatrixType& A, unsigned int j, VectorType& v, ScalarType& b){
+          void householder_vector(const MatrixType& A, unsigned int j, VectorType& v, ScalarType& b)
+          {
               ScalarType sg;
               //
               dot_prod(A, j+1, sg);
@@ -222,7 +223,8 @@ namespace viennacl
           * @param b beta
           */
           template<typename MatrixType, typename VectorType, typename ScalarType>
-          void apply_householder_reflection(MatrixType& A, unsigned int iter_cnt, VectorType& v, ScalarType b){
+          void apply_householder_reflection(MatrixType& A, unsigned int iter_cnt, VectorType& v, ScalarType b)
+          {
               //update every column of matrix A
               ScalarType in_prod_res;
               for(unsigned int i = iter_cnt; i < static_cast<unsigned int>(A.size2()); ++i){
@@ -240,7 +242,8 @@ namespace viennacl
           * @param v vector that should be stored
           */
           template<typename MatrixType, typename VectorType>
-          void store_householder_vector(MatrixType& A, unsigned int ind, VectorType& v){
+          void store_householder_vector(MatrixType& A, unsigned int ind, VectorType& v)
+          {
               for(unsigned int i = ind; i < static_cast<unsigned int>(A.size1()); ++i){
                   A(i, ind-1) = v(i);
               }
@@ -253,7 +256,8 @@ namespace viennacl
           * @param b_v vector of betas
           */
           template<typename MatrixType, typename VectorType>
-          void single_qr(MatrixType& R, VectorType& b_v){
+          void single_qr(MatrixType& R, VectorType& b_v)
+          {
               typedef typename MatrixType::value_type ScalarType;
               if((R.size1() > 0) && (R.size2() > 0)){
                   VectorType v = (VectorType)boost::numeric::ublas::zero_vector<ScalarType>(R.size1());
@@ -290,7 +294,8 @@ namespace viennacl
           * @param max_size max size that corresponds to that container
           */
           template <typename SizeType>
-          void get_max_block_size(const std::vector<std::vector<SizeType> >& inds, SizeType max_size){
+          void get_max_block_size(const std::vector<std::vector<SizeType> >& inds, SizeType & max_size)
+          {
               max_size = 0;
               for(std::size_t i = 0; i < inds.size(); ++i){
                   if(inds[i].size() > max_size){
@@ -306,7 +311,8 @@ namespace viennacl
           * @param res result value
           */
           template<typename MatrixType, typename VectorType, typename ScalarType>
-          void custom_dot_prod(const MatrixType& A, const VectorType& v, unsigned int ind, ScalarType& res){
+          void custom_dot_prod(const MatrixType& A, const VectorType& v, unsigned int ind, ScalarType& res)
+          {
               res = static_cast<ScalarType>(0);
               for(unsigned int j = ind; j < A.size1(); ++j){
                   if(j == ind){
@@ -323,7 +329,8 @@ namespace viennacl
           * @param y output vector
           */
           template<typename MatrixType, typename VectorType>
-          void apply_q_trans_vec(const MatrixType& R, const VectorType& b_v, VectorType& y){
+          void apply_q_trans_vec(const MatrixType& R, const VectorType& b_v, VectorType& y)
+          {
               typedef typename MatrixType::value_type ScalarType;
               ScalarType inn_prod = static_cast<ScalarType>(0);
               for(std::size_t i = 0; i < R.size2(); ++i){
@@ -369,60 +376,63 @@ namespace viennacl
                         std::vector<std::vector<unsigned int> >& g_J,
                         block_matrix& g_A_I_J_vcl,
                         block_vector& g_bv_vcl,
-                        std::vector<cl_uint>& g_is_update)
+                        std::vector<cl_uint>& g_is_update,
+                        viennacl::context ctx)
           {
-              //typedef typename MatrixType::value_type ScalarType;
-              unsigned int bv_size = 0;
-              unsigned int v_size = 0;
-              //set up arguments for GPU
-              //find maximum size of rows/columns
-              unsigned int local_r_n = 0;
-              unsigned int local_c_n = 0;
-              //find max size for blocks
-              get_max_block_size(g_I, local_r_n);
-              get_max_block_size(g_J, local_c_n);
-              //get size
-              get_size(g_J, bv_size);
-              get_size(g_I, v_size);
-              //get start indices
-              std::vector<cl_uint> start_bv_inds(g_I.size() + 1, 0);
-              std::vector<cl_uint> start_v_inds(g_I.size() + 1, 0);
-              init_start_inds(g_J, start_bv_inds);
-              init_start_inds(g_I, start_v_inds);
-              //init arrays
-              std::vector<ScalarType> b_v(bv_size, static_cast<ScalarType>(0));
-              std::vector<ScalarType> v(v_size, static_cast<ScalarType>(0));
-              //call qr program
-              block_vector v_vcl;
+            viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
 
-              g_bv_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
-                                                                      &(b_v[0]));
+            //typedef typename MatrixType::value_type ScalarType;
+            unsigned int bv_size = 0;
+            unsigned int v_size = 0;
+            //set up arguments for GPU
+            //find maximum size of rows/columns
+            unsigned int local_r_n = 0;
+            unsigned int local_c_n = 0;
+            //find max size for blocks
+            get_max_block_size(g_I, local_r_n);
+            get_max_block_size(g_J, local_c_n);
+            //get size
+            get_size(g_J, bv_size);
+            get_size(g_I, v_size);
+            //get start indices
+            std::vector<cl_uint> start_bv_inds(g_I.size() + 1, 0);
+            std::vector<cl_uint> start_v_inds(g_I.size() + 1, 0);
+            init_start_inds(g_J, start_bv_inds);
+            init_start_inds(g_I, start_v_inds);
+            //init arrays
+            std::vector<ScalarType> b_v(bv_size, static_cast<ScalarType>(0));
+            std::vector<ScalarType> v(v_size, static_cast<ScalarType>(0));
+            //call qr program
+            block_vector v_vcl;
 
-              v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                                  static_cast<unsigned int>(sizeof(ScalarType)*v_size),
-                                                                                                  &(v[0]));
-              //the same as j_start_inds
-              g_bv_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
-                                                                                &(start_bv_inds[0]));
+            g_bv_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                         static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
+                                                         &(b_v[0]));
 
-              v_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
-                                                                                &(start_v_inds[0]));
-              viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
-                                                                                &(g_is_update[0]));
-              //local memory
-              //viennacl::ocl::enqueue(k(vcl_vec, size, viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()), temp));
-              viennacl::ocl::kernel& qr_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr");
-              qr_kernel.local_work_size(0, local_c_n);
-              qr_kernel.global_work_size(0, 256);
-              viennacl::ocl::enqueue(qr_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle1(), g_bv_vcl.handle(),
-                                              v_vcl.handle(), g_A_I_J_vcl.handle2(),
-                                              g_bv_vcl.handle1(), v_vcl.handle1(), g_is_update_vcl,
-                                              viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
-                                              static_cast<cl_uint>(g_I.size())));
+            v_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                      static_cast<unsigned int>(sizeof(ScalarType)*v_size),
+                                                      &(v[0]));
+            //the same as j_start_inds
+            g_bv_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                          static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
+                                                          &(start_bv_inds[0]));
+
+            v_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                       static_cast<unsigned int>(sizeof(cl_uint)*g_I.size()),
+                                                       &(start_v_inds[0]));
+            viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
+                                                                                     &(g_is_update[0]));
+            //local memory
+            //viennacl::ocl::enqueue(k(vcl_vec, size, viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()), temp));
+            viennacl::ocl::kernel& qr_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr");
+            qr_kernel.local_work_size(0, local_c_n);
+            qr_kernel.global_work_size(0, 256);
+            viennacl::ocl::enqueue(qr_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle1(), g_bv_vcl.handle(),
+                                            v_vcl.handle(), g_A_I_J_vcl.handle2(),
+                                            g_bv_vcl.handle1(), v_vcl.handle1(), g_is_update_vcl,
+                                            viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
+                                            static_cast<cl_uint>(g_I.size())));
 
           }
         }
