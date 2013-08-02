@@ -1147,48 +1147,4 @@ int run_test(double epsilon)
     return EXIT_SUCCESS;
 }
 
-int main (int, const char **)
-{
-  std::cout << std::endl;
-  std::cout << "----------------------------------------------" << std::endl;
-  std::cout << "----------------------------------------------" << std::endl;
-  std::cout << "## Test :: Matrix Range" << std::endl;
-  std::cout << "----------------------------------------------" << std::endl;
-  std::cout << "----------------------------------------------" << std::endl;
-  std::cout << std::endl;
-
-  double epsilon = 1e-4;
-  std::cout << "# Testing setup:" << std::endl;
-  std::cout << "  eps:     " << epsilon << std::endl;
-  std::cout << "  numeric: float" << std::endl;
-  std::cout << " --- row-major ---" << std::endl;
-  if (run_test<viennacl::row_major, float>(epsilon) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-  std::cout << " --- column-major ---" << std::endl;
-  if (run_test<viennacl::column_major, float>(epsilon) != EXIT_SUCCESS)
-    return EXIT_FAILURE;
-
-
-#ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
-#endif
-  {
-    double epsilon = 1e-12;
-    std::cout << "# Testing setup:" << std::endl;
-    std::cout << "  eps:     " << epsilon << std::endl;
-    std::cout << "  numeric: double" << std::endl;
-
-    if (run_test<viennacl::row_major, double>(epsilon) != EXIT_SUCCESS)
-      return EXIT_FAILURE;
-    if (run_test<viennacl::column_major, double>(epsilon) != EXIT_SUCCESS)
-      return EXIT_FAILURE;
-  }
-
-   std::cout << std::endl;
-   std::cout << "------- Test completed --------" << std::endl;
-   std::cout << std::endl;
-
-
-  return EXIT_SUCCESS;
-}
 

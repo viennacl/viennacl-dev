@@ -2,11 +2,12 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
 # tests with CPU backend
-foreach(PROG blas3_prod blas3_solve iterators
+foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
              global_variables
-             matrix-vector matrix
+             matrix_vector
+             matrix_row_float matrix_row_double matrix_col_float matrix_col_double
              scalar scheduler_matrix scheduler_vector sparse
-             vector vector-int vector_multi_inner_prod
+             vector_float vector_double vector_int vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    add_test(${PROG}-cpu ${PROG}-test-cpu)
@@ -15,12 +16,14 @@ endforeach(PROG)
 
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
-  foreach(PROG blas3_prod blas3_solve fft iterators
+  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double fft iterators
                generator_blas1 generator_blas2 generator_blas3 #generator_segmentation
                global_variables
-               matrix-vector matrix nmf qr-method
+               matrix_vector
+               matrix_row_float matrix_row_double matrix_col_float matrix_col_double
+               nmf qr_method
                scalar sparse structured-matrices svd
-               vector vector-int vector_multi_inner_prod
+               vector_float vector_double vector_int vector_multi_inner_prod
                spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
@@ -39,11 +42,12 @@ endif (ENABLE_OPENCL)
 
 # tests with CUDA backend
 if (ENABLE_CUDA)
-  foreach(PROG blas3_prod blas3_solve iterators
+  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
                global_variables
-               matrix-vector matrix
+               matrix_vector
+               matrix_row_float matrix_row_double matrix_col_float matrix_col_double
                scalar sparse
-               vector vector-int vector_multi_inner_prod
+               vector_float vector_double vector_int vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
      add_test(${PROG}-cuda ${PROG}-test-cuda)
