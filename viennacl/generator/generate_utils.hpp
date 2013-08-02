@@ -103,7 +103,7 @@ namespace viennacl{
 
 
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true){
+      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf /* see forwards.h for default argument */){
 
         if(root_node.op.type_family==OPERATION_UNARY_TYPE_FAMILY)
         {
