@@ -120,19 +120,34 @@ namespace viennacl{
 
       template<class Fun>
       static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun){
+        if(root_node.op.type_family==OPERATION_UNARY_TYPE_FAMILY)
+        {
+          //Lhs:
+          if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+            traverse(statement, statement.array()[root_node.lhs.node_index], fun);
+          else
+            fun(&statement, &root_node, LHS_NODE_TYPE);
 
-        if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.lhs.node_index], fun);
-        else
-          fun(&statement, &root_node, LHS_NODE_TYPE);
+          //Self:
+          fun(&statement, &root_node, PARENT_NODE_TYPE);
+        }
+        else if(root_node.op.type_family==OPERATION_BINARY_TYPE_FAMILY)
+        {
+          //Lhs:
+          if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+            traverse(statement, statement.array()[root_node.lhs.node_index], fun);
+          else
+            fun(&statement, &root_node, LHS_NODE_TYPE);
 
-        fun(&statement, &root_node, PARENT_NODE_TYPE);
+          //Self:
+          fun(&statement, &root_node, PARENT_NODE_TYPE);
 
-        if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.rhs.node_index], fun);
-        else
-          fun(&statement, &root_node, RHS_NODE_TYPE);
-
+          //Rhs:
+          if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
+            traverse(statement, statement.array()[root_node.rhs.node_index], fun);
+          else
+            fun(&statement, &root_node, RHS_NODE_TYPE);
+        }
       }
 
       template<class TraversalFunctor>
