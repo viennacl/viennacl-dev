@@ -104,7 +104,17 @@ namespace viennacl{
           std::string prototype;
           std::set<std::string> already_generated;
           profile_.kernel_arguments(statements_, prototype);
-          detail::map_all_statements(statements_.begin(), statements_.end(), mapping_);
+
+          {
+            std::map<void *, std::size_t> memory;
+            unsigned int current_arg = 0;
+            std::size_t i = 0;
+            for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
+              detail::traverse(it->first, it->second, detail::map_functor(memory,current_arg,mapping_[i++]));
+          }
+
+
+
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, profile_.vectorization(), mapping_[std::distance(statements_.begin(), it)]), true, true, true);
           }

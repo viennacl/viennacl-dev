@@ -82,8 +82,8 @@ namespace viennacl{
                     if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
                        ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
                     {
-                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size1_fun())));
-                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size2_fun())));
+                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                       return;
                     }
                     else{
@@ -92,15 +92,15 @@ namespace viennacl{
                       if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
                          ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
                       {
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size1_fun())));
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size2_fun())));
+                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                         return;
                       }
                       else if(current_node->rhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
                               ||current_node->rhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
                       {
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size1_fun())));
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs.type, current_node->lhs, utils::size2_fun())));
+                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                         return;
                       }
                       else{

@@ -59,7 +59,7 @@ namespace viennacl{
               k.global_work_size(1,1);
 
               scheduler::statement_node const & first_node = statements.front().second;
-              viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs.type, first_node.lhs, utils::size_fun());
+              viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs, utils::size_fun());
               k.arg(n_arg++, cl_uint(N/vectorization_));
             }
             void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
@@ -128,8 +128,8 @@ namespace viennacl{
               k.global_work_size(1,group_size2_*num_groups2_);
 
               scheduler::statement_node const & first_node = statements.front().second;
-              k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size1_fun())));
-              k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs.type, first_node.lhs, utils::size2_fun())));
+              k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::size1_fun())));
+              k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::size2_fun())));
             }
 
             void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
