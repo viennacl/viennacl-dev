@@ -176,6 +176,15 @@ int main (int, const char **)
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(gpu_M, gpu_rhs, solver_tag, spai_gpu);
 
+    //
+    // Test 4: FSPAI with GPU:
+    //
+    std::cout << "--- Test 4: GPU-based FSPAI ---" << std::endl;
+    std::cout << " * Preconditioner setup..." << std::endl;
+    viennacl::linalg::fspai_precond<GPUMatrixType> fspai_gpu(gpu_M, viennacl::linalg::fspai_tag());
+    std::cout << " * Iterative solver run..." << std::endl;
+    run_solver(gpu_M, gpu_rhs, solver_tag, fspai_gpu);
+
     return EXIT_SUCCESS;
 }
 

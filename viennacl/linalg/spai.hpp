@@ -240,7 +240,8 @@ namespace viennacl
             * @param tag SPAI configuration tag
             */
             fspai_precond(const MatrixType & A,
-                        const fspai_tag & tag): tag_(tag){
+                          const fspai_tag & tag) : tag_(tag), L(viennacl::traits::context(A)), L_trans(viennacl::traits::context(A)), temp_apply_vec_(A.size1(), viennacl::traits::context(A))
+            {
                 //UBLASSparseMatrixType ubls_A;
                 UBLASSparseMatrixType ublas_A(A.size1(), A.size2());
                 UBLASSparseMatrixType pA(A.size1(), A.size2());
@@ -265,9 +266,8 @@ namespace viennacl
             */
             void apply(VectorType& vec) const
             {
-              VectorType temp(vec.size());
-              temp = viennacl::linalg::prod(L_trans, vec);
-              vec = viennacl::linalg::prod(L, temp);
+              temp_apply_vec_ = viennacl::linalg::prod(L_trans, vec);
+              vec = viennacl::linalg::prod(L, temp_apply_vec_);
             }
 
         private:
@@ -275,6 +275,7 @@ namespace viennacl
             const fspai_tag & tag_;
             MatrixType L;
             MatrixType L_trans;
+            mutable VectorType temp_apply_vec_;
         };
 
 
