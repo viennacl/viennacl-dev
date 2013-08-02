@@ -147,9 +147,9 @@ namespace viennacl{
           params_t params_;
       };
 
-      /** @brief Add the timing value for a given profile and an operation */
+      /** @brief Add the timing value for a given profile and an statement */
       template<class ProfileT>
-      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, viennacl::scheduler::statement const & operation, ProfileT const & prof){
+      void benchmark_impl(std::map<double, ProfileT> & timings, viennacl::ocl::device const & dev, viennacl::scheduler::statement const & statement, ProfileT const & prof){
 
         tools::Timer t;
 
@@ -158,7 +158,7 @@ namespace viennacl{
         //Skips if use too much local memory.
         std::list<viennacl::ocl::kernel *> kernels;
         viennacl::generator::code_generator gen;
-        gen.add(operation);
+        gen.add(statement, statement.array()[0]);
         gen.force_profile(prof);
         viennacl::generator::get_configured_program(gen, kernels, true);
 
@@ -186,12 +186,12 @@ namespace viennacl{
         timings.insert(std::make_pair(exec_time, ProfileT(prof)));
       }
 
-      /** @brief Fills a timing map for a given operation and a benchmark configuration
+      /** @brief Fills a timing map for a given statement and a benchmark configuration
        *
-       * @tparam OpT type of the operation
+       * @tparam OpT type of the statement
        * @tparam ConfigT type of the benchmark configuration
        * @param timings the timings to fill
-       * @param op the given operation
+       * @param op the given statement
        * @param the given config */
       template<class ConfigT>
       void benchmark(std::map<double, typename ConfigT::profile_t> & timings, scheduler::statement const & op, ConfigT & config, size_t /*scalartype_size*/){
@@ -216,7 +216,7 @@ namespace viennacl{
         std::cout << std::endl;
       }
 
-      /** @brief Fills a timing map for a given operation and a list of profiles */
+      /** @brief Fills a timing map for a given statement and a list of profiles */
       template< class ProfT>
       void benchmark(std::map<double, ProfT> & timings, scheduler::statement const & op, std::list<ProfT> const & profiles, size_t scalartype_size){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
