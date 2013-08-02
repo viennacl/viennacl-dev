@@ -253,7 +253,7 @@ namespace viennacl
         value_type data_alpha = static_cast<value_type>(alpha);
 
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for if (internal_size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+        #pragma omp parallel for if (loop_bound > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (std::size_t i = 0; i < loop_bound; ++i)
           data_vec1[i*inc1+start1] = data_alpha;
