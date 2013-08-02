@@ -191,7 +191,7 @@ namespace viennacl
         *  @param size   Size of the memory buffer in bytes
         *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
         */
-        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
+        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL) const
         {
           return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, size, ptr), *this);
         }
@@ -202,7 +202,7 @@ namespace viennacl
         *  @param buffer A vector (STL vector, ublas vector, etc.)
         */
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
-        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer)
+        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer) const
         {
           return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), *this);
         }
