@@ -116,7 +116,7 @@ namespace viennacl{
 
 
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, profile_.vectorization(), mapping_[std::distance(statements_.begin(), it)]), true, true, true);
+            detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, profile_.vectorization(), mapping_[std::distance(statements_.begin(), it)]));
           }
           prototype.erase(prototype.size()-1); //Last comma pruned
           return prototype;

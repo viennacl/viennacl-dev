@@ -143,9 +143,9 @@ namespace viennacl{
           }
 
           void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
-            if(node_type==LHS_NODE_TYPE)
+            if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->lhs, *this);
-            else if(node_type==RHS_NODE_TYPE)
+            else if(node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->rhs, *this);
             else if(node_type==PARENT_NODE_TYPE){
               const char * op_expr = detail::generate(root_node->op.type);

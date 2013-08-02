@@ -218,29 +218,36 @@ namespace viennacl{
           //Fetch vector entry
           std::set<std::string>  fetched;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k){
-            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, exprs[k]->mapping()), true, true, false);
-            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("i", "0"), profile_.vectorization_, stream, exprs[k]->mapping()), true, false, true);
+          for(std::vector<detail::mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
+            viennacl::scheduler::statement const & statement = (*it)->statement();
+            viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
+            detail::mapping_type const & mapping = (*it)->mapping();
+
+            detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("i", "0"),profile_.vectorization_,stream,mapping);
+            detail::fetch_all_rhs(fetched,statement,root_node, std::make_pair("i", "0"),profile_.vectorization_,stream,mapping);
           }
 
 
           //Update sums;
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k){
+          for(std::vector<detail::mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
+              viennacl::scheduler::statement const & statement = (*it)->statement();
+              viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
+              detail::mapping_type const & mapping = (*it)->mapping();
             if(profile_.vectorization_ > 1){
               for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-                std::string expr_str;
-                detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, exprs[k]->mapping()), true, true, false);
-                expr_str += "*";
-                detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), a, expr_str, exprs[k]->mapping()), true, false, true);
-                stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
+                std::string str;
+                detail::generate_all_lhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                str += "*";
+                detail::generate_all_rhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                stream << " sum" << std::distance(exprs.begin(),it) << " += "  << str << ";" << std::endl;
               }
             }
             else{
-              std::string expr_str;
-              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, exprs[k]->mapping()), true, true, false);
-              expr_str += "*";
-              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("i", "0"), -1, expr_str, exprs[k]->mapping()), true, false, true);
-              stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
+              std::string str;
+              detail::generate_all_lhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+              str += "*";
+              detail::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+              stream << " sum" << std::distance(exprs.begin(),it) << " += "  << str << ";" << std::endl;
             }
           }
 
@@ -266,7 +273,7 @@ namespace viennacl{
             stream << "}" << std::endl;
           }
 
-          //Last reduction and fetches to temporary buffer
+          //Last reduction and write back to temporary buffer
           stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
           stream << "if(lid==0){" << std::endl;
           stream.inc_tab();

@@ -198,7 +198,7 @@ namespace viennacl{
           std::string offset(std::pair<std::string, std::string> const & index) const {
             if(info_.statement){
               std::string str;
-              detail::traverse(*info_.statement, *info_.root_node, detail::expression_generation_traversal(index, -1, str, *info_.mapping), true, false, true);
+              detail::generate_all_rhs(*info_.statement, *info_.root_node, index, -1, str, *info_.mapping);
               return str;
             }
             else

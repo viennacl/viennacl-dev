@@ -52,14 +52,17 @@ namespace viennacl{
       typedef std::map<key_type, tools::shared_ptr<detail::mapped_container> > mapping_type;
 
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun);
-      template<class TraversalFunctor>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node_type const & root_node, TraversalFunctor const & fun, bool prod_as_tree, bool recurse_lhs = true, bool recurse_rhs = true);
+      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
       static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_container const & s);
       static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_container const & s);
       static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_container & s);
       static const char * generate(scheduler::operation_node_type arg);
-
+      static void generate_all_rhs(scheduler::statement const & statement
+                                , scheduler::statement_node const & root_node
+                                , std::pair<std::string, std::string> const & index
+                                , int vector_element
+                                , std::string & str
+                                , detail::mapping_type const & mapping);
 
     }
 

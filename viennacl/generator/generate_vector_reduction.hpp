@@ -169,23 +169,31 @@ namespace viennacl{
 
           std::set<std::string>  fetched;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
-            if(is_lhs_transposed)
-              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("c","r"), profile_.vectorization_, stream, exprs[k]->mapping()), true, true, false);
-            else
-              detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("r","c"), profile_.vectorization_, stream, exprs[k]->mapping()), true, true, false);
+          for(std::vector<detail::mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
+            viennacl::scheduler::statement const & statement = (*it)->statement();
+            viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
+            detail::mapping_type const & mapping = (*it)->mapping();
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
-            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::fetch_traversal(fetched, std::make_pair("c","0"), profile_.vectorization_, stream, exprs[k]->mapping()), true, false, true);
+            if(is_lhs_transposed)
+              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),profile_.vectorization_,stream,mapping);
+            else
+              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),profile_.vectorization_,stream,mapping);
+
+            detail::fetch_all_rhs(fetched,statement,root_node, std::make_pair("c", "0"),profile_.vectorization_,stream,mapping);
+          }
 
 
           //Update sums;
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k){
-            std::string expr_str;
-            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("r","c"), -1, expr_str, exprs[k]->mapping()), true, true, false);
-            expr_str += "*";
-            detail::traverse(exprs[k]->statement(), exprs[k]->root_node(), detail::expression_generation_traversal(std::make_pair("c","0"), -1, expr_str, exprs[k]->mapping()), true, false, true);
-            stream << " sum" << k << " += "  << expr_str << ";" << std::endl;
+          for(std::vector<detail::mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
+              viennacl::scheduler::statement const & statement = (*it)->statement();
+              viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
+              detail::mapping_type const & mapping = (*it)->mapping();
+
+              std::string str;
+              detail::generate_all_lhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+              str += "*";
+              detail::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+              stream << " sum" << std::distance(exprs.begin(),it) << " += "  << str << ";" << std::endl;
           }
 
 

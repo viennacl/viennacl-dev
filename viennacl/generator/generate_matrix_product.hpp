@@ -366,7 +366,7 @@ namespace viennacl{
 
                 if(iit->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_rhs_transposed = true;
-                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::RHS_NODE_TYPE)).get();
+                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
                 }
                 else{
                   is_rhs_transposed = false;
