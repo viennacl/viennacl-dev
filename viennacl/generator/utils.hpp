@@ -37,116 +37,116 @@ namespace viennacl{
 
     namespace utils{
 
-      template<class Fun>
-      static typename Fun::result_type call_on_host_scalar(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert(element.type_family == scheduler::HOST_SCALAR_TYPE_FAMILY && bool("Must be called on a host scalar"));
-        switch(type){
-          case scheduler::FLOAT_TYPE :
+    template<class Fun>
+    static typename Fun::result_type call_on_host_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::HOST_SCALAR_TYPE_FAMILY && bool("Must be called on a host scalar"));
+        switch(element.type){
+        case scheduler::FLOAT_TYPE :
             return fun(element.host_float);
-          case scheduler::DOUBLE_TYPE :
+        case scheduler::DOUBLE_TYPE :
             return fun(element.host_double);
-          default :
+        default :
             throw "not implemented";
         }
-      }
+    }
 
-      template<class Fun>
-      static typename Fun::result_type call_on_scalar(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a scalar"));
-        switch(type){
-          case scheduler::FLOAT_TYPE :
+    template<class Fun>
+    static typename Fun::result_type call_on_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a scalar"));
+        switch(element.type){
+        case scheduler::FLOAT_TYPE :
             return fun(*element.scalar_float);
-          case scheduler::DOUBLE_TYPE :
+        case scheduler::DOUBLE_TYPE :
             return fun(*element.scalar_double);
-          default :
+        default :
             throw "not implemented";
         }
-      }
+    }
 
-      template<class Fun>
-      static typename Fun::result_type call_on_vector(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY && bool("Must be called on a vector"));
-        switch(type){
-          case scheduler::FLOAT_TYPE :
+    template<class Fun>
+    static typename Fun::result_type call_on_vector(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY && bool("Must be called on a vector"));
+        switch(element.type){
+        case scheduler::FLOAT_TYPE :
             return fun(*element.vector_float);
-          case scheduler::DOUBLE_TYPE :
+        case scheduler::DOUBLE_TYPE :
             return fun(*element.vector_double);
-          default :
+        default :
             throw "not implemented";
         }
-      }
+    }
 
-      template<class Fun>
-      static typename Fun::result_type call_on_symbolic_vector(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert(element.type_family == scheduler::SYMBOLIC_VECTOR_TYPE_FAMILY && bool("Must be called on a symbolic_vector"));
-        switch(type){
-          case scheduler::FLOAT_TYPE :
+    template<class Fun>
+    static typename Fun::result_type call_on_symbolic_vector(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::SYMBOLIC_VECTOR_TYPE_FAMILY && bool("Must be called on a symbolic_vector"));
+        switch(element.type){
+        case scheduler::FLOAT_TYPE :
             return fun(*element.symbolic_vector_float);
-          case scheduler::DOUBLE_TYPE :
+        case scheduler::DOUBLE_TYPE :
             return fun(*element.symbolic_vector_double);
-          default :
+        default :
             throw "not implemented";
         }
-      }
+    }
 
-      template<class Fun>
-      static typename Fun::result_type call_on_matrix(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert((element.type_family == scheduler::MATRIX_ROW_TYPE_FAMILY || element.type_family == scheduler::MATRIX_COL_TYPE_FAMILY) && bool("Must be called on a matrix"));
-	if (element.type_family == scheduler::MATRIX_ROW_TYPE_FAMILY)
-	{
-	  switch(type){
-          case scheduler::FLOAT_TYPE :
-            return fun(*element.matrix_row_float);
-          case scheduler::DOUBLE_TYPE :
-            return fun(*element.matrix_row_double);
-          default :
-            throw "not implemented";
-	  }
-	}
-	else
-	{
-	  switch(type){
-          case scheduler::FLOAT_TYPE :
-            return fun(*element.matrix_col_float);
-          case scheduler::DOUBLE_TYPE :
-            return fun(*element.matrix_col_double);
-          default :
-            throw "not implemented";
-	  }
-	}
-      }
+    template<class Fun>
+    static typename Fun::result_type call_on_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert((element.type_family == scheduler::MATRIX_ROW_TYPE_FAMILY || element.type_family == scheduler::MATRIX_COL_TYPE_FAMILY) && bool("Must be called on a matrix"));
+        if (element.type_family == scheduler::MATRIX_ROW_TYPE_FAMILY)
+        {
+            switch(element.type){
+            case scheduler::FLOAT_TYPE :
+                return fun(*element.matrix_row_float);
+            case scheduler::DOUBLE_TYPE :
+                return fun(*element.matrix_row_double);
+            default :
+                throw "not implemented";
+            }
+        }
+        else
+        {
+            switch(element.type){
+            case scheduler::FLOAT_TYPE :
+                return fun(*element.matrix_col_float);
+            case scheduler::DOUBLE_TYPE :
+                return fun(*element.matrix_col_double);
+            default :
+                throw "not implemented";
+            }
+        }
+    }
 
 
-      template<class Fun>
-      static typename Fun::result_type call_on_symbolic_matrix(scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-	assert(element.type_family == scheduler::SYMBOLIC_MATRIX_TYPE_FAMILY && bool("Must be called on a matrix_vector"));
-        switch(type){
-          case scheduler::FLOAT_TYPE :
+    template<class Fun>
+    static typename Fun::result_type call_on_symbolic_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::SYMBOLIC_MATRIX_TYPE_FAMILY && bool("Must be called on a matrix_vector"));
+        switch(element.type){
+        case scheduler::FLOAT_TYPE :
             return fun(*element.symbolic_matrix_float);
-          case scheduler::DOUBLE_TYPE :
+        case scheduler::DOUBLE_TYPE :
             return fun(*element.symbolic_matrix_double);
-          default :
+        default :
             throw "not implemented";
         }
-      }
+    }
 
       template<class Fun>
-      static typename Fun::result_type call_on_element(scheduler::statement_node_type_family family, scheduler::statement_node_type type, scheduler::lhs_rhs_element element, Fun const & fun){
-        switch(family){
+      static typename Fun::result_type call_on_element(scheduler::lhs_rhs_element const & element, Fun const & fun){
+        switch(element.type_family){
           case scheduler::HOST_SCALAR_TYPE_FAMILY:
-            return call_on_host_scalar(type, element, fun);
+            return call_on_host_scalar(element, fun);
           case scheduler::SCALAR_TYPE_FAMILY:
-            return call_on_scalar(type, element, fun);
+            return call_on_scalar(element, fun);
           case scheduler::VECTOR_TYPE_FAMILY :
-            return call_on_vector(type, element, fun);
+            return call_on_vector(element, fun);
           case scheduler::SYMBOLIC_VECTOR_TYPE_FAMILY :
-            return call_on_symbolic_vector(type, element, fun);
+            return call_on_symbolic_vector(element, fun);
           case scheduler::MATRIX_ROW_TYPE_FAMILY:
-            return call_on_matrix(type,element,fun);
+            return call_on_matrix(element,fun);
           case scheduler::MATRIX_COL_TYPE_FAMILY:
-            return call_on_matrix(type,element,fun);
+            return call_on_matrix(element,fun);
           case scheduler::SYMBOLIC_MATRIX_TYPE_FAMILY :
-            return call_on_symbolic_matrix(type, element, fun);
+            return call_on_symbolic_matrix(element, fun);
           default:
             throw "not implemented";
         }

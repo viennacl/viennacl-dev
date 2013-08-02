@@ -118,6 +118,23 @@ namespace viennacl{
           }
       };
 
+      template<class Fun>
+      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun){
+
+        if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+          traverse(statement, statement.array()[root_node.lhs.node_index], fun);
+        else
+          fun(&statement, &root_node, LHS_NODE_TYPE);
+
+        fun(&statement, &root_node, PARENT_NODE_TYPE);
+
+        if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
+          traverse(statement, statement.array()[root_node.rhs.node_index], fun);
+        else
+          fun(&statement, &root_node, RHS_NODE_TYPE);
+
+      }
+
       template<class TraversalFunctor>
       static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, TraversalFunctor const & fun, bool prod_as_tree, bool recurse_lhs = true, bool recurse_rhs = true){
         statement::container_type const & array = statement.array();
@@ -172,6 +189,9 @@ namespace viennacl{
           }
         }
       }
+
+
+
     }
   }
 }

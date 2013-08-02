@@ -149,17 +149,17 @@ namespace viennacl{
             //add kernel name
             char str[10];
             std::sprintf(str,"kernel_%d",kernel_id);
-            viennacl::ocl::kernel & k = p.get_kernel(str);
-            kernels.push_back(&k);
+            viennacl::ocl::kernel & kernel = p.get_kernel(str);
+            kernels.push_back(&kernel);
 
             unsigned int current_arg = 0;
 
             //Configure ND Range and enqueue arguments
-            profile.configure_range_enqueue_arguments(i, statements, k, current_arg);
+            profile.configure_range_enqueue_arguments(i, statements, kernel, current_arg);
 
             std::set<void *> memory;
             for(typename StatementsType::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-              detail::enqueue_statement(it->first, it->second, memory, current_arg, k);
+              detail::traverse(it->first, it->second, detail::enqueue_functor(memory,current_arg,kernel));
             }
 
 
@@ -224,7 +224,7 @@ namespace viennacl{
           void* memory[64] = {NULL};
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             for(template_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
-              detail::statement_representation(iit->first, iit->second, memory, current_arg, program_name);
+              detail::traverse(iit->first, iit->second, detail::representation_functor(memory, current_arg, program_name));
             }
           }
           *program_name='\0';

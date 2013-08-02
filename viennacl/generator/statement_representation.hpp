@@ -142,34 +142,24 @@ namespace viennacl{
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
+          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
+            if(node_type==LHS_NODE_TYPE)
+              utils::call_on_element(root_node->lhs, *this);
+            else if(node_type==RHS_NODE_TYPE)
+              utils::call_on_element(root_node->rhs, *this);
+            else if(node_type==PARENT_NODE_TYPE){
+              const char * op_expr = detail::generate(root_node->op.type);
+              std::size_t n = std::strlen(op_expr);
+              std::memcpy(ptr_, op_expr, n);
+              ptr_+=n;
+            }
+          }
+
         private:
           void* (&memory_)[64];
           unsigned int & current_arg_;
           char *& ptr_;
       };
-
-      static void statement_representation(scheduler::statement const & statement, scheduler::statement_node const & root_node, void* (&memory)[64], unsigned int & current_arg, char*& ptr){
-          scheduler::statement::container_type expr = statement.array();
-          for(std::size_t i = 0 ; i < expr.size() ; ++i){
-            scheduler::statement_node  const & node = expr[i];
-            if(node.lhs.type_family!=COMPOSITE_OPERATION_FAMILY){
-              utils::call_on_element(node.lhs.type_family, node.lhs.type, node.lhs, representation_functor(memory, current_arg, ptr));
-            }
-
-            {
-              const char * op_expr = detail::generate(node.op.type);
-              std::size_t n = std::strlen(op_expr);
-              std::memcpy(ptr, op_expr, n);
-              ptr+=n;
-            }
-
-            if(node.rhs.type_family!=COMPOSITE_OPERATION_FAMILY){
-              utils::call_on_element(node.rhs.type_family, node.rhs.type, node.rhs, representation_functor(memory, current_arg, ptr));
-            }
-
-            *ptr++='_';
-          }
-      }
 
     }
 

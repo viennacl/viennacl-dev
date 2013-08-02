@@ -457,9 +457,9 @@ int main(int argc, char* argv[]){
 
                     std::cout << std::endl;
 
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: double" << std::endl;
-                    retval = test_vector<double> (epsilon);
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: double" << std::endl;
+//                    retval = test_vector<double> (epsilon);
 
                     if ( retval == EXIT_SUCCESS )
                         std::cout << "# Test passed" << std::endl;
@@ -468,21 +468,21 @@ int main(int argc, char* argv[]){
               }
 
 
-              std::cout << std::endl;
-              std::cout << "----------------------------------------------" << std::endl;
-              std::cout << "----------------------------------------------" << std::endl;
-              std::cout << "## Test :: Matrix" << std::endl;
-              std::cout << "----------------------------------------------" << std::endl;
+//              std::cout << std::endl;
+//              std::cout << "----------------------------------------------" << std::endl;
+//              std::cout << "----------------------------------------------" << std::endl;
+//              std::cout << "## Test :: Matrix" << std::endl;
+//              std::cout << "----------------------------------------------" << std::endl;
 
-              {
-                  double epsilon = 1.0E-4;
-                  std::cout << "# Testing setup:" << std::endl;
+//              {
+//                  double epsilon = 1.0E-4;
+//                  std::cout << "# Testing setup:" << std::endl;
 
-                  std::cout << "  numeric: float" << std::endl;
-                  std::cout << "  --------------" << std::endl;
-                  std::cout << "  Row-Major"      << std::endl;
-                  std::cout << "  --------------" << std::endl;
-                  retval = test_matrix<float, viennacl::row_major> (epsilon);
+//                  std::cout << "  numeric: float" << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  std::cout << "  Row-Major"      << std::endl;
+//                  std::cout << "  --------------" << std::endl;
+//                  retval = test_matrix<float, viennacl::row_major> (epsilon);
 
 //                  std::cout << "  --------------" << std::endl;
 //                  std::cout << "  Column-Major"      << std::endl;
@@ -500,11 +500,11 @@ int main(int argc, char* argv[]){
 //                  std::cout << "  --------------" << std::endl;
 //                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
 
-                  if ( retval == EXIT_SUCCESS )
-                      std::cout << "# Test passed" << std::endl;
-                  else
-                      return retval;
-              }
+//                  if ( retval == EXIT_SUCCESS )
+//                      std::cout << "# Test passed" << std::endl;
+//                  else
+//                      return retval;
+//              }
 
             }
         }

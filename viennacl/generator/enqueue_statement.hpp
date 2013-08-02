@@ -112,24 +112,19 @@ namespace viennacl{
               kernel_.arg(current_arg_++, mat.value());
           }
 
+          //Traversal functor:
+          void operator()(scheduler::statement const * /*statement*/, scheduler::statement_node const * root_node, detail::node_type node_type) const {
+            if(node_type==LHS_NODE_TYPE)
+              utils::call_on_element(root_node->lhs, *this);
+            else if(node_type==RHS_NODE_TYPE)
+              utils::call_on_element(root_node->rhs, *this);
+          }
+
         private:
           std::set<void *> & memory_;
           unsigned int & current_arg_;
           viennacl::ocl::kernel & kernel_;
       };
-
-      static void enqueue_statement(scheduler::statement const & statement, scheduler::statement_node const & root_node, std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel){
-        if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
-          enqueue_statement(statement, statement.array()[root_node.lhs.node_index], memory, current_arg, kernel);
-        else
-          utils::call_on_element(root_node.lhs.type_family, root_node.lhs.type, root_node.lhs, enqueue_functor(memory, current_arg, kernel));
-
-        if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
-          enqueue_statement(statement, statement.array()[root_node.rhs.node_index], memory, current_arg, kernel);
-        else
-          utils::call_on_element(root_node.rhs.type_family, root_node.rhs.type, root_node.rhs, enqueue_functor(memory, current_arg, kernel));
-
-      }
 
     }
 
