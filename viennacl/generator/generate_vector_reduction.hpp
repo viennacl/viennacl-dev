@@ -51,6 +51,15 @@ namespace viennacl{
               return m_*(k_+1)*scalartype_size;
             }
 
+            virtual std::ostream & print(std::ostream & s) const{
+                s << "Scalar Reduction : { vector_type, m, k, num_groups} = {"
+                  << vectorization_
+                  << ", " << m_
+                  << ", " << k_
+                  << ", " << num_groups_
+                  << "}";
+            }
+
           public:
             /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : template_base::profile(vectorization, 1), m_(m), k_(k), num_groups_(num_groups){ }
