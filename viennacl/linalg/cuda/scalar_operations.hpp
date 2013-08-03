@@ -65,7 +65,7 @@ namespace viennacl
       template <typename T>
       __global__ void as_kernel(T * s1, T fac2, unsigned int options2, const T * s2)
       {
-          T alpha = *fac2;
+          T alpha = fac2;
           if (options2 & (1 << 0))
             alpha = -alpha;
           if (options2 & (1 << 1))
