@@ -105,7 +105,6 @@ int main(int argc, char* argv[]){
         viennacl::ocl::switch_context(k);
         devices_type dev = viennacl::ocl::current_context().devices();
         for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
-
                 viennacl::ocl::switch_device(*it);
                 std::cout << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;

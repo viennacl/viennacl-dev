@@ -58,7 +58,7 @@ using namespace boost::numeric;
 // -------------------------------------------------------------
 //
 static const unsigned int min_large_block_size = 32;
-static const unsigned int max_large_block_size = 256;
+static const unsigned int max_large_block_size = 128;
 static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
 
 static const unsigned int min_alignment = 1;
@@ -286,9 +286,9 @@ int test(Epsilon const& epsilon)
     return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
+  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
   std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
 
@@ -300,16 +300,17 @@ int test(Epsilon const& epsilon)
     return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
+  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
   std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
 
+
   std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
+  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
   std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
+  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
 
@@ -321,9 +322,9 @@ int test(Epsilon const& epsilon)
     return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
+  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
   std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
+  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
   if (ret != EXIT_SUCCESS)
     return ret;
 
