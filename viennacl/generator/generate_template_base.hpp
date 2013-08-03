@@ -164,7 +164,7 @@ namespace viennacl{
         profile const & profile_;
     };
 
-    std::ostream & operator<<(std::ostream & os, template_base::profile const & profile){
+    inline std::ostream & operator<<(std::ostream & os, template_base::profile const & profile){
         profile.print(os);
         return os;
     }
