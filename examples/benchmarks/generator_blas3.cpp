@@ -41,7 +41,8 @@
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/linalg/lu.hpp"
 
-#include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/generate.hpp"
+#include "viennacl/scheduler/forwards.h"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
@@ -53,84 +54,43 @@
 #define SIZE_INC 256
 #define MAX_SIZE 7936
 
-template<typename ScalarType>
-double run_benchmark(size_t matrix_size, bool is_lhs_trans, bool is_rhs_trans)
-{
-
-    //
-    // One alternative: Put the matrices into a contiguous block of memory (allows to use viennacl::fast_copy(), avoiding temporary memory)
-    //
-    std::vector<ScalarType> stl_B(matrix_size * matrix_size);
-    std::vector<ScalarType> stl_C(matrix_size * matrix_size);
-
-    //
-    // Fill the matrix
-    //
-    for (unsigned int i = 0; i < matrix_size; ++i)
-        for (unsigned int j = 0; j < matrix_size; ++j)
-            stl_B[i*matrix_size + j] = random<ScalarType>();
-
-    for (unsigned int i = 0; i < matrix_size; ++i)
-        for (unsigned int j = 0; j < matrix_size; ++j)
-            stl_C[i + j*matrix_size] = random<ScalarType>();
-
-
-
-    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
-    //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
-    viennacl::matrix<ScalarType> vcl_A(matrix_size, matrix_size);
-    viennacl::matrix<ScalarType> vcl_B(matrix_size, matrix_size);
-    viennacl::matrix<ScalarType> vcl_C(matrix_size, matrix_size);
-
-    viennacl::generator::matrix< viennacl::matrix<ScalarType> > A(vcl_A);
-    viennacl::generator::matrix< viennacl::matrix<ScalarType> > B(vcl_B);
-    viennacl::generator::matrix< viennacl::matrix<ScalarType> > C(vcl_C);
-
-    viennacl::fast_copy(&(stl_B[0]),
-                        &(stl_B[0]) + stl_B.size(),
-                        vcl_B);
-    viennacl::fast_copy(&(stl_C[0]),
-                        &(stl_C[0]) + stl_C.size(),
-                        vcl_C);
-
-    viennacl::generator::custom_operation op;
+template<class MatA, class MatB, class MatC>
+viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
     if(is_lhs_trans)
       if(is_rhs_trans)
-        op.add(A = viennacl::generator::prod(viennacl::generator::trans(B), viennacl::generator::trans(C)));
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
       else
-        op.add(A = viennacl::generator::prod(viennacl::generator::trans(B), C));
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
     else
       if(is_rhs_trans)
-        op.add(A = viennacl::generator::prod(B, viennacl::generator::trans(C)));
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
       else
-        op.add(A = viennacl::generator::prod(B, C));
-    op.program();
-    op.execute();
-    viennacl::backend::finish();
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
 
-    double res = 0;
+}
+
+template<typename ScalarType>
+double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
+{    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
+    //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
+    viennacl::matrix<ScalarType> A(size, size);
+    viennacl::matrix<ScalarType> B(size, size);
+    viennacl::matrix<ScalarType> C(size, size);
+    viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
+    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+    viennacl::backend::finish();
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-        op.execute();
+      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
-    res = timer.get();
-
-    return res/N_RUNS;
+    double time = timer.get()/(double)N_RUNS;
+    delete statement;
+    return 2*pow(size/static_cast<double>(1000.0),3)/time;
 }
 
 int main(int argc, char* argv[]){
-    std::vector<std::string> args(argv,argv+argc);
-    if(argc<3){
-        std::cerr << "USAGE : PROGRAM_NAME DEVICE LAYOUT SCALARTYPE" << std::endl;
-        exit(1);
-    }
-
-    unsigned int requested_device = atoi(args[1].c_str());
-    unsigned int layout = atoi(args[2].c_str());
-    std::string scalartype = args[3];
-
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;
@@ -138,7 +98,6 @@ int main(int argc, char* argv[]){
     platforms_type platforms = viennacl::ocl::get_platforms();
     size_t num_platforms = platforms.size();
 
-    unsigned int current_device = 0;
 
     for(unsigned int k=0 ; k < num_platforms ; ++k)
     {
@@ -148,42 +107,19 @@ int main(int argc, char* argv[]){
         viennacl::ocl::switch_context(k);
         devices_type dev = viennacl::ocl::current_context().devices();
         for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
-
-            if(current_device++ == requested_device ){
                 viennacl::ocl::switch_device(*it);
                 std::cout << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << "               Device Info" << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
-                std::cout << "Running GEMM for : " << scalartype << std::endl;
+                std::cout << "----------------------------------------------" << std::endl;
 
-                std::cout << "#Size \t GFLOPs" << std::endl;
+                std::cout << "float : " << std::endl;
+                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    double exec_time = 0;
-                    if(scalartype=="float"){
-                        switch(layout){
-                        case 0 : exec_time = run_benchmark<float>(size,false,false); break;
-                        case 1 : exec_time = run_benchmark<float>(size,true,false); break;
-                        case 2 : exec_time = run_benchmark<float>(size,false,true); break;
-                        case 3 : exec_time = run_benchmark<float>(size,true,true); break;
-                        }
-                    }
-                    else if(scalartype=="double"){
-                        switch(layout){
-                        case 0 : exec_time = run_benchmark<double>(size,false,false); break;
-                        case 1 : exec_time = run_benchmark<double>(size,true,false); break;
-                        case 2 : exec_time = run_benchmark<double>(size,false,true); break;
-                        case 3 : exec_time = run_benchmark<double>(size,true,true); break;
-                        }
-                    }
-                    else{
-                        std::cerr << "Unknown Scalartype ... Aborting" << std::endl;
-                        exit(EXIT_FAILURE);
-                    }
-                    std::cout << size << "\t" << 2*pow(size/static_cast<double>(1000.0),3)/exec_time << std::endl;
+                    std::cout << size << "\t" << run_benchmark<float>(size,false,false) << "\t" << run_benchmark<float>(size,true,false) << "\t" << run_benchmark<float>(size,false,true) << "\t" << run_benchmark<float>(size,true,true) << std::endl;
                 }
-            }
         }
     }
     return 0;
