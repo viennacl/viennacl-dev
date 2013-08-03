@@ -81,13 +81,28 @@ namespace viennacl{
               //Query device informations
               size_t lmem_available = dev.local_mem_size();
               size_t max_workgroup_size = dev.max_work_group_size();
-              std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
 
-              bool invalid_work_group_sizes = size1*size2 > max_workgroup_size; // uses too much resources
+              std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
+              bool invalid_work_group_sizes = size1*size2 > max_workgroup_size
+                                              || size1 > max_work_item_sizes[0]
+                                              || size2 > max_work_item_sizes[1]; // uses too much resources
+
+
               invalid_work_group_sizes = invalid_work_group_sizes || size1 > max_work_item_sizes[0];
               if(max_work_item_sizes.size()>1) invalid_work_group_sizes = invalid_work_group_sizes || size2 > max_work_item_sizes[1];
 
-              return  invalid_work_group_sizes || lmem_used(scalartype_size)>lmem_available || invalid_impl(dev, scalartype_size);
+              bool is_slow = false;
+              if(dev.type()==CL_DEVICE_TYPE_GPU){
+                  std::size_t warp_size = 32;
+                  if(dev.vendor_id()==4098)
+                      warp_size = 64;
+                  is_slow = static_cast<bool>(((size1*size2)%warp_size)>0);
+              }
+
+              return  invalid_work_group_sizes
+                      || is_slow
+                      || lmem_used(scalartype_size)>lmem_available
+                      || invalid_impl(dev, scalartype_size);
             }
 
             std::size_t num_kernels() const{

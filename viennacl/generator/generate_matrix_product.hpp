@@ -46,6 +46,7 @@ namespace viennacl{
 
         class profile : public template_base::profile{
             friend class matrix_product;
+
             std::size_t lmem_used(std::size_t scalartype_size) const {
               std::size_t lmem_used = 0;
               if(use_lhs_shared_)
@@ -57,7 +58,7 @@ namespace viennacl{
 
             virtual std::ostream & print(std::ostream & s) const{
                 s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
-                  << vectorization_
+                  << vectorization_ << ","
                   << ms_ << ", "
                   << ks_ << ", "
                   << ns_ << ", "
@@ -65,6 +66,15 @@ namespace viennacl{
                   << kl_ << ", "
                   << nl_ << ", "
                   << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
+            }
+
+            bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
+                return ml_ < ms_
+                        || kl_ < ks_
+                        || nl_ < ns_
+                        || (ms_ % vectorization_) > 0
+                        || (ks_ % vectorization_) > 0
+                        || (ns_ % vectorization_) > 0;
             }
 
           public:
@@ -561,18 +571,15 @@ namespace viennacl{
           for(unsigned int k = 0 ; k < upperbound_1_rhs ; ++k){
             for(unsigned int n=0 ; n < upperbound_2_rhs ; ++n){
               stream << rhs_value_scalartype << " val_rhs_" << k << "_" << n << " = " ;
-              if(use_rhs_shared ) stream << "* ptr_rhs_" << k << "++";
+              if(use_rhs_shared )
+                  stream << "* ptr_rhs_" << k << "++";
               else{
                 if(is_rhs_rowmajor)
-                  stream << "* ptr_rhs_" << k;
+                  stream << "* ptr_rhs_" << k << "++";
                 else
-                  stream  << "* ptr_rhs_" << n;
+                   stream  << "* ptr_rhs_" << n << "++";
               }
               stream << ";";
-              if( !use_rhs_shared ){
-                  if(is_rhs_rowmajor)stream << "++" << "ptr_rhs_" << k << ";" ;
-                  else stream << "++" << "ptr_rhs_" << n << ";" ;
-              }
               stream << std::endl;
             }
           }

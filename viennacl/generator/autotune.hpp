@@ -47,6 +47,8 @@ namespace viennacl{
 
     namespace autotune{
 
+      static const unsigned int n_runs = 1;
+
       /** @brief class for a tuning parameter */
       class tuning_param{
         public:
@@ -158,28 +160,12 @@ namespace viennacl{
         viennacl::generator::get_configured_program(gen, kernels, true);
 
         viennacl::ocl::kernel & k = *kernels.front();
-        //Anticipates kernel failure
-        size_t max_workgroup_size = viennacl::ocl::info<CL_KERNEL_WORK_GROUP_SIZE>(k,dev);
-        size_t size1, size2;
-        prof.set_local_sizes(size1, size2, 0);
-        if(size1*size2 > max_workgroup_size)
-            return INFINITY;
 
-        //Doesn't execute because it would likelily be a waste of time
-        size_t prefered_workgroup_size_multiple = viennacl::ocl::info<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(k,dev);
-        if( (size1*size2) % prefered_workgroup_size_multiple > 0)
-            return INFINITY;
-
-        viennacl::generator::enqueue(gen);
-        viennacl::backend::finish();
-
-        double exec_time = 0;
         t.start();
-        generator::enqueue(gen);
-
+        for(unsigned int i = 0 ; i < n_runs ; ++i)
+            viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
-        exec_time = t.get();
-        return exec_time;
+        return (double)t.get()/n_runs;
       }
 
 
@@ -215,37 +201,39 @@ namespace viennacl{
           double percent = (double)n++*100/n_conf;
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
           double exec_time = benchmark_impl(dev,op,profile);
-          if(exec_time < INFINITY){
-              timings->insert(std::make_pair(exec_time, profile));
-              if(out)
-                  *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigType::current_state_representation(profile) << std::endl ;
-          }
+          timings->insert(std::make_pair(exec_time, profile));
+          if(out)
+              *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigType::current_state_representation(profile) << std::endl ;
         }
 
         std::cout << std::endl;
       }
 
-//      /** @brief Fills a timing map for a given statement and a list of profiles */
-//      template< class ProfT>
-//      void benchmark(std::map<double, ProfT> & timings, scheduler::statement const & op, std::list<ProfT> const & profiles, size_t scalartype_size){
-//        viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
-//        unsigned int n=0;
-//        unsigned int n_conf = 0;
+      /** @brief Fills a timing map for a given statement and a list of profiles */
+      template< class ProfT>
+      void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, std::list<ProfT> const & profiles, std::size_t scalartype_size){
+        viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
-//        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-//          if(it->is_invalid(dev,scalartype_size)) continue;
-//          ++n_conf;
-//        }
+        unsigned int n=0;
+        unsigned int n_conf = 0;
 
-//        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-//          if(it->is_invalid(dev,scalartype_size)) continue;
-//          std::cout << '\r' << "Test " << n << "/" << n_conf << " [" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << (double)n*100/n_conf << "%" << "]" << std::flush;
-//          benchmark_impl(dev,op,*it);
-//        }
+        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
+          if(it->is_invalid(dev,scalartype_size)) continue;
+          ++n_conf;
+        }
 
-//        std::cout << std::endl;
-//      }
+        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
+          if(it->is_invalid(dev,scalartype_size))
+              continue;
+          double percent = (double)n++*100/n_conf;
+          std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+          double exec_time = benchmark_impl(dev,op,*it);
+          timings->insert(std::make_pair(exec_time, *it));
+        }
+
+        std::cout << std::endl;
+      }
 
 
 

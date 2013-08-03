@@ -24,7 +24,6 @@ typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
-static const int size = 512;
 
 template<class ScalarType>
 struct blas3_config{
@@ -84,9 +83,9 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    std::vector<int> ml; for(unsigned int i=16 ; i<=128 ; i+=16) ml.push_back(i);
-    std::vector<int> kl; for(unsigned int i=16 ; i<=128 ; i+=16) kl.push_back(i);
-    std::vector<int> nl; for(unsigned int i=16 ; i<=128 ; i+=16) nl.push_back(i);
+    std::vector<int> ml; for(unsigned int i=16 ; i<=256 ; i*=2) ml.push_back(i);
+    std::vector<int> kl; for(unsigned int i=16 ; i<=256 ; i*=2) kl.push_back(i);
+    std::vector<int> nl; for(unsigned int i=16 ; i<=256 ; i*=12) nl.push_back(i);
     std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
@@ -112,44 +111,60 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
 
-    timings.clear();
-    viennacl::matrix<NumericT> A(size,size);
-    viennacl::matrix<NumericT> B(size,size);
-    viennacl::matrix<NumericT> C(size,size);
-    fill_matrix<NumericT>(A,B,C);
-    viennacl::backend::finish();
+    rounds_config.push_back(std::make_pair(1024,50));
+    rounds_config.push_back(std::make_pair(2560,50));
+    rounds_config.push_back(std::make_pair(3584,50));
+    rounds_config.push_back(std::make_pair(4608,50));
 
     std::ofstream stream(dump_name.c_str());
 
-    if(is_lhs_trans)
-        if(is_rhs_trans)
-            viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),conf,&stream);
-        else
-            viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),conf,&stream);
-    else
-        if(is_rhs_trans)
-            viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),conf,&stream);
-        else
-            viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),conf,&stream);
+    for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
+        unsigned int k = std::distance(rounds_config.begin(),it);
+        timings.clear();
+        unsigned int size=it->first;
+        unsigned int n_keep=it->second;
+        std::cout << "Round " << k << " : Tuning for size " << size << std::endl;
+        viennacl::matrix<NumericT> A(size,size);
+        viennacl::matrix<NumericT> B(size,size);
+        viennacl::matrix<NumericT> C(size,size);
 
-    fastest_firsts.clear();
-    viennacl::backend::finish();
-    for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
+        fill_matrix<NumericT>(A,B,C);
+
+        viennacl::backend::finish();
+
+        if(k==0){
+          if(is_lhs_trans)
+              if(is_rhs_trans)
+                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),conf,&stream);
+              else
+                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),conf,&stream);
+          else
+              if(is_rhs_trans)
+                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),conf,&stream);
+              else
+                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),conf,&stream);
+        }
+        else{
+          if(is_lhs_trans)
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),fastest_firsts,sizeof(NumericT));
+            else
+              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),fastest_firsts,sizeof(NumericT));
+          else
+            if(is_rhs_trans)
+              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),fastest_firsts,sizeof(NumericT));
+            else
+              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),fastest_firsts,sizeof(NumericT));
+        }
+        fastest_firsts.clear();
+        viennacl::backend::finish();
+        for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
+            unsigned int n = std::distance(timings.begin(),itt);
+            if(n>n_keep) break;
+            fastest_firsts.push_back(itt->second);
+        }
+        std::cout << "Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
         std::cout << "-----------" << std::endl;
-        std::cout << std::distance(timings.begin(),itt) << "th Best : " << itt->first << "s | " << 2*std::pow((double)size/1000,3)/itt->first << " GFlops : " << std::endl;
-        std::cout << "ML : " << itt->second.ml() << std::endl;
-        std::cout << "NL : " << itt->second.nl() << std::endl;
-        std::cout << "KL : " << itt->second.kl() << std::endl;
-
-        std::cout << "MS : " << itt->second.ms() << std::endl;
-        std::cout << "NS : " << itt->second.ns() << std::endl;
-        std::cout << "KS : " << itt->second.ks() << std::endl;
-
-        std::cout << "Unroll : " << itt->second.unroll() << std::endl;
-
-        std::cout << "LHS Shared : " << std::boolalpha << itt->second.use_lhs_shared() << std::endl;
-        std::cout << "RHS Shared : " << std::boolalpha << itt->second.use_rhs_shared() << std::endl;
-
     }
 
 }
@@ -194,7 +209,7 @@ int main(int argc, char* argv[]){
                 std::cout << "-------------------" << std::endl;
                 switch(layout){
                 case 0:
-                    std::cout << "====== Step 1 : AA =====" << std::endl;
+                    std::cout << "Layout : AA" << std::endl;
                     if(scalartype=="float")
                         run_autotune<float>("BLAS3 AA Float" + it->name(),false,false);
                     else if(scalartype=="double")
@@ -203,22 +218,28 @@ int main(int argc, char* argv[]){
 
 
                 case 1:
-                    std::cout << "====== Step 3 : TA =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float>("BLAS3 TA Float" + it->name(), true, false);
-                    else if(scalartype=="double") run_autotune<double>("BLAS3 TA Double" + it->name(), true, false);
+                    std::cout << "Layout : TA" << std::endl;
+                    if(scalartype=="float")
+                        run_autotune<float>("BLAS3 TA Float" + it->name(), true, false);
+                    else if(scalartype=="double")
+                        run_autotune<double>("BLAS3 TA Double" + it->name(), true, false);
                     break;
 
 
                 case 2:
-                    std::cout << "====== Step 2 : AT =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float>("BLAS3 AT Float" + it->name(), false, true);
-                    else if(scalartype=="double") run_autotune<double>("BLAS3 AT Double" + it->name(), false, true);
+                    std::cout << "Layout : AT" << std::endl;
+                    if(scalartype=="float")
+                        run_autotune<float>("BLAS3 AT Float" + it->name(), false, true);
+                    else if(scalartype=="double")
+                        run_autotune<double>("BLAS3 AT Double" + it->name(), false, true);
                     break;
 
                 case 3:
-                    std::cout << "====== Step 4 : TT =====" << std::endl;
-                    if(scalartype=="float") run_autotune<float>("BLAS3 TT Float" + it->name(),true,true);
-                    else if(scalartype=="double") run_autotune<double>("BLAS3 TT Double" + it->name(), true, true);
+                    std::cout << "Layout : TT" << std::endl;
+                    if(scalartype=="float")
+                        run_autotune<float>("BLAS3 TT Float" + it->name(),true,true);
+                    else if(scalartype=="double")
+                        run_autotune<double>("BLAS3 TT Double" + it->name(), true, true);
                     break;
                 }
 
