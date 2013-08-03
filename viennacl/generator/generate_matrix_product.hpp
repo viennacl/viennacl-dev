@@ -401,20 +401,27 @@ namespace viennacl{
 
 
           if(profile_.vectorization_>1){
+            if(!assigned->is_row_major() || !lhs->is_row_major())
+              stream << "unsigned int Mv = M / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
+            if(assigned->is_row_major() || rhs->is_row_major())
+              stream << "unsigned int Nv = N / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
+            if(lhs->is_row_major() || !rhs->is_row_major())
+              stream << "unsigned int Kv = K / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
+
             if(assigned->is_row_major())
-              assigned->bind_sizes("M", "N/"+utils::to_string(profile_.vectorization_));
+              assigned->bind_sizes("M", "Nv");
             else
-              assigned->bind_sizes("M/"+utils::to_string(profile_.vectorization_), "N");
+              assigned->bind_sizes("Mv", "N");
 
             if(lhs->is_row_major())
-              lhs->bind_sizes("M", "K/"+utils::to_string(profile_.vectorization_));
+              lhs->bind_sizes("M", "Kv");
             else
-              lhs->bind_sizes("M/"+utils::to_string(profile_.vectorization_), "K");
+              lhs->bind_sizes("Mv", "K");
 
             if(rhs->is_row_major())
-              rhs->bind_sizes("K", "N/"+utils::to_string(profile_.vectorization_));
+              rhs->bind_sizes("K", "Nv");
             else
-              rhs->bind_sizes("K/"+utils::to_string(profile_.vectorization_), "N");
+              rhs->bind_sizes("Kv", "N");
 
           }
           else{
