@@ -85,7 +85,7 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     std::vector<int> ml; for(unsigned int i=16 ; i<=256 ; i*=2) ml.push_back(i);
     std::vector<int> kl; for(unsigned int i=16 ; i<=256 ; i*=2) kl.push_back(i);
-    std::vector<int> nl; for(unsigned int i=16 ; i<=256 ; i*=12) nl.push_back(i);
+    std::vector<int> nl; for(unsigned int i=16 ; i<=256 ; i*=2) nl.push_back(i);
     std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
