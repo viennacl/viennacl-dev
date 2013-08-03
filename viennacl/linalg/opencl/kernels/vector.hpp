@@ -237,7 +237,7 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_swap(StringType & source, std::string const & numeric_string)
+        void generate_vector_swap(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void swap( \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
@@ -620,7 +620,7 @@ namespace viennacl
 
               // kernels with mostly predetermined skeleton:
               generate_plane_rotation(source, numeric_string);
-              generate_swap(source, numeric_string);
+              generate_vector_swap(source, numeric_string);
               generate_assign_cpu(source, numeric_string);
 
               generate_inner_prod(source, numeric_string, 1);

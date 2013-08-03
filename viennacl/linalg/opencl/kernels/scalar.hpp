@@ -205,7 +205,7 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_swap(StringType & source, std::string const & numeric_string)
+        void generate_scalar_swap(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void swap( \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * s1, \n");
@@ -243,7 +243,7 @@ namespace viennacl
 
               // fully parametrized kernels:
               generate_asbs(source, numeric_string);
-              generate_swap(source, numeric_string);
+              generate_scalar_swap(source, numeric_string);
 
 
               std::string prog_name = program_name();
