@@ -33,6 +33,7 @@
 // include necessary system headers
 //
 #include <iostream>
+#include <iomanip>
 
 //
 // ViennaCL includes
@@ -42,7 +43,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
-#include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/generate.hpp"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
@@ -55,52 +56,34 @@
 #define MAX_SIZE 7936
 
 template<typename ScalarType, class FB>
-double run_benchmark(size_t matrix_size)
+double run_benchmark(size_t size, bool is_trans)
 {
-
-    //
-    // One alternative: Put the matrices into a contiguous block of memory (allows to use viennacl::fast_copy(), avoiding temporary memory)
-    //
-    std::vector<ScalarType> cpu_A(matrix_size * matrix_size);
-    std::vector<ScalarType> cpu_x(matrix_size);
-
-    //
-    // Fill the matrix
-    //
-    for (unsigned int i = 0; i < matrix_size; ++i)
-        for (unsigned int j = 0; j < matrix_size; ++j)
-            cpu_A[i*matrix_size + j] = random<ScalarType>();
-
-    for (unsigned int i = 0; i < matrix_size; ++i)
-         cpu_x[matrix_size] = random<ScalarType>();
-
-
-
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
-    viennacl::vector<ScalarType> y(matrix_size);
-    viennacl::matrix<ScalarType,FB> A(matrix_size, matrix_size);
-    viennacl::vector<ScalarType> x(matrix_size);
+    viennacl::vector<ScalarType> y = viennacl::scalar_vector<ScalarType>(size,1);
+    viennacl::matrix<ScalarType,FB> A = viennacl::scalar_matrix<ScalarType>(size, size,1);
+    viennacl::vector<ScalarType> x = viennacl::scalar_vector<ScalarType>(size,1);
 
-    typedef viennacl::generator::vector< ScalarType > vec;
-    typedef viennacl::generator::matrix< viennacl::matrix<ScalarType,FB> > mat;
+    viennacl::scheduler::statement * statement;
 
-    viennacl::fast_copy(&(cpu_A[0]), &(cpu_A[0]) + cpu_A.size(), A);
-    viennacl::fast_copy(cpu_x, x);
+    if(is_trans)
+      statement = new viennacl::scheduler::statement(y, viennacl::op_assign(), viennacl::linalg::prod(trans(A),x));
+    else
+      statement = new viennacl::scheduler::statement(y, viennacl::op_assign(), viennacl::linalg::prod(A,x));
 
-    viennacl::generator::custom_operation op;
-    op.add(vec(y) = viennacl::generator::prod(mat(A), vec(x)));
-    op.execute();
+    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
 
     Timer timer;
     timer.start();
-
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-        op.execute();
+      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
-    return timer.get()/N_RUNS;
+
+    double time = timer.get()/(double)N_RUNS;
+    delete statement;
+    return 1e-9*size*(2*size-1)/time;
 }
 
 int main(int argc, char* argv[]){
@@ -131,19 +114,15 @@ int main(int argc, char* argv[]){
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
                 std::cout << std::endl;
                 std::cout << "float:" << std::endl;
-                std::cout << "#Size \t Execution Time" << std::endl;
+                std::cout << "#N\tAv(GFLOP/s)\tTv(GFLOP/s)" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    double exec_time = 0;
-                    exec_time = run_benchmark<float,viennacl::row_major>(size);
-                    std::cout << size << "\t" << exec_time << " #" << 1e-9*size*(2*size-1)/exec_time << "GFLOPs" << std::endl;
+                    std::cout << size << "\t" << std::setprecision(3) << run_benchmark<float,viennacl::row_major>(size,false) << "\t" << run_benchmark<float,viennacl::row_major>(size,true) << std::endl;
                 }
                 std::cout << std::endl;
                 std::cout << "double:" << std::endl;
-                std::cout << "#Size \t Execution Time" << std::endl;
+                std::cout << "#N\tAv(GFLOP/s)\tTv(GFLOP/s)" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    double exec_time = 0;
-                    exec_time = run_benchmark<double,viennacl::row_major>(size);
-                    std::cout << size << "\t" << exec_time << " #" << 1e-9*size*(2*size-1)/exec_time << "GFLOPs" << std::endl;
+                  std::cout << size << "\t" << std::setprecision(3) << run_benchmark<double,viennacl::row_major>(size,false) << "\t" << run_benchmark<double,viennacl::row_major>(size,true) << std::endl;
                 }
         }
     }

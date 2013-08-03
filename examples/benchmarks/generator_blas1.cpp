@@ -32,6 +32,7 @@
 // include necessary system headers
 //
 #include <iostream>
+#include <iomanip>
 
 //
 // ViennaCL includes
@@ -40,54 +41,60 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 
-#include "viennacl/generator/custom_operation.hpp"
+#include "viennacl/generator/generate.hpp"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
 
+#include "viennacl/scheduler/forwards.h"
 
 #include "benchmark-utils.hpp"
 
 #define N_RUNS 100
 #define MAX_SIZE 1e8
 
+enum operation_type{
+  dot,
+  assign
+};
+
 template<typename ScalarType>
-float run_benchmark(size_t size)
+float run_benchmark(size_t size, operation_type type)
 {
-    float res;
-    viennacl::vector<ScalarType> vcl_A(size);
-    viennacl::vector<ScalarType> vcl_B(size);
+    std::size_t n_bytes = size*sizeof(ScalarType);
+    std::size_t n_transfers;
+    if(type==dot)
+      n_transfers = 2;
+    else if(type==assign)
+      n_transfers = 2;
+    viennacl::vector<ScalarType> vcl_A = viennacl::scalar_vector<ScalarType>(size,1);
+    viennacl::vector<ScalarType> vcl_B = viennacl::scalar_vector<ScalarType>(size,1);
 
     viennacl::scalar<ScalarType> s(0);
 
-    typedef viennacl::generator::vector< ScalarType > vec;
-    typedef viennacl::generator::scalar< ScalarType > scal;
+    viennacl::scheduler::statement * statement;
 
-    std::vector<ScalarType> stl_A(size);
-    std::vector<ScalarType> stl_B(size);
+    if(type==dot)
+      statement = new viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_A, vcl_B));
+    else if(type==assign)
+      statement = new viennacl::scheduler::statement(vcl_A, viennacl::op_assign(), vcl_B);
 
-
-    for (unsigned int i = 0; i < size; ++i) stl_A[i] = random<ScalarType>();
-    for (unsigned int i = 0; i < size; ++i)  stl_B[i] = random<ScalarType>();
-
-    viennacl::fast_copy(stl_A,vcl_A);
-    viennacl::fast_copy(stl_B,vcl_B);
-
-
-    viennacl::generator::custom_operation inprod;
-    inprod.add(scal(s) = inner_prod(vec(vcl_A),2*vec(vcl_A)+vec(vcl_B)));
-    inprod.execute();
+    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
 
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-        inprod.execute();
+      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
-    res = timer.get()/(double)N_RUNS;
-    return res;
+
+    double time = timer.get()/(double)N_RUNS;
+    delete statement;
+
+    return (n_bytes*n_transfers)/time / 1e9;
 }
+
 
 int main(int argc, char* argv[]){
     typedef std::vector< viennacl::ocl::platform > platforms_type;
@@ -113,17 +120,15 @@ int main(int argc, char* argv[]){
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
                 std::cout << "float:" << std::endl;
-                std::cout << "#Size \t Time" << std::endl;
+                std::cout << "#N\tAssign(GB/s)\tDot(GB/s)" << std::endl;
                 for(unsigned int size = 1024 ; size <= MAX_SIZE ; size *= 2){
-                     float exec_time = run_benchmark<float>(size);
-                    std::cout << size << "\t" << exec_time << std::endl;
+                  std::cout << std::setprecision(2) << (float)size << "\t" << (int)run_benchmark<float>(size, assign) << "\t" << (int)run_benchmark<float>(size, dot) << std::endl;
                 }
                 std::cout << std::endl;
                 std::cout << "double:" << std::endl;
-                std::cout << "#Size \t Time" << std::endl;
+                std::cout << "#N\tAssign(GB/s)\tDot(GB/s)" << std::endl;
                 for(unsigned int size = 1024 ; size <= MAX_SIZE ; size *= 2){
-                     float exec_time = run_benchmark<double>(size);
-                    std::cout << size << "\t" << exec_time << std::endl;
+                  std::cout << std::setprecision(2) << (double)size << "\t" << (int)run_benchmark<double>(size, assign) << "\t" << (int)run_benchmark<double>(size, dot) << std::endl;
                 }
         }
     }

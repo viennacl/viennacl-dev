@@ -170,7 +170,7 @@ namespace viennacl{
       public:
         code_generator() : vector_saxpy_profile_(1,128,128,true)
                           , matrix_saxpy_profile_(1,16,16,16,16,true)
-                          , scalar_reduction_profile_(1, 128, 128, true)
+                          , scalar_reduction_profile_(4, 128, 512, 0)
                           , vector_reduction_profile_(1, 1, 256, 32)
                           , matrix_product_profile_(1,32,32,32,4,4,4,false,false,1)
                            {
