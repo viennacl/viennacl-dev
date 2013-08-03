@@ -46,6 +46,8 @@ namespace viennacl{
 
         class profile{
           protected:
+            friend std::ostream & operator<<(std::ostream &, profile const &);
+
             virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
 
             virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
@@ -57,6 +59,7 @@ namespace viennacl{
               k.local_work_size(1,lsize2);
             }
 
+            virtual std::ostream & print(std::ostream & s) const = 0;
 
           public:
             profile(unsigned int vectorization, std::size_t num_kernels) : vectorization_(vectorization), num_kernels_(num_kernels){ }
@@ -146,6 +149,9 @@ namespace viennacl{
         profile const & profile_;
     };
 
+    std::ostream & operator<<(std::ostream & os, template_base::profile const & profile){
+        profile.print(os);
+    }
 
   }
 

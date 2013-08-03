@@ -33,11 +33,19 @@ struct dot_config{
         profile_t prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
+    static std::string state_representation_format(){
+        return "V" "\t" "GS" "\t" "NG" "\t" "GD";
+    }
+    static std::string current_state_representation(profile_t const profile){
+        std::ostringstream oss;
+        oss << profile.vectorization() << "\t" << profile.group_size() << "\t" << profile.num_groups() << "\t" << profile.global_decomposition();
+        return oss.str();
+    }
 };
 
 
 template<class ScalarType>
-void autotune(){
+void autotune(std::string const & dump_name){
     std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size), cpu_v4(size);
     for(unsigned int i=0; i<size; ++i){
         cpu_v1[i]=0;
@@ -73,12 +81,12 @@ void autotune(){
     conf.add_tuning_param("group_size",group_sizes);
     conf.add_tuning_param("num_groups",num_groups);
     conf.add_tuning_param("global_decomposition", global_decompositions);
-    viennacl::generator::autotune::benchmark(timings,viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2)),conf,sizeof(ScalarType));
+    std::ofstream stream(dump_name.c_str());
+    viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2)),conf,&stream);
     std::cout << std::endl;
-    std::cout << "Best Profile: " << timings.begin()->first << "s" << std::endl;
-    std::cout << "Vectorization : " << timings.begin()->second.vectorization() << std::endl;
-    std::cout << "Num Groups : " << timings.begin()->second.num_groups() << std::endl;
-    std::cout << "Group Size : " << timings.begin()->second.group_size() << std::endl;
+    std::cout << " ============" << std::endl;
+    std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
+    std::cout << " ============" << std::endl;
     std::cout << std::endl;
 }
 
@@ -97,10 +105,10 @@ int main(){
             std::cout << it->name()<< std::endl;
              std::cout << "-------------------" << std::endl;
             std::cout << "float:" << std::endl;
-            autotune<float>();
+            autotune<float>("BLAS1 Float "+it->name());
             std::cout << "-------------------" << std::endl;
             std::cout << "double:" << std::endl;
-            autotune<double>();
+            autotune<double>("BLAS1 Double_"+it->name());
     }
   }
 

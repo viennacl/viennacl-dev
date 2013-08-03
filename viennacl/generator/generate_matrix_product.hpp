@@ -55,6 +55,18 @@ namespace viennacl{
               return lmem_used;
             }
 
+            virtual std::ostream & print(std::ostream & s) const{
+                s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
+                  << vectorization_
+                  << ms_ << ", "
+                  << ks_ << ", "
+                  << ns_ << ", "
+                  << ml_ << ", "
+                  << kl_ << ", "
+                  << nl_ << ", "
+                  << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
+            }
+
           public:
             /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int ml, unsigned int kl, unsigned int nl

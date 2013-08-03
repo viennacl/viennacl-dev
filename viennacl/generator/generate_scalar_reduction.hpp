@@ -138,9 +138,24 @@ namespace viennacl{
               }
             }
 
+            virtual std::ostream & print(std::ostream & s) const{
+                s << "Scalar Reduction : { vector_type, group_size, num_groups, global_decomposition } = {"
+                  << vectorization_
+                  << ", " << group_size_
+                  << ", " << num_groups_
+                  << ", " << global_decomposition_
+                  << "}";
+            }
+
           public:
             /** @brief The user constructor */
             profile(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : template_base::profile(vectorization, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
+
+            unsigned int num_groups() const { return num_groups_; }
+
+            unsigned int group_size() const { return group_size_; }
+
+            bool global_decomposition() const { return global_decomposition_; }
 
             void set_local_sizes(std::size_t& s1, std::size_t& s2, std::size_t /*kernel_id*/) const{
               s1 = group_size_;
@@ -182,10 +197,6 @@ namespace viennacl{
                 arguments_string += detail::generate_pointer_kernel_argument("__global", it->first, "temp" + utils::to_string(std::distance(temporaries_.begin(), it)));
               }
             }
-
-            unsigned int num_groups() const { return num_groups_; }
-
-            unsigned int group_size() const { return group_size_; }
           private:
             unsigned int group_size_;
             unsigned int num_groups_;

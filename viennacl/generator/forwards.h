@@ -49,7 +49,8 @@ namespace viennacl{
       class mapped_container;
 
       typedef std::pair<scheduler::statement_node const *, node_type> key_type;
-      typedef std::map<key_type, tools::shared_ptr<detail::mapped_container> > mapping_type;
+      typedef tools::shared_ptr<detail::mapped_container> container_ptr_type;
+      typedef std::map<key_type, container_ptr_type> mapping_type;
 
       template<class Fun>
       static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);

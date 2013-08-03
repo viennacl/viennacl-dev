@@ -31,12 +31,20 @@ struct blas2_config{
         profile_t prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
+    static std::string state_representation_format(){
+        return "V" "\t" "M" "\t" "K" "\t" "NG";
+    }
+    static std::string current_state_representation(profile_t const profile){
+        std::ostringstream oss;
+        oss << profile.vectorization() << "\t" << profile.m() << "\t" << profile.k() << "\t" << profile.num_groups();
+        return oss.str();
+    }
 };
 
 
 
 template<class ScalarType>
-void autotune(bool trans){
+void autotune(std::string const & dump_name, bool trans){
     std::vector<ScalarType> cpu_v1(size), cpu_v3(size);
     boost::numeric::ublas::matrix<ScalarType, boost::numeric::ublas::row_major> cpu_m2(size,size);
     for(unsigned int i=0; i<size; ++i){
@@ -76,16 +84,16 @@ void autotune(bool trans){
     conf.add_tuning_param("local_size1",local_sizes1);
     conf.add_tuning_param("local_size2",local_sizes2);
     conf.add_tuning_param("num_groups",num_groups);
-
+    std::ofstream stream(dump_name.c_str());
     if(trans)
-      viennacl::generator::autotune::benchmark(timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(m2), v3)),conf,sizeof(ScalarType));
+      viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(m2), v3)),conf,&stream);
     else
-      viennacl::generator::autotune::benchmark(timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(m2, v3)),conf,sizeof(ScalarType));
+      viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(m2, v3)),conf,&stream);
     std::cout << std::endl;
-    std::cout << "Best Profile: " << std::setprecision(5) <<  timings.begin()->first << "s" << "\t|\t" << 1e-9*size*(2*size-1)/timings.begin()->first << " GFLOPs" << std::endl;
-    std::cout << "M : " << timings.begin()->second.m() << std::endl;
-    std::cout << "K : " << timings.begin()->second.k() << std::endl;
-    std::cout << "Num Groups 0 : " << timings.begin()->second.num_groups() << std::endl;
+    std::cout << " ============" << std::endl;
+    std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
+    std::cout << " ============" << std::endl;
+    std::cout << std::endl;
 }
 
 int main(){
@@ -105,17 +113,18 @@ int main(){
 
             std::cout << "scalartype : float" << std::endl;
             std::cout << "-- Av " << std::endl;
-            autotune<float>(false);
+            autotune<float>("BLAS2 AV Float "+it->name(), false);
             std::cout << "-- Tv" << std::endl;
-            autotune<float>(true);
+            autotune<float>("BLAS2 TV Float "+it->name(), true);
 
             std::cout << "-----------------" << std::endl;
 
             std::cout << "scalartype : double" << std::endl;
-            std::cout << "-- Av" << std::endl;
-            autotune<double>(false);
+            std::cout << "-- Av " << std::endl;
+            autotune<double>("BLAS2 AV Double "+it->name(), false);
             std::cout << "-- Tv" << std::endl;
-            autotune<double>(true);
+            autotune<double>("BLAS2 TV Double "+it->name(), true);
+
     }
   }
 
