@@ -266,18 +266,6 @@ set(MATRIX_ROW_SRCS
    matrix_row/align1/vec_mul.cl
    matrix_row/align16/dummy)
 
-set(SCALAR_SRCS
-   scalar/align1/as_cpu.cl
-   scalar/align1/as_gpu.cl
-   scalar/align1/asbs_cpu_cpu.cl
-   scalar/align1/asbs_cpu_gpu.cl
-   scalar/align1/asbs_gpu_cpu.cl
-   scalar/align1/asbs_gpu_gpu.cl
-   scalar/align1/asbs_s_cpu_cpu.cl
-   scalar/align1/asbs_s_cpu_gpu.cl
-   scalar/align1/asbs_s_gpu_cpu.cl
-   scalar/align1/asbs_s_gpu_gpu.cl)
-
 set(FFT_SRCS
    fft/align1/bluestein_post.cl
    fft/align1/bluestein_pre.cl
@@ -337,7 +325,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      MATRIX_COL_SRCS MATRIX_ROW_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -374,7 +362,6 @@ foreach(d
       matrix_solve_col_row
       matrix_solve_row_col
       matrix_solve_row_row
-      scalar
       fft
       svd
       spai

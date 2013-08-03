@@ -357,6 +357,14 @@ namespace viennacl
 
       ///////////////// swap //////////////////
 
+      template <typename T>
+      __global__ void scalar_swap_kernel(T * s1, T * s2)
+      {
+        T tmp = *s2;
+        *s2 = *s1;
+        *s1 = tmp;
+      }
+
       /** @brief Swaps the contents of two scalars, data is copied
       *
       * @param s1   The first scalar
@@ -370,7 +378,7 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
 
-        throw "todo";
+        scalar_swap_kernel<<<1, 1>>>(detail::cuda_arg<value_type>(s1),detail::cuda_arg<value_type>(s2));
       }
 
 

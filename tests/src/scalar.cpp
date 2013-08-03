@@ -48,14 +48,13 @@ int test(Epsilon const& epsilon)
 
    NumericT s1 = NumericT(3.1415926);
    NumericT s2 = NumericT(2.71763);
-   int s3 = 42;
+   NumericT s3 = NumericT(42);
 
    viennacl::scalar<NumericT> vcl_s1;
    viennacl::scalar<NumericT> vcl_s2;
    viennacl::scalar<NumericT> vcl_s3 = 1.0;
 
    vcl_s1 = s1;
-
    if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: vcl_s1 = s1;" << std::endl;
@@ -79,6 +78,16 @@ int test(Epsilon const& epsilon)
       retval = EXIT_FAILURE;
    }
 
+   NumericT tmp = s2;
+   s2 = s1;
+   s1 = tmp;
+   viennacl::linalg::swap(vcl_s1, vcl_s2);
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: swap " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
 
    s1 += s2;
    vcl_s1 += vcl_s2;
@@ -124,7 +133,25 @@ int test(Epsilon const& epsilon)
    vcl_s1 = vcl_s2 + vcl_s3;
    if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
-      std::cout << "# Error at operation: + " << std::endl;
+      std::cout << "# Error at operation: s1 = s2 + s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 + s3;
+   vcl_s1 += vcl_s2 + vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 + s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 + s3;
+   vcl_s1 -= vcl_s2 + vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 + s3 " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
       retval = EXIT_FAILURE;
    }
@@ -133,7 +160,25 @@ int test(Epsilon const& epsilon)
    vcl_s1 = vcl_s2 - vcl_s3;
    if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
-      std::cout << "# Error at operation: - " << std::endl;
+      std::cout << "# Error at operation: s1 = s2 - s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 - s3;
+   vcl_s1 += vcl_s2 - vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 - s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 - s3;
+   vcl_s1 -= vcl_s2 - vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 - s3 " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
       retval = EXIT_FAILURE;
    }
@@ -142,7 +187,25 @@ int test(Epsilon const& epsilon)
    vcl_s1 = vcl_s2 * vcl_s3;
    if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
-      std::cout << "# Error at operation: * " << std::endl;
+      std::cout << "# Error at operation: s1 = s2 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 * s3;
+   vcl_s1 += vcl_s2 * vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 * s3;
+   vcl_s1 -= vcl_s2 * vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 * s3 " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
       retval = EXIT_FAILURE;
    }
@@ -151,10 +214,176 @@ int test(Epsilon const& epsilon)
    vcl_s1 = vcl_s2 / vcl_s3;
    if( fabs(diff(s1, vcl_s1)) > epsilon )
    {
-      std::cout << "# Error at operation: / " << std::endl;
+      std::cout << "# Error at operation: s1 = s2 / s3 " << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
       retval = EXIT_FAILURE;
    }
+
+   s1 += s2 / s3;
+   vcl_s1 += vcl_s2 / vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 / s3;
+   vcl_s1 -= vcl_s2 / vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   // addition with factors, =
+   vcl_s1 = s1;
+
+   s1 = s2 * s2 + s3 * s3;
+   vcl_s1 = vcl_s2 * s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 * s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   vcl_s1 = vcl_s2 * vcl_s2 + vcl_s3 * vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 * s2 + s3 * s3, second test " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 = s2 * s2 + s3 / s3;
+   vcl_s1 = vcl_s2 * s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 * s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   vcl_s1 = vcl_s2 * vcl_s2 + vcl_s3 / vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 * s2 + s3 / s3, second test " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 = s2 / s2 + s3 * s3;
+   vcl_s1 = vcl_s2 / s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 / s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   vcl_s1 = vcl_s2 / vcl_s2 + vcl_s3 * vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 / s2 + s3 * s3, second test " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 = s2 / s2 + s3 / s3;
+   vcl_s1 = vcl_s2 / s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 / s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   vcl_s1 = vcl_s2 / vcl_s2 + vcl_s3 / vcl_s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 = s2 / s2 + s3 / s3, second test " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   // addition with factors, +=
+   vcl_s1 = s1;
+
+   s1 += s2 * s2 + s3 * s3;
+   vcl_s1 += vcl_s2 * s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 * s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 * s2 + s3 / s3;
+   vcl_s1 += vcl_s2 * s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 * s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 / s2 + s3 * s3;
+   vcl_s1 += vcl_s2 / s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 / s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 += s2 / s2 + s3 / s3;
+   vcl_s1 += vcl_s2 / s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 += s2 / s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   // addition with factors, -=
+   vcl_s1 = s1;
+
+   s1 -= s2 * s2 + s3 * s3;
+   vcl_s1 -= vcl_s2 * s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 * s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 * s2 + s3 / s3;
+   vcl_s1 -= vcl_s2 * s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 * s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 / s2 + s3 * s3;
+   vcl_s1 -= vcl_s2 / s2 + vcl_s3 * s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 / s2 + s3 * s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   s1 -= s2 / s2 + s3 / s3;
+   vcl_s1 -= vcl_s2 / s2 + vcl_s3 / s3;
+   if( fabs(diff(s1, vcl_s1)) > epsilon )
+   {
+      std::cout << "# Error at operation: s1 -= s2 / s2 + s3 / s3 " << std::endl;
+      std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+
+   // lenghty expression:
 
    s1 = s2 + s3 * s2 - s3 / s1;
    vcl_s1 = vcl_s2 + vcl_s3 * vcl_s2 - vcl_s3 / vcl_s1;

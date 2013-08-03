@@ -28,7 +28,7 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/kernels/scalar_kernels.h"
+#include "viennacl/linalg/opencl/kernels/scalar.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
@@ -56,13 +56,13 @@ namespace viennacl
 
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
         cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
                                 + (reciprocal_alpha ? 2 : 0)
                                 + (flip_sign_alpha ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(),
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "as_cpu" : "as_gpu"));
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
@@ -92,7 +92,7 @@ namespace viennacl
 
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -111,7 +111,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), kernel_name);
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
@@ -143,7 +143,7 @@ namespace viennacl
 
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
-        viennacl::linalg::kernels::scalar<value_type, 1>::init(ctx);
+        viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
         std::string kernel_name;
         if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -162,7 +162,7 @@ namespace viennacl
                                 + (reciprocal_beta ? 2 : 0)
                                 + (flip_sign_beta ? 1 : 0);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), kernel_name);
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
@@ -191,9 +191,9 @@ namespace viennacl
 
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
-        viennacl::linalg::kernels::scalar<value_type, 1>::init();
+        viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::scalar<value_type, 1>::program_name(), "swap");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), "swap");
         k.local_work_size(0, 1);
         k.global_work_size(0, 1);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),

@@ -145,8 +145,8 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
 
-        value_type       * data_s1 = detail::extract_raw_pointer<value_type>(s1);
-        value_type const * data_s2 = detail::extract_raw_pointer<value_type>(s2);
+        value_type * data_s1 = detail::extract_raw_pointer<value_type>(s1);
+        value_type * data_s2 = detail::extract_raw_pointer<value_type>(s2);
 
         value_type temp = *data_s2;
         *data_s2 = *data_s1;
