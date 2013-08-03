@@ -323,12 +323,6 @@ namespace viennacl{
       }
     }
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
-      generator::code_generator gen;
-      gen.add(s,root_node);
-      viennacl::generator::enqueue(gen);
-    }
-
   }
 }
 #endif

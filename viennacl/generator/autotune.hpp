@@ -159,8 +159,6 @@ namespace viennacl{
 
         viennacl::generator::get_configured_program(gen, kernels, true);
 
-        viennacl::ocl::kernel & k = *kernels.front();
-
         t.start();
         for(unsigned int i = 0 ; i < n_runs ; ++i)
             viennacl::generator::enqueue(gen);

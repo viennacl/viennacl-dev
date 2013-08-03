@@ -51,7 +51,7 @@ namespace viennacl{
               return m_*(k_+1)*scalartype_size;
             }
 
-            virtual std::ostream & print(std::ostream & s) const{
+            virtual void print(std::ostream & s) const{
                 s << "Scalar Reduction : { vector_type, m, k, num_groups} = {"
                   << vectorization_
                   << ", " << m_

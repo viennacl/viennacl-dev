@@ -56,7 +56,7 @@ namespace viennacl{
               return lmem_used;
             }
 
-            virtual std::ostream & print(std::ostream & s) const{
+            virtual void print(std::ostream & s) const{
                 s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
                   << vectorization_ << ","
                   << ms_ << ", "

@@ -138,7 +138,7 @@ namespace viennacl{
               }
             }
 
-            virtual std::ostream & print(std::ostream & s) const{
+            virtual void print(std::ostream & s) const{
                 s << "Scalar Reduction : { vector_type, group_size, num_groups, global_decomposition } = {"
                   << vectorization_
                   << ", " << group_size_

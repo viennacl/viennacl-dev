@@ -66,7 +66,7 @@ namespace viennacl{
               arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
             }
 
-            virtual std::ostream & print(std::ostream & s) const{
+            virtual void print(std::ostream & s) const{
                 s << "Vector Saxpy : { vector_type, group_size, num_groups, global_decomposition } = {"
                   << vectorization_
                   << ", " << group_size_
@@ -123,7 +123,7 @@ namespace viennacl{
         class profile : public template_base::profile{
             friend class matrix_saxpy;
 
-            virtual std::ostream & print(std::ostream & s) const{
+            virtual void print(std::ostream & s) const{
                 s << "Matrix Saxpy : { vector_type, group_size_row, group_size_col, num_groups_row, num_group_col, global_decomposition } = {"
                   << vectorization_
                   << ", " << group_size_row_
