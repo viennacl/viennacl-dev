@@ -35,6 +35,32 @@
 
 
 #ifdef VIENNACL_WITH_CUDA
+
+// xSCAL
+
+ViennaCLStatus ViennaCLCUDASscal(ViennaCLCUDABackend backend, int n,
+                                 float alpha,
+                                 float *x, int offx, int incx)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  v1 *= alpha;
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, int n,
+                                 double alpha,
+                                 double *x, int offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  v1 *= alpha;
+  return ViennaCLSuccess;
+}
+
+
+// xSWAP
+
 ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, int n,
                                  float *x, int offx, int incx,
                                  float *y, int offy, int incy)

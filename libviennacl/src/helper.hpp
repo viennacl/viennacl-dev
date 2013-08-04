@@ -20,7 +20,7 @@
 
 
 
-static ViennaCLStatus init_cuda(viennacl::backend::mem_handle & h, ViennaCLVector x)
+static ViennaCLStatus init_cuda_vector(viennacl::backend::mem_handle & h, ViennaCLVector x)
 {
 #ifdef VIENNACL_WITH_CUDA
   h.switch_active_handle_id(viennacl::CUDA_MEMORY);
@@ -41,7 +41,7 @@ static ViennaCLStatus init_cuda(viennacl::backend::mem_handle & h, ViennaCLVecto
 #endif
 }
 
-static ViennaCLStatus init_opencl(viennacl::backend::mem_handle & h, ViennaCLVector x)
+static ViennaCLStatus init_opencl_vector(viennacl::backend::mem_handle & h, ViennaCLVector x)
 {
 #ifdef VIENNACL_WITH_OPENCL
   h.switch_active_handle_id(viennacl::OPENCL_MEMORY);
@@ -63,7 +63,7 @@ static ViennaCLStatus init_opencl(viennacl::backend::mem_handle & h, ViennaCLVec
 }
 
 
-static ViennaCLStatus init_host(viennacl::backend::mem_handle & h, ViennaCLVector x)
+static ViennaCLStatus init_host_vector(viennacl::backend::mem_handle & h, ViennaCLVector x)
 {
   h.switch_active_handle_id(viennacl::MAIN_MEMORY);
   h.ram_handle().reset(x->host_mem);
@@ -79,18 +79,18 @@ static ViennaCLStatus init_host(viennacl::backend::mem_handle & h, ViennaCLVecto
 }
 
 
-static ViennaCLStatus init(viennacl::backend::mem_handle & h, ViennaCLVector x)
+static ViennaCLStatus init_vector(viennacl::backend::mem_handle & h, ViennaCLVector x)
 {
   switch (x->backend->backend_type)
   {
     case ViennaCLCUDA:
-      return init_cuda(h, x);
+      return init_cuda_vector(h, x);
 
     case ViennaCLOpenCL:
-      return init_opencl(h, x);
+      return init_opencl_vector(h, x);
 
     case ViennaCLHost:
-      return init_host(h, x);
+      return init_host_vector(h, x);
 
     default:
       return ViennaCLGenericFailure;

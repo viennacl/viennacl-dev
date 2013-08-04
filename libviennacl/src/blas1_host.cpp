@@ -34,48 +34,30 @@
 #include "viennacl/linalg/norm_inf.hpp"
 
 
-ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y)
+
+// xSCAL
+
+ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend backend, size_t n,
+                                 float alpha,
+                                 float *x, size_t offx, int incx)
 {
-  if (x->precision != y->precision)
-    return ViennaCLGenericFailure;
+  viennacl::vector_base<float> v1(x, n, viennacl::MAIN_MEMORY, offx, incx);
 
-  switch (x->precision)
-  {
-    case ViennaCLFloat:
-    {
-      viennacl::backend::mem_handle v1_handle;
-      viennacl::backend::mem_handle v2_handle;
-
-      if (init(v1_handle, x) != ViennaCLSuccess)
-        return ViennaCLGenericFailure;
-
-      if (init(v2_handle, y) != ViennaCLSuccess)
-        return ViennaCLGenericFailure;
-
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
-
-      viennacl::swap(v1, v2);
-      return ViennaCLSuccess;
-    }
-
-    case ViennaCLDouble:
-    {
-      viennacl::backend::mem_handle v1_handle; init(v1_handle, x);
-      viennacl::backend::mem_handle v2_handle; init(v2_handle, y);
-
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
-
-      viennacl::swap(v1, v2);
-      return ViennaCLSuccess;
-    }
-
-    default:
-      return ViennaCLGenericFailure;
-  }
+  v1 *= alpha;
+  return ViennaCLSuccess;
 }
 
+ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend backend, size_t n,
+                                 double alpha,
+                                 double *x, size_t offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::MAIN_MEMORY, offx, incx);
+
+  v1 *= alpha;
+  return ViennaCLSuccess;
+}
+
+// xSWAP
 
 ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend backend, size_t n,
                                  float *x, size_t offx, int incx,
@@ -98,4 +80,3 @@ ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend backend, size_t n,
   viennacl::swap(v1, v2);
   return ViennaCLSuccess;
 }
-

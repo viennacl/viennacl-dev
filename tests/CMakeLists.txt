@@ -60,3 +60,27 @@ if (ENABLE_CUDA)
                       ${PROJECT_SOURCE_DIR}/external/pugixml/src/pugixml.cpp)
 endif (ENABLE_CUDA)
 
+# test shared library
+include_directories(${PROJECT_SOURCE_DIR}/libviennacl/include/)
+
+if(ENABLE_CUDA)
+  if(ENABLE_OPENCL)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-DVIENNACL_WITH_OPENCL") #set flags before setting executable!
+    cuda_add_executable(libviennacl-test src/libviennacl.cu)
+    target_link_libraries(libviennacl-test viennacl ${OPENCL_LIBRARIES})
+  else(ENABLE_OPENCL)
+    cuda_add_executable(libviennacl-test src/libviennacl.cu)
+    target_link_libraries(libviennacl-test viennacl)
+  endif(ENABLE_OPENCL)
+else(ENABLE_CUDA)
+  add_executable(libviennacl-test src/libviennacl.cpp)
+  if(ENABLE_OPENCL)
+    set_target_properties(libviennacl-test PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+    target_link_libraries(libviennacl-test viennacl ${OPENCL_LIBRARIES})
+  else(ENABLE_OPENCL)
+    target_link_libraries(libviennacl-test viennacl)
+  endif(ENABLE_OPENCL)
+endif(ENABLE_CUDA)
+add_test(libviennacl libviennacl-test)
+
+

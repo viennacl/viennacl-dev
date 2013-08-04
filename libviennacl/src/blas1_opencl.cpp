@@ -35,6 +35,29 @@
 
 #ifdef VIENNACL_WITH_OPENCL
 
+// xSCAL
+
+ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLOpenCLBackend backend, size_t n,
+                                   float alpha,
+                                   cl_mem x, size_t offx, int incx)
+{
+  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
+
+  v1 *= alpha;
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLOpenCLBackend backend, size_t n,
+                                   double alpha,
+                                   cl_mem x, size_t offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
+
+  v1 *= alpha;
+  return ViennaCLSuccess;
+}
+
+// xSWAP
 
 ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, size_t n,
                                    cl_mem x, size_t offx, int incx,
@@ -57,6 +80,4 @@ ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLOpenCLBackend backend, size_t n,
   viennacl::swap(v1, v2);
   return ViennaCLSuccess;
 }
-
-
 #endif
