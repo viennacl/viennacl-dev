@@ -24,7 +24,7 @@
 //disable debug mechanisms to have a fair benchmark environment
 #define NDEBUG
 
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_BUILD
 
 //
 // include necessary system headers

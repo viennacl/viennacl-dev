@@ -226,36 +226,37 @@ namespace viennacl{
                                        detail::mapped_matrix const & mat,
                                        access_flow flow) const {
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= get_local_size(0)){" << std::endl;
-          stream.inc_tab();
-          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= get_local_size(1)){" << std::endl;
-          stream.inc_tab();
-          if(flow==REGULAR){
-            stream << aligned_scalartype_ << " val = " << mat.name() +  "[" + offset + " + j  + " + mat.size2()  + "*i]" << ";" << std::endl;
-            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << lmem_size2 << "+j*" << profile_.vectorization_<<";" <<std::endl;
-            for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-              if(profile_.vectorization_>1)
-                stream << "*ptr++ =  val.s" << a << ";" << std::endl;
-              else
-                stream << "*ptr++ =  val;" << std::endl;
+          stream << aligned_scalartype_ << " val;" << std::endl;
+          stream << "__local " << mat.scalartype() << "* ptr;" << std::endl;
+          std::size_t size1, size2;
+          profile_.set_local_sizes(size1, size2,0);
+          for(unsigned int ni = 0; ni < bound1 ; ni+=size1){
+            for(unsigned int nj = 0 ; nj < bound2 ; nj+=size2){
+              std::string i = "(get_local_id(0) + " + utils::to_string(ni)+")";
+              std::string j = "(get_local_id(1) + " + utils::to_string(nj)+")";
+              if(flow==REGULAR){
+                stream << "val = " << mat.name() +  "[" + offset + " + " << j << "  + " + mat.size2()  + "*" << i << "]" << ";" << std::endl;
+                stream << "ptr = " << lmem_name << " + " << i << "*" << lmem_size2 << "+" << j << "*" << profile_.vectorization_<<";" <<std::endl;
+                for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
+                  if(profile_.vectorization_>1)
+                    stream << "*ptr++ =  val.s" << a << ";" << std::endl;
+                  else
+                    stream << "*ptr++ =  val;" << std::endl;
+                }
+              }
+              else{
+                stream << "val = " << mat.name() + "[" + offset + "+ " << j << "*" + mat.size1() + " + " << i << "]" << ";" << std::endl;
+                stream << "ptr = " << lmem_name << " + " << i << "*" << profile_.vectorization_ * lmem_size2 << "+ " << j << ";" <<std::endl;
+                for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
+                  if(profile_.vectorization_>1)
+                    stream << "*ptr =  val.s" << a << ";" << std::endl;
+                  else
+                    stream << "*ptr =  val;" << std::endl;
+                  stream << "ptr += " << lmem_size2 << ";" << std::endl;
+                }
+              }
             }
           }
-          else{
-            stream << aligned_scalartype_ << " val = " << mat.name() + "[" + offset + "+ j*" + mat.size1() + " + i]" << ";" << std::endl;
-            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << profile_.vectorization_ * lmem_size2 << "+ j;" <<std::endl;
-            for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-              if(profile_.vectorization_>1)
-                stream << "*ptr =  val.s" << a << ";" << std::endl;
-              else
-                stream << "*ptr =  val;" << std::endl;
-              stream << "ptr += " << lmem_size2 << ";" << std::endl;
-            }
-          }
-
-          stream.dec_tab();
-          stream << "}" << std::endl;
-          stream.dec_tab();
-          stream << "}" << std::endl;
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         }
@@ -320,28 +321,27 @@ namespace viennacl{
           std::string lhs_mat_size1 = "M", lhs_mat_size2 = "K";
           std::string rhs_mat_size1 = "K", rhs_mat_size2 = "N";
 
+
           if(profile_.vectorization_>1){
-            if(!assigned->is_row_major() || !lhs->is_row_major())
-              stream << "unsigned int Mv = M / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
-            if(assigned->is_row_major() || rhs->is_row_major())
-              stream << "unsigned int Nv = N / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
-            if(lhs->is_row_major() || !rhs->is_row_major())
-              stream << "unsigned int Kv = K / " << utils::to_string(profile_.vectorization_) << ";" << std::endl;
+            std::string StrV = utils::to_string(profile_.vectorization_) ;
+            std::string Mv = "M/"+StrV;
+            std::string Nv = "N/"+StrV;
+            std::string Kv = "K/"+StrV;
 
             if(assigned->is_row_major())
-              assigned_mat_size2 = "Nv";
+              assigned_mat_size2 = Nv;
             else
-              assigned_mat_size1 = "Mv";
+              assigned_mat_size1 = Mv;
 
             if(lhs->is_row_major())
-              lhs_mat_size2 = "Kv";
+              lhs_mat_size2 = Kv;
             else
-              lhs_mat_size1 = "Mv";
+              lhs_mat_size1 = Mv;
 
             if(rhs->is_row_major())
-              rhs_mat_size2 = "Nv";
+              rhs_mat_size2 = Nv;
             else
-              rhs_mat_size1 = "Kv";
+              rhs_mat_size1 = Kv;
           }
 
           assigned->bind_sizes(assigned_mat_size1, assigned_mat_size2);
@@ -484,7 +484,7 @@ namespace viennacl{
 
 
           ///Large Work-group Wise loop
-          std::string block_num = helper_variable(stream,true,"unsigned int", "block_num", lhs->size2() + '/' + utils::to_string(kl_lhs));
+          std::string block_num = helper_variable(stream,false,"unsigned int", "block_num", lhs->size2() + '/' + utils::to_string(kl_lhs));
           stream << "for(unsigned int bl=0 ; bl<" << block_num << " ; ++bl){" << std::endl;
           stream.inc_tab();
 
