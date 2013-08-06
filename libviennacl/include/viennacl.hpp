@@ -183,34 +183,35 @@ typedef ViennaCLVector_impl*    ViennaCLVector;
 /******************** BLAS Level 1 ***********************/
 
 
-// xSWAP
+// xCOPY
 
-ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y);
+ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaCLVector y);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, int n,
                                  float *x, int offx, int incx,
                                  float *y, int offy, int incy);
-ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, int n,
                                  double *x, int offx, int incx,
                                  double *y, int offy, int incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLOpenCLBackend backend, size_t n,
                                    cl_mem x, size_t offx, int incx,
                                    cl_mem y, size_t offy, int incy);
-ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLOpenCLBackend backend, size_t n,
                                    cl_mem x, size_t offx, int incx,
                                    cl_mem y, size_t offy, int incy);
 #endif
 
-ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend backend, size_t n,
                                  float *x, size_t offx, int incx,
                                  float *y, size_t offy, int incy);
-ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend backend, size_t n,
                                  double *x, size_t offx, int incx,
                                  double *y, size_t offy, int incy);
+
 
 // xSCAL
 
@@ -241,6 +242,35 @@ ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend backend, size_t n,
                                  double alpha,
                                  double *x, size_t offx, int incx);
 
+
+// xSWAP
+
+ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y);
+
+#ifdef VIENNACL_WITH_CUDA
+ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, int n,
+                                 float *x, int offx, int incx,
+                                 float *y, int offy, int incy);
+ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, int n,
+                                 double *x, int offx, int incx,
+                                 double *y, int offy, int incy);
+#endif
+
+#ifdef VIENNACL_WITH_OPENCL
+ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, size_t offx, int incx,
+                                   cl_mem y, size_t offy, int incy);
+ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, size_t offx, int incx,
+                                   cl_mem y, size_t offy, int incy);
+#endif
+
+ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend backend, size_t n,
+                                 float *x, size_t offx, int incx,
+                                 float *y, size_t offy, int incy);
+ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend backend, size_t n,
+                                 double *x, size_t offx, int incx,
+                                 double *y, size_t offy, int incy);
 
 
 

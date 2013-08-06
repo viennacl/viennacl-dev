@@ -34,6 +34,29 @@
 #include "viennacl/linalg/norm_inf.hpp"
 
 
+// xCOPY
+
+ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend backend, size_t n,
+                                 float *x, size_t offx, int incx,
+                                 float *y, size_t offy, int incy)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::MAIN_MEMORY, offx, incx);
+  viennacl::vector_base<float> v2(y, n, viennacl::MAIN_MEMORY, offy, incy);
+
+  v2 = v1;
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend backend, size_t n,
+                                 double *x, size_t offx, int incx,
+                                 double *y, size_t offy, int incy)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::MAIN_MEMORY, offx, incx);
+  viennacl::vector_base<double> v2(y, n, viennacl::MAIN_MEMORY, offy, incy);
+
+  v2 = v1;
+  return ViennaCLSuccess;
+}
 
 // xSCAL
 

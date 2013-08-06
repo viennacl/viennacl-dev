@@ -33,9 +33,9 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 
-// xSWAP
+// xCOPY
 
-ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y)
+ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaCLVector y)
 {
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
@@ -56,7 +56,7 @@ ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y)
       viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
 
-      viennacl::swap(v1, v2);
+      v2 = v1;
       return ViennaCLSuccess;
     }
 
@@ -65,7 +65,7 @@ ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y)
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
 
-      viennacl::swap(v1, v2);
+      v2 = v1;
       return ViennaCLSuccess;
     }
 
@@ -101,6 +101,48 @@ ViennaCLStatus ViennaCLscal(ViennaCLHostScalar alpha, ViennaCLVector x)
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
 
       v1 *= alpha->value_double;
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+
+// xSWAP
+
+ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y)
+{
+  if (x->precision != y->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle v2_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  if (init_vector(v2_handle, y) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+
+      viennacl::swap(v1, v2);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+
+      viennacl::swap(v1, v2);
       return ViennaCLSuccess;
     }
 

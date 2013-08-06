@@ -35,6 +35,31 @@
 
 #ifdef VIENNACL_WITH_OPENCL
 
+// xCOPY
+
+ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, size_t offx, int incx,
+                                   cl_mem y, size_t offy, int incy)
+{
+  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
+  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->context_id));
+
+  v2 = v1;
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, size_t offx, int incx,
+                                   cl_mem y, size_t offy, int incy)
+{
+  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
+  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->context_id));
+
+  v2 = v1;
+  return ViennaCLSuccess;
+}
+
+
 // xSCAL
 
 ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLOpenCLBackend backend, size_t n,
@@ -64,7 +89,7 @@ ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, size_t n,
                                    cl_mem y, size_t offy, int incy)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-  viennacl::vector_base<float> v2(y, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
+  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->context_id));
 
   viennacl::swap(v1, v2);
   return ViennaCLSuccess;
