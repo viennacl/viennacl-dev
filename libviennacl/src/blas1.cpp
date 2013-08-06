@@ -33,6 +33,123 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 
+// IxAMAX
+
+ViennaCLStatus ViennaCLiamax(size_t *index, ViennaCLVector x)
+{
+  viennacl::backend::mem_handle v1_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+
+      *index = viennacl::linalg::index_norm_inf(v1);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+
+      *index = viennacl::linalg::index_norm_inf(v1);
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+
+
+
+// xASUM
+
+ViennaCLStatus ViennaCLasum(ViennaCLHostScalar *alpha, ViennaCLVector x)
+{
+  if ((*alpha)->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+
+      (*alpha)->value_float = viennacl::linalg::norm_1(v1);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+
+      (*alpha)->value_double = viennacl::linalg::norm_1(v1);
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+
+
+// xAXPY
+
+ViennaCLStatus ViennaCLaxpy(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLVector y)
+{
+  if (alpha->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  if (x->precision != y->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle v2_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  if (init_vector(v2_handle, y) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+
+      v2 += alpha->value_float * v1;
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+
+      v2 += alpha->value_double * v1;
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+
 // xCOPY
 
 ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaCLVector y)
@@ -66,6 +183,135 @@ ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaCLVector y)
       viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
 
       v2 = v1;
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+// xDOT
+
+ViennaCLStatus ViennaCLdot(ViennaCLHostScalar *alpha, ViennaCLVector x, ViennaCLVector y)
+{
+  if ((*alpha)->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  if (x->precision != y->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle v2_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  if (init_vector(v2_handle, y) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+
+      (*alpha)->value_float = viennacl::linalg::inner_prod(v1, v2);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+
+      (*alpha)->value_double = viennacl::linalg::inner_prod(v1, v2);
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+// xNRM2
+
+ViennaCLStatus ViennaCLnrm2(ViennaCLHostScalar *alpha, ViennaCLVector x)
+{
+  if ((*alpha)->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+
+      (*alpha)->value_float = viennacl::linalg::norm_2(v1);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+
+      (*alpha)->value_double = viennacl::linalg::norm_2(v1);
+      return ViennaCLSuccess;
+    }
+
+    default:
+      return ViennaCLGenericFailure;
+  }
+}
+
+
+
+// xROT
+
+ViennaCLStatus ViennaCLrot(ViennaCLVector     x, ViennaCLVector     y,
+                           ViennaCLHostScalar c, ViennaCLHostScalar s)
+{
+  if (c->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  if (s->precision != x->precision)
+    return ViennaCLGenericFailure;
+
+  if (x->precision != y->precision)
+    return ViennaCLGenericFailure;
+
+  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle v2_handle;
+
+  if (init_vector(v1_handle, x) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  if (init_vector(v2_handle, y) != ViennaCLSuccess)
+    return ViennaCLGenericFailure;
+
+  switch (x->precision)
+  {
+    case ViennaCLFloat:
+    {
+      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+
+      viennacl::linalg::plane_rotation(v1, v2, c->value_float, s->value_float);
+      return ViennaCLSuccess;
+    }
+
+    case ViennaCLDouble:
+    {
+      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+
+      viennacl::linalg::plane_rotation(v1, v2, c->value_double, s->value_double);
       return ViennaCLSuccess;
     }
 

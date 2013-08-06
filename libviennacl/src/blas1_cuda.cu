@@ -36,6 +36,81 @@
 
 #ifdef VIENNACL_WITH_CUDA
 
+
+// IxAMAX
+
+ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLCUDABackend backend, int n,
+                                  size_t *index,
+                                  float *x, int offx, int incx)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *index = viennacl::linalg::index_norm_inf(v1);
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLCUDABackend backend, int n,
+                                  size_t *index,
+                                  double *x, int offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *index = viennacl::linalg::index_norm_inf(v1);
+  return ViennaCLSuccess;
+}
+
+
+
+// xASUM
+
+ViennaCLStatus ViennaCLCUDASasum(ViennaCLCUDABackend backend, int n,
+                                 float *alpha,
+                                 float *x, int offx, int incx)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *alpha = viennacl::linalg::norm_1(v1);
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADasum(ViennaCLCUDABackend backend, int n,
+                                 double *alpha,
+                                 double *x, int offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *alpha = viennacl::linalg::norm_1(v1);
+  return ViennaCLSuccess;
+}
+
+
+// xAXPY
+
+ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLCUDABackend backend, int n,
+                                 float alpha,
+                                 float *x, int offx, int incx,
+                                 float *y, int offy, int incy)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<float> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  v2 += alpha * v1;
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLCUDABackend backend, int n,
+                                 double alpha,
+                                 double *x, int offx, int incx,
+                                 double *y, int offy, int incy)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<double> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  v2 += alpha * v1;
+  return ViennaCLSuccess;
+}
+
+
 // xCOPY
 
 ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, int n,
@@ -59,6 +134,84 @@ ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, int n,
   v2 = v1;
   return ViennaCLSuccess;
 }
+
+// xDOT
+
+ViennaCLStatus ViennaCLCUDASdot(ViennaCLCUDABackend backend, int n,
+                                float *alpha,
+                                float *x, int offx, int incx,
+                                float *y, int offy, int incy)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<float> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  *alpha = viennacl::linalg::inner_prod(v1, v2);
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADdot(ViennaCLCUDABackend backend, int n,
+                                double *alpha,
+                                double *x, int offx, int incx,
+                                double *y, int offy, int incy)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<double> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  *alpha = viennacl::linalg::inner_prod(v1, v2);
+  return ViennaCLSuccess;
+}
+
+// xNRM2
+
+ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLCUDABackend backend, int n,
+                                 float *alpha,
+                                 float *x, int offx, int incx)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *alpha = viennacl::linalg::norm_2(v1);
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLCUDABackend backend, int n,
+                                 double *alpha,
+                                 double *x, int offx, int incx)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+
+  *alpha = viennacl::linalg::norm_2(v1);
+  return ViennaCLSuccess;
+}
+
+
+
+// xROT
+
+ViennaCLStatus ViennaCLCUDASrot(ViennaCLCUDABackend backend, int n,
+                                float *x, int offx, int incx,
+                                float *y, int offy, int incy,
+                                float c, float s)
+{
+  viennacl::vector_base<float> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<float> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  viennacl::linalg::plane_rotation(v1, v2, c, s);
+  return ViennaCLSuccess;
+}
+
+ViennaCLStatus ViennaCLCUDADrot(ViennaCLCUDABackend backend, int n,
+                                double *x, int offx, int incx,
+                                double *y, int offy, int incy,
+                                double c, double s)
+{
+  viennacl::vector_base<double> v1(x, n, viennacl::CUDA_MEMORY, offx, incx);
+  viennacl::vector_base<double> v2(y, n, viennacl::CUDA_MEMORY, offy, incy);
+
+  viennacl::linalg::plane_rotation(v1, v2, c, s);
+  return ViennaCLSuccess;
+}
+
+
 
 // xSCAL
 
