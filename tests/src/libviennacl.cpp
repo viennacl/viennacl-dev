@@ -15,9 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
 /*
 *
-*   Tutorial: Using the ViennaCL BLAS-like shared library
+*   Testing the ViennaCL BLAS-like shared library
 *
 */
 
@@ -31,85 +32,252 @@
 
 #include "viennacl/vector.hpp"
 
+template <typename ScalarType>
+ScalarType diff(ScalarType const & s1, ScalarType const & s2)
+{
+   if (s1 != s2)
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
+   return 0;
+}
+
+template <typename ScalarType, typename ViennaCLVectorType>
+ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
+{
+   std::vector<ScalarType> v2_cpu(vcl_vec.size());
+   viennacl::backend::finish();
+   viennacl::copy(vcl_vec, v2_cpu);
+
+   ScalarType inf_norm = 0;
+   for (unsigned int i=0;i<v1.size(); ++i)
+   {
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
+      else
+         v2_cpu[i] = 0.0;
+
+      if (v2_cpu[i] > inf_norm)
+        inf_norm = v2_cpu[i];
+   }
+
+   return inf_norm;
+}
+
+template <typename T, typename U, typename EpsilonT>
+void check(T const & t, U const & u, EpsilonT eps)
+{
+  EpsilonT rel_error = diff(t,u);
+  if (rel_error > eps)
+  {
+    std::cerr << "Relative error: " << rel_error << std::endl;
+    std::cerr << "Aborting!" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  std::cout << "SUCCESS ";
+}
+
 int main()
 {
-  std::size_t size = 10;
+  std::size_t size  = 10;
+  float  eps_float  = 1e-5;
+  double eps_double = 1e-12;
 
-  //
-  // Part 1: Host-based execution
-  //
+  std::vector<double> ref_float_x(size, 1.0f);
+  std::vector<double> ref_float_y(size, 2.0f);
 
-  viennacl::vector<float> host_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::MAIN_MEMORY));
-  viennacl::vector<float> host_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::MAIN_MEMORY));
+  std::vector<double> ref_double_x(size, 1.0);
+  std::vector<double> ref_double_y(size, 2.0);
 
-  // Create backend:
+  // Host setup
   ViennaCLHostBackend my_host_backend = NULL;
+  viennacl::vector<float> host_float_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::MAIN_MEMORY));
+  viennacl::vector<float> host_float_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::MAIN_MEMORY));
 
-  ViennaCLHostSswap(my_host_backend, size/2,
-                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_x), 1, 2,
-                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_y), 0, 2);
+  viennacl::vector<double> host_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::MAIN_MEMORY));
+  viennacl::vector<double> host_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::MAIN_MEMORY));
 
-  ViennaCLHostSscal(my_host_backend, size,
-                    2.0f,
-                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_x), 0, 1);
-
-  std::cout << " --- Host ---" << std::endl;
-  std::cout << "host_x: " << host_x << std::endl;
-  std::cout << "host_y: " << host_y << std::endl;
-
-  //
-  // Part 2: CUDA-based execution
-  //
-
+  // CUDA setup
 #ifdef VIENNACL_WITH_CUDA
   ViennaCLCUDABackend my_cuda_backend = NULL;
+  viennacl::vector<float> cuda_float_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::CUDA_MEMORY));
+  viennacl::vector<float> cuda_float_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
 
-  viennacl::vector<float> cuda_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::CUDA_MEMORY));
-  viennacl::vector<float> cuda_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
-
-  ViennaCLCUDASswap(my_cuda_backend, size/2,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 2,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_y), 1, 2);
-
-  ViennaCLCUDASscal(my_cuda_backend, size,
-                    2.0f,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 1);
-
-  std::cout << " --- CUDA ---" << std::endl;
-  std::cout << "cuda_x: " << cuda_x << std::endl;
-  std::cout << "cuda_y: " << cuda_y << std::endl;
+  viennacl::vector<double> cuda_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::CUDA_MEMORY));
+  viennacl::vector<double> cuda_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
 #endif
 
-  //
-  // Part 3: OpenCL-based execution
-  //
-
+  // OpenCL setup
 #ifdef VIENNACL_WITH_OPENCL
   std::size_t context_id = 0;
-  viennacl::vector<float> opencl_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
-  viennacl::vector<float> opencl_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+  viennacl::vector<float> opencl_float_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+  viennacl::vector<float> opencl_float_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+
+  viennacl::vector<double> opencl_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+  viennacl::vector<double> opencl_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
 
   ViennaCLOpenCLBackend_impl my_opencl_backend_impl;
   my_opencl_backend_impl.context_id = context_id;
   ViennaCLOpenCLBackend my_opencl_backend = &my_opencl_backend_impl;
+#endif
 
-  ViennaCLOpenCLSswap(my_opencl_backend, size/2,
-                      viennacl::traits::opencl_handle(opencl_x).get(), 1, 2,
-                      viennacl::traits::opencl_handle(opencl_y).get(), 1, 2);
+  // consistency checks:
+  check(ref_float_x, host_float_x, eps_float);
+  check(ref_float_y, host_float_y, eps_float);
+  check(ref_double_x, host_double_x, eps_double);
+  check(ref_double_y, host_double_y, eps_double);
+  check(ref_float_x, cuda_float_x, eps_float);
+  check(ref_float_y, cuda_float_y, eps_float);
+  check(ref_double_x, cuda_double_x, eps_double);
+  check(ref_double_y, cuda_double_y, eps_double);
+  check(ref_float_x, opencl_float_x, eps_float);
+  check(ref_float_y, opencl_float_y, eps_float);
+  check(ref_double_x, opencl_double_x, eps_double);
+  check(ref_double_y, opencl_double_y, eps_double);
 
-  ViennaCLOpenCLSscal(my_opencl_backend, size,
+  // COPY
+  std::cout << std::endl << "-- Testing xCOPY...";
+  for (std::size_t i=0; i<size/3; ++i)
+  {
+    ref_float_y[0 + 2*i]  = ref_float_x[1 + 2*i];
+    ref_double_y[0 + 2*i] = ref_double_x[1 + 2*i];
+  }
+
+  std::cout << std::endl << "Host: ";
+  ViennaCLHostScopy(my_host_backend, size/3,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 1, 2,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_y), 0, 2);
+  check(ref_float_x, host_float_x, eps_float);
+  check(ref_float_y, host_float_y, eps_float);
+  ViennaCLHostDcopy(my_host_backend, size/3,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 1, 2,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_y), 0, 2);
+  check(ref_double_x, host_double_x, eps_double);
+  check(ref_double_y, host_double_y, eps_double);
+
+
+#ifdef VIENNACL_WITH_CUDA
+  std::cout << std::endl << "CUDA: ";
+  ViennaCLCUDAScopy(my_cuda_backend, size/3,
+                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_x), 1, 2,
+                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_y), 0, 2);
+  check(ref_float_x, cuda_float_x, eps_float);
+  check(ref_float_y, cuda_float_y, eps_float);
+  ViennaCLCUDADcopy(my_cuda_backend, size/3,
+                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_x), 1, 2,
+                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_y), 0, 2);
+  check(ref_double_x, cuda_double_x, eps_double);
+  check(ref_double_y, cuda_double_y, eps_double);
+#endif
+
+#ifdef VIENNACL_WITH_OPENCL
+  std::cout << std::endl << "OpenCL: ";
+  ViennaCLOpenCLScopy(my_opencl_backend, size/3,
+                      viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 2,
+                      viennacl::traits::opencl_handle(opencl_float_y).get(), 0, 2);
+  check(ref_float_x, opencl_float_x, eps_float);
+  check(ref_float_y, opencl_float_y, eps_float);
+  ViennaCLOpenCLDcopy(my_opencl_backend, size/3,
+                      viennacl::traits::opencl_handle(opencl_double_x).get(), 1, 2,
+                      viennacl::traits::opencl_handle(opencl_double_y).get(), 0, 2);
+  check(ref_double_x, opencl_double_x, eps_double);
+  check(ref_double_y, opencl_double_y, eps_double);
+#endif
+
+
+  // SCAL
+  std::cout << std::endl << "-- Testing xSCAL...";
+  for (std::size_t i=0; i<size/4; ++i)
+  {
+    ref_float_x[1 + 3*i]  *= 2.0f;
+    ref_double_x[1 + 3*i] *= 2.0;
+  }
+
+  std::cout << std::endl << "Host: ";
+  ViennaCLHostSscal(my_host_backend, size/4,
+                    2.0f,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 1, 3);
+  check(ref_float_x, host_float_x, eps_float);
+  ViennaCLHostDscal(my_host_backend, size/4,
+                    2.0,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 1, 3);
+  check(ref_double_x, host_double_x, eps_double);
+
+#ifdef VIENNACL_WITH_CUDA
+  std::cout << std::endl << "CUDA: ";
+  ViennaCLCUDASscal(my_cuda_backend, size/4,
+                    2.0f,
+                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_x), 1, 3);
+  check(ref_float_x, cuda_float_x, eps_float);
+  ViennaCLCUDADscal(my_cuda_backend, size/4,
+                    2.0,
+                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_x), 1, 3);
+  check(ref_double_x, cuda_double_x, eps_double);
+#endif
+
+#ifdef VIENNACL_WITH_OPENCL
+  std::cout << std::endl << "OpenCL: ";
+  ViennaCLOpenCLSscal(my_opencl_backend, size/4,
                       2.0f,
-                      viennacl::traits::opencl_handle(opencl_x).get(), 0, 1);
+                      viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 3);
+  check(ref_float_x, opencl_float_x, eps_float);
+  ViennaCLOpenCLDscal(my_opencl_backend, size/4,
+                      2.0,
+                      viennacl::traits::opencl_handle(opencl_double_x).get(), 1, 3);
+  check(ref_double_x, opencl_double_x, eps_double);
+#endif
 
-  std::cout << " --- OpenCL ---" << std::endl;
-  std::cout << "opencl_x: " << opencl_x << std::endl;
-  std::cout << "opencl_y: " << opencl_y << std::endl;
+
+  // SWAP
+  std::cout << std::endl << "-- Testing xSWAP...";
+  for (std::size_t i=0; i<size/3; ++i)
+  {
+    float tmp = ref_float_x[2 + 2*i];
+    ref_float_x[2 + 2*i] = ref_float_y[1 + 2*i];
+    ref_float_y[1 + 2*i] = tmp;
+
+    double tmp2 = ref_double_x[2 + 2*i];
+    ref_double_x[2 + 2*i] = ref_double_y[1 + 2*i];
+    ref_double_y[1 + 2*i] = tmp2;
+  }
+
+  std::cout << std::endl << "Host: ";
+  ViennaCLHostSswap(my_host_backend, size/3,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 2, 2,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_y), 1, 2);
+  check(ref_float_y, host_float_y, eps_float);
+  ViennaCLHostDswap(my_host_backend, size/3,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 2, 2,
+                    viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_y), 1, 2);
+  check(ref_double_y, host_double_y, eps_double);
+
+
+#ifdef VIENNACL_WITH_CUDA
+  std::cout << std::endl << "CUDA: ";
+  ViennaCLCUDASswap(my_cuda_backend, size/3,
+                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_x), 2, 2,
+                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_y), 1, 2);
+  check(ref_float_y, cuda_float_y, eps_float);
+  ViennaCLCUDADswap(my_cuda_backend, size/3,
+                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_x), 2, 2,
+                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_y), 1, 2);
+  check(ref_double_y, cuda_double_y, eps_double);
+#endif
+
+#ifdef VIENNACL_WITH_OPENCL
+  std::cout << std::endl << "OpenCL: ";
+  ViennaCLOpenCLSswap(my_opencl_backend, size/3,
+                      viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 2,
+                      viennacl::traits::opencl_handle(opencl_float_y).get(), 1, 2);
+  check(ref_float_y, opencl_float_y, eps_float);
+  ViennaCLOpenCLDswap(my_opencl_backend, size/3,
+                      viennacl::traits::opencl_handle(opencl_double_x).get(), 2, 2,
+                      viennacl::traits::opencl_handle(opencl_double_y).get(), 1, 2);
+  check(ref_double_y, opencl_double_y, eps_double);
 #endif
 
   //
   //  That's it.
   //
-  std::cout << "!!!! TEST COMPLETED SUCCESSFULLY !!!!" << std::endl;
+  std::cout << std::endl << "!!!! TEST COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;
 }
