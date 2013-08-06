@@ -73,38 +73,16 @@ namespace viennacl
     // ----------------------------------------------------
     // VIENNACL
     //
-    template< typename ScalarType, unsigned int alignment >
-    viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>,
-                                 const viennacl::vector<ScalarType, alignment>,
+    template< typename ScalarType>
+    viennacl::scalar_expression< const viennacl::vector_base<ScalarType>,
+                                 const viennacl::vector_base<ScalarType>,
                                  viennacl::op_norm_inf >
-    norm_inf(viennacl::vector<ScalarType, alignment> const & v1)
+    norm_inf(viennacl::vector_base<ScalarType> const & v1)
     {
        //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>,
-                                          const viennacl::vector<ScalarType, alignment>,
+      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType>,
+                                          const viennacl::vector_base<ScalarType>,
                                           viennacl::op_norm_inf >(v1, v1);
-    }
-
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_range<VectorType>,
-                                 const viennacl::vector_range<VectorType>,
-                                 viennacl::op_norm_inf >
-    norm_inf(viennacl::vector_range<VectorType> const & vector)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_range<VectorType>,
-                                          const viennacl::vector_range<VectorType>,
-                                          viennacl::op_norm_inf >(vector, vector);
-    }
-
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_slice<VectorType>,
-                                 const viennacl::vector_slice<VectorType>,
-                                 viennacl::op_norm_inf >
-    norm_inf(viennacl::vector_slice<VectorType> const & vector)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_slice<VectorType>,
-                                          const viennacl::vector_slice<VectorType>,
-                                          viennacl::op_norm_inf >(vector, vector);
     }
 
     // with vector expression:

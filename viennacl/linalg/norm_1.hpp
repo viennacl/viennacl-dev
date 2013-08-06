@@ -71,36 +71,14 @@ namespace viennacl
     // ----------------------------------------------------
     // VIENNACL
     //
-    template< typename ScalarType, unsigned int alignment >
-    viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>,
-                                 const viennacl::vector<ScalarType, alignment>,
+    template< typename ScalarType>
+    viennacl::scalar_expression< const viennacl::vector_base<ScalarType>,
+                                 const viennacl::vector_base<ScalarType>,
                                  viennacl::op_norm_1 >
-    norm_1(viennacl::vector<ScalarType, alignment> const & vector)
+    norm_1(viennacl::vector_base<ScalarType> const & vector)
     {
-      return viennacl::scalar_expression< const viennacl::vector<ScalarType, alignment>,
-                                          const viennacl::vector<ScalarType, alignment>,
-                                          viennacl::op_norm_1 >(vector, vector);
-    }
-
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_range<VectorType>,
-                                 const viennacl::vector_range<VectorType>,
-                                 viennacl::op_norm_1 >
-    norm_1(viennacl::vector_range<VectorType> const & vector)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_range<VectorType>,
-                                          const viennacl::vector_range<VectorType>,
-                                          viennacl::op_norm_1 >(vector, vector);
-    }
-
-    template< typename VectorType >
-    viennacl::scalar_expression< const viennacl::vector_slice<VectorType>,
-                                 const viennacl::vector_slice<VectorType>,
-                                 viennacl::op_norm_1 >
-    norm_1(viennacl::vector_slice<VectorType> const & vector)
-    {
-      return viennacl::scalar_expression< const viennacl::vector_slice<VectorType>,
-                                          const viennacl::vector_slice<VectorType>,
+      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType>,
+                                          const viennacl::vector_base<ScalarType>,
                                           viennacl::op_norm_1 >(vector, vector);
     }
 
