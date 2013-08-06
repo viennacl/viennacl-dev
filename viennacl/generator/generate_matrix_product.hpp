@@ -554,14 +554,11 @@ namespace viennacl{
 
                   int ind_lhs_1 = m;
                   int ind_lhs_2 = k;
-                  int ind_s_lhs=a;
+                  int ind_s_lhs = a;
 
                   int ind_rhs_1=k;
                   int ind_rhs_2=n;
                   int ind_s_rhs=a;
-
-                  bool is_vectorized_lhs = false;
-                  bool is_vectorized_rhs = false;
 
                   if(result_access_flow==REGULAR){
                     if(!use_lhs_shared){
@@ -599,7 +596,6 @@ namespace viennacl{
                         ind_rhs_1 = ind_rhs_1/profile_.vectorization_;
                       }
                       else{
-                        is_vectorized_rhs=true;
                       }
                     }
                   }
@@ -616,29 +612,22 @@ namespace viennacl{
                     }
                   }
 
-                  bool is_vectorized = is_vectorized_lhs || is_vectorized_rhs;
-
                   std::ostringstream res_oss;
                   std::ostringstream lhs_oss;
                   std::ostringstream rhs_oss;
 
                   res_oss << "res" << m << n ;
-                  if(!is_vectorized && profile_.vectorization_>1) res_oss << ".s" << a;
+                  if(profile_.vectorization_>1) res_oss << ".s" << a;
 
                   lhs_oss << "val_lhs_" << ind_lhs_1 << "_" << ind_lhs_2;
-                  if(!is_vectorized_lhs && !use_lhs_shared && profile_.vectorization_>1) lhs_oss << ".s" << ind_s_lhs;
+                  if(!use_lhs_shared && profile_.vectorization_>1) lhs_oss << ".s" << ind_s_lhs;
 
 
                   rhs_oss << "val_rhs_" << ind_rhs_1 << "_" << ind_rhs_2;
-                  if(!is_vectorized_rhs && !use_rhs_shared && profile_.vectorization_>1) rhs_oss << ".s" << ind_s_rhs;
+                  if(!use_rhs_shared && profile_.vectorization_>1) rhs_oss << ".s" << ind_s_rhs;
 
 
                   stream << res_oss.str() << "+=" << lhs_oss.str() << "*" << rhs_oss.str() << ";" << std::endl;
-
-
-
-                  if(is_vectorized)
-                    break;
                 }
               }
             }

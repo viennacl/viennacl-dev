@@ -111,7 +111,7 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
 
-    rounds_config.push_back(std::make_pair(1024,50));
+    rounds_config.push_back(std::make_pair(2304,50));
     rounds_config.push_back(std::make_pair(2560,50));
     rounds_config.push_back(std::make_pair(3584,50));
     rounds_config.push_back(std::make_pair(4608,50));

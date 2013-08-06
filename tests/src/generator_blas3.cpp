@@ -58,7 +58,7 @@ using namespace boost::numeric;
 // -------------------------------------------------------------
 //
 static const unsigned int min_large_block_size = 32;
-static const unsigned int max_large_block_size = 128;
+static const unsigned int max_large_block_size = 256;
 static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
 
 static const unsigned int min_alignment = 1;
