@@ -143,12 +143,10 @@ namespace viennacl{
                       if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
                          ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
                       {
-                        k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                      }
-                      else if(current_node->rhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                              ||current_node->rhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                      {
-                        k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                        if(current_node->op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+                          k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                        else
+                          k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                       }
                       else{
                         assert(false && bool("unexpected expression tree"));
@@ -287,8 +285,8 @@ namespace viennacl{
           detail::mapped_matrix const * lhs = NULL;
           detail::mapped_matrix const * rhs = NULL;
 
-          bool if_lhs_transposed = false;
-          bool if_rhs_transposed = false;
+          bool is_lhs_transposed = false;
+          bool is_rhs_transposed = false;
 
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             scheduler::statement::container_type const & exprs = it->first.array();
@@ -296,20 +294,20 @@ namespace viennacl{
             for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
                 if(iit->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
-                  if_lhs_transposed = true;
+                  is_lhs_transposed = true;
                   lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
                 }
                 else{
-                  if_lhs_transposed = false;
+                  is_lhs_transposed = false;
                   lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
                 }
 
                 if(iit->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
-                  if_rhs_transposed = true;
+                  is_rhs_transposed = true;
                   rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
                 }
                 else{
-                  if_rhs_transposed = false;
+                  is_rhs_transposed = false;
                   rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
                 }
 
@@ -317,44 +315,76 @@ namespace viennacl{
             }
           }
 
-          std::string assigned_mat_size1 = "M", assigned_mat_size2 = "N";
-          std::string lhs_mat_size1 = "M", lhs_mat_size2 = "K";
-          std::string rhs_mat_size1 = "K", rhs_mat_size2 = "N";
+//          std::string assigned_mat_size1 = "M", assigned_mat_size2 = "N";
+//          std::string lhs_mat_size1 = "M", lhs_mat_size2 = "K";
+//          std::string rhs_mat_size1 = "K", rhs_mat_size2 = "N";
+
+
+//          if(profile_.vectorization_>1){
+//            std::string StrV = utils::to_string(profile_.vectorization_) ;
+//            std::string Mv = "M/"+StrV;
+//            std::string Nv = "N/"+StrV;
+//            std::string Kv = "K/"+StrV;
+
+//            if(assigned->is_row_major())
+//              assigned_mat_size2 = Nv;
+//            else
+//              assigned_mat_size1 = Mv;
+
+//            if(lhs->is_row_major())
+//              lhs_mat_size2 = Kv;
+//            else
+//              lhs_mat_size1 = Mv;
+
+//            if(rhs->is_row_major())
+//              rhs_mat_size2 = Nv;
+//            else
+//              rhs_mat_size1 = Kv;
+//          }
+
+//          assigned->bind_sizes(assigned_mat_size1, assigned_mat_size2);
+//          lhs->bind_sizes(lhs_mat_size1, lhs_mat_size2);
+//          rhs->bind_sizes(rhs_mat_size1, rhs_mat_size2);
 
 
           if(profile_.vectorization_>1){
-            std::string StrV = utils::to_string(profile_.vectorization_) ;
-            std::string Mv = "M/"+StrV;
-            std::string Nv = "N/"+StrV;
-            std::string Kv = "K/"+StrV;
+            std::string StrV = "/"+utils::to_string(profile_.vectorization_) ;
 
             if(assigned->is_row_major())
-              assigned_mat_size2 = Nv;
+              assigned->bind_sizes("M", "N"+StrV);
             else
-              assigned_mat_size1 = Mv;
+              assigned->bind_sizes("M"+StrV, "N");
 
             if(lhs->is_row_major())
-              lhs_mat_size2 = Kv;
+              if(is_lhs_transposed)
+                 lhs->bind_sizes("M"+StrV, "K");
+              else
+                 lhs->bind_sizes("M", "K"+StrV);
             else
-              lhs_mat_size1 = Mv;
+              if(is_lhs_transposed)
+                lhs->bind_sizes("M", "K"+StrV);
+              else
+                lhs->bind_sizes("M"+StrV, "K");
+
 
             if(rhs->is_row_major())
-              rhs_mat_size2 = Nv;
+              if(is_rhs_transposed)
+                 rhs->bind_sizes("K"+StrV, "N");
+              else
+                 rhs->bind_sizes("K", "N"+StrV);
             else
-              rhs_mat_size1 = Kv;
+              if(is_rhs_transposed)
+                rhs->bind_sizes("K", "N"+StrV);
+              else
+                rhs->bind_sizes("K"+StrV, "N");
+
+
           }
-
-          assigned->bind_sizes(assigned_mat_size1, assigned_mat_size2);
-
-          if(if_lhs_transposed)
-            lhs->bind_sizes(lhs_mat_size2, lhs_mat_size1);
-          else
-            lhs->bind_sizes(lhs_mat_size1, lhs_mat_size2);
-
-          if(if_rhs_transposed)
-            rhs->bind_sizes(rhs_mat_size2, rhs_mat_size1);
-          else
-            rhs->bind_sizes(rhs_mat_size1, rhs_mat_size2);
+          else{
+            assigned->bind_sizes("M", "N");
+            lhs->bind_sizes("M", "K");
+            rhs->bind_sizes("K", "N");
+          }
 
 
 
@@ -370,15 +400,15 @@ namespace viennacl{
             result_access_flow = STRIDED;
 
           access_flow lhs_access_flow;
-          if((lhs->is_row_major() && !if_lhs_transposed)
-             ||(!lhs->is_row_major() && if_lhs_transposed))
+          if((lhs->is_row_major() && !is_lhs_transposed)
+             ||(!lhs->is_row_major() && is_lhs_transposed))
             lhs_access_flow = REGULAR;
           else
             lhs_access_flow = STRIDED;
 
           access_flow rhs_access_flow;
-          if((rhs->is_row_major() && !if_rhs_transposed)
-             ||(!rhs->is_row_major() && if_rhs_transposed))
+          if((rhs->is_row_major() && !is_rhs_transposed)
+             ||(!rhs->is_row_major() && is_rhs_transposed))
             rhs_access_flow = REGULAR;
           else
             rhs_access_flow = STRIDED;
@@ -484,7 +514,7 @@ namespace viennacl{
 
 
           ///Large Work-group Wise loop
-          std::string block_num = helper_variable(stream,false,"unsigned int", "block_num", lhs->size2() + '/' + utils::to_string(kl_lhs));
+          std::string block_num = helper_variable(stream,false,"unsigned int", "block_num", "K/" + utils::to_string(kl));
           stream << "for(unsigned int bl=0 ; bl<" << block_num << " ; ++bl){" << std::endl;
           stream.inc_tab();
 

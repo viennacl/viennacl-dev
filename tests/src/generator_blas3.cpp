@@ -15,8 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-//#define NDEBUG
-//#define VIENNACL_DEBUG_BUILD
+#define NDEBUG
 
 //
 // *** System
@@ -207,8 +206,8 @@ int test_prod(Epsilon const& epsilon)
   int ret;
 
   long matrix_size1 = 1*max_large_block_size;
-  long matrix_size2 = 1*max_large_block_size;
-  long matrix_size3 = 1*max_large_block_size;
+  long matrix_size2 = 2*max_large_block_size;
+  long matrix_size3 = 3*max_large_block_size;
 
   // --------------------------------------------------------------------------
 
