@@ -133,15 +133,18 @@ int main()
   check(ref_float_y, host_float_y, eps_float);
   check(ref_double_x, host_double_x, eps_double);
   check(ref_double_y, host_double_y, eps_double);
+#ifdef VIENNACL_WITH_CUDA
   check(ref_float_x, cuda_float_x, eps_float);
   check(ref_float_y, cuda_float_y, eps_float);
   check(ref_double_x, cuda_double_x, eps_double);
   check(ref_double_y, cuda_double_y, eps_double);
+#endif
+#ifdef VIENNACL_WITH_OPENCL
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
   check(ref_double_x, opencl_double_x, eps_double);
   check(ref_double_y, opencl_double_y, eps_double);
-
+#endif
 
   // ASUM
   std::cout << std::endl << "-- Testing xASUM...";
