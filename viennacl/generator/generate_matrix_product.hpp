@@ -224,37 +224,35 @@ namespace viennacl{
                                        detail::mapped_matrix const & mat,
                                        access_flow flow) const {
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-          stream << aligned_scalartype_ << " val;" << std::endl;
-          stream << "__local " << mat.scalartype() << "* ptr;" << std::endl;
-          std::size_t size1, size2;
-          profile_.set_local_sizes(size1, size2,0);
-          for(unsigned int ni = 0; ni < bound1 ; ni+=size1){
-            for(unsigned int nj = 0 ; nj < bound2 ; nj+=size2){
-              std::string i = "(get_local_id(0) + " + utils::to_string(ni)+")";
-              std::string j = "(get_local_id(1) + " + utils::to_string(nj)+")";
-              if(flow==REGULAR){
-                stream << "val = *(" << global_ptr << " + " << j << "  + " << mat.size2()  << "*" << i << ");" << std::endl;
-                stream << "ptr = " << lmem_name << " + " << i << "*" << lmem_size2 << "+" << j << "*" << profile_.vectorization_<<";" <<std::endl;
-                for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-                  if(profile_.vectorization_>1)
-                    stream << "*ptr++ =  val.s" << a << ";" << std::endl;
-                  else
-                    stream << "*ptr++ =  val;" << std::endl;
-                }
-              }
-              else{
-                stream << "val = *(" << global_ptr << "+ " << j << "*" << mat.size1() << " + " << i << ");" << std::endl;
-                stream << "ptr = " << lmem_name << " + " << i << "*" << profile_.vectorization_ * lmem_size2 << "+ " << j << ";" <<std::endl;
-                for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-                  if(profile_.vectorization_>1)
-                    stream << "*ptr =  val.s" << a << ";" << std::endl;
-                  else
-                    stream << "*ptr =  val;" << std::endl;
-                  stream << "ptr += " << lmem_size2 << ";" << std::endl;
-                }
-              }
+          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= get_local_size(0)){" << std::endl;
+          stream.inc_tab();
+          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= get_local_size(1)){" << std::endl;
+          stream.inc_tab();
+          if(flow==REGULAR){
+           stream << aligned_scalartype_ << " val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
+           stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << lmem_size2 << "+j*" << profile_.vectorization_<<";" <<std::endl;
+           for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
+             if(profile_.vectorization_>1)
+               stream << "*ptr++ =  val.s" << a << ";" << std::endl;
+             else
+               stream << "*ptr++ =  val;" << std::endl;
+           }
+          }
+          else{
+           stream << aligned_scalartype_ << " val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
+           stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << profile_.vectorization_ * lmem_size2 << "+ j;" <<std::endl;
+           for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
+             if(profile_.vectorization_>1)
+               stream << "*ptr =  val.s" << a << ";" << std::endl;
+             else
+               stream << "*ptr =  val;" << std::endl;
+             stream << "ptr += " << lmem_size2 << ";" << std::endl;
             }
           }
+           stream.dec_tab();
+           stream << "}" << std::endl;
+           stream.dec_tab();
+           stream << "}" << std::endl;
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         }
@@ -438,6 +436,7 @@ namespace viennacl{
           //////////////////
           /// DECLARATIONS
           /// //////////////
+
 
           std::size_t local_lhs_size1 = ml ;
           std::size_t local_lhs_size2 = kl + 1;

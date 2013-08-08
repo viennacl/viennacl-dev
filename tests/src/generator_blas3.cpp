@@ -143,7 +143,7 @@ int test_prod(Epsilon const& epsilon,
        else
          std::cout << "Test C = A * B passed!" << std::endl;
    }
-
+   C.clear();
 
    std::cout << "Testing C = trans(A) * B ..." << std::endl;
    {
@@ -160,6 +160,7 @@ int test_prod(Epsilon const& epsilon,
        }
        else std::cout << "Test C = trans(A) * B passed!" << std::endl;
    }
+   C.clear();
 
    std::cout << "Testing C = A * trans(B) ..." << std::endl;
    {
@@ -176,6 +177,7 @@ int test_prod(Epsilon const& epsilon,
        }
        else std::cout << "Test C = A * trans(B) passed!" << std::endl;
    }
+   C.clear();
 
    std::cout << "Testing C = trans(A) * trans(B) ..." << std::endl;
    {
