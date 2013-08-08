@@ -263,17 +263,21 @@ namespace viennacl
 
 
       template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
         value_type alpha = s;
 
+        unsigned int s1  = clear ? viennacl::traits::internal_size1(mat) : viennacl::traits::size1(mat);
+        unsigned int s2  = clear ? viennacl::traits::internal_size2(mat) : viennacl::traits::size2(mat);
+
         if (viennacl::is_row_major<F>::value)
         {
+
           matrix_row_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                  static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
                                                  static_cast<unsigned int>(viennacl::traits::stride1(mat)),          static_cast<unsigned int>(viennacl::traits::stride2(mat)),
-                                                 static_cast<unsigned int>(viennacl::traits::size1(mat)),            static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                                 s1,                                                                 s2,
                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(mat)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
                                                  alpha);
           VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_row_assign_kernel");
@@ -283,7 +287,7 @@ namespace viennacl
           matrix_col_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                   static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
                                                   static_cast<unsigned int>(viennacl::traits::stride1(mat)),          static_cast<unsigned int>(viennacl::traits::stride2(mat)),
-                                                  static_cast<unsigned int>(viennacl::traits::size1(mat)),            static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                                  s1,                                                                 s2,
                                                   static_cast<unsigned int>(viennacl::traits::internal_size1(mat)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
                                                   alpha);
           VIENNACL_CUDA_LAST_ERROR_CHECK("matrix_col_assign_kernel");

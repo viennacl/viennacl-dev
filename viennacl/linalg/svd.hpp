@@ -59,7 +59,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
         viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_GIVENS_PREV_KERNEL);
 
-        kernel.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size1(matrix), 256));
+        kernel.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size1(matrix), 256));
         kernel.local_work_size(0, 256);
 
         viennacl::ocl::enqueue(kernel(
@@ -83,8 +83,8 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
         viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_INVERSE_SIGNS_KERNEL);
 
-        kernel.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size1(matrix), 16));
-        kernel.global_work_size(1, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size2(matrix), 16));
+        kernel.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size1(matrix), 16));
+        kernel.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size2(matrix), 16));
 
         kernel.local_work_size(0, 16);
         kernel.local_work_size(1, 16);

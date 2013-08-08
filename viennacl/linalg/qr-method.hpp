@@ -53,7 +53,7 @@ namespace viennacl
 
           viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_GIVENS_NEXT_KERNEL);
 
-          kernel.global_work_size(0, viennacl::tools::roundUpToNextMultiple<cl_uint>(viennacl::traits::size1(matrix), 256));
+          kernel.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(viennacl::traits::size1(matrix), 256));
           kernel.local_work_size(0, 256);
 
           viennacl::ocl::enqueue(kernel(

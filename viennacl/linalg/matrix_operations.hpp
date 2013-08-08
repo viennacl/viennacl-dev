@@ -148,21 +148,21 @@ namespace viennacl
 
 
     template <typename NumericT, typename F>
-    void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+    void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
     {
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::matrix_assign(mat, s);
+          viennacl::linalg::host_based::matrix_assign(mat, s, clear);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::matrix_assign(mat, s);
+          viennacl::linalg::opencl::matrix_assign(mat, s, clear);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::matrix_assign(mat, s);
+          viennacl::linalg::cuda::matrix_assign(mat, s, clear);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

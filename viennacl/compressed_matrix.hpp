@@ -64,7 +64,7 @@ namespace viennacl
             elements[data_index] = *col_it;
             ++data_index;
           }
-          data_index = viennacl::tools::roundUpToNextMultiple<std::size_t>(data_index, ALIGNMENT); //take care of alignment
+          data_index = viennacl::tools::align_to_multiple<std::size_t>(data_index, ALIGNMENT); //take care of alignment
         }
         row_buffer.set(row_index, data_index);
 
@@ -116,7 +116,7 @@ namespace viennacl
           {
             ++entries_per_row;
           }
-          num_entries += viennacl::tools::roundUpToNextMultiple<std::size_t>(entries_per_row, ALIGNMENT);
+          num_entries += viennacl::tools::align_to_multiple<std::size_t>(entries_per_row, ALIGNMENT);
         }
 
         if (num_entries == 0) //we copy an empty matrix

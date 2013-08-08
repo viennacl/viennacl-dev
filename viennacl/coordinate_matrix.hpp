@@ -269,7 +269,7 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(coord_buffer_, coord_buffer_old);
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
 
-            std::size_t internal_new_nnz = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_nonzeros, ALIGNMENT);
+            std::size_t internal_new_nnz = viennacl::tools::align_to_multiple<std::size_t>(new_nonzeros, ALIGNMENT);
             viennacl::backend::typesafe_host_array<unsigned int> size_deducer(coord_buffer_);
             viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz, viennacl::traits::context(coord_buffer_));
             viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz,             viennacl::traits::context(elements_));
@@ -339,7 +339,7 @@ namespace viennacl
         /** @brief  Returns the number of nonzero entries */
         std::size_t nnz() const { return nonzeros_; }
         /** @brief  Returns the number of internal nonzero entries */
-        std::size_t internal_nnz() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(nonzeros_, ALIGNMENT); }
+        std::size_t internal_nnz() const { return viennacl::tools::align_to_multiple<std::size_t>(nonzeros_, ALIGNMENT); }
 
         /** @brief  Returns the OpenCL handle to the (row, column) index array */
         const handle_type & handle12() const { return coord_buffer_; }

@@ -275,7 +275,7 @@ namespace viennacl
 
 
       template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
 
@@ -286,8 +286,8 @@ namespace viennacl
         std::size_t A_start2 = viennacl::traits::start2(mat);
         std::size_t A_inc1   = viennacl::traits::stride1(mat);
         std::size_t A_inc2   = viennacl::traits::stride2(mat);
-        std::size_t A_size1  = viennacl::traits::size1(mat);
-        std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_size1  = clear ? viennacl::traits::internal_size1(mat) : viennacl::traits::size1(mat);
+        std::size_t A_size2  = clear ? viennacl::traits::internal_size2(mat) : viennacl::traits::size2(mat);
         std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
         std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
 

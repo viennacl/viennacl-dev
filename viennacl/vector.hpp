@@ -368,11 +368,11 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
 
-      static const size_type alignment = 1;
+      static const size_type alignment = 128;
 
       /** @brief Default constructor in order to be compatible with various containers.
       */
-      explicit vector_base() : size_(0), start_(0), stride_(1) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
+      explicit vector_base() : size_(0), internal_size_(0), start_(0), stride_(1) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
 
       /** @brief An explicit constructor for wrapping an existing vector into a vector_range or vector_slice.
        *
@@ -384,10 +384,12 @@ namespace viennacl
        * @param vec_stride Increment between two elements in the original buffer (in multiples of SCALARTYPE)
       */
       explicit vector_base(viennacl::backend::mem_handle & h,
-                           size_type vec_size, size_type vec_start, difference_type vec_stride) : size_(vec_size), start_(vec_start), stride_(vec_stride), elements_(h) {}
+                           size_type vec_size, size_type vec_start, difference_type vec_stride)
+        : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
       /** @brief Creates a vector and allocates the necessary memory */
-      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context()) : size_(vec_size), start_(0), stride_(1)
+      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context())
+        : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
       {
         if (size_ > 0)
         {
@@ -398,7 +400,7 @@ namespace viennacl
 
       // CUDA or host memory:
       explicit vector_base(SCALARTYPE * ptr_to_mem, size_type vec_size, viennacl::memory_types mem_type, std::size_t start = 0, difference_type stride = 1)
-        : size_(vec_size), start_(start), stride_(stride)
+        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
       {
         if (mem_type == viennacl::CUDA_MEMORY)
         {
@@ -430,7 +432,8 @@ namespace viennacl
       * @param existing_mem   An OpenCL handle representing the memory
       * @param vec_size       The size of the vector.
       */
-      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context()) : size_(vec_size), start_(start), stride_(stride)
+      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context())
+        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
       {
         elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
         elements_.opencl_handle() = existing_mem;
@@ -439,6 +442,7 @@ namespace viennacl
         elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
       }
 #endif
+
       /** @brief Creates the vector from the supplied random vector. */
       /*template<class DISTRIBUTION>
       vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
@@ -451,7 +455,8 @@ namespace viennacl
       } */
 
       template <typename LHS, typename RHS, typename OP>
-      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(viennacl::traits::size(proxy)), start_(0), stride_(1)
+      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
+        : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
       {
         if (size_ > 0)
         {
@@ -479,6 +484,7 @@ namespace viennacl
           if (size_ == 0)
           {
             size_ = vec.size();
+            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
             elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
             pad();
@@ -506,6 +512,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = viennacl::traits::size(proxy);
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
           pad();
         }
@@ -528,6 +535,7 @@ namespace viennacl
           size_ = v1.size();
           if (size_ > 0)
           {
+            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
             pad();
           }
@@ -548,6 +556,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
         }
@@ -570,6 +579,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
         }
@@ -589,6 +599,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
           {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
@@ -840,7 +851,7 @@ namespace viennacl
 
       /** @brief Returns the internal length of the vector, which is given by size() plus the extra memory due to padding the memory with zeros up to a multiple of 'ALIGNMENT'
       */
-      size_type internal_size() const { return viennacl::tools::roundUpToNextMultiple<size_type>(size_, 1); }
+      size_type internal_size() const { return internal_size_; }
 
       /** @brief Returns the offset within the buffer
       */
@@ -937,7 +948,7 @@ namespace viennacl
 
         if (new_size != size_)
         {
-          std::size_t new_internal_size = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_size, 1);
+          std::size_t new_internal_size = viennacl::tools::align_to_multiple<std::size_t>(new_size, alignment);
 
           std::vector<SCALARTYPE> temp(size_);
           if (preserve && size_ > 0)
@@ -952,6 +963,7 @@ namespace viennacl
 
           fast_copy(temp, *this);
           size_ = new_size;
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           pad();
         }
 
@@ -960,6 +972,7 @@ namespace viennacl
       size_type       size_;
       size_type       start_;
       difference_type stride_;
+      size_type       internal_size_;
       handle_type elements_;
   }; //vector_base
 

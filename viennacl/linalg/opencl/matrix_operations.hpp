@@ -214,7 +214,7 @@ namespace viennacl
 
 
       template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
 
@@ -224,11 +224,14 @@ namespace viennacl
         KernelClass::init(ctx);
         value_type alpha = static_cast<value_type>(s);
 
+        cl_uint s1 = clear ? cl_uint(viennacl::traits::internal_size1(mat)) : cl_uint(viennacl::traits::size1(mat));
+        cl_uint s2 = clear ? cl_uint(viennacl::traits::internal_size2(mat)) : cl_uint(viennacl::traits::size2(mat));
+
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "assign_cpu");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                  cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
                                  cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),            cl_uint(viennacl::traits::size2(mat)),
+                                 s1,                                               s2,
                                  cl_uint(viennacl::traits::internal_size1(mat)),   cl_uint(viennacl::traits::internal_size2(mat)),
                                  alpha
                                 )
@@ -474,8 +477,8 @@ namespace viennacl
           //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
           viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
 
-          k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size1(C), 16));
-          k.global_work_size(1, viennacl::tools::roundUpToNextMultiple<unsigned int>(viennacl::traits::size2(C), 16));
+          k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size1(C), 16));
+          k.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size2(C), 16));
           k.local_work_size(0, 16);
           k.local_work_size(1, 16);
 

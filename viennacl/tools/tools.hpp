@@ -121,7 +121,7 @@ namespace viennacl
     * @return The smallest multiple of 'base' such that to_reach <= base
     */
     template <class INT_TYPE>
-    INT_TYPE roundUpToNextMultiple(INT_TYPE to_reach, INT_TYPE base)
+    INT_TYPE align_to_multiple(INT_TYPE to_reach, INT_TYPE base)
     {
       if (to_reach % base == 0) return to_reach;
       return ((to_reach / base) + 1) * base;

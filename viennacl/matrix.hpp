@@ -234,8 +234,11 @@ namespace viennacl
       typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
 
+      static const size_type alignment = 128;
+
+
       /** @brief The default constructor. Does not allocate any memory. */
-      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0) {};
+      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0) {}
 
       /** @brief Creates the matrix with the given dimensions
       *
@@ -243,12 +246,14 @@ namespace viennacl
       * @param columns  Number of columns
       */
       explicit matrix_base(size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
+          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
+            internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, alignment)),
+            internal_size2_(viennacl::tools::align_to_multiple<size_type>(columns, alignment))
       {
         if (rows > 0 && columns > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+          clear();
         }
       }
 
@@ -266,13 +271,16 @@ namespace viennacl
       template <typename LHS, typename RHS, typename OP>
       explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
         size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
-        internal_size1_(viennacl::traits::size1(proxy)), internal_size2_(viennacl::traits::size2(proxy))
+        internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
+        internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment))
       {
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (internal_size() > 0)
+        {
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-
-        self_type::operator=(proxy);
+          clear();
+          self_type::operator=(proxy);
+        }
       }
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -333,9 +341,11 @@ namespace viennacl
         {
           size1_ = viennacl::traits::size1(proxy);
           size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+          if (size1_ != internal_size1_ || size2_ != internal_size2_)
+            clear();
         }
 
         if (internal_size() > 0)
@@ -358,8 +368,8 @@ namespace viennacl
         {
           size1_ = viennacl::traits::size1(proxy);
           size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
         }
 
         std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
@@ -422,8 +432,8 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
@@ -447,8 +457,8 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
@@ -469,8 +479,8 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
         }
@@ -564,11 +574,10 @@ namespace viennacl
       /** @brief Resets all entries to zero */
       void clear()
       {
-        viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
+        viennacl::linalg::matrix_assign(*this, SCALARTYPE(0), true);
       }
 
 
-      //const unsigned int row_stride() const { return roundUpToNextMultiple<unsigned int>(columns(), ALIGNMENT); }
       /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
       size_type internal_size1() const { return internal_size1_; }
       /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
@@ -618,8 +627,8 @@ namespace viennacl
           viennacl::backend::memory_read(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(old_entries[0]));
 
           //set up entries of new matrix:
-          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1)
-                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
+          std::vector< SCALARTYPE > new_entries(  viennacl::tools::align_to_multiple<vcl_size_t>(rows,    alignment)
+                                                * viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment));
           for (size_type i=0; i<rows; ++i)
           {
             if (i >= size1_)
@@ -629,7 +638,7 @@ namespace viennacl
             {
               if (j >= size2_)
                 continue;
-              new_entries[F::mem_index(i, j, viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows, 1), viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1))]
+              new_entries[F::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
                   = old_entries[F::mem_index(i, j, internal_size1(), internal_size2())];
             }
           }
@@ -637,20 +646,19 @@ namespace viennacl
           //copy new entries to GPU:
           size1_ = rows;
           size2_ = columns;
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), viennacl::traits::context(elements_), &(new_entries[0]));
         }
         else //discard old entries:
         {
           size1_ = rows;
           size2_ = columns;
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
 
-          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1)
-                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_), &(new_entries[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_));
+          clear();
         }
       }
 

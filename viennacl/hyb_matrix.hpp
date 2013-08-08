@@ -67,13 +67,13 @@ namespace viennacl
         SCALARTYPE  csr_threshold()  const { return csr_threshold_; }
         void csr_threshold(SCALARTYPE thr) { csr_threshold_ = thr; }
 
-        std::size_t internal_size1() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(rows_, ALIGNMENT); }
-        std::size_t internal_size2() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(cols_, ALIGNMENT); }
+        std::size_t internal_size1() const { return viennacl::tools::align_to_multiple<std::size_t>(rows_, ALIGNMENT); }
+        std::size_t internal_size2() const { return viennacl::tools::align_to_multiple<std::size_t>(cols_, ALIGNMENT); }
 
         std::size_t size1() const { return rows_; }
         std::size_t size2() const { return cols_; }
 
-        std::size_t internal_ellnnz() const {return viennacl::tools::roundUpToNextMultiple<std::size_t>(ellnnz_, ALIGNMENT); }
+        std::size_t internal_ellnnz() const {return viennacl::tools::align_to_multiple<std::size_t>(ellnnz_, ALIGNMENT); }
         std::size_t ell_nnz() const { return ellnnz_; }
         std::size_t csr_nnz() const { return csrnnz_; }
 

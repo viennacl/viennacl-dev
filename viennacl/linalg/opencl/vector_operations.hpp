@@ -67,7 +67,7 @@ namespace viennacl
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -123,7 +123,7 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -189,7 +189,7 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -238,7 +238,7 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         cl_uint size = up_to_internal_size ? cl_uint(vec1.internal_size()) : cl_uint(viennacl::traits::size(vec1));
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),

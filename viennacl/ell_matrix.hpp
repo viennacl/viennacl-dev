@@ -58,13 +58,13 @@ namespace viennacl
         }
 
       public:
-        std::size_t internal_size1() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(rows_, ALIGNMENT); }
-        std::size_t internal_size2() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(cols_, ALIGNMENT); }
+        std::size_t internal_size1() const { return viennacl::tools::align_to_multiple<std::size_t>(rows_, ALIGNMENT); }
+        std::size_t internal_size2() const { return viennacl::tools::align_to_multiple<std::size_t>(cols_, ALIGNMENT); }
 
         std::size_t size1() const { return rows_; }
         std::size_t size2() const { return cols_; }
 
-        std::size_t internal_maxnnz() const {return viennacl::tools::roundUpToNextMultiple<std::size_t>(maxnnz_, ALIGNMENT); }
+        std::size_t internal_maxnnz() const {return viennacl::tools::align_to_multiple<std::size_t>(maxnnz_, ALIGNMENT); }
         std::size_t maxnnz() const { return maxnnz_; }
 
         std::size_t nnz() const { return rows_ * maxnnz_; }
