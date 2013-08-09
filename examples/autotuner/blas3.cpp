@@ -80,12 +80,13 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
 template<class NumericT>
 void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_trans){
     typedef std::map<double, viennacl::generator::matrix_product::profile> timings_t;
+    typedef viennacl::matrix<NumericT> MatrixT;
 
     viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    std::vector<int> ml; for(unsigned int i=16 ; i<=256 ; i*=2) ml.push_back(i);
-    std::vector<int> kl; for(unsigned int i=16 ; i<=256 ; i*=2) kl.push_back(i);
-    std::vector<int> nl; for(unsigned int i=16 ; i<=256 ; i*=2) nl.push_back(i);
+    std::vector<int> ml; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) ml.push_back(i);
+    std::vector<int> kl; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) kl.push_back(i);
+    std::vector<int> nl; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) nl.push_back(i);
     std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
@@ -124,9 +125,9 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
         unsigned int size=it->first;
         unsigned int n_keep=it->second;
         std::cout << "Round " << k << " : Tuning for size " << size << std::endl;
-        viennacl::matrix<NumericT> A(size,size);
-        viennacl::matrix<NumericT> B(size,size);
-        viennacl::matrix<NumericT> C(size,size);
+        MatrixT A(size,size);
+        MatrixT B(size,size);
+        MatrixT C(size,size);
 
         fill_matrix<NumericT>(A,B,C);
 
