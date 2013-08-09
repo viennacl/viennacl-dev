@@ -24,6 +24,7 @@
 */
 
 #include <map>
+#include <set>
 #include <list>
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
@@ -31,6 +32,41 @@
 namespace viennacl{
 
   namespace generator{
+
+    enum expression_type_family{
+      SCALAR_SAXPY_FAMILY,
+      VECTOR_SAXPY_FAMILY,
+      MATRIX_SAXPY_FAMILY,
+      SCALAR_REDUCE_FAMILY,
+      VECTOR_REDUCE_FAMILY,
+      MATRIX_PRODUCT_FAMILY,
+      INVALID_EXPRESSION_FAMILY
+    };
+
+    enum expression_type{
+      SCALAR_SAXPY_TYPE,
+      VECTOR_SAXPY_TYPE,
+      MATRIX_SAXPY_TYPE,
+      SCALAR_REDUCE_TYPE,
+      VECTOR_REDUCE_Ax_TYPE,
+      VECTOR_REDUCE_Tx_TYPE,
+      MATRIX_PRODUCT_AA_TYPE,
+      MATRIX_PRODUCT_TA_TYPE,
+      MATRIX_PRODUCT_AT_TYPE,
+      MATRIX_PRODUCT_TT_TYPE,
+      INVALID_EXPRESSION_TYPE
+    };
+
+    struct expression_descriptor{
+        bool operator==(expression_descriptor const & o) const{
+          return  type_family==o.type_family
+               && type==o.type;
+        }
+        expression_type_family type_family;
+        expression_type type;
+        std::size_t scalartype_size;
+    };
+
 
     namespace utils{
       class kernel_generation_stream;

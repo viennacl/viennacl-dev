@@ -40,115 +40,103 @@ namespace viennacl{
 
   namespace generator{
 
-    class vector_reduction : public template_base{
-        typedef template_base base_type;
+    class vector_reduction : public profile_base{
+
+        std::size_t lmem_used(std::size_t scalartype_size) const {
+          return m_*(k_+1)*scalartype_size;
+        }
+
+        virtual void print(std::ostream & s) const{
+          s << "Scalar Reduction : { vector_type, m, k, num_groups} = {"
+            << vectorization_
+            << ", " << m_
+            << ", " << k_
+            << ", " << num_groups_
+            << "}";
+        }
+
       public:
-        typedef base_type::statements_type statements_type;
+        /** @brief The user constructor */
+        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : profile_base(vectorization, 1), m_(m), k_(k), num_groups_(num_groups){ }
 
-        class profile : public template_base::profile{
-            friend class vector_reduction;
-            std::size_t lmem_used(std::size_t scalartype_size) const {
-              return m_*(k_+1)*scalartype_size;
-            }
+        void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
+          s1 = m_;
+          s2 = k_;
+        }
 
-            virtual void print(std::ostream & s) const{
-                s << "Scalar Reduction : { vector_type, m, k, num_groups} = {"
-                  << vectorization_
-                  << ", " << m_
-                  << ", " << k_
-                  << ", " << num_groups_
-                  << "}";
-            }
+        unsigned int m() const { return m_; }
 
-          public:
-            /** @brief The user constructor */
-            profile(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : template_base::profile(vectorization, 1), m_(m), k_(k), num_groups_(num_groups){ }
+        unsigned int k() const { return k_; }
 
-            void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
-              s1 = m_;
-              s2 = k_;
-            }
+        unsigned int num_groups() const { return num_groups_; }
 
-            unsigned int m() const { return m_; }
+        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
 
-            unsigned int k() const { return k_; }
-
-            unsigned int num_groups() const { return num_groups_; }
-
-            void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
-
-              configure_local_sizes(kernel, kernel_id);
-              kernel.global_work_size(0,m_*num_groups_);
-              kernel.global_work_size(1,k_);
+          configure_local_sizes(kernel, kernel_id);
+          kernel.global_work_size(0,m_*num_groups_);
+          kernel.global_work_size(1,k_);
 
 
-              for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-                scheduler::statement::container_type exprs = it->first.array();
-                for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
-                  if(iit->op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
-                    scheduler::statement_node const * current_node = &(*iit);
-                    //The LHS of the prod is a matrix
-                    if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                       ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                    {
-                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
-                      kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                      return;
-                    }
-                    else{
-                      //The LHS of the prod is a matrix expression
-                      current_node = &exprs[current_node->lhs.node_index];
-                      if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                         ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                      {
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                        return;
-                      }
-                      else if(current_node->rhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                              ||current_node->rhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                      {
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
-                        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                        return;
-                      }
-                      else{
-                        assert(false && bool("unexpected expression tree"));
-                      }
-                    }
+          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            scheduler::statement::container_type exprs = it->first.array();
+            for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
+              if(iit->op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
+                scheduler::statement_node const * current_node = &(*iit);
+                //The LHS of the prod is a matrix
+                if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
+                   ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                {
+                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                  return;
+                }
+                else{
+                  //The LHS of the prod is a matrix expression
+                  current_node = &exprs[current_node->lhs.node_index];
+                  if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
+                     ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                  {
+                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                     return;
                   }
+                  else if(current_node->rhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
+                          ||current_node->rhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                  {
+                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                    return;
+                  }
+                  else{
+                    assert(false && bool("unexpected expression tree"));
+                  }
                 }
+                return;
               }
             }
+          }
+        }
 
-            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
-              arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
-              arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
-            }
-          private:
-            unsigned int m_;
-            unsigned int k_;
-            unsigned int num_groups_;
-        };
+        void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
+          arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
+          arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
+        }
 
-      public:
-        vector_reduction(template_base::statements_type const & s, profile const & p) : template_base(s, profile_), profile_(p){ }
-
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream) const{
+      private:
+        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           std::vector<detail::mapped_vector_reduction*> exprs;
-          for(std::vector<detail::mapping_type>::iterator it = mapping_.begin() ; it != mapping_.end() ; ++it){
-            for(detail::mapping_type::iterator iit = it->begin() ; iit != it->end() ; ++iit){
+          for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
+            for(detail::mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
               if(detail::mapped_vector_reduction * p = dynamic_cast<detail::mapped_vector_reduction*>(iit->second.get()))
                 exprs.push_back(p);
               if(detail::mapped_matrix * p = dynamic_cast<detail::mapped_matrix*>(iit->second.get()))
                 p->bind_sizes("M","N");
             }
-         }
+          }
 
-          std::size_t lsize1 = profile_.m_;
-          std::size_t lsize2 = profile_.k_+1;
+          std::size_t lsize1 = m_;
+          std::size_t lsize2 = k_+1;
           std::string scalartype = "float";
           bool is_lhs_transposed = false;
           if(exprs.front()->root_node().lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
@@ -181,28 +169,24 @@ namespace viennacl{
           for(std::vector<detail::mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
             viennacl::scheduler::statement const & statement = (*it)->statement();
             viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
-            detail::mapping_type const & mapping = (*it)->mapping();
-
             if(is_lhs_transposed)
-              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),profile_.vectorization_,stream,mapping);
+              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),vectorization_,stream,(*it)->mapping());
             else
-              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),profile_.vectorization_,stream,mapping);
+              detail::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),vectorization_,stream,(*it)->mapping());
 
-            detail::fetch_all_rhs(fetched,statement,root_node, std::make_pair("c", "0"),profile_.vectorization_,stream,mapping);
+            detail::fetch_all_rhs(fetched,statement,root_node, std::make_pair("c", "0"),vectorization_,stream,(*it)->mapping());
           }
 
 
           //Update sums;
           for(std::vector<detail::mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
-              viennacl::scheduler::statement const & statement = (*it)->statement();
-              viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
-              detail::mapping_type const & mapping = (*it)->mapping();
-
-              std::string str;
-              detail::generate_all_lhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
-              str += "*";
-              detail::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
-              stream << " sum" << std::distance(exprs.begin(),it) << " += "  << str << ";" << std::endl;
+            viennacl::scheduler::statement const & statement = (*it)->statement();
+            viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
+            std::string str;
+            detail::generate_all_lhs(statement,root_node,std::make_pair("i","0"),-1,str,(*it)->mapping());
+            str += "*";
+            detail::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,(*it)->mapping());
+            stream << " sum" << std::distance(exprs.begin(),it) << " += "  << str << ";" << std::endl;
           }
 
 
@@ -213,7 +197,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid0*" << lsize2 << "+ lid1] = sum" << k << ";" << std::endl;
           }
 
-          for(unsigned int stride = profile_.k_/2 ; stride>1 ; stride /=2){
+          for(unsigned int stride = k_/2 ; stride>1 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream <<  "if(lid1 < " << stride << ")" ;
             stream << "{" << std::endl;
@@ -236,9 +220,9 @@ namespace viennacl{
             exprs[i]->access_name("buf"+utils::to_string(i)+"[lid0*"+utils::to_string(lsize2)+"]");
           }
           std::size_t i = 0;
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
+          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             std::string str;
-            detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping_[i++]), false);
+            detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
             stream << str << ";" << std::endl;
           }
           stream.dec_tab();
@@ -251,7 +235,9 @@ namespace viennacl{
         }
 
       private:
-        profile profile_;
+        unsigned int m_;
+        unsigned int k_;
+        unsigned int num_groups_;
     };
   }
 }

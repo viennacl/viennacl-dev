@@ -39,172 +39,157 @@ namespace viennacl{
 
   namespace generator{
 
-    class matrix_product : public template_base{
-        typedef template_base base_type;
-      public:
-        typedef base_type::statements_type statements_type;
-
-        class profile : public template_base::profile{
-            friend class matrix_product;
-
-            std::size_t lmem_used(std::size_t scalartype_size) const {
-              std::size_t lmem_used = 0;
-              if(use_lhs_shared_)
-                lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
-              if(use_rhs_shared_)
-                lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
-              return lmem_used;
-            }
-
-            virtual void print(std::ostream & s) const{
-                s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
-                  << vectorization_ << ","
-                  << ms_ << ", "
-                  << ks_ << ", "
-                  << ns_ << ", "
-                  << ml_ << ", "
-                  << kl_ << ", "
-                  << nl_ << ", "
-                  << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
-            }
-
-            bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
-                return ml_ < ms_ || kl_ < ks_ || nl_ < ns_
-                        || (ms_ % vectorization_) > 0 || (ks_ % vectorization_) > 0 || (ns_ % vectorization_) > 0;
-            }
-
-          public:
-            /** @brief The user constructor */
-            profile(unsigned int vectorization, unsigned int ml, unsigned int kl, unsigned int nl
-                    , unsigned int ms, unsigned int ks, unsigned int ns
-                    , bool use_lhs_shared, bool use_rhs_shared
-                    , unsigned int unroll) : template_base::profile(vectorization,1){
-
-              ml_= ml; kl_=kl ; nl_=nl;
-              ms_ = ms; ks_=ks; ns_=ns;
-              use_lhs_shared_ = use_lhs_shared;
-              use_rhs_shared_ = use_rhs_shared;
-              unroll_ = unroll;
-            }
-
-            unsigned int ml() const { return ml_; }
-            unsigned int kl() const { return kl_; }
-            unsigned int nl() const { return nl_; }
-
-            unsigned int ms() const { return ms_; }
-            unsigned int ks() const { return ks_; }
-            unsigned int ns() const { return ns_; }
-
-            bool use_lhs_shared() const { return use_lhs_shared_; }
-            bool use_rhs_shared() const { return use_rhs_shared_; }
-
-            unsigned int unroll() const { return unroll_; }
-
-            void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t /*kernel_id*/) const{
-              size1 = ml_/ms_;
-              size2 = nl_/ns_;
-            }
-
-            void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
-              //set M, N
-              scheduler::statement_node const & first_node = statements.front().second;
-              unsigned int M = utils::call_on_matrix(first_node.lhs, utils::size1_fun());
-              unsigned int N = utils::call_on_matrix(first_node.lhs, utils::size2_fun());
-
-              //set ND range
-              configure_local_sizes(k, kernel_id);
-              k.global_work_size(0, M/ms_);
-              k.global_work_size(1, N/ns_);
-
-              //set arguments
-              //M,N
-              k.arg(n_arg++, cl_uint(M));
-              k.arg(n_arg++, cl_uint(N));
-
-              //K
-              for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-                scheduler::statement::container_type exprs = it->first.array();
-                for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
-                  if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
-                    scheduler::statement_node const * current_node = &(*iit);
-                    //The LHS of the prod is a matrix
-                    if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                       ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                    {
-                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                    }
-                    else{
-                      //The LHS of the prod is a matrix expression
-                      current_node = &exprs[current_node->lhs.node_index];
-                      if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                         ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
-                      {
-                        if(current_node->op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-                          k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
-                        else
-                          k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
-                      }
-                      else{
-                        assert(false && bool("unexpected expression tree"));
-                      }
-                    }
-                    return;
-                  }
-                }
-              }
-            }
-            static std::string size1() { return "M";  }
-            static std::string size2() { return "K"; }
-            static std::string size3() { return "N"; }
-
-            void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
-              arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
-              arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
-              arguments_string += detail::generate_value_kernel_argument("unsigned int", "K");
-            }
-
-          private:
-            unsigned int ml_;
-            unsigned int kl_;
-            unsigned int nl_;
-
-            unsigned int ms_;
-            unsigned int ks_;
-            unsigned int ns_;
-
-            bool use_lhs_shared_;
-            bool use_rhs_shared_;
-
-            unsigned int unroll_;
-        };
+    class matrix_product : public profile_base{
 
         enum access_flow{
           REGULAR,
           STRIDED
         };
 
+      public:
+
+        std::size_t lmem_used(std::size_t scalartype_size) const {
+          std::size_t lmem_used = 0;
+          if(use_lhs_shared_)
+            lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
+          if(use_rhs_shared_)
+            lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
+          return lmem_used;
+        }
+
+        virtual void print(std::ostream & s) const{
+          s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
+            << vectorization_ << ","
+            << ms_ << ", "
+            << ks_ << ", "
+            << ns_ << ", "
+            << ml_ << ", "
+            << kl_ << ", "
+            << nl_ << ", "
+            << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
+        }
+
+        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
+          return ml_ < ms_ || kl_ < ks_ || nl_ < ns_
+              || (ms_ % vectorization_) > 0 || (ks_ % vectorization_) > 0 || (ns_ % vectorization_) > 0;
+        }
+
+      public:
+        /** @brief The user constructor */
+        matrix_product(unsigned int vectorization, unsigned int ml, unsigned int kl, unsigned int nl
+                , unsigned int ms, unsigned int ks, unsigned int ns
+                , bool use_lhs_shared, bool use_rhs_shared
+                , unsigned int unroll) : profile_base(vectorization,1){
+
+          ml_= ml; kl_=kl ; nl_=nl;
+          ms_ = ms; ks_=ks; ns_=ns;
+          use_lhs_shared_ = use_lhs_shared;
+          use_rhs_shared_ = use_rhs_shared;
+          unroll_ = unroll;
+        }
+
+        unsigned int ml() const { return ml_; }
+        unsigned int kl() const { return kl_; }
+        unsigned int nl() const { return nl_; }
+
+        unsigned int ms() const { return ms_; }
+        unsigned int ks() const { return ks_; }
+        unsigned int ns() const { return ns_; }
+
+        bool use_lhs_shared() const { return use_lhs_shared_; }
+        bool use_rhs_shared() const { return use_rhs_shared_; }
+
+        unsigned int unroll() const { return unroll_; }
+
+        void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t /*kernel_id*/) const{
+          size1 = ml_/ms_;
+          size2 = nl_/ns_;
+        }
+
+        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
+          //set M, N
+          scheduler::statement_node const & first_node = statements.front().second;
+          unsigned int M = utils::call_on_matrix(first_node.lhs, utils::size1_fun());
+          unsigned int N = utils::call_on_matrix(first_node.lhs, utils::size2_fun());
+
+          //set ND range
+          configure_local_sizes(k, kernel_id);
+          k.global_work_size(0, M/ms_);
+          k.global_work_size(1, N/ns_);
+
+          //set arguments
+          //M,N
+          k.arg(n_arg++, cl_uint(M));
+          k.arg(n_arg++, cl_uint(N));
+
+          //K
+          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            scheduler::statement::container_type exprs = it->first.array();
+            for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
+              if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
+                scheduler::statement_node const * current_node = &(*iit);
+                //The LHS of the prod is a matrix
+                if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
+                   ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                {
+                  k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                }
+                else{
+                  //The LHS of the prod is a matrix expression
+                  current_node = &exprs[current_node->lhs.node_index];
+                  if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
+                     ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                  {
+                    if(current_node->op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                    else
+                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                  }
+                  else{
+                    assert(false && bool("unexpected expression tree"));
+                  }
+                }
+                return;
+              }
+            }
+          }
+
+        }
+
+        static std::string size1() { return "M";  }
+        static std::string size2() { return "K"; }
+        static std::string size3() { return "N"; }
+
+        void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
+          arguments_string += detail::generate_value_kernel_argument("unsigned int", "M");
+          arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
+          arguments_string += detail::generate_value_kernel_argument("unsigned int", "K");
+        }
+
+      private:
+
         void transform_block(detail::mapped_matrix const & mat_infos, bool store_shared
                              , unsigned int & large_block_1, unsigned int & large_block_2
                              , unsigned int & small_block_1, unsigned int & small_block_2
                              , access_flow flow) const {
           if(flow==REGULAR){
-            large_block_2/=profile_.vectorization_;
+            large_block_2/=vectorization_;
             if(!store_shared)
-              small_block_2/=profile_.vectorization_;
+              small_block_2/=vectorization_;
           }
           else{
-            large_block_1/=profile_.vectorization_;
+            large_block_1/=vectorization_;
             if(!store_shared)
-              small_block_1/=profile_.vectorization_;
+              small_block_1/=vectorization_;
           }
         }
 
 
         std::string helper_variable(utils::kernel_generation_stream & stream
-                                           , bool store_in_register
-                                           , std::string const & type
-                                           , std::string const & name
-                                           , std::string const & expr) const {
+                                    , bool store_in_register
+                                    , std::string const & type
+                                    , std::string const & name
+                                    , std::string const & expr) const {
           if(!store_in_register)
             return expr;
           stream << type << " " << name << " = " << expr << ";" << std::endl;
@@ -212,137 +197,102 @@ namespace viennacl{
         }
 
         void fetch_to_local_mem(utils::kernel_generation_stream & stream,
-                                       std::string const & lmem_name,
-                                       std::size_t lmem_size2,
-                                       std::string const & global_ptr,
-                                       unsigned int bound1,
-                                       unsigned int bound2,
-                                       detail::mapped_matrix const & mat,
-                                       access_flow flow) const {
+                                std::string const & lmem_name,
+                                std::size_t lmem_size2,
+                                std::string const & global_ptr,
+                                unsigned int bound1,
+                                unsigned int bound2,
+                                detail::mapped_matrix const & mat,
+                                access_flow flow) const {
+          std::string aligned_scalartype = mat.scalartype();
+          if(vectorization_ > 1)
+            aligned_scalartype+=utils::to_string(vectorization_);
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
           stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= get_local_size(0)){" << std::endl;
           stream.inc_tab();
           stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= get_local_size(1)){" << std::endl;
           stream.inc_tab();
           if(flow==REGULAR){
-           stream << aligned_scalartype_ << " val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
-           stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << lmem_size2 << "+j*" << profile_.vectorization_<<";" <<std::endl;
-           for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-             if(profile_.vectorization_>1)
-               stream << "*ptr++ =  val.s" << a << ";" << std::endl;
-             else
-               stream << "*ptr++ =  val;" << std::endl;
-           }
-          }
-          else{
-           stream << aligned_scalartype_ << " val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
-           stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << profile_.vectorization_ * lmem_size2 << "+ j;" <<std::endl;
-           for(unsigned int a = 0 ; a < profile_.vectorization_ ; ++a){
-             if(profile_.vectorization_>1)
-               stream << "*ptr =  val.s" << a << ";" << std::endl;
-             else
-               stream << "*ptr =  val;" << std::endl;
-             stream << "ptr += " << lmem_size2 << ";" << std::endl;
+            stream << aligned_scalartype << " val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
+            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << lmem_size2 << "+j*" << vectorization_<<";" <<std::endl;
+            for(unsigned int a = 0 ; a < vectorization_ ; ++a){
+              if(vectorization_>1)
+                stream << "*ptr++ =  val.s" << a << ";" << std::endl;
+              else
+                stream << "*ptr++ =  val;" << std::endl;
             }
           }
-           stream.dec_tab();
-           stream << "}" << std::endl;
-           stream.dec_tab();
-           stream << "}" << std::endl;
+          else{
+            stream << aligned_scalartype << " val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
+            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << vectorization_ * lmem_size2 << "+ j;" <<std::endl;
+            for(unsigned int a = 0 ; a < vectorization_ ; ++a){
+              if(vectorization_>1)
+                stream << "*ptr =  val.s" << a << ";" << std::endl;
+              else
+                stream << "*ptr =  val;" << std::endl;
+              stream << "ptr += " << lmem_size2 << ";" << std::endl;
+            }
+          }
+          stream.dec_tab();
+          stream << "}" << std::endl;
+          stream.dec_tab();
+          stream << "}" << std::endl;
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         }
 
-
-      public:
-        matrix_product(template_base::statements_type const & s, profile const & p) : template_base(s, profile_), profile_(p){
-
-        }
-
-        void core(std::size_t /*idx*/, utils::kernel_generation_stream& stream) const{
+        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           //////////////////
           /// INIT
           /// //////////////
 
-          bool use_lhs_shared = profile_.use_lhs_shared_;
-          bool use_rhs_shared = profile_.use_rhs_shared_;
-          unsigned int kl = profile_.kl_;
-          unsigned int ks = profile_.ks_;
-          unsigned int ml = profile_.ml_;
-          unsigned int ms = profile_.ms_;
-          unsigned int nl = profile_.nl_;
-          unsigned int ns = profile_.ns_;
-          unsigned int unroll = profile_.unroll_;
+          bool use_lhs_shared = use_lhs_shared_;
+          bool use_rhs_shared = use_rhs_shared_;
+          unsigned int kl = kl_;
+          unsigned int ks = ks_;
+          unsigned int ml = ml_;
+          unsigned int ms = ms_;
+          unsigned int nl = nl_;
+          unsigned int ns = ns_;
+          unsigned int unroll = unroll_;
 
-          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping_.at(0).at(std::make_pair(&statements_.front().second,detail::LHS_NODE_TYPE)).get());
+          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping.at(0).at(std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
           detail::mapped_matrix const * lhs = NULL;
           detail::mapped_matrix const * rhs = NULL;
 
           bool is_lhs_transposed = false;
           bool is_rhs_transposed = false;
 
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
+          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             scheduler::statement::container_type const & exprs = it->first.array();
-            std::size_t i = std::distance(statements_.begin(), it);
+            std::size_t i = std::distance(statements.begin(), it);
             for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
                 if(iit->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_lhs_transposed = true;
-                  lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
+                  lhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
                 }
                 else{
                   is_lhs_transposed = false;
-                  lhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
+                  lhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
                 }
 
                 if(iit->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_rhs_transposed = true;
-                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
+                  rhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
                 }
                 else{
                   is_rhs_transposed = false;
-                  rhs = (detail::mapped_matrix const *)mapping_.at(i).at(std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
+                  rhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
                 }
 
               }
             }
           }
 
-//          std::string assigned_mat_size1 = "M", assigned_mat_size2 = "N";
-//          std::string lhs_mat_size1 = "M", lhs_mat_size2 = "K";
-//          std::string rhs_mat_size1 = "K", rhs_mat_size2 = "N";
-
-
-//          if(profile_.vectorization_>1){
-//            std::string StrV = utils::to_string(profile_.vectorization_) ;
-//            std::string Mv = "M/"+StrV;
-//            std::string Nv = "N/"+StrV;
-//            std::string Kv = "K/"+StrV;
-
-//            if(assigned->is_row_major())
-//              assigned_mat_size2 = Nv;
-//            else
-//              assigned_mat_size1 = Mv;
-
-//            if(lhs->is_row_major())
-//              lhs_mat_size2 = Kv;
-//            else
-//              lhs_mat_size1 = Mv;
-
-//            if(rhs->is_row_major())
-//              rhs_mat_size2 = Nv;
-//            else
-//              rhs_mat_size1 = Kv;
-//          }
-
-//          assigned->bind_sizes(assigned_mat_size1, assigned_mat_size2);
-//          lhs->bind_sizes(lhs_mat_size1, lhs_mat_size2);
-//          rhs->bind_sizes(rhs_mat_size1, rhs_mat_size2);
-
-
-          if(profile_.vectorization_>1){
-            std::string StrV = "/"+utils::to_string(profile_.vectorization_) ;
+          if(vectorization_>1){
+            std::string StrV = "/"+utils::to_string(vectorization_) ;
 
             if(assigned->is_row_major())
               assigned->bind_sizes("M", "N"+StrV);
@@ -351,9 +301,9 @@ namespace viennacl{
 
             if(lhs->is_row_major())
               if(is_lhs_transposed)
-                 lhs->bind_sizes("M"+StrV, "K");
+                lhs->bind_sizes("M"+StrV, "K");
               else
-                 lhs->bind_sizes("M", "K"+StrV);
+                lhs->bind_sizes("M", "K"+StrV);
             else
               if(is_lhs_transposed)
                 lhs->bind_sizes("M", "K"+StrV);
@@ -363,9 +313,9 @@ namespace viennacl{
 
             if(rhs->is_row_major())
               if(is_rhs_transposed)
-                 rhs->bind_sizes("K"+StrV, "N");
+                rhs->bind_sizes("K"+StrV, "N");
               else
-                 rhs->bind_sizes("K", "N"+StrV);
+                rhs->bind_sizes("K", "N"+StrV);
             else
               if(is_rhs_transposed)
                 rhs->bind_sizes("K", "N"+StrV);
@@ -382,9 +332,9 @@ namespace viennacl{
 
 
 
-          aligned_scalartype_ = assigned->scalartype();
-          if(profile_.vectorization_ > 1)
-            aligned_scalartype_+=utils::to_string(profile_.vectorization_);
+          std::string aligned_scalartype = assigned->scalartype();
+          if(vectorization_ > 1)
+            aligned_scalartype+=utils::to_string(vectorization_);
 
 
           access_flow result_access_flow;
@@ -412,13 +362,13 @@ namespace viennacl{
           if(use_lhs_shared)
             lhs_value_scalartype = lhs->scalartype();
           else
-            lhs_value_scalartype = aligned_scalartype_;
+            lhs_value_scalartype = aligned_scalartype;
 
           std::string rhs_value_scalartype;
           if(use_rhs_shared)
             rhs_value_scalartype = rhs->scalartype();
           else
-            rhs_value_scalartype = aligned_scalartype_;
+            rhs_value_scalartype = aligned_scalartype;
 
 
           unsigned int ml_res = ml, nl_res = nl, ms_res = ms, ns_res = ns;
@@ -443,7 +393,7 @@ namespace viennacl{
           ///Result Values
           for(unsigned int m=0; m< ms_res; ++m)
             for(unsigned int n=0; n < ns_res ; ++n)
-              stream << aligned_scalartype_ << " " << "res" << m << n << " = (" << aligned_scalartype_ << ")(0) ;" << std::endl;
+              stream << aligned_scalartype << " " << "res" << m << n << " = (" << aligned_scalartype << ")(0) ;" << std::endl;
 
           ///Local memory
           if(use_lhs_shared)
@@ -452,13 +402,13 @@ namespace viennacl{
             stream << "__local " << rhs->scalartype() << " rhs_buf[" << local_rhs_size1*local_rhs_size2 << "]" << ";" << std::endl;
 
           ///Pointer to result
-          stream << "__global " << aligned_scalartype_ << "* res_ptr = " <<  assigned->name() << " + " << assigned->offset(std::make_pair("get_global_id(0)*" + utils::to_string(ms_res), "get_global_id(1)*" + utils::to_string(ns_res))) << ";" << std::endl;
+          stream << "__global " << aligned_scalartype << "* res_ptr = " <<  assigned->name() << " + " << assigned->offset(std::make_pair("get_global_id(0)*" + utils::to_string(ms_res), "get_global_id(1)*" + utils::to_string(ns_res))) << ";" << std::endl;
 
 
           ///LHS - Local Memory Offset
           if(use_lhs_shared){
             std::string i = "get_group_id(0)*" + utils::to_string(ml_lhs);
-            stream << "__global " << aligned_scalartype_ << "* global_lhs_ptr = " << lhs->name() << " + ";
+            stream << "__global " << aligned_scalartype << "* global_lhs_ptr = " << lhs->name() << " + ";
             if(lhs_access_flow==REGULAR)
               stream << "(" << i << ")" << "*" << lhs->size2();
             else
@@ -470,13 +420,13 @@ namespace viennacl{
           else{
             if(lhs_access_flow==REGULAR)
               for(unsigned int m=0; m<ms_lhs; ++m)
-                stream << "__global " << aligned_scalartype_ << " * " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
+                stream << "__global " << aligned_scalartype << " * " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
                        << lhs->size2() << "* ("
                        << "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << "+" << m
                        << " );" << std::endl;
             else
               for(unsigned int k=0; k<ks_lhs; ++k)
-                stream << "__global " << aligned_scalartype_<< " * " << "lhs_ptr_" << k << " = " << lhs->name() << " + "
+                stream << "__global " << aligned_scalartype<< " * " << "lhs_ptr_" << k << " = " << lhs->name() << " + "
                        << "(" << lhs->size1() << ")*" << k
                        << "+ " << "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << ";" << std::endl;
           }
@@ -496,13 +446,13 @@ namespace viennacl{
           else{
             if(rhs_access_flow==REGULAR)
               for(unsigned int k = 0 ; k < ks_rhs ; ++k)
-                stream << "__global " << aligned_scalartype_ << " * " << "rhs_ptr_" << k << " = " << rhs->name() << " + "
+                stream << "__global " << aligned_scalartype << " * " << "rhs_ptr_" << k << " = " << rhs->name() << " + "
                        << "(" << k << ")" << "*" << rhs->size2()
                        << " + " << "get_local_id(1)*" << ns_rhs << " + get_group_id(1)*" << nl_rhs
                        << ";" << std::endl;
             else
               for(unsigned int n = 0 ; n < ns_rhs ; ++n)
-                stream << "__global " << aligned_scalartype_ << " * " << "rhs_ptr_" << n << " = " << rhs->name() << " +  "
+                stream << "__global " << aligned_scalartype << " * " << "rhs_ptr_" << n << " = " << rhs->name() << " +  "
                        << "(" << "get_local_id(1)*" << ns_rhs << " + get_group_id(1)*" << nl_rhs << " + " << n << ")" << "*" << rhs->size1()
                        << ";" << std::endl;
           }
@@ -543,12 +493,12 @@ namespace viennacl{
             for(unsigned int n=0 ; n < ns_rhs ; ++n){
               stream << rhs_value_scalartype << " val_rhs_" << k << "_" << n << " = " ;
               if(use_rhs_shared )
-                  stream << "* rhs_ptr_" << k << "++";
+                stream << "* rhs_ptr_" << k << "++";
               else{
                 if(rhs_access_flow==REGULAR)
                   stream << "* rhs_ptr_" << k << "++";
                 else
-                   stream  << "* rhs_ptr_" << n << "++";
+                  stream  << "* rhs_ptr_" << n << "++";
               }
               stream << ";";
               stream << std::endl;
@@ -575,7 +525,7 @@ namespace viennacl{
           for(unsigned int k = 0 ; k < ks ; ++k){
             for(unsigned int n=0 ; n < ns_res ; ++n){
               for(unsigned int m=0 ; m < ms_res ; ++m){
-                for(unsigned int a = 0; a<profile_.vectorization_; ++a){
+                for(unsigned int a = 0; a<vectorization_; ++a){
 
                   int ind_lhs_1 = m;
                   int ind_lhs_2 = k;
@@ -588,37 +538,37 @@ namespace viennacl{
                   if(result_access_flow==REGULAR){
                     if(!use_lhs_shared){
                       if(lhs_access_flow==REGULAR){
-                        ind_s_lhs = ind_lhs_2%profile_.vectorization_;
-                        ind_lhs_2 /= profile_.vectorization_;
+                        ind_s_lhs = ind_lhs_2%vectorization_;
+                        ind_lhs_2 /= vectorization_;
                       }
                       else{
-                        ind_s_lhs = ind_lhs_1%profile_.vectorization_;
-                        ind_lhs_1 /= profile_.vectorization_;
+                        ind_s_lhs = ind_lhs_1%vectorization_;
+                        ind_lhs_1 /= vectorization_;
                       }
                     }
                   }
                   else{
                     if(use_lhs_shared){
-                      ind_lhs_1 = ind_lhs_1*profile_.vectorization_+a;
+                      ind_lhs_1 = ind_lhs_1*vectorization_+a;
                     }
                     else{
                       if(lhs_access_flow==REGULAR){
-                        ind_lhs_1 = ind_lhs_1*profile_.vectorization_+a;
-                        ind_s_lhs = ind_lhs_2%profile_.vectorization_;
-                        ind_lhs_2 /= profile_.vectorization_;
+                        ind_lhs_1 = ind_lhs_1*vectorization_+a;
+                        ind_s_lhs = ind_lhs_2%vectorization_;
+                        ind_lhs_2 /= vectorization_;
                       }
                     }
                   }
 
                   if(result_access_flow==REGULAR){
                     if(use_rhs_shared){
-                      ind_rhs_2 = ind_rhs_2*profile_.vectorization_+a;
+                      ind_rhs_2 = ind_rhs_2*vectorization_+a;
                     }
                     else{
                       if(rhs_access_flow==STRIDED){
-                        ind_rhs_2 = ind_rhs_2*profile_.vectorization_+a;
-                        ind_s_rhs = ind_rhs_1%profile_.vectorization_;
-                        ind_rhs_1 = ind_rhs_1/profile_.vectorization_;
+                        ind_rhs_2 = ind_rhs_2*vectorization_+a;
+                        ind_s_rhs = ind_rhs_1%vectorization_;
+                        ind_rhs_1 = ind_rhs_1/vectorization_;
                       }
                       else{
                       }
@@ -627,12 +577,12 @@ namespace viennacl{
                   else{
                     if(!use_rhs_shared){
                       if(rhs_access_flow==REGULAR){
-                        ind_s_rhs = ind_rhs_2%profile_.vectorization_;
-                        ind_rhs_2/=profile_.vectorization_;
+                        ind_s_rhs = ind_rhs_2%vectorization_;
+                        ind_rhs_2/=vectorization_;
                       }
                       else{
-                        ind_s_rhs = ind_rhs_1%profile_.vectorization_;
-                        ind_rhs_1/=profile_.vectorization_;
+                        ind_s_rhs = ind_rhs_1%vectorization_;
+                        ind_rhs_1/=vectorization_;
                       }
                     }
                   }
@@ -642,14 +592,14 @@ namespace viennacl{
                   std::ostringstream rhs_oss;
 
                   res_oss << "res" << m << n ;
-                  if(profile_.vectorization_>1) res_oss << ".s" << a;
+                  if(vectorization_>1) res_oss << ".s" << a;
 
                   lhs_oss << "val_lhs_" << ind_lhs_1 << "_" << ind_lhs_2;
-                  if(!use_lhs_shared && profile_.vectorization_>1) lhs_oss << ".s" << ind_s_lhs;
+                  if(!use_lhs_shared && vectorization_>1) lhs_oss << ".s" << ind_s_lhs;
 
 
                   rhs_oss << "val_rhs_" << ind_rhs_1 << "_" << ind_rhs_2;
-                  if(!use_rhs_shared && profile_.vectorization_>1) rhs_oss << ".s" << ind_s_rhs;
+                  if(!use_rhs_shared && vectorization_>1) rhs_oss << ".s" << ind_s_rhs;
 
 
                   stream << res_oss.str() << "+=" << lhs_oss.str() << "*" << rhs_oss.str() << ";" << std::endl;
@@ -681,17 +631,17 @@ namespace viennacl{
           stream << "}" << std::endl;
 
           if(use_lhs_shared){
-              if(lhs_access_flow==REGULAR)
-                stream << "global_lhs_ptr += " << kl_lhs << ";" << std::endl;
-              else
-                stream << "global_lhs_ptr += " << kl_lhs << "*" << lhs->size1() << ";" << std::endl;
+            if(lhs_access_flow==REGULAR)
+              stream << "global_lhs_ptr += " << kl_lhs << ";" << std::endl;
+            else
+              stream << "global_lhs_ptr += " << kl_lhs << "*" << lhs->size1() << ";" << std::endl;
           }
 
           if(use_rhs_shared){
             if(rhs_access_flow==REGULAR)
-                stream << "offsetRHS += " << kl_rhs << "*" << rhs->size2() << ";" << std::endl;
+              stream << "offsetRHS += " << kl_rhs << "*" << rhs->size2() << ";" << std::endl;
             else
-                stream << "offsetRHS += " << kl_rhs << ";" << std::endl;
+              stream << "offsetRHS += " << kl_rhs << ";" << std::endl;
           }
 
           stream.dec_tab();
@@ -714,16 +664,21 @@ namespace viennacl{
             }
           }
 
-
-
-
-
         }
 
       private:
-        profile profile_;
+        unsigned int ml_;
+        unsigned int kl_;
+        unsigned int nl_;
 
-        mutable std::string aligned_scalartype_;
+        unsigned int ms_;
+        unsigned int ks_;
+        unsigned int ns_;
+
+        bool use_lhs_shared_;
+        bool use_rhs_shared_;
+
+        unsigned int unroll_;
     };
 
   }

@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_GENERATE_HPP
-#define VIENNACL_GENERATOR_GENERATE_HPP
+#ifndef VIENNACL_GENERATE_HPP
+#define VIENNACL_GENERATE_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -28,16 +28,13 @@
 #include <typeinfo>
 
 #include "viennacl/scheduler/forwards.h"
+#include "viennacl/generator/forwards.h"
 
+#include "viennacl/generator/profiles.hpp"
 #include "viennacl/generator/enqueue_statement.hpp"
 #include "viennacl/generator/statement_representation.hpp"
 
 #include "viennacl/generator/map_generate_prototype.hpp"
-
-#include "viennacl/generator/generate_saxpy.hpp"
-#include "viennacl/generator/generate_scalar_reduction.hpp"
-#include "viennacl/generator/generate_vector_reduction.hpp"
-#include "viennacl/generator/generate_matrix_product.hpp"
 
 namespace viennacl{
 
@@ -45,42 +42,9 @@ namespace viennacl{
 
     using namespace scheduler;
 
-    enum expression_type_family{
-      SCALAR_SAXPY_FAMILY,
-      VECTOR_SAXPY_FAMILY,
-      MATRIX_SAXPY_FAMILY,
-      SCALAR_REDUCE_FAMILY,
-      VECTOR_REDUCE_FAMILY,
-      MATRIX_PRODUCT_FAMILY,
-      INVALID_EXPRESSION_FAMILY
-    };
-
-    enum expression_type{
-      SCALAR_SAXPY_TYPE,
-      VECTOR_SAXPY_TYPE,
-      MATRIX_SAXPY_TYPE,
-      SCALAR_REDUCE_TYPE,
-      VECTOR_REDUCE_Ax_TYPE,
-      VECTOR_REDUCE_Tx_TYPE,
-      MATRIX_PRODUCT_AA_TYPE,
-      MATRIX_PRODUCT_TA_TYPE,
-      MATRIX_PRODUCT_AT_TYPE,
-      MATRIX_PRODUCT_TT_TYPE,
-      INVALID_EXPRESSION_TYPE
-    };
-
-    struct expression_descriptor{
-        expression_type_family type_family;
-        expression_type type;
-        bool operator==(expression_descriptor const & other) const{
-          return type_family==other.type_family
-               &&type==other.type;
-        }
-    };
-
     class code_generator{
       private:
-        typedef std::pair<expression_descriptor, generator::template_base::statements_type> representation_node_type;
+        typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
 
         static bool is_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
@@ -184,6 +148,7 @@ namespace viennacl{
 
         void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
           scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
+          descriptor.scalartype_size == utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
           if(lhs_family==VECTOR_TYPE_FAMILY){
             descriptor.type_family = VECTOR_SAXPY_FAMILY;
             descriptor.type = VECTOR_SAXPY_TYPE;
@@ -202,75 +167,68 @@ namespace viennacl{
         }
 
         template<class StatementsType>
-        void enqueue_expression(template_base::profile const & profile, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
+        void enqueue_expression(profile_base const & profile, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
             char str[10];
             std::sprintf(str,"kernel_%d",kernel_id);
             viennacl::ocl::kernel & kernel = p.get_kernel(str);
             kernels.push_back(&kernel);
-
             unsigned int current_arg = 0;
-
             //Configure ND Range and enqueue arguments
             profile.configure_range_enqueue_arguments(i, statements, kernel, current_arg);
-
             std::set<void *> memory;
             for(typename StatementsType::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               detail::traverse(it->first, it->second, detail::enqueue_functor(memory,current_arg,kernel));
             }
-
             ++kernel_id;
           }
         }
 
       public:
-        code_generator() : vector_saxpy_profile_(1,128,128,true)
-                          , matrix_saxpy_profile_(1,16,16,16,16,true)
-                          , scalar_reduction_profile_(4, 128, 512, 0)
-                          , vector_reduction_profile_(1, 1, 256, 32)
-                          , matrix_product_profile_(2,16,32,64,8,4,2,1,0,1)
-                           {
+        code_generator() : vector_saxpy_(1,128,128,true)
+                          , matrix_saxpy_(1,16,16,16,16,true)
+                          , scalar_reduction_(4, 128, 512, 0)
+                          , vector_reduction_(1, 1, 256, 32)
+                          , matrix_product_(2,16,32,64,8,4,2,1,0,1){
           statements_.reserve(16);
         }
 
         bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {
           expression_descriptor descriptor;
           fill_descriptor(statement, root_node, descriptor);
-
           if(descriptor.type_family==INVALID_EXPRESSION_FAMILY)
             return false;
-
           if(statements_.empty())
-            statements_.push_back(std::make_pair(descriptor,template_base::statements_type(1,std::make_pair(statement, root_node))));
+            statements_.push_back(std::make_pair(descriptor,profile_base::statements_type(1,std::make_pair(statement, root_node))));
           else
             if(statements_.back().first == descriptor)
               statements_.back().second.push_back(std::make_pair(statement, root_node));
             else
-              statements_.push_back(std::make_pair(descriptor,template_base::statements_type(1,std::make_pair(statement, root_node))));
+              statements_.push_back(std::make_pair(descriptor,profile_base::statements_type(1,std::make_pair(statement, root_node))));
           return true;
         }
 
-        template_base::profile const & get_profile(expression_descriptor descriptor) const {
+        profile_base const & get_profile(expression_descriptor descriptor) const {
           expression_type_family family = descriptor.type_family;
           expression_type type = descriptor.type;
           switch(family){
-            case VECTOR_SAXPY_FAMILY: return vector_saxpy_profile_;
-            case MATRIX_SAXPY_FAMILY: return matrix_saxpy_profile_;
-            case SCALAR_REDUCE_FAMILY: return scalar_reduction_profile_;
+            case VECTOR_SAXPY_FAMILY: return vector_saxpy_;
+            case MATRIX_SAXPY_FAMILY: return matrix_saxpy_;
+            case SCALAR_REDUCE_FAMILY: return scalar_reduction_;
             case VECTOR_REDUCE_FAMILY:
               switch(type){
-                case VECTOR_REDUCE_Ax_TYPE: return vector_reduction_profile_;
-                case VECTOR_REDUCE_Tx_TYPE: return vector_reduction_profile_;
+                case VECTOR_REDUCE_Ax_TYPE: return vector_reduction_;
+                case VECTOR_REDUCE_Tx_TYPE: return vector_reduction_;
                 default: throw "vector reduction profile type not recognized";
               }
               break;
             case MATRIX_PRODUCT_FAMILY:
               switch(type){
-                case MATRIX_PRODUCT_AA_TYPE: return matrix_product_profile_;
-                case MATRIX_PRODUCT_TA_TYPE: return matrix_product_profile_;
-                case MATRIX_PRODUCT_AT_TYPE: return matrix_product_profile_;
-                case MATRIX_PRODUCT_TT_TYPE: return matrix_product_profile_;
+                case MATRIX_PRODUCT_AA_TYPE: return matrix_product_;
+                case MATRIX_PRODUCT_TA_TYPE: return matrix_product_;
+                case MATRIX_PRODUCT_AT_TYPE: return matrix_product_;
+                case MATRIX_PRODUCT_TT_TYPE: return matrix_product_;
                 default: throw "matrix reduction profile type not recognized";
               }
               break;
@@ -288,32 +246,11 @@ namespace viennacl{
           unsigned int current_arg = 0;
           void* memory[64] = {NULL};
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            for(template_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
+            for(profile_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
               detail::traverse(iit->first, iit->second, detail::representation_functor(memory, current_arg, program_name));
             }
           }
           *program_name='\0';
-        }
-
-
-        void force_profile(vector_saxpy::profile const & profile){
-          vector_saxpy_profile_ = profile;
-        }
-
-        void force_profile(matrix_saxpy::profile const & profile){
-          matrix_saxpy_profile_ = profile;
-        }
-
-        void force_profile(scalar_reduction::profile const & profile){
-          scalar_reduction_profile_ = profile;
-        }
-
-        void force_profile(vector_reduction::profile const & profile){
-          vector_reduction_profile_ = profile;
-        }
-
-        void force_profile(matrix_product::profile const & profile){
-          matrix_product_profile_ = profile;
         }
 
         std::string make_program_string() const {
@@ -328,31 +265,7 @@ namespace viennacl{
           stream << std::endl;
 
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            expression_type_family family = it->first.type_family;
-            expression_type type = it->first.type;
-            representation_node_type::second_type const & s = it->second;
-            switch(family){
-              case VECTOR_SAXPY_FAMILY: vector_saxpy(s,vector_saxpy_profile_)(stream); break;
-              case MATRIX_SAXPY_FAMILY: matrix_saxpy(s,matrix_saxpy_profile_)(stream); break;
-              case SCALAR_REDUCE_FAMILY: scalar_reduction(s,scalar_reduction_profile_)(stream); break;
-              case VECTOR_REDUCE_FAMILY:
-                switch(type){
-                  case VECTOR_REDUCE_Ax_TYPE: vector_reduction(s,vector_reduction_profile_)(stream); break;
-                  case VECTOR_REDUCE_Tx_TYPE: vector_reduction(s,vector_reduction_profile_)(stream); break;
-                  default: throw "vector reduction profile type not recognized";
-                }
-                break;
-              case MATRIX_PRODUCT_FAMILY:
-                switch(type){
-                  case MATRIX_PRODUCT_AA_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
-                  case MATRIX_PRODUCT_TA_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
-                  case MATRIX_PRODUCT_AT_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
-                  case MATRIX_PRODUCT_TT_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
-                  default: throw "matrix reduction profile type not recognized";
-                }
-                break;
-              default: throw "profile type family not recognized";
-            }
+            get_profile(it->first)(stream,it->second);
           }
           return stream.str();
         }
@@ -360,11 +273,11 @@ namespace viennacl{
       private:
         statements_type statements_;
 
-        vector_saxpy::profile vector_saxpy_profile_;
-        matrix_saxpy::profile matrix_saxpy_profile_;
-        scalar_reduction::profile scalar_reduction_profile_;
-        vector_reduction::profile vector_reduction_profile_;
-        matrix_product::profile matrix_product_profile_;
+        vector_saxpy vector_saxpy_;
+        matrix_saxpy matrix_saxpy_;
+        scalar_reduction scalar_reduction_;
+        vector_reduction vector_reduction_;
+        matrix_product matrix_product_;
     };
 
     static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){

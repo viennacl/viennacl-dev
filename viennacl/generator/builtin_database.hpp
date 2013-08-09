@@ -58,7 +58,7 @@ namespace viennacl{
       };
 
       typedef std::pair<profile_type, size_t> profile_id;
-      typedef std::map<device_key, std::map<profile_id, template_base::profile const * > > builtin_database_t;
+      typedef std::map<device_key, std::map<profile_id, profile_base::profile const * > > builtin_database_t;
 
 //      static  builtin_database_t make_database(){
 

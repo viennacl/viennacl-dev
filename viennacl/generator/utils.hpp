@@ -152,6 +152,12 @@ namespace viennacl{
         }
       }
 
+      struct scalartype_size_fun{
+          typedef std::size_t result_type;
+          template<class T>
+          result_type operator()(T const &t) const { return sizeof(T); }
+      };
+
       struct size_fun{
           typedef std::size_t result_type;
           template<class T>
