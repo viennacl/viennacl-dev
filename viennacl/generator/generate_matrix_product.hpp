@@ -69,12 +69,8 @@ namespace viennacl{
             }
 
             bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
-                return ml_ < ms_
-                        || kl_ < ks_
-                        || nl_ < ns_
-                        || (ms_ % vectorization_) > 0
-                        || (ks_ % vectorization_) > 0
-                        || (ns_ % vectorization_) > 0;
+                return ml_ < ms_ || kl_ < ks_ || nl_ < ns_
+                        || (ms_ % vectorization_) > 0 || (ks_ % vectorization_) > 0 || (ns_ % vectorization_) > 0;
             }
 
           public:

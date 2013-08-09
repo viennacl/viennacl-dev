@@ -46,105 +46,163 @@ namespace viennacl{
     using namespace scheduler;
 
     enum expression_type_family{
-      SCALAR_SAXPY,
-      VECTOR_SAXPY,
-      MATRIX_SAXPY,
-      SCALAR_REDUCE,
-      VECTOR_REDUCE,
-      MATRIX_PRODUCT,
-      INVALID_EXPRESSION
+      SCALAR_SAXPY_FAMILY,
+      VECTOR_SAXPY_FAMILY,
+      MATRIX_SAXPY_FAMILY,
+      SCALAR_REDUCE_FAMILY,
+      VECTOR_REDUCE_FAMILY,
+      MATRIX_PRODUCT_FAMILY,
+      INVALID_EXPRESSION_FAMILY
     };
 
+    enum expression_type{
+      SCALAR_SAXPY_TYPE,
+      VECTOR_SAXPY_TYPE,
+      MATRIX_SAXPY_TYPE,
+      SCALAR_REDUCE_TYPE,
+      VECTOR_REDUCE_Ax_TYPE,
+      VECTOR_REDUCE_Tx_TYPE,
+      MATRIX_PRODUCT_AA_TYPE,
+      MATRIX_PRODUCT_TA_TYPE,
+      MATRIX_PRODUCT_AT_TYPE,
+      MATRIX_PRODUCT_TT_TYPE,
+      INVALID_EXPRESSION_TYPE
+    };
 
-
+    struct expression_descriptor{
+        expression_type_family type_family;
+        expression_type type;
+        bool operator==(expression_descriptor const & other) const{
+          return type_family==other.type_family
+               &&type==other.type;
+        }
+    };
 
     class code_generator{
       private:
-        typedef std::pair<expression_type_family, generator::template_base::statements_type> representation_node_type;
+        typedef std::pair<expression_descriptor, generator::template_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
 
-        template<class T>
-        static void merge(T & first, T const & second){
-          first.insert(first.end(), second.begin(), second.end());
-        }
-
-        static expression_type_family type_family_of(scheduler::statement const & s, scheduler::statement_node const & root_node){
-          unsigned int n_scalar_reduce = 0, n_vector_reduce = 0, n_matrix_matrix_product = 0;
-          if(is_invalid(s, root_node, n_scalar_reduce, n_vector_reduce, n_matrix_matrix_product)){
-            return INVALID_EXPRESSION;
-          }
-          switch(root_node.lhs.type_family){
-            case VECTOR_TYPE_FAMILY :
-              if(n_vector_reduce>0)
-                return VECTOR_REDUCE;
-              else
-                return VECTOR_SAXPY;
-            case MATRIX_ROW_TYPE_FAMILY :
-              if(n_matrix_matrix_product>0)
-                return MATRIX_PRODUCT;
-              else
-                return MATRIX_SAXPY;
-            case MATRIX_COL_TYPE_FAMILY :
-              if(n_matrix_matrix_product>0)
-                return MATRIX_PRODUCT;
-              else
-                return MATRIX_SAXPY;
-            case SCALAR_TYPE_FAMILY :
-              if(n_scalar_reduce>0)
-                return SCALAR_REDUCE;
-              else
-                return SCALAR_SAXPY;
-            default:
-              return INVALID_EXPRESSION;
-          }
-        }
-
-        static bool is_invalid(scheduler::statement const & statement, scheduler::statement_node const & root_node, unsigned int & n_scalar_reduce, unsigned int & n_vector_reduce, unsigned int & n_mat_mat_prod, bool is_in_prod = false){
+        static bool is_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
-
-          //Nested prod not allowed
-          if(root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE
-             ||root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE
-             ||root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-          {
-            if(is_in_prod)
-              return true;
-            else
-              is_in_prod = true;
-          }
-
-          if(root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
-            ++n_scalar_reduce;
-          if(root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-            ++n_vector_reduce;
-          if(root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-            ++n_mat_mat_prod;
-
-          //More than one n_* is nonzero
-          if( (n_scalar_reduce>0)
-              +(n_vector_reduce>0)
-              +(n_mat_mat_prod>0) > 1)
+          if(root_node.op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
             return true;
-
-          //Only one mat-mat prod allowed:
-          if(n_mat_mat_prod>1)
-          {
-            return true;
+          else{
+            bool res = false;
+            if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+              res = res || is_lhs_transposed(statement, expr[root_node.lhs.node_index]);
+            if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+              res = res || is_lhs_transposed(statement, expr[root_node.rhs.node_index]);
+            return res;
           }
-
-          if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            if(is_invalid(statement, expr[root_node.lhs.node_index], n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, is_in_prod)==true)
-              return true;
-
-          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            if(is_invalid(statement, expr[root_node.rhs.node_index], n_scalar_reduce, n_vector_reduce, n_mat_mat_prod, is_in_prod)==true)
-              return true;
-
-          return false;
         }
 
-        template<class T, class StatementsType>
-        void enqueue_expression(T const & profile, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
+        static bool is_lhs_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+          scheduler::statement::container_type const & expr = statement.array();
+          if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+            return is_transposed(statement, expr[root_node.lhs.node_index]);
+          else
+            return false;
+        }
+
+        static bool is_rhs_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+          scheduler::statement::container_type const & expr = statement.array();
+          if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
+            return is_transposed(statement, expr[root_node.rhs.node_index]);
+          else
+            return false;
+        }
+
+        static void fill_expression_descriptor_scalar(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid = (root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                          || (descriptor.type_family==SCALAR_REDUCE_FAMILY && root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE);
+          if(is_invalid){
+            descriptor.type_family =INVALID_EXPRESSION_FAMILY;
+            descriptor.type == INVALID_EXPRESSION_TYPE;
+          }
+          else if(root_node.op.type==OPERATION_BINARY_INNER_PROD_TYPE){
+            descriptor.type_family = SCALAR_REDUCE_FAMILY;
+            descriptor.type = SCALAR_REDUCE_TYPE;
+          }
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_scalar(statement, expr[root_node.lhs.node_index],descriptor);
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_scalar(statement, expr[root_node.rhs.node_index],descriptor);
+        }
+
+        static void fill_expression_descriptor_vector(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid =  (root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
+                          || (root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                          || (descriptor.type_family==VECTOR_REDUCE_FAMILY && root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE);
+          if(is_invalid){
+            descriptor.type_family=INVALID_EXPRESSION_FAMILY;
+            descriptor.type=INVALID_EXPRESSION_TYPE;
+          }
+          else if(root_node.op.type==OPERATION_BINARY_MAT_VEC_PROD_TYPE){
+            descriptor.type_family=VECTOR_REDUCE_FAMILY;
+            if(is_lhs_transposed(statement,root_node))
+              descriptor.type=VECTOR_REDUCE_Tx_TYPE;
+            else
+              descriptor.type=VECTOR_REDUCE_Ax_TYPE;
+          }
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_vector(statement, expr[root_node.lhs.node_index],descriptor);
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_vector(statement, expr[root_node.rhs.node_index],descriptor);
+        }
+
+        static void fill_expression_descriptor_matrix(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid =  (root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
+                          || (root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                          || (descriptor.type_family==MATRIX_PRODUCT_FAMILY && root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE);
+          if(is_invalid){
+            descriptor.type_family=INVALID_EXPRESSION_FAMILY;
+            descriptor.type=INVALID_EXPRESSION_TYPE;
+          }
+          else if(root_node.op.type==OPERATION_BINARY_MAT_MAT_PROD_TYPE){
+            descriptor.type_family=MATRIX_PRODUCT_FAMILY;
+            bool lhs_trans = is_lhs_transposed(statement,root_node);
+            bool rhs_trans = is_rhs_transposed(statement,root_node);
+            if(!lhs_trans && !rhs_trans)
+              descriptor.type=MATRIX_PRODUCT_AA_TYPE;
+            else if(lhs_trans && !rhs_trans)
+              descriptor.type=MATRIX_PRODUCT_TA_TYPE;
+            else if(!lhs_trans && rhs_trans)
+              descriptor.type=MATRIX_PRODUCT_AT_TYPE;
+            else if(lhs_trans && rhs_trans)
+              descriptor.type=MATRIX_PRODUCT_TT_TYPE;
+
+          }
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_matrix(statement, expr[root_node.lhs.node_index],descriptor);
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_expression_descriptor_matrix(statement, expr[root_node.rhs.node_index],descriptor);
+        }
+
+        void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
+          if(lhs_family==VECTOR_TYPE_FAMILY){
+            descriptor.type_family = VECTOR_SAXPY_FAMILY;
+            descriptor.type = VECTOR_SAXPY_TYPE;
+            fill_expression_descriptor_vector(statement,root_node,descriptor);
+          }
+          else if(lhs_family==MATRIX_ROW_TYPE_FAMILY || lhs_family==MATRIX_COL_TYPE_FAMILY){
+            descriptor.type_family = MATRIX_SAXPY_FAMILY;
+            descriptor.type = MATRIX_SAXPY_TYPE;
+            fill_expression_descriptor_matrix(statement,root_node,descriptor);
+          }
+          else if(lhs_family==SCALAR_TYPE_FAMILY){
+            descriptor.type_family = SCALAR_SAXPY_FAMILY;
+            descriptor.type = SCALAR_SAXPY_TYPE;
+            fill_expression_descriptor_scalar(statement,root_node,descriptor);
+          }
+        }
+
+        template<class StatementsType>
+        void enqueue_expression(template_base::profile const & profile, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
             char str[10];
@@ -162,7 +220,6 @@ namespace viennacl{
               detail::traverse(it->first, it->second, detail::enqueue_functor(memory,current_arg,kernel));
             }
 
-
             ++kernel_id;
           }
         }
@@ -178,45 +235,53 @@ namespace viennacl{
         }
 
         bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {
-          expression_type_family expr_type = type_family_of(statement,root_node);
+          expression_descriptor descriptor;
+          fill_descriptor(statement, root_node, descriptor);
 
-          if(expr_type==INVALID_EXPRESSION)
+          if(descriptor.type_family==INVALID_EXPRESSION_FAMILY)
             return false;
 
           if(statements_.empty())
-            statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,std::make_pair(statement, root_node))));
+            statements_.push_back(std::make_pair(descriptor,template_base::statements_type(1,std::make_pair(statement, root_node))));
           else
-            if(statements_.back().first == expr_type)
+            if(statements_.back().first == descriptor)
               statements_.back().second.push_back(std::make_pair(statement, root_node));
             else
-              statements_.push_back(std::make_pair(expr_type,template_base::statements_type(1,std::make_pair(statement, root_node))));
+              statements_.push_back(std::make_pair(descriptor,template_base::statements_type(1,std::make_pair(statement, root_node))));
           return true;
+        }
+
+        template_base::profile const & get_profile(expression_descriptor descriptor) const {
+          expression_type_family family = descriptor.type_family;
+          expression_type type = descriptor.type;
+          switch(family){
+            case VECTOR_SAXPY_FAMILY: return vector_saxpy_profile_;
+            case MATRIX_SAXPY_FAMILY: return matrix_saxpy_profile_;
+            case SCALAR_REDUCE_FAMILY: return scalar_reduction_profile_;
+            case VECTOR_REDUCE_FAMILY:
+              switch(type){
+                case VECTOR_REDUCE_Ax_TYPE: return vector_reduction_profile_;
+                case VECTOR_REDUCE_Tx_TYPE: return vector_reduction_profile_;
+                default: throw "vector reduction profile type not recognized";
+              }
+              break;
+            case MATRIX_PRODUCT_FAMILY:
+              switch(type){
+                case MATRIX_PRODUCT_AA_TYPE: return matrix_product_profile_;
+                case MATRIX_PRODUCT_TA_TYPE: return matrix_product_profile_;
+                case MATRIX_PRODUCT_AT_TYPE: return matrix_product_profile_;
+                case MATRIX_PRODUCT_TT_TYPE: return matrix_product_profile_;
+                default: throw "matrix reduction profile type not recognized";
+              }
+              break;
+            default: throw "profile type family not recognized";
+          }
         }
 
         void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           unsigned int kernel_id = 0;
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            switch(it->first){
-              case VECTOR_SAXPY:
-                enqueue_expression(vector_saxpy_profile_, it->second, kernel_id, p, kernels);
-                break;
-              case MATRIX_SAXPY:
-                enqueue_expression(matrix_saxpy_profile_, it->second, kernel_id, p, kernels);
-                break;
-              case SCALAR_REDUCE:
-                enqueue_expression(scalar_reduction_profile_, it->second, kernel_id, p, kernels);
-                break;
-              case VECTOR_REDUCE:
-                enqueue_expression(vector_reduction_profile_, it->second, kernel_id, p, kernels);
-                break;
-              case MATRIX_PRODUCT:
-                enqueue_expression(matrix_product_profile_, it->second, kernel_id, p, kernels);
-                break;
-              default:
-                break;
-            }
-
-          }
+          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
+            enqueue_expression(get_profile(it->first), it->second, kernel_id, p, kernels);
         }
 
         void make_program_name(char * program_name) const {
@@ -263,25 +328,30 @@ namespace viennacl{
           stream << std::endl;
 
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            switch(it->first){
-              case VECTOR_SAXPY:
-                vector_saxpy(it->second, vector_saxpy_profile_)(stream);
+            expression_type_family family = it->first.type_family;
+            expression_type type = it->first.type;
+            representation_node_type::second_type const & s = it->second;
+            switch(family){
+              case VECTOR_SAXPY_FAMILY: vector_saxpy(s,vector_saxpy_profile_)(stream); break;
+              case MATRIX_SAXPY_FAMILY: matrix_saxpy(s,matrix_saxpy_profile_)(stream); break;
+              case SCALAR_REDUCE_FAMILY: scalar_reduction(s,scalar_reduction_profile_)(stream); break;
+              case VECTOR_REDUCE_FAMILY:
+                switch(type){
+                  case VECTOR_REDUCE_Ax_TYPE: vector_reduction(s,vector_reduction_profile_)(stream); break;
+                  case VECTOR_REDUCE_Tx_TYPE: vector_reduction(s,vector_reduction_profile_)(stream); break;
+                  default: throw "vector reduction profile type not recognized";
+                }
                 break;
-              case MATRIX_SAXPY:
-                matrix_saxpy(it->second, matrix_saxpy_profile_)(stream);
+              case MATRIX_PRODUCT_FAMILY:
+                switch(type){
+                  case MATRIX_PRODUCT_AA_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
+                  case MATRIX_PRODUCT_TA_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
+                  case MATRIX_PRODUCT_AT_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
+                  case MATRIX_PRODUCT_TT_TYPE: matrix_product(s,matrix_product_profile_)(stream); break;
+                  default: throw "matrix reduction profile type not recognized";
+                }
                 break;
-              case SCALAR_REDUCE:
-
-                scalar_reduction(it->second, scalar_reduction_profile_)(stream);
-                break;
-              case VECTOR_REDUCE:
-                vector_reduction(it->second, vector_reduction_profile_)(stream);
-                break;
-              case MATRIX_PRODUCT:
-                matrix_product(it->second,matrix_product_profile_)(stream);
-                break;
-              default:
-                break;
+              default: throw "profile type family not recognized";
             }
           }
           return stream.str();

@@ -39,31 +39,10 @@ namespace viennacl{
 
   namespace generator{
 
-      enum generation_type{
-        //AMD:
-        HD5xxx,
-        HD6xxx,
-        HD7xxx,
-
-        //Intel:
-        CoreIxxx,
-        CoreI1xxx,
-        CoreI2xxx,
-        CoreI3xxx,
-        CoreI4xxx,
-
-        //NVidia:
-        GeForce5xx,
-        GeForce6xx,
-        GeForce7xx,
-
-        UNKNOWN
-      };
-
       struct device_key{
           cl_uint vendor_id;
           cl_device_type device_type;
-          generation_type generation;
+          std::string name;
       };
 
       enum profile_type{

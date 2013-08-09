@@ -116,7 +116,8 @@ namespace viennacl{
 
       protected:
         virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream) const = 0;
-        template_base(statements_type const & s, profile const & p) : statements_(s), mapping_(s.size()), profile_(p) { }
+
+        template_base(statements_type const & s, profile const & p) : statements_(s), mapping_(s.size()), profile_(p){ }
 
         std::string init_get_prototype() const {
           std::string prototype;
