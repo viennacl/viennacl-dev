@@ -83,7 +83,7 @@ namespace viennacl{
                           || (descriptor.type_family==SCALAR_REDUCE_FAMILY && root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE);
           if(is_invalid){
             descriptor.type_family =INVALID_EXPRESSION_FAMILY;
-            descriptor.type == INVALID_EXPRESSION_TYPE;
+            descriptor.type = INVALID_EXPRESSION_TYPE;
           }
           else if(root_node.op.type==OPERATION_BINARY_INNER_PROD_TYPE){
             descriptor.type_family = SCALAR_REDUCE_FAMILY;
@@ -148,7 +148,7 @@ namespace viennacl{
 
         void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
           scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
-          descriptor.scalartype_size == utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
+          descriptor.scalartype_size = utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
           if(lhs_family==VECTOR_TYPE_FAMILY){
             descriptor.type_family = VECTOR_SAXPY_FAMILY;
             descriptor.type = VECTOR_SAXPY_TYPE;
@@ -186,11 +186,7 @@ namespace viennacl{
         }
 
       public:
-        code_generator() : vector_saxpy_(1,128,128,true)
-                          , matrix_saxpy_(1,16,16,16,16,true)
-                          , scalar_reduction_(4, 128, 512, 0)
-                          , vector_reduction_(1, 1, 256, 32)
-                          , matrix_product_(2,16,32,64,8,4,2,1,0,1){
+        code_generator() : dev_(viennacl::ocl::current_device()){
           statements_.reserve(16);
         }
 
@@ -210,30 +206,7 @@ namespace viennacl{
         }
 
         profile_base const & get_profile(expression_descriptor descriptor) const {
-          expression_type_family family = descriptor.type_family;
-          expression_type type = descriptor.type;
-          switch(family){
-            case VECTOR_SAXPY_FAMILY: return vector_saxpy_;
-            case MATRIX_SAXPY_FAMILY: return matrix_saxpy_;
-            case SCALAR_REDUCE_FAMILY: return scalar_reduction_;
-            case VECTOR_REDUCE_FAMILY:
-              switch(type){
-                case VECTOR_REDUCE_Ax_TYPE: return vector_reduction_;
-                case VECTOR_REDUCE_Tx_TYPE: return vector_reduction_;
-                default: throw "vector reduction profile type not recognized";
-              }
-              break;
-            case MATRIX_PRODUCT_FAMILY:
-              switch(type){
-                case MATRIX_PRODUCT_AA_TYPE: return matrix_product_;
-                case MATRIX_PRODUCT_TA_TYPE: return matrix_product_;
-                case MATRIX_PRODUCT_AT_TYPE: return matrix_product_;
-                case MATRIX_PRODUCT_TT_TYPE: return matrix_product_;
-                default: throw "matrix reduction profile type not recognized";
-              }
-              break;
-            default: throw "profile type family not recognized";
-          }
+          return *profiles::get(dev_,descriptor);
         }
 
         void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
@@ -272,12 +245,7 @@ namespace viennacl{
 
       private:
         statements_type statements_;
-
-        vector_saxpy vector_saxpy_;
-        matrix_saxpy matrix_saxpy_;
-        scalar_reduction scalar_reduction_;
-        vector_reduction vector_reduction_;
-        matrix_product matrix_product_;
+        viennacl::ocl::device const & dev_;
     };
 
     static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){

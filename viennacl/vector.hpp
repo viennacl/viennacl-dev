@@ -49,12 +49,13 @@ namespace viennacl
 
     public:
       typedef SCALARTYPE const & const_reference;
+      typedef SCALARTYPE cpu_value_type;
 
       viennacl::context context() const { return ctx_; }
 
       size_type size() const { return size_; }
 
-      SCALARTYPE  value() const { return value_.first; }
+      cpu_value_type  value() const { return value_.first; }
 
       bool is_value_static() const { return value_.second; }
 
@@ -62,13 +63,13 @@ namespace viennacl
 
       bool has_index() const { return index_.first; }
 
-      SCALARTYPE operator()(size_type i) const {
+      cpu_value_type operator()(size_type i) const {
         if(index_.first)
           return (i==index_.second)?value_.first:0;
         return value_.first;
       }
 
-      SCALARTYPE operator[](size_type i) const {
+      cpu_value_type operator[](size_type i) const {
         if(index_.first)
           return (i==index_.second)?value_.first:0;
         return

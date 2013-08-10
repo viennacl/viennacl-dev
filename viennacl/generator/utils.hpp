@@ -154,8 +154,9 @@ namespace viennacl{
 
       struct scalartype_size_fun{
           typedef std::size_t result_type;
-          template<class T>
-          result_type operator()(T const &t) const { return sizeof(T); }
+          result_type operator()(float const &) const { return sizeof(float); }
+          result_type operator()(double const &) const { return sizeof(double); }
+          template<class T> result_type operator()(T const &t) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
 
       struct size_fun{

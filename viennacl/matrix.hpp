@@ -45,6 +45,7 @@ namespace viennacl
       symbolic_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
     public:
       typedef SCALARTYPE const & const_reference;
+      typedef SCALARTYPE cpu_value_type;
 
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
