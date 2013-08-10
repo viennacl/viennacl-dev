@@ -37,7 +37,6 @@
 #include "viennacl/ocl/infos.hpp"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/builtin_database.hpp"
 
 #include "viennacl/tools/timer.hpp"
 
@@ -86,23 +85,23 @@ namespace viennacl{
 
       /** @brief Tuning configuration
        *
-       *  ConfigT must have a profile_t typedef
-       *  ConfigT must implement is_invalid that returns whether or not a given parameter is invalid
-       *  ConfigT must implement create_profile that creates a profile_t given a set of parameters
+       *  ConfigType must have a profile_type typedef
+       *  ConfigType must implement is_invalid that returns whether or not a given parameter is invalid
+       *  ConfigType must implement create_profile that creates a profile_type given a set of parameters
        *
        *  Parameters are stored in a std::map<std::string, viennacl::generator::autotune::tuning_param>
        */
-      template<class ConfigT>
+      template<class ConfigType>
       class tuning_config{
         private:
           /** @brief Storage type of the parameters */
           typedef std::map<std::string, viennacl::generator::autotune::tuning_param> params_t;
 
         public:
-          typedef ConfigT config_t;
+          typedef ConfigType config_type;
 
-          /** @brief Accessor for profile_t */
-          typedef typename config_t::profile_t profile_t;
+          /** @brief Accessor for profile_type */
+          typedef typename config_type::profile_type profile_type;
 
           /** @brief Add a tuning parameter to the config */
           void add_tuning_param(std::string const & name, std::vector<int> const & values){
@@ -126,12 +125,12 @@ namespace viennacl{
 
           /** @brief Returns true if the compilation/execution of the underlying profile has an undefined behavior */
           bool is_invalid(viennacl::ocl::device const & dev) const{
-              return config_t::is_invalid(dev,params_);
+              return config_type::is_invalid(dev,params_);
           }
 
           /** @brief Returns the current profile */
-          typename config_t::profile_t get_current(){
-              return config_t::create_profile(params_);
+          typename config_type::profile_type get_current(){
+              return config_type::create_profile(params_);
           }
 
           /** @brief Reset the config */
@@ -147,15 +146,15 @@ namespace viennacl{
 
       /** @brief Add the timing value for a given profile and an statement */
       template<class ProfileT>
-      double benchmark_impl(viennacl::ocl::device const & dev, viennacl::scheduler::statement const & statement, ProfileT const & prof){
+      double benchmark_impl(viennacl::ocl::device const & dev, viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
 
         tools::Timer t;
 
         //Skips if use too much local memory.
         std::list<viennacl::ocl::kernel *> kernels;
-        viennacl::generator::code_generator gen;
+        viennacl::generator::code_generator gen(dev);
         gen.add(statement, statement.array()[0]);
-        gen.force_profile(prof);
+        gen.force_profile(key, prof);
 
         viennacl::generator::get_configured_program(gen, kernels, true);
 
@@ -170,16 +169,16 @@ namespace viennacl{
       /** @brief Fills a timing map for a given statement and a benchmark configuration
        *
        * @tparam OpT type of the statement
-       * @tparam ConfigT type of the benchmark configuration
+       * @tparam ConfigType type of the benchmark configuration
        * @param timings the timings to fill
        * @param op the given statement
        * @param the given config */
-      template<class ConfigType>
-      void benchmark(std::map<double, typename ConfigType::profile_t> * timings, scheduler::statement const & op, tuning_config<ConfigType> & config, std::ofstream * out){
+      template<class ConfigTypeype>
+      void benchmark(std::map<double, typename ConfigTypeype::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigTypeype> & config, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         if(out)
-            *out << "#time" << "\t\t" << ConfigType::state_representation_format() << std::endl;
+            *out << "#time" << "\t\t" << ConfigTypeype::state_representation_format() << std::endl;
         unsigned int n_conf = 0;
         while(config.has_next()){
           config.update();
@@ -195,13 +194,13 @@ namespace viennacl{
           config.update();
           if(config.is_invalid(dev))
               continue;
-          typename ConfigType::profile_t const & profile = config.get_current();
+          typename ConfigTypeype::profile_type const & profile = config.get_current();
           double percent = (double)n++*100/n_conf;
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-          double exec_time = benchmark_impl(dev,op,profile);
+          double exec_time = benchmark_impl(dev,op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));
           if(out)
-              *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigType::current_state_representation(profile) << std::endl ;
+              *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigTypeype::current_state_representation(profile) << std::endl ;
         }
 
         std::cout << std::endl;
@@ -210,23 +209,15 @@ namespace viennacl{
 
       /** @brief Fills a timing map for a given statement and a list of profiles */
       template< class ProfT>
-      void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, std::list<ProfT> const & profiles, std::size_t scalartype_size){
+      void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, std::list<ProfT> const & profiles){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         unsigned int n=0;
         unsigned int n_conf = 0;
-
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-          if(it->is_invalid(dev,scalartype_size)) continue;
-          ++n_conf;
-        }
-
-        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-          if(it->is_invalid(dev,scalartype_size))
-              continue;
           double percent = (double)n++*100/n_conf;
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-          double exec_time = benchmark_impl(dev,op,*it);
+          double exec_time = benchmark_impl(dev,op,key,*it);
           timings->insert(std::make_pair(exec_time, *it));
         }
 

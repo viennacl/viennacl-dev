@@ -20,6 +20,8 @@
 #include "../tutorial/Random.hpp"
 
 
+using namespace viennacl::generator;
+
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
@@ -27,21 +29,21 @@ typedef std::vector<cl_device_id> cl_devices_type;
 
 template<class ScalarType>
 struct blas3_config{
-    typedef viennacl::generator::matrix_product::profile profile_t;
-    static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        return profile_t(params.at("vector").current(), params.at("ml").current(), params.at("kl").current(), params.at("nl").current(),
+    typedef matrix_product profile_type;
+    static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
+        return profile_type(params.at("vector").current(), params.at("ml").current(), params.at("kl").current(), params.at("nl").current(),
                          params.at("ms").current(), params.at("ks").current(), params.at("ns").current(),
                          static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()),
                          params.at("unroll").current());
     }
-    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        profile_t prof = create_profile(params);
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
+        profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
     static std::string state_representation_format(){
         return "V" "\t" "ML" "\t" "KL" "\t" "NL" "\t" "MS" "\t" "KS" "\t" "NS" "\t" "LMEM1" "\t" "LMEM2" "\t" "UNROLL";
     }
-    static std::string current_state_representation(profile_t const profile){
+    static std::string current_state_representation(profile_type const profile){
         std::ostringstream oss;
         oss << profile.vectorization() << "\t" << profile.ml() << "\t" << profile.kl() << "\t" << profile.nl()
             << "\t" << profile.ms() << "\t" << profile.ks() << "\t" << profile.ns()
@@ -79,10 +81,10 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
 
 template<class NumericT>
 void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_trans){
-    typedef std::map<double, viennacl::generator::matrix_product::profile> timings_t;
+    typedef std::map<double, matrix_product> timings_t;
     typedef viennacl::matrix<NumericT> MatrixT;
 
-    viennacl::generator::autotune::tuning_config<blas3_config<NumericT> > conf;
+    autotune::tuning_config<blas3_config<NumericT> > conf;
 
     std::vector<int> ml; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) ml.push_back(i);
     std::vector<int> kl; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) kl.push_back(i);
@@ -108,7 +110,7 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
 
     timings_t timings;
-    std::list<viennacl::generator::matrix_product::profile> fastest_firsts;
+    std::list<matrix_product> fastest_firsts;
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
 
@@ -133,29 +135,35 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
         viennacl::backend::finish();
 
+        std::size_t scalartype_size = sizeof(NumericT);
+        code_generator::forced_profile_key_type keyAA(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
+        code_generator::forced_profile_key_type keyTA(MATRIX_PRODUCT_TA_TYPE, scalartype_size);
+        code_generator::forced_profile_key_type keyAT(MATRIX_PRODUCT_AT_TYPE, scalartype_size);
+        code_generator::forced_profile_key_type keyTT(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
+
         if(k==0){
           if(is_lhs_trans)
               if(is_rhs_trans)
-                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),conf,&stream);
+                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),keyTT,conf,&stream);
               else
-                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),conf,&stream);
+                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),keyTA,conf,&stream);
           else
               if(is_rhs_trans)
-                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),conf,&stream);
+                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),keyAT,conf,&stream);
               else
-                  viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),conf,&stream);
+                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),keyAA,conf,&stream);
         }
         else{
           if(is_lhs_trans)
             if(is_rhs_trans)
-              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),fastest_firsts,sizeof(NumericT));
+              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),keyTT,fastest_firsts);
             else
-              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),fastest_firsts,sizeof(NumericT));
+              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),keyTA,fastest_firsts);
           else
             if(is_rhs_trans)
-              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),fastest_firsts,sizeof(NumericT));
+              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),keyAT,fastest_firsts);
             else
-              viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),fastest_firsts,sizeof(NumericT));
+              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),keyAA,fastest_firsts);
         }
         fastest_firsts.clear();
         viennacl::backend::finish();

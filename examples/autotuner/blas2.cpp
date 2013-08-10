@@ -14,6 +14,8 @@
 
 #define N_RUNS 5
 
+using namespace viennacl::generator;
+
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
@@ -23,18 +25,18 @@ static const unsigned int size = 2048;
 
 template<class ScalarType>
 struct blas2_config{
-    typedef viennacl::generator::vector_reduction::profile profile_t;
-    static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-      return profile_t(params.at("vectorization").current(), params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
+    typedef vector_reduction profile_type;
+    static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
+      return profile_type(params.at("vectorization").current(), params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
     }
-    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        profile_t prof = create_profile(params);
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
+        profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
     static std::string state_representation_format(){
         return "V" "\t" "M" "\t" "K" "\t" "NG";
     }
-    static std::string current_state_representation(profile_t const profile){
+    static std::string current_state_representation(profile_type const profile){
         std::ostringstream oss;
         oss << profile.vectorization() << "\t" << profile.m() << "\t" << profile.k() << "\t" << profile.num_groups();
         return oss.str();
@@ -44,7 +46,7 @@ struct blas2_config{
 
 
 template<class ScalarType>
-void autotune(std::string const & dump_name, bool trans){
+void run_autotune(std::string const & dump_name, bool trans){
     std::vector<ScalarType> cpu_v1(size), cpu_v3(size);
     boost::numeric::ublas::matrix<ScalarType, boost::numeric::ublas::row_major> cpu_m2(size,size);
     for(unsigned int i=0; i<size; ++i){
@@ -64,8 +66,8 @@ void autotune(std::string const & dump_name, bool trans){
 
 
     size_t max_size = viennacl::ocl::info<CL_DEVICE_MAX_WORK_GROUP_SIZE>(viennacl::ocl::current_device().id());
-    std::map<double,typename blas2_config<ScalarType>::profile_t> timings;
-    viennacl::generator::autotune::tuning_config< blas2_config<ScalarType> > conf;
+    std::map<double,typename blas2_config<ScalarType>::profile_type> timings;
+    autotune::tuning_config< blas2_config<ScalarType> > conf;
 
     std::vector<int> vectorization;
     std::vector<int> local_sizes1;
@@ -85,10 +87,13 @@ void autotune(std::string const & dump_name, bool trans){
     conf.add_tuning_param("local_size2",local_sizes2);
     conf.add_tuning_param("num_groups",num_groups);
     std::ofstream stream(dump_name.c_str());
+    std::size_t scalartype_size = sizeof(ScalarType);
+    code_generator::forced_profile_key_type keyTx(VECTOR_REDUCE_Tx_TYPE, scalartype_size);
+    code_generator::forced_profile_key_type keyAx(VECTOR_REDUCE_Ax_TYPE, scalartype_size);
     if(trans)
-      viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(m2), v3)),conf,&stream);
+      autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(m2), v3)),keyTx,conf,&stream);
     else
-      viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(m2, v3)),conf,&stream);
+      autotune::benchmark(&timings,viennacl::scheduler::statement(v1,viennacl::op_assign(), viennacl::linalg::prod(m2, v3)),keyAx,conf,&stream);
     std::cout << std::endl;
     std::cout << " ============" << std::endl;
     std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
@@ -113,17 +118,17 @@ int main(){
 
             std::cout << "scalartype : float" << std::endl;
             std::cout << "-- Av " << std::endl;
-            autotune<float>("BLAS2 AV Float "+it->name(), false);
+            run_autotune<float>("BLAS2 AV Float "+it->name(), false);
             std::cout << "-- Tv" << std::endl;
-            autotune<float>("BLAS2 TV Float "+it->name(), true);
+            run_autotune<float>("BLAS2 TV Float "+it->name(), true);
 
             std::cout << "-----------------" << std::endl;
 
             std::cout << "scalartype : double" << std::endl;
             std::cout << "-- Av " << std::endl;
-            autotune<double>("BLAS2 AV Double "+it->name(), false);
+            run_autotune<double>("BLAS2 AV Double "+it->name(), false);
             std::cout << "-- Tv" << std::endl;
-            autotune<double>("BLAS2 TV Double "+it->name(), true);
+            run_autotune<double>("BLAS2 TV Double "+it->name(), true);
 
     }
   }

@@ -14,7 +14,7 @@
 #include "viennacl/generator/autotune.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
-#define N_RUNS 5
+using namespace viennacl::generator;
 
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
@@ -25,18 +25,18 @@ static const unsigned int size = 1024*1024;
 
 template<class ScalarType>
 struct dot_config{
-    typedef viennacl::generator::scalar_reduction::profile profile_t;
-    static profile_t create_profile(std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-      return profile_t(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), params.at("global_decomposition").current());
+    typedef scalar_reduction profile_type;
+    static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
+      return profile_type(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), params.at("global_decomposition").current());
     }
-    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, viennacl::generator::autotune::tuning_param> const & params){
-        profile_t prof = create_profile(params);
+    static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
+        profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
     static std::string state_representation_format(){
         return "V" "\t" "GS" "\t" "NG" "\t" "GD";
     }
-    static std::string current_state_representation(profile_t const profile){
+    static std::string current_state_representation(profile_type const profile){
         std::ostringstream oss;
         oss << profile.vectorization() << "\t" << profile.group_size() << "\t" << profile.num_groups() << "\t" << profile.global_decomposition();
         return oss.str();
@@ -45,7 +45,7 @@ struct dot_config{
 
 
 template<class ScalarType>
-void autotune(std::string const & dump_name){
+void run_autotune(std::string const & dump_name){
     std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size), cpu_v4(size);
     for(unsigned int i=0; i<size; ++i){
         cpu_v1[i]=0;
@@ -63,9 +63,9 @@ void autotune(std::string const & dump_name){
 
     viennacl::scalar<ScalarType> s = 0;
 
-    std::map<double, typename dot_config<ScalarType>::profile_t> timings;
+    std::map<double, typename dot_config<ScalarType>::profile_type> timings;
     std::cout << "* Tuning DOT" << std::endl;
-    viennacl::generator::autotune::tuning_config<dot_config<ScalarType> > conf;
+    autotune::tuning_config<dot_config<ScalarType> > conf;
     std::vector<int> vectorizations;
     std::vector<int> group_sizes;
     std::vector<int> num_groups;
@@ -82,7 +82,9 @@ void autotune(std::string const & dump_name){
     conf.add_tuning_param("num_groups",num_groups);
     conf.add_tuning_param("global_decomposition", global_decompositions);
     std::ofstream stream(dump_name.c_str());
-    viennacl::generator::autotune::benchmark(&timings,viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2)),conf,&stream);
+    std::size_t scalartype_size = sizeof(ScalarType);
+    code_generator::forced_profile_key_type key(SCALAR_REDUCE_TYPE, scalartype_size);
+    autotune::benchmark(&timings,viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2)),key,conf,&stream);
     std::cout << std::endl;
     std::cout << " ============" << std::endl;
     std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
@@ -105,10 +107,10 @@ int main(){
             std::cout << it->name()<< std::endl;
              std::cout << "-------------------" << std::endl;
             std::cout << "float:" << std::endl;
-            autotune<float>("BLAS1 Float "+it->name());
+            run_autotune<float>("BLAS1 Float "+it->name());
             std::cout << "-------------------" << std::endl;
             std::cout << "double:" << std::endl;
-            autotune<double>("BLAS1 Double_"+it->name());
+            run_autotune<double>("BLAS1 Double_"+it->name());
     }
   }
 
