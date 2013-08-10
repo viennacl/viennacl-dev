@@ -24,7 +24,6 @@
 //disable debug mechanisms to have a fair benchmark environment
 #define NDEBUG
 
-#define VIENNACL_DEBUG_BUILD
 
 //
 // include necessary system headers
@@ -34,6 +33,8 @@
 //
 // ViennaCL includes
 //
+//#define VIENNACL_DEBUG_BUILD
+
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
@@ -50,9 +51,9 @@
 
 #include "benchmark-utils.hpp"
 
-#define N_RUNS 5
-#define SIZE_INC 256
-#define MAX_SIZE 7936
+#define N_RUNS 2
+#define SIZE_INC 128
+#define MAX_SIZE 3072
 
 template<class MatA, class MatB, class MatC>
 viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){

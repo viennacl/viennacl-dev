@@ -42,53 +42,151 @@ namespace viennacl{
 
     namespace profiles{
 
-      enum vendor_id_type{
-        intel_id = 32902,
-        nvidia_id = 4318,
-        amd_id = 4098,
-        unknown = 0
-      };
+      static const unsigned int intel_id = 32902;
+      static const unsigned int nvidia_id = 4318;
+      static const unsigned int amd_id = 4098;
+      static const unsigned int unknown_id = 0;
 
-      enum device_type{
-        gpu_type = CL_DEVICE_TYPE_GPU,
-        cpu_type = CL_DEVICE_TYPE_CPU,
-        all_type = CL_DEVICE_TYPE_ALL
-      };
+      typedef cl_uint vendor_id_type;
+      typedef cl_device_type device_type;
 
       typedef std::string device_name_type;
-      typedef std::map<std::size_t, profile_base *> scalartype_map;
-      typedef std::map<expression_type, scalartype_map> expression_map;
+      typedef std::pair<expression_type, std::size_t> expression_key_type;
+      typedef std::map<expression_key_type, profile_base*> expression_map;
       typedef std::map<device_name_type, expression_map> device_name_map;
       typedef std::map<device_type, device_name_map> device_type_map;
       typedef std::map<vendor_id_type, device_type_map> database_type;
 
 
-      /*---------------------------*/
-      /*     Global GPU Defaults   */
-      /*---------------------------*/
+
       static database_type init_database(){
         database_type map;
 
-        map[unknown][gpu_type][""][VECTOR_SAXPY_TYPE][4] = new vector_saxpy(1,128,128,true);
-        map[unknown][gpu_type][""][MATRIX_SAXPY_TYPE][4] = new matrix_saxpy(1,16,16,16,16,true);
-        map[unknown][gpu_type][""][SCALAR_REDUCE_TYPE][4] = new scalar_reduction(1, 128, 128, true);
-        map[unknown][gpu_type][""][VECTOR_REDUCE_Ax_TYPE][4] = new vector_reduction(1, 1, 256, 32);
-        map[unknown][gpu_type][""][VECTOR_REDUCE_Tx_TYPE][4] = new vector_reduction(1, 1, 256, 32);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_AA_TYPE][4] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_TA_TYPE][4] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_AT_TYPE][4] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_TT_TYPE][4] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        /*---------------------------*/
+        /*     GPU Defaults          */
+        /*---------------------------*/
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(1,128,128,true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(1, 128, 128, true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = new vector_reduction(1, 1, 256, 32);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1, 1, 256, 32);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
 
 
-        map[unknown][gpu_type][""][VECTOR_SAXPY_TYPE][8] = new vector_saxpy(1,128,128,true);
-        map[unknown][gpu_type][""][MATRIX_SAXPY_TYPE][8] = new matrix_saxpy(1,16,16,16,16,true);
-        map[unknown][gpu_type][""][SCALAR_REDUCE_TYPE][8] = new scalar_reduction(1, 128, 128, true);
-        map[unknown][gpu_type][""][VECTOR_REDUCE_Ax_TYPE][8] = new vector_reduction(1, 1, 256, 32);
-        map[unknown][gpu_type][""][VECTOR_REDUCE_Tx_TYPE][8] = new vector_reduction(1, 1, 256, 32);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_AA_TYPE][8] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_TA_TYPE][8] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_AT_TYPE][8] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
-        map[unknown][gpu_type][""][MATRIX_PRODUCT_TT_TYPE][8] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = new vector_saxpy(1,128,128,true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(1, 128, 128, true);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1, 1, 256, 32);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1, 1, 256, 32);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,1,0,1);
+
+        /*---------------------------*/
+        /*     CPU Defaults          */
+        /*---------------------------*/
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(8,16,256,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(8,8,512,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = new vector_reduction(1,2,1,8);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1,16,8,8);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(4,64,64,128,4,4,128,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(1,128,64,32,16,4,32,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+
+
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = new vector_saxpy(8,16,32,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(8,8,512,true);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,1,8);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,8,16,16);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(2,128,64,64,8,4,64,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,128,128,32,8,4,16,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_CPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+
+
+        /*---------------------------*/
+        /*     ACCELERATOR Defaults  */
+        /*---------------------------*/
+        //same as CPU for now
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(8,16,256,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(8,8,512,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = new vector_reduction(1,2,1,8);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1,16,8,8);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(64,64,128,4,4,128,0,0,4,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(128,64,32,16,4,32,0,0,1,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+
+
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = new vector_saxpy(8,16,32,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(8,8,512,true);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,1,8);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,8,16,16);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(128,64,64,8,4,64,0,0,2,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(128,128,32,8,4,16,0,0,1,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(1,32,32,32,4,4,4,0,0,1);
+
+
+
+        /*---------------------------*/
+        /*     AMD  GPU DEFAULT      */
+        /*---------------------------*/
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(1,4,64,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(8,128,128,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = new vector_reduction(1,1,256,1024);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1,32,8,256);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(4,16,64,128,4,4,4,1,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(4,32,128,128,4,4,8,0,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(4,64,32,64,4,8,4,1,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(4,128,64,32,8,4,8,0,0,1);
+
+
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = new vector_saxpy(2,1,64,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(2,256,64,true);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,256,1024);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,64,4,256);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(128,64,64,8,4,64,0,0,2,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(128,128,32,8,4,16,0,0,1,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(4,32,64,128,4,4,4,1,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(2,32,128,128,4,2,4,0,0,1);
+
+
+
+        /*---------------------------*/
+        /*     NVidia  GPU DEFAULT   */
+        /*---------------------------*/
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(1,1,256,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(4,64,512,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = new vector_reduction(1,1,256,1024);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1,64,4,64);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(1,16,128,128,4,4,4,1,0,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(1,32,32,128,4,4,8,0,0,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,32,128,128,4,8,4,1,0,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(1,32,32,128,8,4,8,0,0,1);
+
+
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = new vector_saxpy(2,1,64,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = new matrix_saxpy(1,16,16,16,16,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(2,64,512,true);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,128,1024);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,16,32,1024);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(1,16,64,128,2,2,8,1,0,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,128,128,32,2,2,8,0,1,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,32,64,128,4,4,4,1,0,1);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(1,32,128,128,4,2,4,0,0,1);
 
         return map;
       }
@@ -96,123 +194,43 @@ namespace viennacl{
 
 
       static profile_base * get(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
-        return database.at(unknown).at(gpu_type).at("").at(descriptor.type).at(descriptor.scalartype_size);
+        device_type dev_type = device.type();
+        vendor_id_type vendor_id = device.vendor_id();
+        std::string const & device_name = device.name();
+        expression_key_type expression_key(descriptor.type, descriptor.scalartype_size);
+
+        //std::cout << "Looking up vendor ID..." << std::endl;
+        /*-Vendor ID-*/
+        database_type::iterator vendor_it = database.find(vendor_id);
+        //Vendor not recognized => global default:
+        if(vendor_it==database.end())
+          return database.at(unknown_id).at(dev_type).at("").at(expression_key);
+
+        //std::cout << "Looking up device type..." << std::endl;
+        /*-Device Type-*/
+        device_type_map::iterator device_type_it = vendor_it->second.find(dev_type);
+        //Device type not recognized for this vendor => global default
+        if(device_type_it==vendor_it->second.end())
+          return database.at(unknown_id).at(dev_type).at("").at(expression_key);
+
+        //std::cout << "Looking up device name..." << std::endl;
+        /*-Device Name-*/
+        device_name_map::iterator device_name_it = device_type_it->second.find(device_name);
+        //Name not found => Vendor default
+        if(device_name_it==device_type_it->second.end())
+          return database.at(vendor_id).at(dev_type).at("").at(expression_key);
+
+        //std::cout << "Looking up expression name.." << std::endl;
+        /*-Expression-*/
+        expression_map::iterator expression_it = device_name_it->second.find(expression_key);
+        //Expression not found => Vendor default
+        if(expression_it==device_name_it->second.end())
+          return database.at(vendor_id).at(dev_type).at("").at(expression_key);
+
+        //std::cout << "Device found in the database! Getting profile..." << std::endl;
+        //Everything okay. Return specific profile//
+        return database.at(vendor_id).at(dev_type).at(device_name).at(expression_key);
       }
-
-//      /*---------------------------*/
-//      /*     Global CPU Defaults   */
-//      /*---------------------------*/
-//      static database_type init_global_cpu_default_database(){
-//        database_type map;
-
-//        ///SCALARTYPE_SIZE = 4
-//        //Vector SAXPY
-//        map.insert(std::make_pair(expression_key_type(VECTOR_SAXPY_TYPE, 4), new vector_saxpy(8,16,256,true)));
-//        //Matrix SAXPY
-//        map.insert(std::make_pair(expression_key_type(MATRIX_SAXPY_TYPE, 4), new matrix_saxpy(1,16,16,16,16,true)));
-//        //Scalar Reduce
-//        map.insert(std::make_pair(expression_key_type(SCALAR_REDUCE_TYPE, 4), new scalar_reduction(8,8,512)));
-//        //Vector Reduce
-//        map.insert(std::make_pair(expression_key_type(VECTOR_REDUCE_Ax_TYPE, 4), new vector_reduction(2,1,8)));
-//        map.insert(std::make_pair(expression_key_type(VECTOR_REDUCE_Tx_TYPE, 4), new vector_reduction(16,8,8)));
-//        //GEMM
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_AA_TYPE, 4), new matrix_product(64,64,128,4,4,128,0,0,4,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_TA_TYPE, 4), new matrix_product(128,64,32,16,4,32,0,0,1,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_AT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_TT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-
-//        ///SCALARTYPE_SIZE = 8
-//        //Vector SAXPY
-//        map.insert(std::make_pair(expression_key_type(VECTOR_SAXPY_TYPE, 8), new vector_saxpy(8,16,32)));
-//        //Matrix SAXPY
-//        map.insert(std::make_pair(expression_key_type(MATRIX_SAXPY_TYPE, 8), new matrix_saxpy(1,16,16,16,16,true)));
-//        //Scalar Reduce
-//        map.insert(std::make_pair(expression_key_type(SCALAR_REDUCE_TYPE, 8), new scalar_reduction(8,8,512)));
-//        //Vector Reduce
-//        map.insert(std::make_pair(expression_key_type(VECTOR_REDUCE_Ax_TYPE, 8), new vector_reduction(1,1,8)));
-//        map.insert(std::make_pair(expression_key_type(VECTOR_REDUCE_Tx_TYPE, 8), new vector_reduction(8,16,16)));
-//        //GEMM
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_AA_TYPE, 8), new matrix_product(128,64,64,8,4,64,0,0,2,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_TA_TYPE, 8), new matrix_product(128,128,32,8,4,16,0,0,1,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_AT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-//        map.insert(std::make_pair(expression_key_type(MATRIX_PRODUCT_TT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-
-//        return map;
-//      }
-//      static database_type global_gpu_default_database = init_global_cpu_default_database();
-
-
-//      static void init_amd_default_profiles(profile_database_type & map){
-//        ///SCALARTYPE_SIZE = 4
-//        //vector SAXPY
-//        map.insert(std::make_pair(expression_key(VECTOR_SAXPY_TYPE, 4), new vector_saxpy::profile(1,4,64,true)));
-//        //matrix SAXPY
-
-//        //scalar REDUCE
-//        map.insert(std::make_pair(expression_key(SCALAR_REDUCE_TYPE, 4), new scalar_reduction::profile(8, 128, 128, true)));
-//        //vector REDUCE
-//        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Ax_TYPE, 4), new vector_reduction::profile(1, 1, 256, 1024)));
-//        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Tx_TYPE, 4), new vector_reduction::profile(1, 32, 8, 256)));
-//        //GEMM
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AA_TYPE, 4), new matrix_product::profile(4,16,64,128,4,4,4,1,0,1)));
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TA_TYPE, 4), new matrix_product::profile(4,32,128,128,4,4,8,0,0,1)));
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AT_TYPE, 4), new matrix_product::profile(4,64,32,64,4,8,4,1,0,1)));
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TT_TYPE, 4), new matrix_product::profile(4,128,64,32,8,4,8,0,0,1)));
-
-//        ///SCALARTYPE_SIZE = 8
-//        //vector SAXPY
-//        map.insert(std::make_pair(expression_key(VECTOR_SAXPY_TYPE, 8), new vector_saxpy::profile(2,1,64,true)));
-//        //matrix SAXPY
-
-//        //scalar REDUCE
-//        map.insert(std::make_pair(expression_key(SCALAR_REDUCE_TYPE, 8), new scalar_reduction::profile(2, 256, 64, true)));
-//        //vector REDUCE
-//        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Ax_TYPE, 8), new vector_reduction::profile(1, 1, 256, 1024)));
-//        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Tx_TYPE, 8), new vector_reduction::profile(1, 64, 4, 256)));
-//        //GEMM
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AA_TYPE, 8), new matrix_product::profile(4,32,64,128,4,4,4,1,0,1)));
-//        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TA_TYPE, 8), new matrix_product::profile(2,32,128,128,4,2,4,0,0,1)));
-//      }
-
-//      static profile_base * get_nvidia(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
-
-//      }
-
-
-//      static profile_base * get(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
-//        cl_uint vendor_id = device.vendor_id();
-//        cl_device_type device_type = device.type();
-//        expression_key_type key(descriptor.type, descriptor.scalartype_size);
-//        switch (vendor_id) {
-//          //NVidia
-//          case nvidia_id:
-//            if(device_type==CL_DEVICE_TYPE_GPU)
-//              return get_nvidia_gpu(device,descriptor);
-//            else
-//              return global_cpu_default_database.at(key);
-
-//          //AMD
-//          case amd_id:
-//            if(device_type==CL_DEVICE_TYPE_GPU)
-//              return get_amd_gpu(device,descriptor);
-//            else
-//              return get_amd_cpu(device,descriptor);
-
-//          //Intel
-//          case intel_id:
-//            if(device_type==CL_DEVICE_TYPE_GPU)
-//              return get_intel_gpu(device,descriptor);
-//            else
-//              return get_intel_cpu(device,descriptor);
-
-//          //Other
-//          default:
-//            if(device_type==CL_DEVICE_TYPE_GPU)
-//              return global_gpu_default_database.at(key);
-//            else
-//              return global_cpu_default_database.at(key);
-//        }
-//      }
 
     }
 

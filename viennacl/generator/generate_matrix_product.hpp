@@ -393,7 +393,7 @@ namespace viennacl{
           ///Result Values
           for(unsigned int m=0; m< ms_res; ++m)
             for(unsigned int n=0; n < ns_res ; ++n)
-              stream << aligned_scalartype << " " << "res" << m << n << " = (" << aligned_scalartype << ")(0) ;" << std::endl;
+              stream << aligned_scalartype << " " << "res" << m << "_" << n << " = (" << aligned_scalartype << ")(0) ;" << std::endl;
 
           ///Local memory
           if(use_lhs_shared)
@@ -591,7 +591,7 @@ namespace viennacl{
                   std::ostringstream lhs_oss;
                   std::ostringstream rhs_oss;
 
-                  res_oss << "res" << m << n ;
+                  res_oss << "res" << m << "_" << n ;
                   if(vectorization_>1) res_oss << ".s" << a;
 
                   lhs_oss << "val_lhs_" << ind_lhs_1 << "_" << ind_lhs_2;
@@ -650,7 +650,7 @@ namespace viennacl{
           if(result_access_flow==REGULAR){
             for(unsigned int m=0 ; m < ms_res ; ++m){
               for(unsigned int n=0 ; n < ns_res ; ++n){
-                stream << "*res_ptr++=" << "res" << m << n << ";" << std::endl;
+                stream << "*res_ptr++=" << "res" << m << "_" << n << ";" << std::endl;
               }
               if(m<ms_res-1)  stream << "res_ptr+=" << assigned->size2() << " - " << ns_res << ";" << std::endl;
             }
@@ -658,7 +658,7 @@ namespace viennacl{
           else{
             for(unsigned int n=0 ; n < ns_res ; ++n){
               for(unsigned int m=0 ; m < ms_res ; ++m){
-                stream << "*res_ptr++=" << "res" << m << n << ";" << std::endl;
+                stream << "*res_ptr++=" << "res" << m << "_" << n << ";" << std::endl;
               }
               if(n<ns_res-1) stream << "res_ptr+=" << assigned->size1() << " - " << ms_res << ";" << std::endl;
             }
