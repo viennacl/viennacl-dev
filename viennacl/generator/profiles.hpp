@@ -41,43 +41,43 @@ namespace viennacl{
 
     namespace profiles{
 
-      typedef std::pair<expression_type, std::size_t> expression_key;
-      typedef std::map<expression_key, profile_base *> database_type;
+      typedef std::pair<expression_type, std::size_t> key_type;
+      typedef std::map<key_type, profile_base *> database_type;
 
       static database_type init_global_gpu_default_database(){
         database_type map;
 
         ///SCALARTYPE_SIZE = 4
         //Vector SAXPY
-        map.insert(std::make_pair(expression_key(VECTOR_SAXPY_TYPE, 4), new vector_saxpy(1,128,128,true)));
+        map.insert(std::make_pair(key_type(VECTOR_SAXPY_TYPE, 4), new vector_saxpy(1,128,128,true)));
         //Matrix SAXPY
-        map.insert(std::make_pair(expression_key(MATRIX_SAXPY_TYPE, 4), new matrix_saxpy(1,16,16,16,16,true)));
+        map.insert(std::make_pair(key_type(MATRIX_SAXPY_TYPE, 4), new matrix_saxpy(1,16,16,16,16,true)));
         //Scalar Reduce
-        map.insert(std::make_pair(expression_key(SCALAR_REDUCE_TYPE, 4), new scalar_reduction(1, 128, 128, true)));
+        map.insert(std::make_pair(key_type(SCALAR_REDUCE_TYPE, 4), new scalar_reduction(1, 128, 128, true)));
         //Vector Reduce
-        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Ax_TYPE, 4), new vector_reduction(1, 1, 256, 32)));
-        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Tx_TYPE, 4), new vector_reduction(1, 1, 256, 32)));
+        map.insert(std::make_pair(key_type(VECTOR_REDUCE_Ax_TYPE, 4), new vector_reduction(1, 1, 256, 32)));
+        map.insert(std::make_pair(key_type(VECTOR_REDUCE_Tx_TYPE, 4), new vector_reduction(1, 1, 256, 32)));
         //GEMM
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AA_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TA_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_AA_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_TA_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_AT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_TT_TYPE, 4), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
 
         ///SCALARTYPE_SIZE = 8
         //Vector SAXPY
-        map.insert(std::make_pair(expression_key(VECTOR_SAXPY_TYPE, 8), new vector_saxpy(1,128,128,true)));
+        map.insert(std::make_pair(key_type(VECTOR_SAXPY_TYPE, 8), new vector_saxpy(1,128,128,true)));
         //Matrix SAXPY
-        map.insert(std::make_pair(expression_key(MATRIX_SAXPY_TYPE, 8), new matrix_saxpy(1,16,16,16,16,true)));
+        map.insert(std::make_pair(key_type(MATRIX_SAXPY_TYPE, 8), new matrix_saxpy(1,16,16,16,16,true)));
         //Scalar Reduce
-        map.insert(std::make_pair(expression_key(SCALAR_REDUCE_TYPE, 8), new scalar_reduction(1, 128, 128, true)));
+        map.insert(std::make_pair(key_type(SCALAR_REDUCE_TYPE, 8), new scalar_reduction(1, 128, 128, true)));
         //Vector Reduce
-        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Ax_TYPE, 8), new vector_reduction(1, 1, 256, 32)));
-        map.insert(std::make_pair(expression_key(VECTOR_REDUCE_Tx_TYPE, 8), new vector_reduction(1, 1, 256, 32)));
+        map.insert(std::make_pair(key_type(VECTOR_REDUCE_Ax_TYPE, 8), new vector_reduction(1, 1, 256, 32)));
+        map.insert(std::make_pair(key_type(VECTOR_REDUCE_Tx_TYPE, 8), new vector_reduction(1, 1, 256, 32)));
         //GEMM
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AA_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TA_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_AT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
-        map.insert(std::make_pair(expression_key(MATRIX_PRODUCT_TT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_AA_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_TA_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_AT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,1,0,1)));
+        map.insert(std::make_pair(key_type(MATRIX_PRODUCT_TT_TYPE, 8), new matrix_product(1,32,32,32,4,4,4,0,0,1)));
 
         return map;
       }
@@ -124,7 +124,7 @@ namespace viennacl{
 //        amd_id = 4098
 //      };
 
-      profile_base * get(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
+      static profile_base * get(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
         return global_gpu_default_database.at(std::make_pair(descriptor.type, descriptor.scalartype_size));
       }
 

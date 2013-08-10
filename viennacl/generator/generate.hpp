@@ -46,6 +46,7 @@ namespace viennacl{
       private:
         typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
+        typedef std::map< profiles::key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
 
         static bool is_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
@@ -186,7 +187,7 @@ namespace viennacl{
         }
 
       public:
-        code_generator() : dev_(viennacl::ocl::current_device()){
+        code_generator(viennacl::ocl::device const & dev = viennacl::ocl::current_device()) : dev_(dev){
           statements_.reserve(16);
         }
 
@@ -206,6 +207,9 @@ namespace viennacl{
         }
 
         profile_base const & get_profile(expression_descriptor descriptor) const {
+          forced_profiles_type::const_iterator it = forced_profiles_.find(std::make_pair(descriptor.type, descriptor.scalartype_size));
+          if(it != forced_profiles_.end())
+            return *it->second;
           return *profiles::get(dev_,descriptor);
         }
 
@@ -224,6 +228,11 @@ namespace viennacl{
             }
           }
           *program_name='\0';
+        }
+
+        template<class T>
+        void force_profile(profiles::key_type key, T const & t){
+          forced_profiles_.insert(std::make_pair(key, new T(t)));
         }
 
         std::string make_program_string() const {
@@ -246,6 +255,7 @@ namespace viennacl{
       private:
         statements_type statements_;
         viennacl::ocl::device const & dev_;
+        forced_profiles_type forced_profiles_;
     };
 
     static viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){

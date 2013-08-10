@@ -66,6 +66,8 @@ namespace viennacl{
       public:
         profile_base(unsigned int vectorization, std::size_t num_kernels) : vectorization_(vectorization), num_kernels_(num_kernels){ }
 
+        virtual ~profile_base(){ }
+
         virtual void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
 
         virtual void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const = 0;
