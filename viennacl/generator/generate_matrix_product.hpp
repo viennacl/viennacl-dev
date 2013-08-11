@@ -439,7 +439,7 @@ namespace viennacl{
           ///RHS - Local Memory Offset
           if(use_rhs_shared){
             std::string j = "get_group_id(1)*" + utils::to_string(nl_rhs);
-            stream << "unsigned int offsetRHS = " ;
+            stream << "__global " << aligned_scalartype << "* global_rhs_ptr = " << rhs->name() << " + ";
             if(rhs_access_flow==REGULAR)
               stream << j;
             else
@@ -479,7 +479,7 @@ namespace viennacl{
 
           ///Update RHS Local Memory and pointers (if necessary)
           if(use_rhs_shared){
-            fetch_to_local_mem(stream,"rhs_buf", local_rhs_size2, "offsetRHS",kl_rhs,nl_rhs,*rhs,rhs_access_flow);
+            fetch_to_local_mem(stream,"rhs_buf", local_rhs_size2, "global_rhs_ptr",kl_rhs,nl_rhs,*rhs,rhs_access_flow);
             for(unsigned int k=0; k<ks_rhs; ++k)
               stream << "__local " << rhs_value_scalartype << "* rhs_ptr_" << k << " = rhs_buf + "
                      << k*local_rhs_size2 << " + " << "get_local_id(1)*" << ns_rhs
@@ -644,9 +644,9 @@ namespace viennacl{
 
           if(use_rhs_shared){
             if(rhs_access_flow==REGULAR)
-              stream << "offsetRHS += " << kl_rhs << "*" << rhs->size2() << ";" << std::endl;
+              stream << "global_rhs_ptr += " << kl_rhs << "*" << rhs->size2() << ";" << std::endl;
             else
-              stream << "offsetRHS += " << kl_rhs << ";" << std::endl;
+              stream << "global_rhs_ptr += " << kl_rhs << ";" << std::endl;
           }
 
           stream.dec_tab();
