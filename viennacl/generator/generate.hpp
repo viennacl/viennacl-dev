@@ -170,11 +170,11 @@ namespace viennacl{
         }
 
         template<class StatementsType>
-        void enqueue_expression(profile_base const & profile, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
+        void enqueue_expression(profile_base const & profile, cl_device_id device_id, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
-            char str[10];
-            std::sprintf(str,"kernel_%d",kernel_id);
+            char str[32];
+            std::sprintf(str,"kernel_%p_%d",(void*)device_id,kernel_id);
             viennacl::ocl::kernel & kernel = p.get_kernel(str);
             kernels.push_back(&kernel);
             unsigned int current_arg = 0;
@@ -188,9 +188,21 @@ namespace viennacl{
           }
         }
 
+        profile_base const & get_profile(viennacl::ocl::device const & device, expression_descriptor const & descriptor) const {
+          forced_profiles_type::const_iterator it = forced_profiles_.find(std::make_pair(descriptor.type, descriptor.scalartype_size));
+          if(it != forced_profiles_.end())
+            return *it->second;
+          return *profiles::get(device,descriptor);
+        }
+
       public:
-        code_generator(viennacl::ocl::device const & dev = viennacl::ocl::current_device()) : dev_(dev){
+        code_generator(viennacl::ocl::context const & ctx = viennacl::ocl::current_context()) : ctx_(ctx){
           statements_.reserve(16);
+        }
+
+        template<class T>
+        void force_profile(forced_profile_key_type key, T const & t){
+          forced_profiles_.insert(std::make_pair(key, new T(t)));
         }
 
         bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {
@@ -208,17 +220,10 @@ namespace viennacl{
           return true;
         }
 
-        profile_base const & get_profile(expression_descriptor descriptor) const {
-          forced_profiles_type::const_iterator it = forced_profiles_.find(std::make_pair(descriptor.type, descriptor.scalartype_size));
-          if(it != forced_profiles_.end())
-            return *it->second;
-          return *profiles::get(dev_,descriptor);
-        }
-
         void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           unsigned int kernel_id = 0;
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
-            enqueue_expression(get_profile(it->first), it->second, kernel_id, p, kernels);
+            enqueue_expression(get_profile(ctx_.current_device(), it->first), ctx_.current_device().id(), it->second, kernel_id, p, kernels);
         }
 
         void make_program_name(char * program_name) const {
@@ -232,11 +237,6 @@ namespace viennacl{
           *program_name='\0';
         }
 
-        template<class T>
-        void force_profile(forced_profile_key_type key, T const & t){
-          forced_profiles_.insert(std::make_pair(key, new T(t)));
-        }
-
         std::string make_program_string() const {
           utils::kernel_generation_stream stream;
 
@@ -248,15 +248,16 @@ namespace viennacl{
           stream <<  "#endif\n";
           stream << std::endl;
 
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            get_profile(it->first)(stream,it->second);
-          }
+          for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
+            for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
+              get_profile(*it,iit->first)(stream,*it,iit->second);
+
           return stream.str();
         }
 
       private:
         statements_type statements_;
-        viennacl::ocl::device const & dev_;
+        viennacl::ocl::context const & ctx_;
         forced_profiles_type forced_profiles_;
     };
 

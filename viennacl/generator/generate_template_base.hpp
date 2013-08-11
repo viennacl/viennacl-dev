@@ -111,7 +111,7 @@ namespace viennacl{
 
         std::size_t num_kernels() const{ return num_kernels_; }
 
-        virtual void operator()(utils::kernel_generation_stream & stream, statements_type const & statements) const {
+        virtual void operator()(utils::kernel_generation_stream & stream, viennacl::ocl::device const & device, statements_type const & statements) const {
           std::vector<detail::mapping_type> mapping(statements.size());
 
           ///Get Prototype, initialize mapping
@@ -135,7 +135,7 @@ namespace viennacl{
 
           //Generate
           for(std::size_t n = 0 ; n < num_kernels() ; ++n){
-            stream << "__kernel void " << "kernel_" << n << "(" << std::endl;
+            stream << "__kernel void " << "kernel_" << device.id() << "_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
 
