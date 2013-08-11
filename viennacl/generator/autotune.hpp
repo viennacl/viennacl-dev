@@ -146,13 +146,13 @@ namespace viennacl{
 
       /** @brief Add the timing value for a given profile and an statement */
       template<class ProfileT>
-      double benchmark_impl(viennacl::ocl::device const & dev, viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
+      double benchmark_impl(viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
 
         tools::Timer t;
 
         //Skips if use too much local memory.
         std::list<viennacl::ocl::kernel *> kernels;
-        viennacl::generator::code_generator gen(dev);
+        viennacl::generator::code_generator gen;
         gen.add(statement, statement.array()[0]);
         gen.force_profile(key, prof);
 
@@ -197,7 +197,7 @@ namespace viennacl{
           typename ConfigTypeype::profile_type const & profile = config.get_current();
           double percent = (double)n++*100/n_conf;
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-          double exec_time = benchmark_impl(dev,op,key,profile);
+          double exec_time = benchmark_impl(op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));
           if(out)
               *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigTypeype::current_state_representation(profile) << std::endl ;
@@ -210,14 +210,12 @@ namespace viennacl{
       /** @brief Fills a timing map for a given statement and a list of profiles */
       template< class ProfT>
       void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, std::list<ProfT> const & profiles){
-        viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-
         unsigned int n=0;
         unsigned int n_conf = 0;
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
           double percent = (double)n++*100/n_conf;
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-          double exec_time = benchmark_impl(dev,op,key,*it);
+          double exec_time = benchmark_impl(op,key,*it);
           timings->insert(std::make_pair(exec_time, *it));
         }
 
