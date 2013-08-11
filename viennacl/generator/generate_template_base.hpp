@@ -135,7 +135,13 @@ namespace viennacl{
 
           //Generate
           for(std::size_t n = 0 ; n < num_kernels() ; ++n){
-            stream << "__kernel void " << "kernel_" << device.id() << "_" << n << "(" << std::endl;
+
+            std::size_t size1, size2, size3=1;
+            set_local_sizes(size1,size2,n);
+            stream << "__kernel ";
+//            stream << "__attribute__((vec_type_hint()))" << std::endl;
+            stream << " __attribute__((reqd_work_group_size(" << size1 << "," << size2 << "," << size3 << ")))" << std::endl;
+            stream << "void " << "kernel_" << device.id() << "_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
 
