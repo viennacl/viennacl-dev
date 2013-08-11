@@ -44,7 +44,7 @@ namespace viennacl{
 
     namespace detail{
 
-      class map_functor{
+      class map_functor : public traversal_functor{
           std::string create_name(unsigned int & current_arg, std::map<void *, std::size_t> & memory, void * handle) const{
             if(handle==NULL)
               return "arg" + utils::to_string(current_arg_++);
@@ -74,7 +74,7 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
             mapped_host_scalar * p = new mapped_host_scalar(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(current_arg_, memory_, (void*)&scal);
+            p->name_ = create_name(current_arg_, memory_, NULL);
             return container_ptr_type(p);
           }
 

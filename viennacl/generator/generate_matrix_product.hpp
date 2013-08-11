@@ -296,10 +296,13 @@ namespace viennacl{
           if(vectorization_>1){
             std::string StrV = "/"+utils::to_string(vectorization_) ;
 
-            if(assigned->is_row_major())
-              assigned->bind_sizes("M", "N"+StrV);
-            else
-              assigned->bind_sizes("M"+StrV, "N");
+            for(detail::mapping_type::const_iterator it = mapping.front().begin() ; it != mapping.front().end() ; ++it){
+              if(detail::mapped_matrix const * p = dynamic_cast<detail::mapped_matrix const *>(it->second.get()))
+                if(p->is_row_major())
+                  p->bind_sizes("M", "N"+StrV);
+                else
+                  p->bind_sizes("M"+StrV, "N");
+            }
 
             if(lhs->is_row_major())
               if(is_lhs_transposed)

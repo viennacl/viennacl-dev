@@ -47,7 +47,7 @@ namespace viennacl{
 
     namespace detail{
 
-      class enqueue_functor{
+      class enqueue_functor : public traversal_functor{
         public:
           typedef void result_type;
 
@@ -55,8 +55,7 @@ namespace viennacl{
 
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
-            if(memory_.insert((void*)&scal).second)
-              kernel_.arg(current_arg_++, scal);
+            kernel_.arg(current_arg_++, scal);
           }
 
           //Scalar mapping

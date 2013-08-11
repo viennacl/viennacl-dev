@@ -44,7 +44,7 @@ namespace viennacl{
 
     namespace detail{
 
-      class representation_functor{
+      class representation_functor : public traversal_functor{
         private:
           unsigned int get_id(void * handle) const{
             unsigned int i = 0;
@@ -80,7 +80,6 @@ namespace viennacl{
             *ptr_++='h'; //host
             *ptr_++='s'; //scalar
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            append_id(ptr_, get_id((void*)&scal));
           }
 
           //Scalar mapping

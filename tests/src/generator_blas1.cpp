@@ -32,8 +32,8 @@
 //
 #define VIENNACL_WITH_UBLAS 1
 
-//#define VIENNACL_DEBUG_ALL
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_ALL
+#define VIENNACL_DEBUG_BUILD
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
@@ -41,6 +41,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/generator/generate.hpp"
+#include "viennacl/scheduler/io.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
     if ( float delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
@@ -129,6 +130,9 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::copy (cy, y);
     viennacl::copy (cz, z);
 
+    NumericT alpha = 3.14;
+    NumericT beta = 3.51;
+
     // --------------------------------------------------------------------------      
 
     {
@@ -157,6 +161,16 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::backend::finish();
     CHECK_RESULT(cx, x, x = y + w);
     }
+
+    {
+    std::cout << "w = alpha*x + beta*y ..." << std::endl;
+    cw = alpha*cx + beta*cy;
+    viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
+    generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+    }
+
 
     {
     std::cout << "s = inner_prod(x,y)..." << std::endl;

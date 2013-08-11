@@ -54,6 +54,9 @@ namespace viennacl{
           case OPERATION_UNARY_TRANS_TYPE : return "trans";
           case OPERATION_BINARY_ASSIGN_TYPE : return "=";
           case OPERATION_BINARY_ADD_TYPE : return "+";
+          case OPERATION_BINARY_SUB_TYPE : return "-";
+          case OPERATION_BINARY_MULT_TYPE : return "*";
+          case OPERATION_BINARY_DIV_TYPE : return "/";
           case OPERATION_BINARY_INNER_PROD_TYPE : return "iprod";
           case OPERATION_BINARY_MAT_MAT_PROD_TYPE : return "mmprod";
           case OPERATION_BINARY_MAT_VEC_PROD_TYPE : return "mvprod";
@@ -83,7 +86,13 @@ namespace viennacl{
 
       }
 
-      class prototype_generation_traversal{
+      class traversal_functor{
+        public:
+          void call_before_expansion() const { }
+          void call_after_expansion() const { }
+      };
+
+      class prototype_generation_traversal : public traversal_functor{
         private:
           std::set<std::string> & already_generated_;
           std::string & str_;
@@ -107,17 +116,22 @@ namespace viennacl{
 
         if(root_node.op.type_family==OPERATION_UNARY_TYPE_FAMILY)
         {
+          //Self:
+          fun(&statement, &root_node, PARENT_NODE_TYPE);
+
           //Lhs:
+          fun.call_before_expansion();
           if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
               traverse(statement, statement.array()[root_node.lhs.node_index], fun, recurse_binary_leaf);
           fun(&statement, &root_node, LHS_NODE_TYPE);
-
-          //Self:
-          fun(&statement, &root_node, PARENT_NODE_TYPE);
+          fun.call_after_expansion();
         }
         else if(root_node.op.type_family==OPERATION_BINARY_TYPE_FAMILY)
         {
           bool deep_recursion = recurse_binary_leaf || !is_binary_leaf_operator(root_node.op.type);
+
+          fun.call_before_expansion();
+
           //Lhs:
           if(deep_recursion){
             if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
@@ -134,10 +148,13 @@ namespace viennacl{
               traverse(statement, statement.array()[root_node.rhs.node_index], fun, recurse_binary_leaf);
             fun(&statement, &root_node, RHS_NODE_TYPE);
           }
+
+          fun.call_after_expansion();
+
         }
       }
 
-      class fetch_traversal{
+      class fetch_traversal : public traversal_functor{
         private:
           std::set<std::string> & fetched_;
           std::pair<std::string, std::string> index_string_;
@@ -183,7 +200,7 @@ namespace viennacl{
       }
 
 
-      class expression_generation_traversal{
+      class expression_generation_traversal : public traversal_functor{
         private:
           std::pair<std::string, std::string> index_string_;
           int vector_element_;
@@ -192,6 +209,9 @@ namespace viennacl{
 
         public:
           expression_generation_traversal(std::pair<std::string, std::string> const & index, int vector_element, std::string & str, mapping_type const & mapping) : index_string_(index), vector_element_(vector_element), str_(str), mapping_(mapping){ }
+
+          void call_before_expansion() const { str_+="("; }
+          void call_after_expansion() const { str_+=")"; }
 
           void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
             if(node_type==PARENT_NODE_TYPE)
@@ -202,19 +222,13 @@ namespace viennacl{
                 str_ += generate(root_node->op.type);
             }
             else{
-              if(node_type==LHS_NODE_TYPE)
-              {
-                if(root_node->op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY)
-                  str_ += "(";
+              if(node_type==LHS_NODE_TYPE){
                 if(root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                   str_ += detail::generate(index_string_,vector_element_, *mapping_.at(std::make_pair(root_node,node_type)));
               }
-              else if(node_type==RHS_NODE_TYPE)
-              {
+              else if(node_type==RHS_NODE_TYPE){
                 if(root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                   str_ += detail::generate(index_string_,vector_element_, *mapping_.at(std::make_pair(root_node,node_type)));
-                if(root_node->op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY)
-                  str_ += ")";
               }
             }
           }
