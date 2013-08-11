@@ -258,6 +258,7 @@ namespace viennacl{
           unsigned int unroll = unroll_;
 
           detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping.at(0).at(std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
+          detail::mapped_matrix_product* prod = NULL;
           detail::mapped_matrix const * lhs = NULL;
           detail::mapped_matrix const * rhs = NULL;
 
@@ -269,6 +270,7 @@ namespace viennacl{
             std::size_t i = std::distance(statements.begin(), it);
             for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
+                prod = (detail::mapped_matrix_product *)mapping.at(i).at(std::make_pair(&(*iit), detail::PARENT_NODE_TYPE)).get();
                 if(iit->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_lhs_transposed = true;
                   lhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
@@ -402,7 +404,7 @@ namespace viennacl{
             stream << "__local " << rhs->scalartype() << " rhs_buf[" << local_rhs_size1*local_rhs_size2 << "]" << ";" << std::endl;
 
           ///Pointer to result
-          stream << "__global " << aligned_scalartype << "* res_ptr = " <<  assigned->name() << " + " << assigned->offset(std::make_pair("get_global_id(0)*" + utils::to_string(ms_res), "get_global_id(1)*" + utils::to_string(ns_res))) << ";" << std::endl;
+          //stream << "__global " << aligned_scalartype << "* res_ptr = " <<  assigned->name() << " + " << assigned->offset(std::make_pair("get_global_id(0)*" + utils::to_string(ms_res), "get_global_id(1)*" + utils::to_string(ns_res))) << ";" << std::endl;
 
 
           ///LHS - Local Memory Offset
@@ -647,22 +649,17 @@ namespace viennacl{
           stream.dec_tab();
           stream << "}" << std::endl;
 
-          if(result_access_flow==REGULAR){
-            for(unsigned int m=0 ; m < ms_res ; ++m){
-              for(unsigned int n=0 ; n < ns_res ; ++n){
-                stream << "*res_ptr++=" << "res" << m << "_" << n << ";" << std::endl;
-              }
-              if(m<ms_res-1)  stream << "res_ptr+=" << assigned->size2() << " - " << ns_res << ";" << std::endl;
-            }
-          }
-          else{
+          for(unsigned int m=0 ; m < ms_res ; ++m){
             for(unsigned int n=0 ; n < ns_res ; ++n){
-              for(unsigned int m=0 ; m < ms_res ; ++m){
-                stream << "*res_ptr++=" << "res" << m << "_" << n << ";" << std::endl;
-              }
-              if(n<ns_res-1) stream << "res_ptr+=" << assigned->size1() << " - " << ms_res << ";" << std::endl;
+              std::string i = "get_global_id(0)*" + utils::to_string(ms_res) + "+" + utils::to_string(m);
+              std::string j = "get_global_id(1)*" + utils::to_string(ns_res) + "+" + utils::to_string(n);
+              prod->access_name("res"+utils::to_string(m)+"_"+utils::to_string(n));
+              std::string str;
+              detail::traverse(statements.front().first, statements.front().second, detail::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
+              stream << str << ";" << std::endl;
             }
           }
+
 
         }
 
