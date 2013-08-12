@@ -77,9 +77,9 @@ namespace viennacl{
             }
           }
 
-          //Symbolic vector mapping
+          //Implicit vector mapping
           template<class ScalarType>
-          result_type operator()(symbolic_vector_base<ScalarType> const & vec) const {
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             if(memory_.insert((void*)&vec).second){
               if(vec.is_value_static()==false)
                 kernel_.arg(current_arg_++, vec.value());
@@ -104,9 +104,9 @@ namespace viennacl{
             }
           }
 
-          //Symbolic matrix mapping
+          //Implicit matrix mapping
           template<class ScalarType>
-          result_type operator()(symbolic_matrix_base<ScalarType> const & mat) const {
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             if(mat.is_value_static()==false)
               kernel_.arg(current_arg_++, mat.value());
           }

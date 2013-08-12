@@ -98,7 +98,7 @@ namespace viennacl
     //};
 
     //
-      // is_any_vector : checks for either vector_base or symbolic_vector_base
+      // is_any_vector : checks for either vector_base or implicit_vector_base
       //
       template<typename T>
       struct is_any_vector { enum { value = 0 }; };
@@ -120,7 +120,7 @@ namespace viennacl
 
 
       //
-      // is_any_matrix : checks for either matrix_base or symbolic_matrix_base
+      // is_any_matrix : checks for either matrix_base or implicit_matrix_base
       //
       template<typename T>
       struct is_any_dense_matrix { enum { value = 0 }; };

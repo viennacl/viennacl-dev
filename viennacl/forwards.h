@@ -146,7 +146,7 @@ namespace viennacl
   class const_vector_iterator;
 
   template<typename SCALARTYPE>
-  class symbolic_vector_base;
+  class implicit_vector_base;
 
   template <typename SCALARTYPE>
   class zero_vector;
@@ -249,7 +249,7 @@ namespace viennacl
   class matrix;
 
   template<typename SCALARTYPE>
-  class symbolic_matrix_base;
+  class implicit_matrix_base;
 
   template <class SCALARTYPE>
   class identity_matrix;
@@ -385,7 +385,7 @@ namespace viennacl
     , OPENCL_MEMORY
     , CUDA_MEMORY
   };
-  
+
   /** @brief Exception class in case of memory errors */
   class memory_exception : public std::exception
   {

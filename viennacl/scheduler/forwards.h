@@ -288,17 +288,17 @@ namespace viennacl
         viennacl::vector_base<float>            *vector_float;
         viennacl::vector_base<double>           *vector_double;
 
-        // symbolic vectors:
-        //viennacl::symbolic_vector_base<char>             *symbolic_vector_char;
-         //viennacl::symbolic_vector_base<unsigned char>    *symbolic_vector_uchar;
-         //viennacl::symbolic_vector_base<short>            *symbolic_vector_short;
-         //viennacl::symbolic_vector_base<unsigned short>   *symbolic_vector_ushort;
-         //viennacl::symbolic_vector_base<int>              *symbolic_vector_int;
-         //viennacl::symbolic_vector_base<unsigned int>     *symbolic_vector_uint;
-         //viennacl::symbolic_vector_base<long>             *symbolic_vector_long;
-         //viennacl::symbolic_vector_base<unsigned long>    *symbolic_vector_ulong;
-         viennacl::symbolic_vector_base<float>            *symbolic_vector_float;
-         viennacl::symbolic_vector_base<double>           *symbolic_vector_double;
+        // implicit vectors:
+        //viennacl::implicit_vector_base<char>             *implicit_vector_char;
+        //viennacl::implicit_vector_base<unsigned char>    *implicit_vector_uchar;
+        //viennacl::implicit_vector_base<short>            *implicit_vector_short;
+        //viennacl::implicit_vector_base<unsigned short>   *implicit_vector_ushort;
+        //viennacl::implicit_vector_base<int>              *implicit_vector_int;
+        //viennacl::implicit_vector_base<unsigned int>     *implicit_vector_uint;
+        //viennacl::implicit_vector_base<long>             *implicit_vector_long;
+        //viennacl::implicit_vector_base<unsigned long>    *implicit_vector_ulong;
+        viennacl::implicit_vector_base<float>            *implicit_vector_float;
+        viennacl::implicit_vector_base<double>           *implicit_vector_double;
 
         // row-major matrices:
         //viennacl::matrix_base<char>             *matrix_row_char;
@@ -324,16 +324,16 @@ namespace viennacl
         viennacl::matrix_base<float,          viennacl::column_major>    *matrix_col_float;
         viennacl::matrix_base<double,         viennacl::column_major>    *matrix_col_double;
 
-        //viennacl::symbolic_matrix_base<char>             *symbolic_matrix_char;
-        //viennacl::symbolic_matrix_base<unsigned char>    *symbolic_matrix_uchar;
-        //viennacl::symbolic_matrix_base<short>            *symbolic_matrix_short;
-        //viennacl::symbolic_matrix_base<unsigned short>   *symbolic_matrix_ushort;
-        //viennacl::symbolic_matrix_base<int>              *symbolic_matrix_int;
-        //viennacl::symbolic_matrix_base<unsigned int>     *symbolic_matrix_uint;
-        //viennacl::symbolic_matrix_base<long>             *symbolic_matrix_long;
-        //viennacl::symbolic_matrix_base<unsigned long>    *symbolic_matrix_ulong;
-        viennacl::symbolic_matrix_base<float>            *symbolic_matrix_float;
-        viennacl::symbolic_matrix_base<double>           *symbolic_matrix_double;
+        //viennacl::implicit_matrix_base<char>             *implicit_matrix_char;
+        //viennacl::implicit_matrix_base<unsigned char>    *implicit_matrix_uchar;
+        //viennacl::implicit_matrix_base<short>            *implicit_matrix_short;
+        //viennacl::implicit_matrix_base<unsigned short>   *implicit_matrix_ushort;
+        //viennacl::implicit_matrix_base<int>              *implicit_matrix_int;
+        //viennacl::implicit_matrix_base<unsigned int>     *implicit_matrix_uint;
+        //viennacl::implicit_matrix_base<long>             *implicit_matrix_long;
+        //viennacl::implicit_matrix_base<unsigned long>    *implicit_matrix_ulong;
+        viennacl::implicit_matrix_base<float>            *implicit_matrix_float;
+        viennacl::implicit_matrix_base<double>           *implicit_matrix_double;
 
       };
     };

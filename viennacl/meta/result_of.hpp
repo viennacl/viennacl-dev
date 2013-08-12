@@ -341,7 +341,7 @@ namespace viennacl
       };
 
       template <typename T>
-      struct cpu_value_type<viennacl::symbolic_vector_base<T> >
+      struct cpu_value_type<viennacl::implicit_vector_base<T> >
       {
         typedef T    type;
       };
@@ -385,7 +385,7 @@ namespace viennacl
       };
 
       template <typename T>
-      struct cpu_value_type<viennacl::symbolic_matrix_base<T> >
+      struct cpu_value_type<viennacl::implicit_matrix_base<T> >
       {
         typedef T    type;
       };

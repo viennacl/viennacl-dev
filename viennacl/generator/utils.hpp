@@ -78,13 +78,13 @@ namespace viennacl{
 
     template<class Fun>
     static typename Fun::result_type call_on_implicit_vector(scheduler::lhs_rhs_element element, Fun const & fun){
-        assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY   && bool("Must be called on a symbolic_vector"));
-        assert(element.subtype     == scheduler::IMPLICIT_VECTOR_TYPE && bool("Must be called on a symbolic_vector"));
+        assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY   && bool("Must be called on a implicit_vector"));
+        assert(element.subtype     == scheduler::IMPLICIT_VECTOR_TYPE && bool("Must be called on a implicit_vector"));
         switch(element.numeric_type){
         case scheduler::FLOAT_TYPE :
-            return fun(*element.symbolic_vector_float);
+            return fun(*element.implicit_vector_float);
         case scheduler::DOUBLE_TYPE :
-            return fun(*element.symbolic_vector_double);
+            return fun(*element.implicit_vector_double);
         default :
             throw "not implemented";
         }
@@ -124,9 +124,9 @@ namespace viennacl{
         assert(element.subtype     == scheduler::IMPLICIT_MATRIX_TYPE && bool("Must be called on a matrix_vector"));
         switch(element.numeric_type){
         case scheduler::FLOAT_TYPE :
-            return fun(*element.symbolic_matrix_float);
+            return fun(*element.implicit_matrix_float);
         case scheduler::DOUBLE_TYPE :
-            return fun(*element.symbolic_matrix_double);
+            return fun(*element.implicit_matrix_double);
         default :
             throw "not implemented";
         }

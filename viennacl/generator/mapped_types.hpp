@@ -278,14 +278,14 @@ namespace viennacl{
           bool is_row_major_;
       };
 
-      /** @brief Mapping of a symbolic vector to a generator class */
-      class mapped_symbolic_vector : public mapped_container{
+      /** @brief Mapping of a implicit vector to a generator class */
+      class mapped_implicit_vector : public mapped_container{
           friend class map_functor;
           std::string value_name_;
           std::string index_name_;
           bool is_value_static_;
         public:
-          mapped_symbolic_vector(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_implicit_vector(std::string const & scalartype) : mapped_container(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /*index*/) const{
             return value_name_;
           }
@@ -298,13 +298,13 @@ namespace viennacl{
           }
       };
 
-      /** @brief Mapping of a symbolic matrix to a generator class */
-      class mapped_symbolic_matrix : public mapped_container{
+      /** @brief Mapping of a implicit matrix to a generator class */
+      class mapped_implicit_matrix : public mapped_container{
           friend class map_functor;
           std::string value_name_;
           bool is_diag_;
         public:
-          mapped_symbolic_matrix(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_implicit_matrix(std::string const & scalartype) : mapped_container(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /* index */) const{
             return value_name_;
           }

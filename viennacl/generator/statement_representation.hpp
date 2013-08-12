@@ -102,10 +102,10 @@ namespace viennacl{
             append_id(ptr_, get_id((void*)&vec));
           }
 
-          //Symbolic vector mapping
+          //Implicit vector mapping
           template<class ScalarType>
-          result_type operator()(symbolic_vector_base<ScalarType> const & vec) const {
-            *ptr_++='s'; //symbolic
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+            *ptr_++='i'; //implicit
             *ptr_++='v'; //vector
             if(vec.is_value_static())
               *ptr_++='v'; //value
@@ -131,10 +131,10 @@ namespace viennacl{
             append_id(ptr_, get_id((void*)&mat));
           }
 
-          //Symbolic matrix mapping
+          //Implicit matrix mapping
           template<class ScalarType>
-          result_type operator()(symbolic_matrix_base<ScalarType> const & mat) const {
-            *ptr_++='s'; //symbolic
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
+            *ptr_++='i'; //implicit
             *ptr_++='m'; //matrix
             if(mat.is_value_static())
               *ptr_++='v'; //value

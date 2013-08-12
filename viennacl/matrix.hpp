@@ -38,11 +38,11 @@ namespace viennacl
 {
 
   template<typename SCALARTYPE>
-  class symbolic_matrix_base
+  class implicit_matrix_base
   {
     protected:
       typedef vcl_size_t        size_type;
-      symbolic_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
+      implicit_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
     public:
       typedef SCALARTYPE const & const_reference;
       typedef SCALARTYPE cpu_value_type;
