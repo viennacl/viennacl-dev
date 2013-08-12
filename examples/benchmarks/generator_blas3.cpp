@@ -108,6 +108,7 @@ int main(int argc, char* argv[]){
         viennacl::ocl::switch_context(k);
         devices_type dev = viennacl::ocl::current_context().devices();
         for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+          if(it->type()==CL_DEVICE_TYPE_GPU){
                 viennacl::ocl::switch_device(*it);
                 std::cout << std::endl;
                 std::cout << "----------------------------------------------" << std::endl;
@@ -121,6 +122,7 @@ int main(int argc, char* argv[]){
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
                     std::cout << size << "\t" << run_benchmark<float>(size,false,false) << "\t" << run_benchmark<float>(size,true,false) << "\t" << run_benchmark<float>(size,false,true) << "\t" << run_benchmark<float>(size,true,true) << std::endl;
                 }
+          }
         }
     }
     return 0;

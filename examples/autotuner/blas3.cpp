@@ -31,8 +31,13 @@ template<class ScalarType>
 struct blas3_config{
     typedef matrix_product profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-        return profile_type(params.at("vector").current(), params.at("ml").current(), params.at("kl").current(), params.at("nl").current(),
-                         params.at("ms").current(), params.at("ks").current(), params.at("ns").current(),
+        return profile_type(params.at("vector").current()
+                        , params.at("local_size1").current()
+                        , params.at("cache_width").current()
+                        , params.at("local_size2").current()
+                        , params.at("ms").current()
+                        , params.at("ks").current()
+                        , params.at("ns").current(),
                          static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()),
                          params.at("unroll").current());
     }
@@ -41,11 +46,11 @@ struct blas3_config{
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
     static std::string state_representation_format(){
-        return "V" "\t" "ML" "\t" "KL" "\t" "NL" "\t" "MS" "\t" "KS" "\t" "NS" "\t" "LMEM1" "\t" "LMEM2" "\t" "UNROLL";
+        return "V" "\t" "LS1" "\t" "CACHEWIDTH" "\t" "LS2" "\t" "MS" "\t" "KS" "\t" "NS" "\t" "LMEM1" "\t" "LMEM2" "\t" "UNROLL";
     }
     static std::string current_state_representation(profile_type const profile){
         std::ostringstream oss;
-        oss << profile.vectorization() << "\t" << profile.ml() << "\t" << profile.kl() << "\t" << profile.nl()
+        oss << profile.vectorization() << "\t" << profile.local_size1() << "\t" << profile.cache_width() << "\t" << profile.local_size2()
             << "\t" << profile.ms() << "\t" << profile.ks() << "\t" << profile.ns()
             << "\t" << profile.use_lhs_shared() << "\t" << profile.use_rhs_shared() << "\t" << profile.unroll();
         return oss.str();
@@ -86,9 +91,9 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    std::vector<int> ml; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) ml.push_back(i);
-    std::vector<int> kl; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) kl.push_back(i);
-    std::vector<int> nl; for(unsigned int i=16 ; i<=MatrixT::alignment ; i*=2) nl.push_back(i);
+    std::vector<int> local_size1; for(unsigned int i=1 ; i<=16 ; i*=2) local_size1.push_back(i);
+    std::vector<int> cache_width; for(unsigned int i=1 ; i<=16 ; i*=2) cache_width.push_back(i);
+    std::vector<int> local_size2; for(unsigned int i=1 ; i<=16 ; i*=2) local_size2.push_back(i);
     std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
@@ -97,9 +102,9 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
     std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
     std::vector<int> unroll; unroll.push_back(1);
 
-    conf.add_tuning_param("ml",ml);
-    conf.add_tuning_param("kl",kl);
-    conf.add_tuning_param("nl",nl);
+    conf.add_tuning_param("local_size1",local_size1);
+    conf.add_tuning_param("cache_width",cache_width);
+    conf.add_tuning_param("local_size2",local_size2);
     conf.add_tuning_param("ms",ms);
     conf.add_tuning_param("ks",ks);
     conf.add_tuning_param("ns",ns);

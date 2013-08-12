@@ -51,18 +51,18 @@ namespace viennacl{
         std::size_t lmem_used(std::size_t scalartype_size) const {
           std::size_t lmem_used = 0;
           if(use_lhs_shared_)
-            lmem_used += (ml_ + 1) * (kl_ + 1) * scalartype_size;
+            lmem_used += (ml_ + 1) * (cache_width_ + 1) * scalartype_size;
           if(use_rhs_shared_)
-            lmem_used += (kl_ + 1) * (nl_ + 1) * scalartype_size;
+            lmem_used += (cache_width_ + 1) * (nl_ + 1) * scalartype_size;
           return lmem_used;
         }
 
         virtual void print(std::ostream & s) const{
-          s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
+          s << "{vector_type, local_size1, cache_width, local_size2, ms, ks, ns, use_lhs_shared, use_rhs_shared, unroll} = {"
             << vectorization_ << ","
-            << ml_ << ", "
-            << kl_ << ", "
-            << nl_ << ", "
+            << local_size1_ << ", "
+            << cache_width_ << ", "
+            << local_size2_ << ", "
             << ms_ << ", "
             << ks_ << ", "
             << ns_ << ", "
@@ -70,31 +70,43 @@ namespace viennacl{
         }
 
         bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
-          return ml_ < ms_ || kl_ < ks_ || nl_ < ns_
-              || (ms_ % vectorization_) > 0 || (ks_ % vectorization_) > 0 || (ns_ % vectorization_) > 0;
+          return ml_ < ms_
+              || cache_width_ < ks_
+              || nl_ < ns_
+              || (ms_ % vectorization_) > 0
+              || (ks_ % vectorization_) > 0
+              || (ns_ % vectorization_) > 0;
         }
 
       public:
         /** @brief The user constructor */
-        matrix_product(unsigned int vectorization, unsigned int ml, unsigned int kl, unsigned int nl
+        matrix_product(unsigned int vectorization
+                , std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
                 , unsigned int ms, unsigned int ks, unsigned int ns
                 , bool use_lhs_shared, bool use_rhs_shared
                 , unsigned int unroll) : profile_base(vectorization,1){
-
-          ml_= ml; kl_=kl ; nl_=nl;
-          ms_ = ms; ks_=ks; ns_=ns;
+          local_size1_ = local_size1;
+          local_size2_ = local_size2;
+          cache_width_=cache_width;
+          ml_= ms*local_size1;
+          nl_=ns*local_size2;
+          ms_ = ms;
+          ks_=ks;
+          ns_=ns;
           use_lhs_shared_ = use_lhs_shared;
           use_rhs_shared_ = use_rhs_shared;
           unroll_ = unroll;
         }
 
-        unsigned int ml() const { return ml_; }
-        unsigned int kl() const { return kl_; }
-        unsigned int nl() const { return nl_; }
+        std::size_t local_size1() const { return local_size1_; }
+        std::size_t local_size2() const { return local_size2_; }
+        std::size_t ml() const { return ml_; }
+        std::size_t cache_width() const { return cache_width_; }
+        std::size_t nl() const { return nl_; }
 
-        unsigned int ms() const { return ms_; }
-        unsigned int ks() const { return ks_; }
-        unsigned int ns() const { return ns_; }
+        std::size_t ms() const { return ms_; }
+        std::size_t ks() const { return ks_; }
+        std::size_t ns() const { return ns_; }
 
         bool use_lhs_shared() const { return use_lhs_shared_; }
         bool use_rhs_shared() const { return use_rhs_shared_; }
@@ -102,8 +114,8 @@ namespace viennacl{
         unsigned int unroll() const { return unroll_; }
 
         void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t /*kernel_id*/) const{
-          size1 = ml_/ms_;
-          size2 = nl_/ns_;
+          size1 = local_size1_;
+          size2 = local_size2_;
         }
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
@@ -249,13 +261,13 @@ namespace viennacl{
 
           bool use_lhs_shared = use_lhs_shared_;
           bool use_rhs_shared = use_rhs_shared_;
-          unsigned int kl = kl_;
-          unsigned int ks = ks_;
-          unsigned int ml = ml_;
-          unsigned int ms = ms_;
-          unsigned int nl = nl_;
-          unsigned int ns = ns_;
-          unsigned int unroll = unroll_;
+          std::size_t cache_width = cache_width_;
+          std::size_t ks = ks_;
+          std::size_t ml = ml_;
+          std::size_t ms = ms_;
+          std::size_t nl = nl_;
+          std::size_t ns = ns_;
+          std::size_t unroll = unroll_;
 
           detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping.at(0).at(std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
           detail::mapped_matrix_product* prod = NULL;
@@ -297,11 +309,12 @@ namespace viennacl{
             std::string StrV = "/"+utils::to_string(vectorization_) ;
 
             for(detail::mapping_type::const_iterator it = mapping.front().begin() ; it != mapping.front().end() ; ++it){
-              if(detail::mapped_matrix const * p = dynamic_cast<detail::mapped_matrix const *>(it->second.get()))
+              if(detail::mapped_matrix const * p = dynamic_cast<detail::mapped_matrix const *>(it->second.get())){
                 if(p->is_row_major())
                   p->bind_sizes("M", "N"+StrV);
                 else
                   p->bind_sizes("M"+StrV, "N");
+              }
             }
 
             if(lhs->is_row_major())
@@ -377,12 +390,12 @@ namespace viennacl{
 
 
           unsigned int ml_res = ml, nl_res = nl, ms_res = ms, ns_res = ns;
-          unsigned int ml_lhs = ml, kl_lhs = kl, ms_lhs = ms, ks_lhs = ks;
-          unsigned int kl_rhs = kl, nl_rhs = nl, ks_rhs = ks, ns_rhs = ns;
+          unsigned int ml_lhs = ml, cache_width_lhs = cache_width, ms_lhs = ms, ks_lhs = ks;
+          unsigned int cache_width_rhs = cache_width, nl_rhs = nl, ks_rhs = ks, ns_rhs = ns;
 
           transform_block(*assigned,false,ml_res,nl_res,ms_res,ns_res,result_access_flow);
-          transform_block(*lhs,use_lhs_shared,ml_lhs,kl_lhs,ms_lhs,ks_lhs,lhs_access_flow);
-          transform_block(*rhs,use_rhs_shared,kl_rhs,nl_rhs,ks_rhs,ns_rhs,rhs_access_flow);
+          transform_block(*lhs,use_lhs_shared,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs,lhs_access_flow);
+          transform_block(*rhs,use_rhs_shared,cache_width_rhs,nl_rhs,ks_rhs,ns_rhs,rhs_access_flow);
 
           //////////////////
           /// DECLARATIONS
@@ -390,9 +403,9 @@ namespace viennacl{
 
 
           std::size_t local_lhs_size1 = ml ;
-          std::size_t local_lhs_size2 = kl + 1;
+          std::size_t local_lhs_size2 = cache_width + 1;
 
-          std::size_t local_rhs_size1 = kl;
+          std::size_t local_rhs_size1 = cache_width;
           std::size_t local_rhs_size2 = nl + 1;
 
           ///Result Values
@@ -464,13 +477,13 @@ namespace viennacl{
 
 
           ///Large Work-group Wise loop
-          std::string block_num = helper_variable(stream,false,"unsigned int", "block_num", "K/" + utils::to_string(kl));
+          std::string block_num = helper_variable(stream,false,"unsigned int", "block_num", "K/" + utils::to_string(cache_width));
           stream << "for(unsigned int bl=0 ; bl<" << block_num << " ; ++bl){" << std::endl;
           stream.inc_tab();
 
           ///Update LHS Local Memory and pointers (if necessary)
           if(use_lhs_shared){
-            fetch_to_local_mem(stream,"lhs_buf",local_lhs_size2,"global_lhs_ptr",ml_lhs,kl_lhs,*lhs,lhs_access_flow);
+            fetch_to_local_mem(stream,"lhs_buf",local_lhs_size2,"global_lhs_ptr",ml_lhs,cache_width_lhs,*lhs,lhs_access_flow);
             for(unsigned int m=0; m<ms_lhs; ++m)
               stream << "__local " << lhs_value_scalartype << "* lhs_ptr_" << m << " = lhs_buf + "
                      << "(" << "get_local_id(0)*" << ms_lhs << "+" << m << ")" << "*" << local_lhs_size2
@@ -479,7 +492,7 @@ namespace viennacl{
 
           ///Update RHS Local Memory and pointers (if necessary)
           if(use_rhs_shared){
-            fetch_to_local_mem(stream,"rhs_buf", local_rhs_size2, "global_rhs_ptr",kl_rhs,nl_rhs,*rhs,rhs_access_flow);
+            fetch_to_local_mem(stream,"rhs_buf", local_rhs_size2, "global_rhs_ptr",cache_width_rhs,nl_rhs,*rhs,rhs_access_flow);
             for(unsigned int k=0; k<ks_rhs; ++k)
               stream << "__local " << rhs_value_scalartype << "* rhs_ptr_" << k << " = rhs_buf + "
                      << k*local_rhs_size2 << " + " << "get_local_id(1)*" << ns_rhs
@@ -490,7 +503,7 @@ namespace viennacl{
           ///Small work-item wise loop
           if(unroll > 1)
             stream << "#pragma unroll " << unroll << std::endl;
-          stream << " for(unsigned int bs=0 ; bs < " << kl/ks  << " ; ++bs){" << std::endl;
+          stream << " for(unsigned int bs=0 ; bs < " << cache_width/ks  << " ; ++bs){" << std::endl;
           stream.inc_tab();
 
 
@@ -526,10 +539,9 @@ namespace viennacl{
           }
 
 
-
-          for(unsigned int k = 0 ; k < ks ; ++k){
             for(unsigned int n=0 ; n < ns_res ; ++n){
-              for(unsigned int m=0 ; m < ms_res ; ++m){
+             for(unsigned int k = 0 ; k < ks ; ++k){
+               for(unsigned int m=0 ; m < ms_res ; ++m){
                 for(unsigned int a = 0; a<vectorization_; ++a){
 
                   int ind_lhs_1 = m;
@@ -637,16 +649,16 @@ namespace viennacl{
 
           if(use_lhs_shared){
             if(lhs_access_flow==REGULAR)
-              stream << "global_lhs_ptr += " << kl_lhs << ";" << std::endl;
+              stream << "global_lhs_ptr += " << cache_width_lhs << ";" << std::endl;
             else
-              stream << "global_lhs_ptr += " << kl_lhs << "*" << lhs->size1() << ";" << std::endl;
+              stream << "global_lhs_ptr += " << cache_width_lhs << "*" << lhs->size1() << ";" << std::endl;
           }
 
           if(use_rhs_shared){
             if(rhs_access_flow==REGULAR)
-              stream << "global_rhs_ptr += " << kl_rhs << "*" << rhs->size2() << ";" << std::endl;
+              stream << "global_rhs_ptr += " << cache_width_rhs << "*" << rhs->size2() << ";" << std::endl;
             else
-              stream << "global_rhs_ptr += " << kl_rhs << ";" << std::endl;
+              stream << "global_rhs_ptr += " << cache_width_rhs << ";" << std::endl;
           }
 
           stream.dec_tab();
@@ -667,13 +679,16 @@ namespace viennacl{
         }
 
       private:
-        unsigned int ml_;
-        unsigned int kl_;
-        unsigned int nl_;
+        std::size_t local_size1_;
+        std::size_t local_size2_;
+        std::size_t cache_width_;
 
-        unsigned int ms_;
-        unsigned int ks_;
-        unsigned int ns_;
+        std::size_t ml_;
+        std::size_t nl_;
+
+        std::size_t ms_;
+        std::size_t ks_;
+        std::size_t ns_;
 
         bool use_lhs_shared_;
         bool use_rhs_shared_;
