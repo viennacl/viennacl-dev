@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATE_HPP
-#define VIENNACL_GENERATE_HPP
+#ifndef VIENNACL_GENERATOR_GENERATE_HPP
+#define VIENNACL_GENERATOR_GENERATE_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -291,6 +291,10 @@ namespace viennacl{
       generator::code_generator gen;
       gen.add(s,root_node);
       viennacl::generator::enqueue(gen);
+    }
+
+    static void generate_enqueue_statement(viennacl::scheduler::statement const & s){
+      generate_enqueue_statement(s, s.array()[0]);
     }
 
   }

@@ -25,8 +25,8 @@
 
 #include <set>
 
-#include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
+#include "viennacl/vector.hpp"
 
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
@@ -70,8 +70,8 @@ namespace viennacl{
           result_type operator()(vector_base<ScalarType> const & vec) const {
             if(memory_.insert((void*)&vec).second){
               kernel_.arg(current_arg_++, vec.handle().opencl_handle());
-              if(vec.start()>0)
-                kernel_.arg(current_arg_++, vec.start());
+              if(viennacl::traits::start(vec)>0)
+                kernel_.arg(current_arg_++, viennacl::traits::start(vec));
               if(vec.stride()>1)
                 kernel_.arg(current_arg_++, vec.stride());
             }
@@ -93,14 +93,14 @@ namespace viennacl{
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
             if(memory_.insert((void*)&mat).second){
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
-              if(mat.start1()>0)
-                kernel_.arg(current_arg_++, mat.start1());
-              if(mat.stride1()>1)
-                kernel_.arg(current_arg_++, mat.stride1());
-              if(mat.start2()>0)
-                kernel_.arg(current_arg_++, mat.start2());
-              if(mat.stride2()>1)
-                kernel_.arg(current_arg_++, mat.stride2());
+              if(viennacl::traits::start1(mat)>0)
+                kernel_.arg(current_arg_++, viennacl::traits::start1(mat));
+              if(viennacl::traits::stride1(mat)>1)
+                kernel_.arg(current_arg_++, viennacl::traits::stride1(mat));
+              if(viennacl::traits::start2(mat)>0)
+                kernel_.arg(current_arg_++, viennacl::traits::start2(mat));
+              if(viennacl::traits::stride2(mat)>1)
+                kernel_.arg(current_arg_++, viennacl::traits::stride2(mat));
             }
           }
 

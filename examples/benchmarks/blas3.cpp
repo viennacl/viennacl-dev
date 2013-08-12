@@ -26,6 +26,9 @@
  #define NDEBUG
 #endif
 
+//#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_BUILD
+
 //
 // include necessary system headers
 //
@@ -47,8 +50,7 @@
 
 #include "benchmark-utils.hpp"
 
-
-#define BLAS3_MATRIX_SIZE   2048
+#define BLAS3_MATRIX_SIZE   1920
 
 template<typename ScalarType>
 int run_benchmark()

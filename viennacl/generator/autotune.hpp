@@ -189,7 +189,7 @@ namespace viennacl{
         config.reset();
 
         unsigned int n = 0;
-
+        std::cout << n_conf << std::endl;
         while(config.has_next()){
           config.update();
           if(config.is_invalid(dev))

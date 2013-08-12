@@ -110,18 +110,18 @@ namespace viennacl{
               //The LHS of the prod is a vector
               if(current_node->lhs.type_family==scheduler::VECTOR_TYPE_FAMILY)
               {
-                vector_size = utils::call_on_vector(current_node->lhs, utils::size_fun());
+                vector_size = utils::call_on_vector(current_node->lhs, utils::internal_size_fun());
               }
               else{
                 //The LHS of the prod is a vector expression
                 current_node = &exprs[current_node->lhs.node_index];
                 if(current_node->lhs.type_family==scheduler::VECTOR_TYPE_FAMILY)
                 {
-                  vector_size = cl_uint(utils::call_on_vector(current_node->lhs, utils::size_fun()));
+                  vector_size = cl_uint(utils::call_on_vector(current_node->lhs, utils::internal_size_fun()));
                 }
                 else if(current_node->rhs.type_family==scheduler::VECTOR_TYPE_FAMILY)
                 {
-                  vector_size = cl_uint(utils::call_on_vector(current_node->lhs, utils::size_fun()));
+                  vector_size = cl_uint(utils::call_on_vector(current_node->lhs, utils::internal_size_fun()));
                 }
                 else{
                   assert(false && bool("unexpected expression tree"));

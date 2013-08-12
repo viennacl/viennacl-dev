@@ -94,7 +94,7 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
             *ptr_++='v'; //vector
-            if(vec.start()>0)
+            if(viennacl::traits::start(vec)>0)
               *ptr_++='r';
             if(vec.stride()>1)
               *ptr_++='s';
@@ -118,13 +118,13 @@ namespace viennacl{
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
             *ptr_++='m'; //vector
-            if(mat.start1()>0)
+            if(viennacl::traits::start1(mat)>0)
               *ptr_++='r';
-            if(mat.stride1()>1)
+            if(viennacl::traits::stride1(mat)>1)
               *ptr_++='s';
-            if(mat.start2()>0)
+            if(viennacl::traits::start2(mat)>0)
               *ptr_++='r';
-            if(mat.stride2()>1)
+            if(viennacl::traits::stride2(mat)>1)
               *ptr_++='s';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
             *ptr_++=utils::first_letter_of_type<Layout>::value();

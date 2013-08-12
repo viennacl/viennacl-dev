@@ -33,6 +33,11 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/result_of.hpp"
+
+#include "viennacl/scheduler/forwards.h"
+
+#include "viennacl/generator/generate.hpp"
+
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
@@ -41,6 +46,7 @@
 #include "viennacl/tools/matrix_prod_kernel_class_deducer.hpp"
 
 #include "viennacl/linalg/opencl/common.hpp"
+
 #include "viennacl/linalg/kernels/matrix_row_kernels.h"
 #include "viennacl/linalg/kernels/matrix_row_element_kernels.h"
 #include "viennacl/linalg/kernels/matrix_col_kernels.h"
@@ -55,6 +61,7 @@
 #include "viennacl/linalg/kernels/matrix_prod_row_col_row_kernels.h"
 #include "viennacl/linalg/kernels/matrix_prod_row_row_col_kernels.h"
 #include "viennacl/linalg/kernels/matrix_prod_row_row_row_kernels.h"
+
 
 namespace viennacl
 {
@@ -692,8 +699,14 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-
-        detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
+        if(A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
+         ||B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
+         ||C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
+          detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
+        else{
+          typedef matrix_expression<const matrix_base<NumericT, F1>, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+        }
       }
 
 
@@ -723,7 +736,17 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
+
+
+        if(A.lhs().start1() > 0 || A.lhs().start2() > 0 || A.lhs().stride1() > 1 || A.lhs().stride2() > 1
+         ||B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
+         ||C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
+          detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
+        else{
+          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
+          typedef matrix_expression<LhsType, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+        }
       }
 
 
@@ -750,7 +773,15 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
+        if(A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
+         ||B.lhs().start1() > 0 || B.lhs().start2() > 0 || B.lhs().stride1() > 1 || B.lhs().stride2() > 1
+         ||C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
+          detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
+        else{
+          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
+          typedef matrix_expression<const matrix_base<NumericT, F1>, RhsType, op_mat_mat_prod> ProdType;
+          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+        }
       }
 
 
@@ -776,7 +807,16 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
+        if(A.lhs().start1() > 0 || A.lhs().start2() > 0 || A.lhs().stride1() > 1 || A.lhs().stride2() > 1
+         ||B.lhs().start1() > 0 || B.lhs().start2() > 0 || B.lhs().stride1() > 1 || B.lhs().stride2() > 1
+         ||C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
+          detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
+        else{
+          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
+          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
+          typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
+          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+        }
       }
 
 

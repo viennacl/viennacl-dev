@@ -33,6 +33,9 @@ namespace viennacl{
 
   namespace generator{
 
+    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
+    static void generate_enqueue_statement(viennacl::scheduler::statement const & s);
+
     enum expression_type_family{
       SCALAR_SAXPY_FAMILY,
       VECTOR_SAXPY_FAMILY,

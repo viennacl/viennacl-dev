@@ -91,15 +91,15 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     autotune::tuning_config<blas3_config<NumericT> > conf;
 
-    std::vector<int> local_size1; for(unsigned int i=1 ; i<=16 ; i*=2) local_size1.push_back(i);
-    std::vector<int> cache_width; for(unsigned int i=1 ; i<=16 ; i*=2) cache_width.push_back(i);
-    std::vector<int> local_size2; for(unsigned int i=1 ; i<=16 ; i*=2) local_size2.push_back(i);
+    std::vector<int> local_size1; for(unsigned int i=2 ; i<=64 ; i*=2) local_size1.push_back(i);
+    std::vector<int> cache_width; for(unsigned int i=16 ; i<=128 ; i*=2) cache_width.push_back(i);
+    std::vector<int> local_size2; for(unsigned int i=2 ; i<=64 ; i*=2) local_size2.push_back(i);
     std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
     std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
-    std::vector<int> lhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
-    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
+    std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
+    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
     std::vector<int> unroll; unroll.push_back(1);
 
     conf.add_tuning_param("local_size1",local_size1);

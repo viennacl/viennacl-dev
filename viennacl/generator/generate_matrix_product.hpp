@@ -32,6 +32,7 @@
 #include "viennacl/generator/mapped_types.hpp"
 #include "viennacl/generator/utils.hpp"
 
+#include "viennacl/forwards.h"
 
 #include "viennacl/tools/tools.hpp"
 
@@ -70,7 +71,11 @@ namespace viennacl{
         }
 
         bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
-          return ml_ < ms_
+          static const int alignment = 128;
+          return ml_ > alignment
+              || cache_width_ > alignment
+              || nl_ > alignment
+              || ml_ < ms_
               || cache_width_ < ks_
               || nl_ < ns_
               || (ms_ % vectorization_) > 0
@@ -121,8 +126,8 @@ namespace viennacl{
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
           //set M, N
           scheduler::statement_node const & first_node = statements.front().second;
-          unsigned int M = utils::call_on_matrix(first_node.lhs, utils::size1_fun());
-          unsigned int N = utils::call_on_matrix(first_node.lhs, utils::size2_fun());
+          unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
+          unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
 
           //set ND range
           configure_local_sizes(k, kernel_id);
@@ -143,7 +148,7 @@ namespace viennacl{
                 //The LHS of the prod is a matrix
                 if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                 {
-                  k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                  k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
                 }
                 else{
                   //The LHS of the prod is a matrix expression
@@ -151,9 +156,9 @@ namespace viennacl{
                   if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                   {
                     if(current_node->op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
+                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
                     else
-                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
+                      k.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
                   }
                   else{
                     assert(false && bool("unexpected expression tree"));
@@ -341,7 +346,12 @@ namespace viennacl{
 
           }
           else{
-            assigned->bind_sizes("M", "N");
+            for(detail::mapping_type::const_iterator it = mapping.front().begin() ; it != mapping.front().end() ; ++it){
+              if(detail::mapped_matrix const * p = dynamic_cast<detail::mapped_matrix const *>(it->second.get())){
+                p->bind_sizes("M", "N");
+              }
+            }
+
             lhs->bind_sizes("M", "K");
             rhs->bind_sizes("K", "N");
           }
@@ -664,6 +674,7 @@ namespace viennacl{
 
           for(unsigned int m=0 ; m < ms_res ; ++m){
             for(unsigned int n=0 ; n < ns_res ; ++n){
+              stream << "barrier(CLK_GLOBAL_MEM_FENCE);" << std::endl;
               std::string i = "get_global_id(0)*" + utils::to_string(ms_res) + "+" + utils::to_string(m);
               std::string j = "get_global_id(1)*" + utils::to_string(ns_res) + "+" + utils::to_string(n);
               prod->access_name("res"+utils::to_string(m)+"_"+utils::to_string(n));

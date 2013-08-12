@@ -162,10 +162,10 @@ namespace viennacl{
           template<class T> result_type operator()(T const &t) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
 
-      struct size_fun{
+      struct internal_size_fun{
           typedef std::size_t result_type;
           template<class T>
-          result_type operator()(T const &t) const { return viennacl::traits::size(t); }
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
       };
 
       struct handle_fun{
@@ -174,16 +174,16 @@ namespace viennacl{
           result_type operator()(T const &t) const { return t.handle().opencl_handle(); }
       };
 
-      struct size1_fun{
+      struct internal_size1_fun{
           typedef std::size_t result_type;
           template<class T>
-          result_type operator()(T const &t) const { return viennacl::traits::size1(t); }
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size1(t); }
       };
 
-      struct size2_fun{
+      struct internal_size2_fun{
           typedef std::size_t result_type;
           template<class T>
-          result_type operator()(T const &t) const { return viennacl::traits::size2(t); }
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
       };
 
 //      static std::size_t size(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
