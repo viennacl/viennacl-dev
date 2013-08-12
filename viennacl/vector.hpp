@@ -559,14 +559,16 @@ namespace viennacl
           size_ = v.size();
           internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            clear();
+          }
         }
+        else
+          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
 
         if (size_ > 0)
-        {
-          clear();
           this->operator()(v.index()) = SCALARTYPE(1);
-        }
 
         return *this;
       }
@@ -582,11 +584,13 @@ namespace viennacl
           size_ = v.size();
           internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            clear();
+          }
         }
-
-        if (size_ > 0)
-          clear();
+        else
+          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
 
         return *this;
       }
