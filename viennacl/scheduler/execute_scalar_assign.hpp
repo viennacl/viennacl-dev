@@ -38,9 +38,9 @@ namespace viennacl
 
       if (leaf.op.type  == OPERATION_BINARY_INNER_PROD_TYPE)
       {
-        if (root_node.lhs.type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-            &&   leaf.lhs.type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY
-            &&   leaf.rhs.type == FLOAT_TYPE  &&      leaf.rhs.type_family == VECTOR_TYPE_FAMILY)
+        if (root_node.lhs.numeric_type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+            &&   leaf.lhs.numeric_type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY
+            &&   leaf.rhs.numeric_type == FLOAT_TYPE  &&      leaf.rhs.type_family == VECTOR_TYPE_FAMILY)
 
         {
           viennacl::scalar<float>            & s = *(root_node.lhs.scalar_float);
@@ -48,9 +48,9 @@ namespace viennacl
           viennacl::vector_base<float> const & z = *(leaf.rhs.vector_float);
           viennacl::linalg::inner_prod_impl(y, z, s);
         }
-        else if (root_node.lhs.type == DOUBLE_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-                 &&   leaf.lhs.type == DOUBLE_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY
-                 &&   leaf.rhs.type == DOUBLE_TYPE  &&      leaf.rhs.type_family == VECTOR_TYPE_FAMILY)
+        else if (root_node.lhs.numeric_type == DOUBLE_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+                 &&   leaf.lhs.numeric_type == DOUBLE_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY
+                 &&   leaf.rhs.numeric_type == DOUBLE_TYPE  &&      leaf.rhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<double>            & s = *(root_node.lhs.scalar_double);
           viennacl::vector_base<double> const & y = *(leaf.lhs.vector_double);
@@ -62,15 +62,15 @@ namespace viennacl
       }
       else if (leaf.op.type  == OPERATION_UNARY_NORM_1_TYPE)
       {
-        if (root_node.lhs.type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-            &&   leaf.lhs.type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        if (root_node.lhs.numeric_type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+            &&   leaf.lhs.numeric_type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<float>            & s = *(root_node.lhs.scalar_float);
           viennacl::vector_base<float> const & x = *(leaf.lhs.vector_float);
           viennacl::linalg::norm_1_impl(x, s);
         }
-        else if (root_node.lhs.type == DOUBLE_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-                 &&   leaf.lhs.type == DOUBLE_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        else if (root_node.lhs.numeric_type == DOUBLE_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+                 &&   leaf.lhs.numeric_type == DOUBLE_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<double>            & s = *(root_node.lhs.scalar_double);
           viennacl::vector_base<double> const & x = *(leaf.lhs.vector_double);
@@ -81,15 +81,15 @@ namespace viennacl
       }
       else if (leaf.op.type  == OPERATION_UNARY_NORM_2_TYPE)
       {
-        if (root_node.lhs.type == FLOAT_TYPE   && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-            &&   leaf.lhs.type == FLOAT_TYPE   &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        if (root_node.lhs.numeric_type == FLOAT_TYPE   && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+            &&   leaf.lhs.numeric_type == FLOAT_TYPE   &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<float>            & s = *(root_node.lhs.scalar_float);
           viennacl::vector_base<float> const & x = *(leaf.lhs.vector_float);
           viennacl::linalg::norm_2_impl(x, s);
         }
-        else if (root_node.lhs.type == DOUBLE_TYPE && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-                 &&   leaf.lhs.type == DOUBLE_TYPE &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        else if (root_node.lhs.numeric_type == DOUBLE_TYPE && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+                 &&   leaf.lhs.numeric_type == DOUBLE_TYPE &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<double>            & s = *(root_node.lhs.scalar_double);
           viennacl::vector_base<double> const & x = *(leaf.lhs.vector_double);
@@ -100,15 +100,15 @@ namespace viennacl
       }
       else if (leaf.op.type  == OPERATION_UNARY_NORM_INF_TYPE)
       {
-        if (root_node.lhs.type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-            &&   leaf.lhs.type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        if (root_node.lhs.numeric_type == FLOAT_TYPE  && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+            &&   leaf.lhs.numeric_type == FLOAT_TYPE  &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<float>            & s = *(root_node.lhs.scalar_float);
           viennacl::vector_base<float> const & x = *(leaf.lhs.vector_float);
           viennacl::linalg::norm_inf_impl(x, s);
         }
-        else if (root_node.lhs.type == DOUBLE_TYPE && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
-                 &&   leaf.lhs.type == DOUBLE_TYPE &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
+        else if (root_node.lhs.numeric_type == DOUBLE_TYPE && root_node.lhs.type_family == SCALAR_TYPE_FAMILY
+                 &&   leaf.lhs.numeric_type == DOUBLE_TYPE &&      leaf.lhs.type_family == VECTOR_TYPE_FAMILY)
         {
           viennacl::scalar<double>            & s = *(root_node.lhs.scalar_double);
           viennacl::vector_base<double> const & x = *(leaf.lhs.vector_double);
@@ -119,19 +119,6 @@ namespace viennacl
       }
       else
         throw statement_not_supported_exception("Unsupported operation for scalar.");
-    }
-
-    /** @brief Generic dispatcher */
-    inline void execute_scalar_assign(statement const & s, statement_node const & root_node)
-    {
-      switch (root_node.rhs.type_family)
-      {
-        case COMPOSITE_OPERATION_FAMILY:
-          execute_scalar_assign_composite(s, root_node);
-          break;
-        default:
-          throw statement_not_supported_exception("Unsupported rvalue on root node for operation on scalar.");
-      }
     }
 
 

@@ -105,53 +105,54 @@ namespace viennacl
 
         if (element.type_family == COMPOSITE_OPERATION_FAMILY)
         {
-          switch (element.type)
-          {
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(COMPOSITE_OPERATION_TYPE, node_index)
-
-            default: throw statement_not_supported_exception("Cannot convert composite operation type to string");
-          }
-        }
-        else if (element.type_family == HOST_SCALAR_TYPE_FAMILY)
-        {
-          switch (element.type)
-          {
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   host_char)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  host_uchar)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  host_short)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, host_ushort)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    host_int)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   host_uint)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   host_long)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  host_ulong)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  host_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, host_double)
-
-            default: throw statement_not_supported_exception("Cannot convert host scalar type to string");
-          }
+          ss << "(" << element.node_index << ")";
+          return "COMPOSITE_OPERATION_FAMILY" + ss.str();
         }
         else if (element.type_family == SCALAR_TYPE_FAMILY)
         {
-          switch (element.type)
+          if (element.subtype == HOST_SCALAR_TYPE)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   scalar_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  scalar_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  scalar_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, scalar_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    scalar_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   scalar_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   scalar_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  scalar_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   scalar_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  scalar_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, scalar_double)
+            ss << ", HOST_SCALAR_TYPE ";
+            switch (element.numeric_type)
+            {
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   host_char)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  host_uchar)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  host_short)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, host_ushort)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    host_int)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   host_uint)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   host_long)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  host_ulong)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  host_float)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, host_double)
 
+              default: throw statement_not_supported_exception("Cannot convert host scalar type to string");
+            }
+          }
+          else
+          {
+            ss << ", DEVICE_SCALAR_TYPE";
+            switch (element.numeric_type)
+            {
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   scalar_char)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  scalar_uchar)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  scalar_short)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, scalar_ushort)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    scalar_int)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   scalar_uint)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   scalar_long)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  scalar_ulong)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   scalar_half)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  scalar_float)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, scalar_double)
             default: throw statement_not_supported_exception("Cannot convert scalar type to string");
+            }
           }
         }
         else if (element.type_family == VECTOR_TYPE_FAMILY)
         {
-          switch (element.type)
+          ss << ", DENSE_VECTOR_TYPE ";
+          switch (element.numeric_type)
           {
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   vector_char)
             //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  vector_uchar)
@@ -168,42 +169,47 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert vector type to string");
           }
         }
-        else if (element.type_family == MATRIX_ROW_TYPE_FAMILY)
+        else if (element.type_family == MATRIX_TYPE_FAMILY)
         {
-          switch (element.type)
+          if (element.subtype == DENSE_ROW_MATRIX_TYPE)
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_row_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_row_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_row_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_row_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_row_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_row_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_row_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_row_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_row_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_row_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_row_double)
+            ss << ", DENSE_ROW_MATRIX_TYPE ";
+            switch (element.numeric_type)
+            {
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_row_char)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_row_uchar)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_row_short)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_row_ushort)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_row_int)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_row_uint)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_row_long)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_row_ulong)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_row_half)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_row_float)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_row_double)
 
-            default: throw statement_not_supported_exception("Cannot convert row-major matrix type to string");
+              default: throw statement_not_supported_exception("Cannot convert row-major matrix type to string");
+            }
           }
-        }
-        else if (element.type_family == MATRIX_COL_TYPE_FAMILY)
-        {
-          switch (element.type)
+          else
           {
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_col_char)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_col_uchar)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_col_short)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_col_ushort)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_col_int)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_col_uint)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_col_long)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_col_ulong)
-            //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_col_half)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_col_float)
-            VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_col_double)
+            ss << ", DENSE_COL_MATRIX_TYPE ";
+            switch (element.numeric_type)
+            {
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_col_char)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_col_uchar)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_col_short)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_col_ushort)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_col_int)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_col_uint)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_col_long)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_col_ulong)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_col_half)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_col_float)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_col_double)
 
-            default: throw statement_not_supported_exception("Cannot convert column-major matrix type to string");
+              default: throw statement_not_supported_exception("Cannot convert column-major matrix type to string");
+            }
           }
         }
         else

@@ -42,16 +42,15 @@ namespace viennacl
       void am(lhs_rhs_element & mat1,
               lhs_rhs_element const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
-        assert(   (mat1.type_family == MATRIX_ROW_TYPE_FAMILY || mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-               && (mat2.type_family == MATRIX_ROW_TYPE_FAMILY || mat2.type_family == MATRIX_COL_TYPE_FAMILY)
-	       && bool("Arguments are not matrix types!"));
+        assert(   mat1.type_family == MATRIX_TYPE_FAMILY && mat2.type_family == MATRIX_TYPE_FAMILY
+               && bool("Arguments are not matrix types!"));
 
-	assert(mat1.type == mat2.type && bool("Matrices do not have the same scalar type"));
+        assert(mat1.numeric_type == mat2.numeric_type && bool("Matrices do not have the same scalar type"));
 
-	if (mat1.type_family == MATRIX_ROW_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
+        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
           case FLOAT_TYPE:
             viennacl::linalg::am(*mat1.matrix_row_float,
                                  *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
@@ -63,12 +62,12 @@ namespace viennacl
 
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling am()");
-	  }
-	}
-	else if (mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
+          }
+        }
+        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
           case FLOAT_TYPE:
             viennacl::linalg::am(*mat1.matrix_col_float,
                                  *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
@@ -77,15 +76,15 @@ namespace viennacl
             viennacl::linalg::am(*mat1.matrix_col_double,
                                  *mat2.matrix_col_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
-	    
+
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling am()");
-	  }
-	}
-	else
-	{
-	  throw statement_not_supported_exception("Invalid arguments in scheduler when calling am()");
-	}
+          }
+        }
+        else
+        {
+          throw statement_not_supported_exception("Invalid arguments in scheduler when calling am()");
+        }
       }
 
       /** @brief Wrapper for viennacl::linalg::avbv(), taking care of the argument unwrapping */
@@ -94,24 +93,24 @@ namespace viennacl
                 lhs_rhs_element const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 lhs_rhs_element const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        assert(   (mat1.type_family == MATRIX_ROW_TYPE_FAMILY || mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-               && (mat2.type_family == MATRIX_ROW_TYPE_FAMILY || mat2.type_family == MATRIX_COL_TYPE_FAMILY)
-               && (mat3.type_family == MATRIX_ROW_TYPE_FAMILY || mat3.type_family == MATRIX_COL_TYPE_FAMILY)
+        assert(   mat1.type_family == MATRIX_TYPE_FAMILY
+               && mat2.type_family == MATRIX_TYPE_FAMILY
+               && mat3.type_family == MATRIX_TYPE_FAMILY
                && bool("Arguments are not matrix types!"));
 
-	assert(   (mat1.type_family == mat2.type_family)
-	       && (mat2.type_family == mat3.type_family)
-	       && bool("Matrices do not have the same layout"));
+        assert(   (mat1.subtype == mat2.subtype)
+               && (mat2.subtype == mat3.subtype)
+               && bool("Matrices do not have the same layout"));
 
-	assert(   (mat1.type == mat2.type)
-	       && (mat2.type == mat3.type)
-	       && bool("Matrices do not have the same scalar type"));
+        assert(   (mat1.numeric_type == mat2.numeric_type)
+               && (mat2.numeric_type == mat3.numeric_type)
+               && bool("Matrices do not have the same scalar type"));
 
-	if (mat1.type_family == MATRIX_ROW_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
-	  case FLOAT_TYPE:
+        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
+          case FLOAT_TYPE:
             viennacl::linalg::ambm(*mat1.matrix_row_float,
                                    *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                    *mat3.matrix_row_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
@@ -123,12 +122,12 @@ namespace viennacl
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm()");
-	  }
+          }
         }
-	else if (mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
+        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
           case FLOAT_TYPE:
             viennacl::linalg::ambm(*mat1.matrix_col_float,
                                    *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -141,8 +140,8 @@ namespace viennacl
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm()");
-	  }
-	}
+          }
+        }
       }
 
       /** @brief Wrapper for viennacl::linalg::avbv_v(), taking care of the argument unwrapping */
@@ -151,23 +150,23 @@ namespace viennacl
                   lhs_rhs_element const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   lhs_rhs_element const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        assert(   (mat1.type_family == MATRIX_ROW_TYPE_FAMILY || mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-               && (mat2.type_family == MATRIX_ROW_TYPE_FAMILY || mat2.type_family == MATRIX_COL_TYPE_FAMILY)
-               && (mat3.type_family == MATRIX_ROW_TYPE_FAMILY || mat3.type_family == MATRIX_COL_TYPE_FAMILY)
+        assert(   mat1.type_family == MATRIX_TYPE_FAMILY
+               && mat2.type_family == MATRIX_TYPE_FAMILY
+               && mat3.type_family == MATRIX_TYPE_FAMILY
                && bool("Arguments are not matrix types!"));
 
-	assert(   (mat1.type_family == mat2.type_family)
-	       && (mat2.type_family == mat3.type_family)
-	       && bool("Matrices do not have the same layout"));
+        assert(   (mat1.subtype == mat2.subtype)
+               && (mat2.subtype == mat3.subtype)
+               && bool("Matrices do not have the same layout"));
 
-	assert(   (mat1.type == mat2.type)
-	       && (mat2.type == mat3.type)
-	       && bool("Matrices do not have the same scalar type"));
+        assert(   (mat1.numeric_type == mat2.numeric_type)
+               && (mat2.numeric_type == mat3.numeric_type)
+               && bool("Matrices do not have the same scalar type"));
 
-	if (mat1.type_family == MATRIX_ROW_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
+        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
           case FLOAT_TYPE:
             viennacl::linalg::ambm_m(*mat1.matrix_row_float,
                                      *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -180,12 +179,12 @@ namespace viennacl
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
-	  }
-	}
-	else if (mat1.type_family == MATRIX_COL_TYPE_FAMILY)
-	{
-	  switch (mat1.type)
-	  {
+          }
+        }
+        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
+        {
+          switch (mat1.numeric_type)
+          {
           case FLOAT_TYPE:
             viennacl::linalg::ambm_m(*mat1.matrix_col_float,
                                      *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
@@ -198,8 +197,8 @@ namespace viennacl
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
-	  }
-	}
+          }
+        }
       }
 
 

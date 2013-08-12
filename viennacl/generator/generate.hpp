@@ -157,7 +157,7 @@ namespace viennacl{
             descriptor.type = VECTOR_SAXPY_TYPE;
             fill_expression_descriptor_vector(statement,root_node,descriptor);
           }
-          else if(lhs_family==MATRIX_ROW_TYPE_FAMILY || lhs_family==MATRIX_COL_TYPE_FAMILY){
+          else if(lhs_family==MATRIX_TYPE_FAMILY){
             descriptor.type_family = MATRIX_SAXPY_FAMILY;
             descriptor.type = MATRIX_SAXPY_TYPE;
             fill_expression_descriptor_matrix(statement,root_node,descriptor);

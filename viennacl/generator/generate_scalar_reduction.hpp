@@ -51,7 +51,7 @@ namespace viennacl{
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
             {
-              switch(it->second.lhs.type){
+              switch(it->second.lhs.numeric_type){
                 case scheduler::FLOAT_TYPE:
                   res.push_back("float");
                   break;
@@ -85,7 +85,7 @@ namespace viennacl{
               std::size_t size_of_scalartype;
               const char * scalartype_name;
               if (array[0].lhs.type_family != scheduler::SCALAR_TYPE_FAMILY) throw "not implemented";
-              switch(array[0].lhs.type){
+              switch(array[0].lhs.numeric_type){
                 case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
                 case scheduler::DOUBLE_TYPE: scalartype_name = "double"; size_of_scalartype = sizeof(double); break;
                 default: throw "not implemented"; break;

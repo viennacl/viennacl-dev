@@ -83,8 +83,7 @@ namespace viennacl{
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
                 scheduler::statement_node const * current_node = &(*iit);
                 //The LHS of the prod is a matrix
-                if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                   ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                 {
                   kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
                   kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
@@ -93,15 +92,13 @@ namespace viennacl{
                 else{
                   //The LHS of the prod is a matrix expression
                   current_node = &exprs[current_node->lhs.node_index];
-                  if(current_node->lhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                     ||current_node->lhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                  if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                   {
                     kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
                     kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));
                     return;
                   }
-                  else if(current_node->rhs.type_family==scheduler::MATRIX_ROW_TYPE_FAMILY
-                          ||current_node->rhs.type_family==scheduler::MATRIX_COL_TYPE_FAMILY)
+                  else if(current_node->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                   {
                     kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size1_fun())));
                     kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::size2_fun())));

@@ -77,7 +77,8 @@ int main()
 
   // specify LHS of first node, i.e. vcl_vec3:
   expression_nodes[0].lhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[0].lhs.type         = viennacl::scheduler::FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[0].lhs.subtype      = viennacl::scheduler::DENSE_VECTOR_TYPE;    // a dense vector
+  expression_nodes[0].lhs.numeric_type = viennacl::scheduler::FLOAT_TYPE;           // vector consisting of floats
   expression_nodes[0].lhs.vector_float = &vcl_vec3;                                 // provide pointer to vcl_vec3;
 
   // specify assignment operation for this node:
@@ -85,15 +86,15 @@ int main()
   expression_nodes[0].op.type          = viennacl::scheduler::OPERATION_BINARY_ASSIGN_TYPE; // assignment operation: '='
 
   // specify RHS: Just refer to the second node:
-  expression_nodes[0].rhs.type_family  = viennacl::scheduler::COMPOSITE_OPERATION_FAMILY; // this links to another node
-  expression_nodes[0].rhs.type         = viennacl::scheduler::COMPOSITE_OPERATION_TYPE;   // this links to another node
+  expression_nodes[0].rhs.type_family  = viennacl::scheduler::COMPOSITE_OPERATION_FAMILY; // this links to another node (no need to set .subtype and .numeric_type)
   expression_nodes[0].rhs.node_index   = 1;                                               // index of the other node
 
   ////// Second node //////
 
   // LHS
   expression_nodes[1].lhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;   // family of vectors
-  expression_nodes[1].lhs.type         = viennacl::scheduler::FLOAT_TYPE;    // vector consisting of floats
+  expression_nodes[1].lhs.subtype      = viennacl::scheduler::DENSE_VECTOR_TYPE;    // a dense vector
+  expression_nodes[1].lhs.numeric_type = viennacl::scheduler::FLOAT_TYPE;           // vector consisting of floats
   expression_nodes[1].lhs.vector_float = &vcl_vec1;                                 // provide pointer to vcl_vec1
 
   // OP
@@ -102,7 +103,8 @@ int main()
 
   // RHS
   expression_nodes[1].rhs.type_family  = viennacl::scheduler::VECTOR_TYPE_FAMILY;  // family of vectors
-  expression_nodes[1].rhs.type         = viennacl::scheduler::FLOAT_TYPE;   // vector consisting of floats
+  expression_nodes[1].rhs.subtype      = viennacl::scheduler::DENSE_VECTOR_TYPE;   // a dense vector
+  expression_nodes[1].rhs.numeric_type = viennacl::scheduler::FLOAT_TYPE;          // vector consisting of floats
   expression_nodes[1].rhs.vector_float = &vcl_vec2;                                // provide pointer to vcl_vec2
 
 

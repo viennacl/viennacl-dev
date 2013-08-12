@@ -41,17 +41,19 @@ namespace viennacl
       void av(lhs_rhs_element & vec1,
               lhs_rhs_element const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
-        assert(vec1.type_family == VECTOR_TYPE_FAMILY && vec2.type_family == VECTOR_TYPE_FAMILY && bool("Arguments are not vector types!"));
+        assert(   vec1.type_family == VECTOR_TYPE_FAMILY && vec1.subtype == DENSE_VECTOR_TYPE
+               && vec2.type_family == VECTOR_TYPE_FAMILY && vec2.subtype == DENSE_VECTOR_TYPE
+               && bool("Arguments are not vector types!"));
 
-        switch (vec1.type)
+        switch (vec1.numeric_type)
         {
           case FLOAT_TYPE:
-            assert(vec2.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::av(*vec1.vector_float,
                                  *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
           case DOUBLE_TYPE:
-            assert(vec2.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::av(*vec1.vector_double,
                                  *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
@@ -66,18 +68,21 @@ namespace viennacl
                 lhs_rhs_element const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 lhs_rhs_element const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        assert(vec1.type_family == VECTOR_TYPE_FAMILY && vec2.type_family == VECTOR_TYPE_FAMILY && bool("Arguments are not vector types!"));
+        assert(   vec1.type_family == VECTOR_TYPE_FAMILY && vec1.subtype == DENSE_VECTOR_TYPE
+               && vec2.type_family == VECTOR_TYPE_FAMILY && vec2.subtype == DENSE_VECTOR_TYPE
+               && vec3.type_family == VECTOR_TYPE_FAMILY && vec3.subtype == DENSE_VECTOR_TYPE
+               && bool("Arguments are not vector types!"));
 
-        switch (vec1.type)
+        switch (vec1.numeric_type)
         {
           case FLOAT_TYPE:
-            assert(vec2.type == FLOAT_TYPE && vec3.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == FLOAT_TYPE && vec3.numeric_type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv(*vec1.vector_float,
                                    *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                    *vec3.vector_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           case DOUBLE_TYPE:
-            assert(vec2.type == DOUBLE_TYPE && vec3.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == DOUBLE_TYPE && vec3.numeric_type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv(*vec1.vector_double,
                                    *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                    *vec3.vector_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
@@ -93,18 +98,21 @@ namespace viennacl
                   lhs_rhs_element const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   lhs_rhs_element const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        assert(vec1.type_family == VECTOR_TYPE_FAMILY && vec2.type_family == VECTOR_TYPE_FAMILY && bool("Arguments are not vector types!"));
+        assert(   vec1.type_family == VECTOR_TYPE_FAMILY && vec1.subtype == DENSE_VECTOR_TYPE
+               && vec2.type_family == VECTOR_TYPE_FAMILY && vec2.subtype == DENSE_VECTOR_TYPE
+               && vec3.type_family == VECTOR_TYPE_FAMILY && vec3.subtype == DENSE_VECTOR_TYPE
+               && bool("Arguments are not vector types!"));
 
-        switch (vec1.type)
+        switch (vec1.numeric_type)
         {
           case FLOAT_TYPE:
-            assert(vec2.type == FLOAT_TYPE && vec3.type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == FLOAT_TYPE && vec3.numeric_type == FLOAT_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv_v(*vec1.vector_float,
                                      *vec2.vector_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                      *vec3.vector_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           case DOUBLE_TYPE:
-            assert(vec2.type == DOUBLE_TYPE && vec3.type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
+            assert(vec2.numeric_type == DOUBLE_TYPE && vec3.numeric_type == DOUBLE_TYPE && bool("Vectors do not have the same scalar type"));
             viennacl::linalg::avbv_v(*vec1.vector_double,
                                      *vec2.vector_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
                                      *vec3.vector_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
