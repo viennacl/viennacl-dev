@@ -196,9 +196,10 @@ namespace viennacl{
               continue;
           typename ConfigTypeype::profile_type const & profile = config.get_current();
           double percent = (double)n++*100/n_conf;
-          std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
           double exec_time = benchmark_impl(op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));
+          std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
+                    << " | Best : " << timings->begin()->second << " => " << std::scientific << timings->begin()->first << std::flush;
           if(out)
               *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigTypeype::current_state_representation(profile) << std::endl ;
         }
@@ -211,9 +212,8 @@ namespace viennacl{
       template< class ProfT>
       void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, std::list<ProfT> const & profiles){
         unsigned int n=0;
-        unsigned int n_conf = 0;
         for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-          double percent = (double)n++*100/n_conf;
+          double percent = (double)n++*100/profiles.size();
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
           double exec_time = benchmark_impl(op,key,*it);
           timings->insert(std::make_pair(exec_time, *it));

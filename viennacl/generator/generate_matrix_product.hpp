@@ -60,12 +60,12 @@ namespace viennacl{
         virtual void print(std::ostream & s) const{
           s << "{vector_type, ms, ks, ns, ml, kl, nl, use_lhs_shared, use_rhs_shared, unroll} = {"
             << vectorization_ << ","
-            << ms_ << ", "
-            << ks_ << ", "
-            << ns_ << ", "
             << ml_ << ", "
             << kl_ << ", "
             << nl_ << ", "
+            << ms_ << ", "
+            << ks_ << ", "
+            << ns_ << ", "
             << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
         }
 

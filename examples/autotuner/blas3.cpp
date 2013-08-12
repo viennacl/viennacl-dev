@@ -93,8 +93,8 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
     std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
-    std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
-    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
+    std::vector<int> lhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
+    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
     std::vector<int> unroll; unroll.push_back(1);
 
     conf.add_tuning_param("ml",ml);
@@ -114,10 +114,10 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
 
-    rounds_config.push_back(std::make_pair(2304,50));
-    rounds_config.push_back(std::make_pair(2560,50));
-    rounds_config.push_back(std::make_pair(3584,50));
-    rounds_config.push_back(std::make_pair(4608,50));
+    rounds_config.push_back(std::make_pair(1280,100));
+    rounds_config.push_back(std::make_pair(2304,100));
+    rounds_config.push_back(std::make_pair(3584,100));
+    rounds_config.push_back(std::make_pair(4608,100));
 
     std::ofstream stream(dump_name.c_str());
 

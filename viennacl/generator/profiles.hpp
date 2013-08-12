@@ -139,8 +139,9 @@ namespace viennacl{
 
 
         /*---------------------------*/
-        /*     AMD  GPU DEFAULT      */
+        /*     AMD  GPU              */
         /*---------------------------*/
+        //Default
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = new vector_saxpy(1,4,64,true);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = new matrix_saxpy(1,16,16,16,16,true);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = new scalar_reduction(8,128,128,true);
@@ -157,12 +158,18 @@ namespace viennacl{
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = new scalar_reduction(2,256,64,true);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,256,1024);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,64,4,256);
-        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(128,64,64,8,4,64,0,0,2,1);
-        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(128,128,32,8,4,16,0,0,1,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(2,128,64,64,8,4,4,0,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,128,128,32,8,4,16,0,0,1);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(4,32,64,128,4,4,4,1,0,1);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(2,32,128,128,4,2,4,0,0,1);
 
 
+        //Cypress
+        map[amd_id][CL_DEVICE_TYPE_GPU]["Cypress"][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(4,16,64,128,4,4,8,1,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU]["Cypress"][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(4,32,32,128,8,4,4,0,0,1);
+        map[amd_id][CL_DEVICE_TYPE_GPU]["Cypress"][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(4,64,32,128,8,4,8,1,0,1);
+
+        map[amd_id][CL_DEVICE_TYPE_GPU]["Cypress"][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(2,16,32,128,2,2,8,0,0,1);
 
         /*---------------------------*/
         /*     NVidia  GPU DEFAULT   */
