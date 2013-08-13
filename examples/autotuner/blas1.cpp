@@ -97,8 +97,8 @@ int main(){
     size_t num_platforms = platforms.size();
     for(unsigned int k=0 ; k < num_platforms ; ++k)
   {
-    viennacl::ocl::platform pf(k);
     viennacl::ocl::set_context_platform_index(k,k);
+    viennacl::ocl::set_context_device_num(k, 42);
     viennacl::ocl::switch_context(k);
     devices_type dev = viennacl::ocl::current_context().devices();
     for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){

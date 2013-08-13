@@ -521,7 +521,8 @@ namespace viennacl
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
             std::cout << "ViennaCL: Number of devices for context: " << devices.size() << std::endl;
             #endif
-            for (std::size_t i=0; i<devices.size(); ++i)
+            std::size_t device_num = std::min<std::size_t>(default_device_num_, devices.size());
+            for (std::size_t i=0; i<device_num; ++i)
               devices_.push_back(devices[i]);
 
             if (devices.size() == 0)
@@ -546,9 +547,8 @@ namespace viennacl
                                                                   ++iter)
             device_id_array.push_back(iter->id());
 
-          cl_uint device_num = std::min<std::size_t>(default_device_num_, device_id_array.size());
           h_ = clCreateContext(0,
-                               device_num,
+                               static_cast<cl_uint>(devices_.size()),
                                &(device_id_array[0]),
                                NULL, NULL, &err);
           VIENNACL_ERR_CHECK(err);
