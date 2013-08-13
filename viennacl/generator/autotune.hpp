@@ -192,9 +192,9 @@ namespace viennacl{
         std::cout << n_conf << std::endl;
         while(config.has_next()){
           config.update();
-          if(config.is_invalid(dev))
-              continue;
           typename ConfigType::profile_type const & profile = config.get_current();
+          if(config.is_invalid(dev) || profile.is_slow(dev))
+              continue;
           double percent = (double)n++*100/n_conf;
           double exec_time = benchmark_impl(op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));

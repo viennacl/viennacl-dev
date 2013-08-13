@@ -103,7 +103,6 @@ int main(int argc, char* argv[]){
     for(unsigned int k=0 ; k < num_platforms ; ++k)
     {
         viennacl::ocl::platform pf(k);
-        viennacl::ocl::set_context_device_type(k,CL_DEVICE_TYPE_ALL);
         viennacl::ocl::set_context_platform_index(k,k);
         viennacl::ocl::switch_context(k);
         devices_type dev = viennacl::ocl::current_context().devices();

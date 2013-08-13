@@ -90,7 +90,7 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
     std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
     std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
     std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
-    std::vector<int> unroll; unroll.push_back(1);
+    std::vector<int> unroll; unroll.push_back(0); unroll.push_back(1);
 
     conf.add_tuning_param("local_size1",local_size1);
     conf.add_tuning_param("cache_width",cache_width);
