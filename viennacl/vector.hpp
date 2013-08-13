@@ -910,7 +910,7 @@ namespace viennacl
         if (internal_size() != size())
         {
           std::vector<SCALARTYPE> pad(internal_size() - size());
-          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * pad.size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
+          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
         }
       }
 
