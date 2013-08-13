@@ -48,7 +48,29 @@ namespace viennacl
         }
         else if (leaf.op.type == OPERATION_BINARY_MULT_TYPE || leaf.op.type == OPERATION_BINARY_DIV_TYPE) // x = (y) * / alpha;
         {
-          assert( leaf.rhs.type_family == SCALAR_TYPE_FAMILY && bool("Logic error: * or / does not have scalar on right hand side"));
+          bool scalar_is_temporary = (leaf.rhs.type_family != SCALAR_TYPE_FAMILY);
+
+          statement_node scalar_temp_node;
+          if (scalar_is_temporary)
+          {
+            lhs_rhs_element temp;
+            temp.type_family  = SCALAR_TYPE_FAMILY;
+            temp.subtype      = DEVICE_SCALAR_TYPE;
+            temp.numeric_type = root_node.lhs.numeric_type;
+            detail::new_element(scalar_temp_node.lhs, temp);
+
+            scalar_temp_node.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+            scalar_temp_node.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
+
+            scalar_temp_node.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+            scalar_temp_node.rhs.subtype      = INVALID_SUBTYPE;
+            scalar_temp_node.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+            scalar_temp_node.rhs.node_index   = leaf.rhs.node_index;
+
+            // work on subexpression:
+            // TODO: Catch exception, free temporary, then rethrow
+            execute_composite(s, scalar_temp_node);
+          }
 
           if (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY)  //(y) is an expression, so introduce a temporary z = (y):
           {
@@ -74,7 +96,7 @@ namespace viennacl
             // now compute x = z * / alpha:
             lhs_rhs_element u = root_node.lhs;
             lhs_rhs_element v = new_root_y.lhs;
-            lhs_rhs_element alpha = leaf.rhs;
+            lhs_rhs_element alpha = scalar_is_temporary ? scalar_temp_node.lhs : leaf.rhs;
 
             bool is_division = (leaf.op.type  == OPERATION_BINARY_DIV_TYPE);
             switch (root_node.op.type)
@@ -99,12 +121,11 @@ namespace viennacl
 
             detail::delete_element(new_root_y.lhs);
           }
-          else if (leaf.lhs.type_family != COMPOSITE_OPERATION_FAMILY
-              && leaf.rhs.type_family == SCALAR_TYPE_FAMILY)
+          else if (leaf.lhs.type_family != COMPOSITE_OPERATION_FAMILY)
           {
             lhs_rhs_element u = root_node.lhs;
             lhs_rhs_element v = leaf.lhs;
-            lhs_rhs_element alpha = leaf.rhs;
+            lhs_rhs_element alpha = scalar_is_temporary ? scalar_temp_node.lhs : leaf.rhs;
 
             bool is_division = (leaf.op.type  == OPERATION_BINARY_DIV_TYPE);
             switch (root_node.op.type)
@@ -129,6 +150,10 @@ namespace viennacl
           }
           else
             throw statement_not_supported_exception("Unsupported binary operator for OPERATION_BINARY_MULT_TYPE || OPERATION_BINARY_DIV_TYPE on leaf node.");
+
+          // clean up
+          if (scalar_is_temporary)
+            detail::delete_element(scalar_temp_node.lhs);
         }
         else if (   leaf.op.type == OPERATION_BINARY_INNER_PROD_TYPE
                  || leaf.op.type == OPERATION_UNARY_NORM_1_TYPE

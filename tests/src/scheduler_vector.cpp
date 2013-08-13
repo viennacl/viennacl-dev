@@ -332,6 +332,28 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "--- Testing complicated composite operations ---" << std::endl;
+  std::cout << "x = inner_prod(x, y) * y..." << std::endl;
+  {
+  ublas_v1 = inner_prod(ublas_v1, ublas_v2) * ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2) * vcl_v2); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2) * vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = y / norm_1(x)..." << std::endl;
+  {
+  ublas_v1 = ublas_v2 / norm_1(ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2 / viennacl::linalg::norm_1(vcl_v1) ); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2) * vcl_v2;
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
   // --------------------------------------------------------------------------
   return retval;
 }
