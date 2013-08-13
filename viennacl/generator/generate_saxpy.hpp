@@ -63,16 +63,22 @@ namespace viennacl{
           arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
         }
 
-        virtual void print(std::ostream & s) const{
-          s << "Vector Saxpy : { vector_type, group_size, num_groups, global_decomposition } = {"
-            << vectorization_
-            << ", " << group_size_
-            << ", " << num_groups_
-            << ", " << global_decomposition_
-            << "}";
-        }
 
       private:
+
+        static std::string csv_format() {
+          return "Vec,LSize1,NumGroups1,GlobalDecomposition";
+        }
+
+        std::string csv_representation() const{
+          std::ostringstream oss;
+          oss << vectorization_
+              << "," << group_size_
+              << "," << num_groups_
+              << "," << global_decomposition_;
+          return oss.str();
+        }
+
         void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
@@ -112,19 +118,24 @@ namespace viennacl{
 
     class matrix_saxpy : public profile_base{
 
-        virtual void print(std::ostream & s) const{
-          s << "Matrix Saxpy : { vector_type, group_size_row, group_size_col, num_groups_row, num_group_col, global_decomposition } = {"
-            << vectorization_
-            << ", " << group_size_row_
-            << ", " << group_size_col_
-            << ", " << num_groups_row_
-            << ", " << num_groups_col_
-            << ", " << global_decomposition_
-            << "}";
-        }
 
       public:
         matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : profile_base(v, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), global_decomposition_(d){ }
+
+        static std::string csv_format() {
+          return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";
+        }
+
+        std::string csv_representation() const{
+          std::ostringstream oss;
+          oss << vectorization_
+                 << "," << group_size_row_
+                 << "," << group_size_col_
+                 << "," << num_groups_row_
+                 << "," << num_groups_col_
+                 << "," << global_decomposition_;
+          return oss.str();
+        }
 
         void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
           s1 = group_size_row_;

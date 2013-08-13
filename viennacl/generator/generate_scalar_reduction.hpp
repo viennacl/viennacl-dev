@@ -132,18 +132,23 @@ namespace viennacl{
           }
         }
 
-        virtual void print(std::ostream & s) const{
-          s << "Scalar Reduction : { vector_type, group_size, num_groups, global_decomposition } = {"
-            << vectorization_
-            << ", " << group_size_
-            << ", " << num_groups_
-            << ", " << global_decomposition_
-            << "}";
-        }
-
       public:
         /** @brief The user constructor */
         scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : profile_base(vectorization, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
+
+
+        static std::string csv_format() {
+          return "Vec,LSize,NumGroups,GlobalDecomposition";
+        }
+
+        std::string csv_representation() const{
+          std::ostringstream oss;
+          oss << vectorization_
+                 << "," << group_size_
+                 << "," << num_groups_
+                 << "," << global_decomposition_;
+          return oss.str();
+        }
 
         unsigned int num_groups() const { return num_groups_; }
 

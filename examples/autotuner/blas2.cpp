@@ -33,14 +33,6 @@ struct blas2_config{
         profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
-    static std::string state_representation_format(){
-        return "V" "\t" "M" "\t" "K" "\t" "NG";
-    }
-    static std::string current_state_representation(profile_type const profile){
-        std::ostringstream oss;
-        oss << profile.vectorization() << "\t" << profile.m() << "\t" << profile.k() << "\t" << profile.num_groups();
-        return oss.str();
-    }
 };
 
 

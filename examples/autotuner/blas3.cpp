@@ -45,16 +45,6 @@ struct blas3_config{
         profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
-    static std::string state_representation_format(){
-        return "V" "\t" "LS1" "\t" "CACHEWIDTH" "\t" "LS2" "\t" "MS" "\t" "KS" "\t" "NS" "\t" "LMEM1" "\t" "LMEM2" "\t" "UNROLL";
-    }
-    static std::string current_state_representation(profile_type const profile){
-        std::ostringstream oss;
-        oss << profile.vectorization() << "\t" << profile.local_size1() << "\t" << profile.cache_width() << "\t" << profile.local_size2()
-            << "\t" << profile.ms() << "\t" << profile.ks() << "\t" << profile.ns()
-            << "\t" << profile.use_lhs_shared() << "\t" << profile.use_rhs_shared() << "\t" << profile.unroll();
-        return oss.str();
-    }
 };
 
 

@@ -173,12 +173,12 @@ namespace viennacl{
        * @param timings the timings to fill
        * @param op the given statement
        * @param the given config */
-      template<class ConfigTypeype>
-      void benchmark(std::map<double, typename ConfigTypeype::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigTypeype> & config, std::ofstream * out){
+      template<class ConfigType>
+      void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         if(out)
-            *out << "#time" << "\t\t" << ConfigTypeype::state_representation_format() << std::endl;
+          *out << "#time" << "," << ConfigType::profile_type::csv_format() << std::endl;
         unsigned int n_conf = 0;
         while(config.has_next()){
           config.update();
@@ -194,14 +194,14 @@ namespace viennacl{
           config.update();
           if(config.is_invalid(dev))
               continue;
-          typename ConfigTypeype::profile_type const & profile = config.get_current();
+          typename ConfigType::profile_type const & profile = config.get_current();
           double percent = (double)n++*100/n_conf;
           double exec_time = benchmark_impl(op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
                     << " | Best : " << timings->begin()->second << " => " << std::scientific << timings->begin()->first << std::flush;
           if(out)
-              *out << std::setprecision(3) << std::scientific << exec_time << "\t" << ConfigTypeype::current_state_representation(profile) << std::endl ;
+            *out << std::setprecision(3) << std::scientific << exec_time << "," << profile.csv_representation() << std::endl ;
         }
 
         std::cout << std::endl;

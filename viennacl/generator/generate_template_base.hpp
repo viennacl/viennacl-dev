@@ -59,7 +59,9 @@ namespace viennacl{
           k.local_work_size(1,lsize2);
         }
 
-        virtual void print(std::ostream & s) const = 0;
+        virtual void print(std::ostream & s) const{
+          s << csv_representation();
+        }
 
         virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const = 0;
 
@@ -74,6 +76,8 @@ namespace viennacl{
         virtual void set_local_sizes(std::size_t & x, std::size_t & y, std::size_t kernel_id) const = 0;
 
         unsigned int vectorization() const { return vectorization_; }
+
+        virtual std::string csv_representation() const = 0;
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
          *  @param dev the given device*/
