@@ -125,7 +125,7 @@ namespace viennacl
 
       //std::cout << "Starting CG" << std::endl;
       std::size_t problem_size = viennacl::traits::size(rhs);
-      VectorType result(problem_size);
+      VectorType result(rhs);
       viennacl::traits::clear(result);
 
       VectorType residual = rhs;
@@ -139,22 +139,22 @@ namespace viennacl
 
       static bool first = true;
 
+      viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
       if (first)
       {
-        viennacl::ocl::current_context().add_program(double_float_conversion_program, "double_float_conversion_program");
+        ctx.add_program(double_float_conversion_program, "double_float_conversion_program");
       }
 
-      viennacl::vector<float> residual_low_precision(problem_size);
-      viennacl::vector<float> result_low_precision(problem_size); result_low_precision.clear();
-      viennacl::vector<float> p_low_precision(problem_size);
-      viennacl::vector<float> tmp_low_precision(problem_size);
+      viennacl::vector<float> residual_low_precision(problem_size, viennacl::traits::context(rhs));
+      viennacl::vector<float> result_low_precision(problem_size, viennacl::traits::context(rhs));
+      viennacl::vector<float> p_low_precision(problem_size, viennacl::traits::context(rhs));
+      viennacl::vector<float> tmp_low_precision(problem_size, viennacl::traits::context(rhs));
       float inner_ip_rr = static_cast<float>(ip_rr);
       float new_inner_ip_rr = 0;
       float initial_inner_rhs_norm_squared = static_cast<float>(ip_rr);
       float alpha;
       float beta;
 
-      viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
       viennacl::ocl::kernel & assign_double_to_float      = ctx.get_kernel("double_float_conversion_program", "assign_double_to_float");
       viennacl::ocl::kernel & inplace_add_float_to_double = ctx.get_kernel("double_float_conversion_program", "inplace_add_float_to_double");
 
@@ -168,7 +168,7 @@ namespace viennacl
       residual_low_precision = p_low_precision;
 
       // transfer matrix to single precision:
-      viennacl::compressed_matrix<float> matrix_low_precision(matrix.size1(), matrix.size2(), matrix.nnz());
+      viennacl::compressed_matrix<float> matrix_low_precision(matrix.size1(), matrix.size2(), matrix.nnz(), viennacl::traits::context(rhs));
       viennacl::backend::memory_copy(matrix.handle1(), const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle1()), 0, 0, sizeof(cl_uint) * (matrix.size1() + 1) );
       viennacl::backend::memory_copy(matrix.handle2(), const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle2()), 0, 0, sizeof(cl_uint) * (matrix.nnz()) );
 
