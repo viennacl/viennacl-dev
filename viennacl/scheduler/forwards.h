@@ -545,6 +545,12 @@ namespace viennacl
         container_type   array_;
     };
 
+    namespace detail
+    {
+      /** @brief Deals with x = RHS where RHS is an expression and x is either a scalar, a vector, or a matrix */
+      inline void execute_composite(statement const & /* s */, statement_node const & /* root_node */);
+    }
+
   } // namespace scheduler
 
 } // namespace viennacl

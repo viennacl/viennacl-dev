@@ -123,6 +123,66 @@ namespace viennacl
       }
 
 
+      /** @brief Dispatcher interface for computing s = norm_1(x) */
+      inline void norm_impl(lhs_rhs_element const & x,
+                            lhs_rhs_element const & s,
+                            operation_node_type op_type)
+      {
+        assert( x.type_family == VECTOR_TYPE_FAMILY && x.subtype == DENSE_VECTOR_TYPE && bool("Argument is not a dense vector type!"));
+        assert( s.type_family == SCALAR_TYPE_FAMILY && s.subtype == DEVICE_SCALAR_TYPE && bool("Argument is not a scalar type!"));
+
+        switch (x.numeric_type)
+        {
+          case FLOAT_TYPE:
+            assert(s.numeric_type == FLOAT_TYPE && bool("Vector and scalar do not have the same numeric type"));
+            if (op_type == OPERATION_UNARY_NORM_1_TYPE)
+              viennacl::linalg::norm_1_impl(*x.vector_float, *s.scalar_float);
+            else if (op_type == OPERATION_UNARY_NORM_2_TYPE)
+              viennacl::linalg::norm_2_impl(*x.vector_float, *s.scalar_float);
+            else if (op_type == OPERATION_UNARY_NORM_INF_TYPE)
+              viennacl::linalg::norm_inf_impl(*x.vector_float, *s.scalar_float);
+            else
+              throw statement_not_supported_exception("Invalid norm type in scheduler::detail::norm_impl()");
+            break;
+          case DOUBLE_TYPE:
+            if (op_type == OPERATION_UNARY_NORM_1_TYPE)
+              viennacl::linalg::norm_1_impl(*x.vector_double, *s.scalar_double);
+            else if (op_type == OPERATION_UNARY_NORM_2_TYPE)
+              viennacl::linalg::norm_2_impl(*x.vector_double, *s.scalar_double);
+            else if (op_type == OPERATION_UNARY_NORM_INF_TYPE)
+              viennacl::linalg::norm_inf_impl(*x.vector_double, *s.scalar_double);
+            else
+              throw statement_not_supported_exception("Invalid norm type in scheduler::detail::norm_impl()");
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid numeric type in scheduler when calling norm_impl()");
+        }
+      }
+
+      /** @brief Dispatcher interface for computing s = inner_prod(x, y) */
+      inline void inner_prod_impl(lhs_rhs_element const & x,
+                                  lhs_rhs_element const & y,
+                                  lhs_rhs_element const & s)
+      {
+        assert( x.type_family == VECTOR_TYPE_FAMILY && x.subtype == DENSE_VECTOR_TYPE && bool("Argument is not a dense vector type!"));
+        assert( y.type_family == VECTOR_TYPE_FAMILY && y.subtype == DENSE_VECTOR_TYPE && bool("Argument is not a dense vector type!"));
+        assert( s.type_family == SCALAR_TYPE_FAMILY && s.subtype == DEVICE_SCALAR_TYPE && bool("Argument is not a scalar type!"));
+
+        switch (x.numeric_type)
+        {
+          case FLOAT_TYPE:
+            assert(y.numeric_type == FLOAT_TYPE && s.numeric_type == FLOAT_TYPE && bool("Vector and scalar do not have the same numeric type"));
+            viennacl::linalg::inner_prod_impl(*x.vector_float, *y.vector_float, *s.scalar_float);
+            break;
+          case DOUBLE_TYPE:
+            assert(y.numeric_type == DOUBLE_TYPE && s.numeric_type == DOUBLE_TYPE && bool("Vector and scalar do not have the same numeric type"));
+            viennacl::linalg::inner_prod_impl(*x.vector_double, *y.vector_double, *s.scalar_double);
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid arguments in scheduler when calling av()");
+        }
+      }
+
     } // namespace detail
   } // namespace scheduler
 } // namespace viennacl

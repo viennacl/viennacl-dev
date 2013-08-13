@@ -70,7 +70,7 @@ namespace viennacl
       {
         assert(   x1.type_family == x2.type_family
                && x2.type_family == x3.type_family
-               && bool("Arguments are not matrix types!"));
+               && bool("Arguments are not of the same type family!"));
 
         switch (x1.type_family)
         {
@@ -102,7 +102,7 @@ namespace viennacl
       {
         assert(   x1.type_family == x2.type_family
                && x2.type_family == x3.type_family
-               && bool("Arguments are not matrix types!"));
+               && bool("Arguments are not of the same type family!"));
 
         switch (x1.type_family)
         {
