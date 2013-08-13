@@ -60,10 +60,13 @@ namespace viennacl{
       INVALID_EXPRESSION_TYPE
     };
 
+    typedef std::pair<expression_type, std::size_t> expression_key_type;
+
     struct expression_descriptor{
-        bool operator==(expression_descriptor const & o) const{
-          return  type_family==o.type_family
-               && type==o.type;
+        expression_key_type make_key() const { return expression_key_type(type,scalartype_size); }
+        bool operator==(expression_descriptor const & other) const
+        {
+          return type_family == other.type_family && type == other.type && scalartype_size==other.scalartype_size;
         }
         expression_type_family type_family;
         expression_type type;

@@ -279,7 +279,7 @@ namespace viennacl{
       return p;
     }
 
-    static void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
+    inline void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
       get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
@@ -287,13 +287,13 @@ namespace viennacl{
       }
     }
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
+    inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
       generator::code_generator gen;
       gen.add(s,root_node);
       viennacl::generator::enqueue(gen);
     }
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s){
+    inline void generate_enqueue_statement(viennacl::scheduler::statement const & s){
       generate_enqueue_statement(s, s.array()[0]);
     }
 

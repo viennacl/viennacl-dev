@@ -34,6 +34,7 @@
 #include <string>
 #include <sstream>
 #include <assert.h>
+#include "viennacl/ocl/device_utils.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/error.hpp"
 
@@ -569,6 +570,17 @@ namespace viennacl
             name_valid_ = true;
           }
           return name_;
+        }
+
+        /** @brief Device architecture family. */
+        device_architecture_family architecture_family() const
+        {
+          if( !architecture_family_valid_)
+          {
+            architecture_family_ = get_device_architecture(vendor_id(), name());
+            architecture_family_valid_ = true;
+          }
+          return architecture_family_;
         }
 
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
@@ -1162,6 +1174,7 @@ namespace viennacl
         void flush_cache()
         {
           address_bits_valid_       = false;
+          architecture_family_valid_ = false;
           available_valid_          = false;
           compiler_available_valid_ = false;
 #ifdef CL_DEVICE_DOUBLE_FP_CONFIG
@@ -1426,6 +1439,9 @@ namespace viennacl
 
         mutable bool driver_version_valid_;
         mutable char driver_version_[256];    // don't forget to adjust member function accordingly when changing array size
+
+        mutable bool architecture_family_valid_;
+        mutable device_architecture_family architecture_family_;
     };
 
   } //namespace ocl
