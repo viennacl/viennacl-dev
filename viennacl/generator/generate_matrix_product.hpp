@@ -47,7 +47,7 @@ namespace viennacl{
           STRIDED
         };
 
-      public:
+      private:
 
         std::size_t lmem_used(std::size_t scalartype_size) const {
           std::size_t lmem_used = 0;

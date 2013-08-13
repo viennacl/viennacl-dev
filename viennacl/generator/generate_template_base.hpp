@@ -27,6 +27,7 @@
 #include <list>
 #include <set>
 
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/device_utils.hpp"
 #include "viennacl/ocl/infos.hpp"

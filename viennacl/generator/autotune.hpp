@@ -177,19 +177,26 @@ namespace viennacl{
       void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
-        if(out)
+        if(out){
+          *out << "#" << expression_type_to_string(key.first) << " | Scalartype Size : " << key.second << std::endl;
+          *out << "#----------------------" << std::endl;
+          *out << "#----------------------" << std::endl;
+          *out << "#----------------------" << std::endl;
+          *out << dev.full_info(1,'#');
+          *out << "#----------------------" << std::endl;
           *out << "#time" << "," << ConfigType::profile_type::csv_format() << std::endl;
+        }
         unsigned int n_conf = 0;
         while(config.has_next()){
           config.update();
-          if(config.is_invalid(dev))
+          typename ConfigType::profile_type const & profile = config.get_current();
+          if(config.is_invalid(dev) || profile.is_slow(dev))
               continue;
           ++n_conf;
         }
         config.reset();
 
         unsigned int n = 0;
-        std::cout << n_conf << std::endl;
         while(config.has_next()){
           config.update();
           typename ConfigType::profile_type const & profile = config.get_current();

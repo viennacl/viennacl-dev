@@ -92,27 +92,38 @@ void run_autotune(std::string const & dump_name){
     std::cout << std::endl;
 }
 
-int main(){
-    platforms_type platforms = viennacl::ocl::get_platforms();
-    size_t num_platforms = platforms.size();
-    for(unsigned int k=0 ; k < num_platforms ; ++k)
+int main(int argc, char* argv[]){
+  typedef std::vector< viennacl::ocl::platform > platforms_type;
+  std::vector<std::string> args(argv, argv+argc);
+  if(argc<2){
+    std::cerr << "USAGE : PROGRAM_NAME DEVICE" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  unsigned int requested_device = atoi(args[1].c_str());
+  std::size_t current_device = 0;
+  platforms_type platforms = viennacl::ocl::get_platforms();
+  for (platforms_type::iterator platform_iter  = platforms.begin();
+       platform_iter != platforms.end();
+       ++platform_iter)
   {
-    viennacl::ocl::set_context_platform_index(k,k);
-    viennacl::ocl::set_context_device_num(k, 42);
-    viennacl::ocl::switch_context(k);
-    devices_type dev = viennacl::ocl::current_context().devices();
-    for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
-      viennacl::ocl::switch_device(*it);
-            std::cout << "-------------------" << std::endl;
-            std::cout << it->name()<< std::endl;
-             std::cout << "-------------------" << std::endl;
-            std::cout << "float:" << std::endl;
-            run_autotune<float>("BLAS1 Float "+it->name());
-            std::cout << "-------------------" << std::endl;
-            std::cout << "double:" << std::endl;
-            run_autotune<double>("BLAS1 Double_"+it->name());
+    typedef std::vector<viennacl::ocl::device> devices_type;
+    devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
+    for(devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
+    {
+      if(current_device++==requested_device){
+        viennacl::ocl::setup_context(current_device,*iter);
+        viennacl::ocl::switch_context(current_device);
+        viennacl::ocl::device const & device = viennacl::ocl::current_device();
+        std::cout << "-------------------" << std::endl;
+        std::cout << device.info()<< std::endl;
+        std::cout << "Inner Product" << std::endl;
+        std::cout << "-------------------" << std::endl;
+        std::cout << "float:" << std::endl;
+        run_autotune<float>("BLAS1 Float "+device.name());
+        std::cout << "-------------------" << std::endl;
+        std::cout << "double:" << std::endl;
+        run_autotune<double>("BLAS1 Double_"+device.name());
+      }
     }
   }
-
-
 }
