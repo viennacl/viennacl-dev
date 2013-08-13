@@ -89,7 +89,7 @@ namespace viennacl{
                 , std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
                 , unsigned int ms, unsigned int ks, unsigned int ns
                 , bool use_lhs_shared, bool use_rhs_shared
-                , unsigned int unroll) : profile_base(vectorization,1){
+                , bool unroll) : profile_base(vectorization,1){
           local_size1_ = local_size1;
           local_size2_ = local_size2;
           cache_width_=cache_width;
@@ -270,7 +270,7 @@ namespace viennacl{
           std::size_t ms = ms_;
           std::size_t nl = nl_;
           std::size_t ns = ns_;
-          std::size_t unroll = unroll_;
+          bool unroll = unroll_;
 
           detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping.at(0).at(std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
           detail::mapped_matrix_product* prod = NULL;
@@ -509,8 +509,8 @@ namespace viennacl{
 
 
           ///Small work-item wise loop
-          if(unroll > 1)
-            stream << "#pragma unroll " << unroll << std::endl;
+          if(unroll)
+            stream << "#pragma unroll " << cache_width/ks << std::endl;
           stream << " for(unsigned int bs=0 ; bs < " << cache_width/ks  << " ; ++bs){" << std::endl;
           stream.inc_tab();
 
