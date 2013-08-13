@@ -971,9 +971,9 @@ namespace viennacl
           *
           * @param indent   Number of optional blanks to be added at the start of each line
           */
-        std::string info(std::size_t indent = 0) const
+        std::string info(std::size_t indent = 0, char indent_char = ' ') const
         {
-          std::string line_indent(indent, ' ');
+          std::string line_indent(indent, indent_char);
           std::ostringstream oss;
           oss << line_indent << "Name:                " << name() << std::endl;
           oss << line_indent << "Vendor:              " << vendor() << std::endl;
@@ -993,9 +993,9 @@ namespace viennacl
         *
         * @param indent   Number of optional blanks to be added at the start of each line
         */
-        std::string full_info(std::size_t indent = 0) const
+        std::string full_info(std::size_t indent = 0, char indent_char = ' ') const
         {
-          std::string line_indent(indent, ' ');
+          std::string line_indent(indent, indent_char);
           std::ostringstream oss;
           oss << line_indent << "Address Bits:                  " << address_bits() << std::endl;
           oss << line_indent << "Available:                     " << available() << std::endl;
