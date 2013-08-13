@@ -35,7 +35,7 @@ namespace viennacl
     namespace detail
     {
       //
-      lhs_rhs_element const & extract_representative_vector(statement const & s, lhs_rhs_element const & element)
+      inline lhs_rhs_element const & extract_representative_vector(statement const & s, lhs_rhs_element const & element)
       {
         switch (element.type_family)
         {
