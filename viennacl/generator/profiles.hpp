@@ -160,7 +160,7 @@ namespace viennacl{
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,64,4,256);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(2,16,64,16,8,4,4,0,0,false);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,16,128,8,8,4,16,0,0,false);
-        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(4,8,64,32,4,4,4,1,0,false);
+        map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(4,8,32,32,4,4,4,1,0,false);
         map[amd_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(2,8,128,32,4,2,4,0,0,false);
 
 
@@ -181,7 +181,7 @@ namespace viennacl{
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = new vector_reduction(1,64,4,64);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = new matrix_product(1,2,128,64,8,4,2,1,0,true);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = new matrix_product(1,8,32,16,4,4,8,0,0,true);
-        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,8,128,32,4,8,4,1,0,false);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = new matrix_product(1,4,128,32,4,8,4,1,0,false);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = new matrix_product(1,4,32,16,8,4,8,0,0,false);
 
 
@@ -191,8 +191,8 @@ namespace viennacl{
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = new vector_reduction(1,1,128,1024);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = new vector_reduction(1,16,32,1024);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AA_TYPE,8)] = new matrix_product(1,8,64,128,2,2,8,1,0,false);
-        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,64,128,4,2,2,8,0,1,false);
-        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,8,64,32,4,4,4,1,0,false);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TA_TYPE,8)] = new matrix_product(1,64,128,4,2,2,8,0,0,false);
+        map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_AT_TYPE,8)] = new matrix_product(1,8,32,32,4,4,4,1,0,false);
         map[nvidia_id][CL_DEVICE_TYPE_GPU][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = new matrix_product(1,8,128,32,4,2,4,0,0,false);
 
         return map;
