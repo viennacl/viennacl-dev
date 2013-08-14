@@ -28,6 +28,7 @@
 
 #include "viennacl/scheduler/execute_scalar_assign.hpp"
 #include "viennacl/scheduler/execute_axbx.hpp"
+#include "viennacl/scheduler/execute_elementwise.hpp"
 
 namespace viennacl
 {
@@ -161,6 +162,12 @@ namespace viennacl
                  || leaf.op.type == OPERATION_UNARY_NORM_INF_TYPE)
         {
           execute_scalar_assign_composite(s, root_node);
+        }
+        else if (   leaf.op.type_family == OPERATION_UNARY_TYPE_FAMILY
+                 || leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE
+                 || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE) // element-wise operations
+        {
+          execute_element_composite(s, root_node);
         }
         else
           throw statement_not_supported_exception("Unsupported binary operator for vector operations");

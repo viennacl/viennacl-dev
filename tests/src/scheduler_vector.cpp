@@ -332,11 +332,95 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "--- Testing elementwise operations ---" << std::endl;
+  std::cout << "x = element_prod(x, y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x + y, y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x, x + y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1, ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x - y, y + x)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
+
+  std::cout << "x = element_div(x, y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x + y, y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1 + ublas_v2, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x, x + y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1, ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x - y, y + x)... ";
+  {
+  ublas_v1 = element_div(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
   std::cout << "--- Testing complicated composite operations ---" << std::endl;
   std::cout << "x = inner_prod(x, y) * y..." << std::endl;
   {
   ublas_v1 = inner_prod(ublas_v1, ublas_v2) * ublas_v2;
-  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2) * vcl_v2); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2) * vcl_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2) * vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
@@ -346,7 +430,7 @@ int test(Epsilon const& epsilon,
   std::cout << "x = y / norm_1(x)..." << std::endl;
   {
   ublas_v1 = ublas_v2 / norm_1(ublas_v1);
-  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2 / viennacl::linalg::norm_1(vcl_v1) ); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2) * vcl_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2 / viennacl::linalg::norm_1(vcl_v1) );
   viennacl::scheduler::execute(my_statement);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
