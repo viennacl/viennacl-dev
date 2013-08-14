@@ -90,7 +90,7 @@ namespace viennacl
       OPERATION_BINARY_MAT_MAT_PROD_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
       OPERATION_BINARY_DIV_TYPE,     // vector/matrix divided by scalar
-      OPERATION_BINARY_ELEMENT_MULT_TYPE,
+      OPERATION_BINARY_ELEMENT_PROD_TYPE,
       OPERATION_BINARY_ELEMENT_DIV_TYPE,
       OPERATION_BINARY_INNER_PROD_TYPE
     };
@@ -138,7 +138,7 @@ namespace viennacl
       template <> struct op_type_info<op_mat_mat_prod>             { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_mult>                     { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_div>                      { enum { id = OPERATION_BINARY_DIV_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY }; };
-      template <> struct op_type_info<op_element_binary<op_mult> > { enum { id = OPERATION_BINARY_ELEMENT_MULT_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_element_binary<op_prod> > { enum { id = OPERATION_BINARY_ELEMENT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_inner_prod>               { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY }; };
 

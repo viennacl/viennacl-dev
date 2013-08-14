@@ -53,7 +53,7 @@ namespace viennacl
           case OPERATION_BINARY_SUB_TYPE:
           case OPERATION_BINARY_MULT_TYPE:
           case OPERATION_BINARY_DIV_TYPE:
-          case OPERATION_BINARY_ELEMENT_MULT_TYPE:
+          case OPERATION_BINARY_ELEMENT_PROD_TYPE:
           case OPERATION_BINARY_ELEMENT_DIV_TYPE:
             return extract_representative_vector(s, leaf.lhs);
           case OPERATION_BINARY_MAT_VEC_PROD_TYPE:

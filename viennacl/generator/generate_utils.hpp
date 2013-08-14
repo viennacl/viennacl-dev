@@ -78,7 +78,7 @@ namespace viennacl{
              ||op_type == scheduler::OPERATION_BINARY_ADD_TYPE
              ||op_type == scheduler::OPERATION_BINARY_DIV_TYPE
              ||op_type == scheduler::OPERATION_BINARY_ELEMENT_DIV_TYPE
-             ||op_type == scheduler::OPERATION_BINARY_ELEMENT_MULT_TYPE
+             ||op_type == scheduler::OPERATION_BINARY_ELEMENT_PROD_TYPE
              ||op_type == scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE
              ||op_type == scheduler::OPERATION_BINARY_INPLACE_SUB_TYPE
 //                 ||op_type == scheduler::OPERATION_BINARY_INPLACE_DIV_TYPE
