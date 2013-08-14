@@ -73,8 +73,8 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
 
 template <typename ScalarType>
 void run_amg(viennacl::linalg::cg_tag & cg_solver,
-             boost::numeric::ublas::vector<ScalarType> & ublas_vec,
-             boost::numeric::ublas::vector<ScalarType> & ublas_result,
+             boost::numeric::ublas::vector<ScalarType> & /*ublas_vec*/,
+             boost::numeric::ublas::vector<ScalarType> & /*ublas_result*/,
              boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix,
              viennacl::vector<ScalarType> & vcl_vec,
              viennacl::vector<ScalarType> & vcl_result,

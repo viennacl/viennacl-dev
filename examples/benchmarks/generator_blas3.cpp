@@ -91,7 +91,7 @@ double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
     return 2*pow(size/static_cast<double>(1000.0),3)/time;
 }
 
-int main(int argc, char* argv[]){
+int main(){
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;

@@ -373,7 +373,7 @@ namespace viennacl
 
       /** @brief Default constructor in order to be compatible with various containers.
       */
-      explicit vector_base() : size_(0), internal_size_(0), start_(0), stride_(1) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
+      explicit vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
 
       /** @brief An explicit constructor for wrapping an existing vector into a vector_range or vector_slice.
        *

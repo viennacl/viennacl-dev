@@ -114,12 +114,12 @@ template< typename NumericT, typename Epsilon,
           typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC>
 int test_prod(Epsilon const& epsilon,
 
-              ReferenceMatrixTypeA const & A, ReferenceMatrixTypeA const & A_trans,
-              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & B_trans,
+              ReferenceMatrixTypeA const & /*A*/, ReferenceMatrixTypeA const & A_trans,
+              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & /*B_trans*/,
               ReferenceMatrixTypeC & C,
 
-              MatrixTypeA const & vcl_A, MatrixTypeA const & vcl_A_trans,
-              MatrixTypeB const & vcl_B, MatrixTypeB const & vcl_B_trans,
+              MatrixTypeA const & /*vcl_A*/, MatrixTypeA const & vcl_A_trans,
+              MatrixTypeB const & vcl_B, MatrixTypeB const & /*vcl_B_trans*/,
               MatrixTypeC & vcl_C
              )
 {
@@ -352,8 +352,8 @@ int main(int argc, char* argv[])
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;
 
-    platforms_type platforms = viennacl::ocl::get_platforms();
-    size_t num_platforms = platforms.size();
+    //platforms_type platforms = viennacl::ocl::get_platforms();
+    //size_t num_platforms = platforms.size();
 
     devices_type dev = viennacl::ocl::current_context().devices();
     for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){

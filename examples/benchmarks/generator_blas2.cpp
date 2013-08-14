@@ -86,9 +86,8 @@ double run_benchmark(size_t size, bool is_trans)
     return 1e-9*size*(2*size-1)/time;
 }
 
-int main(int argc, char* argv[]){
-    std::vector<std::string> args(argv,argv+argc);
-
+int main()
+{
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;

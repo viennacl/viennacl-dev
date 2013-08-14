@@ -429,9 +429,6 @@ namespace viennacl
             temp[j] += entry_x * data_y[j][i*stride_y[j]+start_y[j]];
         }
 
-        std::size_t start_result = viennacl::traits::start(result);
-        std::size_t inc_result   = viennacl::traits::stride(result);
-
         for (std::size_t j=0; j < vec_tuple.const_size(); ++j)
           result[j] = temp[j];  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }

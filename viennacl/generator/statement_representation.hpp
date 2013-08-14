@@ -76,7 +76,7 @@ namespace viennacl{
           representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
 
           template<class ScalarType>
-          result_type operator()(ScalarType const & scal) const {
+          result_type operator()(ScalarType const & /*scal*/) const {
             *ptr_++='h'; //host
             *ptr_++='s'; //scalar
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();

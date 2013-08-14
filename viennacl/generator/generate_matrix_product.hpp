@@ -197,7 +197,7 @@ namespace viennacl{
 
       private:
 
-        void transform_block(detail::mapped_matrix const & mat_infos, bool store_shared
+        void transform_block(detail::mapped_matrix const & /*mat_infos*/, bool store_shared
                              , unsigned int & large_block_1, unsigned int & large_block_2
                              , unsigned int & small_block_1, unsigned int & small_block_2
                              , access_flow flow) const {
@@ -270,7 +270,7 @@ namespace viennacl{
 
         }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           //////////////////
           /// INIT

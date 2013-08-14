@@ -159,7 +159,7 @@ namespace viennacl{
           typedef std::size_t result_type;
           result_type operator()(float const &) const { return sizeof(float); }
           result_type operator()(double const &) const { return sizeof(double); }
-          template<class T> result_type operator()(T const &t) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
+          template<class T> result_type operator()(T const &) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
 
       struct internal_size_fun{

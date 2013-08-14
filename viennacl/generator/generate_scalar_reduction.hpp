@@ -99,7 +99,7 @@ namespace viennacl{
           }
         }
 
-        void set_size_argument(viennacl::scheduler::statement const & s, viennacl::scheduler::statement_node const & root_node, unsigned int & n_arg, viennacl::ocl::kernel & k) const {
+        void set_size_argument(viennacl::scheduler::statement const & s, viennacl::scheduler::statement_node const & /*root_node*/, unsigned int & n_arg, viennacl::ocl::kernel & k) const {
           scheduler::statement::container_type exprs = s.array();
           for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
             if(it->op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
@@ -199,7 +199,7 @@ namespace viennacl{
 
       private:
 
-        void core_0(utils::kernel_generation_stream& stream, std::vector<detail::mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core_0(utils::kernel_generation_stream& stream, std::vector<detail::mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, statements_type const & /*statements*/, std::vector<detail::mapping_type> const & /*mapping*/) const {
 
           stream << "unsigned int lid = get_local_id(0);" << std::endl;
 

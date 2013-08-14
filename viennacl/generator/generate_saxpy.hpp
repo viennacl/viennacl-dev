@@ -79,7 +79,7 @@ namespace viennacl{
           return oss.str();
         }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -159,7 +159,7 @@ namespace viennacl{
         }
 
       private:
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
             for(detail::mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
