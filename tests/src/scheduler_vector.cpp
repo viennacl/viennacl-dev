@@ -332,7 +332,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
-  std::cout << "--- Testing elementwise operations ---" << std::endl;
+  std::cout << "--- Testing elementwise operations (binary) ---" << std::endl;
   std::cout << "x = element_prod(x, y)... ";
   {
   ublas_v1 = element_prod(ublas_v1, ublas_v2);
@@ -415,6 +415,45 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
+#define GENERATE_UNARY_OP_TEST(OPNAME) \
+  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), 0.21); \
+  ublas_v2 = 3.1415 * ublas_v1; \
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
+  { \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] = OPNAME(ublas_v2[i]); \
+  viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2)); \
+  viennacl::scheduler::execute(my_statement); \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  } \
+  { \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+  ublas_v1[i] = std::OPNAME(ublas_v2[i] / NumericT(2)); \
+  viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2 / NumericT(2))); \
+  viennacl::scheduler::execute(my_statement); \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  }
+
+  GENERATE_UNARY_OP_TEST(cos);
+  GENERATE_UNARY_OP_TEST(cosh);
+  GENERATE_UNARY_OP_TEST(exp);
+  GENERATE_UNARY_OP_TEST(floor);
+  GENERATE_UNARY_OP_TEST(fabs);
+  GENERATE_UNARY_OP_TEST(log);
+  GENERATE_UNARY_OP_TEST(log10);
+  GENERATE_UNARY_OP_TEST(sin);
+  GENERATE_UNARY_OP_TEST(sinh);
+  GENERATE_UNARY_OP_TEST(fabs);
+  //GENERATE_UNARY_OP_TEST(abs); //OpenCL allows abs on integers only
+  GENERATE_UNARY_OP_TEST(sqrt);
+  GENERATE_UNARY_OP_TEST(tan);
+  GENERATE_UNARY_OP_TEST(tanh);
+
+#undef GENERATE_UNARY_OP_TEST
 
   std::cout << "--- Testing complicated composite operations ---" << std::endl;
   std::cout << "x = inner_prod(x, y) * y..." << std::endl;

@@ -38,6 +38,105 @@ namespace viennacl
       // result = element_op(x,y) for vectors or matrices x, y
       inline void element_op(lhs_rhs_element result,
                              lhs_rhs_element const & x,
+                             operation_node_type  op_type)
+      {
+        assert( result.numeric_type == x.numeric_type && bool("Numeric type not the same!"));
+        assert( result.type_family == x.type_family && bool("Subtype not the same!"));
+
+        if (x.subtype == DENSE_VECTOR_TYPE)
+        {
+          assert( result.subtype == x.subtype && bool("result not of vector type for unary elementwise operation"));
+          if (x.numeric_type == FLOAT_TYPE)
+          {
+            switch (op_type)
+            {
+#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, SCALARTYPE, OPTAG) \
+            case OPNAME:  viennacl::linalg::element_op(*result.vector_##SCALARTYPE, \
+                                                       viennacl::vector_expression<const vector_base<SCALARTYPE>, const vector_base<SCALARTYPE>, \
+                                                                                   op_element_unary<OPTAG> >(*x.vector_##SCALARTYPE, *x.vector_##SCALARTYPE)); break;
+
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   float, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  float, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  float, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  float, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  float, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   float, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  float, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   float, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  float, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, float, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   float, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, float, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   float, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  float, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  float, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   float, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  float, op_tanh)
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
+          }
+          else if (x.numeric_type == DOUBLE_TYPE)
+          {
+            switch (op_type)
+            {
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   double, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  double, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  double, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  double, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  double, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   double, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  double, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   double, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  double, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, double, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   double, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, double, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   double, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  double, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  double, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   double, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  double, op_tanh)
+
+#undef VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
+          }
+          else
+            throw statement_not_supported_exception("Invalid numeric type in unary elementwise operator");
+        }
+        else if (x.subtype == DENSE_ROW_MATRIX_TYPE)
+        {
+          if (x.numeric_type == FLOAT_TYPE)
+          {
+
+          }
+          else if (x.numeric_type == DOUBLE_TYPE)
+          {
+
+          }
+          else
+            throw statement_not_supported_exception("Invalid numeric type in unary elementwise operator");
+        }
+        else if (x.subtype == DENSE_COL_MATRIX_TYPE)
+        {
+          if (x.numeric_type == FLOAT_TYPE)
+          {
+
+          }
+          else if (x.numeric_type == DOUBLE_TYPE)
+          {
+
+          }
+          else
+            throw statement_not_supported_exception("Invalid numeric type in unary elementwise operator");
+        }
+      }
+
+      // result = element_op(x,y) for vectors or matrices x, y
+      inline void element_op(lhs_rhs_element result,
+                             lhs_rhs_element const & x,
                              lhs_rhs_element const & y,
                              operation_node_type  op_type)
       {
@@ -212,49 +311,48 @@ namespace viennacl
         detail::execute_composite(s, new_root_lhs);
       }
 
-      // check for temporary on rhs:
-      if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
-      {
-        detail::new_element(new_root_rhs.lhs, root_node.lhs);
-
-        new_root_rhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-        new_root_rhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
-
-        new_root_rhs.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
-        new_root_rhs.rhs.subtype      = INVALID_SUBTYPE;
-        new_root_rhs.rhs.numeric_type = INVALID_NUMERIC_TYPE;
-        new_root_rhs.rhs.node_index   = leaf.rhs.node_index;
-
-        // work on subexpression:
-        // TODO: Catch exception, free temporary, then rethrow
-        detail::execute_composite(s, new_root_rhs);
-      }
-
       if (leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE)
       {
+        // check for temporary on rhs:
+        if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
+        {
+          detail::new_element(new_root_rhs.lhs, root_node.lhs);
+
+          new_root_rhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          new_root_rhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
+
+          new_root_rhs.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+          new_root_rhs.rhs.subtype      = INVALID_SUBTYPE;
+          new_root_rhs.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+          new_root_rhs.rhs.node_index   = leaf.rhs.node_index;
+
+          // work on subexpression:
+          // TODO: Catch exception, free temporary, then rethrow
+          detail::execute_composite(s, new_root_rhs);
+        }
+
         lhs_rhs_element x = (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY) ? new_root_lhs.lhs : leaf.lhs;
         lhs_rhs_element y = (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY) ? new_root_rhs.lhs : leaf.rhs;
 
         // compute element-wise operation:
         detail::element_op(root_node.lhs, x, y, leaf.op.type);
+
+        if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
+          detail::delete_element(new_root_rhs.lhs);
       }
       else if (leaf.op.type_family  == OPERATION_UNARY_TYPE_FAMILY)
       {
-        //lhs_rhs_element x = (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY) ? new_root_lhs.lhs : leaf.lhs;
+        lhs_rhs_element x = (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY) ? new_root_lhs.lhs : leaf.lhs;
 
         // compute element-wise operation:
-        //detail::element_op(new_root_rhs.lhs, x, y, leaf.op.type);
-
-        throw statement_not_supported_exception("TODO");
+        detail::element_op(root_node.lhs, x, leaf.op.type);
       }
       else
-        throw statement_not_supported_exception("Unsupported operation for scalar.");
+        throw statement_not_supported_exception("Unsupported elementwise operation.");
 
       // clean up:
       if (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY)
         detail::delete_element(new_root_lhs.lhs);
-      if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
-        detail::delete_element(new_root_rhs.lhs);
 
     }
 

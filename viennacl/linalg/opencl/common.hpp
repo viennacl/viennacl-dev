@@ -38,6 +38,7 @@ namespace viennacl
         inline std::string op_to_string(op_abs)   { return "abs";   }
         inline std::string op_to_string(op_acos)  { return "acos";  }
         inline std::string op_to_string(op_asin)  { return "asin";  }
+        inline std::string op_to_string(op_atan)  { return "atan";  }
         inline std::string op_to_string(op_ceil)  { return "ceil";  }
         inline std::string op_to_string(op_cos)   { return "cos";   }
         inline std::string op_to_string(op_cosh)  { return "cosh";  }
