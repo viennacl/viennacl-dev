@@ -3037,7 +3037,7 @@ namespace viennacl
 
         // x = y .* vec_expr  or  x = y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           viennacl::linalg::element_op(lhs, viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> >(proxy.lhs(), temp));
@@ -3045,7 +3045,7 @@ namespace viennacl
 
         // x = vec_expr .* z  or  x = vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           viennacl::linalg::element_op(lhs, viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> >(temp, proxy.rhs()));
@@ -3054,8 +3054,8 @@ namespace viennacl
         // x = vec_expr .* vec_expr  or  z = vec_expr .* vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());
@@ -3077,7 +3077,7 @@ namespace viennacl
 
         // x += y .* vec_expr  or  x += y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>,  op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>,  op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           vector<T> temp2(temp.size());
@@ -3087,7 +3087,7 @@ namespace viennacl
 
         // x += vec_expr .* z  or  x += vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           vector<T> temp2(temp.size());
@@ -3098,8 +3098,8 @@ namespace viennacl
         // x += vec_expr .* vec_expr  or  x += vec_expr ./ vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());
@@ -3124,7 +3124,7 @@ namespace viennacl
 
         // x -= y .* vec_expr  or  x -= y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           vector<T> temp2(temp.size());
@@ -3134,7 +3134,7 @@ namespace viennacl
 
         // x -= vec_expr .* z  or  x -= vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           vector<T> temp2(temp.size());
@@ -3145,8 +3145,8 @@ namespace viennacl
         // x -= vec_expr .* vec_expr  or  x -= vec_expr ./ vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());
