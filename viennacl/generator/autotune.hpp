@@ -149,16 +149,15 @@ namespace viennacl{
       double benchmark_impl(viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
 
         tools::Timer t;
-
-        //Skips if use too much local memory.
         std::list<viennacl::ocl::kernel *> kernels;
         viennacl::generator::code_generator gen;
-        gen.add(statement, statement.array()[0]);
         gen.force_profile(key, prof);
-
+        gen.add(statement, statement.array()[0]);
         viennacl::generator::get_configured_program(gen, kernels, true);
-
+        viennacl::generator::enqueue(gen);
+        viennacl::backend::finish();
         t.start();
+
         for(unsigned int i = 0 ; i < n_runs ; ++i)
             viennacl::generator::enqueue(gen);
         viennacl::backend::finish();
@@ -178,12 +177,6 @@ namespace viennacl{
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
         if(out){
-          *out << "#" << expression_type_to_string(key.first) << " | Scalartype Size : " << key.second << std::endl;
-          *out << "#----------------------" << std::endl;
-          *out << "#----------------------" << std::endl;
-          *out << "#----------------------" << std::endl;
-          *out << dev.full_info(1,'#');
-          *out << "#----------------------" << std::endl;
           *out << "#time" << "," << ConfigType::profile_type::csv_format() << std::endl;
         }
         unsigned int n_conf = 0;
@@ -206,30 +199,13 @@ namespace viennacl{
           double exec_time = benchmark_impl(op,key,profile);
           timings->insert(std::make_pair(exec_time, profile));
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
-                    << " | Best : " << timings->begin()->second << " => " << std::scientific << timings->begin()->first << std::flush;
+                    << " | Best : " << timings->begin()->second << " => " << std::scientific << std::right << std::setprecision(2) << timings->begin()->first << std::flush;
           if(out)
             *out << std::setprecision(3) << std::scientific << exec_time << "," << profile.csv_representation() << std::endl ;
         }
 
         std::cout << std::endl;
       }
-
-
-      /** @brief Fills a timing map for a given statement and a list of profiles */
-      template< class ProfT>
-      void benchmark(std::map<double, ProfT> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, std::list<ProfT> const & profiles){
-        unsigned int n=0;
-        for(typename std::list<ProfT>::const_iterator it = profiles.begin(); it!=profiles.end(); ++it){
-          double percent = (double)n++*100/profiles.size();
-          std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-          double exec_time = benchmark_impl(op,key,*it);
-          timings->insert(std::make_pair(exec_time, *it));
-        }
-
-        std::cout << std::endl;
-      }
-
-
 
     }
 

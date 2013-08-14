@@ -1,5 +1,9 @@
 #define VIENNACL_WITH_OPENCL
 
+#define SIZE_INC 128
+#define MAX_SIZE 3072
+#define N_RUNS 2
+
 //#define VIENNACL_DEBUG_BUILD
 //#define VIENNACL_DEBUG_ALL
 
@@ -19,7 +23,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 
 #include "../tutorial/Random.hpp"
-
+#include "../benchmarks/benchmark-utils.hpp"
 
 using namespace viennacl::generator;
 
@@ -69,9 +73,48 @@ void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
     viennacl::backend::finish();
 }
 
+template<class MatA, class MatB, class MatC>
+viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
+    if(is_lhs_trans)
+      if(is_rhs_trans)
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
+      else
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
+    else
+      if(is_rhs_trans)
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
+      else
+          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
+
+}
+
+template<typename ScalarType>
+double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans, code_generator::forced_profile_key_type const & key, typename blas3_config<ScalarType>::profile_type const & profile)
+{    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
+    //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
+    viennacl::matrix<ScalarType> A(size, size);
+    viennacl::matrix<ScalarType> B(size, size);
+    viennacl::matrix<ScalarType> C(size, size);
+    viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
+    viennacl::generator::code_generator gen;
+    gen.add(*statement,statement->array()[0]);
+    gen.force_profile(key, profile);
+    viennacl::generator::enqueue(gen);
+    viennacl::generator::enqueue(gen);
+    viennacl::backend::finish();
+    Timer timer;
+    timer.start();
+    for(unsigned int r = 0 ; r < N_RUNS ; ++r){
+      viennacl::generator::enqueue(gen);
+    }
+    viennacl::backend::finish();
+    double time = timer.get()/(double)N_RUNS;
+    delete statement;
+    return 2*pow(size/static_cast<double>(1000.0),3)/time;
+}
 
 template<class NumericT>
-void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_trans){
+void run_autotune(std::string const & dump_name, viennacl::ocl::device const & device, bool is_lhs_trans, bool is_rhs_trans){
     typedef std::map<double, matrix_product> timings_t;
     typedef viennacl::matrix<NumericT> MatrixT;
 
@@ -106,18 +149,34 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
 
     rounds_config.push_back(std::make_pair(1280,100));
-    rounds_config.push_back(std::make_pair(2304,100));
-    rounds_config.push_back(std::make_pair(3584,100));
-    rounds_config.push_back(std::make_pair(4608,100));
+    rounds_config.push_back(std::make_pair(2432,100));
 
     std::ofstream stream(dump_name.c_str());
+    std::size_t scalartype_size = sizeof(NumericT);
+
+    code_generator::forced_profile_key_type * key = NULL;
+    if(is_lhs_trans)
+        if(is_rhs_trans) key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_TT_TYPE, scalartype_size);
+        else  key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_TA_TYPE, scalartype_size);
+    else
+        if(is_rhs_trans) key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_AT_TYPE, scalartype_size);
+        else key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
+
+
+    stream << "#" << expression_type_to_string(key->first) << " | Scalartype Size : " << key->second << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << device.full_info(1,'#');
+    stream << "#----------------------" << std::endl;
+    stream << "#tuning for size : " << rounds_config.front().first << std::endl;
 
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
         unsigned int k = std::distance(rounds_config.begin(),it);
         timings.clear();
         unsigned int size=it->first;
         unsigned int n_keep=it->second;
-        std::cout << "Round " << k << " : Tuning for size " << size << std::endl;
+
         MatrixT A(size,size);
         MatrixT B(size,size);
         MatrixT C(size,size);
@@ -125,36 +184,19 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
         fill_matrix<NumericT>(A,B,C);
 
         viennacl::backend::finish();
+        viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
 
-        std::size_t scalartype_size = sizeof(NumericT);
-        code_generator::forced_profile_key_type keyAA(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
-        code_generator::forced_profile_key_type keyTA(MATRIX_PRODUCT_TA_TYPE, scalartype_size);
-        code_generator::forced_profile_key_type keyAT(MATRIX_PRODUCT_AT_TYPE, scalartype_size);
-        code_generator::forced_profile_key_type keyTT(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
-
-        if(k==0){
-          if(is_lhs_trans)
-              if(is_rhs_trans)
-                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),keyTT,conf,&stream);
-              else
-                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),keyTA,conf,&stream);
-          else
-              if(is_rhs_trans)
-                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),keyAT,conf,&stream);
-              else
-                  autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),keyAA,conf,&stream);
-        }
+        if(k==0)
+          autotune::benchmark(&timings,*statement,*key,conf,&stream);
         else{
-          if(is_lhs_trans)
-            if(is_rhs_trans)
-              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), trans(C))),keyTT,fastest_firsts);
-            else
-              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(trans(B), C)),keyTA,fastest_firsts);
-          else
-            if(is_rhs_trans)
-              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B, trans(C))),keyAT,fastest_firsts);
-            else
-              autotune::benchmark(&timings,viennacl::scheduler::statement(A, viennacl::op_assign(), viennacl::linalg::prod(B,C)),keyAA,fastest_firsts);
+          unsigned int n=0;
+          for(typename std::list<typename blas3_config<NumericT>::profile_type>::const_iterator it = fastest_firsts.begin(); it!=fastest_firsts.end(); ++it){
+            double percent = (double)n++*100/fastest_firsts.size();
+            std::cout << '\r' << "Determining best profile for size " << size << "..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+            double exec_time = autotune::benchmark_impl(*statement,*key,*it);
+            timings.insert(std::make_pair(exec_time, *it));
+          }
+          std::cout << std::endl;
         }
         fastest_firsts.clear();
         viennacl::backend::finish();
@@ -163,10 +205,27 @@ void run_autotune(std::string const & dump_name, bool is_lhs_trans, bool is_rhs_
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
         }
-        std::cout << "Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
-        std::cout << "-----------" << std::endl;
+        stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
+
+        //Update default profile
+        viennacl::generator::code_generator dummy;
+        dummy.add(*statement,statement->array()[0]);
+        dummy.force_profile(*key, timings.begin()->second);
+        viennacl::generator::enqueue(dummy,true);
+        viennacl::backend::finish();
+
+        delete statement;
     }
 
+    stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
+    stream << "##Size\tGFLOP/s" << std::endl;
+    for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
+        double percent = (double)size/MAX_SIZE*100;
+        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+        stream << size << "\t" << run_benchmark<NumericT>(size,is_lhs_trans,is_rhs_trans,*key,timings.begin()->second) << std::endl;
+    }
+
+    delete key;
 }
 
 
@@ -207,40 +266,41 @@ int main(int argc, char* argv[]){
           case 0:
             std::cout << "Layout : AA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_aa_Float" + device_name,false,false);
+              run_autotune<float>("blas3_aa_Float" + device_name + ".dat",device,false,false);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_aa_Double" + device_name,false,false);
+              run_autotune<double>("blas3_aa_Double" + device_name + ".dat",device,false,false);
             break;
 
 
           case 1:
             std::cout << "Layout : TA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_ta_float" + device_name + ".dat", true, false);
+              run_autotune<float>("blas3_ta_float" + device_name + ".dat",device, true, false);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_ta_double" + device_name + ".dat", true, false);
+              run_autotune<double>("blas3_ta_double" + device_name + ".dat",device, true, false);
             break;
 
 
           case 2:
             std::cout << "Layout : AT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_at_float" + device_name + ".dat", false, true);
+              run_autotune<float>("blas3_at_float" + device_name + ".dat",device, false, true);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_at_double" + device_name + ".dat", false, true);
+              run_autotune<double>("blas3_at_double" + device_name + ".dat",device, false, true);
             break;
 
           case 3:
             std::cout << "Layout : TT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_tt_float" + device_name + ".dat",true,true);
+              run_autotune<float>("blas3_tt_float" + device_name + ".dat",device,true,true);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_tt_double" + device_name + ".dat", true, true);
+              run_autotune<double>("blas3_tt_double" + device_name + ".dat",device, true, true);
             break;
         }
       }
     }
   }
   std::cout << std::endl;
+  std::cout << "Autotuning Complete!" << std::endl;
   return EXIT_SUCCESS;
 }
