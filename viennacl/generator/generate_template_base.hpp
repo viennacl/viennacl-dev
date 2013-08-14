@@ -126,7 +126,7 @@ namespace viennacl{
 
         std::size_t num_kernels() const{ return num_kernels_; }
 
-        virtual void operator()(utils::kernel_generation_stream & stream, viennacl::ocl::device const & device, statements_type const & statements) const {
+        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset, statements_type const & statements) const {
           std::vector<detail::mapping_type> mapping(statements.size());
 
           ///Get Prototype, initialize mapping
@@ -156,7 +156,7 @@ namespace viennacl{
             stream << "__kernel ";
 //            stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << size1 << "," << size2 << "," << size3 << ")))" << std::endl;
-            stream << "void " << "kernel_" << device.id() << "_" << n << "(" << std::endl;
+            stream << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
 

@@ -170,11 +170,11 @@ namespace viennacl{
         }
 
         template<class StatementsType>
-        void enqueue_expression(profile_base const & profile, cl_device_id device_id, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
+        void enqueue_expression(profile_base const & profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
             char str[32];
-            std::sprintf(str,"kernel_%p_%d",(void*)device_id,kernel_id);
+            std::sprintf(str,"kernel_%d_%d",device_offset,kernel_id);
             viennacl::ocl::kernel & kernel = p.get_kernel(str);
             kernels.push_back(&kernel);
             unsigned int current_arg = 0;
@@ -222,8 +222,9 @@ namespace viennacl{
 
         void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           unsigned int kernel_id = 0;
+          std::vector<viennacl::ocl::device>::const_iterator found = std::find(ctx_.devices().begin(),ctx_.devices().end(),ctx_.current_device());
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
-            enqueue_expression(get_profile(ctx_.current_device(), it->first), ctx_.current_device().id(), it->second, kernel_id, p, kernels);
+            enqueue_expression(get_profile(ctx_.current_device(), it->first), std::distance(ctx_.devices().begin(), found), it->second, kernel_id, p, kernels);
         }
 
         void make_program_name(char * program_name) const {
@@ -248,9 +249,10 @@ namespace viennacl{
           stream <<  "#endif\n";
           stream << std::endl;
 
+          std::size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
             for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
-              get_profile(*it,iit->first)(stream,*it,iit->second);
+              get_profile(*it,iit->first)(stream,device_offset++,iit->second);
 
           return stream.str();
         }
