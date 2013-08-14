@@ -63,7 +63,6 @@ void run_autotune(std::string const & dump_name){
     viennacl::scalar<ScalarType> s = 0;
 
     std::map<double, typename dot_config<ScalarType>::profile_type> timings;
-    std::cout << "* Tuning DOT" << std::endl;
     autotune::tuning_config<dot_config<ScalarType> > conf;
     std::vector<int> vectorizations;
     std::vector<int> group_sizes;
@@ -118,13 +117,13 @@ int main(int argc, char* argv[]){
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info()<< std::endl;
-        std::cout << "Inner Product" << std::endl;
+        std::cout << "DOT" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << "float:" << std::endl;
-        run_autotune<float>("inner_product_float_" + device_name + ".dat");
+        run_autotune<float>("dot_float_" + device_name + ".dat");
         std::cout << "-------------------" << std::endl;
         std::cout << "double:" << std::endl;
-        run_autotune<double>("inner_product_double_" + device_name + ".dat");
+        run_autotune<double>("dot_double_" + device_name + ".dat");
       }
     }
   }

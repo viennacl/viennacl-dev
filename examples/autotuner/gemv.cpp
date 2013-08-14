@@ -120,7 +120,7 @@ int main(int argc, char* argv[]){
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info()<< std::endl;
-        std::cout << "Matrix-Vector Product" << std::endl;
+        std::cout << "GEMV" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << "scalartype : float" << std::endl;
         std::cout << "-- Av " << std::endl;

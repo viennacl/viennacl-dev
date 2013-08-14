@@ -260,7 +260,7 @@ int main(int argc, char* argv[]){
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info() << std::endl;
-        std::cout << "Matrix-Matrix Product" << std::endl;
+        std::cout << "GEMM" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << " Scalartype : " << scalartype << std::endl;
         std::cout << "-------------------" << std::endl;
@@ -268,35 +268,35 @@ int main(int argc, char* argv[]){
           case 0:
             std::cout << "Layout : AA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_aa_float_" + device_name + ".dat",device,false,false);
+              run_autotune<float>("gemm_aa_float_" + device_name + ".dat",device,false,false);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_aa_double_" + device_name + ".dat",device,false,false);
+              run_autotune<double>("gemm_aa_double_" + device_name + ".dat",device,false,false);
             break;
 
 
           case 1:
             std::cout << "Layout : TA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_ta_float_" + device_name + ".dat",device, true, false);
+              run_autotune<float>("gemm_ta_float_" + device_name + ".dat",device, true, false);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_ta_double_" + device_name + ".dat",device, true, false);
+              run_autotune<double>("gemm_ta_double_" + device_name + ".dat",device, true, false);
             break;
 
 
           case 2:
             std::cout << "Layout : AT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_at_float_" + device_name + ".dat",device, false, true);
+              run_autotune<float>("gemm_at_float_" + device_name + ".dat",device, false, true);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_at_double_" + device_name + ".dat",device, false, true);
+              run_autotune<double>("gemm_at_double_" + device_name + ".dat",device, false, true);
             break;
 
           case 3:
             std::cout << "Layout : TT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("blas3_tt_float_" + device_name + ".dat",device,true,true);
+              run_autotune<float>("gemm_tt_float_" + device_name + ".dat",device,true,true);
             else if(scalartype=="double")
-              run_autotune<double>("blas3_tt_double_" + device_name + ".dat",device, true, true);
+              run_autotune<double>("gemm_tt_double_" + device_name + ".dat",device, true, true);
             break;
         }
       }
