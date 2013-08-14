@@ -110,27 +110,128 @@ namespace viennacl
         {
           if (x.numeric_type == FLOAT_TYPE)
           {
+            switch (op_type)
+            {
+#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, SCALARTYPE, OPTAG) \
+            case OPNAME:  viennacl::linalg::element_op(*result.matrix_row_##SCALARTYPE, \
+                                                       viennacl::matrix_expression<const matrix_base<SCALARTYPE, viennacl::row_major>, const matrix_base<SCALARTYPE, viennacl::row_major>, \
+                                                                                   op_element_unary<OPTAG> >(*x.matrix_row_##SCALARTYPE, *x.matrix_row_##SCALARTYPE)); break;
+
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   float, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  float, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  float, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  float, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  float, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   float, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  float, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   float, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  float, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, float, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   float, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, float, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   float, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  float, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  float, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   float, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  float, op_tanh)
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
 
           }
           else if (x.numeric_type == DOUBLE_TYPE)
           {
-
+            switch (op_type)
+            {
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   double, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  double, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  double, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  double, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  double, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   double, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  double, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   double, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  double, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, double, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   double, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, double, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   double, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  double, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  double, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   double, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  double, op_tanh)
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
           }
           else
             throw statement_not_supported_exception("Invalid numeric type in unary elementwise operator");
+
+#undef VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP
+
         }
         else if (x.subtype == DENSE_COL_MATRIX_TYPE)
         {
           if (x.numeric_type == FLOAT_TYPE)
           {
+            switch (op_type)
+            {
+#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, SCALARTYPE, OPTAG) \
+            case OPNAME:  viennacl::linalg::element_op(*result.matrix_col_##SCALARTYPE, \
+                                                       viennacl::matrix_expression<const matrix_base<SCALARTYPE, viennacl::column_major>, const matrix_base<SCALARTYPE, viennacl::column_major>, \
+                                                                                   op_element_unary<OPTAG> >(*x.matrix_col_##SCALARTYPE, *x.matrix_col_##SCALARTYPE)); break;
+
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   float, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  float, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  float, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  float, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  float, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   float, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  float, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   float, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  float, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, float, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   float, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, float, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   float, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  float, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  float, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   float, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  float, op_tanh)
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
 
           }
           else if (x.numeric_type == DOUBLE_TYPE)
           {
-
+            switch (op_type)
+            {
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   double, op_abs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  double, op_acos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ASIN_TYPE,  double, op_asin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ATAN_TYPE,  double, op_atan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_CEIL_TYPE,  double, op_ceil)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COS_TYPE,   double, op_cos)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_COSH_TYPE,  double, op_cosh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_EXP_TYPE,   double, op_exp)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FABS_TYPE,  double, op_fabs)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_FLOOR_TYPE, double, op_floor)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG_TYPE,   double, op_log)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_LOG10_TYPE, double, op_log10)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SIN_TYPE,   double, op_sin)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SINH_TYPE,  double, op_sinh)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_SQRT_TYPE,  double, op_sqrt)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TAN_TYPE,   double, op_tan)
+              VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_TANH_TYPE,  double, op_tanh)
+            default:
+              throw statement_not_supported_exception("Invalid op_type in unary elementwise operations");
+            }
           }
           else
             throw statement_not_supported_exception("Invalid numeric type in unary elementwise operator");
+
+#undef VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP
         }
       }
 
