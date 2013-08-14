@@ -195,6 +195,8 @@ int main(int argc, char* argv[]){
         viennacl::ocl::setup_context(current_device,*iter);
         viennacl::ocl::switch_context(current_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
+        std::string device_name = device.name();
+        std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info() << std::endl;
         std::cout << "Matrix-Matrix Product" << std::endl;
@@ -205,35 +207,35 @@ int main(int argc, char* argv[]){
           case 0:
             std::cout << "Layout : AA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("BLAS3 AA Float" + device.name(),false,false);
+              run_autotune<float>("blas3_aa_Float" + device_name,false,false);
             else if(scalartype=="double")
-              run_autotune<double>("BLAS3 AA Double" + device.name(),false,false);
+              run_autotune<double>("blas3_aa_Double" + device_name,false,false);
             break;
 
 
           case 1:
             std::cout << "Layout : TA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("BLAS3 TA Float" + device.name(), true, false);
+              run_autotune<float>("blas3_ta_float" + device_name + ".dat", true, false);
             else if(scalartype=="double")
-              run_autotune<double>("BLAS3 TA Double" + device.name(), true, false);
+              run_autotune<double>("blas3_ta_double" + device_name + ".dat", true, false);
             break;
 
 
           case 2:
             std::cout << "Layout : AT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("BLAS3 AT Float" + device.name(), false, true);
+              run_autotune<float>("blas3_at_float" + device_name + ".dat", false, true);
             else if(scalartype=="double")
-              run_autotune<double>("BLAS3 AT Double" + device.name(), false, true);
+              run_autotune<double>("blas3_at_double" + device_name + ".dat", false, true);
             break;
 
           case 3:
             std::cout << "Layout : TT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("BLAS3 TT Float" + device.name(),true,true);
+              run_autotune<float>("blas3_tt_float" + device_name + ".dat",true,true);
             else if(scalartype=="double")
-              run_autotune<double>("BLAS3 TT Double" + device.name(), true, true);
+              run_autotune<double>("blas3_tt_double" + device_name + ".dat", true, true);
             break;
         }
       }

@@ -115,23 +115,25 @@ int main(int argc, char* argv[]){
         viennacl::ocl::setup_context(current_device,*iter);
         viennacl::ocl::switch_context(current_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
+        std::string device_name = device.name();
+        std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info()<< std::endl;
         std::cout << "Matrix-Vector Product" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << "scalartype : float" << std::endl;
         std::cout << "-- Av " << std::endl;
-        run_autotune<float>("BLAS2 AV Float "+device.name(), false);
+        run_autotune<float>("gemv_av_float_"+device_name + ".dat", false);
         std::cout << "-- Tv" << std::endl;
-        run_autotune<float>("BLAS2 TV Float "+device.name(), true);
+        run_autotune<float>("gemv_tv_float_"+device_name + ".dat", true);
 
         std::cout << "-----------------" << std::endl;
 
         std::cout << "scalartype : double" << std::endl;
         std::cout << "-- Av " << std::endl;
-        run_autotune<double>("BLAS2 AV Double "+device.name(), false);
+        run_autotune<double>("gemv_av_double_"+device_name + ".dat", false);
         std::cout << "-- Tv" << std::endl;
-        run_autotune<double>("BLAS2 TV Double "+device.name(), true);
+        run_autotune<double>("gemv_tv_double_"+device_name + ".dat", true);
       }
     }
   }

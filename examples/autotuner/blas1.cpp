@@ -113,15 +113,17 @@ int main(int argc, char* argv[]){
         viennacl::ocl::setup_context(current_device,*iter);
         viennacl::ocl::switch_context(current_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
+        std::string device_name = device.name();
+        std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info()<< std::endl;
         std::cout << "Inner Product" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << "float:" << std::endl;
-        run_autotune<float>("BLAS1 Float "+device.name());
+        run_autotune<float>("inner_product_float_" + device_name + ".dat");
         std::cout << "-------------------" << std::endl;
         std::cout << "double:" << std::endl;
-        run_autotune<double>("BLAS1 Double_"+device.name());
+        run_autotune<double>("inner_product_double_" + device_name + ".dat");
       }
     }
   }
