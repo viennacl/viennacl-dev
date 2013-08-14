@@ -3,11 +3,11 @@
 //#define VIENNACL_DEBUG_BUILD
 
 #include <iostream>
+#include <algorithm>
+#include <string>
 
 #include "viennacl/linalg/inner_prod.hpp"
-
 #include "viennacl/scheduler/forwards.h"
-
 #include "viennacl/vector.hpp"
 #include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/autotune.hpp"
@@ -114,6 +114,7 @@ int main(int argc, char* argv[]){
         viennacl::ocl::switch_context(current_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
         std::string device_name = device.name();
+        std::transform(device_name.begin(), device_name.end(), device_name.begin(), ::tolower);
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info()<< std::endl;
