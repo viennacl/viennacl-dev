@@ -3,7 +3,6 @@
 //#define VIENNACL_DEBUG_ALL
 
 #include <iostream>
-#include "CL/cl.hpp"
 
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/vector.hpp"

@@ -8,7 +8,6 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/device.hpp"
 
-#include "CL/cl.hpp"
 #include <sys/time.h>
 
 #include "boost/numeric/ublas/matrix.hpp"
