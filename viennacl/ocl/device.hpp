@@ -59,7 +59,7 @@ namespace viennacl
           flush_cache();
         }
 
-        device(const device & other)
+        device(const device & other) : device_(0)
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_DEVICE)
           std::cout << "ViennaCL: Creating device object (Copy CTOR)" << std::endl;
