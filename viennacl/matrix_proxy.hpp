@@ -240,23 +240,6 @@ namespace viennacl
   }
 
 
-  template<typename MatrixType>
-  std::ostream & operator<<(std::ostream & s, matrix_range<MatrixType> const & proxy)
-  {
-    MatrixType temp = proxy;
-    s << temp;
-    return s;
-  }
-
-  template<typename MatrixType>
-  std::ostream & operator<<(std::ostream & s, matrix_range<const MatrixType> const & proxy)
-  {
-    MatrixType temp = proxy;
-    s << temp;
-    return s;
-  }
-
-
   //
   // Convenience function
   //

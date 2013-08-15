@@ -779,10 +779,10 @@ namespace viennacl
   * @param s            STL output stream
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  std::ostream & operator<<(std::ostream & s, const matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
+  template<class SCALARTYPE, typename F>
+  std::ostream & operator<<(std::ostream & s, const matrix_base<SCALARTYPE, F> & gpu_matrix)
   {
-    typedef typename matrix<SCALARTYPE, F, ALIGNMENT>::size_type      size_type;
+    typedef typename matrix_base<SCALARTYPE, F>::size_type      size_type;
 
     std::vector<SCALARTYPE> tmp(gpu_matrix.internal_size());
     viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * gpu_matrix.internal_size(), &(tmp[0]));
@@ -795,7 +795,7 @@ namespace viennacl
       s << "(";
       for (size_type j = 0; j < gpu_matrix.size2(); ++j)
       {
-        s << tmp[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
+        s << tmp[F::mem_index(i * gpu_matrix.stride1() + gpu_matrix.start1(), j * gpu_matrix.stride2() + gpu_matrix.start2(), gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
         if (j < gpu_matrix.size2() - 1)
           s << ",";
       }
