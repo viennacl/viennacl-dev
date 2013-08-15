@@ -128,8 +128,8 @@ void run_autotune(std::string const & dump_name, viennacl::ocl::device const & d
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
     std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
-    std::vector<int> lhs_storage; for(unsigned int i=1 ; i<=1 ; ++i) lhs_storage.push_back(i);
-    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=0 ; ++i) rhs_storage.push_back(i);
+    std::vector<int> lhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
+    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
     std::vector<int> unroll; unroll.push_back(0); unroll.push_back(1);
 
     conf.add_tuning_param("local_size1",local_size1);
