@@ -115,6 +115,8 @@ int test_prod_rank1(Epsilon const & epsilon,
    int retval = EXIT_SUCCESS;
 
    // sync data:
+   ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), NumericT(0.1234));
+   ublas_v2 = ublas::scalar_vector<NumericT>(ublas_v2.size(), NumericT(0.4321));
    viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
    viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
    viennacl::copy(ublas_m1, vcl_m1);

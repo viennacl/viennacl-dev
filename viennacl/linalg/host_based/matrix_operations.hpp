@@ -588,14 +588,16 @@ namespace viennacl
           {
             value_type temp = data_x[start1];
             for (std::size_t row = 0; row < A_size2; ++row)
-              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * temp;
+              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
           }
 
           for (std::size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
           {
             value_type temp = data_x[col * inc1 + start1];
             for (std::size_t row = 0; row < A_size2; ++row)
-              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc2 + A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * temp;
+            {
+              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
           }
         }
         else
@@ -607,7 +609,7 @@ namespace viennacl
           {
             value_type temp = 0;
             for (std::size_t col = 0; col < A_size1; ++col)
-              temp += data_A[viennacl::column_major::mem_index(col * A_inc2 + A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+              temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
 
             data_result[row * inc2 + start2] = temp;
           }
