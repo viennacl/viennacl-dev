@@ -126,11 +126,11 @@ namespace viennacl
         VIENNACL_DEVICE_MAP("Antilles",NorthernIslands);
 
         //SouthernIslands
-        VIENNACL_DEVICE_MAP("Cape",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Bonaire",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Pitcaim",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Tahiti",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Malta",NorthernIslands);
+        VIENNACL_DEVICE_MAP("Cape",SouthernIslands);
+        VIENNACL_DEVICE_MAP("Bonaire",SouthernIslands);
+        VIENNACL_DEVICE_MAP("Pitcaim",SouthernIslands);
+        VIENNACL_DEVICE_MAP("Tahiti",SouthernIslands);
+        VIENNACL_DEVICE_MAP("Malta",SouthernIslands);
 
 #undef VIENNACL_DEVICE_MAP
 
