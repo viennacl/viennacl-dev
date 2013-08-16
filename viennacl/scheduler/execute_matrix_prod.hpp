@@ -30,6 +30,10 @@
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/linalg/sparse_matrix_operations.hpp"
+#include "viennacl/compressed_matrix.hpp"
+#include "viennacl/coordinate_matrix.hpp"
+#include "viennacl/ell_matrix.hpp"
+#include "viennacl/hyb_matrix.hpp"
 
 namespace viennacl
 {
