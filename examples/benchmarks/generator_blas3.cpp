@@ -33,7 +33,7 @@
 //
 // ViennaCL includes
 //
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_BUILD
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"

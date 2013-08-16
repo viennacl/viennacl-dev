@@ -237,9 +237,11 @@ namespace viennacl{
           if(vectorization_ > 1)
             aligned_scalartype+=utils::to_string(vectorization_);
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= get_local_size(0)){" << std::endl;
+          stream << "#pragma unroll " << bound2/local_size2_ << std::endl;
+          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= " << local_size2_ << "){" << std::endl;
           stream.inc_tab();
-          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= get_local_size(1)){" << std::endl;
+          stream << "#pragma unroll " << bound1/local_size1_ << std::endl;
+          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= " << local_size1_ << "){" << std::endl;
           stream.inc_tab();
           if(flow==REGULAR){
             stream << aligned_scalartype << " val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
@@ -678,7 +680,6 @@ namespace viennacl{
 
           for(unsigned int m=0 ; m < ms_res ; ++m){
             for(unsigned int n=0 ; n < ns_res ; ++n){
-              stream << "barrier(CLK_GLOBAL_MEM_FENCE);" << std::endl;
               std::string i = "get_global_id(0)*" + utils::to_string(ms_res) + "+" + utils::to_string(m);
               std::string j = "get_global_id(1)*" + utils::to_string(ns_res) + "+" + utils::to_string(n);
               prod->access_name("res"+utils::to_string(m)+"_"+utils::to_string(n));
