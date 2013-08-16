@@ -29,6 +29,7 @@
 #include "viennacl/scheduler/execute_generic_dispatcher.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 
 namespace viennacl
 {
@@ -315,6 +316,62 @@ namespace viennacl
             break;
           case DOUBLE_TYPE:
             viennacl::linalg::prod_impl(*A.matrix_col_double, *x.vector_double, *result.vector_double);
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");
+          }
+        }
+        else if (A.subtype == COMPRESSED_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            viennacl::linalg::prod_impl(*A.compressed_matrix_float, *x.vector_float, *result.vector_float);
+            break;
+          case DOUBLE_TYPE:
+            viennacl::linalg::prod_impl(*A.compressed_matrix_double, *x.vector_double, *result.vector_double);
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");
+          }
+        }
+        else if (A.subtype == COORDINATE_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            viennacl::linalg::prod_impl(*A.coordinate_matrix_float, *x.vector_float, *result.vector_float);
+            break;
+          case DOUBLE_TYPE:
+            viennacl::linalg::prod_impl(*A.coordinate_matrix_double, *x.vector_double, *result.vector_double);
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");
+          }
+        }
+        else if (A.subtype == ELL_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            viennacl::linalg::prod_impl(*A.ell_matrix_float, *x.vector_float, *result.vector_float);
+            break;
+          case DOUBLE_TYPE:
+            viennacl::linalg::prod_impl(*A.ell_matrix_double, *x.vector_double, *result.vector_double);
+            break;
+          default:
+            throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");
+          }
+        }
+        else if (A.subtype == HYB_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            viennacl::linalg::prod_impl(*A.hyb_matrix_float, *x.vector_float, *result.vector_float);
+            break;
+          case DOUBLE_TYPE:
+            viennacl::linalg::prod_impl(*A.hyb_matrix_double, *x.vector_double, *result.vector_double);
             break;
           default:
             throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");

@@ -177,9 +177,14 @@ namespace viennacl
 
       DENSE_ROW_MATRIX_TYPE,
       DENSE_COL_MATRIX_TYPE,
-      IMPLICIT_MATRIX_TYPE
+      IMPLICIT_MATRIX_TYPE,
 
-      // sparse and other matrix types to be added here
+      COMPRESSED_MATRIX_TYPE,
+      COORDINATE_MATRIX_TYPE,
+      ELL_MATRIX_TYPE,
+      HYB_MATRIX_TYPE
+
+      // other matrix types to be added here
     };
 
     /** @brief Encodes the type of a node in the statement tree. */
@@ -335,6 +340,49 @@ namespace viennacl
         viennacl::implicit_matrix_base<float>            *implicit_matrix_float;
         viennacl::implicit_matrix_base<double>           *implicit_matrix_double;
 
+        //viennacl::compressed_matrix<float>    *compressed_matrix_char;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_uchar;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_short;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_ushort;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_int;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_uint;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_long;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_ulong;
+        viennacl::compressed_matrix<float>    *compressed_matrix_float;
+        viennacl::compressed_matrix<double>   *compressed_matrix_double;
+
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_char;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_uchar;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_short;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_ushort;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_int;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_uint;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_long;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_ulong;
+        viennacl::coordinate_matrix<float>    *coordinate_matrix_float;
+        viennacl::coordinate_matrix<double>   *coordinate_matrix_double;
+
+        //viennacl::ell_matrix<float>    *ell_matrix_char;
+        //viennacl::ell_matrix<double>   *ell_matrix_uchar;
+        //viennacl::ell_matrix<float>    *ell_matrix_short;
+        //viennacl::ell_matrix<double>   *ell_matrix_ushort;
+        //viennacl::ell_matrix<float>    *ell_matrix_int;
+        //viennacl::ell_matrix<double>   *ell_matrix_uint;
+        //viennacl::ell_matrix<float>    *ell_matrix_long;
+        //viennacl::ell_matrix<double>   *ell_matrix_ulong;
+        viennacl::ell_matrix<float>    *ell_matrix_float;
+        viennacl::ell_matrix<double>   *ell_matrix_double;
+
+        //viennacl::hyb_matrix<float>    *hyb_matrix_char;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_uchar;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_short;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_ushort;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_int;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_uint;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_long;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_ulong;
+        viennacl::hyb_matrix<float>    *hyb_matrix_float;
+        viennacl::hyb_matrix<double>   *hyb_matrix_double;
       };
     };
 
@@ -413,6 +461,18 @@ namespace viennacl
         void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::column_major> const & t) { elem.matrix_col_double = const_cast<viennacl::matrix_base<double, viennacl::column_major> *>(&t); }
         void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::row_major>    const & t) { elem.matrix_row_double = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
 
+        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<float>  const & m) { elem.compressed_matrix_float  = const_cast<viennacl::compressed_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<double> const & m) { elem.compressed_matrix_double = const_cast<viennacl::compressed_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<float>  const & m) { elem.coordinate_matrix_float  = const_cast<viennacl::coordinate_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<double> const & m) { elem.coordinate_matrix_double = const_cast<viennacl::coordinate_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<float>  const & m) { elem.ell_matrix_float  = const_cast<viennacl::ell_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<double> const & m) { elem.ell_matrix_double = const_cast<viennacl::ell_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<float>  const & m) { elem.hyb_matrix_float  = const_cast<viennacl::hyb_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
+
         //////////// Tree leaves (terminals) ////////////////////
 
         std::size_t add_element(std::size_t       next_free,
@@ -469,6 +529,54 @@ namespace viennacl
         {
           elem.type_family  = MATRIX_TYPE_FAMILY;
           elem.subtype      = statement_node_subtype(result_of::layout_type_id<F>::value);
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::compressed_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = COMPRESSED_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::coordinate_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = COORDINATE_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::ell_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = ELL_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::hyb_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = HYB_MATRIX_TYPE;
           elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;

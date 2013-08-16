@@ -6,7 +6,7 @@ foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_do
              global_variables
              matrix_vector
              matrix_row_float matrix_row_double matrix_col_float matrix_col_double
-             scalar scheduler_matrix scheduler_matrix_matrix scheduler_matrix_vector scheduler_vector sparse
+             scalar scheduler_matrix scheduler_matrix_matrix scheduler_matrix_vector scheduler_sparse scheduler_vector sparse
              vector_float vector_double vector_int vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
