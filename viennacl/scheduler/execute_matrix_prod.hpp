@@ -51,26 +51,183 @@ namespace viennacl
       inline void matrix_matrix_prod(statement const & s,
                                      lhs_rhs_element result,
                                      lhs_rhs_element const & A,
-                                     lhs_rhs_element const & B)
+                                     lhs_rhs_element const & B,
+                                     double alpha,
+                                     double beta)
       {
-        assert(      A.numeric_type == B.numeric_type && bool("Numeric type not the same!"));
-        assert( result.numeric_type == B.numeric_type && bool("Numeric type not the same!"));
-
-        assert( result.type_family == B.type_family && bool("Subtype not the same!"));
-
-        // switch: numeric type
-        if (A.numeric_type == FLOAT_TYPE)
+        if (A.type_family == MATRIX_TYPE_FAMILY && B.type_family == MATRIX_TYPE_FAMILY)        // C = A * B
         {
-          // switch: trans for A, B
-          throw statement_not_supported_exception("TODO");
+          assert(      A.numeric_type == B.numeric_type && bool("Numeric type not the same!"));
+          assert( result.numeric_type == B.numeric_type && bool("Numeric type not the same!"));
+
+#define VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(LAYOUTA, MEMBERA, LAYOUTB, MEMBERB, LAYOUTC, MEMBERC)\
+          if (A.subtype == LAYOUTA && B.subtype == LAYOUTB && result.subtype == LAYOUTC)\
+          {\
+            switch (result.numeric_type)\
+            {\
+            case FLOAT_TYPE:\
+              viennacl::linalg::prod_impl(*A.matrix_##MEMBERA##_float, *B.matrix_##MEMBERB##_float, *result.matrix_##MEMBERC##_float, static_cast<float>(alpha), static_cast<float>(beta)); break;\
+            case DOUBLE_TYPE:\
+              viennacl::linalg::prod_impl(*A.matrix_##MEMBERA##_double, *B.matrix_##MEMBERB##_double, *result.matrix_##MEMBERC##_double, alpha, beta); break;\
+            default:\
+              throw statement_not_supported_exception("Invalid numeric type in matrix-matrix multiplication");\
+            }\
+          }
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col)
+
+#undef VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD
         }
-        else if (A.numeric_type == DOUBLE_TYPE)
+        else if (A.type_family == MATRIX_TYPE_FAMILY && B.type_family == COMPOSITE_OPERATION_FAMILY)        // C = A * B^T
         {
-          throw statement_not_supported_exception("TODO");
+          statement_node const & leaf = s.array()[B.node_index];
+
+          assert(leaf.lhs.type_family  == MATRIX_TYPE_FAMILY && leaf.op.type == OPERATION_UNARY_TRANS_TYPE && bool("Logic error: Argument not a matrix transpose!"));
+          assert(leaf.lhs.numeric_type == result.numeric_type && bool("Numeric type not the same!"));
+          assert(result.numeric_type == A.numeric_type && bool("Numeric type not the same!"));
+
+#define VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(LAYOUTA, MEMBERA, LAYOUTB, MEMBERB, MAJORB, LAYOUTC, MEMBERC)\
+          if (A.subtype == LAYOUTA && leaf.lhs.subtype == LAYOUTB && result.subtype == LAYOUTC)\
+          {\
+            switch (result.numeric_type)\
+            {\
+            case FLOAT_TYPE:\
+              viennacl::linalg::prod_impl(*A.matrix_##MEMBERA##_float, \
+                                          viennacl::matrix_expression< const matrix_base<float, MAJORB>,\
+                                                                       const matrix_base<float, MAJORB>,\
+                                                                       op_trans> (*(leaf.lhs.matrix_##MEMBERB##_float), *(leaf.lhs.matrix_##MEMBERB##_float)), \
+                                          *result.matrix_##MEMBERC##_float, static_cast<float>(alpha), static_cast<float>(beta)); break;\
+            case DOUBLE_TYPE:\
+              viennacl::linalg::prod_impl(*A.matrix_##MEMBERA##_double,\
+                                          viennacl::matrix_expression< const matrix_base<double, MAJORB>,\
+                                                                       const matrix_base<double, MAJORB>,\
+                                                                       op_trans>(*(leaf.lhs.matrix_##MEMBERB##_double), *(leaf.lhs.matrix_##MEMBERB##_double)), \
+                                          *result.matrix_##MEMBERC##_double, alpha, beta); break;\
+            default:\
+              throw statement_not_supported_exception("Invalid numeric type in matrix-matrix multiplication");\
+            }\
+          }
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col)
+
+#undef VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD
+        }
+        else if (A.type_family == COMPOSITE_OPERATION_FAMILY && B.type_family == MATRIX_TYPE_FAMILY)        // C = A^T * B
+        {
+          statement_node const & leaf = s.array()[A.node_index];
+
+          assert(leaf.lhs.type_family  == MATRIX_TYPE_FAMILY && leaf.op.type == OPERATION_UNARY_TRANS_TYPE && bool("Logic error: Argument not a matrix transpose!"));
+          assert(leaf.lhs.numeric_type == result.numeric_type && bool("Numeric type not the same!"));
+          assert(result.numeric_type == B.numeric_type && bool("Numeric type not the same!"));
+
+#define VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(LAYOUTA, MEMBERA, MAJORA, LAYOUTB, MEMBERB, LAYOUTC, MEMBERC)\
+          if (leaf.lhs.subtype == LAYOUTA && B.subtype == LAYOUTB && result.subtype == LAYOUTC)\
+          {\
+            switch (result.numeric_type)\
+            {\
+            case FLOAT_TYPE:\
+              viennacl::linalg::prod_impl(viennacl::matrix_expression< const matrix_base<float, MAJORA>,\
+                                                                       const matrix_base<float, MAJORA>,\
+                                                                       op_trans>(*leaf.lhs.matrix_##MEMBERA##_float, *leaf.lhs.matrix_##MEMBERA##_float), \
+                                          *B.matrix_##MEMBERB##_float,\
+                                          *result.matrix_##MEMBERC##_float, static_cast<float>(alpha), static_cast<float>(beta)); break;\
+            case DOUBLE_TYPE:\
+              viennacl::linalg::prod_impl(viennacl::matrix_expression< const matrix_base<double, MAJORA>,\
+                                                                       const matrix_base<double, MAJORA>,\
+                                                                       op_trans>(*leaf.lhs.matrix_##MEMBERA##_double, *leaf.lhs.matrix_##MEMBERA##_double), \
+                                          *B.matrix_##MEMBERB##_double,\
+                                          *result.matrix_##MEMBERC##_double, alpha, beta); break;\
+            default:\
+              throw statement_not_supported_exception("Invalid numeric type in matrix-matrix multiplication");\
+            }\
+          }
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col, DENSE_COL_MATRIX_TYPE, col)
+
+#undef VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD
+        }
+        else if (A.type_family == COMPOSITE_OPERATION_FAMILY && B.type_family == COMPOSITE_OPERATION_FAMILY)        // C = A^T * B^T
+        {
+          statement_node const & leafA = s.array()[A.node_index];
+          statement_node const & leafB = s.array()[B.node_index];
+
+          assert(leafA.lhs.type_family  == MATRIX_TYPE_FAMILY && leafA.op.type == OPERATION_UNARY_TRANS_TYPE && bool("Logic error: Argument not a matrix transpose!"));
+          assert(leafB.lhs.type_family  == MATRIX_TYPE_FAMILY && leafB.op.type == OPERATION_UNARY_TRANS_TYPE && bool("Logic error: Argument not a matrix transpose!"));
+          assert(leafA.lhs.numeric_type == result.numeric_type && bool("Numeric type not the same!"));
+          assert(leafB.lhs.numeric_type == result.numeric_type && bool("Numeric type not the same!"));
+
+#define VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(LAYOUTA, MEMBERA, MAJORA, LAYOUTB, MEMBERB, MAJORB, LAYOUTC, MEMBERC)\
+          if (leafA.lhs.subtype == LAYOUTA && leafB.lhs.subtype == LAYOUTB && result.subtype == LAYOUTC)\
+          {\
+            switch (result.numeric_type)\
+            {\
+            case FLOAT_TYPE:\
+              viennacl::linalg::prod_impl(viennacl::matrix_expression< const matrix_base<float, MAJORA>,\
+                                                                       const matrix_base<float, MAJORA>,\
+                                                                       op_trans>(*leafA.lhs.matrix_##MEMBERA##_float, *leafA.lhs.matrix_##MEMBERA##_float), \
+                                          viennacl::matrix_expression< const matrix_base<float, MAJORB>,\
+                                                                       const matrix_base<float, MAJORB>,\
+                                                                       op_trans>(*leafB.lhs.matrix_##MEMBERB##_float, *leafB.lhs.matrix_##MEMBERB##_float), \
+                                          *result.matrix_##MEMBERC##_float, static_cast<float>(alpha), static_cast<float>(beta)); break;\
+            case DOUBLE_TYPE:\
+              viennacl::linalg::prod_impl(viennacl::matrix_expression< const matrix_base<double, MAJORA>,\
+                                                                       const matrix_base<double, MAJORA>,\
+                                                                       op_trans>(*leafA.lhs.matrix_##MEMBERA##_double, *leafA.lhs.matrix_##MEMBERA##_double), \
+                                          viennacl::matrix_expression< const matrix_base<double, MAJORB>,\
+                                                                       const matrix_base<double, MAJORB>,\
+                                                                       op_trans>(*leafB.lhs.matrix_##MEMBERB##_double, *leafB.lhs.matrix_##MEMBERB##_double), \
+                                          *result.matrix_##MEMBERC##_double, alpha, beta); break;\
+            default:\
+              throw statement_not_supported_exception("Invalid numeric type in matrix-matrix multiplication");\
+            }\
+          }
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row, row_major, DENSE_COL_MATRIX_TYPE, col)
+
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_ROW_MATRIX_TYPE, row)
+          VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD(DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col, column_major, DENSE_COL_MATRIX_TYPE, col)
+
+#undef VIENNACL_SCHEDULER_GENERATE_MATRIX_MATRIX_PROD
         }
         else
-          throw statement_not_supported_exception("Invalid numeric type in matrix-{matrix,vector} multiplication");
-
+          throw statement_not_supported_exception("Matrix-matrix multiplication encountered operands being neither dense matrices nor transposed dense matrices");
       }
 
       inline void matrix_vector_prod(statement const & s,
@@ -88,7 +245,7 @@ namespace viennacl
         {
           statement_node const & leaf = s.array()[A.node_index];
 
-          assert(leaf.lhs.type_family  == MATRIX_TYPE_FAMILY && bool("Logic error: Argument not a matrix transpose!"));
+          assert(leaf.lhs.type_family  == MATRIX_TYPE_FAMILY && leaf.op.type == OPERATION_UNARY_TRANS_TYPE && bool("Logic error: Argument not a matrix transpose!"));
           assert(leaf.lhs.numeric_type == x.numeric_type && bool("Numeric type not the same!"));
 
           if (leaf.lhs.subtype == DENSE_ROW_MATRIX_TYPE)
@@ -226,9 +383,17 @@ namespace viennacl
       lhs_rhs_element y = rhs_needs_temporary ? new_root_rhs.lhs : leaf.rhs;
 
       if (root_node.lhs.type_family == VECTOR_TYPE_FAMILY)
+      {
+        assert(root_node.op.type == OPERATION_BINARY_ASSIGN_TYPE && bool("Only direct assignments supported so far"));
         detail::matrix_vector_prod(s, root_node.lhs, x, y);
+      }
       else
-        detail::matrix_matrix_prod(s, root_node.lhs, x, y);
+      {
+        double alpha = (root_node.op.type == OPERATION_BINARY_INPLACE_SUB_TYPE) ? -1.0 : 1.0;
+        double beta  = (root_node.op.type != OPERATION_BINARY_ASSIGN_TYPE)      ?  1.0 : 0.0;
+
+        detail::matrix_matrix_prod(s, root_node.lhs, x, y, alpha, beta);
+      }
 
       // Part 3: Clean up //
 
