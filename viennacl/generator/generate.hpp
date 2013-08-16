@@ -50,34 +50,35 @@ namespace viennacl{
         typedef std::vector<representation_node_type> statements_type;
         typedef std::map<forced_profile_key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
 
-        static bool is_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+
+        static bool is_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-            return true;
+            return root_node.lhs.subtype==scheduler::DENSE_ROW_MATRIX_TYPE;
           else{
-            bool res = false;
+            bool res = root_node.lhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE || root_node.rhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
             if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-              res = res || is_lhs_transposed(statement, expr[root_node.lhs.node_index]);
+              res = res || is_lhs_flow_transposed(statement, expr[root_node.lhs.node_index]);
             if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-              res = res || is_lhs_transposed(statement, expr[root_node.rhs.node_index]);
+              res = res || is_lhs_flow_transposed(statement, expr[root_node.rhs.node_index]);
             return res;
           }
         }
 
-        static bool is_lhs_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+        static bool is_lhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
-            return is_transposed(statement, expr[root_node.lhs.node_index]);
+            return is_flow_transposed(statement, expr[root_node.lhs.node_index]);
           else
-            return false;
+            return root_node.lhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
         }
 
-        static bool is_rhs_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+        static bool is_rhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
-            return is_transposed(statement, expr[root_node.rhs.node_index]);
+            return is_flow_transposed(statement, expr[root_node.rhs.node_index]);
           else
-            return false;
+            return root_node.rhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
         }
 
         static void fill_expression_descriptor_scalar(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
@@ -109,7 +110,7 @@ namespace viennacl{
           }
           else if(root_node.op.type==OPERATION_BINARY_MAT_VEC_PROD_TYPE){
             descriptor.type_family=VECTOR_REDUCE_FAMILY;
-            if(is_lhs_transposed(statement,root_node))
+            if(is_lhs_flow_transposed(statement,root_node))
               descriptor.type=VECTOR_REDUCE_Tx_TYPE;
             else
               descriptor.type=VECTOR_REDUCE_Ax_TYPE;
@@ -131,8 +132,8 @@ namespace viennacl{
           }
           else if(root_node.op.type==OPERATION_BINARY_MAT_MAT_PROD_TYPE){
             descriptor.type_family=MATRIX_PRODUCT_FAMILY;
-            bool lhs_trans = is_lhs_transposed(statement,root_node);
-            bool rhs_trans = is_rhs_transposed(statement,root_node);
+            bool lhs_trans = is_lhs_flow_transposed(statement,root_node);
+            bool rhs_trans = is_rhs_flow_transposed(statement,root_node);
             if(!lhs_trans && !rhs_trans)
               descriptor.type=MATRIX_PRODUCT_AA_TYPE;
             else if(lhs_trans && !rhs_trans)
