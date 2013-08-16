@@ -26,6 +26,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/execute_util.hpp"
+#include "viennacl/scheduler/execute_generic_dispatcher.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 
@@ -384,8 +385,33 @@ namespace viennacl
 
       if (root_node.lhs.type_family == VECTOR_TYPE_FAMILY)
       {
-        assert(root_node.op.type == OPERATION_BINARY_ASSIGN_TYPE && bool("Only direct assignments supported so far"));
-        detail::matrix_vector_prod(s, root_node.lhs, x, y);
+        if (root_node.op.type != OPERATION_BINARY_ASSIGN_TYPE)
+        {
+          //split y += A*x
+          statement_node new_root_z;
+          detail::new_element(new_root_z.lhs, root_node.lhs);
+
+          // compute z = A * x
+          detail::matrix_vector_prod(s, new_root_z.lhs, x, y);
+
+          // assignment y = z
+          double alpha = 0;
+          if (root_node.op.type == OPERATION_BINARY_INPLACE_ADD_TYPE)
+            alpha = 1.0;
+          else if (root_node.op.type == OPERATION_BINARY_INPLACE_SUB_TYPE)
+            alpha = -1.0;
+          else
+            throw statement_not_supported_exception("Invalid assignment type for matrix-vector product");
+
+          lhs_rhs_element y = root_node.lhs;
+          detail::axbx(y,
+                       y, 1.0, 1, false, false,
+                       new_root_z.lhs, alpha, 1, false, false);
+
+          detail::delete_element(new_root_z.lhs);
+        }
+        else
+          detail::matrix_vector_prod(s, root_node.lhs, x, y);
       }
       else
       {

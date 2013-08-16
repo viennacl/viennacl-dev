@@ -142,6 +142,34 @@ int test_prod_rank1(Epsilon const & epsilon,
       retval = EXIT_FAILURE;
    }
 
+   std::cout << "Matrix-Vector product with inplace-add" << std::endl;
+   ublas_v1 += viennacl::linalg::prod(ublas_m1, ublas_v2);
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), viennacl::linalg::prod(vcl_m1, vcl_v2));
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Matrix-Vector product with inplace-sub" << std::endl;
+   ublas_v1 -= viennacl::linalg::prod(ublas_m1, ublas_v2);
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_sub(), viennacl::linalg::prod(vcl_m1, vcl_v2));
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
    // --------------------------------------------------------------------------
    /*
    std::cout << "Matrix-Vector product with scaled matrix" << std::endl;
@@ -210,6 +238,41 @@ int test_prod_rank1(Epsilon const & epsilon,
       std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
+
+   std::cout << "Matrix-Vector product with scaled add, inplace-add" << std::endl;
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+   ublas_v1 += alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) - beta * ublas_v1;
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) - beta * vcl_v1);
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Matrix-Vector product with scaled add, inplace-sub" << std::endl;
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+   ublas_v1 -= alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) - beta * ublas_v1;
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_sub(), alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) - beta * vcl_v1);
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
    // --------------------------------------------------------------------------
 
    viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
@@ -229,6 +292,35 @@ int test_prod_rank1(Epsilon const & epsilon,
       retval = EXIT_FAILURE;
    }
 
+   std::cout << "Transposed Matrix-Vector product, inplace-add" << std::endl;
+   ublas_v2 += viennacl::linalg::prod(trans(ublas_m1), ublas_v1);
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v2, viennacl::op_inplace_add(), viennacl::linalg::prod(trans(vcl_m1), vcl_v1));
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Transposed Matrix-Vector product, inplace-sub" << std::endl;
+   ublas_v2 -= viennacl::linalg::prod(trans(ublas_m1), ublas_v1);
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v2, viennacl::op_inplace_sub(), viennacl::linalg::prod(trans(vcl_m1), vcl_v1));
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   // --------------------------------------------------------------------------
    std::cout << "Transposed Matrix-Vector product with scaled add" << std::endl;
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
    {
@@ -242,6 +334,35 @@ int test_prod_rank1(Epsilon const & epsilon,
       std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
+
+   std::cout << "Transposed Matrix-Vector product with scaled add, inplace-add" << std::endl;
+   ublas_v2 += alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v2, viennacl::op_inplace_add(), alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2);
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Transposed Matrix-Vector product with scaled add, inplace-sub" << std::endl;
+   ublas_v2 -= alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
+   {
+   viennacl::scheduler::statement   my_statement(vcl_v2, viennacl::op_inplace_sub(), alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2);
+   viennacl::scheduler::execute(my_statement);
+   }
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
    // --------------------------------------------------------------------------
 
    return retval;
@@ -257,7 +378,7 @@ int test(Epsilon const& epsilon)
    int retval = EXIT_SUCCESS;
 
    std::size_t num_rows = 141;
-   std::size_t num_cols = 103;
+   std::size_t num_cols = 79;
 
    // --------------------------------------------------------------------------
    ublas::vector<NumericT> ublas_v1(num_rows);
