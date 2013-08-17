@@ -26,8 +26,7 @@
 #include <fstream>
 #include <sstream>
 #include "viennacl/forwards.h"
-#include "viennacl/linalg/kernels/matrix_col_kernels.h"
-#include "viennacl/linalg/kernels/matrix_row_kernels.h"
+#include "viennacl/linalg/opencl/kernels/matrix.hpp"
 
 #include <vector>
 #include <map>
@@ -36,27 +35,6 @@ namespace viennacl
 {
   namespace tools
   {
-    /**     @brief Implementation of a helper meta class for deducing the correct kernels for the supplied matrix */
-    template <typename MatrixType1>
-    struct MATRIX_KERNEL_CLASS_DEDUCER
-    {
-      typedef typename MatrixType1::ERROR_INVALID_ARGUMENT_FOR_KERNEL_CLASS_DEDUCER    ResultType;
-    };
-
-    /** \cond */
-    template <typename SCALARTYPE>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::row_major> >
-    {
-      typedef viennacl::linalg::kernels::matrix_row<SCALARTYPE, 1>     ResultType;
-    };
-
-    template <typename SCALARTYPE>
-    struct MATRIX_KERNEL_CLASS_DEDUCER< viennacl::matrix_base<SCALARTYPE, viennacl::column_major> >
-    {
-      typedef viennacl::linalg::kernels::matrix_col<SCALARTYPE, 1>     ResultType;
-    };
-
-    /** \endcond */
   }
 
 }

@@ -172,7 +172,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
@@ -205,7 +205,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        typedef typename viennacl::tools::MATRIX_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag

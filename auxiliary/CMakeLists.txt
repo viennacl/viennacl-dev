@@ -214,58 +214,6 @@ set(ELL_MATRIX_SRCS
 set(HYB_MATRIX_SRCS
    hyb_matrix/align1/vec_mul.cl)
 
-set(MATRIX_COL_SRCS
-   matrix_col/align1/am_cpu.cl
-   matrix_col/align1/am_gpu.cl
-   matrix_col/align1/ambm_cpu_cpu.cl
-   matrix_col/align1/ambm_cpu_gpu.cl
-   matrix_col/align1/ambm_gpu_cpu.cl
-   matrix_col/align1/ambm_gpu_gpu.cl
-   matrix_col/align1/ambm_m_cpu_cpu.cl
-   matrix_col/align1/ambm_m_cpu_gpu.cl
-   matrix_col/align1/ambm_m_gpu_cpu.cl
-   matrix_col/align1/ambm_m_gpu_gpu.cl
-   matrix_col/align1/assign_cpu.cl
-   matrix_col/align1/diagonal_assign_cpu.cl
-   matrix_col/align1/element_op.cl
-   matrix_col/align1/fft_direct.cl
-   matrix_col/align1/fft_radix2.cl
-   matrix_col/align1/fft_radix2_local.cl
-   matrix_col/align1/fft_reorder.cl
-   matrix_col/align1/triangular_substitute_inplace.cl
-   matrix_col/align1/lu_factorize.cl
-   matrix_col/align1/scaled_rank1_update_cpu.cl
-   matrix_col/align1/scaled_rank1_update_gpu.cl
-   matrix_col/align1/trans_vec_mul.cl
-   matrix_col/align1/vec_mul.cl
-   matrix_col/align16/dummy)
-
-set(MATRIX_ROW_SRCS
-   matrix_row/align1/am_cpu.cl
-   matrix_row/align1/am_gpu.cl
-   matrix_row/align1/ambm_cpu_cpu.cl
-   matrix_row/align1/ambm_cpu_gpu.cl
-   matrix_row/align1/ambm_gpu_cpu.cl
-   matrix_row/align1/ambm_gpu_gpu.cl
-   matrix_row/align1/ambm_m_cpu_cpu.cl
-   matrix_row/align1/ambm_m_cpu_gpu.cl
-   matrix_row/align1/ambm_m_gpu_cpu.cl
-   matrix_row/align1/ambm_m_gpu_gpu.cl
-   matrix_row/align1/assign_cpu.cl
-   matrix_row/align1/diagonal_assign_cpu.cl
-   matrix_row/align1/element_op.cl
-   matrix_row/align1/fft_direct.cl
-   matrix_row/align1/fft_radix2.cl
-   matrix_row/align1/fft_radix2_local.cl
-   matrix_row/align1/fft_reorder.cl
-   matrix_row/align1/triangular_substitute_inplace.cl
-   matrix_row/align1/lu_factorize.cl
-   matrix_row/align1/scaled_rank1_update_cpu.cl
-   matrix_row/align1/scaled_rank1_update_gpu.cl
-   matrix_row/align1/trans_vec_mul.cl
-   matrix_row/align1/vec_mul.cl
-   matrix_row/align16/dummy)
-
 set(FFT_SRCS
    fft/align1/bluestein_post.cl
    fft/align1/bluestein_pre.cl
@@ -325,7 +273,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -346,7 +294,6 @@ foreach(d
       coordinate_matrix
       ell_matrix
       hyb_matrix
-      matrix_col
       matrix_col_element
       matrix_prod_col_col_col
       matrix_prod_col_col_row
@@ -356,7 +303,6 @@ foreach(d
       matrix_prod_row_col_row
       matrix_prod_row_row_col
       matrix_prod_row_row_row
-      matrix_row
       matrix_row_element
       matrix_solve_col_col
       matrix_solve_col_row
