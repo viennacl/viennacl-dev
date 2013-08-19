@@ -52,15 +52,22 @@ namespace viennacl
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
+        if (options2 & (1 << 1))
+        {
+          for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+            for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+              A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha;
+        }
+        else
+        {
+          for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+            for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+              A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
+        }
       }
 
       // alpha on GPU
@@ -82,15 +89,22 @@ namespace viennacl
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
+        if (options2 & (1 << 1))
+        {
+          for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+            for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+              A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha;
+        }
+        else
+        {
+          for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+            for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+              A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha;
+        }
       }
 
 
@@ -124,23 +138,52 @@ namespace viennacl
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-          + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
 
@@ -170,23 +213,52 @@ namespace viennacl
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = *fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-          + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
       // alpha on GPU, beta on CPU
@@ -215,23 +287,52 @@ namespace viennacl
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-          + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
 
@@ -261,23 +362,52 @@ namespace viennacl
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = *fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-          + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+              = B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
 
@@ -311,23 +441,52 @@ namespace viennacl
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
 
@@ -357,23 +516,52 @@ namespace viennacl
         T alpha = fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = *fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
       // alpha on GPU, beta on CPU
@@ -402,23 +590,52 @@ namespace viennacl
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
 
@@ -448,23 +665,52 @@ namespace viennacl
         T alpha = *fac2;
         if (options2 & (1 << 0))
           alpha = -alpha;
-        if (options2 & (1 << 1))
-          alpha = ((T)(1)) / alpha;
 
         T beta = *fac3;
         if (options3 & (1 << 0))
           beta = -beta;
-        if (options3 & (1 << 1))
-          beta = ((T)(1)) / beta;
 
         unsigned int row_gid = (blockIdx.x * blockDim.x + threadIdx.x) / blockDim.x;
         unsigned int col_gid = (blockIdx.x * blockDim.x + threadIdx.x) % blockDim.x;
 
-        for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
-          for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
-            A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
-          += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
-           + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+        if (options2 & (1 << 1))
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] / alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
+        else
+        {
+          if (options3 & (1 << 1))
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] / beta;
+          }
+          else
+          {
+            for (unsigned int row = row_gid; row < A_size1; row += gridDim.x)
+              for (unsigned int col = col_gid; col < A_size2; col += blockDim.x)
+                A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2]
+             += B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2] * alpha
+              + C[(row * C_inc1 + C_start1) * C_internal_size2 + col * C_inc2 + C_start2] * beta;
+          }
+        }
       }
 
       //

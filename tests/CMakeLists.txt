@@ -5,7 +5,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
              global_variables
              matrix_vector
-             matrix_row_float matrix_row_double matrix_col_float matrix_col_double
+             matrix_row_float matrix_row_double matrix_row_int
+             matrix_col_float matrix_col_double matrix_col_int
              scalar scheduler_matrix scheduler_matrix_matrix scheduler_matrix_vector scheduler_sparse scheduler_vector sparse
              vector_float vector_double vector_int vector_multi_inner_prod
              spmdm)
@@ -20,7 +21,8 @@ if (ENABLE_OPENCL)
                generator_blas1 generator_blas2 generator_blas3 #generator_segmentation
                global_variables
                matrix_vector
-               matrix_row_float matrix_row_double matrix_col_float matrix_col_double
+               matrix_row_float matrix_row_double
+               matrix_col_float matrix_col_double
                nmf qr_method
                scalar sparse structured-matrices svd
                vector_float vector_double vector_int vector_multi_inner_prod
@@ -45,7 +47,8 @@ if (ENABLE_CUDA)
   foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
                global_variables
                matrix_vector
-               matrix_row_float matrix_row_double matrix_col_float matrix_col_double
+               matrix_row_float matrix_row_double matrix_row_int
+               matrix_col_float matrix_col_double matrix_col_int
                scalar sparse
                vector_float vector_double vector_int vector_multi_inner_prod
                spmdm)
