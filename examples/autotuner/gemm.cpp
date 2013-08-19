@@ -115,7 +115,7 @@ double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans, code_gen
 }
 
 template<class NumericT>
-void run_autotune(std::string const & dump_name, viennacl::ocl::device const & device, bool is_lhs_trans, bool is_rhs_trans){
+void run_autotune(std::string const & dump_name, bool light_tuning, viennacl::ocl::device const & device, bool is_lhs_trans, bool is_rhs_trans){
     typedef std::map<double, matrix_product> timings_t;
     typedef viennacl::matrix<NumericT> MatrixT;
 
@@ -128,8 +128,15 @@ void run_autotune(std::string const & dump_name, viennacl::ocl::device const & d
     std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
     std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
     std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
-    std::vector<int> lhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
-    std::vector<int> rhs_storage; for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
+    std::vector<int> lhs_storage; std::vector<int> rhs_storage;
+    if(light_tuning){
+        lhs_storage.push_back(1);
+        rhs_storage.push_back(0);
+    }
+    else{
+        for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
+        for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
+    }
     std::vector<int> unroll; unroll.push_back(0); unroll.push_back(1);
 
     conf.add_tuning_param("local_size1",local_size1);
@@ -234,13 +241,14 @@ int main(int argc, char* argv[]){
     typedef std::vector< viennacl::ocl::platform > platforms_type;
   std::vector<std::string> args(argv, argv+argc);
   if(argc<4){
-      std::cerr << "USAGE : PROGRAM_NAME DEVICE LAYOUT SCALARTYPE" << std::endl;
+      std::cerr << "USAGE : PROGRAM_NAME DEVICE LAYOUT SCALARTYPE LIGHT_TUNING" << std::endl;
       exit(1);
   }
   unsigned int current_device=0;
   unsigned int requested_device = atoi(args[1].c_str());
   unsigned int layout = atoi(args[2].c_str());
   std::string scalartype = args[3];
+  unsigned int light_tuning = atoi(args[4].c_str());
 
   platforms_type platforms = viennacl::ocl::get_platforms();
   for (platforms_type::iterator platform_iter  = platforms.begin();
@@ -268,35 +276,35 @@ int main(int argc, char* argv[]){
           case 0:
             std::cout << "Layout : AA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("gemm_aa_float_" + device_name + ".dat",device,false,false);
+              run_autotune<float>("gemm_aa_float_" + device_name + ".dat",light_tuning,device,false,false);
             else if(scalartype=="double")
-              run_autotune<double>("gemm_aa_double_" + device_name + ".dat",device,false,false);
+              run_autotune<double>("gemm_aa_double_" + device_name + ".dat",light_tuning,device,false,false);
             break;
 
 
           case 1:
             std::cout << "Layout : TA" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("gemm_ta_float_" + device_name + ".dat",device, true, false);
+              run_autotune<float>("gemm_ta_float_" + device_name + ".dat",light_tuning,device, true, false);
             else if(scalartype=="double")
-              run_autotune<double>("gemm_ta_double_" + device_name + ".dat",device, true, false);
+              run_autotune<double>("gemm_ta_double_" + device_name + ".dat",light_tuning,device, true, false);
             break;
 
 
           case 2:
             std::cout << "Layout : AT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("gemm_at_float_" + device_name + ".dat",device, false, true);
+              run_autotune<float>("gemm_at_float_" + device_name + ".dat",light_tuning,device, false, true);
             else if(scalartype=="double")
-              run_autotune<double>("gemm_at_double_" + device_name + ".dat",device, false, true);
+              run_autotune<double>("gemm_at_double_" + device_name + ".dat",light_tuning,device, false, true);
             break;
 
           case 3:
             std::cout << "Layout : TT" << std::endl;
             if(scalartype=="float")
-              run_autotune<float>("gemm_tt_float_" + device_name + ".dat",device,true,true);
+              run_autotune<float>("gemm_tt_float_" + device_name + ".dat",light_tuning,device,true,true);
             else if(scalartype=="double")
-              run_autotune<double>("gemm_tt_double_" + device_name + ".dat",device, true, true);
+              run_autotune<double>("gemm_tt_double_" + device_name + ".dat",light_tuning,device, true, true);
             break;
         }
       }
