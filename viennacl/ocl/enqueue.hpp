@@ -63,43 +63,11 @@ namespace viennacl
         else
           err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, NULL);
 
-        if (err != CL_SUCCESS)  //if not successful, try to start with smaller work size
+        if (err != CL_SUCCESS)
         {
-          //std::cout << "FAIL: " << std::endl; exit(0);
-          while (err != CL_SUCCESS && tmp_local > 1)
-          {
-            //std::cout << "Flushing queue, then enqueuing again with half the size..." << std::endl;
-            //std::cout << "Error code: " << err << std::endl;
-
-            tmp_global /= 2;
-            tmp_local /= 2;
-
-            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-            std::cout << "ViennaCL: Kernel start failed for '" << k.name() << "'." << std::endl;
-            std::cout << "ViennaCL: Global work size: '"  << tmp_global << "'..." << std::endl;
-            std::cout << "ViennaCL: Local work size: '"   << tmp_local << "'..." << std::endl;
-            #endif
-
-            queue.finish();
-            err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, NULL);
-          }
-
-          if (err != CL_SUCCESS)
-          {
-            //could not start kernel with any parameters
-            std::cerr << "ViennaCL: FATAL ERROR: Kernel start failed for '" << k.name() << "'." << std::endl;
-            std::cerr << "ViennaCL: Smaller work sizes could not solve the problem. " << std::endl;
-            VIENNACL_ERR_CHECK(err);
-          }
-          else
-          {
-            //remember parameters:
-            k.local_work_size(0, tmp_local);
-            k.global_work_size(0, tmp_global);
-            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-            std::cout << "ViennaCL: Kernel '" << k.name() << "' now uses global work size " << tmp_global << " and local work size " << tmp_local << "."  << std::endl;
-            #endif
-          }
+          std::cerr << "ViennaCL: FATAL ERROR: Kernel start failed for '" << k.name() << "'." << std::endl;
+          std::cerr << "ViennaCL: Smaller work sizes could not solve the problem. " << std::endl;
+          VIENNACL_ERR_CHECK(err);
         }
       }
       else //2D or 3D kernel
@@ -128,7 +96,6 @@ namespace viennacl
           std::cerr << "ViennaCL: FATAL ERROR: Kernel start failed for '" << k.name() << "'." << std::endl;
           VIENNACL_ERR_CHECK(err);
         }
-
       }
 
       #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
