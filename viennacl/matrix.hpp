@@ -152,8 +152,11 @@ namespace viennacl
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
+      typedef typename result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
+      typedef typename result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
+
     public:
-      typedef typename LHS::size_type       size_type;
+      typedef vcl_size_t       size_type;
 
       matrix_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
 
@@ -170,9 +173,9 @@ namespace viennacl
 
     private:
       /** @brief The left hand side operand */
-      typename result_of::matrix_expression_internal_storage<LHS>::type lhs_;
+      lhs_reference_type lhs_;
       /** @brief The right hand side operand */
-      typename result_of::matrix_expression_internal_storage<RHS>::type rhs_;
+      rhs_reference_type rhs_;
   };
 
 
@@ -227,7 +230,7 @@ namespace viennacl
 
       typedef matrix_iterator<row_iteration, self_type >   iterator1;
       typedef matrix_iterator<col_iteration, self_type >   iterator2;
-      typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      typedef scalar<SCALARTYPE>                                                  value_type;
       typedef SCALARTYPE                                                          cpu_value_type;
       typedef SizeType                                                            size_type;
       typedef DistanceType                                                        difference_type;
@@ -560,7 +563,7 @@ namespace viennacl
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
       matrix_expression<const self_type, const SCALARTYPE, op_mult> operator-() const
       {
-        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
+        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1));
       }
 
       /** @brief Returns the number of rows */
@@ -1596,8 +1599,6 @@ namespace viennacl
           static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
           {
             matrix<T, F> temp(proxy.lhs());
-            std::cout << "lhs -= temp / proxy.rhs()" << std::endl;
-            std::cout << temp(0,0) << " / " << proxy.rhs() << std::endl;
             lhs -= temp / proxy.rhs();
           }
       };

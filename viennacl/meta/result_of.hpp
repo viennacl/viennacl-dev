@@ -416,28 +416,6 @@ namespace viennacl
       };
 
 
-
-      template <typename T>
-      struct matrix_expression_internal_storage
-      {
-        typedef T &     type;
-      };
-
-      template <>
-      struct matrix_expression_internal_storage<const float>
-      {
-        typedef float type;
-      };
-
-      template <>
-      struct matrix_expression_internal_storage<const double>
-      {
-        typedef double type;
-      };
-
-
-
-
       //
       // Deduce compatible vector type for a matrix type
       //
