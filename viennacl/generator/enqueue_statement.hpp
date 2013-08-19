@@ -71,9 +71,9 @@ namespace viennacl{
             if(memory_.insert((void*)&vec).second){
               kernel_.arg(current_arg_++, vec.handle().opencl_handle());
               if(viennacl::traits::start(vec)>0)
-                kernel_.arg(current_arg_++, viennacl::traits::start(vec));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
               if(vec.stride()>1)
-                kernel_.arg(current_arg_++, vec.stride());
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride(vec)));
             }
           }
 
@@ -91,16 +91,17 @@ namespace viennacl{
           //Matrix mapping
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
+            typedef typename matrix_base<ScalarType, Layout>::size_type size_type;
             if(memory_.insert((void*)&mat).second){
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
               if(viennacl::traits::start1(mat)>0)
-                kernel_.arg(current_arg_++, viennacl::traits::start1(mat));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
               if(viennacl::traits::stride1(mat)>1)
-                kernel_.arg(current_arg_++, viennacl::traits::stride1(mat));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
               if(viennacl::traits::start2(mat)>0)
-                kernel_.arg(current_arg_++, viennacl::traits::start2(mat));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
               if(viennacl::traits::stride2(mat)>1)
-                kernel_.arg(current_arg_++, viennacl::traits::stride2(mat));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
             }
           }
 
