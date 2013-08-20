@@ -880,13 +880,17 @@ namespace viennacl
               generate_assign_cpu(source, numeric_string, is_row_major);
               generate_diagonal_assign_cpu(source, numeric_string, is_row_major);
               generate_element_op(source, numeric_string, is_row_major);
-              generate_fft(source, numeric_string, is_row_major);
-              generate_lu(source, numeric_string, is_row_major);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
               generate_trans_vec_mul(source, numeric_string, is_row_major);
-              generate_triangular_substitute_inplace(source, numeric_string, is_row_major);
               generate_vec_mul(source, numeric_string, is_row_major);
+
+              if (numeric_string == "float" || numeric_string == "double")
+              {
+                generate_fft(source, numeric_string, is_row_major);
+                generate_lu(source, numeric_string, is_row_major);
+                generate_triangular_substitute_inplace(source, numeric_string, is_row_major);
+              }
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
