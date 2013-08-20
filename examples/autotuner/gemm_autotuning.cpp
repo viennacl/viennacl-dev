@@ -1,5 +1,3 @@
-#define VIENNACL_WITH_OPENCL
-
 #define SIZE_INC 128
 #define MAX_SIZE 3072
 #define N_RUNS 2

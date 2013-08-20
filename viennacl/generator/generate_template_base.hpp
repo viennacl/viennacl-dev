@@ -153,10 +153,9 @@ namespace viennacl{
 
             std::size_t size1, size2, size3=1;
             set_local_sizes(size1,size2,n);
-            stream << "__kernel ";
-//            stream << "__attribute__((vec_type_hint()))" << std::endl;
+            //stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << size1 << "," << size2 << "," << size3 << ")))" << std::endl;
-            stream << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
+            stream << "__kernel " << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
 

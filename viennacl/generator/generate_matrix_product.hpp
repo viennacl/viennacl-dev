@@ -452,13 +452,13 @@ namespace viennacl{
           else{
             if(lhs_access_flow==REGULAR)
               for(unsigned int m=0; m<ms_lhs; ++m)
-                stream << "__global " << aligned_scalartype << " * " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
+                stream << "__global " << aligned_scalartype << "* " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
                        << lhs->size2() << "* ("
                        << "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << "+" << m
                        << " );" << std::endl;
             else
               for(unsigned int k=0; k<ks_lhs; ++k)
-                stream << "__global " << aligned_scalartype<< " * " << "lhs_ptr_" << k << " = " << lhs->name() << " + "
+                stream << "__global " << aligned_scalartype<< "* " << "lhs_ptr_" << k << " = " << lhs->name() << " + "
                        << "(" << lhs->size1() << ")*" << k
                        << "+ " << "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << ";" << std::endl;
           }
@@ -478,13 +478,13 @@ namespace viennacl{
           else{
             if(rhs_access_flow==REGULAR)
               for(unsigned int k = 0 ; k < ks_rhs ; ++k)
-                stream << "__global " << aligned_scalartype << " * " << "rhs_ptr_" << k << " = " << rhs->name() << " + "
+                stream << "__global " << aligned_scalartype << "* " << "rhs_ptr_" << k << " = " << rhs->name() << " + "
                        << "(" << k << ")" << "*" << rhs->size2()
                        << " + " << "get_local_id(1)*" << ns_rhs << " + get_group_id(1)*" << nl_rhs
                        << ";" << std::endl;
             else
               for(unsigned int n = 0 ; n < ns_rhs ; ++n)
-                stream << "__global " << aligned_scalartype << " * " << "rhs_ptr_" << n << " = " << rhs->name() << " +  "
+                stream << "__global " << aligned_scalartype << "* " << "rhs_ptr_" << n << " = " << rhs->name() << " +  "
                        << "(" << "get_local_id(1)*" << ns_rhs << " + get_group_id(1)*" << nl_rhs << " + " << n << ")" << "*" << rhs->size1()
                        << ";" << std::endl;
           }

@@ -35,6 +35,7 @@ namespace viennacl
 {
   namespace tools
   {
+
     /** \cond */
     /** @brief Supply suitable increment functions for the iterators: */
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
@@ -140,6 +141,25 @@ namespace viennacl
     {
       if (to_reach % base == 0) return to_reach;
       return (to_reach / base) * base;
+    }
+
+    /** @brief Replace in a source string a pattern by another
+     *
+     * @param source The source string
+     * @param find String to find
+     * @param replace String to replace
+     */
+    int inline find_and_replace(std::string & source, std::string const & find, std::string const & replace)
+    {
+        int num=0;
+        size_t fLen = find.size();
+        size_t rLen = replace.size();
+        for (size_t pos=0; (pos=source.find(find, pos))!=std::string::npos; pos+=rLen)
+        {
+            num++;
+            source.replace(pos, fLen, replace);
+        }
+        return num;
     }
 
     /** @brief Create a double precision kernel out of a single precision kernel

@@ -36,11 +36,17 @@
 
 #include "viennacl/generator/map_generate_prototype.hpp"
 
+#include "viennacl/tools/tools.hpp"
+
 namespace viennacl{
 
   namespace generator{
 
     using namespace scheduler;
+
+    void translate_opencl_to_cuda(std::string & str){
+
+    }
 
     class code_generator{
       public:
@@ -49,7 +55,6 @@ namespace viennacl{
         typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
         typedef std::map<forced_profile_key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
-
 
         static bool is_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
@@ -239,7 +244,7 @@ namespace viennacl{
           *program_name='\0';
         }
 
-        std::string make_program_string() const {
+        std::string make_opencl_program_string() const {
           utils::kernel_generation_stream stream;
 
           //Headers generation
@@ -258,6 +263,54 @@ namespace viennacl{
           return stream.str();
         }
 
+        std::string make_cuda_program_string() const {
+          //Creates OpenCL string with #ifdef and attributes
+          utils::kernel_generation_stream stream;
+          std::size_t device_offset =0;
+          for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
+            for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
+              get_profile(*it,iit->first)(stream,device_offset++,iit->second);
+          std::string res = stream.str();
+
+          viennacl::tools::find_and_replace(res,"__attribute__","//__attribute__");
+
+          //Pointer
+          viennacl::tools::find_and_replace(res, "__global float*", "float*");
+          viennacl::tools::find_and_replace(res, "__local float*", "float*");
+
+          viennacl::tools::find_and_replace(res, "__global double*", "double*");
+          viennacl::tools::find_and_replace(res, "__local double*", "double*");
+
+          //Qualifiers
+          viennacl::tools::find_and_replace(res,"__global","__device__");
+          viennacl::tools::find_and_replace(res,"__kernel","__global__");
+          viennacl::tools::find_and_replace(res,"__constant","__constant__");
+          viennacl::tools::find_and_replace(res,"__local","__shared__");
+
+          //Indexing
+          viennacl::tools::find_and_replace(res,"get_num_groups(0)","gridDim.x");
+          viennacl::tools::find_and_replace(res,"get_num_groups(1)","gridDim.y");
+
+          viennacl::tools::find_and_replace(res,"get_local_size(0)","blockDim.x");
+          viennacl::tools::find_and_replace(res,"get_local_size(1)","blockDim.y");
+
+          viennacl::tools::find_and_replace(res,"get_group_id(0)","blockIdx.x");
+          viennacl::tools::find_and_replace(res,"get_group_id(1)","blockIdx.y");
+
+          viennacl::tools::find_and_replace(res,"get_local_id(0)","threadIdx.x");
+          viennacl::tools::find_and_replace(res,"get_local_id(1)","threadIdx.y");
+
+          viennacl::tools::find_and_replace(res,"get_global_id(0)","(blockIdx.x*blockDim.x + threadIdx.x)");
+          viennacl::tools::find_and_replace(res,"get_global_id(1)","(blockIdx.y*blockDim.y + threadIdx.y)");
+
+          //Synchronization
+          viennacl::tools::find_and_replace(res,"barrier(CLK_LOCAL_MEM_FENCE)","__syncthreads()");
+          viennacl::tools::find_and_replace(res,"barrier(CLK_GLOBAL_MEM_FENCE)","__syncthreads()");
+
+
+          return res;
+        }
+
       private:
         statements_type statements_;
         viennacl::ocl::context const & ctx_;
@@ -270,7 +323,7 @@ namespace viennacl{
       if(force_recompilation)
         viennacl::ocl::current_context().delete_program(program_name);
       if(!viennacl::ocl::current_context().has_program(program_name)){
-        std::string source_code = generator.make_program_string();
+        std::string source_code = generator.make_opencl_program_string();
     #ifdef VIENNACL_DEBUG_BUILD
         std::cout << "Building " << program_name << "..." << std::endl;
         std::cout << source_code << std::endl;
@@ -288,6 +341,18 @@ namespace viennacl{
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
         viennacl::ocl::enqueue(**it, (*it)->context().get_queue());
       }
+    }
+
+    inline std::string get_opencl_program_string(viennacl::scheduler::statement const & s){
+      generator::code_generator gen;
+      gen.add(s,s.array()[0]);
+      return gen.make_opencl_program_string();
+    }
+
+    inline std::string get_cuda_program_string(viennacl::scheduler::statement const & s){
+      generator::code_generator gen;
+      gen.add(s, s.array()[0]);
+      return gen.make_cuda_program_string();
     }
 
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
