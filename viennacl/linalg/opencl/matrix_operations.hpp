@@ -47,8 +47,7 @@
 #include "viennacl/linalg/opencl/common.hpp"
 
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
-#include "viennacl/linalg/kernels/matrix_row_element_kernels.h"
-#include "viennacl/linalg/kernels/matrix_col_element_kernels.h"
+#include "viennacl/linalg/opencl/kernels/matrix_element.hpp"
 
 #include "viennacl/linalg/kernels/matrix_prod_col_col_col_kernels.h"
 #include "viennacl/linalg/kernels/matrix_prod_col_col_row_kernels.h"
@@ -322,14 +321,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        if (viennacl::is_row_major<F>::value == true)
-          viennacl::linalg::kernels::matrix_row_element<T, 1>::init(ctx);
-        else
-          viennacl::linalg::kernels::matrix_col_element<T, 1>::init(ctx);
-
-        viennacl::ocl::kernel & k = (viennacl::is_row_major<F>::value == true) ?
-                                      ctx.get_kernel(viennacl::linalg::kernels::matrix_row_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign")
-                                    : ctx.get_kernel(viennacl::linalg::kernels::matrix_col_element<T, 1>::program_name(), detail::op_to_string(OP()) + "_assign");
+        viennacl::linalg::opencl::kernels::matrix_element<T, F>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, F>::program_name(), detail::op_to_string(OP()) + "_assign");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),

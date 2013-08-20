@@ -4,7 +4,6 @@ add_executable(generate-blas3-solve-align1  generate-blas3-solve-align1.cpp)
 add_executable(generate-blas3-prod-align1   generate-blas3-prod-align1.cpp)
 add_executable(generate-blas3-prod16-align1 generate-blas3-prod16-align1.cpp)
 add_executable(generate-blas3-prod-amd      generate-blas3-prod-amd.cpp)
-add_executable(generate-matrix-element-ops  generate-matrix-element-ops.cpp)
 
 function(generate_blas3_prod_align1 outvar)
    set(crstr_0 col)
@@ -156,32 +155,6 @@ generate_blas3_prod_align1(MATRIX_PROD_SRCS)
 # Matrix-Matrix triangular solver
 generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
 
-# Matrix element wise operations
-function(generate_matrix_ops_align1 outvar)
-   set(crstr_0 col)
-   set(crstr_1 row)
-   set(outfiles)
-
-   foreach(ar 0 1) # A is column/row major
-
-      set(d "${CMAKE_CURRENT_BINARY_DIR}")
-      set(d "${d}/matrix_${crstr_${ar}}_element")
-      set(d "${d}/align1")
-      file(MAKE_DIRECTORY "${d}")
-      set(o "${d}/ops.cl")
-      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
-      add_custom_command(OUTPUT "${o}"
-         COMMAND generate-matrix-element-ops ${ar} > "${o}"
-         COMMENT "Generating ${ro}"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-         VERBATIM)
-      list(APPEND outfiles "${o}")
-   endforeach()
-   set(${outvar} "${outfiles}" PARENT_SCOPE)
-endfunction()
-
-generate_matrix_ops_align1(MATRIX_ELEMENT_SRCS)
-
 set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/block_trans_lu_backward.cl
    compressed_matrix/align1/block_trans_unit_lu_forward.cl
@@ -281,7 +254,6 @@ foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS
    list(APPEND CL_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${f}")
 endforeach()
 list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
-list(APPEND CL_SRCS ${MATRIX_ELEMENT_SRCS})
 
 configure_file(converter.cpp ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp @ONLY)
 add_executable(converter ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp)
@@ -294,7 +266,6 @@ foreach(d
       coordinate_matrix
       ell_matrix
       hyb_matrix
-      matrix_col_element
       matrix_prod_col_col_col
       matrix_prod_col_col_row
       matrix_prod_col_row_col
@@ -303,7 +274,6 @@ foreach(d
       matrix_prod_row_col_row
       matrix_prod_row_row_col
       matrix_prod_row_row_row
-      matrix_row_element
       matrix_solve_col_col
       matrix_solve_col_row
       matrix_solve_row_col
