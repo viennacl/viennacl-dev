@@ -32,6 +32,8 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/forwards.h"
 
+#include "viennacl/meta/result_of.hpp"
+
 #include "viennacl/tools/shared_ptr.hpp"
 
 #include "viennacl/ocl/kernel.hpp"
@@ -55,7 +57,8 @@ namespace viennacl{
 
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
-            kernel_.arg(current_arg_++, scal);
+            typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
+            kernel_.arg(current_arg_++, cl_scalartype(scal));
           }
 
           //Scalar mapping
@@ -80,11 +83,12 @@ namespace viennacl{
           //Implicit vector mapping
           template<class ScalarType>
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+            typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
             if(memory_.insert((void*)&vec).second){
               if(vec.is_value_static()==false)
-                kernel_.arg(current_arg_++, vec.value());
+                kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
               if(vec.has_index())
-                kernel_.arg(current_arg_++, vec.index());
+                kernel_.arg(current_arg_++, cl_uint(vec.index()));
             }
           }
 
