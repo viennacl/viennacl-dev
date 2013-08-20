@@ -49,10 +49,7 @@ namespace viennacl {
          * @brief The default constructor. Does not allocate any memory.
          *
          */
-        explicit hankel_matrix()
-        {
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
-        }
+        explicit hankel_matrix() {}
 
         /**
          * @brief         Creates the matrix with the given size
@@ -63,7 +60,7 @@ namespace viennacl {
         explicit hankel_matrix(std::size_t rows, std::size_t cols) : elements_(rows, cols)
         {
           assert(rows == cols && bool("Hankel matrix must be square!"));
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
+          (void)cols;  // avoid 'unused parameter' warning in optimized builds
         }
 
         /** @brief Resizes the matrix.

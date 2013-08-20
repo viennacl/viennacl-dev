@@ -25,7 +25,7 @@
 #include <viennacl/vector.hpp>
 #include <viennacl/matrix.hpp>
 
-#include "viennacl/linalg/kernels/fft_kernels.h"
+#include "viennacl/linalg/opencl/kernels/fft.hpp"
 
 #include <cmath>
 
@@ -107,7 +107,7 @@ namespace viennacl
                     )
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(in.context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
           std::string program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::program_name();
           if (data_order == FFT_DATA_ORDER::COL_MAJOR)
@@ -135,7 +135,7 @@ namespace viennacl
                      )
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(in.context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
           std::string program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::program_name();
           if (data_order == FFT_DATA_ORDER::COL_MAJOR)
@@ -173,7 +173,7 @@ namespace viennacl
                     )
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(in.context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
             assert(batch_num != 0);
             assert(is_radix2(size));
@@ -232,7 +232,7 @@ namespace viennacl
                        std::size_t /*batch_num*/)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(in).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
           std::size_t size = in.size() >> 1;
           std::size_t ext_size = next_power_2(2 * size - 1);
@@ -243,7 +243,7 @@ namespace viennacl
           viennacl::vector<SCALARTYPE, ALIGNMENT> Z(ext_size << 1);
 
             {
-                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "zero2");
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "zero2");
                 viennacl::ocl::enqueue(kernel(
                                             A,
                                             B,
@@ -252,7 +252,7 @@ namespace viennacl
 
             }
             {
-                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "bluestein_pre");
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "bluestein_pre");
                 viennacl::ocl::enqueue(kernel(
                                            in,
                                            A,
@@ -265,7 +265,7 @@ namespace viennacl
             viennacl::linalg::convolve_i(A, B, Z);
 
             {
-                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "bluestein_post");
+                viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "bluestein_post");
                 viennacl::ocl::enqueue(kernel(
                                             Z,
                                             out,
@@ -280,9 +280,9 @@ namespace viennacl
                       viennacl::vector<SCALARTYPE, ALIGNMENT> & output)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input1).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
           std::size_t size = input1.size() >> 1;
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "fft_mult_vec");
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "fft_mult_vec");
           viennacl::ocl::enqueue(kernel(input1, input2, output, static_cast<cl_uint>(size)));
         }
 
@@ -290,9 +290,9 @@ namespace viennacl
         void normalize(viennacl::vector<SCALARTYPE, ALIGNMENT> & input)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "fft_div_vec_scalar");
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "fft_div_vec_scalar");
           std::size_t size = input.size() >> 1;
           SCALARTYPE norm_factor = static_cast<SCALARTYPE>(size);
           viennacl::ocl::enqueue(kernel(input, static_cast<cl_uint>(size), norm_factor));
@@ -302,9 +302,9 @@ namespace viennacl
         void transpose(viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> & input)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "transpose_inplace");
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "transpose_inplace");
           viennacl::ocl::enqueue(kernel(input,
                                         static_cast<cl_uint>(input.internal_size1()),
                                         static_cast<cl_uint>(input.internal_size2()) >> 1));
@@ -315,9 +315,9 @@ namespace viennacl
                        viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> & output)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "transpose");
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "transpose");
           viennacl::ocl::enqueue(kernel(input,
                                         output,
                                         static_cast<cl_uint>(input.internal_size1()),
@@ -331,8 +331,8 @@ namespace viennacl
                              std::size_t size)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(in).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
-          viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "real_to_complex");
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
+          viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "real_to_complex");
           viennacl::ocl::enqueue(kernel(in, out, static_cast<cl_uint>(size)));
         }
 
@@ -342,8 +342,8 @@ namespace viennacl
                              std::size_t size)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(in).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "complex_to_real");
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "complex_to_real");
           viennacl::ocl::enqueue(kernel(in, out, static_cast<cl_uint>(size)));
         }
 
@@ -351,9 +351,9 @@ namespace viennacl
         void reverse(viennacl::vector_base<SCALARTYPE>& in)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(in).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
           std::size_t size = in.size();
-          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "reverse_inplace");
+          viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "reverse_inplace");
           viennacl::ocl::enqueue(kernel(in, static_cast<cl_uint>(size)));
         }
 

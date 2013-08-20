@@ -187,20 +187,6 @@ set(ELL_MATRIX_SRCS
 set(HYB_MATRIX_SRCS
    hyb_matrix/align1/vec_mul.cl)
 
-set(FFT_SRCS
-   fft/align1/bluestein_post.cl
-   fft/align1/bluestein_pre.cl
-   fft/align1/complex_to_real.cl
-   fft/align1/fft_div_vec_scalar.cl
-   fft/align1/fft_mult_vec.cl
-   fft/align1/real_to_complex.cl
-   fft/align1/reverse_inplace.cl
-   fft/align1/transpose.cl
-   fft/align1/transpose_inplace.cl
-   fft/align1/vandermonde_prod.cl
-   fft/align1/zero2.cl
-   )
-
 set(SVD_SRCS
    svd/align1/bidiag_pack.cl
    svd/align1/col_reduce_lcl_array.cl
@@ -246,7 +232,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -278,7 +264,6 @@ foreach(d
       matrix_solve_col_row
       matrix_solve_row_col
       matrix_solve_row_row
-      fft
       svd
       spai
       nmf

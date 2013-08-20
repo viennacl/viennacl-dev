@@ -390,8 +390,6 @@ int main(int , char **)
     createHeaders("coordinate_matrix");
     createHeaders("ell_matrix");
     createHeaders("hyb_matrix");
-    createHeaders("matrix_row_element");
-    createHeaders("matrix_col_element");
     createHeaders("matrix_prod_row_row_row");
     createHeaders("matrix_prod_row_row_col");
     createHeaders("matrix_prod_row_col_row");
@@ -404,7 +402,6 @@ int main(int , char **)
     createHeaders("matrix_solve_col_row");
     createHeaders("matrix_solve_row_col");
     createHeaders("matrix_solve_row_row");
-    createHeaders("fft");
     createHeaders("rand");
     createHeaders("svd");
     createHeaders("spai");
