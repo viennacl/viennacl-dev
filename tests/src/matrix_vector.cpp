@@ -109,8 +109,8 @@ template <typename NumericT, typename Epsilon,
           typename UblasMatrixType, typename UblasVectorType,
           typename VCLMatrixType, typename VCLVectorType1, typename VCLVectorType2>
 int test_prod_rank1(Epsilon const & epsilon,
-                    UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2,
-                    VCLMatrixType & vcl_m1, VCLVectorType1 & vcl_v1, VCLVectorType2 & vcl_v2)
+                    UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2, UblasMatrixType & ublas_m2,
+                    VCLMatrixType & vcl_m1, VCLVectorType1 & vcl_v1, VCLVectorType2 & vcl_v2, VCLMatrixType & vcl_m2)
 {
    int retval = EXIT_SUCCESS;
 
@@ -213,6 +213,37 @@ int test_prod_rank1(Epsilon const & epsilon,
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------
+
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+   viennacl::copy(ublas_m2, vcl_m2);
+   UblasMatrixType A = ublas_m2;
+
+   std::cout << "Diagonal extraction from matrix" << std::endl;
+   for (std::size_t i=0; i<ublas_m1.size2(); ++i)
+     ublas_v2[i] = ublas_m1(i + 3, i);
+   vcl_v2   = diag(vcl_m1, static_cast<int>(-3));
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Matrix diagonal assignment from vector" << std::endl;
+   A = ublas::scalar_matrix<NumericT>(A.size1(), A.size2(), NumericT(0));
+   for (std::size_t i=0; i<ublas_m1.size2(); ++i)
+     A(i + (A.size1() - ublas_m1.size2()), i) = ublas_v2[i];
+   vcl_m2 = diag(vcl_v2, static_cast<int>(ublas_m1.size2()) - static_cast<int>(A.size1()));
+
+   if( fabs(diff(A, vcl_m2)) > epsilon )
+   {
+      std::cout << "# Error at operation: Matrix assignment from diagonal" << std::endl;
+      std::cout << "  diff: " << fabs(diff(A, vcl_m2)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -349,7 +380,7 @@ int test(Epsilon const& epsilon)
 {
    int retval = EXIT_SUCCESS;
 
-   std::size_t num_rows = 141;
+   std::size_t num_rows = 141; //note: use num_rows > num_cols + 3 for diag() tests to work
    std::size_t num_cols = 103;
 
    // --------------------------------------------------------------------------
@@ -446,8 +477,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = full, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_native, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_native, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -459,8 +490,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_native, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_range, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -472,8 +503,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_native, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_native, vcl_v2_slice, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -488,8 +519,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = range, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_range, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_native, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -501,8 +532,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_range, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_range, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -514,8 +545,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_range, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_range, vcl_v2_slice, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -530,8 +561,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = slice, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_slice, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_native, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -543,8 +574,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = slice, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_slice, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_range, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -556,8 +587,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = full, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_native, vcl_v1_slice, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_native, vcl_v1_slice, vcl_v2_slice, vcl_m2_native);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -571,8 +602,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = full, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_native, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_native, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -584,8 +615,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_native, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_range, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -597,8 +628,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_native, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_native, vcl_v2_slice, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -613,8 +644,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = range, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_range, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_native, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -626,8 +657,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_range, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_range, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -639,8 +670,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_range, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_range, vcl_v2_slice, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -655,8 +686,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = slice, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_slice, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_native, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -668,8 +699,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = slice, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_slice, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_range, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -681,8 +712,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = range, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_range, vcl_v1_slice, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_range, vcl_v1_slice, vcl_v2_slice, vcl_m2_range);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -696,8 +727,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = full, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_native, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_native, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -709,8 +740,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_native, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_range, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -722,8 +753,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_native, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_native, vcl_v2_slice, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -738,8 +769,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = range, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_range, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_native, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -751,8 +782,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_range, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_range, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -764,8 +795,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_range, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_range, vcl_v2_slice, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -780,8 +811,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = slice, v2 = full" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_native);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_native, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -793,8 +824,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = slice, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_range);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_range, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;
@@ -806,8 +837,8 @@ int test(Epsilon const& epsilon)
 
    std::cout << "* m = slice, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
-                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_slice);
+                                      ublas_m1, ublas_v1, ublas_v2, ublas_m2,
+                                      vcl_m1_slice, vcl_v1_slice, vcl_v2_slice, vcl_m2_slice);
    if (retval == EXIT_FAILURE)
    {
      std::cout << " --- FAILED! ---" << std::endl;

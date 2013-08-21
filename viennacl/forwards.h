@@ -108,6 +108,12 @@ namespace viennacl
   struct op_tan {};
   struct op_tanh {};
 
+  /** @brief A tag class representing the (off-)diagonal of a matrix */
+  struct op_matrix_diag {};
+
+  /** @brief A tag class representing a matrix given by a vector placed on a certain (off-)diagonal */
+  struct op_vector_diag {};
+
   /** @brief A tag class representing inner products of two vectors */
   struct op_inner_prod {};
 

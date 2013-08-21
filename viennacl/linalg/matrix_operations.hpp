@@ -199,6 +199,59 @@ namespace viennacl
     }
 
 
+    /** @brief Dispatcher interface for A = diag(v, k) */
+    template <typename NumericT, typename F>
+    void matrix_diag_from_vector(const vector_base<NumericT> & v, int k, matrix_base<NumericT, F> & A)
+    {
+      switch (viennacl::traits::handle(v).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_diag_from_vector(v, k, A);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_diag_from_vector(v, k, A);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_diag_from_vector(v, k, A);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Dispatcher interface for v = diag(A, k) */
+    template <typename NumericT, typename F>
+    void matrix_diag_to_vector(const matrix_base<NumericT, F> & A, int k, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_diag_to_vector(A, k, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_diag_to_vector(A, k, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_diag_to_vector(A, k, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
     //
     /////////////////////////   matrix-vector products /////////////////////////////////
     //

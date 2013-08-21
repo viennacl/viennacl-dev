@@ -462,6 +462,78 @@ namespace viennacl
           wrapper_A(row, row) = alpha;
       }
 
+      template <typename NumericT, typename F>
+      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT, F> & mat)
+      {
+        typedef NumericT        value_type;
+
+        value_type       *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type const *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        std::size_t row_start = 0;
+        std::size_t col_start = 0;
+
+        if (k >= 0)
+          col_start = static_cast<std::size_t>(k);
+        else
+          row_start = static_cast<std::size_t>(-k);
+
+        matrix_assign(mat, NumericT(0));
+
+        for (std::size_t i = 0; i < v_size; ++i)
+          wrapper_A(row_start + i, col_start + i) = data_vec[v_start + i * v_inc];
+
+      }
+
+      template <typename NumericT, typename F>
+      void matrix_diag_to_vector(const matrix_base<NumericT, F> & mat, int k, vector_base<NumericT> & vec)
+      {
+        typedef NumericT        value_type;
+
+        value_type const *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type       *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        std::size_t row_start = 0;
+        std::size_t col_start = 0;
+
+        if (k >= 0)
+          col_start = static_cast<std::size_t>(k);
+        else
+          row_start = static_cast<std::size_t>(-k);
+
+        for (std::size_t i = 0; i < v_size; ++i)
+         data_vec[v_start + i * v_inc] = wrapper_A(row_start + i, col_start + i);
+      }
 
       //
       ///////////////////////// Element-wise operation //////////////////////////////////
