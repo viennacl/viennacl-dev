@@ -864,8 +864,6 @@ namespace viennacl
     return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>(A, j);
   }
 
-
-
   /////////////////////// transfer operations: //////////////////////////////////////
 
   //

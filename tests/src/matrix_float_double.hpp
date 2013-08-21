@@ -31,14 +31,16 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
-/*#include "viennacl/compressed_matrix.hpp"
-#include "viennacl/linalg/cg.hpp"
-#include "viennacl/linalg/inner_prod.hpp"
-#include "viennacl/linalg/ilu.hpp"
-#include "viennacl/linalg/norm_2.hpp"
-#include "viennacl/io/matrix_market.hpp"*/
+#include "viennacl/linalg/norm_1.hpp"
+#include "viennacl/linalg/norm_inf.hpp"
+#include "viennacl/linalg/norm_frobenius.hpp"
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/vector_proxy.hpp"
+#include "viennacl/linalg/norm_1.hpp"
+#include "viennacl/linalg/norm_2.hpp"
+#include "viennacl/linalg/norm_inf.hpp"
+#include "viennacl/linalg/norm_frobenius.hpp"
+
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/matrix_proxy.hpp"
@@ -826,10 +828,53 @@ int run_test(double epsilon)
       }
     }
 
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Norms //////////" << std::endl;
+    std::cout << "//" << std::endl;
+
+    /*ScalarType ublas_norm_1 = viennacl::linalg::norm_1(ublas_C);
+    ScalarType   vcl_norm_1 = viennacl::linalg::norm_1(vcl_C);
+    if ( std::fabs(ublas_norm_1 - vcl_norm_1) / ublas_norm_1 > epsilon)
+    {
+      std::cerr << "Failure at norm_1(): " << std::fabs(ublas_norm_1 - vcl_norm_1) / ublas_norm_1  << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    ScalarType ublas_norm_inf = ublas::norm_inf(ublas_C);
+    ScalarType   vcl_norm_inf = viennacl::linalg::norm_inf(vcl_C);
+    if ( std::fabs(ublas_norm_inf - vcl_norm_inf) / ublas_norm_inf > epsilon)
+    {
+      std::cerr << "Failure at norm_inf(): " << std::fabs(ublas_norm_inf - vcl_norm_inf) / ublas_norm_inf << std::endl;
+      return EXIT_FAILURE;
+    }*/
+
+    ScalarType ublas_norm_frobenius = viennacl::linalg::norm_frobenius(ublas_C);
+    ScalarType   vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_C);
+    if ( std::fabs(ublas_norm_frobenius - vcl_norm_frobenius) / ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius()" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    viennacl::scalar<ScalarType> device_ublas_norm_frobenius = viennacl::linalg::norm_frobenius(ublas_C);
+    viennacl::scalar<ScalarType>   device_vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_C);
+    if ( std::fabs(device_ublas_norm_frobenius - device_vcl_norm_frobenius) / device_ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius()" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    std::cout << "PASSED!" << std::endl;
+
 
     //
     // run operation tests:
     //
+
+    std::cout << "//" << std::endl;
+    std::cout << "////////// Test: Operations //////////" << std::endl;
+    std::cout << "//" << std::endl;
+
 
     /////// A=matrix:
     std::cout << "Testing A=matrix, B=matrix, C=matrix ..." << std::endl;

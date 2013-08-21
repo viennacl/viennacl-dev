@@ -129,8 +129,11 @@ namespace viennacl
   /** @brief A tag class representing the 2-norm of a vector */
   struct op_norm_2 {};
 
-  /** @brief A tag class representing the 2-norm of a vector */
+  /** @brief A tag class representing the inf-norm of a vector */
   struct op_norm_inf {};
+
+  /** @brief A tag class representing the Frobenius-norm of a matrix */
+  struct op_norm_frobenius {};
 
   /** @brief A tag class representing transposed matrices */
   struct op_trans {};
@@ -497,6 +500,9 @@ namespace viennacl
     template <typename T>
     void norm_1_impl(vector_base<T> const & vec, scalar<T> & result);
 
+    //template <typename T, typename F>
+    //void norm_1_impl(matrix_base<T, F> const & A, scalar<T> & result);
+
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
@@ -505,6 +511,10 @@ namespace viennacl
     template <typename T>
     void norm_1_cpu(vector_base<T> const & vec,
                     T & result);
+
+    //template <typename T, typename F>
+    //void norm_1_cpu(matrix_base<T, F> const & vec,
+    //                T & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
@@ -530,6 +540,9 @@ namespace viennacl
     template <typename T>
     void norm_inf_impl(vector_base<T> const & vec, scalar<T> & result);
 
+    //template <typename T, typename F>
+    //void norm_inf_impl(matrix_base<T, F> const & vec, scalar<T> & result);
+
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       scalar<T> & result);
@@ -538,10 +551,18 @@ namespace viennacl
     template <typename T>
     void norm_inf_cpu(vector_base<T> const & vec, T & result);
 
+    //template <typename T, typename F>
+    //void norm_inf_cpu(matrix_base<T, F> const & vec, T & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result);
+
+    template <typename T, typename F>
+    void norm_frobenius_impl(matrix_base<T, F> const & vec, scalar<T> & result);
+
+    template <typename T, typename F>
+    void norm_frobenius_cpu(matrix_base<T, F> const & vec, T & result);
 
 
     template <typename T>

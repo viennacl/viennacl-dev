@@ -94,6 +94,14 @@ namespace viennacl
                                           viennacl::op_norm_1 >(vector, vector);
     }
 
+    // with matrix
+    /*template<typename NumericT, typename F>
+    scalar_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_norm_1>
+    norm_1(const matrix<NumericT, F> & A)
+    {
+      return scalar_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_norm_1>(A, A);
+    }*/
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif

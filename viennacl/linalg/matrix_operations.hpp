@@ -34,6 +34,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/vector.hpp"
 #include "viennacl/linalg/host_based/matrix_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -301,7 +302,33 @@ namespace viennacl
       }
     }
 
+    /** @brief Computes the Frobenius norm of a matrix - dispatcher interface
+    *
+    * @param A      The matrix
+    * @param result The result scalar
+    */
+    template <typename T, typename F>
+    void norm_frobenius_impl(matrix_base<T, F> const & A,
+                             scalar<T> & result)
+    {
+      typedef typename matrix_base<T, F>::handle_type  HandleType;
+      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+      norm_2_impl(temp, result);
+    }
 
+    /** @brief Computes the Frobenius norm of a vector with final reduction on the CPU
+    *
+    * @param A      The matrix
+    * @param result The result scalar
+    */
+    template <typename T, typename F>
+    void norm_frobenius_cpu(matrix_base<T, F> const & A,
+                             T & result)
+    {
+      typedef typename matrix_base<T, F>::handle_type  HandleType;
+      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+      norm_2_cpu(temp, result);
+    }
 
     //
     /////////////////////////   matrix-vector products /////////////////////////////////
