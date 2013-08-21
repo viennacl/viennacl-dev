@@ -44,10 +44,6 @@ namespace viennacl{
 
     using namespace scheduler;
 
-    void translate_opencl_to_cuda(std::string & str){
-
-    }
-
     class code_generator{
       public:
         typedef std::pair<expression_type, std::size_t> forced_profile_key_type;
