@@ -251,6 +251,57 @@ namespace viennacl
       }
     }
 
+    template <typename NumericT, typename F>
+    void matrix_row(const matrix_base<NumericT, F> & A, unsigned int i, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_row(A, i, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_row(A, i, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_row(A, i, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template <typename NumericT, typename F>
+    void matrix_column(const matrix_base<NumericT, F> & A, unsigned int j, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_column(A, j, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_column(A, j, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_column(A, j, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
 
     //
     /////////////////////////   matrix-vector products /////////////////////////////////

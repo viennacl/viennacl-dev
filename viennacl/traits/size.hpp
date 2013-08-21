@@ -285,6 +285,17 @@ namespace viennacl
       return std::min(row_depth, col_depth);
     }
 
+    template <typename LHS>
+    vcl_size_t size(vector_expression<LHS, const unsigned int, op_row> const & proxy)
+    {
+      return size2(proxy.lhs());
+    }
+
+    template <typename LHS>
+    vcl_size_t size(vector_expression<LHS, const unsigned int, op_column> const & proxy)
+    {
+      return size1(proxy.lhs());
+    }
 
 
   } //namespace traits

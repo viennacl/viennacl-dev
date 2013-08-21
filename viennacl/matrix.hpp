@@ -833,7 +833,7 @@ namespace viennacl
     return matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>(mat, mat);
   }
 
-  //diag:
+  //diag():
   template<typename NumericT, typename F>
   vector_expression< const matrix_base<NumericT, F>, const int, op_matrix_diag>
   diag(const matrix_base<NumericT, F> & A, int k = 0)
@@ -848,7 +848,21 @@ namespace viennacl
     return matrix_expression< const vector_base<NumericT>, const int, op_vector_diag>(v, k);
   }
 
+  // row():
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>
+  row(const matrix_base<NumericT, F> & A, unsigned int i)
+  {
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>(A, i);
+  }
 
+  // column():
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>
+  column(const matrix_base<NumericT, F> & A, unsigned int j)
+  {
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>(A, j);
+  }
 
 
 
@@ -2384,7 +2398,7 @@ namespace viennacl
       };
 
 
-      //////////////////// diag() operations ////////////////////////////////////////
+      //////////////////// diag(), row(), column() operations ////////////////////////////////////////
 
       template <typename T, typename F, typename LHS>
       struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const int, op_vector_diag> >
@@ -2403,6 +2417,27 @@ namespace viennacl
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const int, op_matrix_diag> const & proxy)
         {
           viennacl::linalg::matrix_diag_to_vector(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
+
+      template <typename T, typename LHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_row> >
+      {
+        template <typename F>
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const unsigned int, op_row> const & proxy)
+        {
+          viennacl::linalg::matrix_row(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
+
+
+      template <typename T, typename LHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_column> >
+      {
+        template <typename F>
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const unsigned int, op_column> const & proxy)
+        {
+          viennacl::linalg::matrix_column(proxy.lhs(), proxy.rhs(), lhs);
         }
       };
 

@@ -114,6 +114,12 @@ namespace viennacl
   /** @brief A tag class representing a matrix given by a vector placed on a certain (off-)diagonal */
   struct op_vector_diag {};
 
+  /** @brief A tag class representing the extraction of a matrix row to a vector */
+  struct op_row {};
+
+  /** @brief A tag class representing the extraction of a matrix column to a vector */
+  struct op_column {};
+
   /** @brief A tag class representing inner products of two vectors */
   struct op_inner_prod {};
 

@@ -219,6 +219,33 @@ int test_prod_rank1(Epsilon const & epsilon,
 
    viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
    viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+
+   std::cout << "Row extraction from matrix" << std::endl;
+   ublas_v2 = row(ublas_m1, std::size_t(7));
+   vcl_v2   = row(vcl_m1, std::size_t(7));
+
+   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   {
+      std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   std::cout << "Column extraction from matrix" << std::endl;
+   ublas_v1 = column(ublas_m1, std::size_t(7));
+   vcl_v1   = column(vcl_m1, std::size_t(7));
+
+   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
+      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+
+   // --------------------------------------------------------------------------
+
+   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
+   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
    viennacl::copy(ublas_m2, vcl_m2);
    UblasMatrixType A = ublas_m2;
 
