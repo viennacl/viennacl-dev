@@ -114,12 +114,12 @@ template< typename NumericT, typename Epsilon,
           typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC>
 int test_prod(Epsilon const& epsilon,
 
-              ReferenceMatrixTypeA const & /*A*/, ReferenceMatrixTypeA const & A_trans,
-              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & /*B_trans*/,
+              ReferenceMatrixTypeA const & A, ReferenceMatrixTypeA const & A_trans,
+              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & B_trans,
               ReferenceMatrixTypeC & C,
 
-              MatrixTypeA const & /*vcl_A*/, MatrixTypeA const & vcl_A_trans,
-              MatrixTypeB const & vcl_B, MatrixTypeB const & /*vcl_B_trans*/,
+              MatrixTypeA const & vcl_A, MatrixTypeA const & vcl_A_trans,
+              MatrixTypeB const & vcl_B, MatrixTypeB const & vcl_B_trans,
               MatrixTypeC & vcl_C
              )
 {
@@ -128,23 +128,23 @@ int test_prod(Epsilon const& epsilon,
    NumericT alpha = 3.14;
    NumericT beta = 4.51;
 
-//   std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
-//   {
-//       C     = alpha*viennacl::linalg::prod(A, B);
+std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
+{
+    C     = alpha*viennacl::linalg::prod(A, B);
 
-//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
-//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-//       viennacl::backend::finish();
-//       act_diff = fabs(diff(C, vcl_C));
-//       if( act_diff > epsilon )
-//       {
-//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-//         std::cout << "  diff: " << act_diff << std::endl;
-//         retval = EXIT_FAILURE;
-//       }
-//       else
-//         std::cout << "Test C = A * B passed!" << std::endl;
-//   }
+    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
+    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    act_diff = fabs(diff(C, vcl_C));
+    if( act_diff > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+      std::cout << "  diff: " << act_diff << std::endl;
+      retval = EXIT_FAILURE;
+    }
+    else
+      std::cout << "Test C = A * B passed!" << std::endl;
+}
 
 
    std::cout << "Testing C = alpha*trans(A) * B + beta*C ..." << std::endl;
@@ -163,37 +163,37 @@ int test_prod(Epsilon const& epsilon,
        else std::cout << "Test C = trans(A) * B passed!" << std::endl;
    }
 
-//   std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
-//   {
-//       C     = boost::numeric::ublas::prod(A,trans(B_trans)) + beta*C;
-//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
-//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-//       viennacl::backend::finish();
-//       act_diff = fabs(diff(C, vcl_C));
-//       if( act_diff > epsilon )
-//       {
-//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-//         std::cout << "  diff: " << act_diff << std::endl;
-//         retval = EXIT_FAILURE;
-//       }
-//       else std::cout << "Test C = A * trans(B) passed!" << std::endl;
-//   }
+std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
+{
+    C     = boost::numeric::ublas::prod(A,trans(B_trans)) + beta*C;
+    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
+    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    act_diff = fabs(diff(C, vcl_C));
+    if( act_diff > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+      std::cout << "  diff: " << act_diff << std::endl;
+      retval = EXIT_FAILURE;
+    }
+    else std::cout << "Test C = A * trans(B) passed!" << std::endl;
+}
 
-//   std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
-//   {
-//       C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans)) + beta*C;
-//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
-//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-//       viennacl::backend::finish();
-//       act_diff = fabs(diff(C, vcl_C));
-//       if( act_diff > epsilon )
-//       {
-//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-//         std::cout << "  diff: " << act_diff << std::endl;
-//         retval = EXIT_FAILURE;
-//       }
-//       else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
-//   }
+std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
+{
+    C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans)) + beta*C;
+    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
+    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+    viennacl::backend::finish();
+    act_diff = fabs(diff(C, vcl_C));
+    if( act_diff > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+      std::cout << "  diff: " << act_diff << std::endl;
+      retval = EXIT_FAILURE;
+    }
+    else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
+}
 
 
    return retval;

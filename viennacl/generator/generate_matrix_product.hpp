@@ -237,36 +237,36 @@ namespace viennacl{
           if(vectorization_ > 1)
             aligned_scalartype+=utils::to_string(vectorization_);
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-          stream << "#pragma unroll " << bound2/local_size2_ << std::endl;
-          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= " << local_size2_ << "){" << std::endl;
-          stream.inc_tab();
-          stream << "#pragma unroll " << bound1/local_size1_ << std::endl;
-          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= " << local_size1_ << "){" << std::endl;
-          stream.inc_tab();
-          if(flow==REGULAR){
-            stream << aligned_scalartype << " val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
-            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << lmem_size2 << "+j*" << vectorization_<<";" <<std::endl;
-            for(unsigned int a = 0 ; a < vectorization_ ; ++a){
-              if(vectorization_>1)
-                stream << "*ptr++ =  val.s" << a << ";" << std::endl;
-              else
-                stream << "*ptr++ =  val;" << std::endl;
-            }
+          stream << "{" << std::endl;
+          stream << "unsigned int j = get_local_id(1);" << std::endl;
+          stream << "unsigned int i;" << std::endl;
+          stream << "__local " << mat.scalartype() << "* ptr;" << std::endl;
+          stream << aligned_scalartype << " val;" << std::endl;
+          assert(bound2%local_size2_==0);
+          assert(bound1%local_size1_==0);
+          for(unsigned int j = 0 ; j < bound2 ; j+=local_size2_){
+              stream << "i = get_local_id(0);" << std::endl;
+              for(unsigned int i = 0 ; i < bound1 ; i+=local_size1_){
+                  if(flow==REGULAR){
+                    stream << "val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
+                    for(unsigned int a = 0 ; a < vectorization_ ; ++a)
+                        if(vectorization_>1)
+                            stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_<<" + " << a << "] = val.s" << a << ";" <<std::endl;
+                        else
+                            stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_ << "] = val" << ";" <<std::endl;
+                  }
+                  else{
+                    stream << "val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
+                    for(unsigned int a = 0 ; a < vectorization_ ; ++a)
+                        if(vectorization_>1)
+                            stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j + " << a*lmem_size2 << "] = val.s" << a << ";" <<std::endl;
+                        else
+                            stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j] = val.s" << a << ";" <<std::endl;
+                  }
+                  stream << "i+=" << local_size1_ << ";" << std::endl;
+              }
+              stream << "j+=" << local_size2_ << ";" << std::endl;
           }
-          else{
-            stream << aligned_scalartype << " val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
-            stream << "__local " << mat.scalartype() << "* ptr = " << lmem_name << " + i*" << vectorization_ * lmem_size2 << "+ j;" <<std::endl;
-            for(unsigned int a = 0 ; a < vectorization_ ; ++a){
-              if(vectorization_>1)
-                stream << "*ptr =  val.s" << a << ";" << std::endl;
-              else
-                stream << "*ptr =  val;" << std::endl;
-              stream << "ptr += " << lmem_size2 << ";" << std::endl;
-            }
-          }
-          stream.dec_tab();
-          stream << "}" << std::endl;
-          stream.dec_tab();
           stream << "}" << std::endl;
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
