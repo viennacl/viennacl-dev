@@ -1,5 +1,5 @@
 
-__kernel void d_mat_mul(
+__kernel void d_tr_mat_mul(
     __global const unsigned int * sp_mat_coords,
     __global const float * sp_mat_elems,
     unsigned int sp_mat_row_num,
@@ -26,8 +26,8 @@ __kernel void d_mat_mul(
     unsigned int result_internal_rows,
     unsigned int result_internal_cols) {
 
-    uint glb_id = get_local_size(0) * get_group_id(0) + get_local_id(0);
-    uint glb_sz = get_global_size(0) * get_local_size(0);
+    uint glb_id = get_global_id(0);
+    uint glb_sz = get_global_size(0);
 
     for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) {
       uint row = rc % sp_mat_row_num;

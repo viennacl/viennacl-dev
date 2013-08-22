@@ -78,6 +78,7 @@ int main()
   ublas::compressed_matrix<ScalarType> ublas_lhs(size/2, size);
   viennacl::compressed_matrix<ScalarType> compressed_lhs(size/2, size);
   viennacl::ell_matrix<ScalarType> ell_lhs;
+  viennacl::coordinate_matrix<ScalarType> coo_lhs;
 
   ublas::matrix<ScalarType> ublas_rhs1(size, size/2);
   viennacl::matrix<ScalarType> rhs1(size, size/2);
@@ -102,8 +103,10 @@ int main()
   for (unsigned int i = 2; i < size1; i++) {
     ublas_lhs(i, i-2) = -1.1f; ublas_lhs(i, i-1) = -2.2f; ublas_lhs(i, i) = 3.3f; ublas_lhs(i, i+1) = 2.2f; ublas_lhs(i, i+2) = 1.1f;
   }
+
   viennacl::copy( ublas_lhs, compressed_lhs);
   viennacl::copy( ublas_lhs, ell_lhs);
+  viennacl::copy( ublas_lhs, coo_lhs);
 
   size1 = size;
   size2 = size/2;
@@ -119,16 +122,26 @@ int main()
   ublas_result = ublas::prod( ublas_lhs, ublas_rhs1);
 
   /******************************************************************/
-//  std::cout << "Testing compressed(CSR) lhs * dense rhs" << std::endl;
-//  result = viennacl::linalg::prod( compressed_lhs, rhs1);
-//
-//  temp.clear();
-//  viennacl::copy( result, temp);
-//  retVal = check_matrices(ublas_result, temp);
+  std::cout << "Testing compressed(CSR) lhs * dense rhs" << std::endl;
+  result = viennacl::linalg::prod( compressed_lhs, rhs1);
+
+  temp.clear();
+  viennacl::copy( result, temp);
+  retVal = check_matrices(ublas_result, temp);
 
   /******************************************************************/
   std::cout << "Testing compressed(ELL) lhs * dense rhs" << std::endl;
+  result.clear();
   result = viennacl::linalg::prod( ell_lhs, rhs1);
+
+  temp.clear();
+  viennacl::copy( result, temp);
+  check_matrices(ublas_result, temp);
+
+  /******************************************************************/
+  std::cout << "Testing compressed(COO) lhs * dense rhs" << std::endl;
+  result.clear();
+  result = viennacl::linalg::prod( coo_lhs, rhs1);
 
   temp.clear();
   viennacl::copy( result, temp);
@@ -157,7 +170,19 @@ int main()
   viennacl::copy( result, temp);
   check_matrices(ublas_result, temp);
 
-  std::cout << "Tests passed successfully" << std::endl;
+  /******************************************************************/
+//  std::cout << "Testing compressed(COO) lhs * transposed dense rhs" << std::endl;
+//  result.clear();
+//  result = viennacl::linalg::prod( coo_lhs, viennacl::trans(rhs2));
+//
+//  temp.clear();
+//  viennacl::copy( result, temp);
+//  check_matrices(ublas_result, temp);
+
+  /******************************************************************/
+  if(retVal == EXIT_SUCCESS) {
+    std::cout << "Tests passed successfully" << std::endl;
+  }
 
   return retVal;
 }

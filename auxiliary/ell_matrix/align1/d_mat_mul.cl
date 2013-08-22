@@ -26,8 +26,8 @@ __kernel void d_mat_mul(
     unsigned int result_internal_rows,
     unsigned int result_internal_cols) {
 
-    uint glb_id = get_local_size(0) * get_group_id(0) + get_local_id(0);
-    uint glb_sz = get_global_size(0) * get_local_size(0);
+    uint glb_id = get_global_id(0);
+    uint glb_sz = get_global_size(0);
 
     for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) {
       uint row = rc % sp_mat_row_num;
@@ -47,6 +47,7 @@ __kernel void d_mat_mul(
           r += x*y;
         }
       }
+
       result[ (result_row_start + row * result_row_inc) * result_internal_cols +
                result_col_start + col * result_col_inc ] = r;
     }
