@@ -210,7 +210,7 @@ namespace viennacl
     {
       if(gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
       {
-        cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2());
+        cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
 
         std::vector<SCALARTYPE> ell_elements(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
         viennacl::backend::typesafe_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
