@@ -47,7 +47,7 @@ namespace viennacl
           bool flip_sign_z = (leaf.op.type  == OPERATION_BINARY_SUB_TYPE);
 
           if (   leaf.lhs.type_family != COMPOSITE_OPERATION_FAMILY
-              && leaf.lhs.type_family != COMPOSITE_OPERATION_FAMILY)
+              && leaf.rhs.type_family != COMPOSITE_OPERATION_FAMILY)
           {
             lhs_rhs_element u = root_node.lhs;
             lhs_rhs_element v = leaf.lhs;
