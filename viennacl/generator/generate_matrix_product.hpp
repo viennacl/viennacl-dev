@@ -225,6 +225,30 @@ namespace viennacl{
           return name;
         }
 
+        void fetch_element_to_local_mem(utils::kernel_generation_stream & stream,
+                                std::string const & lmem_name,
+                                std::size_t lmem_size2,
+                                std::string const & global_ptr,
+                                detail::mapped_matrix const & mat,
+                                access_flow flow) const {
+
+            if(flow==REGULAR){
+              stream << "val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
+              for(unsigned int a = 0 ; a < vectorization_ ; ++a)
+                  if(vectorization_>1)
+                      stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_<<" + " << a << "] = val.s" << a << ";" <<std::endl;
+                  else
+                      stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_ << "] = val" << ";" <<std::endl;
+            }
+            else{
+              stream << "val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
+              for(unsigned int a = 0 ; a < vectorization_ ; ++a)
+                  if(vectorization_>1)
+                      stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j + " << a*lmem_size2 << "] = val.s" << a << ";" <<std::endl;
+                  else
+                      stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j] = val" << ";" <<std::endl;
+            }
+        }
         void fetch_to_local_mem(utils::kernel_generation_stream & stream,
                                 std::string const & lmem_name,
                                 std::size_t lmem_size2,
@@ -240,32 +264,29 @@ namespace viennacl{
           stream << "{" << std::endl;
           stream << "unsigned int j = get_local_id(1);" << std::endl;
           stream << "unsigned int i;" << std::endl;
-          stream << "__local " << mat.scalartype() << "* ptr;" << std::endl;
           stream << aligned_scalartype << " val;" << std::endl;
-          assert(bound2%local_size2_==0);
-          assert(bound1%local_size1_==0);
-          for(unsigned int j = 0 ; j < bound2 ; j+=local_size2_){
-              stream << "i = get_local_id(0);" << std::endl;
-              for(unsigned int i = 0 ; i < bound1 ; i+=local_size1_){
-                  if(flow==REGULAR){
-                    stream << "val = *(" << global_ptr + " + j  + " + mat.size2()  + "*i" << ");" << std::endl;
-                    for(unsigned int a = 0 ; a < vectorization_ ; ++a)
-                        if(vectorization_>1)
-                            stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_<<" + " << a << "] = val.s" << a << ";" <<std::endl;
-                        else
-                            stream << lmem_name << "[i*" << lmem_size2 << " + j*" << vectorization_ << "] = val" << ";" <<std::endl;
+          //Can unroll
+          if(bound2%local_size2_==0 && bound1%local_size1_==0){
+              for(unsigned int j = 0 ; j < bound2 ; j+=local_size2_){
+                  stream << "i = get_local_id(0);" << std::endl;
+                  for(unsigned int i = 0 ; i < bound1 ; i+=local_size1_){
+                      fetch_element_to_local_mem(stream,lmem_name,lmem_size2,global_ptr,mat,flow);
+                      stream << "i+=" << local_size1_ << ";" << std::endl;
                   }
-                  else{
-                    stream << "val = *(" << global_ptr + "+ j*" + mat.size1() + " + i" << ");" << std::endl;
-                    for(unsigned int a = 0 ; a < vectorization_ ; ++a)
-                        if(vectorization_>1)
-                            stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j + " << a*lmem_size2 << "] = val.s" << a << ";" <<std::endl;
-                        else
-                            stream << lmem_name << "[i*" << vectorization_*lmem_size2 << " + j] = val.s" << a << ";" <<std::endl;
-                  }
-                  stream << "i+=" << local_size1_ << ";" << std::endl;
+                  stream << "j+=" << local_size2_ << ";" << std::endl;
               }
-              stream << "j+=" << local_size2_ << ";" << std::endl;
+          }
+          else{
+              stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= " << local_size2_ << "){" << std::endl;
+              stream.inc_tab();
+              stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= " << local_size1_ << "){" << std::endl;
+              stream.inc_tab();
+              fetch_element_to_local_mem(stream,lmem_name,lmem_size2,global_ptr,mat,flow);
+              stream.dec_tab();
+              stream << "}" << std::endl;
+              stream.dec_tab();
+              stream << "}" << std::endl;
+
           }
           stream << "}" << std::endl;
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
