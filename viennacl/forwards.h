@@ -70,12 +70,14 @@ namespace viennacl
   struct op_sub {};
   /** @brief A tag class representing multiplication by a scalar */
   struct op_mult {};
-  /** @brief A tag class representing matrix-vector products */
+  /** @brief A tag class representing matrix-vector products and element-wise multiplications*/
   struct op_prod {};
   /** @brief A tag class representing matrix-matrix products */
   struct op_mat_mat_prod {};
   /** @brief A tag class representing division */
   struct op_div {};
+  /** @brief A tag class representing the power function */
+  struct op_pow {};
 
   /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
   template <typename OP>

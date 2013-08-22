@@ -42,7 +42,7 @@ int main()
   {
     {
       typedef double NumericT;
-      NumericT epsilon = 1.0E-12;
+      NumericT epsilon = 1.0E-10;
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: double" << std::endl;

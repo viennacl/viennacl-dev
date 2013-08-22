@@ -316,19 +316,28 @@ namespace viennacl
           source.append("  unsigned int C_start1, unsigned int C_start2, \n");
           source.append("  unsigned int C_inc1,   unsigned int C_inc2, \n");
           source.append("  unsigned int C_internal_size1,  unsigned int C_internal_size2, \n");
-          source.append("  unsigned int is_division) \n");
+          source.append("  unsigned int op_type) \n"); //0: product, 1: division, 2: pow
           source.append("{ \n");
           if (is_row_major)
           {
             source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
             source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
-            source.append("  if (is_division) {");
+            source.append("  if (op_type == 2) {");
+            if (numeric_string == "float" || numeric_string == "double")
+            {
+              source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
+              source.append("      for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
+              source.append("        A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = \n");
+              source.append("        pow(B[(row * B_inc1 + B_start1) * B_internal_size2 + (col * B_inc2 + B_start2)], \n");
+              source.append("            C[(row * C_inc1 + C_start1) * C_internal_size2 + (col * C_inc2 + C_start2)]); \n");
+            }
+            source.append("  } else if (op_type == 1) {");
             source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
             source.append("      for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
             source.append("        A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = \n");
             source.append("        B[(row * B_inc1 + B_start1) * B_internal_size2 + (col * B_inc2 + B_start2)] / \n");
             source.append("        C[(row * C_inc1 + C_start1) * C_internal_size2 + (col * C_inc2 + C_start2)]; \n");
-            source.append("  } else {");
+            source.append("  } else if (op_type == 0) {");
             source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
             source.append("      for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
             source.append("        A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = \n");
@@ -340,13 +349,22 @@ namespace viennacl
           {
             source.append("  unsigned int row_gid = get_global_id(0) % get_local_size(0);\n");
             source.append("  unsigned int col_gid = get_global_id(0) / get_local_size(0);\n");
-            source.append("  if (is_division) {");
+            source.append("  if (op_type == 2) {");
+            if (numeric_string == "float" || numeric_string == "double")
+            {
+              source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
+              source.append("      for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
+              source.append("        A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) *  A_internal_size1] =  \n");
+              source.append("          pow(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) *  B_internal_size1], \n");
+              source.append("              C[(row * C_inc1 + C_start1) + (col * C_inc2 + C_start2) *  C_internal_size1]); \n");
+            }
+            source.append("  } else if (op_type == 1) {");
             source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
             source.append("      for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
             source.append("        A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) *  A_internal_size1] =  \n");
             source.append("          B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) *  B_internal_size1] / \n");
             source.append("          C[(row * C_inc1 + C_start1) + (col * C_inc2 + C_start2) *  C_internal_size1]; \n");
-            source.append("  } else {");
+            source.append("  } else if (op_type == 0) {");
             source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
             source.append("      for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
             source.append("        A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) *  A_internal_size1] = \n");

@@ -864,10 +864,19 @@ namespace viennacl
                                          unsigned int start3,
                                          unsigned int inc3,
 
-                                         unsigned int is_division
+                                         unsigned int op_type
                                        )
       {
-        if (is_division)
+        if (op_type == 2)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]);
+          }
+        }
+        else if (op_type == 1)
         {
           for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
                             i < size1;
@@ -876,7 +885,7 @@ namespace viennacl
             vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3];
           }
         }
-        else
+        else if (op_type == 0)
         {
           for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
                             i < size1;
@@ -887,6 +896,42 @@ namespace viennacl
         }
       }
 
+      template <typename T>
+      __global__ void element_op_int_kernel(T * vec1,
+                                         unsigned int start1,
+                                         unsigned int inc1,
+                                         unsigned int size1,
+
+                                         T const * vec2,
+                                         unsigned int start2,
+                                         unsigned int inc2,
+
+                                         T const * vec3,
+                                         unsigned int start3,
+                                         unsigned int inc3,
+
+                                         unsigned int op_type
+                                       )
+      {
+        if (op_type == 1)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3];
+          }
+        }
+        else if (op_type == 0)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3];
+          }
+        }
+      }
 
       /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
       *
@@ -898,6 +943,42 @@ namespace viennacl
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
         typedef T        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
+        element_op_int_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                        detail::cuda_arg<value_type>(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                        op_type
+                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+      }
+
+      template <typename OP>
+      void element_op(vector_base<float> & vec1,
+                      vector_expression<const vector_base<float>, const vector_base<float>, op_element_binary<OP> > const & proxy)
+      {
+        typedef float        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
 
         element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
@@ -912,7 +993,37 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
 
-                                        static_cast<unsigned int>(viennacl::is_division<OP>::value)
+                                        op_type
+                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+      }
+
+      template <typename OP>
+      void element_op(vector_base<double> & vec1,
+                      vector_expression<const vector_base<double>, const vector_base<double>, op_element_binary<OP> > const & proxy)
+      {
+        typedef double        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
+        element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                        detail::cuda_arg<value_type>(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                        op_type
                                        );
         VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
       }

@@ -177,6 +177,12 @@ namespace viennacl
       };
 
       /** \cond */
+      template <typename T, typename SizeType>
+      struct size_type< vector_base<T, SizeType> >
+      {
+        typedef SizeType   type;
+      };
+
       #ifdef VIENNACL_WITH_EIGEN
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >

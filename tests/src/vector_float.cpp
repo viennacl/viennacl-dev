@@ -40,7 +40,7 @@ int main()
   std::cout << std::endl;
   {
     typedef float NumericT;
-    NumericT epsilon = static_cast<NumericT>(1.0E-4);
+    NumericT epsilon = static_cast<NumericT>(1.0E-2);
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  eps:     " << epsilon << std::endl;
     std::cout << "  numeric: float" << std::endl;

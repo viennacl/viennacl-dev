@@ -251,78 +251,46 @@ namespace viennacl
 
 
 
-
-    template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >
-    element_prod(vector_base<T> const & v1, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >(v1, v2);
+#define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
+    template <typename T> \
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T> const & v1, vector_base<T> const & v2) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> >(v1, v2); \
+    } \
+\
+    template <typename V1, typename V2, typename OP, typename T> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2) \
+    { \
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> >(proxy, v2); \
+    } \
+\
+    template <typename T, typename V2, typename V3, typename OP> \
+    viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> >(v1, proxy); \
+    } \
+\
+    template <typename V1, typename V2, typename OP1, \
+              typename V3, typename V4, typename OP2> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
+                                const vector_expression<const V3, const V4, OP2>, \
+                                op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP1> const & proxy1, \
+                     vector_expression<const V3, const V4, OP2> const & proxy2) \
+    {\
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
+                                         const vector_expression<const V3, const V4, OP2>, \
+                                         op_element_binary<op_##OPNAME> >(proxy1, proxy2); \
     }
 
-    template <typename V1, typename V2, typename OP, typename T>
-    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_prod> >
-    element_prod(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_prod> >(proxy, v2);
-    }
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(prod)  //for element_prod()
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(div)   //for element_div()
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(pow)   //for element_pow()
 
-    template <typename T, typename V2, typename V3, typename OP>
-    viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_prod> >
-    element_prod(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_prod> >(v1, proxy);
-    }
-
-    template <typename V1, typename V2, typename OP1,
-              typename V3, typename V4, typename OP2>
-    viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>,
-                                const vector_expression<const V3, const V4, OP2>,
-                                op_element_binary<op_prod> >
-    element_prod(vector_expression<const V1, const V2, OP1> const & proxy1,
-                 vector_expression<const V3, const V4, OP2> const & proxy2)
-    {
-      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>,
-                                         const vector_expression<const V3, const V4, OP2>,
-                                         op_element_binary<op_prod> >(proxy1, proxy2);
-    }
-
-
-
-
-    template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >
-    element_div(vector_base<T> const & v1, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >(v1, v2);
-    }
-
-    template <typename V1, typename V2, typename OP, typename T>
-    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_div> >
-    element_div(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_div> >(proxy, v2);
-    }
-
-    template <typename T, typename V2, typename V3, typename OP>
-    viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_div> >
-    element_div(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_div> >(v1, proxy);
-    }
-
-    template <typename V1, typename V2, typename OP1,
-              typename V3, typename V4, typename OP2>
-    viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>,
-                                const vector_expression<const V3, const V4, OP2>,
-                                op_element_binary<op_div> >
-    element_div(vector_expression<const V1, const V2, OP1> const & proxy1,
-                 vector_expression<const V3, const V4, OP2> const & proxy2)
-    {
-      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>,
-                                         const vector_expression<const V3, const V4, OP2>,
-                                         op_element_binary<op_div> >(proxy1, proxy2);
-    }
-
+#undef VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS
 
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
     template <typename T> \

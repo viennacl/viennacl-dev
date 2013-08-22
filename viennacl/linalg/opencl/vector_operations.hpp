@@ -296,6 +296,12 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), "element_op");
 
+        cl_uint op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
                                  cl_uint(viennacl::traits::stride(vec1)),
@@ -309,7 +315,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(proxy.rhs())),
                                  cl_uint(viennacl::traits::stride(proxy.rhs())),
 
-                                 cl_uint(viennacl::is_division<OP>::value))
+                                 op_type)
                               );
       }
 
