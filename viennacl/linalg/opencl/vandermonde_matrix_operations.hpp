@@ -53,9 +53,9 @@ namespace viennacl
                             viennacl::vector_base<SCALARTYPE> & result)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(ctx);
+          viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::kernels::fft<SCALARTYPE, 1>::program_name(), "vandermonde_prod");
+          viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "vandermonde_prod");
           viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(mat),
                                         viennacl::traits::opencl_handle(vec),
                                         viennacl::traits::opencl_handle(result),

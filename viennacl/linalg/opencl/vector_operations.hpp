@@ -67,7 +67,7 @@ namespace viennacl
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -123,7 +123,7 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -189,7 +189,7 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -231,18 +231,20 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T>
-      void vector_assign(vector_base<T> & vec1, const T & alpha)
+      void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
         k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::roundUpToNextMultiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+
+        cl_uint size = up_to_internal_size ? cl_uint(vec1.internal_size()) : cl_uint(viennacl::traits::size(vec1));
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
                                  cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
+                                 size,
                                  cl_uint(vec1.internal_size()),     //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
                                  viennacl::traits::opencl_handle(T(alpha)) )
                               );
@@ -294,6 +296,12 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), "element_op");
 
+        cl_uint op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                                  cl_uint(viennacl::traits::start(vec1)),
                                  cl_uint(viennacl::traits::stride(vec1)),
@@ -307,7 +315,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(proxy.rhs())),
                                  cl_uint(viennacl::traits::stride(proxy.rhs())),
 
-                                 cl_uint(viennacl::is_division<OP>::value))
+                                 op_type)
                               );
       }
 
@@ -416,10 +424,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
         temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
@@ -473,8 +479,7 @@ namespace viennacl
 
         std::size_t work_groups = 128;
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(x));
         temp.resize(8 * work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         viennacl::ocl::packed_cl_uint layout_x = detail::make_layout(x);
@@ -652,10 +657,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
         temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
         // Step 1: Compute partial inner products for each work group:
@@ -664,7 +667,7 @@ namespace viennacl
         // Step 2: Sum partial results:
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<T> temp_cpu(work_groups);
+        std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -721,11 +724,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
@@ -754,19 +754,14 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 1);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<T> temp_cpu(work_groups);
+        std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -792,11 +787,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
@@ -825,19 +817,14 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 2);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<T> temp_cpu(work_groups);
+        std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -863,11 +850,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
@@ -896,19 +880,14 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        static std::map<viennacl::ocl::context, viennacl::vector<T> > temp_vectors_per_context;
-
         std::size_t work_groups = 128;
-        viennacl::vector<T> & temp = temp_vectors_per_context[ctx];
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
         norm_reduction_impl(vec, temp, 0);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<T> temp_cpu(work_groups);
+        std::vector<T> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;

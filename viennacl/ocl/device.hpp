@@ -34,6 +34,7 @@
 #include <string>
 #include <sstream>
 #include <assert.h>
+#include "viennacl/ocl/device_utils.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/error.hpp"
 
@@ -58,7 +59,7 @@ namespace viennacl
           flush_cache();
         }
 
-        device(const device & other)
+        device(const device & other) : device_(0)
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_DEVICE)
           std::cout << "ViennaCL: Creating device object (Copy CTOR)" << std::endl;
@@ -571,6 +572,17 @@ namespace viennacl
           return name_;
         }
 
+        /** @brief Device architecture family. */
+        device_architecture_family architecture_family() const
+        {
+          if( !architecture_family_valid_)
+          {
+            architecture_family_ = get_device_architecture(vendor_id(), name());
+            architecture_family_valid_ = true;
+          }
+          return architecture_family_;
+        }
+
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_char() const
         {
@@ -959,9 +971,9 @@ namespace viennacl
           *
           * @param indent   Number of optional blanks to be added at the start of each line
           */
-        std::string info(std::size_t indent = 0) const
+        std::string info(std::size_t indent = 0, char indent_char = ' ') const
         {
-          std::string line_indent(indent, ' ');
+          std::string line_indent(indent, indent_char);
           std::ostringstream oss;
           oss << line_indent << "Name:                " << name() << std::endl;
           oss << line_indent << "Vendor:              " << vendor() << std::endl;
@@ -981,9 +993,9 @@ namespace viennacl
         *
         * @param indent   Number of optional blanks to be added at the start of each line
         */
-        std::string full_info(std::size_t indent = 0) const
+        std::string full_info(std::size_t indent = 0, char indent_char = ' ') const
         {
-          std::string line_indent(indent, ' ');
+          std::string line_indent(indent, indent_char);
           std::ostringstream oss;
           oss << line_indent << "Address Bits:                  " << address_bits() << std::endl;
           oss << line_indent << "Available:                     " << available() << std::endl;
@@ -1162,6 +1174,7 @@ namespace viennacl
         void flush_cache()
         {
           address_bits_valid_       = false;
+          architecture_family_valid_ = false;
           available_valid_          = false;
           compiler_available_valid_ = false;
 #ifdef CL_DEVICE_DOUBLE_FP_CONFIG
@@ -1426,6 +1439,9 @@ namespace viennacl
 
         mutable bool driver_version_valid_;
         mutable char driver_version_[256];    // don't forget to adjust member function accordingly when changing array size
+
+        mutable bool architecture_family_valid_;
+        mutable device_architecture_family architecture_family_;
     };
 
   } //namespace ocl

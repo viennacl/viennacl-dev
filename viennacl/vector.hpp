@@ -38,78 +38,100 @@
 
 namespace viennacl
 {
-  //
-  // Initializer types
-  //
-  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class unit_vector
+
+  template<typename SCALARTYPE>
+  class implicit_vector_base
   {
-    public:
+    protected:
       typedef vcl_size_t        size_type;
+      implicit_vector_base(size_type s, std::size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
+      implicit_vector_base(size_type s, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
 
-      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : size_(s), index_(ind), ctx_(ctx)
-      {
-        assert( (ind < s) && bool("Provided index out of range!") );
-      }
-
-      size_type size() const { return size_; }
-      size_type index() const { return index_; }
+    public:
+      typedef SCALARTYPE const & const_reference;
+      typedef SCALARTYPE cpu_value_type;
 
       viennacl::context context() const { return ctx_; }
 
-    private:
+      size_type size() const { return size_; }
+
+      cpu_value_type  value() const { return value_.first; }
+
+      bool is_value_static() const { return value_.second; }
+
+      std::size_t index() const { return index_.second; }
+
+      bool has_index() const { return index_.first; }
+
+      cpu_value_type operator()(size_type i) const {
+        if(index_.first)
+          return (i==index_.second)?value_.first:0;
+        return value_.first;
+      }
+
+      cpu_value_type operator[](size_type i) const {
+        if(index_.first)
+          return (i==index_.second)?value_.first:0;
+        return
+            value_.first;
+      }
+
+    protected:
       size_type size_;
-      size_type index_;
+      std::pair<bool, std::size_t> index_;
+      std::pair<SCALARTYPE, bool> value_;
       viennacl::context ctx_;
   };
 
-
-  /** @brief Represents a vector consisting of zeros only. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
+  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise.*/
   template <typename SCALARTYPE>
-  class zero_vector
+  class unit_vector : public implicit_vector_base<SCALARTYPE>
   {
+      typedef implicit_vector_base<SCALARTYPE> base_type;
     public:
-      typedef vcl_size_t        size_type;
+      typedef typename base_type::size_type size_type;
+      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(1,true), ctx)
+      {
+        assert( (ind < s) && bool("Provided index out of range!") );
+      }
+  };
+
+
+  /** @brief Represents a vector consisting of zeros only. */
+  template <typename SCALARTYPE>
+  class zero_vector : public implicit_vector_base<SCALARTYPE>
+  {
+      typedef implicit_vector_base<SCALARTYPE> base_type;
+    public:
+      typedef typename base_type::size_type size_type;
       typedef SCALARTYPE        const_reference;
+      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(0,true), ctx) {}
+  };
 
-      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : size_(s), ctx_(ctx) {}
-
-      size_type size() const { return size_; }
-      const_reference operator()(size_type /*i*/) const { return 0; }
-      const_reference operator[](size_type /*i*/) const { return 0; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size_;
-      viennacl::context ctx_;
+  /** @brief Represents a vector consisting of ones only. */
+  template <typename SCALARTYPE>
+  class one_vector : public implicit_vector_base<SCALARTYPE>
+  {
+      typedef implicit_vector_base<SCALARTYPE> base_type;
+    public:
+      typedef typename base_type::size_type size_type;
+      typedef SCALARTYPE        const_reference;
+      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(1,true), ctx) {}
   };
 
 
   /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
   template <typename SCALARTYPE>
-  class scalar_vector
+  class scalar_vector : public implicit_vector_base<SCALARTYPE>
   {
+      typedef implicit_vector_base<SCALARTYPE> base_type;
     public:
-      typedef vcl_size_t         size_type;
+      typedef typename base_type::size_type size_type;
       typedef SCALARTYPE const & const_reference;
 
-      scalar_vector(size_type s, SCALARTYPE val) : size_(s), value_(val) {}
-
-      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx) : size_(s), value_(val), ctx_(ctx) {}
-
-      size_type size() const { return size_; }
-      const_reference operator()(size_type /*i*/) const { return value_; }
-      const_reference operator[](size_type /*i*/) const { return value_; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size_;
-      SCALARTYPE value_;
-      viennacl::context ctx_;
+      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(val,false), ctx) {}
   };
+
 
 #ifdef VIENNACL_WITH_OPENCL
   template<class SCALARTYPE, class DISTRIBUTION>
@@ -347,11 +369,11 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
 
-      static const size_type alignment = 1;
+      static const size_type alignment = 128;
 
       /** @brief Default constructor in order to be compatible with various containers.
       */
-      explicit vector_base() : size_(0), start_(0), stride_(1) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
+      explicit vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
 
       /** @brief An explicit constructor for wrapping an existing vector into a vector_range or vector_slice.
        *
@@ -363,19 +385,64 @@ namespace viennacl
        * @param vec_stride Increment between two elements in the original buffer (in multiples of SCALARTYPE)
       */
       explicit vector_base(viennacl::backend::mem_handle & h,
-                           size_type vec_size, size_type vec_start, difference_type vec_stride) : size_(vec_size), start_(vec_start), stride_(vec_stride), elements_(h) {}
+                           size_type vec_size, size_type vec_start, difference_type vec_stride)
+        : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
       /** @brief Creates a vector and allocates the necessary memory */
-      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context()) : size_(vec_size), start_(0), stride_(1)
+      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context())
+        : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
       {
         if (size_ > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
-          pad();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+          clear();
         }
       }
 
+      // CUDA or host memory:
+      explicit vector_base(SCALARTYPE * ptr_to_mem, size_type vec_size, viennacl::memory_types mem_type, std::size_t start = 0, difference_type stride = 1)
+        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+      {
+        if (mem_type == viennacl::CUDA_MEMORY)
+        {
+#ifdef VIENNACL_WITH_CUDA
+          elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
+          elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+          elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+#else
+          throw "CUDA not activated!";
+#endif
+        }
+        else if (mem_type == viennacl::MAIN_MEMORY)
+        {
+          elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
+          elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+          elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        }
+
+        elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
+
+      }
+
+#ifdef VIENNACL_WITH_OPENCL
+      /** @brief Create a vector from existing OpenCL memory
+      *
+      * Note: The provided memory must take an eventual ALIGNMENT into account, i.e. existing_mem must be at least of size internal_size()!
+      * This is trivially the case with the default alignment, but should be considered when using vector<> with an alignment parameter not equal to 1.
+      *
+      * @param existing_mem   An OpenCL handle representing the memory
+      * @param vec_size       The size of the vector.
+      */
+      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context())
+        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+      {
+        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+        elements_.opencl_handle() = existing_mem;
+        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        elements_.opencl_handle().context(ctx.opencl_context());
+        elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
+      }
+#endif
 
       /** @brief Creates the vector from the supplied random vector. */
       /*template<class DISTRIBUTION>
@@ -389,13 +456,13 @@ namespace viennacl
       } */
 
       template <typename LHS, typename RHS, typename OP>
-      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy) : size_(viennacl::traits::size(proxy)), start_(0), stride_(1)
+      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
+        : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
       {
         if (size_ > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp[0]));
-          pad();
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+          clear();
         }
         self_type::operator=(proxy);
       }
@@ -418,8 +485,10 @@ namespace viennacl
           if (size_ == 0)
           {
             size_ = vec.size();
+            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
             elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
+            pad();
           }
 
           viennacl::linalg::av(*this,
@@ -444,6 +513,7 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = viennacl::traits::size(proxy);
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
           pad();
         }
@@ -466,6 +536,7 @@ namespace viennacl
           size_ = v1.size();
           if (size_ > 0)
           {
+            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
             pad();
           }
@@ -486,15 +557,18 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            clear();
+          }
         }
+        else
+          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
 
         if (size_ > 0)
-        {
-          clear();
           this->operator()(v.index()) = SCALARTYPE(1);
-        }
 
         return *this;
       }
@@ -508,12 +582,15 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            clear();
+          }
         }
-
-        if (size_ > 0)
-          clear();
+        else
+          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
 
         return *this;
       }
@@ -527,8 +604,12 @@ namespace viennacl
         if (size() == 0)
         {
           size_ = v.size();
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
           if (size_ > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+            pad();
+          }
         }
 
         if (size_ > 0)
@@ -775,7 +856,7 @@ namespace viennacl
 
       /** @brief Returns the internal length of the vector, which is given by size() plus the extra memory due to padding the memory with zeros up to a multiple of 'ALIGNMENT'
       */
-      size_type internal_size() const { return viennacl::tools::roundUpToNextMultiple<size_type>(size_, 1); }
+      size_type internal_size() const { return internal_size_; }
 
       /** @brief Returns the offset within the buffer
       */
@@ -799,7 +880,7 @@ namespace viennacl
       */
       void clear()
       {
-        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0));
+        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
       }
 
       viennacl::memory_types memory_domain() const
@@ -829,13 +910,13 @@ namespace viennacl
         if (internal_size() != size())
         {
           std::vector<SCALARTYPE> pad(internal_size() - size());
-          viennacl::backend::memory_write(elements_, 0, sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
+          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
         }
       }
 
-      void switch_memory_domain(viennacl::memory_types new_domain)
+      void switch_memory_context(viennacl::context new_ctx)
       {
-        viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
       }
 
       //TODO: Think about implementing the following public member functions
@@ -872,7 +953,7 @@ namespace viennacl
 
         if (new_size != size_)
         {
-          std::size_t new_internal_size = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_size, 1);
+          std::size_t new_internal_size = viennacl::tools::align_to_multiple<std::size_t>(new_size, alignment);
 
           std::vector<SCALARTYPE> temp(size_);
           if (preserve && size_ > 0)
@@ -887,6 +968,8 @@ namespace viennacl
 
           fast_copy(temp, *this);
           size_ = new_size;
+          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+          pad();
         }
 
       }
@@ -894,6 +977,7 @@ namespace viennacl
       size_type       size_;
       size_type       start_;
       difference_type stride_;
+      size_type       internal_size_;
       handle_type elements_;
   }; //vector_base
 
@@ -916,6 +1000,7 @@ namespace viennacl
 
   public:
     typedef typename base_type::size_type                  size_type;
+    typedef typename base_type::difference_type            difference_type;
 
     /** @brief Default constructor in order to be compatible with various containers.
     */
@@ -927,7 +1012,10 @@ namespace viennacl
     */
     explicit vector(size_type vec_size) : base_type(vec_size) {}
 
-    explicit vector(size_type vec_size, viennacl::context & ctx) : base_type(vec_size, ctx) {}
+    explicit vector(size_type vec_size, viennacl::context ctx) : base_type(vec_size, ctx) {}
+
+    explicit vector(SCALARTYPE * ptr_to_mem, size_type vec_size, viennacl::memory_types mem_type, size_type start = 0, difference_type stride = 1)
+        : base_type(ptr_to_mem, vec_size, mem_type, start, stride) {}
 
 #ifdef VIENNACL_WITH_OPENCL
     /** @brief Create a vector from existing OpenCL memory
@@ -938,16 +1026,7 @@ namespace viennacl
     * @param existing_mem   An OpenCL handle representing the memory
     * @param vec_size       The size of the vector.
     */
-    explicit vector(cl_mem existing_mem, size_type vec_size) : base_type(vec_size)
-    {
-      viennacl::backend::mem_handle h;
-      h.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-      h.opencl_handle() = existing_mem;
-      h.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-      h.raw_size(sizeof(SCALARTYPE) * vec_size);
-
-      base_type::set_handle(h);
-    }
+    explicit vector(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1) : base_type(existing_mem, vec_size, start, stride) {}
 
     /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT') and the OpenCL context provided
     *
@@ -993,7 +1072,14 @@ namespace viennacl
         viennacl::linalg::vector_assign(*this, v[0]);
     }
 
-    using base_type::operator=;
+    // the following is used to circumvent an issue with Clang 3.0 when 'using base_type::operator=;' directly
+    template <typename T>
+    self_type & operator=(T const & other)
+    {
+      base_type::operator=(other);
+      return *this;
+    }
+
     using base_type::operator+=;
     using base_type::operator-=;
 
@@ -1021,9 +1107,9 @@ namespace viennacl
       return *this;
     }
 
-    void switch_memory_domain(viennacl::memory_types new_domain)
+    void switch_memory_context(viennacl::context new_ctx)
     {
-      base_type::switch_memory_domain(new_domain);
+      base_type::switch_memory_context(new_ctx);
     }
 
   }; //vector
@@ -1220,12 +1306,54 @@ namespace viennacl
   /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   *
   * @param gpu_vec    A gpu vector.
-  * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
+  * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
   */
   template <typename NumericT, typename CPUVECTOR>
   void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+  }
+
+
+  /** @brief Asynchronous version of fast_copy(), copying data from device to host. The host iterator cpu_begin needs to reside in a linear piece of memory, such as e.g. for std::vector.
+  *
+  * This method allows for overlapping data transfer with host computation and returns immediately if the gpu vector has a unit-stride.
+  * In order to wait for the transfer to complete, use viennacl::backend::finish().
+  * Note that data pointed to by cpu_begin must not be modified prior to completion of the transfer.
+  *
+  * @param gpu_begin  GPU iterator pointing to the beginning of the gpu vector (STL-like)
+  * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
+  * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
+  */
+  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  void async_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
+                  const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+                  CPU_ITERATOR cpu_begin )
+  {
+    if (gpu_begin != gpu_end)
+    {
+      if (gpu_begin.stride() == 1)
+      {
+        viennacl::backend::memory_read(gpu_begin.handle(),
+                                       sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                       sizeof(SCALARTYPE)*gpu_begin.stride() * (gpu_end - gpu_begin),
+                                       &(*cpu_begin),
+                                       true);
+      }
+      else // no async copy possible, so fall-back to fast_copy
+        fast_copy(gpu_begin, gpu_end, cpu_begin);
+    }
+  }
+
+  /** @brief Transfer from a gpu vector to a cpu vector. Convenience wrapper for viennacl::linalg::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
+  *
+  * @param gpu_vec    A gpu vector.
+  * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
+  */
+  template <typename NumericT, typename CPUVECTOR>
+  void async_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
+  {
+    viennacl::async_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
   }
 
 
@@ -1351,6 +1479,47 @@ namespace viennacl
   void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
   {
     viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+  }
+
+  /** @brief Asynchronous version of fast_copy(), copying data from host to device. The host iterator cpu_begin needs to reside in a linear piece of memory, such as e.g. for std::vector.
+  *
+  * This method allows for overlapping data transfer with host computation and returns immediately if the gpu vector has a unit-stride.
+  * In order to wait for the transfer to complete, use viennacl::backend::finish().
+  * Note that data pointed to by cpu_begin must not be modified prior to completion of the transfer.
+  *
+  * @param cpu_begin  CPU iterator pointing to the beginning of the cpu vector (STL-like)
+  * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
+  * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
+  */
+  template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  void async_copy(CPU_ITERATOR const & cpu_begin,
+                  CPU_ITERATOR const & cpu_end,
+                  vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
+  {
+    if (cpu_end - cpu_begin > 0)
+    {
+      if (gpu_begin.stride() == 1)
+      {
+        viennacl::backend::memory_write(gpu_begin.handle(),
+                                        sizeof(SCALARTYPE)*gpu_begin.offset(),
+                                        sizeof(SCALARTYPE)*gpu_begin.stride() * (cpu_end - cpu_begin), &(*cpu_begin),
+                                        true);
+      }
+      else // fallback to blocking copy. There's nothing we can do to prevent this
+        fast_copy(cpu_begin, cpu_end, gpu_begin);
+    }
+  }
+
+
+  /** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+  *
+  * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
+  * @param gpu_vec    The gpu vector.
+  */
+  template <typename CPUVECTOR, typename NumericT>
+  void async_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
+  {
+    viennacl::async_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
   }
 
   //from cpu to gpu. Safe assumption: cpu_vector does not necessarily occupy a linear memory segment, but is not larger than the allocated memory on the GPU
@@ -1483,29 +1652,29 @@ namespace viennacl
   * @param val  The vector that should be printed
   */
   template <typename T>
-  std::ostream & operator<<(std::ostream & s, vector_base<T> const & val)
+  std::ostream & operator<<(std::ostream & os, vector_base<T> const & val)
   {
     std::vector<T> tmp(val.size());
     viennacl::copy(val.begin(), val.end(), tmp.begin());
-    std::cout << "[" << val.size() << "](";
+    os << "[" << val.size() << "](";
     for (typename std::vector<T>::size_type i=0; i<val.size(); ++i)
     {
       if (i > 0)
-        s << ",";
-      s << tmp[i];
+        os << ",";
+      os << tmp[i];
     }
-    std::cout << ")";
-    return s;
+    os << ")";
+    return os;
   }
 
   template <typename LHS, typename RHS, typename OP>
-  std::ostream & operator<<(std::ostream & s, vector_expression<LHS, RHS, OP> const & proxy)
+  std::ostream & operator<<(std::ostream & os, vector_expression<LHS, RHS, OP> const & proxy)
 
   {
     typedef typename viennacl::result_of::cpu_value_type<typename LHS::value_type>::type ScalarType;
     viennacl::vector<ScalarType> result = proxy;
-    s << result;
-    return s;
+    os << result;
+    return os;
   }
 
   /** @brief Swaps the contents of two vectors, data is copied
@@ -1740,16 +1909,67 @@ namespace viennacl
     return vector_expression< const vector_base<T>, const S1, op_mult>(vec, value);
   }
 
-  /** @brief Operator overload for the expression alpha * v1, where alpha is a host scalar (possibly integer)
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a char
   *
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
   template <typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
-  operator * (T const & value, vector_base<T> const & vec)
+  operator * (char value, vector_base<T> const & vec)
   {
     return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+  }
+
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a short
+  *
+  * @param value   The host scalar (float or double)
+  * @param vec     A ViennaCL vector
+  */
+  template <typename T>
+  vector_expression< const vector_base<T>, const T, op_mult>
+  operator * (short value, vector_base<T> const & vec)
+  {
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+  }
+
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a int
+  *
+  * @param value   The host scalar (float or double)
+  * @param vec     A ViennaCL vector
+  */
+  template <typename T>
+  vector_expression< const vector_base<T>, const T, op_mult>
+  operator * (int value, vector_base<T> const & vec)
+  {
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+  }
+
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a long
+  *
+  * @param value   The host scalar (float or double)
+  * @param vec     A ViennaCL vector
+  */
+  template <typename T>
+  vector_expression< const vector_base<T>, const T, op_mult>
+  operator * (long value, vector_base<T> const & vec)
+  {
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+  }
+
+
+
+
+  /** @brief Operator overload for the expression alpha * v1, where alpha is a scalar expression and v1 is a ViennaCL vector.
+  *
+  * @param value   The host scalar (float or double)
+  * @param vec     A ViennaCL vector
+  */
+  template <typename LHS, typename RHS, typename OP, typename T>
+  vector_expression< const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult>
+  operator * (scalar_expression<LHS, RHS, OP> const & expr, vector_base<T> const & vec)
+  {
+    return vector_expression< const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult>(vec, expr);
   }
 
   /** @brief Scales the vector by a scalar 'alpha' and returns an expression template
@@ -1884,7 +2104,20 @@ namespace viennacl
       template <typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_mult> const & proxy)
+        // generic case: ScalarType is a scalar expression
+        template <typename LHS, typename RHS, typename OP>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
+        {
+          T alpha = proxy.rhs();
+          viennacl::linalg::av(lhs, proxy.lhs(), alpha, 1, false, false);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar<T>, op_mult> const & proxy)
+        {
+          viennacl::linalg::av(lhs, proxy.lhs(), proxy.rhs(), 1, false, false);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const T, op_mult> const & proxy)
         {
           viennacl::linalg::av(lhs, proxy.lhs(), proxy.rhs(), 1, false, false);
         }
@@ -1894,7 +2127,20 @@ namespace viennacl
       template <typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_mult> const & proxy)
+        // generic case: ScalarType is a scalar expression
+        template <typename LHS, typename RHS, typename OP>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
+        {
+          T alpha = proxy.rhs();
+          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), alpha, 1, false, false);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar<T>, op_mult> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, false);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const T, op_mult> const & proxy)
         {
           viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, false);
         }
@@ -1904,7 +2150,20 @@ namespace viennacl
       template <typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_mult> const & proxy)
+        // generic case: ScalarType is a scalar expression
+        template <typename LHS, typename RHS, typename OP>
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
+        {
+          T alpha = proxy.rhs();
+          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), alpha, 1, false, true);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar<T>, op_mult> const & proxy)
+        {
+          viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, true);
+        }
+
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const T, op_mult> const & proxy)
         {
           viennacl::linalg::avbv(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, true);
         }
@@ -2050,8 +2309,7 @@ namespace viennacl
         }
 
         // x = alpha * y + z
-        template <typename ScalarType>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
         {
@@ -2061,8 +2319,7 @@ namespace viennacl
         }
 
         // x = y / alpha + z
-        template <typename ScalarType>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_div>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
         {
@@ -2072,9 +2329,8 @@ namespace viennacl
         }
 
         // x = y + beta * z
-        template <typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_mult>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2083,9 +2339,8 @@ namespace viennacl
         }
 
         // x = y + z / beta
-        template <typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_div>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2094,9 +2349,8 @@ namespace viennacl
         }
 
         // x = alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_mult>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2105,9 +2359,8 @@ namespace viennacl
         }
 
         // x = alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_mult>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_div>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2116,9 +2369,8 @@ namespace viennacl
         }
 
         // x = y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_mult>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2127,9 +2379,8 @@ namespace viennacl
         }
 
         // x = y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
-                                                                  const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const T, op_div>,
+                                                                  const vector_expression<const vector_base<T>, const T, op_div>,
                                                                   op_add> const & proxy)
         {
           viennacl::linalg::avbv(lhs,
@@ -2786,7 +3037,7 @@ namespace viennacl
 
         // x = y .* vec_expr  or  x = y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           viennacl::linalg::element_op(lhs, viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> >(proxy.lhs(), temp));
@@ -2794,7 +3045,7 @@ namespace viennacl
 
         // x = vec_expr .* z  or  x = vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           viennacl::linalg::element_op(lhs, viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> >(temp, proxy.rhs()));
@@ -2803,8 +3054,8 @@ namespace viennacl
         // x = vec_expr .* vec_expr  or  z = vec_expr .* vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());
@@ -2826,7 +3077,7 @@ namespace viennacl
 
         // x += y .* vec_expr  or  x += y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>,  op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>,  op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           vector<T> temp2(temp.size());
@@ -2836,7 +3087,7 @@ namespace viennacl
 
         // x += vec_expr .* z  or  x += vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           vector<T> temp2(temp.size());
@@ -2847,8 +3098,8 @@ namespace viennacl
         // x += vec_expr .* vec_expr  or  x += vec_expr ./ vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());
@@ -2873,7 +3124,7 @@ namespace viennacl
 
         // x -= y .* vec_expr  or  x -= y ./ vec_expr
         template <typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, const OP2>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
           vector<T> temp2(temp.size());
@@ -2883,7 +3134,7 @@ namespace viennacl
 
         // x -= vec_expr .* z  or  x -= vec_expr ./ z
         template <typename LHS1, typename RHS1, typename OP1>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
           vector<T> temp2(temp.size());
@@ -2894,8 +3145,8 @@ namespace viennacl
         // x -= vec_expr .* vec_expr  or  x -= vec_expr ./ vec_expr
         template <typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
-        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, const OP1>,
-                                                                  const vector_expression<const LHS2, const RHS2, const OP2>,
+        static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
+                                                                  const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_binary<OP> > const & proxy)
         {
           vector<T> temp1(proxy.lhs());

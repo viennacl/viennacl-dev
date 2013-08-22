@@ -34,6 +34,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/vector.hpp"
 #include "viennacl/linalg/host_based/matrix_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -69,8 +70,10 @@ namespace viennacl
           viennacl::linalg::cuda::am(mat1, mat2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -102,8 +105,10 @@ namespace viennacl
                                        mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -135,32 +140,36 @@ namespace viennacl
                                          mat3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
 
     template <typename NumericT, typename F>
-    void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+    void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
     {
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::matrix_assign(mat, s);
+          viennacl::linalg::host_based::matrix_assign(mat, s, clear);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::matrix_assign(mat, s);
+          viennacl::linalg::opencl::matrix_assign(mat, s, clear);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::matrix_assign(mat, s);
+          viennacl::linalg::cuda::matrix_assign(mat, s, clear);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -183,11 +192,143 @@ namespace viennacl
           viennacl::linalg::cuda::matrix_diagonal_assign(mat, s);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
+
+    /** @brief Dispatcher interface for A = diag(v, k) */
+    template <typename NumericT, typename F>
+    void matrix_diag_from_vector(const vector_base<NumericT> & v, int k, matrix_base<NumericT, F> & A)
+    {
+      switch (viennacl::traits::handle(v).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_diag_from_vector(v, k, A);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_diag_from_vector(v, k, A);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_diag_from_vector(v, k, A);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Dispatcher interface for v = diag(A, k) */
+    template <typename NumericT, typename F>
+    void matrix_diag_to_vector(const matrix_base<NumericT, F> & A, int k, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_diag_to_vector(A, k, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_diag_to_vector(A, k, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_diag_to_vector(A, k, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template <typename NumericT, typename F>
+    void matrix_row(const matrix_base<NumericT, F> & A, unsigned int i, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_row(A, i, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_row(A, i, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_row(A, i, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template <typename NumericT, typename F>
+    void matrix_column(const matrix_base<NumericT, F> & A, unsigned int j, vector_base<NumericT> & v)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::matrix_column(A, j, v);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::matrix_column(A, j, v);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::matrix_column(A, j, v);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the Frobenius norm of a matrix - dispatcher interface
+    *
+    * @param A      The matrix
+    * @param result The result scalar
+    */
+    template <typename T, typename F>
+    void norm_frobenius_impl(matrix_base<T, F> const & A,
+                             scalar<T> & result)
+    {
+      typedef typename matrix_base<T, F>::handle_type  HandleType;
+      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+      norm_2_impl(temp, result);
+    }
+
+    /** @brief Computes the Frobenius norm of a vector with final reduction on the CPU
+    *
+    * @param A      The matrix
+    * @param result The result scalar
+    */
+    template <typename T, typename F>
+    void norm_frobenius_cpu(matrix_base<T, F> const & A,
+                             T & result)
+    {
+      typedef typename matrix_base<T, F>::handle_type  HandleType;
+      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+      norm_2_cpu(temp, result);
+    }
 
     //
     /////////////////////////   matrix-vector products /////////////////////////////////
@@ -228,8 +369,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(mat, vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -267,8 +410,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(mat_trans, vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -309,8 +454,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -349,8 +496,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -388,8 +537,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -426,8 +577,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -463,100 +616,62 @@ namespace viennacl
           viennacl::linalg::cuda::element_op(A, proxy);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
 
-
-
-    template <typename T, typename F>
-    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_prod> >
-    element_prod(matrix_base<T, F> const & A, matrix_base<T, F> const & B)
-    {
-      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_prod> >(A, B);
+#define VIENNACL_MAKE_BINARY_OP(OPNAME)\
+    template <typename T, typename F>\
+    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_base<T, F> const & A, matrix_base<T, F> const & B)\
+    {\
+      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_##OPNAME> >(A, B);\
+    }\
+\
+    template <typename M1, typename M2, typename OP, typename T, typename F>\
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,\
+                                const matrix_base<T, F>,\
+                                op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_expression<const M1, const M2, OP> const & proxy, matrix_base<T, F> const & B)\
+    {\
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,\
+                                         const matrix_base<T, F>,\
+                                         op_element_binary<op_##OPNAME> >(proxy, B);\
+    }\
+\
+    template <typename T, typename F, typename M2, typename M3, typename OP>\
+    viennacl::matrix_expression<const matrix_base<T, F>,\
+                                const matrix_expression<const M2, const M3, OP>,\
+                                op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_base<T, F> const & A, matrix_expression<const M2, const M3, OP> const & proxy)\
+    {\
+      return viennacl::matrix_expression<const matrix_base<T, F>,\
+                                         const matrix_expression<const M2, const M3, OP>,\
+                                         op_element_binary<op_##OPNAME> >(A, proxy);\
+    }\
+\
+    template <typename M1, typename M2, typename OP1,\
+              typename M3, typename M4, typename OP2>\
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,\
+                                const matrix_expression<const M3, const M4, OP2>,\
+                                op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_expression<const M1, const M2, OP1> const & proxy1,\
+                 matrix_expression<const M3, const M4, OP2> const & proxy2)\
+    {\
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,\
+                                         const matrix_expression<const M3, const M4, OP2>,\
+                                         op_element_binary<op_##OPNAME> >(proxy1, proxy2);\
     }
 
-    template <typename M1, typename M2, typename OP, typename T, typename F>
-    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
-                                const matrix_base<T, F>,
-                                op_element_binary<op_prod> >
-    element_prod(matrix_expression<const M1, const M2, OP> const & proxy, matrix_base<T, F> const & B)
-    {
-      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
-                                         const matrix_base<T, F>,
-                                         op_element_binary<op_prod> >(proxy, B);
-    }
+    VIENNACL_MAKE_BINARY_OP(prod)
+    VIENNACL_MAKE_BINARY_OP(div)
+    VIENNACL_MAKE_BINARY_OP(pow)
 
-    template <typename T, typename F, typename M2, typename M3, typename OP>
-    viennacl::matrix_expression<const matrix_base<T, F>,
-                                const matrix_expression<const M2, const M3, OP>,
-                                op_element_binary<op_prod> >
-    element_prod(matrix_base<T, F> const & A, matrix_expression<const M2, const M3, OP> const & proxy)
-    {
-      return viennacl::matrix_expression<const matrix_base<T, F>,
-                                         const matrix_expression<const M2, const M3, OP>,
-                                         op_element_binary<op_prod> >(A, proxy);
-    }
-
-    template <typename M1, typename M2, typename OP1,
-              typename M3, typename M4, typename OP2>
-    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
-                                const matrix_expression<const M3, const M4, OP2>,
-                                op_element_binary<op_prod> >
-    element_prod(matrix_expression<const M1, const M2, OP1> const & proxy1,
-                 matrix_expression<const M3, const M4, OP2> const & proxy2)
-    {
-      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
-                                         const matrix_expression<const M3, const M4, OP2>,
-                                         op_element_binary<op_prod> >(proxy1, proxy2);
-    }
-
-
-
-
-    template <typename T, typename F>
-    viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_div> >
-    element_div(matrix_base<T, F> const & A, matrix_base<T, F> const & B)
-    {
-      return viennacl::matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<op_div> >(A, B);
-    }
-
-    template <typename M1, typename M2, typename OP, typename T, typename F>
-    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
-                                const matrix_base<T, F>,
-                                op_element_binary<op_div> >
-    element_div(matrix_expression<const M1, const M2, OP> const & proxy, matrix_base<T, F> const & B)
-    {
-      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,
-                                         const matrix_base<T, F>,
-                                         op_element_binary<op_div> >(proxy, B);
-    }
-
-    template <typename T, typename F, typename M2, typename M3, typename OP>
-    viennacl::matrix_expression<const matrix_base<T, F>,
-                                const matrix_expression<const M2, const M3, OP>,
-                                op_element_binary<op_div> >
-    element_div(matrix_base<T, F> const & A, matrix_expression<const M2, const M3, OP> const & proxy)
-    {
-      return viennacl::matrix_expression<const matrix_base<T, F>,
-                                         const matrix_expression<const M2, const M3, OP>,
-                                         op_element_binary<op_div> >(A, proxy);
-    }
-
-    template <typename M1, typename M2, typename OP1,
-              typename M3, typename M4, typename OP2>
-    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
-                                const matrix_expression<const M3, const M4, OP2>,
-                                op_element_binary<op_div> >
-    element_div(matrix_expression<const M1, const M2, OP1> const & proxy1,
-                matrix_expression<const M3, const M4, OP2> const & proxy2)
-    {
-      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,
-                                         const matrix_expression<const M3, const M4, OP2>,
-                                         op_element_binary<op_div> >(proxy1, proxy2);
-    }
+#undef VIENNACL_GENERATE_BINARY_OP_OVERLOADS
 
 
 
@@ -656,8 +771,10 @@ namespace viennacl
                                                        vec1, vec2);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 

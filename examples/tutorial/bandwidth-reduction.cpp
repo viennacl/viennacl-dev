@@ -59,8 +59,20 @@ int calc_bw(std::vector< std::map<int, double> > const & matrix)
     int bw = 0;
 
     for (std::size_t i = 0; i < matrix.size(); i++)
-        for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
-            bw = std::max(bw, std::abs(static_cast<int>(i - it->first)));
+    {
+      int min_index = matrix.size();
+      int max_index = 0;
+      for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
+      {
+        if (it->first > max_index)
+          max_index = it->first;
+        if (it->first < min_index)
+          min_index = it->first;
+      }
+
+      if (max_index > min_index) //row isn't empty
+        bw = std::max(bw, max_index - min_index);
+    }
 
     return bw;
 }
@@ -76,8 +88,19 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
         r2[r[i]] = i;
 
     for (std::size_t i = 0; i < r.size(); i++)
-        for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++)
-            bw = std::max(bw, std::abs(static_cast<int>(i - r2[it->first])));
+    {
+      int min_index = matrix.size();
+      int max_index = 0;
+      for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++)
+      {
+        if (r2[it->first] > max_index)
+          max_index = r2[it->first];
+        if (r2[it->first] < min_index)
+          min_index = r2[it->first];
+      }
+      if (max_index > min_index)
+        bw = std::max(bw, max_index - min_index);
+    }
 
     return bw;
 }

@@ -791,7 +791,7 @@ namespace viennacl
         uint last_index  = blockDim.x - 1;
         uint group_start = group_boundaries[blockIdx.x];
         uint group_end   = group_boundaries[blockIdx.x + 1];
-        uint k_end = (group_end > group_start) ? 1 + (group_end - group_star TBB programs, be sure to link in the Intel® TBB shared library, otherwise undefined references will occur. The following table shows compilation commands that use the t - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
         uint local_index = 0;
 

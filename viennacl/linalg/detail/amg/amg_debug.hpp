@@ -42,6 +42,7 @@ namespace viennacl
       namespace amg
       {
 
+#ifdef VIENNACL_AMG_DEBUG
         template <typename MatrixType>
         void printmatrix(MatrixType & mat, int const value=-1)
         {
@@ -49,7 +50,6 @@ namespace viennacl
           typedef typename VIENNACL_AMG_MATRIXTYPE::iterator1 InternalRowIterator;
           typedef typename VIENNACL_AMG_MATRIXTYPE::iterator2 InternalColIterator;
 
-          #ifdef VIENNACL_AMG_DEBUG
           VIENNACL_AMG_MATRIXTYPE mat2 = mat;
 
           for (InternalRowIterator row_iter = mat2.begin1(); row_iter != mat2.end1(); ++row_iter)
@@ -61,20 +61,26 @@ namespace viennacl
             std::cout << std::endl;
           }
           std::cout << std::endl;
-          #endif
         }
 
         template <typename VectorType>
         void printvector(VectorType const & vec)
         {
-          #ifdef VIENNACL_AMG_DEBUGBENCH
           for (typename VectorType::const_iterator iter = vec.begin(); iter != vec.end(); ++iter)
           {
             std::cout << *iter << " ";
           }
           std::cout << std::endl;
-          #endif
         }
+#else
+        template <typename MatrixType>
+        void printmatrix(MatrixType &, int) {}
+
+        template <typename VectorType>
+        void printvector(VectorType const &) {}
+
+#endif
+
 
       }
     }

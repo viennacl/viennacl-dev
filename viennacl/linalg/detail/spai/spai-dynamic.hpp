@@ -327,8 +327,10 @@ namespace viennacl
                                       block_matrix& g_A_I_J_vcl,
                                       block_vector& g_bv_vcl,
                                       block_matrix& g_A_I_J_u_vcl,
-                                      std::vector<cl_uint>& g_is_update)
+                                      std::vector<cl_uint>& g_is_update,
+                                      viennacl::context ctx)
           {
+            viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
             unsigned int local_r_n = 0;
             unsigned int local_c_n = 0;
             unsigned int sz_blocks = 0;
@@ -338,12 +340,12 @@ namespace viennacl
             std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));
             std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             compute_blocks_size(g_I, g_J_u, sz_blocks, blocks_ind, matrix_dims);
-            std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
+            //std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
 
-            viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
-                                                                                                          &(g_is_update[0]));
-            viennacl::ocl::kernel& block_q_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_q_mult");
+            viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
+                                                                                     &(g_is_update[0]));
+            viennacl::ocl::kernel& block_q_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_q_mult");
             block_q_kernel.local_work_size(0, local_c_n);
             block_q_kernel.global_work_size(0, 256);
             viennacl::ocl::enqueue(block_q_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(),
@@ -401,8 +403,11 @@ namespace viennacl
                                 viennacl::ocl::handle<cl_mem>& matrix_dimensions,
                                 block_matrix& g_A_I_u_J_u_vcl,
                                 std::vector<cl_uint>& g_is_update,
-                                const bool is_empty_block)
+                                const bool is_empty_block,
+                                viennacl::context ctx)
           {
+            viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
+
             //std::vector<std::vector<unsigned int> > g_I_q(g_I.size());
             assemble_qr_row_inds(g_I, g_J, g_I_u, g_I_q);
             unsigned int sz_blocks;
@@ -413,22 +418,28 @@ namespace viennacl
 
             block_matrix g_A_I_J_q_vcl;
             //need to allocate memory for QR block
-            g_A_I_J_q_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                    static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
-                                                                                    &(con_A_I_J_q[0]));
-            g_A_I_J_q_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                              static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
-                                                                              &(matrix_dims[0]));
-            g_A_I_J_q_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
+            g_A_I_J_q_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                              static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
+                                                              &(con_A_I_J_q[0]));
+            g_A_I_J_q_vcl.handle().context(opencl_ctx);
+
+            g_A_I_J_q_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                               static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
+                                                               &(matrix_dims[0]));
+            g_A_I_J_q_vcl.handle1().context(opencl_ctx);
+
+            g_A_I_J_q_vcl.handle2() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
                                                                 static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
-                                                                                    &(blocks_ind[0]));
-            viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                                          static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
-                                                                                                          &(g_is_update[0]));
+                                                                &(blocks_ind[0]));
+            g_A_I_J_q_vcl.handle2().context(opencl_ctx);
+
+            viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
+                                                                                     &(g_is_update[0]));
 
             if(!is_empty_block)
             {
-              viennacl::ocl::kernel& qr_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly");
+              viennacl::ocl::kernel& qr_assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly");
               qr_assembly_kernel.local_work_size(0, 1);
               qr_assembly_kernel.global_work_size(0, 256);
               viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions,
@@ -446,7 +457,7 @@ namespace viennacl
             }
             else
             {
-              viennacl::ocl::kernel& qr_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly_1");
+              viennacl::ocl::kernel& qr_assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr_assembly_1");
               qr_assembly_kernel.local_work_size(0, 1);
               qr_assembly_kernel.global_work_size(0, 256);
               viennacl::ocl::enqueue(qr_assembly_kernel(matrix_dimensions, g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(),
@@ -478,8 +489,10 @@ namespace viennacl
                           block_matrix& g_A_I_u_J_u_vcl,
                           block_vector& g_bv_vcl,
                           block_vector& g_bv_vcl_u,
-                          std::vector<cl_uint>& g_is_update)
+                          std::vector<cl_uint>& g_is_update,
+                          viennacl::context ctx)
           {
+            viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
             std::vector<cl_uint> matrix_dims(g_I.size()*2, static_cast<cl_uint>(0));
             std::vector<cl_uint> blocks_ind(g_I.size() + 1, static_cast<cl_uint>(0));
             std::vector<cl_uint> start_bv_r_inds(g_I.size() + 1, 0);
@@ -492,25 +505,35 @@ namespace viennacl
 
             block_matrix g_A_I_J_r_vcl;
             block_vector g_bv_r_vcl;
-            g_A_I_J_r_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                    static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
-                                                                                    &(con_A_I_J_r[0]));
-            g_A_I_J_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                        static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
-                                                                                    &(matrix_dims[0]));
-            g_A_I_J_r_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                        static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
-                                                                                    &(blocks_ind[0]));
-            g_bv_r_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                      static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
-                                                                      &(b_v_r[0]));
-            g_bv_r_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                              static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
-                                                                              &(start_bv_r_inds[0]));
-            viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                        static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
-                                                                                                          &(g_is_update[0]));
-            viennacl::ocl::kernel& r_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_r_assembly");
+            g_A_I_J_r_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                              static_cast<unsigned int>(sizeof(ScalarType)*sz_blocks),
+                                                              &(con_A_I_J_r[0]));
+            g_A_I_J_r_vcl.handle().context(opencl_ctx);
+
+            g_A_I_J_r_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                               static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size())),
+                                                               &(matrix_dims[0]));
+            g_A_I_J_r_vcl.handle1().context(opencl_ctx);
+
+            g_A_I_J_r_vcl.handle2() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                               static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
+                                                               &(blocks_ind[0]));
+            g_A_I_J_r_vcl.handle2().context(opencl_ctx);
+
+            g_bv_r_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                           static_cast<unsigned int>(sizeof(ScalarType)*bv_size),
+                                                           &(b_v_r[0]));
+            g_bv_r_vcl.handle().context(opencl_ctx);
+
+            g_bv_r_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                            static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
+                                                            &(start_bv_r_inds[0]));
+            g_bv_r_vcl.handle().context(opencl_ctx);
+
+            viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
+                                                                                     &(g_is_update[0]));
+            viennacl::ocl::kernel& r_assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_r_assembly");
             r_assembly_kernel.local_work_size(0, 1);
             r_assembly_kernel.global_work_size(0, 256);
 
@@ -520,7 +543,7 @@ namespace viennacl
                                                     g_A_I_J_r_vcl.handle(), g_A_I_J_r_vcl.handle2(), g_A_I_J_r_vcl.handle1(),
                                                     g_is_update_vcl, static_cast<cl_uint>(g_I.size())));
 
-            viennacl::ocl::kernel & bv_assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_bv_assembly");
+            viennacl::ocl::kernel & bv_assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_bv_assembly");
             bv_assembly_kernel.local_work_size(0, 1);
             bv_assembly_kernel.global_work_size(0, 256);
             viennacl::ocl::enqueue(bv_assembly_kernel(g_bv_vcl.handle(), g_bv_vcl.handle1(), g_A_I_J_vcl.handle1(), g_bv_vcl_u.handle(),
@@ -556,6 +579,7 @@ namespace viennacl
                             block_vector& g_bv_vcl,
                             spai_tag const & tag)
           {
+            viennacl::context ctx = viennacl::traits::context(A);
             //updated index set for columns
             std::vector<std::vector<unsigned int> > g_J_u(g_J.size());
             //updated index set for rows
@@ -583,13 +607,13 @@ namespace viennacl
             //assemble new A_I_J_u blocks on GPU and multiply them with Q'
             block_assembly(A, g_J_u, g_I, g_A_I_J_u_vcl, g_is_update, is_empty_block);
             //I have matrix A_I_J_u ready..
-            block_q_multiplication<ScalarType>(g_J_u, g_I, g_A_I_J_vcl, g_bv_vcl, g_A_I_J_u_vcl, g_is_update);
+            block_q_multiplication<ScalarType>(g_J_u, g_I, g_A_I_J_vcl, g_bv_vcl, g_A_I_J_u_vcl, g_is_update, ctx);
             //assemble A_\hatI_\hatJ
             block_assembly(A, g_J_u, g_I_u, g_A_I_u_J_u_vcl, g_is_update, is_empty_block);
             assemble_qr_block<ScalarType>(g_J, g_I, g_J_u, g_I_u, g_I_q, g_A_I_J_u_vcl, g_A_I_J_vcl.handle1(),
-                                          g_A_I_u_J_u_vcl, g_is_update, is_empty_block);
+                                          g_A_I_u_J_u_vcl, g_is_update, is_empty_block, ctx);
 
-            block_qr<ScalarType>(g_I_q, g_J_u, g_A_I_u_J_u_vcl, g_bv_u_vcl, g_is_update);
+            block_qr<ScalarType>(g_I_q, g_J_u, g_A_I_u_J_u_vcl, g_bv_u_vcl, g_is_update, ctx);
             //concatanation of new and old indices
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
@@ -599,7 +623,7 @@ namespace viennacl
               g_J[i].insert(g_J[i].end(), g_J_u[i].begin(), g_J_u[i].end());
               g_I[i].insert(g_I[i].end(), g_I_u[i].begin(), g_I_u[i].end());
             }
-            assemble_r<ScalarType>(g_I, g_J, g_A_I_J_vcl, g_A_I_J_u_vcl, g_A_I_u_J_u_vcl,  g_bv_vcl,  g_bv_u_vcl, g_is_update);
+            assemble_r<ScalarType>(g_I, g_J, g_A_I_J_vcl, g_A_I_J_u_vcl, g_A_I_u_J_u_vcl,  g_bv_vcl,  g_bv_u_vcl, g_is_update, ctx);
           }
 
         }

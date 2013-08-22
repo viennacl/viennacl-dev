@@ -132,12 +132,12 @@ namespace viennacl
              * @param tag spai tag
              */
             spai_precond(const MatrixType& A,
-                         const spai_tag& tag): tag_(tag)
+                         const spai_tag& tag): tag_(tag), spai_m_(viennacl::traits::context(A))
             {
                 viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
                 viennacl::linalg::kernels::spai<ScalarType, 1>::init(ctx);
 
-                MatrixType At(A.size1(), A.size2());
+                MatrixType At(A.size1(), A.size2(), viennacl::context(ctx));
                 UBLASSparseMatrixType ubls_A, ubls_spai_m;
                 UBLASSparseMatrixType ubls_At;
                 viennacl::copy(A, ubls_A);;
@@ -154,19 +154,21 @@ namespace viennacl
                 viennacl::copy(ubls_At, At);
                 viennacl::linalg::detail::spai::computeSPAI(At, ubls_At, ubls_spai_m, spai_m_, tag_);
                 //viennacl::copy(ubls_spai_m, spai_m_);
-
+                tmp_.resize(A.size1(), viennacl::traits::context(A), false);
             }
             /** @brief Application of current preconditioner, multiplication on the right-hand side vector
              * @param vec rhs vector
              */
             void apply(VectorType& vec) const {
-                vec = viennacl::linalg::prod(spai_m_, vec);
+                tmp_ = viennacl::linalg::prod(spai_m_, vec);
+                vec = tmp_;
             }
         private:
             // variables
             spai_tag tag_;
             // result of SPAI
             MatrixType spai_m_;
+            mutable VectorType tmp_;
         };
 
 
@@ -238,7 +240,8 @@ namespace viennacl
             * @param tag SPAI configuration tag
             */
             fspai_precond(const MatrixType & A,
-                        const fspai_tag & tag): tag_(tag){
+                          const fspai_tag & tag) : tag_(tag), L(viennacl::traits::context(A)), L_trans(viennacl::traits::context(A)), temp_apply_vec_(A.size1(), viennacl::traits::context(A))
+            {
                 //UBLASSparseMatrixType ubls_A;
                 UBLASSparseMatrixType ublas_A(A.size1(), A.size2());
                 UBLASSparseMatrixType pA(A.size1(), A.size2());
@@ -263,9 +266,8 @@ namespace viennacl
             */
             void apply(VectorType& vec) const
             {
-              VectorType temp(vec.size());
-              temp = viennacl::linalg::prod(L_trans, vec);
-              vec = viennacl::linalg::prod(L, temp);
+              temp_apply_vec_ = viennacl::linalg::prod(L_trans, vec);
+              vec = viennacl::linalg::prod(L, temp_apply_vec_);
             }
 
         private:
@@ -273,6 +275,7 @@ namespace viennacl
             const fspai_tag & tag_;
             MatrixType L;
             MatrixType L_trans;
+            mutable VectorType temp_apply_vec_;
         };
 
 

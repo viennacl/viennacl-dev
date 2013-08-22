@@ -36,6 +36,36 @@
 
 namespace viennacl
 {
+
+  template<typename SCALARTYPE>
+  class implicit_matrix_base
+  {
+    protected:
+      typedef vcl_size_t        size_type;
+      implicit_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
+    public:
+      typedef SCALARTYPE const & const_reference;
+      typedef SCALARTYPE cpu_value_type;
+
+      size_type size1() const { return size1_; }
+      size_type size2() const { return size2_; }
+
+      SCALARTYPE  value() const { return value_.first; }
+      bool is_value_static( ) const { return value_.second; }
+      bool diag() const { return diag_; }
+
+      const_reference operator()(size_type i, size_type j) const {
+        if(diag_) return (i == j) ? value_.first : 0;
+        return value_.first;
+      }
+
+    protected:
+      size_type size1_;
+      size_type size2_;
+      std::pair<SCALARTYPE, bool> value_;
+      bool diag_;
+  };
+
   //
   // Initializer types
   //
@@ -122,8 +152,11 @@ namespace viennacl
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
+      typedef typename result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
+      typedef typename result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
+
     public:
-      typedef typename LHS::size_type       size_type;
+      typedef vcl_size_t       size_type;
 
       matrix_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
 
@@ -140,9 +173,9 @@ namespace viennacl
 
     private:
       /** @brief The left hand side operand */
-      typename result_of::matrix_expression_internal_storage<LHS>::type lhs_;
+      lhs_reference_type lhs_;
       /** @brief The right hand side operand */
-      typename result_of::matrix_expression_internal_storage<RHS>::type rhs_;
+      rhs_reference_type rhs_;
   };
 
 
@@ -197,7 +230,7 @@ namespace viennacl
 
       typedef matrix_iterator<row_iteration, self_type >   iterator1;
       typedef matrix_iterator<col_iteration, self_type >   iterator2;
-      typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<SCALARTYPE>::ResultType>   value_type;
+      typedef scalar<SCALARTYPE>                                                  value_type;
       typedef SCALARTYPE                                                          cpu_value_type;
       typedef SizeType                                                            size_type;
       typedef DistanceType                                                        difference_type;
@@ -205,8 +238,11 @@ namespace viennacl
       typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
 
+      static const size_type alignment = 128;
+
+
       /** @brief The default constructor. Does not allocate any memory. */
-      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0) {};
+      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0) {}
 
       /** @brief Creates the matrix with the given dimensions
       *
@@ -214,12 +250,14 @@ namespace viennacl
       * @param columns  Number of columns
       */
       explicit matrix_base(size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(rows), internal_size2_(columns)
+          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
+            internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, alignment)),
+            internal_size2_(viennacl::tools::align_to_multiple<size_type>(columns, alignment))
       {
         if (rows > 0 && columns > 0)
         {
-          std::vector<SCALARTYPE> temp(internal_size());
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx, &(temp[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+          clear();
         }
       }
 
@@ -237,15 +275,32 @@ namespace viennacl
       template <typename LHS, typename RHS, typename OP>
       explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
         size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
-        internal_size1_(viennacl::traits::size1(proxy)), internal_size2_(viennacl::traits::size2(proxy))
+        internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
+        internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment))
       {
         elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
         if (internal_size() > 0)
+        {
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-
-        self_type::operator=(proxy);
+          clear();
+          self_type::operator=(proxy);
+        }
       }
 
+#ifdef VIENNACL_WITH_OPENCL
+      explicit matrix_base(cl_mem mem, size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
+        : size1_(rows), size2_(columns),
+          start1_(0), start2_(0),
+          stride1_(1), stride2_(1),
+          internal_size1_(rows), internal_size2_(columns)
+      {
+        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+        elements_.opencl_handle() = mem;
+        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+        elements_.opencl_handle().context(ctx.opencl_context());
+        elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
+      }
+#endif
 
 
       self_type & operator=(const self_type & other)  //enables implicit conversions
@@ -290,9 +345,11 @@ namespace viennacl
         {
           size1_ = viennacl::traits::size1(proxy);
           size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+          if (size1_ != internal_size1_ || size2_ != internal_size2_)
+            clear();
         }
 
         if (internal_size() > 0)
@@ -315,8 +372,8 @@ namespace viennacl
         {
           size1_ = viennacl::traits::size1(proxy);
           size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
         }
 
         std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
@@ -379,17 +436,19 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+            clear();
+          }
         }
+        else
+          viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
 
         if (internal_size() > 0)
-        {
-          clear();
           viennacl::linalg::matrix_diagonal_assign(*this, m(0,0));
-        }
 
         return *this;
       }
@@ -404,14 +463,16 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+            clear();
+          }
         }
-
-        if (internal_size() > 0)
-          clear();
+        else
+          viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
 
         return *this;
       }
@@ -426,15 +487,17 @@ namespace viennacl
         {
           size1_ = m.size1();
           size2_ = m.size2();
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           if (internal_size() > 0)
+          {
             viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+            clear();
+          }
         }
 
         if (internal_size() > 0)
         {
-          clear();
           viennacl::linalg::matrix_assign(*this, m(0,0));
         }
 
@@ -500,7 +563,7 @@ namespace viennacl
       /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
       matrix_expression<const self_type, const SCALARTYPE, op_mult> operator-() const
       {
-        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
+        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1));
       }
 
       /** @brief Returns the number of rows */
@@ -521,11 +584,10 @@ namespace viennacl
       /** @brief Resets all entries to zero */
       void clear()
       {
-        viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
+        viennacl::linalg::matrix_assign(*this, SCALARTYPE(0), true);
       }
 
 
-      //const unsigned int row_stride() const { return roundUpToNextMultiple<unsigned int>(columns(), ALIGNMENT); }
       /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
       size_type internal_size1() const { return internal_size1_; }
       /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
@@ -551,9 +613,9 @@ namespace viennacl
         elements_ = h;
       }
 
-      void switch_memory_domain(viennacl::memory_types new_domain)
+      void switch_memory_context(viennacl::context new_ctx)
       {
-        viennacl::backend::switch_memory_domain<SCALARTYPE>(elements_, new_domain);
+        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
       }
 
 
@@ -575,8 +637,8 @@ namespace viennacl
           viennacl::backend::memory_read(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(old_entries[0]));
 
           //set up entries of new matrix:
-          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1)
-                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
+          std::vector< SCALARTYPE > new_entries(  viennacl::tools::align_to_multiple<vcl_size_t>(rows,    alignment)
+                                                * viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment));
           for (size_type i=0; i<rows; ++i)
           {
             if (i >= size1_)
@@ -586,7 +648,7 @@ namespace viennacl
             {
               if (j >= size2_)
                 continue;
-              new_entries[F::mem_index(i, j, viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows, 1), viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1))]
+              new_entries[F::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
                   = old_entries[F::mem_index(i, j, internal_size1(), internal_size2())];
             }
           }
@@ -594,20 +656,19 @@ namespace viennacl
           //copy new entries to GPU:
           size1_ = rows;
           size2_ = columns;
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), viennacl::traits::context(elements_), &(new_entries[0]));
         }
         else //discard old entries:
         {
           size1_ = rows;
           size2_ = columns;
-          internal_size1_ = size1_;
-          internal_size2_ = size2_;
+          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
 
-          std::vector< SCALARTYPE > new_entries(  viennacl::tools::roundUpToNextMultiple<vcl_size_t>(rows,    1)
-                                                * viennacl::tools::roundUpToNextMultiple<vcl_size_t>(columns, 1));
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_), &(new_entries[0]));
+          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_));
+          clear();
         }
       }
 
@@ -649,18 +710,9 @@ namespace viennacl
       */
       explicit matrix(size_type rows, size_type columns, viennacl::context ctx = viennacl::context()) : base_type(rows, columns, ctx) {}
 
-  #ifdef VIENNACL_WITH_OPENCL
-      explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type (rows, columns)
-      {
-        viennacl::backend::mem_handle h;
-        h.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-        h.opencl_handle() = mem;
-        h.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        h.raw_size(sizeof(SCALARTYPE)*base_type::internal_size());
-
-        base_type::set_handle(h);
-      }
-  #endif
+#ifdef VIENNACL_WITH_OPENCL
+      explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type(mem, rows, columns) {}
+#endif
 
       template <typename LHS, typename RHS, typename OP>
       matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy) {}
@@ -730,10 +782,10 @@ namespace viennacl
   * @param s            STL output stream
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
-  std::ostream & operator<<(std::ostream & s, const matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
+  template<class SCALARTYPE, typename F>
+  std::ostream & operator<<(std::ostream & s, const matrix_base<SCALARTYPE, F> & gpu_matrix)
   {
-    typedef typename matrix<SCALARTYPE, F, ALIGNMENT>::size_type      size_type;
+    typedef typename matrix_base<SCALARTYPE, F>::size_type      size_type;
 
     std::vector<SCALARTYPE> tmp(gpu_matrix.internal_size());
     viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * gpu_matrix.internal_size(), &(tmp[0]));
@@ -746,7 +798,7 @@ namespace viennacl
       s << "(";
       for (size_type j = 0; j < gpu_matrix.size2(); ++j)
       {
-        s << tmp[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
+        s << tmp[F::mem_index(i * gpu_matrix.stride1() + gpu_matrix.start1(), j * gpu_matrix.stride2() + gpu_matrix.start2(), gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
         if (j < gpu_matrix.size2() - 1)
           s << ",";
       }
@@ -781,6 +833,36 @@ namespace viennacl
     return matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>(mat, mat);
   }
 
+  //diag():
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const int, op_matrix_diag>
+  diag(const matrix_base<NumericT, F> & A, int k = 0)
+  {
+    return vector_expression< const matrix_base<NumericT, F>, const int, op_matrix_diag>(A, k);
+  }
+
+  template<typename NumericT>
+  matrix_expression< const vector_base<NumericT>, const int, op_vector_diag>
+  diag(const vector_base<NumericT> & v, int k = 0)
+  {
+    return matrix_expression< const vector_base<NumericT>, const int, op_vector_diag>(v, k);
+  }
+
+  // row():
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>
+  row(const matrix_base<NumericT, F> & A, unsigned int i)
+  {
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>(A, i);
+  }
+
+  // column():
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>
+  column(const matrix_base<NumericT, F> & A, unsigned int j)
+  {
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>(A, j);
+  }
 
   /////////////////////// transfer operations: //////////////////////////////////////
 
@@ -1547,8 +1629,6 @@ namespace viennacl
           static void apply(matrix_base<T, F> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
           {
             matrix<T, F> temp(proxy.lhs());
-            std::cout << "lhs -= temp / proxy.rhs()" << std::endl;
-            std::cout << temp(0,0) << " / " << proxy.rhs() << std::endl;
             lhs -= temp / proxy.rhs();
           }
       };
@@ -2316,10 +2396,48 @@ namespace viennacl
       };
 
 
+      //////////////////// diag(), row(), column() operations ////////////////////////////////////////
+
+      template <typename T, typename F, typename LHS>
+      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const int, op_vector_diag> >
+      {
+        static void apply(matrix_base<T, F> & lhs, matrix_expression<const vector_base<T>, const int, op_vector_diag> const & proxy)
+        {
+          viennacl::linalg::matrix_diag_from_vector(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
 
 
+      template <typename T, typename LHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const int, op_matrix_diag> >
+      {
+        template <typename F>
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const int, op_matrix_diag> const & proxy)
+        {
+          viennacl::linalg::matrix_diag_to_vector(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
+
+      template <typename T, typename LHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_row> >
+      {
+        template <typename F>
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const unsigned int, op_row> const & proxy)
+        {
+          viennacl::linalg::matrix_row(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
 
 
+      template <typename T, typename LHS>
+      struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_column> >
+      {
+        template <typename F>
+        static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T, F>, const unsigned int, op_column> const & proxy)
+        {
+          viennacl::linalg::matrix_column(proxy.lhs(), proxy.rhs(), lhs);
+        }
+      };
 
 
       //////////////////// Element-wise operations ////////////////////////////////////////

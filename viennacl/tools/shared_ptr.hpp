@@ -81,23 +81,6 @@ namespace viennacl
         detail::aux* pa;
         T* pt;
 
-        void inc() { if(pa) pa->count.inc(); }
-
-        void dec()
-        {
-          if(pa)
-          {
-            pa->count.dec();
-
-            if(pa->count.is_null())
-            {
-                pa->destroy();
-                delete pa;
-                pa = NULL;
-            }
-          }
-        }
-
       public:
 
         shared_ptr() :pa(NULL), pt(NULL) {}
@@ -146,6 +129,24 @@ namespace viennacl
         T* operator->() const {  return pt; }
 
         T& operator*() const { return *pt; }
+
+        void inc() { if(pa) pa->count.inc(); }
+
+        void dec()
+        {
+          if(pa)
+          {
+            pa->count.dec();
+
+            if(pa->count.is_null())
+            {
+                pa->destroy();
+                delete pa;
+                pa = NULL;
+            }
+          }
+        }
+
     };
 
   }

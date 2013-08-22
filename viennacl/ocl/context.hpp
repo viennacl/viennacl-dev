@@ -191,7 +191,7 @@ namespace viennacl
         *  @param size   Size of the memory buffer in bytes
         *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
         */
-        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL)
+        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, unsigned int size, void * ptr = NULL) const
         {
           return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, size, ptr), *this);
         }
@@ -202,7 +202,7 @@ namespace viennacl
         *  @param buffer A vector (STL vector, ublas vector, etc.)
         */
         template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
-        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer)
+        viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer) const
         {
           return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), *this);
         }
@@ -260,7 +260,7 @@ namespace viennacl
           std::cout << "Number of devices in context: " << devices_.size() << std::endl;
           throw "queue not found!";
 
-          return (it->second)[current_queue_id_];
+          //return (it->second)[current_queue_id_];
         }
 
         //get a particular queue:
@@ -521,7 +521,8 @@ namespace viennacl
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
             std::cout << "ViennaCL: Number of devices for context: " << devices.size() << std::endl;
             #endif
-            for (std::size_t i=0; i<devices.size(); ++i)
+            std::size_t device_num = std::min<std::size_t>(default_device_num_, devices.size());
+            for (std::size_t i=0; i<device_num; ++i)
               devices_.push_back(devices[i]);
 
             if (devices.size() == 0)
@@ -546,9 +547,8 @@ namespace viennacl
                                                                   ++iter)
             device_id_array.push_back(iter->id());
 
-          cl_uint device_num = std::max(default_device_num_, device_id_array.size());
           h_ = clCreateContext(0,
-                               device_num,
+                               static_cast<cl_uint>(devices_.size()),
                                &(device_id_array[0]),
                                NULL, NULL, &err);
           VIENNACL_ERR_CHECK(err);

@@ -2,11 +2,13 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
 # tests with CPU backend
-foreach(PROG blas3_prod blas3_solve iterators
+foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
              global_variables
-             matrix-vector matrix
-             scalar scheduler_matrix scheduler_vector sparse
-             vector vector-int vector_multi_inner_prod
+             matrix_vector matrix_vector_int
+             matrix_row_float matrix_row_double matrix_row_int
+             matrix_col_float matrix_col_double matrix_col_int
+             scalar scheduler_matrix scheduler_matrix_matrix scheduler_matrix_vector scheduler_sparse scheduler_vector sparse
+             vector_float vector_double vector_int vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    add_test(${PROG}-cpu ${PROG}-test-cpu)
@@ -15,12 +17,15 @@ endforeach(PROG)
 
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
-  foreach(PROG blas3_prod blas3_solve fft iterators
+  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double fft iterators
                generator_blas1 generator_blas2 generator_blas3 #generator_segmentation
                global_variables
-               matrix-vector matrix nmf qr-method
+               matrix_vector matrix_vector_int
+               matrix_row_float matrix_row_double matrix_row_int
+               matrix_col_float matrix_col_double matrix_col_int
+               nmf qr_method
                scalar sparse structured-matrices svd
-               vector vector-int vector_multi_inner_prod
+               vector_float vector_double vector_int vector_multi_inner_prod
                spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
@@ -39,11 +44,13 @@ endif (ENABLE_OPENCL)
 
 # tests with CUDA backend
 if (ENABLE_CUDA)
-  foreach(PROG blas3_prod blas3_solve iterators
+  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_double iterators
                global_variables
-               matrix-vector matrix
+               matrix_vector matrix_vector_int
+               matrix_row_float matrix_row_double matrix_row_int
+               matrix_col_float matrix_col_double matrix_col_int
                scalar sparse
-               vector vector-int vector_multi_inner_prod
+               vector_float vector_double vector_int vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
      add_test(${PROG}-cuda ${PROG}-test-cuda)
@@ -55,4 +62,28 @@ if (ENABLE_CUDA)
                       src/external_2.cu
                       ${PROJECT_SOURCE_DIR}/external/pugixml/src/pugixml.cpp)
 endif (ENABLE_CUDA)
+
+# test shared library
+include_directories(${PROJECT_SOURCE_DIR}/libviennacl/include/)
+
+if(ENABLE_CUDA)
+  if(ENABLE_OPENCL)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-DVIENNACL_WITH_OPENCL") #set flags before setting executable!
+    cuda_add_executable(libviennacl-test src/libviennacl.cu)
+    target_link_libraries(libviennacl-test viennacl ${OPENCL_LIBRARIES})
+  else(ENABLE_OPENCL)
+    cuda_add_executable(libviennacl-test src/libviennacl.cu)
+    target_link_libraries(libviennacl-test viennacl)
+  endif(ENABLE_OPENCL)
+else(ENABLE_CUDA)
+  add_executable(libviennacl-test src/libviennacl.cpp)
+  if(ENABLE_OPENCL)
+    set_target_properties(libviennacl-test PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+    target_link_libraries(libviennacl-test viennacl ${OPENCL_LIBRARIES})
+  else(ENABLE_OPENCL)
+    target_link_libraries(libviennacl-test viennacl)
+  endif(ENABLE_OPENCL)
+endif(ENABLE_CUDA)
+add_test(libviennacl libviennacl-test)
+
 

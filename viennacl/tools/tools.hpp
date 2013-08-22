@@ -35,18 +35,19 @@ namespace viennacl
 {
   namespace tools
   {
+
     /** \cond */
     /** @brief Supply suitable increment functions for the iterators: */
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
-      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, unsigned int & row, unsigned int & col) { ++row; }
+      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & row, unsigned int & /*col*/) { ++row; }
     };
 
     template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::col_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
-      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & mat, unsigned int & row, unsigned int & col) { ++col; }
+      static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & /*row*/, unsigned int & col) { ++col; }
     };
     /** \endcond */
 
@@ -121,7 +122,7 @@ namespace viennacl
     * @return The smallest multiple of 'base' such that to_reach <= base
     */
     template <class INT_TYPE>
-    INT_TYPE roundUpToNextMultiple(INT_TYPE to_reach, INT_TYPE base)
+    INT_TYPE align_to_multiple(INT_TYPE to_reach, INT_TYPE base)
     {
       if (to_reach % base == 0) return to_reach;
       return ((to_reach / base) + 1) * base;
@@ -140,6 +141,25 @@ namespace viennacl
     {
       if (to_reach % base == 0) return to_reach;
       return (to_reach / base) * base;
+    }
+
+    /** @brief Replace in a source string a pattern by another
+     *
+     * @param source The source string
+     * @param find String to find
+     * @param replace String to replace
+     */
+    int inline find_and_replace(std::string & source, std::string const & find, std::string const & replace)
+    {
+        int num=0;
+        size_t fLen = find.size();
+        size_t rLen = replace.size();
+        for (size_t pos=0; (pos=source.find(find, pos))!=std::string::npos; pos+=rLen)
+        {
+            num++;
+            source.replace(pos, fLen, replace);
+        }
+        return num;
     }
 
     /** @brief Create a double precision kernel out of a single precision kernel

@@ -54,6 +54,13 @@ namespace viennacl
         static void apply(T & result, T const & x, T const & y) { result = x / y; }
       };
 
+      template <>
+      struct op_applier<op_element_binary<op_pow> >
+      {
+        template <typename T>
+        static void apply(T & result, T const & x, T const & y) { result = std::pow(x, y); }
+      };
+
 #define VIENNACL_MAKE_UNARY_OP_APPLIER(funcname)  \
       template <> \
       struct op_applier<op_element_unary<op_##funcname> > \

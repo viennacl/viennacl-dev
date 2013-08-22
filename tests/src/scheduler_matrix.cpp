@@ -243,6 +243,133 @@ int run_test(double epsilon,
   }
 
 
+  std::cout << "--- Testing elementwise operations (binary) ---" << std::endl;
+  std::cout << "x = element_prod(x, y)... ";
+  {
+  ublas_C = element_prod(ublas_A, ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_A, vcl_B));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x + y, y)... ";
+  {
+  ublas_C = element_prod(ublas_A + ublas_B, ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_A + vcl_B, vcl_B));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x, x + y)... ";
+  {
+  ublas_C = element_prod(ublas_A, ublas_A + ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_A, vcl_B + vcl_A));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x - y, y + x)... ";
+  {
+  ublas_C = element_prod(ublas_A - ublas_B, ublas_B + ublas_A);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_A - vcl_B, vcl_B + vcl_A));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
+
+  std::cout << "x = element_div(x, y)... ";
+  {
+  ublas_C = element_div(ublas_A, ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_div(vcl_A, vcl_B));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x + y, y)... ";
+  {
+  ublas_C = element_div(ublas_A + ublas_B, ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_div(vcl_A + vcl_B, vcl_B));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x, x + y)... ";
+  {
+  ublas_C = element_div(ublas_A, ublas_A + ublas_B);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_div(vcl_A, vcl_B + vcl_A));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x - y, y + x)... ";
+  {
+  ublas_C = element_div(ublas_A - ublas_B, ublas_B + ublas_A);
+  viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_div(vcl_A - vcl_B, vcl_B + vcl_A));
+  viennacl::scheduler::execute(my_statement);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
+  std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
+#define GENERATE_UNARY_OP_TEST(OPNAME) \
+  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), 0.21); \
+  ublas_B = 3.1415 * ublas_A; \
+  viennacl::copy(ublas_A, vcl_A); \
+  viennacl::copy(ublas_B, vcl_B); \
+  { \
+  for (std::size_t i=0; i<ublas_C.size1(); ++i) \
+    for (std::size_t j=0; j<ublas_C.size2(); ++j) \
+      ublas_C(i,j) = OPNAME(ublas_A(i,j)); \
+  viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_A)); \
+  viennacl::scheduler::execute(my_statement); \
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  } \
+  { \
+  for (std::size_t i=0; i<ublas_C.size1(); ++i) \
+    for (std::size_t j=0; j<ublas_C.size2(); ++j) \
+      ublas_C(i,j) = OPNAME(ublas_A(i,j) / cpu_value_type(2)); \
+  viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_A / cpu_value_type(2))); \
+  viennacl::scheduler::execute(my_statement); \
+  if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  }
+
+  GENERATE_UNARY_OP_TEST(cos);
+  GENERATE_UNARY_OP_TEST(cosh);
+  GENERATE_UNARY_OP_TEST(exp);
+  GENERATE_UNARY_OP_TEST(floor);
+  GENERATE_UNARY_OP_TEST(fabs);
+  GENERATE_UNARY_OP_TEST(log);
+  GENERATE_UNARY_OP_TEST(log10);
+  GENERATE_UNARY_OP_TEST(sin);
+  GENERATE_UNARY_OP_TEST(sinh);
+  GENERATE_UNARY_OP_TEST(fabs);
+  //GENERATE_UNARY_OP_TEST(abs); //OpenCL allows abs on integers only
+  GENERATE_UNARY_OP_TEST(sqrt);
+  GENERATE_UNARY_OP_TEST(tan);
+  GENERATE_UNARY_OP_TEST(tanh);
+
+#undef GENERATE_UNARY_OP_TEST
+
+
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;

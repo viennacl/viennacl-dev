@@ -15,8 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-//#define NDEBUG
-//#define VIENNACL_DEBUG_BUILD
+#define NDEBUG
 
 //
 // *** System
@@ -48,8 +47,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "examples/tutorial/Random.hpp"
-#include "viennacl/generator/custom_operation.hpp"
-
+#include "viennacl/generator/generate.hpp"
 #include "list"
 //
 // -------------------------------------------------------------
@@ -59,7 +57,7 @@ using namespace boost::numeric;
 // -------------------------------------------------------------
 //
 static const unsigned int min_large_block_size = 32;
-static const unsigned int max_large_block_size = 256;
+static const unsigned int max_large_block_size = 128;
 static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
 
 static const unsigned int min_alignment = 1;
@@ -116,26 +114,46 @@ template< typename NumericT, typename Epsilon,
           typename MatrixTypeA, typename MatrixTypeB, typename MatrixTypeC>
 int test_prod(Epsilon const& epsilon,
 
-              ReferenceMatrixTypeA const & A, ReferenceMatrixTypeA const & A_trans,
-              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & B_trans,
+              ReferenceMatrixTypeA const & /*A*/, ReferenceMatrixTypeA const & A_trans,
+              ReferenceMatrixTypeB const & B, ReferenceMatrixTypeB const & /*B_trans*/,
               ReferenceMatrixTypeC & C,
 
-              MatrixTypeA const & vcl_A, MatrixTypeA const & vcl_A_trans,
-              MatrixTypeB const & vcl_B, MatrixTypeB const & vcl_B_trans,
+              MatrixTypeA const & /*vcl_A*/, MatrixTypeA const & vcl_A_trans,
+              MatrixTypeB const & vcl_B, MatrixTypeB const & /*vcl_B_trans*/,
               MatrixTypeC & vcl_C
              )
 {
    int retval = EXIT_SUCCESS;
    NumericT act_diff = 0;
+   NumericT alpha = 3.14;
+   NumericT beta = 4.51;
 
-   std::cout << "Testing C = trans(A) * B ..." << std::endl;
+//   std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
+//   {
+//       C     = alpha*viennacl::linalg::prod(A, B);
+
+//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
+//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+//       viennacl::backend::finish();
+//       act_diff = fabs(diff(C, vcl_C));
+//       if( act_diff > epsilon )
+//       {
+//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//         std::cout << "  diff: " << act_diff << std::endl;
+//         retval = EXIT_FAILURE;
+//       }
+//       else
+//         std::cout << "Test C = A * B passed!" << std::endl;
+//   }
+
+
+   std::cout << "Testing C = alpha*trans(A) * B + beta*C ..." << std::endl;
    {
-       C     = boost::numeric::ublas::prod(trans(A_trans), B);
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),vcl_B));
-       op.execute();
+       C     = alpha*boost::numeric::ublas::prod(trans(A_trans), B) + beta*C;
+       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
+       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
+       act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -145,59 +163,37 @@ int test_prod(Epsilon const& epsilon,
        else std::cout << "Test C = trans(A) * B passed!" << std::endl;
    }
 
-   std::cout << "Testing C = A * trans(B) ..." << std::endl;
-   {
-       C     = boost::numeric::ublas::prod(A,trans(B_trans));
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(vcl_A,trans(vcl_B_trans)));
-       op.execute();
-       viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
-       if( act_diff > epsilon )
-       {
-         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         std::cout << "  diff: " << act_diff << std::endl;
-         retval = EXIT_FAILURE;
-       }
-       else std::cout << "Test C = A * trans(B) passed!" << std::endl;
-   }
+//   std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
+//   {
+//       C     = boost::numeric::ublas::prod(A,trans(B_trans)) + beta*C;
+//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
+//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+//       viennacl::backend::finish();
+//       act_diff = fabs(diff(C, vcl_C));
+//       if( act_diff > epsilon )
+//       {
+//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//         std::cout << "  diff: " << act_diff << std::endl;
+//         retval = EXIT_FAILURE;
+//       }
+//       else std::cout << "Test C = A * trans(B) passed!" << std::endl;
+//   }
 
-   std::cout << "Testing C = trans(A) * trans(B) ..." << std::endl;
-   {
-       C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(trans(vcl_A_trans),trans(vcl_B_trans)));
-       op.execute();
-       viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
-       if( act_diff > epsilon )
-       {
-         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         std::cout << "  diff: " << act_diff << std::endl;
-         retval = EXIT_FAILURE;
-       }
-       else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
-   }
-
-
-
-   std::cout << "Testing C = (A+A) * B ..." << std::endl;
-   {
-       ReferenceMatrixTypeA newA(A+A);
-       C     = viennacl::linalg::prod(newA, B);
-       viennacl::generator::custom_operation op;
-       op.add(vcl_C = viennacl::generator::prod(vcl_A+vcl_A,vcl_B));
-       op.execute();
-       viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C.get()));
-       if( act_diff > epsilon )
-       {
-         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         std::cout << "  diff: " << act_diff << std::endl;
-         retval = EXIT_FAILURE;
-       }
-       else std::cout << "Test C = (A+A) * B passed!" << std::endl;
-   }
+//   std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
+//   {
+//       C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans)) + beta*C;
+//       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
+//       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+//       viennacl::backend::finish();
+//       act_diff = fabs(diff(C, vcl_C));
+//       if( act_diff > epsilon )
+//       {
+//         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//         std::cout << "  diff: " << act_diff << std::endl;
+//         retval = EXIT_FAILURE;
+//       }
+//       else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
+//   }
 
 
    return retval;
@@ -208,23 +204,15 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  long matrix_size1 = 1*max_large_block_size;
-  long matrix_size2 = 2*max_large_block_size;
-  long matrix_size3 = 3*max_large_block_size;
-
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_A> > DummyMatrixA;
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_B> > DummyMatrixB;
-  typedef viennacl::generator::matrix< viennacl::matrix<NumericT, F_C> > DummyMatrixC;
+  long matrix_size1 = 2*max_large_block_size;
+  long matrix_size2 = 3*max_large_block_size;
+  long matrix_size3 = 4*max_large_block_size;
 
   // --------------------------------------------------------------------------
 
   // ublas reference:
   ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, 3.1415);
-
   ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, 42.0);
-
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 
   //fill A and B:
@@ -234,12 +222,13 @@ int test_prod(Epsilon const& epsilon)
   for (unsigned int i = 0; i < B.size1(); ++i)
     for (unsigned int j = 0; j < B.size2(); ++j)
         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
+  for (unsigned int i = 0; i < C.size1(); ++i)
+    for (unsigned int j = 0; j < C.size2(); ++j)
+        C(i,j) = 0;
+
 
   ublas::matrix<NumericT>     A_trans = trans(A);
-  ublas::matrix<NumericT> big_A_trans = trans(big_A);
-
   ublas::matrix<NumericT>     B_trans = trans(B);
-  ublas::matrix<NumericT> big_B_trans = trans(big_B);
 
   //
   // ViennaCL objects
@@ -250,27 +239,22 @@ int test_prod(Epsilon const& epsilon)
   // A
   viennacl::matrix<NumericT, F_A>    vcl_A(matrix_size1, matrix_size2);
   viennacl::copy(A, vcl_A);
-  DummyMatrixA dummy_vcl_A(vcl_A);
 
   // A^T
   viennacl::matrix<NumericT, F_A>    vcl_A_trans(matrix_size2, matrix_size1);
   viennacl::copy(A_trans, vcl_A_trans);
-  DummyMatrixA dummy_vcl_A_trans(vcl_A_trans);
-
 
   // B
   viennacl::matrix<NumericT, F_B>    vcl_B(matrix_size2, matrix_size3);
   viennacl::copy(B, vcl_B);
-  DummyMatrixB dummy_vcl_B(vcl_B);
 
   // B^T
   viennacl::matrix<NumericT, F_B>    vcl_B_trans(matrix_size3, matrix_size2);
   viennacl::copy(B_trans, vcl_B_trans);
-  DummyMatrixB dummy_vcl_B_trans(vcl_B_trans);
 
   // C
   viennacl::matrix<NumericT, F_C>    vcl_C(matrix_size1, matrix_size3);
-  DummyMatrixC dummy_vcl_C(vcl_C);
+  viennacl::copy(C, vcl_C);
 
   std::cout << "--- Part 1: Testing matrix-matrix products ---" << std::endl;
 
@@ -283,9 +267,9 @@ int test_prod(Epsilon const& epsilon)
   std::cout << "Now using A=matrix, B=matrix, C=matrix" << std::endl;
   ret = test_prod<NumericT>(epsilon,
                             A, A_trans, B, B_trans, C,
-                            dummy_vcl_A, dummy_vcl_A_trans,
-                            dummy_vcl_B, dummy_vcl_B_trans,
-                            dummy_vcl_C);
+                            vcl_A, vcl_A_trans,
+                            vcl_B, vcl_B_trans,
+                            vcl_C);
   if (ret != EXIT_SUCCESS)
     return ret;
 
@@ -304,54 +288,55 @@ int test(Epsilon const& epsilon)
   if (ret != EXIT_SUCCESS)
     return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
 
@@ -361,94 +346,76 @@ int test(Epsilon const& epsilon)
 int main(int argc, char* argv[])
 {
     std::vector<std::string> args(argv,argv+argc);
-    unsigned int requested_device;
-    if(argc!=2){
-        requested_device=0;
-    }
-    else{
-        requested_device = atoi(args[1].c_str());
-    }
     int retval = EXIT_SUCCESS;
 
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
     typedef std::vector<cl_device_id> cl_devices_type;
 
-    platforms_type platforms = viennacl::ocl::get_platforms();
-    size_t num_platforms = platforms.size();
+    //platforms_type platforms = viennacl::ocl::get_platforms();
+    //size_t num_platforms = platforms.size();
 
-    unsigned int current_device = 0;
+    devices_type dev = viennacl::ocl::current_context().devices();
+    for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+            std::cout << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << "## Test :: Generated BLAS 3 routines" << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << std::endl;
 
-    for(unsigned int k=0 ; k < num_platforms ; ++k)
-    {
-        viennacl::ocl::platform pf(k);
-        viennacl::ocl::set_context_device_type(k,CL_DEVICE_TYPE_ALL);
-        viennacl::ocl::set_context_platform_index(k,k);
-        viennacl::ocl::switch_context(k);
-        devices_type dev = viennacl::ocl::current_context().devices();
-        for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+            int retval = EXIT_SUCCESS;
 
-            if(current_device++ == requested_device ){
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "## Test :: Generated BLAS 3 routines" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << std::endl;
+            srand(time(NULL));
 
-                int retval = EXIT_SUCCESS;
+            std::cout << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << std::endl;
+            {
+               typedef float NumericT;
+               NumericT epsilon = NumericT(1.0E-3);
+               std::cout << "# Testing setup:" << std::endl;
 
-                srand(time(NULL));
+               std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << std::endl;
-                {
-                   typedef float NumericT;
-                   NumericT epsilon = NumericT(1.0E-3);
-                   std::cout << "# Testing setup:" << std::endl;
-
-                   std::cout << viennacl::ocl::current_device().info() << std::endl;
-
-                   std::cout << "  eps:     " << epsilon << std::endl;
-                   std::cout << "  numeric: float" << std::endl;
-                   retval = test<NumericT>(epsilon);
-                   if( retval == EXIT_SUCCESS )
-                     std::cout << "# Test passed" << std::endl;
-                   else
-                     return retval;
-                }
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << std::endl;
-             #ifdef VIENNACL_HAVE_OPENCL
-                if( viennacl::ocl::current_device().double_support() )
-             #endif
-                {
-                   {
-                     typedef double NumericT;
-                     NumericT epsilon = 1.0E-11;
-                     std::cout << "# Testing setup:" << std::endl;
-                     std::cout << "  eps:     " << epsilon << std::endl;
-                     std::cout << "  numeric: double" << std::endl;
-                     retval = test<NumericT>(epsilon);
-                     if( retval == EXIT_SUCCESS )
-                       std::cout << "# Test passed" << std::endl;
-                     else
-                       return retval;
-                   }
-                   std::cout << std::endl;
-                   std::cout << "----------------------------------------------" << std::endl;
-                   std::cout << std::endl;
-                }
-
-                std::cout << std::endl;
-                std::cout << "------- Test completed --------" << std::endl;
-                std::cout << std::endl;
+               std::cout << "  eps:     " << epsilon << std::endl;
+               std::cout << "  numeric: float" << std::endl;
+               retval = test<NumericT>(epsilon);
+               if( retval == EXIT_SUCCESS )
+                 std::cout << "# Test passed" << std::endl;
+               else
+                 return retval;
             }
-        }
+            std::cout << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << std::endl;
+         #ifdef VIENNACL_HAVE_OPENCL
+            if( viennacl::ocl::current_device().double_support() )
+         #endif
+            {
+               {
+                 typedef double NumericT;
+                 NumericT epsilon = 1.0E-11;
+                 std::cout << "# Testing setup:" << std::endl;
+                 std::cout << "  eps:     " << epsilon << std::endl;
+                 std::cout << "  numeric: double" << std::endl;
+                 retval = test<NumericT>(epsilon);
+                 if( retval == EXIT_SUCCESS )
+                   std::cout << "# Test passed" << std::endl;
+                 else
+                   return retval;
+               }
+               std::cout << std::endl;
+               std::cout << "----------------------------------------------" << std::endl;
+               std::cout << std::endl;
+            }
+
+            std::cout << std::endl;
+            std::cout << "------- Test completed --------" << std::endl;
+            std::cout << std::endl;
     }
+
 
 
 

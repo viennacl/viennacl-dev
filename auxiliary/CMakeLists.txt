@@ -4,7 +4,6 @@ add_executable(generate-blas3-solve-align1  generate-blas3-solve-align1.cpp)
 add_executable(generate-blas3-prod-align1   generate-blas3-prod-align1.cpp)
 add_executable(generate-blas3-prod16-align1 generate-blas3-prod16-align1.cpp)
 add_executable(generate-blas3-prod-amd      generate-blas3-prod-amd.cpp)
-add_executable(generate-matrix-element-ops  generate-matrix-element-ops.cpp)
 
 function(generate_blas3_prod_align1 outvar)
    set(crstr_0 col)
@@ -156,32 +155,6 @@ generate_blas3_prod_align1(MATRIX_PROD_SRCS)
 # Matrix-Matrix triangular solver
 generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
 
-# Matrix element wise operations
-function(generate_matrix_ops_align1 outvar)
-   set(crstr_0 col)
-   set(crstr_1 row)
-   set(outfiles)
-
-   foreach(ar 0 1) # A is column/row major
-
-      set(d "${CMAKE_CURRENT_BINARY_DIR}")
-      set(d "${d}/matrix_${crstr_${ar}}_element")
-      set(d "${d}/align1")
-      file(MAKE_DIRECTORY "${d}")
-      set(o "${d}/ops.cl")
-      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
-      add_custom_command(OUTPUT "${o}"
-         COMMAND generate-matrix-element-ops ${ar} > "${o}"
-         COMMENT "Generating ${ro}"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-         VERBATIM)
-      list(APPEND outfiles "${o}")
-   endforeach()
-   set(${outvar} "${outfiles}" PARENT_SCOPE)
-endfunction()
-
-generate_matrix_ops_align1(MATRIX_ELEMENT_SRCS)
-
 set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/block_trans_lu_backward.cl
    compressed_matrix/align1/block_trans_unit_lu_forward.cl
@@ -215,84 +188,6 @@ set(ELL_MATRIX_SRCS
 
 set(HYB_MATRIX_SRCS
    hyb_matrix/align1/vec_mul.cl)
-
-set(MATRIX_COL_SRCS
-   matrix_col/align1/am_cpu.cl
-   matrix_col/align1/am_gpu.cl
-   matrix_col/align1/ambm_cpu_cpu.cl
-   matrix_col/align1/ambm_cpu_gpu.cl
-   matrix_col/align1/ambm_gpu_cpu.cl
-   matrix_col/align1/ambm_gpu_gpu.cl
-   matrix_col/align1/ambm_m_cpu_cpu.cl
-   matrix_col/align1/ambm_m_cpu_gpu.cl
-   matrix_col/align1/ambm_m_gpu_cpu.cl
-   matrix_col/align1/ambm_m_gpu_gpu.cl
-   matrix_col/align1/assign_cpu.cl
-   matrix_col/align1/diagonal_assign_cpu.cl
-   matrix_col/align1/element_op.cl
-   matrix_col/align1/fft_direct.cl
-   matrix_col/align1/fft_radix2.cl
-   matrix_col/align1/fft_radix2_local.cl
-   matrix_col/align1/fft_reorder.cl
-   matrix_col/align1/triangular_substitute_inplace.cl
-   matrix_col/align1/lu_factorize.cl
-   matrix_col/align1/scaled_rank1_update_cpu.cl
-   matrix_col/align1/scaled_rank1_update_gpu.cl
-   matrix_col/align1/trans_vec_mul.cl
-   matrix_col/align1/vec_mul.cl
-   matrix_col/align16/dummy)
-
-set(MATRIX_ROW_SRCS
-   matrix_row/align1/am_cpu.cl
-   matrix_row/align1/am_gpu.cl
-   matrix_row/align1/ambm_cpu_cpu.cl
-   matrix_row/align1/ambm_cpu_gpu.cl
-   matrix_row/align1/ambm_gpu_cpu.cl
-   matrix_row/align1/ambm_gpu_gpu.cl
-   matrix_row/align1/ambm_m_cpu_cpu.cl
-   matrix_row/align1/ambm_m_cpu_gpu.cl
-   matrix_row/align1/ambm_m_gpu_cpu.cl
-   matrix_row/align1/ambm_m_gpu_gpu.cl
-   matrix_row/align1/assign_cpu.cl
-   matrix_row/align1/diagonal_assign_cpu.cl
-   matrix_row/align1/element_op.cl
-   matrix_row/align1/fft_direct.cl
-   matrix_row/align1/fft_radix2.cl
-   matrix_row/align1/fft_radix2_local.cl
-   matrix_row/align1/fft_reorder.cl
-   matrix_row/align1/triangular_substitute_inplace.cl
-   matrix_row/align1/lu_factorize.cl
-   matrix_row/align1/scaled_rank1_update_cpu.cl
-   matrix_row/align1/scaled_rank1_update_gpu.cl
-   matrix_row/align1/trans_vec_mul.cl
-   matrix_row/align1/vec_mul.cl
-   matrix_row/align16/dummy)
-
-set(SCALAR_SRCS
-   scalar/align1/as_cpu.cl
-   scalar/align1/as_gpu.cl
-   scalar/align1/asbs_cpu_cpu.cl
-   scalar/align1/asbs_cpu_gpu.cl
-   scalar/align1/asbs_gpu_cpu.cl
-   scalar/align1/asbs_gpu_gpu.cl
-   scalar/align1/asbs_s_cpu_cpu.cl
-   scalar/align1/asbs_s_cpu_gpu.cl
-   scalar/align1/asbs_s_gpu_cpu.cl
-   scalar/align1/asbs_s_gpu_gpu.cl)
-
-set(FFT_SRCS
-   fft/align1/bluestein_post.cl
-   fft/align1/bluestein_pre.cl
-   fft/align1/complex_to_real.cl
-   fft/align1/fft_div_vec_scalar.cl
-   fft/align1/fft_mult_vec.cl
-   fft/align1/real_to_complex.cl
-   fft/align1/reverse_inplace.cl
-   fft/align1/transpose.cl
-   fft/align1/transpose_inplace.cl
-   fft/align1/vandermonde_prod.cl
-   fft/align1/zero2.cl
-   )
 
 set(SVD_SRCS
    svd/align1/bidiag_pack.cl
@@ -339,7 +234,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      MATRIX_COL_SRCS MATRIX_ROW_SRCS SCALAR_SRCS FFT_SRCS SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
+      SVD_SRCS SPAI_SRCS NMF_SRCS ILU_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -347,7 +242,6 @@ foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS
    list(APPEND CL_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${f}")
 endforeach()
 list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
-list(APPEND CL_SRCS ${MATRIX_ELEMENT_SRCS})
 
 configure_file(converter.cpp ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp @ONLY)
 add_executable(converter ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp)
@@ -360,8 +254,6 @@ foreach(d
       coordinate_matrix
       ell_matrix
       hyb_matrix
-      matrix_col
-      matrix_col_element
       matrix_prod_col_col_col
       matrix_prod_col_col_row
       matrix_prod_col_row_col
@@ -370,14 +262,10 @@ foreach(d
       matrix_prod_row_col_row
       matrix_prod_row_row_col
       matrix_prod_row_row_row
-      matrix_row
-      matrix_row_element
       matrix_solve_col_col
       matrix_solve_col_row
       matrix_solve_row_col
       matrix_solve_row_row
-      scalar
-      fft
       svd
       spai
       nmf

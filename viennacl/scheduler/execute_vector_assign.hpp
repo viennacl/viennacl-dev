@@ -84,7 +84,7 @@ namespace viennacl
             // y might be  'v * alpha' or 'v / alpha' with vector v
             if (   (y.op.type == OPERATION_BINARY_MULT_TYPE || y.op.type == OPERATION_BINARY_DIV_TYPE)
                 &&  y.lhs.type_family == VECTOR_TYPE_FAMILY
-                && (y.rhs.type_family == SCALAR_TYPE_FAMILY || y.rhs.type_family == HOST_SCALAR_TYPE_FAMILY))
+                &&  y.rhs.type_family == SCALAR_TYPE_FAMILY)
             {
               lhs_rhs_element u = root_node.lhs;
               lhs_rhs_element v = y.lhs;
@@ -117,16 +117,18 @@ namespace viennacl
             {
               statement_node new_root_y;
 
-              new_root_y.lhs.type_family = root_node.lhs.type_family;
-              new_root_y.lhs.type        = root_node.lhs.type;
+              new_root_y.lhs.type_family  = root_node.lhs.type_family;
+              new_root_y.lhs.subtype      = root_node.lhs.subtype;
+              new_root_y.lhs.numeric_type = root_node.lhs.numeric_type;
               detail::new_vector(new_root_y.lhs, (root_node.lhs.vector_float)->size());
 
               new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-              new_root_y.op.type   = OPERATION_BINARY_ASSIGN_TYPE;
+              new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
 
-              new_root_y.rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-              new_root_y.rhs.type        = COMPOSITE_OPERATION_TYPE;
-              new_root_y.rhs.node_index  = leaf.lhs.node_index;
+              new_root_y.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+              new_root_y.rhs.subtype      = INVALID_SUBTYPE;
+              new_root_y.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+              new_root_y.rhs.node_index   = leaf.lhs.node_index;
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
@@ -174,7 +176,7 @@ namespace viennacl
             // z might be  'v * alpha' or 'v / alpha' with vector v
             if (   (z.op.type == OPERATION_BINARY_MULT_TYPE || z.op.type == OPERATION_BINARY_DIV_TYPE)
                 &&  z.lhs.type_family == VECTOR_TYPE_FAMILY
-                && (z.rhs.type_family == SCALAR_TYPE_FAMILY || z.rhs.type_family == HOST_SCALAR_TYPE_FAMILY))
+                &&  z.rhs.type_family == SCALAR_TYPE_FAMILY)
             {
               lhs_rhs_element u = root_node.lhs;
               lhs_rhs_element v = leaf.rhs;
@@ -207,16 +209,18 @@ namespace viennacl
             {
               statement_node new_root_z;
 
-              new_root_z.lhs.type_family = root_node.lhs.type_family;
-              new_root_z.lhs.type        = root_node.lhs.type;
+              new_root_z.lhs.type_family  = root_node.lhs.type_family;
+              new_root_z.lhs.subtype      = root_node.lhs.subtype;
+              new_root_z.lhs.numeric_type = root_node.lhs.numeric_type;
               detail::new_vector(new_root_z.lhs, (root_node.lhs.vector_float)->size());
 
               new_root_z.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
               new_root_z.op.type   = OPERATION_BINARY_ASSIGN_TYPE;
 
-              new_root_z.rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-              new_root_z.rhs.type        = COMPOSITE_OPERATION_TYPE;
-              new_root_z.rhs.node_index  = leaf.rhs.node_index;
+              new_root_z.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+              new_root_z.rhs.subtype      = INVALID_SUBTYPE;
+              new_root_z.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+              new_root_z.rhs.node_index   = leaf.rhs.node_index;
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
@@ -266,10 +270,10 @@ namespace viennacl
             // z might be  'v * alpha' or 'v / alpha' with vector v
             if (   (y.op.type == OPERATION_BINARY_MULT_TYPE || y.op.type == OPERATION_BINARY_DIV_TYPE)
                 &&  y.lhs.type_family == VECTOR_TYPE_FAMILY
-                && (y.rhs.type_family == SCALAR_TYPE_FAMILY || y.rhs.type_family == HOST_SCALAR_TYPE_FAMILY)
+                &&  y.rhs.type_family == SCALAR_TYPE_FAMILY
                 && (z.op.type == OPERATION_BINARY_MULT_TYPE || z.op.type == OPERATION_BINARY_DIV_TYPE)
                 &&  z.lhs.type_family == VECTOR_TYPE_FAMILY
-                && (z.rhs.type_family == SCALAR_TYPE_FAMILY || z.rhs.type_family == HOST_SCALAR_TYPE_FAMILY))
+                &&  z.rhs.type_family == SCALAR_TYPE_FAMILY)
             {
               lhs_rhs_element u = root_node.lhs;
               lhs_rhs_element v = y.lhs;
@@ -304,16 +308,18 @@ namespace viennacl
             {
               statement_node new_root_y;
 
-              new_root_y.lhs.type_family = root_node.lhs.type_family;
-              new_root_y.lhs.type        = root_node.lhs.type;
+              new_root_y.lhs.type_family  = root_node.lhs.type_family;
+              new_root_y.lhs.subtype      = root_node.lhs.subtype;
+              new_root_y.lhs.numeric_type = root_node.lhs.numeric_type;
               detail::new_vector(new_root_y.lhs, (root_node.lhs.vector_float)->size());
 
               new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
               new_root_y.op.type   = OPERATION_BINARY_ASSIGN_TYPE;
 
-              new_root_y.rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-              new_root_y.rhs.type        = COMPOSITE_OPERATION_TYPE;
-              new_root_y.rhs.node_index  = leaf.lhs.node_index;
+              new_root_y.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+              new_root_y.rhs.subtype      = INVALID_SUBTYPE;
+              new_root_y.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+              new_root_y.rhs.node_index   = leaf.lhs.node_index;
 
               // work on subexpression:
               // TODO: Catch exception, free temporary, then rethrow
@@ -321,16 +327,18 @@ namespace viennacl
 
               statement_node new_root_z;
 
-              new_root_z.lhs.type_family = root_node.lhs.type_family;
-              new_root_z.lhs.type        = root_node.lhs.type;
+              new_root_z.lhs.type_family  = root_node.lhs.type_family;
+              new_root_z.lhs.subtype      = root_node.lhs.subtype;
+              new_root_z.lhs.numeric_type = root_node.lhs.numeric_type;
               detail::new_vector(new_root_z.lhs, (root_node.lhs.vector_float)->size());
 
               new_root_z.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-              new_root_z.op.type   = OPERATION_BINARY_ASSIGN_TYPE;
+              new_root_z.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
 
-              new_root_z.rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-              new_root_z.rhs.type        = COMPOSITE_OPERATION_TYPE;
-              new_root_z.rhs.node_index  = leaf.rhs.node_index;
+              new_root_z.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+              new_root_z.rhs.subtype      = INVALID_SUBTYPE;
+              new_root_z.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+              new_root_z.rhs.node_index   = leaf.rhs.node_index;
 
               // work on subexpression:
               // TODO: Catch exception, free temporaries, then rethrow
@@ -375,7 +383,7 @@ namespace viennacl
       else if (leaf.op.type  == OPERATION_BINARY_MULT_TYPE || leaf.op.type  == OPERATION_BINARY_DIV_TYPE) // x = y * / alpha;
       {
         if (   leaf.lhs.type_family == VECTOR_TYPE_FAMILY
-            && (leaf.rhs.type_family == SCALAR_TYPE_FAMILY || leaf.rhs.type_family == HOST_SCALAR_TYPE_FAMILY))
+            && leaf.rhs.type_family == SCALAR_TYPE_FAMILY)
         {
           lhs_rhs_element u = root_node.lhs;
           lhs_rhs_element v = leaf.lhs;

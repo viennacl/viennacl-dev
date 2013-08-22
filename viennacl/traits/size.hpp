@@ -272,6 +272,32 @@ namespace viennacl
     vcl_size_t internal_size2(matrix_base<NumericT, F> const & mat) { return mat.internal_size2(); }
 
 
+    template <typename LHS>
+    vcl_size_t size(vector_expression<LHS, const int, op_matrix_diag> const & proxy)
+    {
+      int k = proxy.rhs();
+      int A_size1 = static_cast<int>(size1(proxy.lhs()));
+      int A_size2 = static_cast<int>(size2(proxy.lhs()));
+
+      int row_depth = std::min(A_size1, A_size1 + k);
+      int col_depth = std::min(A_size2, A_size2 - k);
+
+      return std::min(row_depth, col_depth);
+    }
+
+    template <typename LHS>
+    vcl_size_t size(vector_expression<LHS, const unsigned int, op_row> const & proxy)
+    {
+      return size2(proxy.lhs());
+    }
+
+    template <typename LHS>
+    vcl_size_t size(vector_expression<LHS, const unsigned int, op_column> const & proxy)
+    {
+      return size1(proxy.lhs());
+    }
+
+
   } //namespace traits
 } //namespace viennacl
 

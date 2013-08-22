@@ -247,7 +247,7 @@ int main()
   //
   std::cout << "Using existing kernel within the OpenCL backend of ViennaCL:" << std::endl;
   viennacl::ocl::program & my_vcl_prog = viennacl::ocl::current_context().add_program(my_prog, "my_compute_program");
-  viennacl::ocl::kernel & my_vcl_kernel = my_vcl_prog.get_kernel("elementwise_prod");
+  viennacl::ocl::kernel & my_vcl_kernel = my_vcl_prog.add_kernel(my_kernel, "elementwise_prod");
   viennacl::ocl::enqueue(my_vcl_kernel(vcl_vec1, vcl_vec2, vcl_result, static_cast<cl_uint>(vcl_vec1.size())));  //Note that std::size_t might differ between host and device. Thus, a cast to cl_uint is necessary here.
 
   std::cout << "vec1  : ";

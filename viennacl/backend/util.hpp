@@ -194,6 +194,7 @@ namespace viennacl
         void raw_resize(mem_handle const & handle, std::size_t num)
         {
           buffer_size_ = sizeof(cpu_type) * num;
+          (void)handle; //silence unused variable warning if compiled without OpenCL support
 
 #ifdef VIENNACL_WITH_OPENCL
           memory_types mem_type = handle.get_active_handle_id();

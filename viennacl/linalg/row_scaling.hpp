@@ -159,7 +159,7 @@ namespace viennacl
         * @param mat   The system matrix
         * @param tag   A row scaling tag holding the desired norm.
         */
-        row_scaling(MatrixType const & mat, row_scaling_tag const & tag) : diag_M(mat.size1())
+        row_scaling(MatrixType const & mat, row_scaling_tag const & tag) : diag_M(mat.size1(), viennacl::traits::context(mat))
         {
           init(mat, tag);
         }

@@ -188,6 +188,22 @@ namespace viennacl
         /** @brief Default construction of a coordinate matrix. No memory is allocated */
         coordinate_matrix() : rows_(0), cols_(0), nonzeros_(0), group_num_(64) {}
 
+        explicit coordinate_matrix(viennacl::context ctx) : rows_(0), cols_(0), nonzeros_(0), group_num_(64)
+        {
+          group_boundaries_.switch_active_handle_id(ctx.memory_type());
+              coord_buffer_.switch_active_handle_id(ctx.memory_type());
+                  elements_.switch_active_handle_id(ctx.memory_type());
+
+#ifdef VIENNACL_WITH_OPENCL
+          if (ctx.memory_type() == OPENCL_MEMORY)
+          {
+            group_boundaries_.opencl_handle().context(ctx.opencl_context());
+                coord_buffer_.opencl_handle().context(ctx.opencl_context());
+                    elements_.opencl_handle().context(ctx.opencl_context());
+          }
+#endif
+        }
+
         /** @brief Construction of a coordinate matrix with the supplied number of rows and columns. If the number of nonzeros is positive, memory is allocated
         *
         * @param rows     Number of rows
@@ -203,7 +219,46 @@ namespace viennacl
             viennacl::backend::memory_create(coord_buffer_,     viennacl::backend::typesafe_host_array<unsigned int>().element_size() * 2 * internal_nnz(), ctx);
             viennacl::backend::memory_create(elements_,         sizeof(SCALARTYPE) * internal_nnz(), ctx);
           }
+          else
+          {
+            group_boundaries_.switch_active_handle_id(ctx.memory_type());
+                coord_buffer_.switch_active_handle_id(ctx.memory_type());
+                    elements_.switch_active_handle_id(ctx.memory_type());
+
+  #ifdef VIENNACL_WITH_OPENCL
+            if (ctx.memory_type() == OPENCL_MEMORY)
+            {
+              group_boundaries_.opencl_handle().context(ctx.opencl_context());
+                  coord_buffer_.opencl_handle().context(ctx.opencl_context());
+                      elements_.opencl_handle().context(ctx.opencl_context());
+            }
+  #endif
+          }
         }
+
+        /** @brief Construction of a coordinate matrix with the supplied number of rows and columns in the supplied context. Does not yet allocate memory.
+        *
+        * @param rows     Number of rows
+        * @param cols     Number of columns
+        * @param ctx      Context in which to create the matrix
+        */
+        explicit coordinate_matrix(std::size_t rows, std::size_t cols, viennacl::context ctx)
+          : rows_(rows), cols_(cols), nonzeros_(0)
+        {
+          group_boundaries_.switch_active_handle_id(ctx.memory_type());
+              coord_buffer_.switch_active_handle_id(ctx.memory_type());
+                  elements_.switch_active_handle_id(ctx.memory_type());
+
+#ifdef VIENNACL_WITH_OPENCL
+          if (ctx.memory_type() == OPENCL_MEMORY)
+          {
+            group_boundaries_.opencl_handle().context(ctx.opencl_context());
+                coord_buffer_.opencl_handle().context(ctx.opencl_context());
+                    elements_.opencl_handle().context(ctx.opencl_context());
+          }
+#endif
+        }
+
 
         /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
         void reserve(std::size_t new_nonzeros)
@@ -215,7 +270,7 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(coord_buffer_, coord_buffer_old);
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
 
-            std::size_t internal_new_nnz = viennacl::tools::roundUpToNextMultiple<std::size_t>(new_nonzeros, ALIGNMENT);
+            std::size_t internal_new_nnz = viennacl::tools::align_to_multiple<std::size_t>(new_nonzeros, ALIGNMENT);
             viennacl::backend::typesafe_host_array<unsigned int> size_deducer(coord_buffer_);
             viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz, viennacl::traits::context(coord_buffer_));
             viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz,             viennacl::traits::context(elements_));
@@ -285,7 +340,7 @@ namespace viennacl
         /** @brief  Returns the number of nonzero entries */
         std::size_t nnz() const { return nonzeros_; }
         /** @brief  Returns the number of internal nonzero entries */
-        std::size_t internal_nnz() const { return viennacl::tools::roundUpToNextMultiple<std::size_t>(nonzeros_, ALIGNMENT); }
+        std::size_t internal_nnz() const { return viennacl::tools::align_to_multiple<std::size_t>(nonzeros_, ALIGNMENT); }
 
         /** @brief  Returns the OpenCL handle to the (row, column) index array */
         const handle_type & handle12() const { return coord_buffer_; }
@@ -334,7 +389,7 @@ namespace viennacl
               // check for the special case x = A * x
               if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
               {
-                viennacl::vector<T> temp(rhs.lhs().size1());
+                viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
                 viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
                 lhs = temp;
               }
@@ -348,7 +403,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs += temp;
             }
@@ -359,7 +414,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(rhs.lhs().size1(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs -= temp;
             }
@@ -372,32 +427,32 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, lhs);
             }
         };
 
-        // x = A * vec_op
+        // x += A * vec_op
         template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
-        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const coordinate_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
+        struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
-            static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
+            static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
+              viennacl::vector<T> temp_result(lhs.size(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs += temp_result;
             }
         };
 
-        // x = A * vec_op
+        // x -= A * vec_op
         template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp(rhs.rhs(), viennacl::traits::context(rhs));
+              viennacl::vector<T> temp_result(lhs.size(), viennacl::traits::context(rhs));
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs -= temp_result;
             }

@@ -93,16 +93,15 @@ namespace viennacl
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      unsigned int problem_size = viennacl::traits::size(rhs);
-      VectorType result(problem_size);
+      VectorType result = rhs;
       viennacl::traits::clear(result);
 
       VectorType residual = rhs;
       VectorType p = rhs;
       VectorType r0star = rhs;
-      VectorType tmp0(problem_size);
-      VectorType tmp1(problem_size);
-      VectorType s(problem_size);
+      VectorType tmp0 = rhs;
+      VectorType tmp1 = rhs;
+      VectorType s = rhs;
 
       CPU_ScalarType norm_rhs_host = viennacl::linalg::norm_2(residual);
       CPU_ScalarType ip_rr0star = norm_rhs_host * norm_rhs_host;
@@ -190,15 +189,14 @@ namespace viennacl
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      unsigned int problem_size = viennacl::traits::size(rhs);
-      VectorType result(problem_size);
+      VectorType result = rhs;
       viennacl::traits::clear(result);
 
       VectorType residual = rhs;
       VectorType r0star = residual;  //can be chosen arbitrarily in fact
-      VectorType tmp0(problem_size);
-      VectorType tmp1(problem_size);
-      VectorType s(problem_size);
+      VectorType tmp0 = rhs;
+      VectorType tmp1 = rhs;
+      VectorType s = rhs;
 
       VectorType p = residual;
 

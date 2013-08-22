@@ -16,7 +16,7 @@
 ============================================================================= */
 
 #ifndef NDEBUG
- #define NDEBUG
+ //#define NDEBUG
 #endif
 
 //
@@ -399,7 +399,7 @@ int test(Epsilon const& epsilon)
   ublas::vector<NumericT> result;
   ublas::compressed_matrix<NumericT> ublas_matrix;
 
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
+  if (viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;

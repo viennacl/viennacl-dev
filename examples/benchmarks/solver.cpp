@@ -38,6 +38,7 @@
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
+#include "viennacl/context.hpp"
 
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
@@ -120,16 +121,15 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
 
 
 template<typename ScalarType>
-int run_benchmark()
+int run_benchmark(viennacl::context ctx)
 {
-
   Timer timer;
   double exec_time;
 
   ScalarType std_factor1 = static_cast<ScalarType>(3.1415);
   ScalarType std_factor2 = static_cast<ScalarType>(42.0);
-  viennacl::scalar<ScalarType> vcl_factor1(std_factor1);
-  viennacl::scalar<ScalarType> vcl_factor2(std_factor2);
+  viennacl::scalar<ScalarType> vcl_factor1(std_factor1, ctx);
+  viennacl::scalar<ScalarType> vcl_factor2(std_factor2, ctx);
 
   ublas::vector<ScalarType> ublas_vec1;
   ublas::vector<ScalarType> ublas_vec2;
@@ -152,14 +152,14 @@ int run_benchmark()
   }
   std::cout << "done reading result" << std::endl;
 
-  viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec1.size(), ublas_vec1.size());
-  viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix(ublas_vec1.size(), ublas_vec1.size());
-  viennacl::ell_matrix<ScalarType> vcl_ell_matrix;
-  viennacl::hyb_matrix<ScalarType> vcl_hyb_matrix;
+  viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
+  viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
+  viennacl::ell_matrix<ScalarType> vcl_ell_matrix(ctx);
+  viennacl::hyb_matrix<ScalarType> vcl_hyb_matrix(ctx);
 
-  viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size());
-  viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size());
-  viennacl::vector<ScalarType> vcl_result(ublas_vec1.size());
+  viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size(), ctx);
+  viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size(), ctx);
+  viennacl::vector<ScalarType> vcl_result(ublas_vec1.size(), ctx);
 
 
   ublas::compressed_matrix<ScalarType> ublas_matrix;
@@ -593,7 +593,22 @@ int main()
   std::cout << "----------------------------------------------" << std::endl;
 
 #ifdef VIENNACL_WITH_OPENCL
+  viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
+  std::vector<viennacl::ocl::device> const & devices = pf.devices();
+
+  // Set first device to first context:
+  viennacl::ocl::setup_context(0, devices[0]);
+
+  // Set second device for second context (use the same device for the second context if only one device available):
+  if (devices.size() > 1)
+    viennacl::ocl::setup_context(1, devices[1]);
+  else
+    viennacl::ocl::setup_context(1, devices[0]);
+
   std::cout << viennacl::ocl::current_device().info() << std::endl;
+  viennacl::context ctx(viennacl::ocl::get_context(1));
+#else
+  viennacl::context ctx;
 #endif
 
   std::cout << "---------------------------------------------------------------------------" << std::endl;
@@ -614,7 +629,7 @@ int main()
   std::cout << "   -------------------------------" << std::endl;
   std::cout << "   # benchmarking single-precision" << std::endl;
   std::cout << "   -------------------------------" << std::endl;
-  run_benchmark<float>();
+  run_benchmark<float>(ctx);
 #ifdef VIENNACL_WITH_OPENCL
   if( viennacl::ocl::current_device().double_support() )
 #endif
@@ -623,7 +638,7 @@ int main()
     std::cout << "   -------------------------------" << std::endl;
     std::cout << "   # benchmarking double-precision" << std::endl;
     std::cout << "   -------------------------------" << std::endl;
-    run_benchmark<double>();
+    run_benchmark<double>(ctx);
   }
   return 0;
 }

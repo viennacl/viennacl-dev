@@ -19,7 +19,7 @@ template<class ScalarType>
 struct buffer_dumper<ScalarType, gaussian_tag>{
     static void dump(viennacl::backend::mem_handle const & buff, gaussian_tag tag, cl_uint start, cl_uint size){
       viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::rand<ScalarType,1>::program_name(),"dump_gaussian");
-      k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(size/2,k.local_work_size(0)));
+      k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(size/2,k.local_work_size(0)));
       viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_float(tag.mu), cl_float(tag.sigma) , cl_uint(time(0))));
     }
 };

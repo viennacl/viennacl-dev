@@ -70,12 +70,14 @@ namespace viennacl
   struct op_sub {};
   /** @brief A tag class representing multiplication by a scalar */
   struct op_mult {};
-  /** @brief A tag class representing matrix-vector products */
+  /** @brief A tag class representing matrix-vector products and element-wise multiplications*/
   struct op_prod {};
   /** @brief A tag class representing matrix-matrix products */
   struct op_mat_mat_prod {};
   /** @brief A tag class representing division */
   struct op_div {};
+  /** @brief A tag class representing the power function */
+  struct op_pow {};
 
   /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
   template <typename OP>
@@ -108,6 +110,18 @@ namespace viennacl
   struct op_tan {};
   struct op_tanh {};
 
+  /** @brief A tag class representing the (off-)diagonal of a matrix */
+  struct op_matrix_diag {};
+
+  /** @brief A tag class representing a matrix given by a vector placed on a certain (off-)diagonal */
+  struct op_vector_diag {};
+
+  /** @brief A tag class representing the extraction of a matrix row to a vector */
+  struct op_row {};
+
+  /** @brief A tag class representing the extraction of a matrix column to a vector */
+  struct op_column {};
+
   /** @brief A tag class representing inner products of two vectors */
   struct op_inner_prod {};
 
@@ -117,8 +131,11 @@ namespace viennacl
   /** @brief A tag class representing the 2-norm of a vector */
   struct op_norm_2 {};
 
-  /** @brief A tag class representing the 2-norm of a vector */
+  /** @brief A tag class representing the inf-norm of a vector */
   struct op_norm_inf {};
+
+  /** @brief A tag class representing the Frobenius-norm of a matrix */
+  struct op_norm_frobenius {};
 
   /** @brief A tag class representing transposed matrices */
   struct op_trans {};
@@ -145,8 +162,20 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT>
   class const_vector_iterator;
 
+  template<typename SCALARTYPE>
+  class implicit_vector_base;
+
   template <typename SCALARTYPE>
   class zero_vector;
+
+  template <typename SCALARTYPE>
+  class unit_vector;
+
+  template <typename SCALARTYPE>
+  class one_vector;
+
+  template <typename SCALARTYPE>
+  class scalar_vector;
 
   template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
@@ -229,11 +258,24 @@ namespace viennacl
   //
   // Matrix types:
   //
+
   template<class SCALARTYPE, typename F = row_major, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class matrix_base;
 
   template <class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
   class matrix;
+
+  template<typename SCALARTYPE>
+  class implicit_matrix_base;
+
+  template <class SCALARTYPE>
+  class identity_matrix;
+
+  template <class SCALARTYPE>
+  class zero_matrix;
+
+  template <class SCALARTYPE>
+  class scalar_matrix;
 
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class compressed_matrix;
@@ -361,6 +403,21 @@ namespace viennacl
     , CUDA_MEMORY
   };
 
+  /** @brief Exception class in case of memory errors */
+  class memory_exception : public std::exception
+  {
+  public:
+    memory_exception() : message_() {}
+    memory_exception(std::string message) : message_("ViennaCL: Internal memory error: " + message) {}
+
+    virtual const char* what() const throw() { return message_.c_str(); }
+
+    virtual ~memory_exception() throw() {}
+  private:
+    std::string message_;
+  };
+
+
   class context;
 
   namespace tools
@@ -372,7 +429,7 @@ namespace viennacl
     {
       typedef typename MATRIXTYPE::ERROR_SPECIALIZATION_FOR_THIS_MATRIX_TYPE_MISSING          ErrorIndicator;
 
-      static void apply(const MATRIXTYPE & mat, unsigned int & row, unsigned int & col) {}
+      static void apply(const MATRIXTYPE & /*mat*/, unsigned int & /*row*/, unsigned int & /*col*/) {}
     };
   }
 
@@ -445,6 +502,9 @@ namespace viennacl
     template <typename T>
     void norm_1_impl(vector_base<T> const & vec, scalar<T> & result);
 
+    //template <typename T, typename F>
+    //void norm_1_impl(matrix_base<T, F> const & A, scalar<T> & result);
+
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
@@ -453,6 +513,10 @@ namespace viennacl
     template <typename T>
     void norm_1_cpu(vector_base<T> const & vec,
                     T & result);
+
+    //template <typename T, typename F>
+    //void norm_1_cpu(matrix_base<T, F> const & vec,
+    //                T & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
@@ -478,6 +542,9 @@ namespace viennacl
     template <typename T>
     void norm_inf_impl(vector_base<T> const & vec, scalar<T> & result);
 
+    //template <typename T, typename F>
+    //void norm_inf_impl(matrix_base<T, F> const & vec, scalar<T> & result);
+
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       scalar<T> & result);
@@ -486,10 +553,18 @@ namespace viennacl
     template <typename T>
     void norm_inf_cpu(vector_base<T> const & vec, T & result);
 
+    //template <typename T, typename F>
+    //void norm_inf_cpu(matrix_base<T, F> const & vec, T & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result);
+
+    template <typename T, typename F>
+    void norm_frobenius_impl(matrix_base<T, F> const & vec, scalar<T> & result);
+
+    template <typename T, typename F>
+    void norm_frobenius_cpu(matrix_base<T, F> const & vec, T & result);
 
 
     template <typename T>

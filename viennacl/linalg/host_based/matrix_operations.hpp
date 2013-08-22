@@ -60,8 +60,6 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         std::size_t A_start1 = viennacl::traits::start1(mat1);
         std::size_t A_start2 = viennacl::traits::start2(mat1);
@@ -86,25 +84,45 @@ namespace viennacl
 
         if (detail::is_row_major(typename F::orientation_category()))
         {
+          if (reciprocal_alpha)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
-              wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
+          }
         }
         else
         {
+          if (reciprocal_alpha)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
-              wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
+          }
         }
       }
 
@@ -124,14 +142,10 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         value_type data_beta = beta;
         if (flip_sign_beta)
           data_beta = -data_beta;
-        if (reciprocal_beta)
-          data_beta = static_cast<value_type>(1) / data_beta;
 
         std::size_t A_start1 = viennacl::traits::start1(mat1);
         std::size_t A_start2 = viennacl::traits::start2(mat1);
@@ -162,28 +176,81 @@ namespace viennacl
 
         if (detail::is_row_major(typename F::orientation_category()))
         {
+          if (reciprocal_alpha && reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
-              wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-              //   + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
+          }
+          else if (!reciprocal_alpha && reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (!reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
+          }
         }
         else
         {
+          if (reciprocal_alpha && reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
-              wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
-
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-              //   + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
+          }
+          else if (!reciprocal_alpha && reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (!reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
+          }
         }
 
       }
@@ -192,8 +259,8 @@ namespace viennacl
       template <typename NumericT, typename F,
                 typename ScalarType1, typename ScalarType2>
       void ambm_m(matrix_base<NumericT, F> & mat1,
-                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         typedef NumericT        value_type;
 
@@ -204,14 +271,10 @@ namespace viennacl
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
           data_alpha = -data_alpha;
-        if (reciprocal_alpha)
-          data_alpha = static_cast<value_type>(1) / data_alpha;
 
         value_type data_beta = beta;
         if (flip_sign_beta)
           data_beta = -data_beta;
-        if (reciprocal_beta)
-          data_beta = static_cast<value_type>(1) / data_beta;
 
         std::size_t A_start1 = viennacl::traits::start1(mat1);
         std::size_t A_start2 = viennacl::traits::start2(mat1);
@@ -246,27 +309,81 @@ namespace viennacl
 
         if (detail::is_row_major(typename F::orientation_category()))
         {
+          if (reciprocal_alpha && reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
-              wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // +=   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-              //    + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
+          }
+          else if (!reciprocal_alpha && reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (!reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t row = 0; row < A_size1; ++row)
+              for (std::size_t col = 0; col < A_size2; ++col)
+                wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
+          }
         }
         else
         {
+          if (reciprocal_alpha && reciprocal_beta)
+          {
 #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
-              wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
-              //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-              // +=   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-              //    + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
+          }
+          else if (!reciprocal_alpha && reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
+          }
+          else if (!reciprocal_alpha && !reciprocal_beta)
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (std::size_t col = 0; col < A_size2; ++col)
+              for (std::size_t row = 0; row < A_size1; ++row)
+                wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
+          }
         }
 
       }
@@ -275,7 +392,7 @@ namespace viennacl
 
 
       template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
 
@@ -286,8 +403,8 @@ namespace viennacl
         std::size_t A_start2 = viennacl::traits::start2(mat);
         std::size_t A_inc1   = viennacl::traits::stride1(mat);
         std::size_t A_inc2   = viennacl::traits::stride2(mat);
-        std::size_t A_size1  = viennacl::traits::size1(mat);
-        std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_size1  = clear ? viennacl::traits::internal_size1(mat) : viennacl::traits::size1(mat);
+        std::size_t A_size2  = clear ? viennacl::traits::internal_size2(mat) : viennacl::traits::size2(mat);
         std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
         std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
 
@@ -345,6 +462,132 @@ namespace viennacl
           wrapper_A(row, row) = alpha;
       }
 
+      template <typename NumericT, typename F>
+      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT, F> & mat)
+      {
+        typedef NumericT        value_type;
+
+        value_type       *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type const *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        std::size_t row_start = 0;
+        std::size_t col_start = 0;
+
+        if (k >= 0)
+          col_start = static_cast<std::size_t>(k);
+        else
+          row_start = static_cast<std::size_t>(-k);
+
+        matrix_assign(mat, NumericT(0));
+
+        for (std::size_t i = 0; i < v_size; ++i)
+          wrapper_A(row_start + i, col_start + i) = data_vec[v_start + i * v_inc];
+
+      }
+
+      template <typename NumericT, typename F>
+      void matrix_diag_to_vector(const matrix_base<NumericT, F> & mat, int k, vector_base<NumericT> & vec)
+      {
+        typedef NumericT        value_type;
+
+        value_type const *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type       *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        std::size_t row_start = 0;
+        std::size_t col_start = 0;
+
+        if (k >= 0)
+          col_start = static_cast<std::size_t>(k);
+        else
+          row_start = static_cast<std::size_t>(-k);
+
+        for (std::size_t i = 0; i < v_size; ++i)
+          data_vec[v_start + i * v_inc] = wrapper_A(row_start + i, col_start + i);
+      }
+
+      template <typename NumericT, typename F>
+      void matrix_row(const matrix_base<NumericT, F> & mat, unsigned int i, vector_base<NumericT> & vec)
+      {
+        typedef NumericT        value_type;
+
+        value_type const *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type       *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        for (std::size_t j = 0; j < v_size; ++j)
+          data_vec[v_start + j * v_inc] = wrapper_A(i, j);
+      }
+
+      template <typename NumericT, typename F>
+      void matrix_column(const matrix_base<NumericT, F> & mat, unsigned int j, vector_base<NumericT> & vec)
+      {
+        typedef NumericT        value_type;
+
+        value_type const *data_A   = detail::extract_raw_pointer<value_type>(mat);
+        value_type       *data_vec = detail::extract_raw_pointer<value_type>(vec);
+
+        std::size_t A_start1 = viennacl::traits::start1(mat);
+        std::size_t A_start2 = viennacl::traits::start2(mat);
+        std::size_t A_inc1   = viennacl::traits::stride1(mat);
+        std::size_t A_inc2   = viennacl::traits::stride2(mat);
+        //std::size_t A_size1  = viennacl::traits::size1(mat);
+        //std::size_t A_size2  = viennacl::traits::size2(mat);
+        std::size_t A_internal_size1  = viennacl::traits::internal_size1(mat);
+        std::size_t A_internal_size2  = viennacl::traits::internal_size2(mat);
+
+        std::size_t v_start = viennacl::traits::start(vec);
+        std::size_t v_inc   = viennacl::traits::stride(vec);
+        std::size_t v_size  = viennacl::traits::size(vec);
+
+        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+
+        for (std::size_t i = 0; i < v_size; ++i)
+          data_vec[v_start + i * v_inc] = wrapper_A(i, j);
+      }
 
       //
       ///////////////////////// Element-wise operation //////////////////////////////////
@@ -588,14 +831,16 @@ namespace viennacl
           {
             value_type temp = data_x[start1];
             for (std::size_t row = 0; row < A_size2; ++row)
-              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * temp;
+              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
           }
 
           for (std::size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
           {
             value_type temp = data_x[col * inc1 + start1];
             for (std::size_t row = 0; row < A_size2; ++row)
-              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc2 + A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * temp;
+            {
+              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
           }
         }
         else
@@ -607,7 +852,7 @@ namespace viennacl
           {
             value_type temp = 0;
             for (std::size_t col = 0; col < A_size1; ++col)
-              temp += data_A[viennacl::column_major::mem_index(col * A_inc2 + A_start2, row * A_inc1 + A_start1, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+              temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
 
             data_result[row * inc2 + start2] = temp;
           }

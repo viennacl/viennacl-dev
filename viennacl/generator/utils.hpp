@@ -20,14 +20,16 @@
 
 
 /** @file viennacl/generator/utils.hpp
-    @brief Some utils for the generator. These are rather general purpose and should end up being merged in viennacl/tools/
+    @brief Internal utils
 */
 
 #include <sstream>
-#include "viennacl/tools/shared_ptr.hpp"
-#include "viennacl/generator/forwards.h"
-#include <vector>
-#include <list>
+
+#include "viennacl/ocl/forwards.h"
+
+#include "viennacl/traits/size.hpp"
+
+#include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
 
@@ -35,12 +37,172 @@ namespace viennacl{
 
     namespace utils{
 
-      template<class T>
-      struct deref_eq : std::binary_function<T,T,bool>{
-          bool operator()(T a, T b) const {
-            return *a == *b;
-          }
+    template<class Fun>
+    static typename Fun::result_type call_on_host_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a host scalar"));
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(element.host_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(element.host_double);
+        default :
+            throw "not implemented";
+        }
+    }
+
+    template<class Fun>
+    static typename Fun::result_type call_on_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a scalar"));
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(*element.scalar_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(*element.scalar_double);
+        default :
+            throw "not implemented";
+        }
+    }
+
+    template<class Fun>
+    static typename Fun::result_type call_on_vector(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY && bool("Must be called on a vector"));
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(*element.vector_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(*element.vector_double);
+        default :
+            throw "not implemented";
+        }
+    }
+
+    template<class Fun>
+    static typename Fun::result_type call_on_implicit_vector(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY   && bool("Must be called on a implicit_vector"));
+        assert(element.subtype     == scheduler::IMPLICIT_VECTOR_TYPE && bool("Must be called on a implicit_vector"));
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(*element.implicit_vector_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(*element.implicit_vector_double);
+        default :
+            throw "not implemented";
+        }
+    }
+
+    template<class Fun>
+    static typename Fun::result_type call_on_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::MATRIX_TYPE_FAMILY && bool("Must be called on a matrix"));
+        if (element.subtype == scheduler::DENSE_ROW_MATRIX_TYPE)
+        {
+            switch(element.numeric_type){
+            case scheduler::FLOAT_TYPE :
+                return fun(*element.matrix_row_float);
+            case scheduler::DOUBLE_TYPE :
+                return fun(*element.matrix_row_double);
+            default :
+                throw "not implemented";
+            }
+        }
+        else
+        {
+            switch(element.numeric_type){
+            case scheduler::FLOAT_TYPE :
+                return fun(*element.matrix_col_float);
+            case scheduler::DOUBLE_TYPE :
+                return fun(*element.matrix_col_double);
+            default :
+                throw "not implemented";
+            }
+        }
+    }
+
+
+    template<class Fun>
+    static typename Fun::result_type call_on_implicit_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
+        assert(element.type_family == scheduler::MATRIX_TYPE_FAMILY   && bool("Must be called on a matrix_vector"));
+        assert(element.subtype     == scheduler::IMPLICIT_MATRIX_TYPE && bool("Must be called on a matrix_vector"));
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(*element.implicit_matrix_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(*element.implicit_matrix_double);
+        default :
+            throw "not implemented";
+        }
+    }
+
+      template<class Fun>
+      static typename Fun::result_type call_on_element(scheduler::lhs_rhs_element const & element, Fun const & fun){
+        switch(element.type_family){
+          case scheduler::SCALAR_TYPE_FAMILY:
+            if (element.subtype == scheduler::HOST_SCALAR_TYPE)
+              return call_on_host_scalar(element, fun);
+            else
+              return call_on_scalar(element, fun);
+          case scheduler::VECTOR_TYPE_FAMILY :
+            if (element.subtype == scheduler::IMPLICIT_VECTOR_TYPE)
+              return call_on_implicit_vector(element, fun);
+            else
+              return call_on_vector(element, fun);
+          case scheduler::MATRIX_TYPE_FAMILY:
+            if (element.subtype == scheduler::IMPLICIT_MATRIX_TYPE)
+              return call_on_implicit_matrix(element, fun);
+            else
+              return call_on_matrix(element,fun);
+          default:
+            throw "not implemented";
+        }
+      }
+
+      struct scalartype_size_fun{
+          typedef std::size_t result_type;
+          result_type operator()(float const &) const { return sizeof(float); }
+          result_type operator()(double const &) const { return sizeof(double); }
+          template<class T> result_type operator()(T const &) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
+
+      struct internal_size_fun{
+          typedef std::size_t result_type;
+          template<class T>
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
+      };
+
+      struct handle_fun{
+          typedef cl_mem result_type;
+          template<class T>
+          result_type operator()(T const &t) const { return t.handle().opencl_handle(); }
+      };
+
+      struct internal_size1_fun{
+          typedef std::size_t result_type;
+          template<class T>
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size1(t); }
+      };
+
+      struct internal_size2_fun{
+          typedef std::size_t result_type;
+          template<class T>
+          result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
+      };
+
+//      static std::size_t size(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
+//        return call_on_vector(type, element, size_fun());
+//      }
+
+//      static std::size_t size1(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
+//        return call_on_matrix(type, element, size1_fun());
+//      }
+
+//      static std::size_t size2(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
+//        return call_on_matrix(type, element, size2_fun());
+//      }
+
+      template<class T, class U>
+      struct is_same_type { enum { value = 0 }; };
+
+      template<class T>
+      struct is_same_type<T,T> { enum { value = 1 }; };
 
       template <class T>
       inline std::string to_string ( T const t )
@@ -50,168 +212,58 @@ namespace viennacl{
         return ss.str();
       }
 
-      //Are same type
-      template<class T, class U>
-      struct are_same_type
-      {
-          enum { value = 0 };
-      };
+      template<class T>
+      struct type_to_string;
+      template<> struct type_to_string<float> { static const char * value() { return "float"; } };
+      template<> struct type_to_string<double> { static const char * value() { return "double"; } };
+
 
       template<class T>
-      struct are_same_type<T,T>
-      {
-          enum { value = 1 };
-      };
-
-      template<class Base,class Target>
-      struct Base2Target { Target* operator ()( Base* value ) const { return dynamic_cast<Target*>(value); } };
-
-      template<class T>
-      struct SharedPtr2Raw {
-          T* operator ()(viennacl::tools::shared_ptr<T> const & value ) const { return value.get(); }
-      };
-
-
-      template<class Base,class Target>
-      struct UnsafeBase2Target { Target* operator ()( Base* value ) const { return static_cast<Target*>(value); } };
-
-      inline void replace_all_occurences(std::string& str, const std::string& oldstr, const std::string& newstr)
-      {
-        size_t pos = 0;
-        while((pos = str.find(oldstr, pos)) != std::string::npos)
-        {
-          str.replace(pos, oldstr.length(), newstr);
-          pos += newstr.length();
-        }
-      }
-
-      template<class T>
-      struct print_type;
-
-      template<>
-      struct print_type<char>
-      {
-          static const char * value() { return "char"; }
-      };
-
-      template<>
-      struct print_type<unsigned char>
-      {
-          static const char * value() { return "unsigned char"; }
-      };
-
-
-      template<>
-      struct print_type<int>
-      {
-          static const char * value() { return "int"; }
-      };
-
-      template<>
-      struct print_type<unsigned int>
-      {
-          static const char * value() { return "unsigned int"; }
-      };
-
-      template<>
-      struct print_type<short>
-      {
-          static const char * value() { return "short"; }
-      };
-
-      template<>
-      struct print_type<unsigned short>
-      {
-          static const char * value() { return "unsigned short"; }
-      };
-
-      template<>
-      struct print_type<long>
-      {
-          static const char * value() { return "long"; }
-      };
-
-      template<>
-      struct print_type<unsigned long>
-      {
-          static const char * value() { return "unsigned long"; }
-      };
-
-      template<>
-      struct print_type<float>
-      {
-          static const char * value() { return "float"; }
-      };
-
-      template<>
-      struct print_type<double>
-      {
-          static const char * value() { return "double"; }
-      };
-
+      struct first_letter_of_type;
+      template<> struct first_letter_of_type<float> { static char value() { return 'f'; } };
+      template<> struct first_letter_of_type<double> { static char value() { return 'd'; } };
+      template<> struct first_letter_of_type<viennacl::row_major> { static char value() { return 'r'; } };
+      template<> struct first_letter_of_type<viennacl::column_major> { static char value() { return 'c'; } };
 
       class kernel_generation_stream : public std::ostream{
         private:
+
           class kgenstream : public std::stringbuf{
             public:
-              kgenstream(std::ostream& final_destination
-                         ,unsigned int const & tab_count) : final_destination_(final_destination)
-              ,tab_count_(tab_count){ }
-              ~kgenstream() {  pubsync(); }
+              kgenstream(std::ostringstream& oss,unsigned int const & tab_count) : oss_(oss), tab_count_(tab_count){ }
               int sync() {
                 for(unsigned int i=0 ; i<tab_count_;++i)
-                  final_destination_ << '\t';
-                final_destination_ << str();
+                  oss_ << "    ";
+                oss_ << str();
                 str("");
-                return !final_destination_;
+                return !oss_;
               }
+              ~kgenstream() {  pubsync(); }
             private:
-              std::ostream& final_destination_;
+              std::ostream& oss_;
               unsigned int const & tab_count_;
           };
 
         public:
-          kernel_generation_stream(std::ostream& final_destination) : std::ostream(new kgenstream(final_destination,tab_count_))
-          , tab_count_(0){ }
-          ~kernel_generation_stream(){ delete rdbuf(); }
-          std::string str(){
-            return static_cast<std::stringbuf*>(rdbuf())->str();
-          }
+          kernel_generation_stream() : std::ostream(new kgenstream(oss,tab_count_)), tab_count_(0){ }
+
+          std::string str(){ return oss.str(); }
 
           void inc_tab(){ ++tab_count_; }
+
           void dec_tab(){ --tab_count_; }
+
+          ~kernel_generation_stream(){ delete rdbuf(); }
 
         private:
           unsigned int tab_count_;
+          std::ostringstream oss;
       };
-
-      template<class U, class T>
-      void unique_push_back(U & v, T t){
-        if(std::find_if(v.begin(), v.end(), std::bind1st(deref_eq<T>(),t))==v.end())
-          v.push_back(t);
-      }
-
-      template<class T, class U>
-      typename std::vector<std::pair<T*, U> >::iterator unique_insert(std::vector<std::pair<T*, U> > & v, std::pair<T*, U> p){
-        typename std::vector<std::pair<T*, U> >::iterator res = v.begin();
-        while(res != v.end()){
-          if(*res->first == *p.first) return res;
-          ++res;
-        }
-        return v.insert(res,p);
-      }
-
-      template<class T>
-      struct is_type{
-          template<class U>
-          bool operator()(U* p) const{
-            return dynamic_cast<T *>(p);
-          }
-      };
-
 
 
     }
+
   }
+
 }
 #endif

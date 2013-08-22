@@ -66,8 +66,10 @@ namespace viennacl
           viennacl::linalg::cuda::av(vec1, vec2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -101,8 +103,10 @@ namespace viennacl
                                        vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -136,8 +140,10 @@ namespace viennacl
                                          vec3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -148,25 +154,27 @@ namespace viennacl
     * @param alpha  The value to be assigned
     */
     template <typename T>
-    void vector_assign(vector_base<T> & vec1, const T & alpha)
+    void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::vector_assign(vec1, alpha);
+          viennacl::linalg::host_based::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::vector_assign(vec1, alpha);
+          viennacl::linalg::opencl::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::vector_assign(vec1, alpha);
+          viennacl::linalg::cuda::vector_assign(vec1, alpha, up_to_internal_size);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -196,8 +204,10 @@ namespace viennacl
           viennacl::linalg::cuda::vector_swap(vec1, vec2);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -232,94 +242,55 @@ namespace viennacl
           viennacl::linalg::cuda::element_op(vec1, proxy);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
 
 
-
-    template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >
-    element_prod(vector_base<T> const & v1, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >(v1, v2);
+#define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
+    template <typename T> \
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T> const & v1, vector_base<T> const & v2) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> >(v1, v2); \
+    } \
+\
+    template <typename V1, typename V2, typename OP, typename T> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2) \
+    { \
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> >(proxy, v2); \
+    } \
+\
+    template <typename T, typename V2, typename V3, typename OP> \
+    viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> >(v1, proxy); \
+    } \
+\
+    template <typename V1, typename V2, typename OP1, \
+              typename V3, typename V4, typename OP2> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
+                                const vector_expression<const V3, const V4, OP2>, \
+                                op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP1> const & proxy1, \
+                     vector_expression<const V3, const V4, OP2> const & proxy2) \
+    {\
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
+                                         const vector_expression<const V3, const V4, OP2>, \
+                                         op_element_binary<op_##OPNAME> >(proxy1, proxy2); \
     }
 
-    template <typename V1, typename V2, typename OP, typename T>
-    viennacl::vector<T>
-    element_prod(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
-    {
-      viennacl::vector<T> temp = proxy;
-      temp = element_prod(temp, v2);
-      return temp;
-    }
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(prod)  //for element_prod()
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(div)   //for element_div()
+    VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(pow)   //for element_pow()
 
-    template <typename T, typename V2, typename V3, typename OP>
-    viennacl::vector<T>
-    element_prod(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
-    {
-      viennacl::vector<T> temp = proxy;
-      temp = element_prod(v1, temp);
-      return temp;
-    }
-
-    template <typename V1, typename V2, typename OP1,
-              typename V3, typename V4, typename OP2>
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
-    element_prod(vector_expression<const V1, const V2, OP1> const & proxy1,
-                 vector_expression<const V3, const V4, OP2> const & proxy2)
-    {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp1 = proxy1;
-      VectorType temp2 = proxy2;
-      temp1 = element_prod(temp1, temp2);
-      return temp1;
-    }
-
-
-
-
-
-
-    template <typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >
-    element_div(vector_base<T> const & v1, vector_base<T> const & v2)
-    {
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >(v1, v2);
-    }
-
-    template <typename V1, typename V2, typename OP, typename T>
-    viennacl::vector<T>
-    element_div(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2)
-    {
-      viennacl::vector<T> temp = proxy;
-      temp = element_div(temp, v2);
-      return temp;
-    }
-
-    template <typename T, typename V2, typename V3, typename OP>
-    viennacl::vector<T>
-    element_div(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy)
-    {
-      viennacl::vector<T> temp = proxy;
-      temp = element_div(v1, temp);
-      return temp;
-    }
-
-    template <typename V1, typename V2, typename OP1,
-              typename V3, typename V4, typename OP2>
-    viennacl::vector<typename viennacl::result_of::cpu_value_type<V1>::type>
-    element_div(vector_expression<const V1, const V2, OP1> const & proxy1,
-                vector_expression<const V3, const V4, OP2> const & proxy2)
-    {
-      typedef vector<typename viennacl::result_of::cpu_value_type<V1>::type>  VectorType;
-      VectorType temp1 = proxy1;
-      VectorType temp2 = proxy2;
-      temp1 = element_div(temp1, temp2);
-      return temp1;
-    }
+#undef VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS
 
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
     template <typename T> \
@@ -392,8 +363,10 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_impl(vec1, vec2, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -462,8 +435,10 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_cpu(vec1, vec2, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -532,8 +507,10 @@ namespace viennacl
           viennacl::linalg::cuda::inner_prod_impl(x, y_tuple, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -562,8 +539,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_1_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -607,8 +586,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_1_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -652,8 +633,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_2_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -695,8 +678,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_2_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -740,8 +725,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_inf_impl(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -783,8 +770,10 @@ namespace viennacl
           viennacl::linalg::cuda::norm_inf_cpu(vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -825,8 +814,10 @@ namespace viennacl
         case viennacl::CUDA_MEMORY:
           return viennacl::linalg::cuda::index_norm_inf(vec);
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -871,8 +862,10 @@ namespace viennacl
           viennacl::linalg::cuda::plane_rotation(vec1, vec2, alpha, beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 

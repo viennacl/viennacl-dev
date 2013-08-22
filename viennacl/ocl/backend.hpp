@@ -160,6 +160,12 @@ namespace viennacl
           contexts_[i].default_device_type(t);
         }
 
+        /** @brief Sets the maximum number of devices per context. Ignored if a device array is provided as well.  */
+        static void set_context_device_num(long i, std::size_t num)
+        {
+          contexts_[i].default_device_num(num);
+        }
+
         /** @brief Sets the context device type */
         static void set_context_platform_index(long i, std::size_t pf_index)
         {
@@ -269,6 +275,12 @@ namespace viennacl
     inline void set_context_device_type(long i, viennacl::ocl::accelerator_tag)
     {
       set_context_device_type(i, CL_DEVICE_TYPE_ACCELERATOR);
+    }
+
+    /** @brief Convenience function for setting the number of default devices per context */
+    inline void set_context_device_num(long i, std::size_t num)
+    {
+      viennacl::ocl::backend<>::set_context_device_num(i, num);
     }
 
 

@@ -237,28 +237,67 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
-  std::cout << "Testing reductions..." << std::endl;
+  std::cout << "--- Testing reductions ---" << std::endl;
+  std::cout << "inner_prod..." << std::endl;
   {
   cpu_result = inner_prod(ublas_v1, ublas_v2);
-  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2)); // same as vcl_v1 = inner_prod(vcl_v1, vcl_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2)); // same as gpu_result = inner_prod(vcl_v1, vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
+  {
+  cpu_result = inner_prod(ublas_v1 + ublas_v2, ublas_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2)); // same as gpu_result = inner_prod(vcl_v1 + vcl_v2, vcl_v2);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = inner_prod(ublas_v1, ublas_v2 - ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2 - vcl_v1)); // same as gpu_result = inner_prod(vcl_v1, vcl_v2 - vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = inner_prod(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1)); // same as gpu_result = inner_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "norm_1..." << std::endl;
   {
   cpu_result = norm_1(ublas_v1);
-  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1)); // same as gpu_result = norm_1(vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
+  {
+  cpu_result = norm_1(ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1 + vcl_v2)); // same as gpu_result = norm_1(vcl_v1 + vcl_v2);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "norm_2..." << std::endl;
   {
   cpu_result = norm_2(ublas_v1);
-  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1)); // same as gpu_result = norm_2(vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
@@ -266,13 +305,177 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = norm_inf(ublas_v1);
-  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1)); // same as vcl_v1 = norm_1(vcl_v1);
+  cpu_result = norm_2(ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1 + vcl_v2)); // same as gpu_result = norm_2(vcl_v1 + vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
+
+  std::cout << "norm_inf..." << std::endl;
+  {
+  cpu_result = norm_inf(ublas_v1);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1)); // same as gpu_result = norm_inf(vcl_v1);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  {
+  cpu_result = norm_inf(ublas_v1 - ublas_v2);
+  viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1 - vcl_v2)); // same as gpu_result = norm_inf(vcl_v1 - vcl_v2);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "--- Testing elementwise operations (binary) ---" << std::endl;
+  std::cout << "x = element_prod(x, y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x + y, y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x, x + y)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1, ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_prod(x - y, y + x)... ";
+  {
+  ublas_v1 = element_prod(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+
+
+  std::cout << "x = element_div(x, y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x + y, y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1 + ublas_v2, ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x, x + y)... ";
+  {
+  ublas_v1 = element_div(ublas_v1, ublas_v1 + ublas_v2);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_div(x - y, y + x)... ";
+  {
+  ublas_v1 = element_div(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
+#define GENERATE_UNARY_OP_TEST(OPNAME) \
+  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), 0.21); \
+  ublas_v2 = 3.1415 * ublas_v1; \
+  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
+  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
+  { \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+    ublas_v1[i] = OPNAME(ublas_v2[i]); \
+  viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2)); \
+  viennacl::scheduler::execute(my_statement); \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  } \
+  { \
+  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
+  ublas_v1[i] = std::OPNAME(ublas_v2[i] / NumericT(2)); \
+  viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2 / NumericT(2))); \
+  viennacl::scheduler::execute(my_statement); \
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+    return EXIT_FAILURE; \
+  }
+
+  GENERATE_UNARY_OP_TEST(cos);
+  GENERATE_UNARY_OP_TEST(cosh);
+  GENERATE_UNARY_OP_TEST(exp);
+  GENERATE_UNARY_OP_TEST(floor);
+  GENERATE_UNARY_OP_TEST(fabs);
+  GENERATE_UNARY_OP_TEST(log);
+  GENERATE_UNARY_OP_TEST(log10);
+  GENERATE_UNARY_OP_TEST(sin);
+  GENERATE_UNARY_OP_TEST(sinh);
+  GENERATE_UNARY_OP_TEST(fabs);
+  //GENERATE_UNARY_OP_TEST(abs); //OpenCL allows abs on integers only
+  GENERATE_UNARY_OP_TEST(sqrt);
+  GENERATE_UNARY_OP_TEST(tan);
+  GENERATE_UNARY_OP_TEST(tanh);
+
+#undef GENERATE_UNARY_OP_TEST
+
+  std::cout << "--- Testing complicated composite operations ---" << std::endl;
+  std::cout << "x = inner_prod(x, y) * y..." << std::endl;
+  {
+  ublas_v1 = inner_prod(ublas_v1, ublas_v2) * ublas_v2;
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2) * vcl_v2);
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = y / norm_1(x)..." << std::endl;
+  {
+  ublas_v1 = ublas_v2 / norm_1(ublas_v1);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2 / viennacl::linalg::norm_1(vcl_v1) );
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
 
   // --------------------------------------------------------------------------
   return retval;

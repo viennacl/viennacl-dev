@@ -37,7 +37,7 @@ namespace viennacl
     template <typename ScalarType>
     struct DOUBLE_PRECISION_CHECKER
     {
-      static void apply(viennacl::ocl::context const & ctx) {}
+      static void apply(viennacl::ocl::context const &) {}
     };
 
     template <>

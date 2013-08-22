@@ -177,6 +177,12 @@ namespace viennacl
       };
 
       /** \cond */
+      template <typename T, typename SizeType>
+      struct size_type< vector_base<T, SizeType> >
+      {
+        typedef SizeType   type;
+      };
+
       #ifdef VIENNACL_WITH_EIGEN
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >
@@ -340,6 +346,13 @@ namespace viennacl
         typedef T    type;
       };
 
+      template <typename T>
+      struct cpu_value_type<viennacl::implicit_vector_base<T> >
+      {
+        typedef T    type;
+      };
+
+
       template <typename T, unsigned int ALIGNMENT>
       struct cpu_value_type<viennacl::vector<T, ALIGNMENT> >
       {
@@ -377,6 +390,13 @@ namespace viennacl
         typedef T    type;
       };
 
+      template <typename T>
+      struct cpu_value_type<viennacl::implicit_matrix_base<T> >
+      {
+        typedef T    type;
+      };
+
+
       template <typename T, typename F, unsigned int ALIGNMENT>
       struct cpu_value_type<viennacl::matrix<T, F, ALIGNMENT> >
       {
@@ -400,28 +420,6 @@ namespace viennacl
       {
         typedef typename cpu_value_type<T1>::type    type;
       };
-
-
-
-      template <typename T>
-      struct matrix_expression_internal_storage
-      {
-        typedef T &     type;
-      };
-
-      template <>
-      struct matrix_expression_internal_storage<const float>
-      {
-        typedef float type;
-      };
-
-      template <>
-      struct matrix_expression_internal_storage<const double>
-      {
-        typedef double type;
-      };
-
-
 
 
       //

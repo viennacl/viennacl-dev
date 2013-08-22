@@ -108,7 +108,8 @@ namespace viennacl
       inline void memory_write(handle_type & dst_buffer,
                                std::size_t dst_offset,
                                std::size_t bytes_to_copy,
-                               const void * ptr)
+                               const void * ptr,
+                               bool /*async*/)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
 
@@ -126,7 +127,8 @@ namespace viennacl
       inline void memory_read(handle_type const & src_buffer,
                               std::size_t src_offset,
                               std::size_t bytes_to_copy,
-                              void * ptr)
+                              void * ptr,
+                              bool /*async*/)
       {
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 

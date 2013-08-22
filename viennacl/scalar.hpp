@@ -203,6 +203,38 @@ namespace viennacl
         RHS & rhs_;
     };
 
+    /** @brief Specialization of a scalar expression for norm_frobenius. Allows for a final reduction on the CPU
+    *
+    * @tparam LHS   The left hand side operand
+    * @tparam RHS   The right hand side operand
+    */
+    template <typename LHS, typename RHS>
+    class scalar_expression<LHS, RHS, op_norm_frobenius>
+    {
+        //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
+      public:
+        typedef typename viennacl::result_of::cpu_value_type<LHS>::type    ScalarType;
+
+        scalar_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
+
+        /** @brief Returns the left hand side operand */
+        LHS & lhs() const { return lhs_; }
+        /** @brief Returns the left hand side operand */
+        RHS & rhs() const { return rhs_; }
+
+        /** @brief Conversion operator to a ViennaCL scalar */
+        operator ScalarType () const
+        {
+          ScalarType result;
+          viennacl::linalg::norm_frobenius_cpu(lhs_, result);
+          return result;
+        }
+
+      private:
+        LHS & lhs_;
+        RHS & rhs_;
+    };
+
 
 
 
@@ -239,7 +271,7 @@ namespace viennacl
       * @param mem    The OpenCL memory handle
       * @param size   Ignored - Only necessary to avoid ambiguities. Users are advised to set this parameter to '1'.
       */
-      explicit scalar(cl_mem mem, size_type size)
+      explicit scalar(cl_mem mem, size_type /*size*/)
       {
         val_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
         val_.opencl_handle() = mem;
@@ -388,6 +420,16 @@ namespace viennacl
         init_if_necessary(viennacl::traits::context(proxy));
 
         viennacl::linalg::norm_inf_impl(proxy.lhs(), *this);
+        return *this;
+      }
+
+      /** @brief Sets the scalar to the result of supplied norm_frobenius expression. */
+      template <typename T1, typename T2>
+      self_type & operator= (scalar_expression<T1, T2, op_norm_frobenius> const & proxy)
+      {
+        init_if_necessary(viennacl::traits::context(proxy));
+
+        viennacl::linalg::norm_frobenius_impl(proxy.lhs(), *this);
         return *this;
       }
 
@@ -558,7 +600,7 @@ namespace viennacl
       {
         assert( val_.get_active_handle_id() != viennacl::MEMORY_NOT_INITIALIZED && bool("Scalar not initialized!"));
 
-        self_type result = *this;
+        self_type result = proxy;
 
         viennacl::linalg::asbs(result,                                       // result =
                                 *this, SCALARTYPE(1.0), 1 , false, false,    //            *this * 1.0

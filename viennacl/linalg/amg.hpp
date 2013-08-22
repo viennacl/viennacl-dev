@@ -219,7 +219,7 @@ namespace viennacl
     * @param tag    AMG preconditioner tag
     */
     template <typename InternalType1, typename InternalType2>
-    void amg_transform_gpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag)
+    void amg_transform_gpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag, viennacl::context ctx)
     {
       typedef typename InternalType1::value_type MatrixType;
       typedef typename InternalType2::value_type::value_type ScalarType;
@@ -232,17 +232,20 @@ namespace viennacl
       // Copy to GPU using the internal sparse matrix structure: std::vector<std::map>.
       for (unsigned int i=0; i<tag.get_coarselevels()+1; ++i)
       {
+        viennacl::switch_memory_context(A[i], ctx);
         //A[i].resize(A_setup[i].size1(),A_setup[i].size2(),false);
         viennacl::copy(*(A_setup[i].get_internal_pointer()),A[i]);
       }
       for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
       {
+        viennacl::switch_memory_context(P[i], ctx);
         //P[i].resize(P_setup[i].size1(),P_setup[i].size2(),false);
         viennacl::copy(*(P_setup[i].get_internal_pointer()),P[i]);
         //viennacl::copy((boost::numeric::ublas::compressed_matrix<ScalarType>)P_setup[i],P[i]);
       }
       for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
       {
+        viennacl::switch_memory_context(R[i], ctx);
         //R[i].resize(P_setup[i].size2(),P_setup[i].size1(),false);
         P_setup[i].set_trans(true);
         viennacl::copy(*(P_setup[i].get_internal_pointer()),R[i]);
@@ -280,6 +283,37 @@ namespace viennacl
         residual[level].clear();
       }
     }
+
+
+    /** @brief Setup data structures for precondition phase for later use on the GPU
+    *
+    * @param result    Result vector on all levels
+    * @param rhs    RHS vector on all levels
+    * @param residual    Residual vector on all levels
+    * @param A      Operators matrices on all levels from setup phase
+    * @param tag    AMG preconditioner tag
+    */
+    template <typename InternalVectorType, typename SparseMatrixType>
+    void amg_setup_apply (InternalVectorType & result, InternalVectorType & rhs, InternalVectorType & residual, SparseMatrixType const & A, amg_tag const & tag, viennacl::context ctx)
+    {
+      typedef typename InternalVectorType::value_type VectorType;
+
+      result.resize(tag.get_coarselevels()+1);
+      rhs.resize(tag.get_coarselevels()+1);
+      residual.resize(tag.get_coarselevels());
+
+      for (unsigned int level=0; level < tag.get_coarselevels()+1; ++level)
+      {
+        result[level] = VectorType(A[level].size1(), ctx);
+        rhs[level] = VectorType(A[level].size1(), ctx);
+      }
+      for (unsigned int level=0; level < tag.get_coarselevels(); ++level)
+      {
+        residual[level] = VectorType(A[level].size1(), ctx);
+      }
+    }
+
+
     /** @brief Pre-compute LU factorization for direct solve (ublas library).
      *  @brief Speeds up precondition phase as this is computed only once overall instead of once per iteration.
     *
@@ -559,6 +593,8 @@ namespace viennacl
       mutable boost::numeric::ublas::vector <VectorType> rhs;
       mutable boost::numeric::ublas::vector <VectorType> residual;
 
+      viennacl::context ctx_;
+
       mutable bool done_init_apply;
 
       amg_tag tag_;
@@ -572,7 +608,7 @@ namespace viennacl
       * @param mat  System matrix
       * @param tag  The AMG tag
       */
-      amg_precond(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat, amg_tag const & tag): Permutation(0)
+      amg_precond(compressed_matrix<ScalarType, MAT_ALIGNMENT> const & mat, amg_tag const & tag): Permutation(0), ctx_(viennacl::traits::context(mat))
       {
         tag_ = tag;
 
@@ -593,7 +629,7 @@ namespace viennacl
         // Start setup phase.
         amg_setup(A_setup,P_setup,Pointvector, tag_);
         // Transform to GPU-Matrixtype for precondition phase.
-        amg_transform_gpu(A,P,R,A_setup,P_setup, tag_);
+        amg_transform_gpu(A,P,R,A_setup,P_setup, tag_, ctx_);
 
         done_init_apply = false;
       }
@@ -605,7 +641,7 @@ namespace viennacl
       void init_apply() const
       {
         // Setup precondition phase (Data structures).
-        amg_setup_apply(result,rhs,residual,A_setup,tag_);
+        amg_setup_apply(result,rhs,residual,A_setup,tag_, ctx_);
         // Do LU factorization for direct solve.
         amg_lu(op,Permutation,A_setup[tag_.get_coarselevels()]);
 
@@ -668,7 +704,9 @@ namespace viennacl
           #endif
 
           // Compute residual.
-          residual[level] = rhs[level] - viennacl::linalg::prod (A[level],result[level]);
+          //residual[level] = rhs[level] - viennacl::linalg::prod (A[level],result[level]);
+          residual[level] = viennacl::linalg::prod (A[level],result[level]);
+          residual[level] = rhs[level] - residual[level];
 
           #ifdef VIENNACL_AMG_DEBUG
           std::cout << "Residual: " << std::endl;
@@ -734,7 +772,7 @@ namespace viennacl
       template <typename VectorType>
       void smooth_jacobi(int level, unsigned int iterations, VectorType & x, VectorType const & rhs) const
       {
-        VectorType old_result (x.size());
+        VectorType old_result = x;
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
         viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::init(ctx);
@@ -742,7 +780,8 @@ namespace viennacl
 
         for (unsigned int i=0; i<iterations; ++i)
         {
-          old_result = x;
+          if (i > 0)
+            old_result = x;
           x.clear();
           viennacl::ocl::enqueue(k(A[level].handle1().opencl_handle(), A[level].handle2().opencl_handle(), A[level].handle().opencl_handle(),
                                   static_cast<ScalarType>(tag_.get_jacobiweight()),

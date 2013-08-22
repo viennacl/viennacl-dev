@@ -239,7 +239,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T>
-      void vector_assign(vector_base<T> & vec1, const T & alpha)
+      void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         typedef T        value_type;
 
@@ -248,15 +248,15 @@ namespace viennacl
         std::size_t start1 = viennacl::traits::start(vec1);
         std::size_t inc1   = viennacl::traits::stride(vec1);
         std::size_t size1  = viennacl::traits::size(vec1);
-        std::size_t internal_size1  = vec1.internal_size();  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
+        std::size_t loop_bound  = up_to_internal_size ? vec1.internal_size() : size1;  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
         value_type data_alpha = static_cast<value_type>(alpha);
 
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for if (internal_size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+        #pragma omp parallel for if (loop_bound > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < internal_size1; ++i)
-          data_vec1[i*inc1+start1] = (i < size1) ? data_alpha : 0;
+        for (std::size_t i = 0; i < loop_bound; ++i)
+          data_vec1[i*inc1+start1] = data_alpha;
       }
 
 
@@ -428,9 +428,6 @@ namespace viennacl
           for (std::size_t j=0; j < vec_tuple.const_size(); ++j)
             temp[j] += entry_x * data_y[j][i*stride_y[j]+start_y[j]];
         }
-
-        std::size_t start_result = viennacl::traits::start(result);
-        std::size_t inc_result   = viennacl::traits::stride(result);
 
         for (std::size_t j=0; j < vec_tuple.const_size(); ++j)
           result[j] = temp[j];  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation

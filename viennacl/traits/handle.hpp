@@ -200,19 +200,19 @@ namespace viennacl
 
     /** \cond */
     template <typename T>
-    viennacl::memory_types active_handle_id(circulant_matrix<T> const & obj) { return OPENCL_MEMORY; }
+    viennacl::memory_types active_handle_id(circulant_matrix<T> const &) { return OPENCL_MEMORY; }
 
     template <typename T>
-    viennacl::memory_types active_handle_id(hankel_matrix<T> const & obj) { return OPENCL_MEMORY; }
+    viennacl::memory_types active_handle_id(hankel_matrix<T> const &) { return OPENCL_MEMORY; }
 
     template <typename T>
-    viennacl::memory_types active_handle_id(toeplitz_matrix<T> const & obj) { return OPENCL_MEMORY; }
+    viennacl::memory_types active_handle_id(toeplitz_matrix<T> const &) { return OPENCL_MEMORY; }
 
     template <typename T>
-    viennacl::memory_types active_handle_id(vandermonde_matrix<T> const & obj) { return OPENCL_MEMORY; }
+    viennacl::memory_types active_handle_id(vandermonde_matrix<T> const &) { return OPENCL_MEMORY; }
 
     template <typename LHS, typename RHS, typename OP>
-    viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const & obj);
+    viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, RHS, OP> const &);
 
     template <typename LHS, typename RHS, typename OP>
     viennacl::memory_types active_handle_id(viennacl::scalar_expression<LHS, RHS, OP> const & obj)

@@ -783,7 +783,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       */
       template <typename T, typename S1>
-      void vector_assign(vector_base<T> & vec1, const S1 & alpha)
+      void vector_assign(vector_base<T> & vec1, const S1 & alpha, bool up_to_internal_size = false)
       {
         typedef T        value_type;
 
@@ -791,10 +791,12 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
+        unsigned int size = up_to_internal_size ? static_cast<unsigned int>(vec1.internal_size()) : static_cast<unsigned int>(viennacl::traits::size(vec1));
+
         vector_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                            static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                            static_cast<unsigned int>(viennacl::traits::stride(vec1)),
-                                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                           size,
                                            static_cast<unsigned int>(vec1.internal_size()),  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
                                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
@@ -862,10 +864,19 @@ namespace viennacl
                                          unsigned int start3,
                                          unsigned int inc3,
 
-                                         unsigned int is_division
+                                         unsigned int op_type
                                        )
       {
-        if (is_division)
+        if (op_type == 2)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]);
+          }
+        }
+        else if (op_type == 1)
         {
           for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
                             i < size1;
@@ -874,7 +885,7 @@ namespace viennacl
             vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3];
           }
         }
-        else
+        else if (op_type == 0)
         {
           for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
                             i < size1;
@@ -885,6 +896,42 @@ namespace viennacl
         }
       }
 
+      template <typename T>
+      __global__ void element_op_int_kernel(T * vec1,
+                                         unsigned int start1,
+                                         unsigned int inc1,
+                                         unsigned int size1,
+
+                                         T const * vec2,
+                                         unsigned int start2,
+                                         unsigned int inc2,
+
+                                         T const * vec3,
+                                         unsigned int start3,
+                                         unsigned int inc3,
+
+                                         unsigned int op_type
+                                       )
+      {
+        if (op_type == 1)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3];
+          }
+        }
+        else if (op_type == 0)
+        {
+          for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                            i < size1;
+                            i += gridDim.x * blockDim.x)
+          {
+            vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3];
+          }
+        }
+      }
 
       /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
       *
@@ -896,6 +943,42 @@ namespace viennacl
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
         typedef T        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
+        element_op_int_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                        detail::cuda_arg<value_type>(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                        op_type
+                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+      }
+
+      template <typename OP>
+      void element_op(vector_base<float> & vec1,
+                      vector_expression<const vector_base<float>, const vector_base<float>, op_element_binary<OP> > const & proxy)
+      {
+        typedef float        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
 
         element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
@@ -910,7 +993,37 @@ namespace viennacl
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
 
-                                        static_cast<unsigned int>(viennacl::is_division<OP>::value)
+                                        op_type
+                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+      }
+
+      template <typename OP>
+      void element_op(vector_base<double> & vec1,
+                      vector_expression<const vector_base<double>, const vector_base<double>, op_element_binary<OP> > const & proxy)
+      {
+        typedef double        value_type;
+
+        unsigned int op_type = 2; //0: product, 1: division, 2: power
+        if (viennacl::is_division<OP>::value)
+          op_type = 1;
+        else if (viennacl::is_product<OP>::value)
+          op_type = 0;
+
+        element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                        detail::cuda_arg<value_type>(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                        op_type
                                        );
         VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
       }
@@ -1598,8 +1711,8 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static const unsigned int work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        const unsigned int work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
@@ -1614,7 +1727,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2239,8 +2352,8 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
         detail::vector_sum_kernel_launcher<T>::apply(temp, 1, result);
@@ -2257,13 +2370,13 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
 
         // Now copy partial results from GPU back to CPU and run reduction there:
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2284,8 +2397,8 @@ namespace viennacl
       {
         typedef T       value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
 
@@ -2303,12 +2416,12 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
 
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
@@ -2331,8 +2444,8 @@ namespace viennacl
       {
         typedef T      value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
         detail::vector_sum_kernel_launcher<T>::apply(temp, 0, result);
@@ -2351,12 +2464,12 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        static std::size_t work_groups = 128;
-        static viennacl::vector<value_type> temp(work_groups);
+        std::size_t work_groups = 128;
+        viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
 
-        static std::vector<value_type> temp_cpu(work_groups);
+        std::vector<value_type> temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;

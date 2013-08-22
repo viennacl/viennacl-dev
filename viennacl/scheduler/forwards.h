@@ -74,11 +74,13 @@ namespace viennacl
       OPERATION_UNARY_SQRT_TYPE,
       OPERATION_UNARY_TAN_TYPE,
       OPERATION_UNARY_TANH_TYPE,
+      OPERATION_UNARY_TRANS_TYPE,
       OPERATION_UNARY_NORM_1_TYPE,
       OPERATION_UNARY_NORM_2_TYPE,
       OPERATION_UNARY_NORM_INF_TYPE,
 
       // binary expression
+      OPERATION_BINARY_ACCESS_TYPE,
       OPERATION_BINARY_ASSIGN_TYPE,
       OPERATION_BINARY_INPLACE_ADD_TYPE,
       OPERATION_BINARY_INPLACE_SUB_TYPE,
@@ -88,7 +90,7 @@ namespace viennacl
       OPERATION_BINARY_MAT_MAT_PROD_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
       OPERATION_BINARY_DIV_TYPE,     // vector/matrix divided by scalar
-      OPERATION_BINARY_ELEMENT_MULT_TYPE,
+      OPERATION_BINARY_ELEMENT_PROD_TYPE,
       OPERATION_BINARY_ELEMENT_DIV_TYPE,
       OPERATION_BINARY_INNER_PROD_TYPE
     };
@@ -124,6 +126,7 @@ namespace viennacl
       template <> struct op_type_info<op_norm_1                  > { enum { id = OPERATION_UNARY_NORM_1_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_norm_2                  > { enum { id = OPERATION_UNARY_NORM_2_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_norm_inf                > { enum { id = OPERATION_UNARY_NORM_INF_TYPE, family = OPERATION_UNARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_trans                   > { enum { id = OPERATION_UNARY_TRANS_TYPE, family = OPERATION_UNARY_TYPE_FAMILY }; };
 
       // binary operations
       template <> struct op_type_info<op_assign>                   { enum { id = OPERATION_BINARY_ASSIGN_TYPE,       family = OPERATION_BINARY_TYPE_FAMILY }; };
@@ -135,7 +138,7 @@ namespace viennacl
       template <> struct op_type_info<op_mat_mat_prod>             { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_mult>                     { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_div>                      { enum { id = OPERATION_BINARY_DIV_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY }; };
-      template <> struct op_type_info<op_element_binary<op_mult> > { enum { id = OPERATION_BINARY_ELEMENT_MULT_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
+      template <> struct op_type_info<op_element_binary<op_prod> > { enum { id = OPERATION_BINARY_ELEMENT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_inner_prod>               { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY }; };
 
@@ -151,9 +154,6 @@ namespace viennacl
       // LHS or RHS are again an expression:
       COMPOSITE_OPERATION_FAMILY,
 
-      // host scalars:
-      HOST_SCALAR_TYPE_FAMILY,
-
       // device scalars:
       SCALAR_TYPE_FAMILY,
 
@@ -161,160 +161,76 @@ namespace viennacl
       VECTOR_TYPE_FAMILY,
 
       // matrices:
-      MATRIX_ROW_TYPE_FAMILY,
-      MATRIX_COL_TYPE_FAMILY
+      MATRIX_TYPE_FAMILY
     };
 
     /** @brief Encodes the type of a node in the statement tree. */
-    enum statement_node_type
+    enum statement_node_subtype
     {
-      COMPOSITE_OPERATION_TYPE,
+      INVALID_SUBTYPE, //when type is COMPOSITE_OPERATION_FAMILY
 
-      // host scalars:
-      HOST_SCALAR_CHAR_TYPE,
-      HOST_SCALAR_UCHAR_TYPE,
-      HOST_SCALAR_SHORT_TYPE,
-      HOST_SCALAR_USHORT_TYPE,
-      HOST_SCALAR_INT_TYPE,
-      HOST_SCALAR_UINT_TYPE,
-      HOST_SCALAR_LONG_TYPE,
-      HOST_SCALAR_ULONG_TYPE,
-      HOST_SCALAR_HALF_TYPE,
-      HOST_SCALAR_FLOAT_TYPE,
-      HOST_SCALAR_DOUBLE_TYPE,
+      HOST_SCALAR_TYPE,
+      DEVICE_SCALAR_TYPE,
 
-      // device scalars:
-      SCALAR_CHAR_TYPE,
-      SCALAR_UCHAR_TYPE,
-      SCALAR_SHORT_TYPE,
-      SCALAR_USHORT_TYPE,
-      SCALAR_INT_TYPE,
-      SCALAR_UINT_TYPE,
-      SCALAR_LONG_TYPE,
-      SCALAR_ULONG_TYPE,
-      SCALAR_HALF_TYPE,
-      SCALAR_FLOAT_TYPE,
-      SCALAR_DOUBLE_TYPE,
+      DENSE_VECTOR_TYPE,
+      IMPLICIT_VECTOR_TYPE,
 
-      // vector:
-      VECTOR_CHAR_TYPE,
-      VECTOR_UCHAR_TYPE,
-      VECTOR_SHORT_TYPE,
-      VECTOR_USHORT_TYPE,
-      VECTOR_INT_TYPE,
-      VECTOR_UINT_TYPE,
-      VECTOR_LONG_TYPE,
-      VECTOR_ULONG_TYPE,
-      VECTOR_HALF_TYPE,
-      VECTOR_FLOAT_TYPE,
-      VECTOR_DOUBLE_TYPE,
+      DENSE_ROW_MATRIX_TYPE,
+      DENSE_COL_MATRIX_TYPE,
+      IMPLICIT_MATRIX_TYPE,
 
-      // matrix, row major:
-      MATRIX_ROW_CHAR_TYPE,
-      MATRIX_ROW_UCHAR_TYPE,
-      MATRIX_ROW_SHORT_TYPE,
-      MATRIX_ROW_USHORT_TYPE,
-      MATRIX_ROW_INT_TYPE,
-      MATRIX_ROW_UINT_TYPE,
-      MATRIX_ROW_LONG_TYPE,
-      MATRIX_ROW_ULONG_TYPE,
-      MATRIX_ROW_HALF_TYPE,
-      MATRIX_ROW_FLOAT_TYPE,
-      MATRIX_ROW_DOUBLE_TYPE,
+      COMPRESSED_MATRIX_TYPE,
+      COORDINATE_MATRIX_TYPE,
+      ELL_MATRIX_TYPE,
+      HYB_MATRIX_TYPE
 
-      // matrix, row major:
-      MATRIX_COL_CHAR_TYPE,
-      MATRIX_COL_UCHAR_TYPE,
-      MATRIX_COL_SHORT_TYPE,
-      MATRIX_COL_USHORT_TYPE,
-      MATRIX_COL_INT_TYPE,
-      MATRIX_COL_UINT_TYPE,
-      MATRIX_COL_LONG_TYPE,
-      MATRIX_COL_ULONG_TYPE,
-      MATRIX_COL_HALF_TYPE,
-      MATRIX_COL_FLOAT_TYPE,
-      MATRIX_COL_DOUBLE_TYPE
+      // other matrix types to be added here
     };
+
+    /** @brief Encodes the type of a node in the statement tree. */
+    enum statement_node_numeric_type
+    {
+      INVALID_NUMERIC_TYPE, //when type is COMPOSITE_OPERATION_FAMILY
+
+      CHAR_TYPE,
+      UCHAR_TYPE,
+      SHORT_TYPE,
+      USHORT_TYPE,
+      INT_TYPE,
+      UINT_TYPE,
+      LONG_TYPE,
+      ULONG_TYPE,
+      HALF_TYPE,
+      FLOAT_TYPE,
+      DOUBLE_TYPE
+    };
+
 
     namespace result_of
     {
-      ///////////// scalar type ID deduction /////////////
+      ///////////// numeric type ID deduction /////////////
 
       template <typename T>
-      struct scalar_type {};
+      struct numeric_type_id {};
 
-      template <> struct scalar_type<char>           { enum { value = SCALAR_CHAR_TYPE   }; };
-      template <> struct scalar_type<unsigned char>  { enum { value = SCALAR_UCHAR_TYPE  }; };
-      template <> struct scalar_type<short>          { enum { value = SCALAR_SHORT_TYPE  }; };
-      template <> struct scalar_type<unsigned short> { enum { value = SCALAR_USHORT_TYPE }; };
-      template <> struct scalar_type<int>            { enum { value = SCALAR_INT_TYPE    }; };
-      template <> struct scalar_type<unsigned int>   { enum { value = SCALAR_UINT_TYPE   }; };
-      template <> struct scalar_type<long>           { enum { value = SCALAR_LONG_TYPE   }; };
-      template <> struct scalar_type<unsigned long>  { enum { value = SCALAR_ULONG_TYPE  }; };
-      template <> struct scalar_type<float>          { enum { value = SCALAR_FLOAT_TYPE  }; };
-      template <> struct scalar_type<double>         { enum { value = SCALAR_DOUBLE_TYPE }; };
+      template <> struct numeric_type_id<char>           { enum { value = CHAR_TYPE   }; };
+      template <> struct numeric_type_id<unsigned char>  { enum { value = UCHAR_TYPE  }; };
+      template <> struct numeric_type_id<short>          { enum { value = SHORT_TYPE  }; };
+      template <> struct numeric_type_id<unsigned short> { enum { value = USHORT_TYPE }; };
+      template <> struct numeric_type_id<int>            { enum { value = INT_TYPE    }; };
+      template <> struct numeric_type_id<unsigned int>   { enum { value = UINT_TYPE   }; };
+      template <> struct numeric_type_id<long>           { enum { value = LONG_TYPE   }; };
+      template <> struct numeric_type_id<unsigned long>  { enum { value = ULONG_TYPE  }; };
+      template <> struct numeric_type_id<float>          { enum { value = FLOAT_TYPE  }; };
+      template <> struct numeric_type_id<double>         { enum { value = DOUBLE_TYPE }; };
 
-      ///////////// vector type ID deduction /////////////
-
-      template <typename T>
-      struct vector_type_for_scalar {};
-
-#define VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(TYPE, ENUMVALUE) \
-      template <> struct vector_type_for_scalar<TYPE> { enum { value = ENUMVALUE }; };
-
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(char,           VECTOR_CHAR_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned char,  VECTOR_UCHAR_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(short,          VECTOR_SHORT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned short, VECTOR_USHORT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(int,            VECTOR_INT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned int,   VECTOR_UINT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(long,           VECTOR_LONG_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(unsigned long,  VECTOR_ULONG_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(float,          VECTOR_FLOAT_TYPE)
-      VIENNACL_GENERATE_VECTOR_TYPE_MAPPING(double,         VECTOR_DOUBLE_TYPE)
-
-#undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
-
-      ///////////// matrix type ID deduction /////////////
-
-      template <typename T, typename F>
-      struct matrix_type_for_scalar_and_layout {};
-
-#define VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(TYPE, LAYOUT, ENUMVALUE) \
-      template <> struct matrix_type_for_scalar_and_layout<TYPE, LAYOUT> { enum { value = ENUMVALUE }; };
-
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::column_major, MATRIX_COL_CHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::column_major, MATRIX_COL_UCHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::column_major, MATRIX_COL_SHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::column_major, MATRIX_COL_USHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::column_major, MATRIX_COL_INT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::column_major, MATRIX_COL_UINT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::column_major, MATRIX_COL_LONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::column_major, MATRIX_COL_ULONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::column_major, MATRIX_COL_FLOAT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::column_major, MATRIX_COL_DOUBLE_TYPE)
-
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(char,           viennacl::row_major, MATRIX_ROW_CHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned char,  viennacl::row_major, MATRIX_ROW_UCHAR_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(short,          viennacl::row_major, MATRIX_ROW_SHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned short, viennacl::row_major, MATRIX_ROW_USHORT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(int,            viennacl::row_major, MATRIX_ROW_INT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned int,   viennacl::row_major, MATRIX_ROW_UINT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(long,           viennacl::row_major, MATRIX_ROW_LONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(unsigned long,  viennacl::row_major, MATRIX_ROW_ULONG_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(float,          viennacl::row_major, MATRIX_ROW_FLOAT_TYPE)
-      VIENNACL_GENERATE_MATRIX_TYPE_MAPPING(double,         viennacl::row_major, MATRIX_ROW_DOUBLE_TYPE)
-
-#undef VIENNACL_GENERATE_VECTOR_TYPE_MAPPING
+      ///////////// matrix layout ID deduction /////////////
 
       template <typename F>
-      struct matrix_family {};
+      struct layout_type_id {};
 
-      template <> struct matrix_family<viennacl::row_major   > { enum { value = MATRIX_ROW_TYPE_FAMILY }; };
-      template <> struct matrix_family<viennacl::column_major> { enum { value = MATRIX_COL_TYPE_FAMILY }; };
-
-
-
+      template <> struct layout_type_id<viennacl::column_major> { enum { value = DENSE_COL_MATRIX_TYPE }; };
+      template <> struct layout_type_id<viennacl::row_major   > { enum { value = DENSE_ROW_MATRIX_TYPE }; };
     }
 
 
@@ -329,7 +245,8 @@ namespace viennacl
     struct lhs_rhs_element
     {
       statement_node_type_family   type_family;
-      statement_node_type          type;
+      statement_node_subtype       subtype;
+      statement_node_numeric_type  numeric_type;
 
       union
       {
@@ -376,6 +293,18 @@ namespace viennacl
         viennacl::vector_base<float>            *vector_float;
         viennacl::vector_base<double>           *vector_double;
 
+        // implicit vectors:
+        //viennacl::implicit_vector_base<char>             *implicit_vector_char;
+        //viennacl::implicit_vector_base<unsigned char>    *implicit_vector_uchar;
+        //viennacl::implicit_vector_base<short>            *implicit_vector_short;
+        //viennacl::implicit_vector_base<unsigned short>   *implicit_vector_ushort;
+        //viennacl::implicit_vector_base<int>              *implicit_vector_int;
+        //viennacl::implicit_vector_base<unsigned int>     *implicit_vector_uint;
+        //viennacl::implicit_vector_base<long>             *implicit_vector_long;
+        //viennacl::implicit_vector_base<unsigned long>    *implicit_vector_ulong;
+        viennacl::implicit_vector_base<float>            *implicit_vector_float;
+        viennacl::implicit_vector_base<double>           *implicit_vector_double;
+
         // row-major matrices:
         //viennacl::matrix_base<char>             *matrix_row_char;
         //viennacl::matrix_base<unsigned char>    *matrix_row_uchar;
@@ -400,6 +329,60 @@ namespace viennacl
         viennacl::matrix_base<float,          viennacl::column_major>    *matrix_col_float;
         viennacl::matrix_base<double,         viennacl::column_major>    *matrix_col_double;
 
+        //viennacl::implicit_matrix_base<char>             *implicit_matrix_char;
+        //viennacl::implicit_matrix_base<unsigned char>    *implicit_matrix_uchar;
+        //viennacl::implicit_matrix_base<short>            *implicit_matrix_short;
+        //viennacl::implicit_matrix_base<unsigned short>   *implicit_matrix_ushort;
+        //viennacl::implicit_matrix_base<int>              *implicit_matrix_int;
+        //viennacl::implicit_matrix_base<unsigned int>     *implicit_matrix_uint;
+        //viennacl::implicit_matrix_base<long>             *implicit_matrix_long;
+        //viennacl::implicit_matrix_base<unsigned long>    *implicit_matrix_ulong;
+        viennacl::implicit_matrix_base<float>            *implicit_matrix_float;
+        viennacl::implicit_matrix_base<double>           *implicit_matrix_double;
+
+        //viennacl::compressed_matrix<float>    *compressed_matrix_char;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_uchar;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_short;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_ushort;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_int;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_uint;
+        //viennacl::compressed_matrix<float>    *compressed_matrix_long;
+        //viennacl::compressed_matrix<double>   *compressed_matrix_ulong;
+        viennacl::compressed_matrix<float>    *compressed_matrix_float;
+        viennacl::compressed_matrix<double>   *compressed_matrix_double;
+
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_char;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_uchar;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_short;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_ushort;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_int;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_uint;
+        //viennacl::coordinate_matrix<float>    *coordinate_matrix_long;
+        //viennacl::coordinate_matrix<double>   *coordinate_matrix_ulong;
+        viennacl::coordinate_matrix<float>    *coordinate_matrix_float;
+        viennacl::coordinate_matrix<double>   *coordinate_matrix_double;
+
+        //viennacl::ell_matrix<float>    *ell_matrix_char;
+        //viennacl::ell_matrix<double>   *ell_matrix_uchar;
+        //viennacl::ell_matrix<float>    *ell_matrix_short;
+        //viennacl::ell_matrix<double>   *ell_matrix_ushort;
+        //viennacl::ell_matrix<float>    *ell_matrix_int;
+        //viennacl::ell_matrix<double>   *ell_matrix_uint;
+        //viennacl::ell_matrix<float>    *ell_matrix_long;
+        //viennacl::ell_matrix<double>   *ell_matrix_ulong;
+        viennacl::ell_matrix<float>    *ell_matrix_float;
+        viennacl::ell_matrix<double>   *ell_matrix_double;
+
+        //viennacl::hyb_matrix<float>    *hyb_matrix_char;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_uchar;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_short;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_ushort;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_int;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_uint;
+        //viennacl::hyb_matrix<float>    *hyb_matrix_long;
+        //viennacl::hyb_matrix<double>   *hyb_matrix_ulong;
+        viennacl::hyb_matrix<float>    *hyb_matrix_float;
+        viennacl::hyb_matrix<double>   *hyb_matrix_double;
       };
     };
 
@@ -478,15 +461,28 @@ namespace viennacl
         void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::column_major> const & t) { elem.matrix_col_double = const_cast<viennacl::matrix_base<double, viennacl::column_major> *>(&t); }
         void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::row_major>    const & t) { elem.matrix_row_double = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
 
+        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<float>  const & m) { elem.compressed_matrix_float  = const_cast<viennacl::compressed_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<double> const & m) { elem.compressed_matrix_double = const_cast<viennacl::compressed_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<float>  const & m) { elem.coordinate_matrix_float  = const_cast<viennacl::coordinate_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<double> const & m) { elem.coordinate_matrix_double = const_cast<viennacl::coordinate_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<float>  const & m) { elem.ell_matrix_float  = const_cast<viennacl::ell_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<double> const & m) { elem.ell_matrix_double = const_cast<viennacl::ell_matrix<double> *>(&m); }
+
+        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<float>  const & m) { elem.hyb_matrix_float  = const_cast<viennacl::hyb_matrix<float>  *>(&m); }
+        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
+
         //////////// Tree leaves (terminals) ////////////////////
 
         std::size_t add_element(std::size_t       next_free,
                                 lhs_rhs_element & elem,
                                 float const &     t)
         {
-          elem.type_family = HOST_SCALAR_TYPE_FAMILY;
-          elem.type        = HOST_SCALAR_FLOAT_TYPE;
-          elem.host_float  = t;
+          elem.type_family  = SCALAR_TYPE_FAMILY;
+          elem.subtype      = HOST_SCALAR_TYPE;
+          elem.numeric_type = FLOAT_TYPE;
+          elem.host_float   = t;
           return next_free;
         }
 
@@ -494,9 +490,10 @@ namespace viennacl
                                 lhs_rhs_element & elem,
                                 double const &    t)
         {
-          elem.type_family = HOST_SCALAR_TYPE_FAMILY;
-          elem.type        = HOST_SCALAR_DOUBLE_TYPE;
-          elem.host_double = t;
+          elem.type_family  = SCALAR_TYPE_FAMILY;
+          elem.subtype      = HOST_SCALAR_TYPE;
+          elem.numeric_type = DOUBLE_TYPE;
+          elem.host_double  = t;
           return next_free;
         }
 
@@ -505,8 +502,9 @@ namespace viennacl
                                 lhs_rhs_element            & elem,
                                 viennacl::scalar<T> const & t)
         {
-          elem.type_family = SCALAR_TYPE_FAMILY;
-          elem.type        = statement_node_type(result_of::scalar_type<T>::value);
+          elem.type_family  = SCALAR_TYPE_FAMILY;
+          elem.subtype      = DEVICE_SCALAR_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;
         }
@@ -518,7 +516,8 @@ namespace viennacl
                                 viennacl::vector_base<T> const & t)
         {
           elem.type_family           = VECTOR_TYPE_FAMILY;
-          elem.type                  = statement_node_type(result_of::vector_type_for_scalar<T>::value);
+          elem.subtype               = DENSE_VECTOR_TYPE;
+          elem.numeric_type          = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;
         }
@@ -528,8 +527,57 @@ namespace viennacl
                                 lhs_rhs_element            & elem,
                                 viennacl::matrix_base<T, F> const & t)
         {
-          elem.type_family           = statement_node_type_family(result_of::matrix_family<F>::value);
-          elem.type                  = statement_node_type(result_of::matrix_type_for_scalar_and_layout<T, F>::value);
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = statement_node_subtype(result_of::layout_type_id<F>::value);
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::compressed_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = COMPRESSED_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::coordinate_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = COORDINATE_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::ell_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = ELL_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        std::size_t add_element(std::size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::hyb_matrix<T> const & t)
+        {
+          elem.type_family  = MATRIX_TYPE_FAMILY;
+          elem.subtype      = HYB_MATRIX_TYPE;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;
         }
@@ -543,7 +591,8 @@ namespace viennacl
                                 viennacl::scalar_expression<LHS, RHS, OP> const & t)
         {
           elem.type_family  = COMPOSITE_OPERATION_FAMILY;
-          elem.type         = COMPOSITE_OPERATION_TYPE;
+          elem.subtype      = INVALID_SUBTYPE;
+          elem.numeric_type = INVALID_NUMERIC_TYPE;
           elem.node_index   = next_free;
           return add_node(next_free, next_free + 1, t);
         }
@@ -554,7 +603,8 @@ namespace viennacl
                                 viennacl::vector_expression<LHS, RHS, OP> const & t)
         {
           elem.type_family  = COMPOSITE_OPERATION_FAMILY;
-          elem.type         = COMPOSITE_OPERATION_TYPE;
+          elem.subtype      = INVALID_SUBTYPE;
+          elem.numeric_type = INVALID_NUMERIC_TYPE;
           elem.node_index   = next_free;
           return add_node(next_free, next_free + 1, t);
         }
@@ -565,7 +615,8 @@ namespace viennacl
                                 viennacl::matrix_expression<LHS, RHS, OP> const & t)
         {
           elem.type_family   = COMPOSITE_OPERATION_FAMILY;
-          elem.type          = COMPOSITE_OPERATION_TYPE;
+          elem.subtype      = INVALID_SUBTYPE;
+          elem.numeric_type = INVALID_NUMERIC_TYPE;
           elem.node_index    = next_free;
           return add_node(next_free, next_free + 1, t);
         }
@@ -601,6 +652,12 @@ namespace viennacl
 
         container_type   array_;
     };
+
+    namespace detail
+    {
+      /** @brief Deals with x = RHS where RHS is an expression and x is either a scalar, a vector, or a matrix */
+      inline void execute_composite(statement const & /* s */, statement_node const & /* root_node */);
+    }
 
   } // namespace scheduler
 

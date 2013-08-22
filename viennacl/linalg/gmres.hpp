@@ -168,21 +168,21 @@ namespace viennacl
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
       unsigned int problem_size = viennacl::traits::size(rhs);
-      VectorType result(problem_size);
+      VectorType result = rhs;
       viennacl::traits::clear(result);
 
       unsigned int krylov_dim = tag.krylov_dim();
       if (problem_size < tag.krylov_dim())
         krylov_dim = problem_size; //A Krylov space larger than the matrix would lead to seg-faults (mathematically, error is certain to be zero already)
 
-      VectorType res(problem_size);
-      VectorType v_k_tilde(problem_size);
-      VectorType v_k_tilde_temp(problem_size);
+      VectorType res = rhs;
+      VectorType v_k_tilde = rhs;
+      VectorType v_k_tilde_temp = rhs;
 
       std::vector< std::vector<CPU_ScalarType> > R(krylov_dim, std::vector<CPU_ScalarType>(tag.krylov_dim()));
       std::vector<CPU_ScalarType> projection_rhs(krylov_dim);
 
-      std::vector<VectorType>      householder_reflectors(krylov_dim, VectorType(problem_size));
+      std::vector<VectorType>      householder_reflectors(krylov_dim, rhs);
       std::vector<CPU_ScalarType>  betas(krylov_dim);
 
       CPU_ScalarType norm_rhs = viennacl::linalg::norm_2(rhs);

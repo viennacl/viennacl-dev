@@ -134,19 +134,19 @@ namespace viennacl
 
         // generation of some random numbers, used for lanczos PRO algorithm
         boost::mt11213b mt;
-        boost::normal_distribution<double> N(0, 1);
-        boost::bernoulli_distribution<double> B(0.5);
-        boost::triangle_distribution<double> T(-1, 0, 1);
+        boost::normal_distribution<CPU_ScalarType> N(0, 1);
+        boost::bernoulli_distribution<CPU_ScalarType> B(0.5);
+        boost::triangle_distribution<CPU_ScalarType> T(-1, 0, 1);
 
-        boost::variate_generator<boost::mt11213b&, boost::normal_distribution<double> >     get_N(mt, N);
-        boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<double> >  get_B(mt, B);
-        boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<double> >   get_T(mt, T);
+        boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_ScalarType> >     get_N(mt, N);
+        boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_ScalarType> >  get_B(mt, B);
+        boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
 
 
         long i, j, k, index, retry, reorths;
         std::vector<long> l_bound(size/2), u_bound(size/2);
         bool second_step;
-        double squ_eps, eta, temp, eps, retry_th;
+        CPU_ScalarType squ_eps, eta, temp, eps, retry_th;
         long n = r.size();
         std::vector< std::vector<CPU_ScalarType> > w(2, std::vector<CPU_ScalarType>(size));
         CPU_ScalarType cpu_beta;
@@ -161,7 +161,7 @@ namespace viennacl
         boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
 
         second_step = false;
-        eps = std::numeric_limits<double>::epsilon();
+        eps = std::numeric_limits<CPU_ScalarType>::epsilon();
         squ_eps = std::sqrt(eps);
         retry_th = 1e-2;
         eta = std::exp(std::log(eps) * tag.factor());
@@ -440,13 +440,13 @@ namespace viennacl
       typedef typename viennacl::result_of::vector_for_matrix<MatrixT>::type    VectorT;
 
       boost::mt11213b mt;
-      boost::normal_distribution<double> N(0, 1);
-      boost::bernoulli_distribution<double> B(0.5);
-      boost::triangle_distribution<double> T(-1, 0, 1);
+      boost::normal_distribution<CPU_ScalarType> N(0, 1);
+      boost::bernoulli_distribution<CPU_ScalarType> B(0.5);
+      boost::triangle_distribution<CPU_ScalarType> T(-1, 0, 1);
 
-      boost::variate_generator<boost::mt11213b&, boost::normal_distribution<double> >     get_N(mt, N);
-      boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<double> >  get_B(mt, B);
-      boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<double> >   get_T(mt, T);
+      boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_ScalarType> >     get_N(mt, N);
+      boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_ScalarType> >  get_B(mt, B);
+      boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
 
       std::vector<CPU_ScalarType> eigenvalues;
       std::size_t matrix_size = matrix.size1();

@@ -50,8 +50,6 @@
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/io.hpp"
-#include "boost/foreach.hpp"
-#include "boost/tokenizer.hpp"
 
 #include "vector-io.hpp"
 
@@ -74,6 +72,26 @@ int main (int, const char **)
     typedef viennacl::compressed_matrix<ScalarType>                     GPUMatrixType;
     typedef viennacl::vector<ScalarType>                                GPUVectorType;
 
+#ifdef VIENNACL_WITH_OPENCL
+  // Optional: Customize OpenCL backend
+  viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
+  std::vector<viennacl::ocl::device> const & devices = pf.devices();
+
+  // Optional: Set first device to first context:
+  viennacl::ocl::setup_context(0, devices[0]);
+
+  // Optional: Set second device for second context (use the same device for the second context if only one device available):
+  if (devices.size() > 1)
+    viennacl::ocl::setup_context(1, devices[1]);
+  else
+    viennacl::ocl::setup_context(1, devices[0]);
+
+  std::cout << viennacl::ocl::current_device().info() << std::endl;
+  viennacl::context ctx(viennacl::ocl::get_context(1));
+#else
+  viennacl::context ctx;
+#endif
+
     MatrixType M;
 
     //
@@ -95,8 +113,8 @@ int main (int, const char **)
     for (std::size_t i=0; i<rhs.size(); ++i)
       rhs(i) = 1;
 
-    GPUMatrixType  gpu_M(M.size1(), M.size2());
-    GPUVectorType  gpu_rhs(M.size1());
+    GPUMatrixType  gpu_M(M.size1(), M.size2(), ctx);
+    GPUVectorType  gpu_rhs(M.size1(), ctx);
     viennacl::copy(M, gpu_M);
     viennacl::copy(rhs, gpu_rhs);
 
@@ -157,6 +175,15 @@ int main (int, const char **)
     viennacl::linalg::spai_precond<GPUMatrixType> spai_gpu(gpu_M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
     std::cout << " * Iterative solver run..." << std::endl;
     run_solver(gpu_M, gpu_rhs, solver_tag, spai_gpu);
+
+    //
+    // Test 4: FSPAI with GPU:
+    //
+    std::cout << "--- Test 4: GPU-based FSPAI ---" << std::endl;
+    std::cout << " * Preconditioner setup..." << std::endl;
+    viennacl::linalg::fspai_precond<GPUMatrixType> fspai_gpu(gpu_M, viennacl::linalg::fspai_tag());
+    std::cout << " * Iterative solver run..." << std::endl;
+    run_solver(gpu_M, gpu_rhs, solver_tag, fspai_gpu);
 
     return EXIT_SUCCESS;
 }

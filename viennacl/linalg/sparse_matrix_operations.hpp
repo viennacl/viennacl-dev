@@ -66,8 +66,10 @@ namespace viennacl
             viennacl::linalg::cuda::detail::row_info(mat, vec, info_selector);
             break;
 #endif
+          case viennacl::MEMORY_NOT_INITIALIZED:
+            throw memory_exception("not initialised!");
           default:
-            throw "not implemented";
+            throw memory_exception("not implemented");
         }
       }
 
@@ -109,8 +111,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(mat, vec, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -148,8 +152,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(sp_mat, d_mat, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -188,8 +194,10 @@ namespace viennacl
           viennacl::linalg::cuda::prod_impl(sp_mat, d_mat, result);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -223,8 +231,10 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(mat, vec, tag);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -259,8 +269,10 @@ namespace viennacl
           viennacl::linalg::cuda::inplace_solve(mat, vec, tag);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -295,8 +307,10 @@ namespace viennacl
             viennacl::linalg::cuda::detail::block_inplace_solve(mat, block_index_array, num_blocks, mat_diagonal, vec, tag);
             break;
   #endif
+          case viennacl::MEMORY_NOT_INITIALIZED:
+            throw memory_exception("not initialised!");
           default:
-            throw "not implemented";
+            throw memory_exception("not implemented");
         }
       }
 

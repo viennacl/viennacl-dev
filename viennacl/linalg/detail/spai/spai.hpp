@@ -225,11 +225,12 @@ namespace viennacl
                           block_matrix & g_A_I_J,
                           block_vector & g_bv)
         {
-            bool is_empty_block;
-            //build index set
-            index_set_up(A_v_c, M_v, g_J, g_I);
-            block_assembly(A, g_J, g_I, g_A_I_J, g_is_update, is_empty_block);
-            block_qr<ScalarType>(g_I, g_J, g_A_I_J, g_bv, g_is_update);
+          viennacl::context ctx = viennacl::traits::context(A);
+          bool is_empty_block;
+          //build index set
+          index_set_up(A_v_c, M_v, g_J, g_I);
+          block_assembly(A, g_J, g_I, g_A_I_J, g_is_update, is_empty_block);
+          block_qr<ScalarType>(g_I, g_J, g_A_I_J, g_bv, g_is_update, ctx);
 
         }
 
@@ -278,72 +279,78 @@ namespace viennacl
                                 block_vector & g_bv_vcl,
                                 std::vector<SparseVectorType> & g_res,
                                 std::vector<cl_uint> & g_is_update,
-                                const spai_tag & tag){
-            unsigned int y_sz, m_sz;
-            std::vector<cl_uint> y_inds(M_v.size() + 1, static_cast<cl_uint>(0));
-            std::vector<cl_uint> m_inds(M_v.size() + 1, static_cast<cl_uint>(0));
-            get_size(g_I, y_sz);
-            init_start_inds(g_I, y_inds);
-            init_start_inds(g_J, m_inds);
-            //create y_v
-            std::vector<ScalarType> y_v(y_sz, static_cast<ScalarType>(0));
-            for(std::size_t i = 0; i < M_v.size(); ++i){
-                for(std::size_t j = 0; j < g_I[i].size(); ++j){
-                    if(g_I[i][j] == i)
-                        y_v[y_inds[i] + j] = static_cast<ScalarType>(1.0);
-                }
+                                const spai_tag & tag,
+                                viennacl::context ctx)
+        {
+          viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
+          unsigned int y_sz, m_sz;
+          std::vector<cl_uint> y_inds(M_v.size() + 1, static_cast<cl_uint>(0));
+          std::vector<cl_uint> m_inds(M_v.size() + 1, static_cast<cl_uint>(0));
+          get_size(g_I, y_sz);
+          init_start_inds(g_I, y_inds);
+          init_start_inds(g_J, m_inds);
+          //create y_v
+          std::vector<ScalarType> y_v(y_sz, static_cast<ScalarType>(0));
+          for(std::size_t i = 0; i < M_v.size(); ++i)
+          {
+            for(std::size_t j = 0; j < g_I[i].size(); ++j)
+            {
+              if(g_I[i][j] == i)
+                y_v[y_inds[i] + j] = static_cast<ScalarType>(1.0);
             }
-            //compute m_v
-            get_size(g_J, m_sz);
-            std::vector<ScalarType> m_v(m_sz, static_cast<cl_uint>(0));
+          }
+          //compute m_v
+          get_size(g_J, m_sz);
+          std::vector<ScalarType> m_v(m_sz, static_cast<cl_uint>(0));
 
-            block_vector y_v_vcl;
-            block_vector m_v_vcl;
-            //prepearing memory for least square problem on GPU
-            y_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                              static_cast<unsigned int>(sizeof(ScalarType)*y_v.size()),
-                                                                              &(y_v[0]));
-            m_v_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                              static_cast<unsigned int>(sizeof(ScalarType)*m_v.size()),
-                                                                              &(m_v[0]));
-            y_v_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                               static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
-                                                                               &(y_inds[0]));
-            viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
-                                                                                        &(g_is_update[0]));
-            viennacl::ocl::kernel& ls_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_least_squares");
-            ls_kernel.local_work_size(0, 1);
-            ls_kernel.global_work_size(0, 256);
-            viennacl::ocl::enqueue(ls_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_bv_vcl.handle(), g_bv_vcl.handle1(), m_v_vcl.handle(),
-                                             y_v_vcl.handle(), y_v_vcl.handle1(),
-                                             g_A_I_J_vcl.handle1(), g_is_update_vcl,
-                                             //viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
-                                             static_cast<unsigned int>(M_v.size())));
-            //copy vector m_v back from GPU to CPU
-            cl_int vcl_err = clEnqueueReadBuffer(viennacl::ocl::get_queue().handle().get(),
-                                                 m_v_vcl.handle().get(), CL_TRUE, 0,
-                                                 sizeof(ScalarType)*(m_v.size()),
-                                                 &(m_v[0]), 0, NULL, NULL);
-            VIENNACL_ERR_CHECK(vcl_err);
-            //fan out vector in parallel
-            //#pragma omp parallel for
-            for(std::size_t i = 0; i < M_v.size(); ++i){
-                if(g_is_update[i]){
-                    //faned out onto sparse vector
-                    custom_fan_out(m_v, m_inds[i], g_J[i], M_v[i]);
-                    g_res[i].clear();
-                    compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[i], static_cast<unsigned int>(i), g_res[i]);
-                    ScalarType res_norm = 0;
-                    //compute norm of res - just to make sure that this implementatino works correct
-                    sparse_norm_2(g_res[i], res_norm);
-                    //std::cout<<"Residual norm of column #: "<<i<<std::endl;
-                    //std::cout<<res_norm<<std::endl;
-                    //std::cout<<"************************"<<std::endl;
-                    g_is_update[i] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic())?(1):(0);
-
-                }
+          block_vector y_v_vcl;
+          block_vector m_v_vcl;
+          //prepearing memory for least square problem on GPU
+          y_v_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                      static_cast<unsigned int>(sizeof(ScalarType)*y_v.size()),
+                                                      &(y_v[0]));
+          m_v_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                      static_cast<unsigned int>(sizeof(ScalarType)*m_v.size()),
+                                                      &(m_v[0]));
+          y_v_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                       static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
+                                                       &(y_inds[0]));
+          viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                   static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
+                                                                                   &(g_is_update[0]));
+          viennacl::ocl::kernel& ls_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_least_squares");
+          ls_kernel.local_work_size(0, 1);
+          ls_kernel.global_work_size(0, 256);
+          viennacl::ocl::enqueue(ls_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_bv_vcl.handle(), g_bv_vcl.handle1(), m_v_vcl.handle(),
+                                           y_v_vcl.handle(), y_v_vcl.handle1(),
+                                           g_A_I_J_vcl.handle1(), g_is_update_vcl,
+                                           //viennacl::ocl::local_mem(static_cast<unsigned int>(sizeof(ScalarType)*(local_r_n*local_c_n))),
+                                           static_cast<unsigned int>(M_v.size())));
+          //copy vector m_v back from GPU to CPU
+          cl_int vcl_err = clEnqueueReadBuffer(opencl_ctx.get_queue().handle().get(),
+                                               m_v_vcl.handle().get(), CL_TRUE, 0,
+                                               sizeof(ScalarType)*(m_v.size()),
+                                               &(m_v[0]), 0, NULL, NULL);
+          VIENNACL_ERR_CHECK(vcl_err);
+          //fan out vector in parallel
+          //#pragma omp parallel for
+          for(std::size_t i = 0; i < M_v.size(); ++i)
+          {
+            if(g_is_update[i])
+            {
+              //faned out onto sparse vector
+              custom_fan_out(m_v, m_inds[i], g_J[i], M_v[i]);
+              g_res[i].clear();
+              compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[i], static_cast<unsigned int>(i), g_res[i]);
+              ScalarType res_norm = 0;
+              //compute norm of res - just to make sure that this implementatino works correct
+              sparse_norm_2(g_res[i], res_norm);
+              //std::cout<<"Residual norm of column #: "<<i<<std::endl;
+              //std::cout<<res_norm<<std::endl;
+              //std::cout<<"************************"<<std::endl;
+              g_is_update[i] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic())?(1):(0);
             }
+          }
         }
 
         //CPU based least square problems
@@ -484,57 +491,74 @@ namespace viennacl
             write_set_to_array(g_I, I_set);
             write_set_to_array(g_J, J_set);
             // if block for assembly does exist
-            if(I_set.size() > 0 && J_set.size() > 0){
-                compute_blocks_size(g_I, g_J, sz_blocks, blocks_ind, matrix_dims);
-                std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
+            if (I_set.size() > 0 && J_set.size() > 0)
+            {
+              viennacl::context ctx = viennacl::traits::context(A);
+              viennacl::ocl::context & opencl_ctx = const_cast<viennacl::ocl::context &>(ctx.opencl_context());
+              compute_blocks_size(g_I, g_J, sz_blocks, blocks_ind, matrix_dims);
+              std::vector<ScalarType> con_A_I_J(sz_blocks, static_cast<ScalarType>(0));
 
-                block_vector set_I_vcl, set_J_vcl;
-                //init memory on GPU
-                //contigious g_A_I_J
-                g_A_I_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                      static_cast<unsigned int>(sizeof(ScalarType)*(sz_blocks)),
-                                                                                      &(con_A_I_J[0]));
-                //matrix_dimensions
-                g_A_I_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                   static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<cl_uint>(g_I.size())),
-                                                                                   &(matrix_dims[0]));
-                //start_block inds
-                g_A_I_J_vcl.handle2() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                       static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
-                                                                                       &(blocks_ind[0]));
-                //set_I
-                set_I_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_I),
-                                                                                    &(I_set[0]));
-                //set_J
-                set_J_vcl.handle() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*sz_J),
-                                                                                    &(J_set[0]));
-                //i_ind
-                set_I_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
-                                                                                     &(i_ind[0]));
-                //j_ind
-                set_J_vcl.handle1() = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                     static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
-                                                                                     &(j_ind[0]));
+              block_vector set_I_vcl, set_J_vcl;
+              //init memory on GPU
+              //contigious g_A_I_J
+              g_A_I_J_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                              static_cast<unsigned int>(sizeof(ScalarType)*(sz_blocks)),
+                                                              &(con_A_I_J[0]));
+              g_A_I_J_vcl.handle().context(opencl_ctx);
 
-                viennacl::ocl::handle<cl_mem> g_is_update_vcl = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                                                               static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
-                                                                                                               &(g_is_update[0]));
-                viennacl::ocl::kernel& assembly_kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "assemble_blocks");
-                assembly_kernel.local_work_size(0, 1);
-                assembly_kernel.global_work_size(0, 256);
-                viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
-                                                       set_I_vcl.handle(), set_J_vcl.handle(), set_I_vcl.handle1(),
-                                                       set_J_vcl.handle1(),
-                                                       g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(), g_A_I_J_vcl.handle(),
-                                                       g_is_update_vcl,
-                                                       static_cast<unsigned int>(g_I.size())));
-                is_empty_block = false;
-            }else{
-                is_empty_block = true;
+              //matrix_dimensions
+              g_A_I_J_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                               static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<cl_uint>(g_I.size())),
+                                                               &(matrix_dims[0]));
+              g_A_I_J_vcl.handle1().context(opencl_ctx);
+
+              //start_block inds
+              g_A_I_J_vcl.handle2() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                               static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
+                                                               &(blocks_ind[0]));
+              g_A_I_J_vcl.handle2().context(opencl_ctx);
+
+              //set_I
+              set_I_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                            static_cast<unsigned int>(sizeof(cl_uint)*sz_I),
+                                                            &(I_set[0]));
+              set_I_vcl.handle().context(opencl_ctx);
+
+              //set_J
+              set_J_vcl.handle() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                            static_cast<unsigned int>(sizeof(cl_uint)*sz_J),
+                                                            &(J_set[0]));
+              set_J_vcl.handle().context(opencl_ctx);
+
+              //i_ind
+              set_I_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                             static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
+                                                             &(i_ind[0]));
+              set_I_vcl.handle().context(opencl_ctx);
+
+              //j_ind
+              set_J_vcl.handle1() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                             static_cast<unsigned int>(sizeof(cl_uint)*(g_I.size() + 1)),
+                                                             &(j_ind[0]));
+              set_J_vcl.handle().context(opencl_ctx);
+
+              viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
+                                                                                       static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
+                                                                                       &(g_is_update[0]));
+
+              viennacl::ocl::kernel& assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "assemble_blocks");
+              assembly_kernel.local_work_size(0, 1);
+              assembly_kernel.global_work_size(0, 256);
+              viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                                                     set_I_vcl.handle(), set_J_vcl.handle(), set_I_vcl.handle1(),
+                                                     set_J_vcl.handle1(),
+                                                     g_A_I_J_vcl.handle2(), g_A_I_J_vcl.handle1(), g_A_I_J_vcl.handle(),
+                                                     g_is_update_vcl,
+                                                     static_cast<unsigned int>(g_I.size())));
+              is_empty_block = false;
             }
+            else
+              is_empty_block = true;
         }
 
         /************************************************************************************************************************/
@@ -734,7 +758,7 @@ namespace viennacl
                 //PERFORM LEAST SQUARE problems solution
                 //PHASE TWO
                 //timer.start();
-                least_square_solve<SparseVectorType, ScalarType>(A_v_c, M_v, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, g_res, g_is_update, tag);
+                least_square_solve<SparseVectorType, ScalarType>(A_v_c, M_v, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, g_res, g_is_update, tag, viennacl::traits::context(A));
                 //std::cout<<"Phase 3 timing: "<<timer.get()<<std::endl;
                 if(tag.getIsStatic()) break;
                 cur_iter++;

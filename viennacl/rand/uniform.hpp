@@ -20,7 +20,7 @@ template<class ScalarType>
 struct buffer_dumper<ScalarType, uniform_tag>{
   static void dump(viennacl::backend::mem_handle const & buff, uniform_tag tag, cl_uint start, cl_uint size){
     viennacl::ocl::kernel & k = viennacl::ocl::get_kernel(viennacl::linalg::kernels::rand<ScalarType,1>::program_name(),"dump_uniform");
-    k.global_work_size(0, viennacl::tools::roundUpToNextMultiple<unsigned int>(size,k.local_work_size(0)));
+    k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(size,k.local_work_size(0)));
     viennacl::ocl::enqueue(k(buff.opencl_handle(), start, size, cl_float(tag.a), cl_float(tag.b) , cl_uint(time(0))));
   }
 };

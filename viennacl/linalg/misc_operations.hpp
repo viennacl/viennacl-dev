@@ -74,8 +74,10 @@ namespace viennacl
             viennacl::linalg::cuda::detail::level_scheduling_substitute(vec, row_index_array, row_buffer, col_buffer, element_buffer, num_rows);
             break;
 #endif
+          case viennacl::MEMORY_NOT_INITIALIZED:
+            throw memory_exception("not initialised!");
           default:
-            throw "not implemented";
+            throw memory_exception("not implemented");
         }
       }
 

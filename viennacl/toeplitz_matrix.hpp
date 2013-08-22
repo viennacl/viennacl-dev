@@ -49,10 +49,7 @@ namespace viennacl {
          * @brief The default constructor. Does not allocate any memory.
          *
          */
-        explicit toeplitz_matrix()
-        {
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
-        }
+        explicit toeplitz_matrix() {}
 
         /** @brief         Creates the matrix with the given size
         *
@@ -63,7 +60,6 @@ namespace viennacl {
         {
           assert(rows == cols && bool("Toeplitz matrix must be square!"));
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
-          viennacl::linalg::kernels::fft<SCALARTYPE, 1>::init(viennacl::ocl::current_context());
         }
 
 
@@ -142,7 +138,7 @@ namespace viennacl {
         }
 
     private:
-        toeplitz_matrix(toeplitz_matrix const & t) {}
+        toeplitz_matrix(toeplitz_matrix const &) {}
         toeplitz_matrix & operator=(toeplitz_matrix const & t);
 
 

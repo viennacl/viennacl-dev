@@ -81,8 +81,10 @@ namespace viennacl
           viennacl::linalg::cuda::as(s1, s2, alpha, len_alpha, reciprocal_alpha, flip_sign_alpha);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -135,8 +137,10 @@ namespace viennacl
                                        s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -189,8 +193,10 @@ namespace viennacl
                                          s3,  beta, len_beta,  reciprocal_beta,  flip_sign_beta);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
@@ -222,8 +228,10 @@ namespace viennacl
           viennacl::linalg::cuda::swap(s1, s2);
           break;
 #endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
         default:
-          throw "not implemented";
+          throw memory_exception("not implemented");
       }
     }
 
