@@ -53,7 +53,7 @@
 
 #define N_RUNS 2
 #define SIZE_INC 128
-#define MAX_SIZE 3072
+#define MAX_SIZE 2560
 
 template<class MatA, class MatB, class MatC>
 viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
@@ -120,6 +120,12 @@ int main(){
                 std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
                     std::cout << size << "\t" << run_benchmark<float>(size,false,false) << "\t" << run_benchmark<float>(size,true,false) << "\t" << run_benchmark<float>(size,false,true) << "\t" << run_benchmark<float>(size,true,true) << std::endl;
+                }
+
+                std::cout << "double : " << std::endl;
+                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
+                for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
+                    std::cout << size << "\t" << run_benchmark<double>(size,false,false) << "\t" << run_benchmark<double>(size,true,false) << "\t" << run_benchmark<double>(size,false,true) << "\t" << run_benchmark<double>(size,true,true) << std::endl;
                 }
           }
         }
