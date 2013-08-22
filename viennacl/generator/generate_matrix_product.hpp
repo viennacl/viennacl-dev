@@ -73,9 +73,9 @@ namespace viennacl{
         bool is_slow_impl(viennacl::ocl::device const & dev) const {
           bool is_slow;
           if(dev.vendor_id()==viennacl::ocl::nvidia_id)
-            is_slow = (unroll_==false);
+            is_slow = (unroll_==0);
           else if(dev.vendor_id()==viennacl::ocl::amd_id)
-            is_slow = (unroll_==true);
+            is_slow = (unroll_ > 0);
           return is_slow;
         }
 
@@ -109,7 +109,7 @@ namespace viennacl{
           ns_=ns;
           use_lhs_shared_ = use_lhs_shared;
           use_rhs_shared_ = use_rhs_shared;
-          unroll_ = unroll;
+          unroll_ = unroll ? 1 : 0;
         }
 
         static std::string csv_format() {

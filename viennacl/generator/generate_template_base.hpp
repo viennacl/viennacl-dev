@@ -107,7 +107,7 @@ namespace viennacl{
           set_local_sizes(size1, size2, 0);
 
           //Query device informations
-          size_t lmem_available = dev.local_mem_size();
+          size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
           size_t max_workgroup_size = dev.max_work_group_size();
 
           std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();

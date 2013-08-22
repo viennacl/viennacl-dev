@@ -81,6 +81,7 @@ namespace viennacl
       }
 
       // helper routines for extracting the scalar type
+      inline double convert_to_double(float d) { return static_cast<double>(d); }
       inline double convert_to_double(double d) { return d; }
       inline double convert_to_double(lhs_rhs_element const & el)
       {

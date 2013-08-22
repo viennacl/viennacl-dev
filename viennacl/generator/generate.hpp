@@ -204,7 +204,7 @@ namespace viennacl{
 
         template<class T>
         void force_profile(forced_profile_key_type key, T const & t){
-          forced_profiles_.insert(std::make_pair(key, new T(t)));
+          forced_profiles_.insert(std::pair<forced_profile_key_type, tools::shared_ptr<profile_base> >(key, tools::shared_ptr<profile_base>(new T(t))));
         }
 
         bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {

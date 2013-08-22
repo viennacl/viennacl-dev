@@ -42,7 +42,8 @@ template<class ScalarType>
 struct dot_config{
     typedef scalar_reduction profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-      return profile_type(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), params.at("global_decomposition").current());
+      bool use_global_decomposition = (params.at("global_decomposition").current() > 0);
+      return profile_type(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), use_global_decomposition);
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);
