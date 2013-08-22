@@ -139,6 +139,7 @@ int main()
   check_matrices(ublas_result, temp);
 
   /******************************************************************/
+
 //  std::cout << "Testing compressed(COO) lhs * dense rhs" << std::endl;
 //  result.clear();
 //  result = viennacl::linalg::prod( coo_lhs, rhs1);

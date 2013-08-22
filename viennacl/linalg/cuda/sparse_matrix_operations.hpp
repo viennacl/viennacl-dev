@@ -1143,7 +1143,6 @@ namespace viennacl
                                                   static_cast<unsigned int>(sp_mat.internal_size1()),
                                                   static_cast<unsigned int>(sp_mat.maxnnz()),
                                                   static_cast<unsigned int>(sp_mat.internal_maxnnz()),
-
                                                   detail::cuda_arg<NumericT>(d_mat),
                                                   static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
                                                   static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
