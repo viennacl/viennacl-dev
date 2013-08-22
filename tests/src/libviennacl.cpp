@@ -120,8 +120,13 @@ int main()
   viennacl::vector<float> opencl_float_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
 
   double opencl_double_alpha = 0;
-  viennacl::vector<double> opencl_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
-  viennacl::vector<double> opencl_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+  viennacl::vector<double> *opencl_double_x = NULL;
+  viennacl::vector<double> *opencl_double_y = NULL;
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    *opencl_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+    *opencl_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+  }
 
   ViennaCLOpenCLBackend_impl my_opencl_backend_impl;
   my_opencl_backend_impl.context_id = context_id;
@@ -142,8 +147,11 @@ int main()
 #ifdef VIENNACL_WITH_OPENCL
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  check(ref_double_x, opencl_double_x, eps_double);
-  check(ref_double_y, opencl_double_y, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    check(ref_double_x, *opencl_double_x, eps_double);
+    check(ref_double_y, *opencl_double_y, eps_double);
+  }
 #endif
 
   // ASUM
@@ -185,10 +193,13 @@ int main()
                       &opencl_float_alpha,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 3);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  ViennaCLOpenCLDasum(my_opencl_backend, size/4,
-                      &opencl_double_alpha,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 2, 3);
-  check(ref_double_alpha, opencl_double_alpha, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDasum(my_opencl_backend, size/4,
+                        &opencl_double_alpha,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 3);
+    check(ref_double_alpha, opencl_double_alpha, eps_double);
+  }
 #endif
 
 
@@ -240,12 +251,15 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 1, 2);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  ViennaCLOpenCLDaxpy(my_opencl_backend, size/3,
-                      2.0,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 0, 2,
-                      viennacl::traits::opencl_handle(opencl_double_y).get(), 1, 2);
-  check(ref_double_x, opencl_double_x, eps_double);
-  check(ref_double_y, opencl_double_y, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDaxpy(my_opencl_backend, size/3,
+                        2.0,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 0, 2,
+                        viennacl::traits::opencl_handle(*opencl_double_y).get(), 1, 2);
+    check(ref_double_x, *opencl_double_x, eps_double);
+    check(ref_double_y, *opencl_double_y, eps_double);
+  }
 #endif
 
 
@@ -292,11 +306,14 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 0, 2);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  ViennaCLOpenCLDcopy(my_opencl_backend, size/3,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 1, 2,
-                      viennacl::traits::opencl_handle(opencl_double_y).get(), 0, 2);
-  check(ref_double_x, opencl_double_x, eps_double);
-  check(ref_double_y, opencl_double_y, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDcopy(my_opencl_backend, size/3,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 1, 2,
+                        viennacl::traits::opencl_handle(*opencl_double_y).get(), 0, 2);
+    check(ref_double_x, *opencl_double_x, eps_double);
+    check(ref_double_y, *opencl_double_y, eps_double);
+  }
 #endif
 
 
@@ -345,11 +362,14 @@ int main()
                      viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 1,
                      viennacl::traits::opencl_handle(opencl_float_y).get(), 3, 1);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  ViennaCLOpenCLDdot(my_opencl_backend, size/2,
-                     &opencl_double_alpha,
-                     viennacl::traits::opencl_handle(opencl_double_x).get(), 2, 1,
-                     viennacl::traits::opencl_handle(opencl_double_y).get(), 3, 1);
-  check(ref_double_alpha, opencl_double_alpha, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDdot(my_opencl_backend, size/2,
+                       &opencl_double_alpha,
+                       viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 1,
+                       viennacl::traits::opencl_handle(*opencl_double_y).get(), 3, 1);
+    check(ref_double_alpha, opencl_double_alpha, eps_double);
+  }
 #endif
 
 
@@ -395,10 +415,13 @@ int main()
                       &opencl_float_alpha,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 2);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  ViennaCLOpenCLDnrm2(my_opencl_backend, size/3,
-                      &opencl_double_alpha,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 1, 2);
-  check(ref_double_alpha, opencl_double_alpha, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDnrm2(my_opencl_backend, size/3,
+                        &opencl_double_alpha,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 1, 2);
+    check(ref_double_alpha, opencl_double_alpha, eps_double);
+  }
 #endif
 
 
@@ -456,12 +479,15 @@ int main()
                      0.6f, 0.8f);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  ViennaCLOpenCLDrot(my_opencl_backend, size/4,
-                     viennacl::traits::opencl_handle(opencl_double_x).get(), 2, 3,
-                     viennacl::traits::opencl_handle(opencl_double_y).get(), 1, 2,
-                     0.6, 0.8);
-  check(ref_double_x, opencl_double_x, eps_double);
-  check(ref_double_y, opencl_double_y, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDrot(my_opencl_backend, size/4,
+                       viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 3,
+                       viennacl::traits::opencl_handle(*opencl_double_y).get(), 1, 2,
+                       0.6, 0.8);
+    check(ref_double_x, *opencl_double_x, eps_double);
+    check(ref_double_y, *opencl_double_y, eps_double);
+  }
 #endif
 
 
@@ -502,10 +528,13 @@ int main()
                       2.0f,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 3);
   check(ref_float_x, opencl_float_x, eps_float);
-  ViennaCLOpenCLDscal(my_opencl_backend, size/4,
-                      2.0,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 1, 3);
-  check(ref_double_x, opencl_double_x, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDscal(my_opencl_backend, size/4,
+                        2.0,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 1, 3);
+    check(ref_double_x, *opencl_double_x, eps_double);
+  }
 #endif
 
 
@@ -551,10 +580,13 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 2,
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 1, 2);
   check(ref_float_y, opencl_float_y, eps_float);
-  ViennaCLOpenCLDswap(my_opencl_backend, size/3,
-                      viennacl::traits::opencl_handle(opencl_double_x).get(), 2, 2,
-                      viennacl::traits::opencl_handle(opencl_double_y).get(), 1, 2);
-  check(ref_double_y, opencl_double_y, eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLDswap(my_opencl_backend, size/3,
+                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 2,
+                        viennacl::traits::opencl_handle(*opencl_double_y).get(), 1, 2);
+    check(ref_double_y, *opencl_double_y, eps_double);
+  }
 #endif
 
 
@@ -605,10 +637,13 @@ int main()
                        viennacl::traits::opencl_handle(opencl_float_x).get(), 0, 2);
   check(ref_float_x[2*ref_index], ref_float_x[2*idx], eps_float);
   idx = 0;
-  ViennaCLOpenCLiDamax(my_opencl_backend, size/3,
-                       &idx,
-                       viennacl::traits::opencl_handle(opencl_double_x).get(), 0, 2);
-  check(ref_double_x[2*ref_index], ref_double_x[2*idx], eps_double);
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    ViennaCLOpenCLiDamax(my_opencl_backend, size/3,
+                         &idx,
+                         viennacl::traits::opencl_handle(*opencl_double_x).get(), 0, 2);
+    check(ref_double_x[2*ref_index], ref_double_x[2*idx], eps_double);
+  }
 #endif
 
 
