@@ -182,7 +182,9 @@ set(COORDINATE_MATRIX_SRCS
    coordinate_matrix/align128/dummy)
 
 set(ELL_MATRIX_SRCS
-   ell_matrix/align1/vec_mul.cl)
+   ell_matrix/align1/vec_mul.cl
+   ell_matrix/align1/d_mat_mul.cl
+   ell_matrix/align1/d_tr_mat_mul.cl)
 
 set(HYB_MATRIX_SRCS
    hyb_matrix/align1/vec_mul.cl)
