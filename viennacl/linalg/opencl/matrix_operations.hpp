@@ -275,14 +275,6 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::vector<NumericT>  KernelClass;
         KernelClass::init(ctx);
 
-        std::size_t row_start = 0;
-        std::size_t col_start = 0;
-
-        if (k >= 0)
-          col_start = static_cast<std::size_t>(k);
-        else
-          row_start = static_cast<std::size_t>(-k);
-
         cl_uint options_alpha = 0;
         viennacl::ocl::packed_cl_uint size_mat;
         if (viennacl::is_row_major<F>::value)
