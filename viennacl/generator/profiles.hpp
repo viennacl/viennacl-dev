@@ -200,7 +200,7 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,128,32,4,4,4,1,0,false));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = profile_base_ptr(new matrix_product(4,4,16,16,4,8,4,1,0,false));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,64,16,4,2,8,1,0,false));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,1,0,false));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,1,0,false));
 
@@ -231,7 +231,7 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(SCALAR_REDUCE_TYPE,4)]     =    profile_base_ptr(new scalar_reduction(4,64,512,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,128,64,8,4,2,1,0,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_AA_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,1,0,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TA_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,32,16,4,4,8,0,0,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_AT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,4,128,32,4,8,4,1,0,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,4,32,16,8,4,8,0,0,true));
