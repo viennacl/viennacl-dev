@@ -136,11 +136,11 @@ namespace viennacl{
             bool lhs_trans = is_lhs_flow_transposed(statement,root_node);
             bool rhs_trans = is_rhs_flow_transposed(statement,root_node);
             if(!lhs_trans && !rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_AA_TYPE;
+              descriptor.type=MATRIX_PRODUCT_NN_TYPE;
             else if(lhs_trans && !rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_TA_TYPE;
+              descriptor.type=MATRIX_PRODUCT_TN_TYPE;
             else if(!lhs_trans && rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_AT_TYPE;
+              descriptor.type=MATRIX_PRODUCT_NT_TYPE;
             else if(lhs_trans && rhs_trans)
               descriptor.type=MATRIX_PRODUCT_TT_TYPE;
 

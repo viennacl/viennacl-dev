@@ -53,9 +53,9 @@ namespace viennacl{
       SCALAR_REDUCE_TYPE,
       VECTOR_REDUCE_Ax_TYPE,
       VECTOR_REDUCE_Tx_TYPE,
-      MATRIX_PRODUCT_AA_TYPE,
-      MATRIX_PRODUCT_TA_TYPE,
-      MATRIX_PRODUCT_AT_TYPE,
+      MATRIX_PRODUCT_NN_TYPE,
+      MATRIX_PRODUCT_TN_TYPE,
+      MATRIX_PRODUCT_NT_TYPE,
       MATRIX_PRODUCT_TT_TYPE,
       INVALID_EXPRESSION_TYPE
     };
@@ -68,9 +68,9 @@ namespace viennacl{
         case SCALAR_REDUCE_TYPE : return "Inner Product";
         case VECTOR_REDUCE_Ax_TYPE : return "Matrix-Vector Product : Ax";
         case VECTOR_REDUCE_Tx_TYPE : return "Matrix-Vector Product : Tx";
-        case MATRIX_PRODUCT_AA_TYPE : return "Matrix-Matrix Product : AA";
-        case MATRIX_PRODUCT_TA_TYPE : return "Matrix-Matrix Product : TA";
-        case MATRIX_PRODUCT_AT_TYPE : return "Matrix-Matrix Product : AT";
+        case MATRIX_PRODUCT_NN_TYPE : return "Matrix-Matrix Product : AA";
+        case MATRIX_PRODUCT_TN_TYPE : return "Matrix-Matrix Product : TA";
+        case MATRIX_PRODUCT_NT_TYPE : return "Matrix-Matrix Product : AT";
         case MATRIX_PRODUCT_TT_TYPE : return "Matrix-Matrix Product : TT";
         default : return "INVALID EXPRESSION";
       }

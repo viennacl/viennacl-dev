@@ -15,9 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#define SIZE_INC 128
-#define MAX_SIZE 3072
-#define N_RUNS 2
+#define N_RUNS 1
 
 //#define VIENNACL_DEBUG_BUILD
 //#define VIENNACL_DEBUG_ALL
@@ -38,16 +36,141 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
+#include <tclap/CmdLine.h>
+
 #include "../tutorial/Random.hpp"
 #include "../benchmarks/benchmark-utils.hpp"
 
 using namespace viennacl::generator;
 
+struct autotuner_options{
+
+    std::string layout;
+    std::string scalartype;
+    std::string output_name;
+
+    unsigned int requested_device;
+
+    std::string ms_interval;
+    std::string ks_interval;
+    std::string ns_interval;
+
+    std::string local_size_1_interval;
+    std::string cache_width_interval;
+    std::string local_size_2_interval;
+
+    std::string vector_interval;
+
+    std::string lhs_fetch_method;
+    std::string rhs_fetch_method;
+
+};
+
+std::vector<unsigned int> get_values_in_comas(std::string const & s){
+    std::vector<unsigned int> res;
+    std::size_t old_coma_pos = 0, new_coma_pos;
+    while((new_coma_pos = s.find(',',old_coma_pos))!= std::string::npos){
+        res.push_back(atoi(s.substr(old_coma_pos,new_coma_pos).c_str()));
+        old_coma_pos = new_coma_pos+1;
+    }
+    res.push_back(atoi(s.substr(old_coma_pos,s.length()).c_str()));
+    return res;
+}
+
+class pow_2_interval_constraint : public TCLAP::Constraint<std::string>{
+    static bool is_pow_of_two(const unsigned int x){ ((x != 0) && !(x & (x - 1))); }
+public:
+    bool check(std::string const & s) const{
+        std::vector<unsigned int> vals = get_values_in_comas(s);
+        return vals.size()==2 && is_pow_of_two(vals[0]) && is_pow_of_two(vals[1]);
+    }
+    std::string shortID() const { return "min,max"; }
+    std::string description() const { return "Must be a power of two"; }
+};
+
+autotuner_options get_options(int argc, char* argv[]){
+    try{
+        autotuner_options options;
+
+        TCLAP::CmdLine cmd("GEMM Autotuner", ' ', "0.1");
+
+
+        pow_2_interval_constraint pow_2_interval_cstrt;
+
+        //Layouts
+        std::vector<std::string> allowed_layouts;
+        allowed_layouts.push_back("NN");
+        allowed_layouts.push_back("TN");
+        allowed_layouts.push_back("NT");
+        allowed_layouts.push_back("TT");
+        TCLAP::ValuesConstraint<std::string> allowed_layouts_constraint( allowed_layouts);
+        TCLAP::ValueArg<std::string> layout_arg("l","layout","Layout to tune the hardware for",true,"NN",&allowed_layouts_constraint,cmd);
+
+        //Scalartype
+        std::vector<std::string> allowed_scalartypes;
+        allowed_scalartypes.push_back("float");
+        allowed_scalartypes.push_back("double");
+        TCLAP::ValuesConstraint<std::string> allowed_scalartypes_constraint( allowed_scalartypes);
+        TCLAP::ValueArg<std::string> scalartype_arg("s","scalartype","Scalartype to tune the hardware for",true,"float",&allowed_scalartypes_constraint,cmd);
+
+        //Output data file
+        TCLAP::ValueArg<std::string> output_name_arg("o","output","Name of the output data file",true,"gemm_autotuning.dat","string",cmd);
+
+        //Device id
+        TCLAP::ValueArg<unsigned int> requested_device_arg("d","device","ID of the device to use for the autotuning procedure",false,0,"unsigned int",cmd);
+
+        //Small blocks
+        TCLAP::ValueArg<std::string> ms_interval_arg("","ms","Number of row in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ks_interval_arg("","ks","Increment size for each small block calculation. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ns_interval_arg("","ns","Number of column in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+
+
+        //Large blocks
+        TCLAP::ValueArg<std::string> local_size_1_interval_arg("","local-size-1","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> cache_width_interval_arg("","cache-width","Increment size for each Large block calculation. Specify min,max both power of two.",false,"16,128",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> local_size_2_interval_arg("","local-size-2","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
+
+
+        //Vector
+        TCLAP::ValueArg<std::string> vector_interval_arg("","vector","Vector type used in the kernel",false,"1,4",&pow_2_interval_cstrt,cmd);
+
+        //Storage Type
+        std::vector<std::string> allowed_fetch_method;
+        allowed_fetch_method.push_back("local");
+        allowed_fetch_method.push_back("global");
+        allowed_fetch_method.push_back("all");
+        TCLAP::ValuesConstraint<std::string> allowed_fetch_method_constraint(allowed_fetch_method);
+        TCLAP::ValueArg<std::string> lhs_fetch_method_arg("","lhs-fetch","Method to fetch the LHS.",false,"all",&allowed_fetch_method_constraint,cmd);
+        TCLAP::ValueArg<std::string> rhs_fetch_method_arg("","rhs-fetch","Method to fetch the RHS.",false,"all",&allowed_fetch_method_constraint,cmd);
+
+
+        cmd.parse(argc,argv);
+        options.layout = layout_arg.getValue();
+        options.scalartype = scalartype_arg.getValue();
+        options.output_name = output_name_arg.getValue();
+        options.requested_device = requested_device_arg.getValue();
+        options.ms_interval = ms_interval_arg.getValue();
+        options.ks_interval = ks_interval_arg.getValue();
+        options.ns_interval = ns_interval_arg.getValue();
+        options.local_size_1_interval = local_size_1_interval_arg.getValue();
+        options.cache_width_interval = cache_width_interval_arg.getValue();
+        options.local_size_2_interval = local_size_2_interval_arg.getValue();
+        options.vector_interval = vector_interval_arg.getValue();
+        options.lhs_fetch_method = lhs_fetch_method_arg.getValue();
+        options.rhs_fetch_method = rhs_fetch_method_arg.getValue();
+
+        return options;
+    }
+    catch (TCLAP::ArgException &e){
+        std::cerr << "error: " << "\"" << e.error() << "\"" << " [for arg " << e.argId() << "]" << std::endl;
+    }
+}
+
 template<class ScalarType>
 struct blas3_config{
     typedef matrix_product profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-        return profile_type(params.at("vector").current()
+       profile_type res(params.at("vector").current()
                         , params.at("local_size1").current()
                         , params.at("cache_width").current()
                         , params.at("local_size2").current()
@@ -56,6 +179,7 @@ struct blas3_config{
                         , params.at("ns").current(),
                          static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()),
                          params.at("unroll").current());
+       return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);
@@ -63,100 +187,104 @@ struct blas3_config{
     }
 };
 
-
-template<class NumericT, class MatTypeA, class MatTypeB, class MatTypeC>
-void fill_matrix(MatTypeA & A, MatTypeB & B, MatTypeC & C){
-    typedef NumericT ScalarTypeA;
-    typedef NumericT ScalarTypeB;
-    typedef NumericT ScalarTypeC;
-
-    boost::numeric::ublas::matrix<ScalarTypeA> cpu_A(A.size1(),A.size2());
-    boost::numeric::ublas::matrix<ScalarTypeB> cpu_B(B.size1(),B.size2());
-    boost::numeric::ublas::matrix<ScalarTypeC> cpu_C(C.size1(),C.size1());
-
-    srand(time(NULL));
-    for(unsigned int i=0; i<A.size1(); ++i){
-        for(unsigned int j=0 ; j<A.size2() ; ++j){
-            cpu_A(i,j)=0;
-            cpu_B(i,j) =static_cast<ScalarTypeB>(rand())/static_cast<ScalarTypeB>(RAND_MAX);
-            cpu_C(i,j) =static_cast<ScalarTypeB>(rand())/static_cast<ScalarTypeB>(RAND_MAX);
-        }
-    }
-
-    viennacl::copy(cpu_A,A);
-    viennacl::copy(cpu_B,B);
-    viennacl::copy(cpu_C,C);
-    viennacl::backend::finish();
+viennacl::generator::code_generator::forced_profile_key_type make_key(std::string const & layout, std::size_t scalartype_size){
+    if(layout=="TT")
+        return code_generator::forced_profile_key_type(MATRIX_PRODUCT_TT_TYPE, scalartype_size);
+    else if(layout=="TN")
+        return code_generator::forced_profile_key_type(MATRIX_PRODUCT_TN_TYPE, scalartype_size);
+    else if(layout=="NT")
+        return code_generator::forced_profile_key_type(MATRIX_PRODUCT_NT_TYPE, scalartype_size);
+    else
+        return code_generator::forced_profile_key_type(MATRIX_PRODUCT_NN_TYPE, scalartype_size);
 }
 
 template<class MatA, class MatB, class MatC>
-viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
-    if(is_lhs_trans)
-      if(is_rhs_trans)
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
-      else
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
+viennacl::scheduler::statement make_statement(std::string const & layout, MatA const & A, MatB const & B, MatC const & C){
+    if(layout=="TT")
+        return viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
+    else if(layout=="TN")
+        return viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
+    else if(layout=="NT")
+        return viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
     else
-      if(is_rhs_trans)
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
-      else
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
-
+       return  viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans, code_generator::forced_profile_key_type const & key, typename blas3_config<ScalarType>::profile_type const & profile)
-{    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
+double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename blas3_config<ScalarType>::profile_type const & profile)
+{
+    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
     viennacl::matrix<ScalarType> A(size, size);
     viennacl::matrix<ScalarType> B(size, size);
     viennacl::matrix<ScalarType> C(size, size);
-    viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
+    viennacl::scheduler::statement statement = make_statement(layout,A,B,C);
     viennacl::generator::code_generator gen;
-    gen.add(*statement,statement->array()[0]);
-    gen.force_profile(key, profile);
+    gen.add(statement,statement.array()[0]);
+    gen.force_profile(make_key(layout,scalartype_size), profile);
     viennacl::generator::enqueue(gen);
     viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     Timer timer;
     timer.start();
-    for(unsigned int r = 0 ; r < N_RUNS ; ++r){
+    for(unsigned int r = 0 ; r < N_RUNS ; ++r)
       viennacl::generator::enqueue(gen);
-    }
     viennacl::backend::finish();
     double time = timer.get()/(double)N_RUNS;
-    delete statement;
     return 2*pow(size/static_cast<double>(1000.0),3)/time;
 }
 
 template<class NumericT>
-void run_autotune(std::string const & dump_name, bool light_tuning, viennacl::ocl::device const & device, bool is_lhs_trans, bool is_rhs_trans){
+void run_autotune(autotuner_options options, viennacl::ocl::device const & device){
     typedef std::map<double, matrix_product> timings_t;
     typedef viennacl::matrix<NumericT> MatrixT;
+    typedef blas3_config<NumericT> config_type;
+    typedef typename config_type::profile_type profile_type;
+    autotune::tuning_config<config_type> conf;
+    timings_t timings;
+    std::list<matrix_product> fastest_firsts;
+    std::ofstream stream(options.output_name.c_str());
 
-    autotune::tuning_config<blas3_config<NumericT> > conf;
+    std::list<std::pair<unsigned int, unsigned int> > rounds_config;
+    rounds_config.push_back(std::make_pair(1280,100));
+    rounds_config.push_back(std::make_pair(2560,100));
+    rounds_config.push_back(std::make_pair(2688,100));
+    rounds_config.push_back(std::make_pair(2816,100));
+    rounds_config.push_back(std::make_pair(2944,100));
+    rounds_config.push_back(std::make_pair(3072,100));
 
-    std::vector<int> local_size1; for(unsigned int i=2 ; i<=64 ; i*=2) local_size1.push_back(i);
-    std::vector<int> cache_width; for(unsigned int i=16 ; i<=128 ; i*=2) cache_width.push_back(i);
-    std::vector<int> local_size2; for(unsigned int i=2 ; i<=64 ; i*=2) local_size2.push_back(i);
-    std::vector<int> ms; for(unsigned int i=1 ; i<= 8 ; i*=2) ms.push_back(i);
-    std::vector<int> ks; for(unsigned int i=1 ; i<= 8 ; i*=2) ks.push_back(i);
-    std::vector<int> ns; for(unsigned int i=1 ; i<= 8 ; i*=2) ns.push_back(i);
-    std::vector<int> vector; for(unsigned int i=1 ; i<=4 ; i*=2) vector.push_back(i);
-    std::vector<int> lhs_storage; std::vector<int> rhs_storage;
-    if(light_tuning){
+    std::vector<unsigned int> tmp;
+    tmp = get_values_in_comas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_1.push_back(i);
+    tmp = get_values_in_comas(options.cache_width_interval); std::vector<int> cache_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) cache_width.push_back(i);
+    tmp = get_values_in_comas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_2.push_back(i);
+    tmp = get_values_in_comas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
+    tmp = get_values_in_comas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
+    tmp = get_values_in_comas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
+    tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    std::vector<int> lhs_storage;
+    if(options.lhs_fetch_method=="global")
+        lhs_storage.push_back(0);
+    else if(options.lhs_fetch_method=="local")
         lhs_storage.push_back(1);
-        rhs_storage.push_back(0);
-    }
     else{
-        for(unsigned int i=0 ; i<=1 ; ++i) lhs_storage.push_back(i);
-        for(unsigned int i=0 ; i<=1 ; ++i) rhs_storage.push_back(i);
+        lhs_storage.push_back(0);
+        lhs_storage.push_back(1);
     }
+    std::vector<int> rhs_storage;
+    if(options.rhs_fetch_method=="global")
+        rhs_storage.push_back(0);
+    else if(options.rhs_fetch_method=="local")
+        rhs_storage.push_back(1);
+    else{
+        rhs_storage.push_back(0);
+        rhs_storage.push_back(1);
+    }
+
     std::vector<int> unroll; unroll.push_back(0); unroll.push_back(1);
 
-    conf.add_tuning_param("local_size1",local_size1);
+    conf.add_tuning_param("local_size1",local_size_1);
     conf.add_tuning_param("cache_width",cache_width);
-    conf.add_tuning_param("local_size2",local_size2);
+    conf.add_tuning_param("local_size2",local_size_2);
     conf.add_tuning_param("ms",ms);
     conf.add_tuning_param("ks",ks);
     conf.add_tuning_param("ns",ns);
@@ -166,27 +294,7 @@ void run_autotune(std::string const & dump_name, bool light_tuning, viennacl::oc
     conf.add_tuning_param("unroll",unroll);
 
 
-    timings_t timings;
-    std::list<matrix_product> fastest_firsts;
-
-    std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-
-    rounds_config.push_back(std::make_pair(1280,100));
-    rounds_config.push_back(std::make_pair(2432,100));
-
-    std::ofstream stream(dump_name.c_str());
-    std::size_t scalartype_size = sizeof(NumericT);
-
-    code_generator::forced_profile_key_type * key = NULL;
-    if(is_lhs_trans)
-        if(is_rhs_trans) key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_TT_TYPE, scalartype_size);
-        else  key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_TA_TYPE, scalartype_size);
-    else
-        if(is_rhs_trans) key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_AT_TYPE, scalartype_size);
-        else key = new code_generator::forced_profile_key_type(MATRIX_PRODUCT_AA_TYPE, scalartype_size);
-
-
-    stream << "#" << expression_type_to_string(key->first) << " | Scalartype Size : " << key->second << std::endl;
+    stream << "#" << options.layout << " | Scalartype : " << options.scalartype << std::endl;
     stream << "#----------------------" << std::endl;
     stream << "#----------------------" << std::endl;
     stream << "#----------------------" << std::endl;
@@ -194,30 +302,29 @@ void run_autotune(std::string const & dump_name, bool light_tuning, viennacl::oc
     stream << "#----------------------" << std::endl;
     stream << "#tuning for size : " << rounds_config.front().first << std::endl;
 
+    code_generator::forced_profile_key_type key = make_key(options.layout,sizeof(NumericT));
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
-        unsigned int k = std::distance(rounds_config.begin(),it);
         timings.clear();
+        unsigned int k = std::distance(rounds_config.begin(),it);
         unsigned int size=it->first;
         unsigned int n_keep=it->second;
-
         MatrixT A(size,size);
         MatrixT B(size,size);
         MatrixT C(size,size);
-
-        fill_matrix<NumericT>(A,B,C);
-
         viennacl::backend::finish();
-        viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
-
-        if(k==0)
-          autotune::benchmark(&timings,*statement,*key,conf,&stream);
+        viennacl::scheduler::statement statement = make_statement(options.layout,A,B,C);
+        stream << "#time" << "," << profile_type::csv_format() << std::endl;
+        if(k==0){
+          autotune::benchmark(&timings,statement,key,conf,&stream);
+        }
         else{
           unsigned int n=0;
-          for(typename std::list<typename blas3_config<NumericT>::profile_type>::const_iterator it = fastest_firsts.begin(); it!=fastest_firsts.end(); ++it){
+          for(typename std::list<profile_type>::const_iterator it = fastest_firsts.begin(); it!=fastest_firsts.end(); ++it){
             double percent = (double)n++*100/fastest_firsts.size();
             std::cout << '\r' << "Determining best profile for size " << size << "..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-            double exec_time = autotune::benchmark_impl(*statement,*key,*it);
+            double exec_time = autotune::benchmark_impl(statement,key,*it);
             timings.insert(std::make_pair(exec_time, *it));
+            stream << std::setprecision(3) << std::scientific << exec_time << "," << it->csv_representation() << std::endl;
           }
           std::cout << std::endl;
         }
@@ -229,52 +336,33 @@ void run_autotune(std::string const & dump_name, bool light_tuning, viennacl::oc
             fastest_firsts.push_back(itt->second);
         }
         stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
-
-        //Update default profile
-        viennacl::generator::code_generator dummy;
-        dummy.add(*statement,statement->array()[0]);
-        dummy.force_profile(*key, timings.begin()->second);
-        viennacl::generator::enqueue(dummy,true);
-        viennacl::backend::finish();
-
-        delete statement;
     }
 
     stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
     stream << "##Size\tGFLOP/s" << std::endl;
-    for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-        double percent = (double)size/MAX_SIZE*100;
+    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
+        double percent = (double)size/3072*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << size << "\t" << run_benchmark<NumericT>(size,is_lhs_trans,is_rhs_trans,*key,timings.begin()->second) << std::endl;
+        stream << size << "\t" << run_benchmark<NumericT>(size,options.layout,sizeof(NumericT),timings.begin()->second) << std::endl;
     }
-
-    delete key;
 }
 
 
-int main(int argc, char* argv[]){
-    typedef std::vector< viennacl::ocl::platform > platforms_type;
-  std::vector<std::string> args(argv, argv+argc);
-  if(argc<4){
-      std::cerr << "USAGE : PROGRAM_NAME DEVICE LAYOUT SCALARTYPE LIGHT_TUNING" << std::endl;
-      exit(1);
-  }
-  unsigned int current_device=0;
-  unsigned int requested_device = atoi(args[1].c_str());
-  unsigned int layout = atoi(args[2].c_str());
-  std::string scalartype = args[3];
-  unsigned int light_tuning = atoi(args[4].c_str());
 
+int main(int argc, char* argv[]){
+  typedef std::vector< viennacl::ocl::platform > platforms_type;
+  typedef std::vector<viennacl::ocl::device> devices_type;
+  autotuner_options options = get_options(argc,argv);
+  unsigned int current_device=0;
   platforms_type platforms = viennacl::ocl::get_platforms();
   for (platforms_type::iterator platform_iter  = platforms.begin();
        platform_iter != platforms.end();
        ++platform_iter)
   {
-    typedef std::vector<viennacl::ocl::device> devices_type;
     devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
     for(devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
     {
-      if(current_device++==requested_device){
+      if(current_device++==options.requested_device){
         viennacl::ocl::setup_context(current_device,*iter);
         viennacl::ocl::switch_context(current_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
@@ -283,45 +371,24 @@ int main(int argc, char* argv[]){
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
         std::cout << device.info() << std::endl;
-        std::cout << "GEMM" << std::endl;
+        std::cout << "Operation : GEMM" << std::endl;
         std::cout << "-------------------" << std::endl;
-        std::cout << " Scalartype : " << scalartype << std::endl;
+        std::cout << "layout : " << options.layout << std::endl;
+        std::cout << "scalatype : " << options.scalartype << std::endl;
+        std::cout << "ms : [" << options.ms_interval << "]" << std::endl;
+        std::cout << "ks : [" << options.ks_interval << "]" <<  std::endl;
+        std::cout << "ns : [" << options.ns_interval << "]" <<  std::endl;
+        std::cout << "local size 1 : [" << options.local_size_1_interval << "]" << std::endl;
+        std::cout << "cache width : [" << options.cache_width_interval << "]" << std::endl;
+        std::cout << "local size 2 : [" << options.local_size_2_interval << "]" << std::endl;
+        std::cout << "vector : [" << options.vector_interval << "]" << std::endl;
+        std::cout << "lhs fetch method : [" << options.lhs_fetch_method << "]" << std::endl;
+        std::cout << "rhs fetch method : [" << options.rhs_fetch_method << "]" << std::endl;
         std::cout << "-------------------" << std::endl;
-        switch(layout){
-          case 0:
-            std::cout << "Layout : AA" << std::endl;
-            if(scalartype=="float")
-              run_autotune<float>("gemm_aa_float_" + device_name + ".dat",light_tuning,device,false,false);
-            else if(scalartype=="double")
-              run_autotune<double>("gemm_aa_double_" + device_name + ".dat",light_tuning,device,false,false);
-            break;
-
-
-          case 1:
-            std::cout << "Layout : TA" << std::endl;
-            if(scalartype=="float")
-              run_autotune<float>("gemm_ta_float_" + device_name + ".dat",light_tuning,device, true, false);
-            else if(scalartype=="double")
-              run_autotune<double>("gemm_ta_double_" + device_name + ".dat",light_tuning,device, true, false);
-            break;
-
-
-          case 2:
-            std::cout << "Layout : AT" << std::endl;
-            if(scalartype=="float")
-              run_autotune<float>("gemm_at_float_" + device_name + ".dat",light_tuning,device, false, true);
-            else if(scalartype=="double")
-              run_autotune<double>("gemm_at_double_" + device_name + ".dat",light_tuning,device, false, true);
-            break;
-
-          case 3:
-            std::cout << "Layout : TT" << std::endl;
-            if(scalartype=="float")
-              run_autotune<float>("gemm_tt_float_" + device_name + ".dat",light_tuning,device,true,true);
-            else if(scalartype=="double")
-              run_autotune<double>("gemm_tt_double_" + device_name + ".dat",light_tuning,device, true, true);
-            break;
-        }
+        if(options.scalartype=="float")
+            run_autotune<float>(options,device);
+        else if(options.scalartype=="double")
+            run_autotune<double>(options,device);
       }
     }
   }

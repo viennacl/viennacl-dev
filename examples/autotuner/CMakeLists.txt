@@ -1,6 +1,8 @@
 include_directories(${PROJECT_SOURCE_DIR}/external)
 
 if (ENABLE_OPENCL)
+  include_directories(${PROJECT_SOURCE_DIR}/external/)
+
   foreach(proc dot_autotuning dump_default_kernels)
     add_executable(${proc} ${proc}.cpp)
     target_link_libraries(${proc} ${OPENCL_LIBRARIES})

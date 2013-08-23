@@ -175,10 +175,6 @@ namespace viennacl{
       template<class ConfigType>
       void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
-
-        if(out){
-          *out << "#time" << "," << ConfigType::profile_type::csv_format() << std::endl;
-        }
         unsigned int n_conf = 0;
         while(config.has_next()){
           config.update();

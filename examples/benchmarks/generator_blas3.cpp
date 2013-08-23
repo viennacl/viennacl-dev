@@ -53,7 +53,7 @@
 
 #define N_RUNS 2
 #define SIZE_INC 128
-#define MAX_SIZE 2560
+#define MAX_SIZE 3586
 
 template<class MatA, class MatB, class MatC>
 viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
@@ -71,7 +71,7 @@ viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_r
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
+unsigned int run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
 {    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
     viennacl::matrix<ScalarType> A(size, size);
