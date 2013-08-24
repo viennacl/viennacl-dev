@@ -63,12 +63,15 @@ namespace viennacl
 
           source.append("   unsigned int op_type) \n"); //0: product, 1: division, 2: power
           source.append("{ \n");
-          source.append("  if (op_type == 2) \n");
-          source.append("  { \n");
-          source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-          source.append("      vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]); \n");
-          source.append("  } \n");
-          source.append("  else if (op_type == 1) \n");
+          if (numeric_string == "float" || numeric_string == "double")
+          {
+            source.append("  if (op_type == 2) \n");
+            source.append("  { \n");
+            source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+            source.append("      vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]); \n");
+            source.append("  } else ");
+          }
+          source.append("  if (op_type == 1) \n");
           source.append("  { \n");
           source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
           source.append("      vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3]; \n");
