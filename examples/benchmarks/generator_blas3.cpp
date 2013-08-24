@@ -21,10 +21,6 @@
 *
 */
 
-//disable debug mechanisms to have a fair benchmark environment
-#define NDEBUG
-
-
 //
 // include necessary system headers
 //
@@ -83,7 +79,7 @@ unsigned int run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-      viennacl::sgenerator::generate_enqueue_statement(*statement, statement->array()[0]);
+      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
     double time = timer.get()/(double)N_RUNS;
