@@ -78,7 +78,7 @@ std::vector<unsigned int> get_values_in_comas(std::string const & s){
 }
 
 class pow_2_interval_constraint : public TCLAP::Constraint<std::string>{
-    static bool is_pow_of_two(const unsigned int x){ ((x != 0) && !(x & (x - 1))); }
+    static bool is_pow_of_two(const unsigned int x){ return ((x != 0) && !(x & (x - 1))); }
 public:
     bool check(std::string const & s) const{
         std::vector<unsigned int> vals = get_values_in_comas(s);
@@ -163,6 +163,7 @@ autotuner_options get_options(int argc, char* argv[]){
     }
     catch (TCLAP::ArgException &e){
         std::cerr << "error: " << "\"" << e.error() << "\"" << " [for arg " << e.argId() << "]" << std::endl;
+        exit(EXIT_FAILURE);
     }
 }
 
