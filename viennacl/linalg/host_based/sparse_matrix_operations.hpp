@@ -29,6 +29,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
+#include "viennacl/linalg/host_based/vector_operations.hpp"
 
 namespace viennacl
 {
@@ -841,7 +842,45 @@ namespace viennacl
 
 
 
+      //
+      // Compressed Compressed Matrix
+      //
 
+      /** @brief Carries out matrix-vector multiplication with a compressed_matrix
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<class ScalarType>
+      void prod_impl(const viennacl::compressed_compressed_matrix<ScalarType> & mat,
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
+      {
+        ScalarType         * result_buf  = detail::extract_raw_pointer<ScalarType>(result.handle());
+        ScalarType   const * vec_buf     = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType   const * elements    = detail::extract_raw_pointer<ScalarType>(mat.handle());
+        unsigned int const * row_buffer  = detail::extract_raw_pointer<unsigned int>(mat.handle1());
+        unsigned int const * row_indices = detail::extract_raw_pointer<unsigned int>(mat.handle3());
+        unsigned int const * col_buffer  = detail::extract_raw_pointer<unsigned int>(mat.handle2());
+
+        vector_assign(result, ScalarType(0));
+
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+        for (std::size_t i = 0; i < mat.nnz1(); ++i)
+        {
+          ScalarType dot_prod = 0;
+          std::size_t row_end = row_buffer[i+1];
+          for (std::size_t j = row_buffer[i]; j < row_end; ++j)
+            dot_prod += elements[j] * vec_buf[col_buffer[j] * vec.stride() + vec.start()];
+          result_buf[row_indices[i] * result.stride() + result.start()] = dot_prod;
+        }
+
+      }
 
 
 

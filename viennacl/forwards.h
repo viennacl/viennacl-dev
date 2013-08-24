@@ -280,6 +280,10 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class compressed_matrix;
 
+  template<class SCALARTYPE>
+  class compressed_compressed_matrix;
+
+
   template<class SCALARTYPE, unsigned int ALIGNMENT = 128>
   class coordinate_matrix;
 

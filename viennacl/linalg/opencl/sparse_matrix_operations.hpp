@@ -33,6 +33,7 @@
 #include "viennacl/linalg/kernels/coordinate_matrix_kernels.h"
 #include "viennacl/linalg/kernels/ell_matrix_kernels.h"
 #include "viennacl/linalg/kernels/hyb_matrix_kernels.h"
+#include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
 
 
 namespace viennacl
@@ -439,6 +440,45 @@ namespace viennacl
                               );
       }
 
+
+      //
+      // Compressed Compressed matrix
+      //
+
+      /** @brief Carries out matrix-vector multiplication with a compressed_compressed_matrix
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<class TYPE>
+      void prod_impl(const viennacl::compressed_compressed_matrix<TYPE> & mat,
+                     const viennacl::vector_base<TYPE> & vec,
+                           viennacl::vector_base<TYPE> & result)
+      {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::compressed_compressed_matrix<TYPE>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_compressed_matrix<TYPE>::program_name(), "vec_mul");
+
+        viennacl::ocl::packed_cl_uint layout_vec;
+        layout_vec.start  = cl_uint(viennacl::traits::start(vec));
+        layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
+        layout_vec.size   = cl_uint(viennacl::traits::size(vec));
+        layout_vec.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+
+        viennacl::ocl::packed_cl_uint layout_result;
+        layout_result.start  = cl_uint(viennacl::traits::start(result));
+        layout_result.stride = cl_uint(viennacl::traits::stride(result));
+        layout_result.size   = cl_uint(viennacl::traits::size(result));
+        layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
+
+        viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(), mat.handle3().opencl_handle(), mat.handle2().opencl_handle(), mat.handle().opencl_handle(), cl_uint(mat.nnz1()),
+                                 vec, layout_vec,
+                                 result, layout_result
+                                ));
+      }
 
 
       //

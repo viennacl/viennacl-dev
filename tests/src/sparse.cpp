@@ -16,7 +16,7 @@
 ============================================================================= */
 
 #ifndef NDEBUG
- //#define NDEBUG
+ #define NDEBUG
 #endif
 
 //
@@ -43,6 +43,7 @@
 #define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/compressed_matrix.hpp"
+#include "viennacl/compressed_compressed_matrix.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
@@ -415,6 +416,21 @@ int test(Epsilon const& epsilon)
     rhs[i] = NumericT(1) + random<NumericT>();
   }
 
+  // add some random numbers to the double-compressed matrix:
+  ublas::compressed_matrix<NumericT> ublas_cc_matrix(ublas_matrix.size1(), ublas_matrix.size2());
+  ublas_cc_matrix(42,199) = NumericT(3.1415);
+  ublas_cc_matrix(31, 69) = NumericT(2.71);
+  ublas_cc_matrix(23, 32) = NumericT(6);
+  ublas_cc_matrix(177,57) = NumericT(4);
+  ublas_cc_matrix(21, 97) = NumericT(-4);
+  ublas_cc_matrix(92, 25) = NumericT(2);
+  ublas_cc_matrix(89, 62) = NumericT(11);
+  ublas_cc_matrix(1,   7) = NumericT(8);
+  ublas_cc_matrix(85, 41) = NumericT(13);
+  ublas_cc_matrix(66, 28) = NumericT(8);
+  ublas_cc_matrix(21, 74) = NumericT(-2);
+
+
   result = rhs;
 
 
@@ -422,12 +438,14 @@ int test(Epsilon const& epsilon)
   viennacl::vector<NumericT> vcl_result(result.size());
   viennacl::vector<NumericT> vcl_result2(result.size());
   viennacl::compressed_matrix<NumericT> vcl_compressed_matrix(rhs.size(), rhs.size());
+  viennacl::compressed_compressed_matrix<NumericT> vcl_compressed_compressed_matrix(rhs.size(), rhs.size());
   viennacl::coordinate_matrix<NumericT> vcl_coordinate_matrix(rhs.size(), rhs.size());
   viennacl::ell_matrix<NumericT> vcl_ell_matrix;
   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix;
 
   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
+  viennacl::copy(ublas_cc_matrix, vcl_compressed_compressed_matrix);
   viennacl::copy(ublas_matrix, vcl_coordinate_matrix);
 
   // --------------------------------------------------------------------------
@@ -646,7 +664,32 @@ int test(Epsilon const& epsilon)
   }
 
 
+  std::cout << "Testing products: compressed_compressed_matrix" << std::endl;
+  result     = viennacl::linalg::prod(ublas_cc_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_compressed_compressed_matrix, vcl_rhs);
 
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  {
+    ublas::compressed_matrix<NumericT> temp(vcl_compressed_compressed_matrix.size1(), vcl_compressed_compressed_matrix.size2());
+    viennacl::copy(vcl_compressed_compressed_matrix, temp);
+
+    // check that entries are correct by computing the product again:
+    result     = viennacl::linalg::prod(temp, rhs);
+
+    if( std::fabs(diff(result, vcl_result)) > epsilon )
+    {
+      std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix (after copy back)" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+      retval = EXIT_FAILURE;
+    }
+
+  }
 
 
 
@@ -819,7 +862,7 @@ int main()
   {
     {
       typedef double NumericT;
-      NumericT epsilon = 1.0E-13;
+      NumericT epsilon = 1.0E-12;
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: double" << std::endl;

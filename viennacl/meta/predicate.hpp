@@ -338,6 +338,12 @@ namespace viennacl
       enum { value = true };
     };
 
+    template <typename ScalarType>
+    struct is_any_sparse_matrix<viennacl::compressed_compressed_matrix<ScalarType> >
+    {
+      enum { value = true };
+    };
+
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_any_sparse_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
     {

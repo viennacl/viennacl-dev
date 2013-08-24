@@ -616,7 +616,73 @@ namespace viennacl
       }
 
 
+      //
+      // Compressed Compressed Matrix
+      //
 
+      template <typename T>
+      __global__ void compressed_compressed_matrix_vec_mul_kernel(
+                const unsigned int * row_jumper,
+                const unsigned int * row_indices,
+                const unsigned int * column_indices,
+                const T * elements,
+                unsigned int nonzero_rows,
+                const T * x,
+                unsigned int start_x,
+                unsigned int inc_x,
+                T * result,
+                unsigned int start_result,
+                unsigned int inc_result,
+                unsigned int size_result)
+      {
+        for (unsigned int i  = blockDim.x * blockIdx.x + threadIdx.x;
+                          i  < size_result;
+                          i += gridDim.x * blockDim.x)
+        {
+          result[i * inc_result + start_result] = 0;
+        }
+
+        for (unsigned int i  = blockDim.x * blockIdx.x + threadIdx.x;
+                          i  < nonzero_rows;
+                          i += gridDim.x * blockDim.x)
+        {
+          T dot_prod = (T)0;
+          unsigned int row_end = row_jumper[i+1];
+          for (unsigned int j = row_jumper[i]; j < row_end; ++j)
+            dot_prod += elements[j] * x[column_indices[j] * inc_x + start_x];
+          result[row_indices[i] * inc_result + start_result] = dot_prod;
+        }
+      }
+
+
+      /** @brief Carries out matrix-vector multiplication with a compressed_compressed_matrix
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<class ScalarType>
+      void prod_impl(const viennacl::compressed_compressed_matrix<ScalarType> & mat,
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
+      {
+        compressed_compressed_matrix_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                                  detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+                                                                  detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                                  detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                                  static_cast<unsigned int>(mat.nnz1()),
+                                                                  detail::cuda_arg<ScalarType>(vec),
+                                                                  static_cast<unsigned int>(vec.start()),
+                                                                  static_cast<unsigned int>(vec.stride()),
+                                                                  detail::cuda_arg<ScalarType>(result),
+                                                                  static_cast<unsigned int>(result.start()),
+                                                                  static_cast<unsigned int>(result.stride()),
+                                                                  static_cast<unsigned int>(result.size())
+                                                                 );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_compressed_matrix_vec_mul_kernel");
+      }
 
       //
       // Coordinate Matrix
