@@ -177,8 +177,7 @@ struct blas3_config{
                         , params.at("ms").current()
                         , params.at("ks").current()
                         , params.at("ns").current(),
-                         static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()),
-                         params.at("unroll").current());
+                         static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()));
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
@@ -280,8 +279,6 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
         rhs_storage.push_back(1);
     }
 
-    std::vector<int> unroll; unroll.push_back(0); unroll.push_back(1);
-
     conf.add_tuning_param("local_size1",local_size_1);
     conf.add_tuning_param("cache_width",cache_width);
     conf.add_tuning_param("local_size2",local_size_2);
@@ -291,7 +288,6 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
     conf.add_tuning_param("vector",vector);
     conf.add_tuning_param("lhs_storage",lhs_storage);
     conf.add_tuning_param("rhs_storage",rhs_storage);
-    conf.add_tuning_param("unroll",unroll);
 
 
     stream << "#" << options.layout << " | Scalartype : " << options.scalartype << std::endl;

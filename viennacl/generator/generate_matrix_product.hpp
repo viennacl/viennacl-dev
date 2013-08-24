@@ -59,7 +59,7 @@ namespace viennacl{
         }
 
         virtual void print(std::ostream & s) const{
-          s << "{vector_type, local_size1, cache_width, local_size2, ms, ks, ns, use_lhs_shared, use_rhs_shared, unroll} = {"
+          s << "{vector_type, local_size1, cache_width, local_size2, ms, ks, ns, use_lhs_shared, use_rhs_shared} = {"
             << vectorization_ << ","
             << local_size1_ << ", "
             << cache_width_ << ", "
@@ -67,13 +67,11 @@ namespace viennacl{
             << ms_ << ", "
             << ks_ << ", "
             << ns_ << ", "
-            << use_lhs_shared_ << ", " << use_rhs_shared_ << ", " << unroll_ << "}" ;
+            << use_lhs_shared_ << ", " << use_rhs_shared_ << "}" ;
         }
 
         bool is_slow_impl(viennacl::ocl::device const & dev) const {
-          bool is_slow;
-          is_slow = (unroll_>0);
-          return is_slow;
+          return false;
         }
 
         bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
@@ -94,8 +92,7 @@ namespace viennacl{
         matrix_product(unsigned int vectorization
                 , std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
                 , unsigned int ms, unsigned int ks, unsigned int ns
-                , bool use_lhs_shared, bool use_rhs_shared
-                , bool unroll) : profile_base(vectorization,1){
+                , bool use_lhs_shared, bool use_rhs_shared) : profile_base(vectorization,1){
           local_size1_ = local_size1;
           local_size2_ = local_size2;
           cache_width_=cache_width;
@@ -106,7 +103,6 @@ namespace viennacl{
           ns_=ns;
           use_lhs_shared_ = use_lhs_shared;
           use_rhs_shared_ = use_rhs_shared;
-          unroll_ = unroll ? 1 : 0;
         }
 
         static std::string csv_format() {
@@ -123,8 +119,7 @@ namespace viennacl{
               << "," << ks_
               << "," << ns_
               << "," << use_lhs_shared_
-              << "," << use_rhs_shared_
-              << "," << unroll_;
+              << "," << use_rhs_shared_;
           return oss.str();
         }
 
@@ -720,8 +715,6 @@ namespace viennacl{
 
         bool use_lhs_shared_;
         bool use_rhs_shared_;
-
-        unsigned int unroll_;
     };
 
   }
