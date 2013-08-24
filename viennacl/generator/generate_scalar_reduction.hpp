@@ -134,7 +134,7 @@ namespace viennacl{
 
       public:
         /** @brief The user constructor */
-        scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : profile_base(vectorization, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
+        scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : profile_base(vectorization, group_size_, 1, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
 
 
         static std::string csv_format() {

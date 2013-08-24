@@ -42,7 +42,7 @@ namespace viennacl{
 
     class vector_saxpy : public profile_base{
       public:
-        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, bool d) : profile_base(v, 1), group_size_(gs), num_groups_(ng), global_decomposition_(d){ }
+        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, bool d) : profile_base(v, gs, 1, 1), group_size_(gs), num_groups_(ng), global_decomposition_(d){ }
 
         void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t/* kernel_id*/) const{
           size1 = group_size_;
@@ -63,6 +63,8 @@ namespace viennacl{
           arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
         }
 
+        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
+        bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       private:
 
@@ -118,9 +120,11 @@ namespace viennacl{
 
     class matrix_saxpy : public profile_base{
 
+        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
+        bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       public:
-        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : profile_base(v, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), global_decomposition_(d){ }
+        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : profile_base(v, gs1, gs2, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), global_decomposition_(d){ }
 
         static std::string csv_format() {
           return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";

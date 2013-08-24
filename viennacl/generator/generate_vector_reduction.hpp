@@ -48,7 +48,7 @@ namespace viennacl{
 
       public:
         /** @brief The user constructor */
-        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : profile_base(vectorization, 1), m_(m), k_(k), num_groups_(num_groups){ }
+        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : profile_base(vectorization, m, k, 1), m_(m), k_(k), num_groups_(num_groups){ }
 
 
         static std::string csv_format() {
@@ -62,11 +62,6 @@ namespace viennacl{
                  << "," << k_
                  << "," << num_groups_;
           return oss.str();
-        }
-
-        void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
-          s1 = m_;
-          s2 = k_;
         }
 
         unsigned int m() const { return m_; }

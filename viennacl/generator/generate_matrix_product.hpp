@@ -47,7 +47,7 @@ namespace viennacl{
           STRIDED
         };
 
-      private:
+        bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
         std::size_t lmem_used(std::size_t scalartype_size) const {
           std::size_t lmem_used = 0;
@@ -70,9 +70,6 @@ namespace viennacl{
             << use_lhs_shared_ << ", " << use_rhs_shared_ << "}" ;
         }
 
-        bool is_slow_impl(viennacl::ocl::device const & dev) const {
-          return false;
-        }
 
         bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
           static const unsigned int alignment = 128;
@@ -92,7 +89,7 @@ namespace viennacl{
         matrix_product(unsigned int vectorization
                 , std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
                 , unsigned int ms, unsigned int ks, unsigned int ns
-                , bool use_lhs_shared, bool use_rhs_shared) : profile_base(vectorization,1){
+                , bool use_lhs_shared, bool use_rhs_shared) : profile_base(vectorization,local_size1, local_size2,1){
           local_size1_ = local_size1;
           local_size2_ = local_size2;
           cache_width_=cache_width;
@@ -121,12 +118,6 @@ namespace viennacl{
               << "," << use_lhs_shared_
               << "," << use_rhs_shared_;
           return oss.str();
-        }
-
-
-        void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t /*kernel_id*/) const{
-          size1 = local_size1_;
-          size2 = local_size2_;
         }
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
