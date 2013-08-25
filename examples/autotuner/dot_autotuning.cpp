@@ -31,6 +31,8 @@
 
 #include "command-line-utils.hpp"
 
+static const unsigned int n_runs = 10;
+
 using namespace viennacl::generator;
 
 typedef std::vector< viennacl::ocl::platform > platforms_type;
@@ -83,8 +85,8 @@ autotuner_options get_options(int argc, char* argv[]){
         TCLAP::ValueArg<std::string> vector_interval_arg("","vector","Vector type used in the kernel",false,"1,1",&pow_2_interval_cstrt,cmd);
 
         //Large blocks
-        TCLAP::ValueArg<std::string> local_size_interval_arg("","local-size","Number of work-item in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> num_groups_interval_arg("","num-groups","Number of work groups required.",false,"1,1024,16",&min_max_inc_cstrt,cmd);
+        TCLAP::ValueArg<std::string> local_size_interval_arg("","local-size","Number of work-item in each work-group. Specify min,max both power of two.",false,"16,1024",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> num_groups_interval_arg("","num-groups","Number of work groups required.",false,"16,1024,16",&min_max_inc_cstrt,cmd);
 
         //Decomposition
         std::vector<std::string> allowed_decomposition_method;
@@ -134,7 +136,7 @@ viennacl::scheduler::statement make_statement(autotuner_options options, viennac
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
+unsigned int run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -173,7 +175,7 @@ void run_autotune(autotuner_options const & options){
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_comas(options.local_size_interval); std::vector<int> local_size; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size.push_back(i);
-    tmp = get_values_in_comas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i=tmp[0] ; i<=tmp[1]; i+=tmp[2]) num_groups.push_back(i);
+    tmp = get_values_in_comas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i=tmp[0] ; i<=tmp[1]; i+=tmp[2]) { num_groups.push_back(i); }
     tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
     std::vector<int> decomposition;
     if(options.decomposition=="global")
@@ -203,7 +205,7 @@ void run_autotune(autotuner_options const & options){
 
     code_generator::forced_profile_key_type key(SCALAR_REDUCE_TYPE, sizeof(ScalarType));
     viennacl::scheduler::statement statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2));
-    autotune::benchmark(&timings,statement,key,conf,&stream);
+    autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
 
     //Recompiles for the best profile
     profile_type best_profile = timings.begin()->second;
@@ -215,12 +217,12 @@ void run_autotune(autotuner_options const & options){
 
     stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
     stream << "##Size\tGB/s" << std::endl;
-    for(unsigned int size = 1024 ; size <= 1e8 ; size *=2){
-        double percent = (double)size/1e8*100;
+    for(unsigned int size = 1024 ; size <= 1e7 ; size *=2){
+        double percent = (double)size/1e7*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
+        stream << "#" << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 int main(int argc, char* argv[]){
@@ -252,6 +254,7 @@ int main(int argc, char* argv[]){
         std::cout << "local size : [" << options.local_size_interval << "]" << std::endl;
         std::cout << "number of groups : [" << options.num_groups_interval << "]" << std::endl;
         std::cout << "decomposition : [" << options.decomposition << "]" << std::endl;
+        std::cout << "tuning size : " << options.tuning_size << std::endl;
         std::cout << "-------------------" << std::endl;
         if(options.scalartype=="float")
             run_autotune<float>(options);
@@ -260,4 +263,5 @@ int main(int argc, char* argv[]){
       }
     }
   }
+  std::cout << "Autotuning complete! Check \"" << options.output_name << "\" for results." << std::endl;
 }

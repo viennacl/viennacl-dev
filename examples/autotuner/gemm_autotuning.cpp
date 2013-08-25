@@ -37,6 +37,8 @@
 
 using namespace viennacl::generator;
 
+static const unsigned int n_runs = 1;
+
 struct autotuner_options{
 
     std::string layout;
@@ -183,7 +185,7 @@ viennacl::scheduler::statement make_statement(std::string const & layout, MatA c
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename config<ScalarType>::profile_type const & profile)
+unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -289,14 +291,14 @@ void run_autotune(autotuner_options options){
         viennacl::scheduler::statement statement = make_statement(options.layout,A,B,C);
         stream << "#time" << "," << profile_type::csv_format() << std::endl;
         if(k==0){
-          autotune::benchmark(&timings,statement,key,conf,&stream);
+          autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
         }
         else{
           unsigned int n=0;
           for(typename std::list<profile_type>::const_iterator it = fastest_firsts.begin(); it!=fastest_firsts.end(); ++it){
             double percent = (double)n++*100/fastest_firsts.size();
             std::cout << '\r' << "Determining best profile for size " << size << "..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-            double exec_time = autotune::benchmark_impl(statement,key,*it);
+            double exec_time = autotune::benchmark_impl(statement,key,*it,n_runs);
             timings.insert(std::make_pair(exec_time, *it));
             stream << std::setprecision(3) << std::scientific << exec_time << "," << it->csv_representation() << std::endl;
           }
@@ -325,8 +327,9 @@ void run_autotune(autotuner_options options){
     for(unsigned int size = 128 ; size <= 3072 ; size += 128){
         double percent = (double)size/3072*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << size << "\t" << run_benchmark<ScalarType>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
+        stream << "#" << size << "\t" << run_benchmark<ScalarType>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
     }
+    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 
@@ -374,7 +377,6 @@ int main(int argc, char* argv[]){
       }
     }
   }
-  std::cout << std::endl;
   std::cout << "Autotuning Complete!" << std::endl;
   return EXIT_SUCCESS;
 }

@@ -46,8 +46,6 @@ namespace viennacl{
 
     namespace autotune{
 
-      static const unsigned int n_runs = 1;
-
       /** @brief class for a tuning parameter */
       class tuning_param{
         public:
@@ -146,7 +144,7 @@ namespace viennacl{
 
       /** @brief Add the timing value for a given profile and an statement */
       template<class ProfileT>
-      double benchmark_impl(viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
+      double benchmark_impl(viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof, unsigned int n_runs){
 
         tools::timer t;
         std::list<viennacl::ocl::kernel *> kernels;
@@ -173,7 +171,7 @@ namespace viennacl{
        * @param op the given statement
        * @param the given config */
       template<class ConfigType>
-      void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, std::ofstream * out){
+      void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, unsigned int n_runs, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
         unsigned int n_conf = 0;
         while(config.has_next()){
@@ -192,15 +190,14 @@ namespace viennacl{
           if(config.is_invalid(dev) || profile.is_slow(dev))
               continue;
           double percent = (double)n++*100/n_conf;
-          double exec_time = benchmark_impl(op,key,profile);
+          double exec_time = benchmark_impl(op,key,profile,n_runs);
           timings->insert(std::make_pair(exec_time, profile));
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
                     << " | Best : " << timings->begin()->second << " => " << std::scientific << std::right << std::setprecision(2) << timings->begin()->first << std::flush;
           if(out)
             *out << std::setprecision(3) << std::scientific << exec_time << "," << profile.csv_representation() << std::endl ;
         }
-
-        std::cout << std::endl;
+        std::cout << '\r' << "Autotuning..." << "[100.00%]" << std::endl;
       }
 
     }

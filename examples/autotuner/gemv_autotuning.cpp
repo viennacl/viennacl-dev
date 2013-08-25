@@ -35,7 +35,7 @@ typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
-static const unsigned int size = 2048;
+static const unsigned int n_runs = 10;
 
 struct autotuner_options{
     unsigned int tuning_size;
@@ -90,9 +90,9 @@ autotuner_options get_options(int argc, char* argv[]){
         TCLAP::ValueArg<std::string> vector_interval_arg("","vector","Vector type used in the kernel",false,"1,1",&pow_2_interval_cstrt,cmd);
 
         //Large blocks
-        TCLAP::ValueArg<std::string> local_size_1_interval_arg("","local-size-1","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> local_size_2_interval_arg("","local-size-2","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> num_groups_interval_arg("","num-groups","Number of work groups required.",false,"1,1024,16",&min_max_inc_cstrt,cmd);
+        TCLAP::ValueArg<std::string> local_size_1_interval_arg("","local-size-1","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"1,64",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> local_size_2_interval_arg("","local-size-2","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"1,64",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> num_groups_interval_arg("","num-groups","Number of work groups required.",false,"16,1024,16",&min_max_inc_cstrt,cmd);
 
 
         cmd.parse(argc,argv);
@@ -138,7 +138,7 @@ viennacl::scheduler::statement make_statement(autotuner_options options, viennac
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
+unsigned int run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -197,7 +197,7 @@ void run_autotune(autotuner_options const & options){
     stream << "#----------------------" << std::endl;
     stream << "#tuning for size : " << options.tuning_size << std::endl;
 
-    autotune::benchmark(&timings,statement,key,conf,&stream);
+    autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
 
     //Recompiles for the best profile
     profile_type best_profile = timings.begin()->second;
@@ -212,9 +212,9 @@ void run_autotune(autotuner_options const & options){
     for(unsigned int size = 128 ; size <= 3072 ; size += 128){
         double percent = (double)size/3072*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
+        stream << "#" << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 
@@ -253,7 +253,6 @@ int main(int argc, char* argv[]){
             run_autotune<float>(options);
         else if(options.scalartype=="double")
             run_autotune<double>(options);
-
       }
     }
   }
