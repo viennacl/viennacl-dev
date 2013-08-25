@@ -65,7 +65,7 @@ namespace viennacl{
             set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_SAXPY_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_SAXPY_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(SCALAR_REDUCE_TYPE,4),device_name);
-            set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Ax_TYPE,4),device_name);
+            set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Nx_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Tx_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_PRODUCT_NN_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_PRODUCT_TN_TYPE,4),device_name);
@@ -75,7 +75,7 @@ namespace viennacl{
             set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_SAXPY_TYPE,8),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_SAXPY_TYPE,8),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(SCALAR_REDUCE_TYPE,8),device_name);
-            set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Ax_TYPE,8),device_name);
+            set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Nx_TYPE,8),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_REDUCE_Tx_TYPE,8),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_PRODUCT_NN_TYPE,8),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_PRODUCT_TN_TYPE,8),device_name);
@@ -92,7 +92,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,128,128,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(1, 128, 128, true));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0));
@@ -103,7 +103,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(1,128,128,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(1, 128, 128, true));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0));
@@ -116,7 +116,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(8,16,256,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,16,8,8));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0));
@@ -127,7 +127,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(8,16,32,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,8,16,16));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(1,16,128,2,8,4,16,0,0));
@@ -142,7 +142,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(8,16,256,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,16,8,8));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0));
@@ -153,7 +153,7 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(8,16,32,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,8,16,16));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(1,16,128,2,8,4,16,0,0));
@@ -172,7 +172,7 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,4,64,16,4,4,8,1,0));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(4,4,64,16,4,4,8,1,0));
@@ -182,7 +182,7 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,64,4,256));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,32,16,2,2,8,0,0));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(2,4,64,32,4,2,2,0,0));
@@ -197,7 +197,7 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,128,32,4,4,4,1,0));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,64,16,4,2,8,1,0));
@@ -207,7 +207,7 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,64,4,256));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,4,128,64,4,2,2,1,0));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(2,2,128,32,4,2,2,0,0));
@@ -229,7 +229,7 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_SAXPY_TYPE,4)]      =    profile_base_ptr(new vector_saxpy(1,1,256,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_SAXPY_TYPE,4)]      =    profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(SCALAR_REDUCE_TYPE,4)]     =    profile_base_ptr(new scalar_reduction(4,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,1,0));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,32,16,4,4,8,0,0));
@@ -239,7 +239,7 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_SAXPY_TYPE,8)]      =    profile_base_ptr(new vector_saxpy(2,1,64,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_SAXPY_TYPE,8)]      =    profile_base_ptr(new matrix_saxpy(2,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(SCALAR_REDUCE_TYPE,8)]     =    profile_base_ptr(new scalar_reduction(2,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Ax_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,1,128,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,1,128,1024));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,16,32,1024));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,64,32,2,2,8,1,0));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,64,128,4,2,2,8,0,1));

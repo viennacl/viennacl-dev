@@ -51,7 +51,7 @@ namespace viennacl{
       VECTOR_SAXPY_TYPE,
       MATRIX_SAXPY_TYPE,
       SCALAR_REDUCE_TYPE,
-      VECTOR_REDUCE_Ax_TYPE,
+      VECTOR_REDUCE_Nx_TYPE,
       VECTOR_REDUCE_Tx_TYPE,
       MATRIX_PRODUCT_NN_TYPE,
       MATRIX_PRODUCT_TN_TYPE,
@@ -66,7 +66,7 @@ namespace viennacl{
         case VECTOR_SAXPY_TYPE : return "Vector SAXPY";
         case MATRIX_SAXPY_TYPE : return "Matrix SAXPY";
         case SCALAR_REDUCE_TYPE : return "Inner Product";
-        case VECTOR_REDUCE_Ax_TYPE : return "Matrix-Vector Product : Ax";
+        case VECTOR_REDUCE_Nx_TYPE : return "Matrix-Vector Product : Ax";
         case VECTOR_REDUCE_Tx_TYPE : return "Matrix-Vector Product : Tx";
         case MATRIX_PRODUCT_NN_TYPE : return "Matrix-Matrix Product : AA";
         case MATRIX_PRODUCT_TN_TYPE : return "Matrix-Matrix Product : TA";

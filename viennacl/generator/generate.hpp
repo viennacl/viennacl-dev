@@ -114,7 +114,7 @@ namespace viennacl{
             if(is_lhs_flow_transposed(statement,root_node))
               descriptor.type=VECTOR_REDUCE_Tx_TYPE;
             else
-              descriptor.type=VECTOR_REDUCE_Ax_TYPE;
+              descriptor.type=VECTOR_REDUCE_Nx_TYPE;
           }
           if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_vector(statement, expr[root_node.lhs.node_index],descriptor);

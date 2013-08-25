@@ -15,8 +15,6 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#define N_RUNS 1
-
 //#define VIENNACL_DEBUG_BUILD
 //#define VIENNACL_DEBUG_ALL
 
@@ -36,10 +34,8 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
-#include <tclap/CmdLine.h>
-
-#include "../tutorial/Random.hpp"
 #include "../benchmarks/benchmark-utils.hpp"
+#include "command-line-utils.hpp"
 
 using namespace viennacl::generator;
 
@@ -64,28 +60,6 @@ struct autotuner_options{
     std::string lhs_fetch_method;
     std::string rhs_fetch_method;
 
-};
-
-std::vector<unsigned int> get_values_in_comas(std::string const & s){
-    std::vector<unsigned int> res;
-    std::size_t old_coma_pos = 0, new_coma_pos;
-    while((new_coma_pos = s.find(',',old_coma_pos))!= std::string::npos){
-        res.push_back(atoi(s.substr(old_coma_pos,new_coma_pos).c_str()));
-        old_coma_pos = new_coma_pos+1;
-    }
-    res.push_back(atoi(s.substr(old_coma_pos,s.length()).c_str()));
-    return res;
-}
-
-class pow_2_interval_constraint : public TCLAP::Constraint<std::string>{
-    static bool is_pow_of_two(const unsigned int x){ return ((x != 0) && !(x & (x - 1))); }
-public:
-    bool check(std::string const & s) const{
-        std::vector<unsigned int> vals = get_values_in_comas(s);
-        return vals.size()==2 && is_pow_of_two(vals[0]) && is_pow_of_two(vals[1]);
-    }
-    std::string shortID() const { return "min,max"; }
-    std::string description() const { return "Must be a power of two"; }
 };
 
 autotuner_options get_options(int argc, char* argv[]){
@@ -227,10 +201,11 @@ double run_benchmark(size_t size, std::string layout, std::size_t scalartype_siz
     viennacl::backend::finish();
     Timer timer;
     timer.start();
-    for(unsigned int r = 0 ; r < N_RUNS ; ++r)
+    static const unsigned int n_runs = 1;
+    for(unsigned int r = 0 ; r < n_runs; ++r)
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
-    double time = timer.get()/(double)N_RUNS;
+    double time = timer.get()/(double)n_runs;
     return 2*pow(size/static_cast<double>(1000.0),3)/time;
 }
 
@@ -350,7 +325,7 @@ int main(int argc, char* argv[]){
   typedef std::vector< viennacl::ocl::platform > platforms_type;
   typedef std::vector<viennacl::ocl::device> devices_type;
   autotuner_options options = get_options(argc,argv);
-  unsigned int current_device=0;
+  unsigned int counter=0;
   platforms_type platforms = viennacl::ocl::get_platforms();
   for (platforms_type::iterator platform_iter  = platforms.begin();
        platform_iter != platforms.end();
@@ -359,9 +334,9 @@ int main(int argc, char* argv[]){
     devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
     for(devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
     {
-      if(current_device++==options.requested_device){
-        viennacl::ocl::setup_context(current_device,*iter);
-        viennacl::ocl::switch_context(current_device);
+      if(counter++==options.requested_device){
+        viennacl::ocl::setup_context(counter,*iter);
+        viennacl::ocl::switch_context(counter);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
         std::string device_name = device.name();
         std::transform(device_name.begin(), device_name.end(), device_name.begin(), ::tolower);
