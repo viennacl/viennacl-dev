@@ -32,11 +32,11 @@ namespace viennacl{
 
   namespace tools{
 
-    class Timer
+    class timer
     {
     public:
 
-      Timer()
+      timer()
       {
         QueryPerformanceFrequency(&freq);
       }
@@ -72,11 +72,11 @@ namespace viennacl{
 
   namespace tools{
 
-    class Timer
+    class timer
     {
     public:
 
-      Timer() : ts(0)
+      timer() : ts(0)
       {}
 
       void start()
