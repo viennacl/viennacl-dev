@@ -16,7 +16,6 @@
 ============================================================================= */
 
 //#define VIENNACL_DEBUG_BUILD
-//#define VIENNACL_WITH_OPENCL
 //#define VIENNACL_DEBUG_ALL
 
 #include <iostream>
@@ -30,8 +29,6 @@
 #include "viennacl/tools/timer.hpp"
 #include "command-line-utils.hpp"
 
-//#define N_RUNS 5
-
 using namespace viennacl::generator;
 
 typedef std::vector< viennacl::ocl::platform > platforms_type;
@@ -41,6 +38,7 @@ typedef std::vector<cl_device_id> cl_devices_type;
 static const unsigned int size = 2048;
 
 struct autotuner_options{
+    unsigned int tuning_size;
 
     std::string layout;
     std::string scalartype;
@@ -64,6 +62,9 @@ autotuner_options get_options(int argc, char* argv[]){
 
         pow_2_interval_constraint pow_2_interval_cstrt;
         min_max_inc_constraint min_max_inc_cstrt;
+
+        //Tuning size
+        TCLAP::ValueArg<unsigned int> tuning_size_arg("","tuning-size","Size to use for the autotuning procedure",false,3072,"unsigned int",cmd);
 
         //Layouts
         std::vector<std::string> allowed_layouts;
@@ -95,6 +96,7 @@ autotuner_options get_options(int argc, char* argv[]){
 
 
         cmd.parse(argc,argv);
+        options.tuning_size = tuning_size_arg.getValue();
         options.layout = layout_arg.getValue();
         options.scalartype = scalartype_arg.getValue();
         options.output_name = output_name_arg.getValue();
@@ -112,7 +114,7 @@ autotuner_options get_options(int argc, char* argv[]){
 }
 
 template<class ScalarType>
-struct blas2_config{
+struct config{
     typedef vector_reduction profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
       return profile_type(params.at("vector").current(), params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
@@ -136,17 +138,17 @@ viennacl::scheduler::statement make_statement(autotuner_options options, viennac
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename blas3_config<ScalarType>::profile_type const & profile)
+double run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
     viennacl::matrix<ScalarType> A(size, size);
     viennacl::vector<ScalarType> y(size);
     viennacl::vector<ScalarType> x(size);
-    viennacl::scheduler::statement statement = make_statement(layout,y,A,x);
+    viennacl::scheduler::statement statement = make_statement(options,y,A,x);
     viennacl::generator::code_generator gen;
     gen.add(statement,statement.array()[0]);
-    gen.force_profile(make_key<ScalarType>(layout), profile);
+    gen.force_profile(make_key<ScalarType>(options), profile);
     viennacl::generator::enqueue(gen);
     viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
@@ -157,15 +159,20 @@ double run_benchmark(size_t size, std::string layout, std::size_t scalartype_siz
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/(double)n_runs;
-    return 1e-9*size*(2*size-1)/time;
+    return 1e-9*(size*size+2*size)*sizeof(ScalarType)/time;
 }
 
 template<class ScalarType>
-void run_autotune(autotuner_options const & options, viennacl::ocl::device const & device){
-    viennacl::vector<ScalarType> y(size), x(size);
-    viennacl::matrix<ScalarType> A(size,size);
-    std::map<double,typename blas2_config<ScalarType>::profile_type> timings;
-    autotune::tuning_config< blas2_config<ScalarType> > conf;
+void run_autotune(autotuner_options const & options){
+    typedef config<ScalarType> config_type;
+    typedef typename config_type::profile_type profile_type;
+
+    viennacl::ocl::device const &  device = viennacl::ocl::current_device();
+
+    viennacl::vector<ScalarType> y(options.tuning_size), x(options.tuning_size);
+    viennacl::matrix<ScalarType> A(options.tuning_size, options.tuning_size);
+    std::map<double,profile_type> timings;
+    autotune::tuning_config<config_type> conf;
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) vector.push_back(i);
@@ -179,11 +186,34 @@ void run_autotune(autotuner_options const & options, viennacl::ocl::device const
     conf.add_tuning_param("num_groups",num_groups);
     std::ofstream stream(options.output_name.c_str());
     code_generator::forced_profile_key_type key = make_key<ScalarType>(options);
-    autotune::benchmark(&timings,make_statement(options,y,A,x),key,conf,&stream);
-    std::cout << std::endl;
-    std::cout << " ============" << std::endl;
-    std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
-    std::cout << " ============" << std::endl;
+    viennacl::scheduler::statement statement = make_statement(options,y,A,x);
+
+    stream << "# ---- GEMV AUTOTUNING ----" << std::endl;
+    stream << "#" << options.layout << " | Scalartype : " << options.scalartype << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << device.full_info(1,'#');
+    stream << "#----------------------" << std::endl;
+    stream << "#tuning for size : " << options.tuning_size << std::endl;
+
+    autotune::benchmark(&timings,statement,key,conf,&stream);
+
+    //Recompiles for the best profile
+    profile_type best_profile = timings.begin()->second;
+    viennacl::generator::code_generator dummy;
+    dummy.add(statement,statement.array()[0]);
+    dummy.force_profile(key, best_profile);
+    viennacl::generator::enqueue(dummy,true);
+    viennacl::backend::finish();
+
+    stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
+    stream << "##Size\tGB/s" << std::endl;
+    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
+        double percent = (double)size/3072*100;
+        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+        stream << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
+    }
     std::cout << std::endl;
 }
 
@@ -220,11 +250,12 @@ int main(int argc, char* argv[]){
         std::cout << "number of groups : [" << options.num_groups_interval << "]" << std::endl;
         std::cout << "-------------------" << std::endl;
         if(options.scalartype=="float")
-            run_autotune<float>(options,device);
+            run_autotune<float>(options);
         else if(options.scalartype=="double")
-            run_autotune<double>(options,device);
+            run_autotune<double>(options);
 
       }
     }
   }
+  std::cout << "Autotuning complete!" << std::endl;
 }

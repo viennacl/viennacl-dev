@@ -152,9 +152,9 @@ namespace viennacl{
 
       protected:
         unsigned int vectorization_;
-        std::size_t num_kernels_;
         std::size_t local_size_1_;
         std::size_t local_size_2_;
+        std::size_t num_kernels_;
     };
 
 

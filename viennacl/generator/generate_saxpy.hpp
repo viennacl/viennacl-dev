@@ -42,7 +42,7 @@ namespace viennacl{
 
     class vector_saxpy : public profile_base{
       public:
-        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, bool d) : profile_base(v, gs, 1, 1), group_size_(gs), num_groups_(ng), global_decomposition_(d){ }
+        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), group_size_(gs), num_groups_(ng), decomposition_(d){ }
 
         void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t/* kernel_id*/) const{
           size1 = group_size_;
@@ -77,7 +77,7 @@ namespace viennacl{
           oss << vectorization_
               << "," << group_size_
               << "," << num_groups_
-              << "," << global_decomposition_;
+              << "," << decomposition_;
           return oss.str();
         }
 
@@ -112,7 +112,7 @@ namespace viennacl{
       private:
         std::size_t group_size_;
         std::size_t num_groups_;
-        bool global_decomposition_;
+        unsigned int decomposition_;
 
     };
 
@@ -124,7 +124,7 @@ namespace viennacl{
         bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       public:
-        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, bool d) : profile_base(v, gs1, gs2, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), global_decomposition_(d){ }
+        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
 
         static std::string csv_format() {
           return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";
@@ -137,7 +137,7 @@ namespace viennacl{
                  << "," << group_size_col_
                  << "," << num_groups_row_
                  << "," << num_groups_col_
-                 << "," << global_decomposition_;
+                 << "," << decomposition_;
           return oss.str();
         }
 
@@ -213,7 +213,7 @@ namespace viennacl{
         std::size_t num_groups_row_;
         std::size_t num_groups_col_;
 
-        bool global_decomposition_;
+        unsigned int decomposition_;
     };
   }
 

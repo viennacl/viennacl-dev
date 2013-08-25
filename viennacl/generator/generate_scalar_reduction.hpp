@@ -72,7 +72,7 @@ namespace viennacl{
       public:
 
         std::size_t lmem_used(std::size_t scalartype_size) const {
-          return group_size_*scalartype_size;
+          return local_size_1_*scalartype_size;
         }
 
         void init_temporaries(statements_type const & statements) const {
@@ -132,7 +132,7 @@ namespace viennacl{
 
       public:
         /** @brief The user constructor */
-        scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, unsigned int decomposition) : profile_base(vectorization, group_size, 1, 2), group_size_(group_size), num_groups_(num_groups), decomposition_(decomposition){ }
+        scalar_reduction(unsigned int vectorization, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : profile_base(vectorization, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
 
         static std::string csv_format() {

@@ -29,118 +29,234 @@
 #include "viennacl/generator/autotune.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
+#include "command-line-utils.hpp"
+
 using namespace viennacl::generator;
 
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
 typedef std::vector<cl_device_id> cl_devices_type;
 
-static const unsigned int size = 1024*1024;
 
+struct autotuner_options{
+    unsigned int tuning_size;
+
+    std::string scalartype;
+    std::string output_name;
+
+    unsigned int requested_device;
+
+    std::string vector_interval;
+
+    std::string local_size_interval;
+    std::string num_groups_interval;
+
+    std::string decomposition;
+};
+
+autotuner_options get_options(int argc, char* argv[]){
+    try{
+        autotuner_options options;
+
+        TCLAP::CmdLine cmd("GEMM Autotuner", ' ', "0.1");
+
+
+        pow_2_interval_constraint pow_2_interval_cstrt;
+        min_max_inc_constraint min_max_inc_cstrt;
+
+        TCLAP::ValueArg<unsigned int> tuning_size_arg("","tuning-size","Size to use for the autotuning procedure",false,1024*1024,"unsigned int",cmd);
+
+        //Scalartype
+        std::vector<std::string> allowed_scalartypes;
+        allowed_scalartypes.push_back("float");
+        allowed_scalartypes.push_back("double");
+        TCLAP::ValuesConstraint<std::string> allowed_scalartypes_constraint( allowed_scalartypes);
+        TCLAP::ValueArg<std::string> scalartype_arg("s","scalartype","Scalartype to tune the hardware for",true,"float",&allowed_scalartypes_constraint,cmd);
+
+        //Output data file
+        TCLAP::ValueArg<std::string> output_name_arg("o","output","Name of the output data file",true,"gemm_autotuning.dat","string",cmd);
+
+        //Device id
+        TCLAP::ValueArg<unsigned int> requested_device_arg("d","device","ID of the device to use for the autotuning procedure",false,0,"unsigned int",cmd);
+
+        //Vector
+        TCLAP::ValueArg<std::string> vector_interval_arg("","vector","Vector type used in the kernel",false,"1,1",&pow_2_interval_cstrt,cmd);
+
+        //Large blocks
+        TCLAP::ValueArg<std::string> local_size_interval_arg("","local-size","Number of work-item in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> num_groups_interval_arg("","num-groups","Number of work groups required.",false,"1,1024,16",&min_max_inc_cstrt,cmd);
+
+        //Decomposition
+        std::vector<std::string> allowed_decomposition_method;
+        allowed_decomposition_method.push_back("local");
+        allowed_decomposition_method.push_back("global");
+        allowed_decomposition_method.push_back("all");
+        TCLAP::ValuesConstraint<std::string> allowed_decomposition_method_constraint(allowed_decomposition_method);
+        TCLAP::ValueArg<std::string> decomposition_method_arg("","decomposition","Work decomposition method. If set to \"local\" , the work items within a work group will access contiguous data.",false,"all",&allowed_decomposition_method_constraint,cmd);
+
+        cmd.parse(argc,argv);
+        options.tuning_size = tuning_size_arg.getValue();
+        options.scalartype = scalartype_arg.getValue();
+        options.output_name = output_name_arg.getValue();
+        options.requested_device = requested_device_arg.getValue();
+        options.vector_interval = vector_interval_arg.getValue();
+        options.local_size_interval = local_size_interval_arg.getValue();
+        options.num_groups_interval = num_groups_interval_arg.getValue();
+        options.decomposition = decomposition_method_arg.getValue();
+        return options;
+    }
+    catch (TCLAP::ArgException &e){
+        std::cerr << "error: " << "\"" << e.error() << "\"" << " [for arg " << e.argId() << "]" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
 
 template<class ScalarType>
-struct dot_config{
+struct config{
     typedef scalar_reduction profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-      bool use_global_decomposition = (params.at("global_decomposition").current() > 0);
-      return profile_type(params.at("vectorization").current(),params.at("group_size").current(),params.at("num_groups").current(), use_global_decomposition);
+      return profile_type(params.at("vector").current(),params.at("local_size").current(),params.at("num_groups").current(), params.at("decomposition").current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);
         return prof.is_invalid(dev, sizeof(ScalarType));
     }
-    static std::string state_representation_format(){
-        return "V" "\t" "GS" "\t" "NG" "\t" "GD";
-    }
-    static std::string current_state_representation(profile_type const profile){
-        std::ostringstream oss;
-        oss << profile.vectorization() << "\t" << profile.group_size() << "\t" << profile.num_groups() << "\t" << profile.global_decomposition();
-        return oss.str();
-    }
 };
 
+template<class ScalarType>
+code_generator::forced_profile_key_type make_key(autotuner_options options){
+    return code_generator::forced_profile_key_type(SCALAR_REDUCE_TYPE,sizeof(ScalarType));
+}
 
 template<class ScalarType>
-void run_autotune(std::string const & dump_name){
-    std::vector<ScalarType> cpu_v1(size), cpu_v2(size), cpu_v3(size), cpu_v4(size);
-    for(unsigned int i=0; i<size; ++i){
-        cpu_v1[i]=0;
-        cpu_v2[i]=rand()/(ScalarType)RAND_MAX;
-        cpu_v3[i]=rand()/(ScalarType)RAND_MAX;
-        cpu_v4[i]=rand()/(ScalarType)RAND_MAX;
-    }
+viennacl::scheduler::statement make_statement(autotuner_options options, viennacl::scalar<ScalarType> const & s, viennacl::vector<ScalarType> const & x, viennacl::vector<ScalarType> const & y){
+    return viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(x, y));
+}
 
-    viennacl::vector<ScalarType> v1(size), v2(size), v3(size), v4(size);
-    viennacl::copy(cpu_v1,v1);
-    viennacl::copy(cpu_v2,v2);
-    viennacl::copy(cpu_v3,v3);
-    viennacl::copy(cpu_v4,v3);
+template<typename ScalarType>
+double run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
+{
+    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
+    //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
+    viennacl::vector<ScalarType> y(size);
+    viennacl::vector<ScalarType> x(size);
+    viennacl::scalar<ScalarType> s = 0;
+    viennacl::scheduler::statement statement = make_statement(options,s,x,y);
+    viennacl::generator::code_generator gen;
+    gen.add(statement,statement.array()[0]);
+    gen.force_profile(make_key<ScalarType>(options), profile);
+    viennacl::generator::enqueue(gen);
+    viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
+    viennacl::tools::timer timer;
+    timer.start();
+    static const unsigned int n_runs = 1;
+    for(unsigned int r = 0 ; r < n_runs; ++r)
+      viennacl::generator::enqueue(gen);
+    viennacl::backend::finish();
+    double time = timer.get()/(double)n_runs;
+    return 1e-9*2*size*sizeof(ScalarType)/time;
+}
 
+template<class ScalarType>
+void run_autotune(autotuner_options const & options){
+    typedef config<ScalarType> config_type;
+    typedef typename config_type::profile_type profile_type;
+
+    viennacl::ocl::device const &  device = viennacl::ocl::current_device();
+
+    viennacl::vector<ScalarType> v1(options.tuning_size), v2(options.tuning_size), v3(options.tuning_size), v4(options.tuning_size);
+    viennacl::backend::finish();
+    autotune::tuning_config<config<ScalarType> > conf;
+    std::map<double, typename config<ScalarType>::profile_type> timings;
     viennacl::scalar<ScalarType> s = 0;
 
-    std::map<double, typename dot_config<ScalarType>::profile_type> timings;
-    autotune::tuning_config<dot_config<ScalarType> > conf;
-    std::vector<int> vectorizations;
-    std::vector<int> group_sizes;
-    std::vector<int> num_groups;
-    std::vector<int> global_decompositions;
-    for(unsigned int a = 1; a <= 8 ; a*=2)
-      vectorizations.push_back(a);
-    for(unsigned int g = 16 ; g <= 1024 ; g *= 2)
-      num_groups.push_back(g);
-    for(unsigned int i = 16; i <= viennacl::ocl::current_device().max_work_group_size() ; i*=2)
-      group_sizes.push_back(i);
-    global_decompositions.push_back(0); global_decompositions.push_back(1);
-    conf.add_tuning_param("vectorization",vectorizations);
-    conf.add_tuning_param("group_size",group_sizes);
+    std::vector<unsigned int> tmp;
+    tmp = get_values_in_comas(options.local_size_interval); std::vector<int> local_size; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size.push_back(i);
+    tmp = get_values_in_comas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i=tmp[0] ; i<=tmp[1]; i+=tmp[2]) num_groups.push_back(i);
+    tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    std::vector<int> decomposition;
+    if(options.decomposition=="global")
+        decomposition.push_back(0);
+    else if(options.decomposition=="local")
+        decomposition.push_back(1);
+    else{
+        decomposition.push_back(0);
+        decomposition.push_back(1);
+    }
+
+    conf.add_tuning_param("vector",vector);
+    conf.add_tuning_param("local_size",local_size);
     conf.add_tuning_param("num_groups",num_groups);
-    conf.add_tuning_param("global_decomposition", global_decompositions);
-    std::ofstream stream(dump_name.c_str());
-    std::size_t scalartype_size = sizeof(ScalarType);
-    code_generator::forced_profile_key_type key(SCALAR_REDUCE_TYPE, scalartype_size);
-    autotune::benchmark(&timings,viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2)),key,conf,&stream);
-    std::cout << std::endl;
-    std::cout << " ============" << std::endl;
-    std::cout << " Best Profile : " << std::scientific << timings.begin()->first << " => " << timings.begin()->second << std::endl;
-    std::cout << " ============" << std::endl;
+    conf.add_tuning_param("decomposition", decomposition);
+    std::ofstream stream(options.output_name.c_str());
+
+
+    stream << "# ---- DOT AUTOTUNING ----" << std::endl;
+    stream << "#" << "Scalartype : " << options.scalartype << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << "#----------------------" << std::endl;
+    stream << device.full_info(1,'#');
+    stream << "#----------------------" << std::endl;
+    stream << "#tuning for size : " << options.tuning_size << std::endl;
+
+    code_generator::forced_profile_key_type key(SCALAR_REDUCE_TYPE, sizeof(ScalarType));
+    viennacl::scheduler::statement statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(v1, v2));
+    autotune::benchmark(&timings,statement,key,conf,&stream);
+
+    //Recompiles for the best profile
+    profile_type best_profile = timings.begin()->second;
+    viennacl::generator::code_generator dummy;
+    dummy.add(statement,statement.array()[0]);
+    dummy.force_profile(key, best_profile);
+    viennacl::generator::enqueue(dummy,true);
+    viennacl::backend::finish();
+
+    stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
+    stream << "##Size\tGB/s" << std::endl;
+    for(unsigned int size = 1024 ; size <= 1e8 ; size *=2){
+        double percent = (double)size/1e8*100;
+        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+        stream << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;
+    }
     std::cout << std::endl;
 }
 
 int main(int argc, char* argv[]){
   typedef std::vector< viennacl::ocl::platform > platforms_type;
-  std::vector<std::string> args(argv, argv+argc);
-  if(argc<2){
-    std::cerr << "USAGE : PROGRAM_NAME DEVICE" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  unsigned int requested_device = atoi(args[1].c_str());
-  std::size_t current_device = 0;
+  typedef std::vector<viennacl::ocl::device> devices_type;
+  autotuner_options options = get_options(argc,argv);
+  std::size_t device_counter = 0;
   platforms_type platforms = viennacl::ocl::get_platforms();
   for (platforms_type::iterator platform_iter  = platforms.begin();
        platform_iter != platforms.end();
        ++platform_iter)
   {
-    typedef std::vector<viennacl::ocl::device> devices_type;
     devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
     for(devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
     {
-      if(current_device++==requested_device){
-        viennacl::ocl::setup_context(current_device,*iter);
-        viennacl::ocl::switch_context(current_device);
+      if(device_counter++==options.requested_device){
+        viennacl::ocl::setup_context(options.requested_device,*iter);
+        viennacl::ocl::switch_context(options.requested_device);
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
         std::string device_name = device.name();
         std::transform(device_name.begin(), device_name.end(), device_name.begin(), ::tolower);
         std::replace(device_name.begin(), device_name.end(),' ', '_');
         std::cout << "-------------------" << std::endl;
-        std::cout << device.info()<< std::endl;
-        std::cout << "DOT" << std::endl;
+        std::cout << device.info() << std::endl;
+        std::cout << "Operation : DOT" << std::endl;
         std::cout << "-------------------" << std::endl;
-        std::cout << "float:" << std::endl;
-        run_autotune<float>("dot_float_" + device_name + ".dat");
+        std::cout << "scalatype : " << options.scalartype << std::endl;
+        std::cout << "vector : [" << options.vector_interval << "]" << std::endl;
+        std::cout << "local size : [" << options.local_size_interval << "]" << std::endl;
+        std::cout << "number of groups : [" << options.num_groups_interval << "]" << std::endl;
+        std::cout << "decomposition : [" << options.decomposition << "]" << std::endl;
         std::cout << "-------------------" << std::endl;
-        std::cout << "double:" << std::endl;
-        run_autotune<double>("dot_double_" + device_name + ".dat");
+        if(options.scalartype=="float")
+            run_autotune<float>(options);
+        else if(options.scalartype=="double")
+            run_autotune<double>(options);
       }
     }
   }

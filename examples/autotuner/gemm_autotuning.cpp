@@ -25,8 +25,9 @@
 #include "viennacl/ocl/device.hpp"
 
 #include <sys/time.h>
-
 #include "viennacl/matrix.hpp"
+#include "viennacl/linalg/prod.hpp"
+
 #include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/autotune.hpp"
 
@@ -139,7 +140,7 @@ autotuner_options get_options(int argc, char* argv[]){
 }
 
 template<class ScalarType>
-struct blas3_config{
+struct config{
     typedef matrix_product profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
        profile_type res(params.at("vector").current()
@@ -182,7 +183,7 @@ viennacl::scheduler::statement make_statement(std::string const & layout, MatA c
 }
 
 template<typename ScalarType>
-double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename blas3_config<ScalarType>::profile_type const & profile)
+double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -206,12 +207,15 @@ double run_benchmark(size_t size, std::string layout, std::size_t scalartype_siz
     return 2*pow(size/static_cast<double>(1000.0),3)/time;
 }
 
-template<class NumericT>
-void run_autotune(autotuner_options options, viennacl::ocl::device const & device){
+template<class ScalarType>
+void run_autotune(autotuner_options options){
     typedef std::map<double, matrix_product> timings_t;
-    typedef viennacl::matrix<NumericT> MatrixT;
-    typedef blas3_config<NumericT> config_type;
+    typedef viennacl::matrix<ScalarType> MatrixT;
+    typedef config<ScalarType> config_type;
     typedef typename config_type::profile_type profile_type;
+
+    viennacl::ocl::device const &  device = viennacl::ocl::current_device();
+
     autotune::tuning_config<config_type> conf;
     timings_t timings;
     std::list<matrix_product> fastest_firsts;
@@ -263,6 +267,7 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
     conf.add_tuning_param("rhs_storage",rhs_storage);
 
 
+    stream << "# ---- GEMM ----" << std::endl;
     stream << "#" << options.layout << " | Scalartype : " << options.scalartype << std::endl;
     stream << "#----------------------" << std::endl;
     stream << "#----------------------" << std::endl;
@@ -271,7 +276,7 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
     stream << "#----------------------" << std::endl;
     stream << "#tuning for size : " << rounds_config.front().first << std::endl;
 
-    code_generator::forced_profile_key_type key = make_key(options.layout,sizeof(NumericT));
+    code_generator::forced_profile_key_type key = make_key(options.layout,sizeof(ScalarType));
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
         timings.clear();
         unsigned int k = std::distance(rounds_config.begin(),it);
@@ -305,6 +310,14 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
             fastest_firsts.push_back(itt->second);
         }
         stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
+
+        //Recompiles for the best profile
+        profile_type best_profile = timings.begin()->second;
+        viennacl::generator::code_generator dummy;
+        dummy.add(statement,statement.array()[0]);
+        dummy.force_profile(key, best_profile);
+        viennacl::generator::enqueue(dummy,true);
+        viennacl::backend::finish();
     }
 
     stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
@@ -312,7 +325,7 @@ void run_autotune(autotuner_options options, viennacl::ocl::device const & devic
     for(unsigned int size = 128 ; size <= 3072 ; size += 128){
         double percent = (double)size/3072*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << size << "\t" << run_benchmark<NumericT>(size,options.layout,sizeof(NumericT),timings.begin()->second) << std::endl;
+        stream << size << "\t" << run_benchmark<ScalarType>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
     }
 }
 
@@ -355,9 +368,9 @@ int main(int argc, char* argv[]){
         std::cout << "rhs fetch method : [" << options.rhs_fetch_method << "]" << std::endl;
         std::cout << "-------------------" << std::endl;
         if(options.scalartype=="float")
-            run_autotune<float>(options,device);
+            run_autotune<float>(options);
         else if(options.scalartype=="double")
-            run_autotune<double>(options,device);
+            run_autotune<double>(options);
       }
     }
   }
