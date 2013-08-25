@@ -148,7 +148,7 @@ namespace viennacl{
       template<class ProfileT>
       double benchmark_impl(viennacl::scheduler::statement const & statement, code_generator::forced_profile_key_type key, ProfileT const & prof){
 
-        tools::Timer t;
+        tools::timer t;
         std::list<viennacl::ocl::kernel *> kernels;
         viennacl::generator::code_generator gen;
         gen.force_profile(key, prof);

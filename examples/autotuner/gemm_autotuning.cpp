@@ -26,15 +26,12 @@
 
 #include <sys/time.h>
 
-#include "boost/numeric/ublas/matrix.hpp"
-
 #include "viennacl/matrix.hpp"
 #include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/autotune.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/linalg/norm_2.hpp"
 
-#include "../benchmarks/benchmark-utils.hpp"
+#include "viennacl/tools/timer.hpp"
+
 #include "command-line-utils.hpp"
 
 using namespace viennacl::generator;
@@ -199,7 +196,7 @@ double run_benchmark(size_t size, std::string layout, std::size_t scalartype_siz
     viennacl::generator::enqueue(gen);
     viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
-    Timer timer;
+    viennacl::tools::timer timer;
     timer.start();
     static const unsigned int n_runs = 1;
     for(unsigned int r = 0 ; r < n_runs; ++r)

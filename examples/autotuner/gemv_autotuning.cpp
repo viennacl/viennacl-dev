@@ -24,10 +24,10 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "boost/numeric/ublas/matrix.hpp"
+
 #include "viennacl/generator/generate.hpp"
 #include "viennacl/generator/autotune.hpp"
-
+#include "viennacl/tools/timer.hpp"
 #include "command-line-utils.hpp"
 
 //#define N_RUNS 5
@@ -133,6 +133,31 @@ template<class ScalarType>
 viennacl::scheduler::statement make_statement(autotuner_options options, viennacl::vector<ScalarType> const & y, viennacl::matrix<ScalarType> const & A, viennacl::vector<ScalarType> const & x){
     if(options.layout =="Nx") return viennacl::scheduler::statement(y,viennacl::op_assign(), viennacl::linalg::prod(A, x));
     else return viennacl::scheduler::statement(y,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(A), x));
+}
+
+template<typename ScalarType>
+double run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename blas3_config<ScalarType>::profile_type const & profile)
+{
+    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
+    //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
+    viennacl::matrix<ScalarType> A(size, size);
+    viennacl::vector<ScalarType> y(size);
+    viennacl::vector<ScalarType> x(size);
+    viennacl::scheduler::statement statement = make_statement(layout,y,A,x);
+    viennacl::generator::code_generator gen;
+    gen.add(statement,statement.array()[0]);
+    gen.force_profile(make_key<ScalarType>(layout), profile);
+    viennacl::generator::enqueue(gen);
+    viennacl::generator::enqueue(gen);
+    viennacl::backend::finish();
+    viennacl::tools::timer timer;
+    timer.start();
+    static const unsigned int n_runs = 1;
+    for(unsigned int r = 0 ; r < n_runs; ++r)
+      viennacl::generator::enqueue(gen);
+    viennacl::backend::finish();
+    double time = timer.get()/(double)n_runs;
+    return 1e-9*size*(2*size-1)/time;
 }
 
 template<class ScalarType>
