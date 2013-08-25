@@ -41,7 +41,6 @@ namespace viennacl{
 
   namespace generator{
 
-
     class scalar_reduction : public profile_base{
       private:
         typedef std::vector<std::pair<const char *, viennacl::ocl::handle<cl_mem> > > temporaries_type;
@@ -78,7 +77,6 @@ namespace viennacl{
 
         void init_temporaries(statements_type const & statements) const {
           if(temporaries_.empty()){
-            temporaries_.reserve(statements.size());
             //set temporary buffer argument
             for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               scheduler::statement::container_type const & array = it->first.array();
@@ -134,7 +132,7 @@ namespace viennacl{
 
       public:
         /** @brief The user constructor */
-        scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, bool global_decomposition) : profile_base(vectorization, group_size_, 1, 2), group_size_(group_size), num_groups_(num_groups), global_decomposition_(global_decomposition){ }
+        scalar_reduction(unsigned int vectorization, unsigned int group_size, unsigned int num_groups, unsigned int decomposition) : profile_base(vectorization, group_size, 1, 2), group_size_(group_size), num_groups_(num_groups), decomposition_(decomposition){ }
 
 
         static std::string csv_format() {
@@ -144,22 +142,16 @@ namespace viennacl{
         std::string csv_representation() const{
           std::ostringstream oss;
           oss << vectorization_
-                 << "," << group_size_
+                 << "," << local_size_1_
                  << "," << num_groups_
-                 << "," << global_decomposition_;
+                 << "," << decomposition_;
           return oss.str();
         }
 
         unsigned int num_groups() const { return num_groups_; }
 
-        unsigned int group_size() const { return group_size_; }
 
-        bool global_decomposition() const { return global_decomposition_; }
-
-        void set_local_sizes(std::size_t& s1, std::size_t& s2, std::size_t /*kernel_id*/) const{
-          s1 = group_size_;
-          s2 = 1;
-        }
+        unsigned int decomposition() const { return decomposition_; }
 
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
@@ -171,14 +163,14 @@ namespace viennacl{
           if(kernel_id==0){
             configure_local_sizes(k, 0);
 
-            std::size_t gsize = group_size_*num_groups_;
+            std::size_t gsize = local_size_1_*num_groups_;
             k.global_work_size(0,gsize);
             k.global_work_size(1,1);
           }
           else{
             configure_local_sizes(k, 1);
 
-            k.global_work_size(0,group_size_);
+            k.global_work_size(0,local_size_1_);
             k.global_work_size(1,1);
           }
 
@@ -206,7 +198,7 @@ namespace viennacl{
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
             stream << scalartypes[k] << " sum" << k << " = 0;" << std::endl;
 
-          if(global_decomposition_){
+          if(decomposition_){
             stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0)){" << std::endl;
           }
           else{
@@ -255,13 +247,13 @@ namespace viennacl{
           stream << "}" << std::endl;
           //Declare and fill local memory
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
-            stream << "__local " << scalartypes[k] << " buf" << k << "[" << group_size_ << "];" << std::endl;
+            stream << "__local " << scalartypes[k] << " buf" << k << "[" << local_size_1_ << "];" << std::endl;
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
-          for(unsigned int stride = group_size_/2 ; stride>1 ; stride /=2){
+          for(unsigned int stride = local_size_1_/2 ; stride>1 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();
@@ -291,7 +283,7 @@ namespace viennacl{
           stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
-            stream << "__local " << scalartypes[k] << " buf" << k << "[" << group_size_ << "];" << std::endl;
+            stream << "__local " << scalartypes[k] << " buf" << k << "[" << local_size_1_ << "];" << std::endl;
 
           for(std::size_t k = 0 ; k < exprs.size() ; ++k)
             stream << scalartypes[0] << " sum" << k << " = 0;" << std::endl;
@@ -307,7 +299,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
-          for(unsigned int stride = group_size_/2 ; stride>1 ; stride /=2){
+          for(unsigned int stride = local_size_1_/2 ; stride>1 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();
@@ -356,9 +348,8 @@ namespace viennacl{
         }
 
       private:
-        unsigned int group_size_;
         unsigned int num_groups_;
-        bool global_decomposition_;
+        unsigned int decomposition_;
         mutable temporaries_type temporaries_;
     };
 
