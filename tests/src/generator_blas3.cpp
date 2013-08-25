@@ -130,7 +130,7 @@ int test_prod(Epsilon const& epsilon,
 
 std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
 {
-    C     = alpha*viennacl::linalg::prod(A, B);
+    C     = alpha*viennacl::linalg::prod(A, B) + beta*C;
 
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
     viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
@@ -224,7 +224,7 @@ int test_prod(Epsilon const& epsilon)
         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
   for (unsigned int i = 0; i < C.size1(); ++i)
     for (unsigned int j = 0; j < C.size2(); ++j)
-        C(i,j) = 0;
+        C(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
 
 
   ublas::matrix<NumericT>     A_trans = trans(A);
@@ -288,55 +288,55 @@ int test(Epsilon const& epsilon)
   if (ret != EXIT_SUCCESS)
     return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;
-//  std::cout << "///////////////////////////////////////" << std::endl;
-//  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::column_major>(epsilon);
-//  if (ret != EXIT_SUCCESS)
-//    return ret;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;
+  std::cout << "///////////////////////////////////////" << std::endl;
+  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::column_major>(epsilon);
+  if (ret != EXIT_SUCCESS)
+    return ret;
 
 
 
