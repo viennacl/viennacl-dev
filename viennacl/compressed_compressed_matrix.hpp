@@ -361,7 +361,12 @@ namespace viennacl
             row_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
             row_buffer_.opencl_handle() = mem_row_buffer;
             row_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
-            row_buffer_.raw_size(sizeof(cl_uint) * (rows + 1));
+            row_buffer_.raw_size(sizeof(cl_uint) * (nonzero_rows + 1));
+
+            row_indices_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+            row_indices_.opencl_handle() = mem_row_indices;
+            row_indices_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+            row_indices_.raw_size(sizeof(cl_uint) * nonzero_rows);
 
             col_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
             col_buffer_.opencl_handle() = mem_col_buffer;
