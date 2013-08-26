@@ -126,12 +126,12 @@ struct config{
 };
 
 template<class ScalarType>
-code_generator::forced_profile_key_type make_key(autotuner_options options){
+code_generator::forced_profile_key_type make_key(autotuner_options /*options*/){
     return code_generator::forced_profile_key_type(SCALAR_REDUCE_TYPE,sizeof(ScalarType));
 }
 
 template<class ScalarType>
-viennacl::scheduler::statement make_statement(autotuner_options options, viennacl::scalar<ScalarType> const & s, viennacl::vector<ScalarType> const & x, viennacl::vector<ScalarType> const & y){
+viennacl::scheduler::statement make_statement(autotuner_options /*options*/, viennacl::scalar<ScalarType> const & s, viennacl::vector<ScalarType> const & x, viennacl::vector<ScalarType> const & y){
     return viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(x, y));
 }
 

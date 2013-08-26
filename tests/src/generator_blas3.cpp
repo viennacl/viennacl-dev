@@ -15,7 +15,9 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#define NDEBUG
+#ifndef NDEBUG
+  #define NDEBUG
+#endif
 
 //
 // *** System
