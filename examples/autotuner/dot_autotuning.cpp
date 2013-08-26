@@ -217,7 +217,7 @@ void run_autotune(autotuner_options const & options){
 
     stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
     stream << "##Size\tGB/s" << std::endl;
-    for(unsigned int size = 1024 ; size <= 1e7 ; size *=2){
+    for(unsigned int size = 1024 ; size <= 5e7 ; size *=2){
         double percent = (double)size/1e7*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
         stream << "#" << size << "\t" << run_benchmark<ScalarType>(size,options,best_profile) << std::endl;

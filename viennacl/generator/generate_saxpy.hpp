@@ -42,17 +42,25 @@ namespace viennacl{
 
     class vector_saxpy : public profile_base{
       public:
-        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), group_size_(gs), num_groups_(ng), decomposition_(d){ }
-
-        void set_local_sizes(std::size_t & size1, std::size_t & size2, std::size_t/* kernel_id*/) const{
-          size1 = group_size_;
-          size2 = 1;
+        static std::string csv_format() {
+          return "Vec,LSize1,NumGroups1,GlobalDecomposition";
         }
+
+        std::string csv_representation() const{
+          std::ostringstream oss;
+          oss << vectorization_
+              << "," << local_size_1_
+              << "," << num_groups_
+              << "," << decomposition_;
+          return oss.str();
+        }
+
+        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
-          k.global_work_size(0,group_size_*num_groups_);
+          k.global_work_size(0,local_size_1_*num_groups_);
           k.global_work_size(1,1);
 
           scheduler::statement_node const & first_node = statements.front().second;
@@ -63,23 +71,7 @@ namespace viennacl{
           arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
         }
 
-        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
-        bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
-
       private:
-
-        static std::string csv_format() {
-          return "Vec,LSize1,NumGroups1,GlobalDecomposition";
-        }
-
-        std::string csv_representation() const{
-          std::ostringstream oss;
-          oss << vectorization_
-              << "," << group_size_
-              << "," << num_groups_
-              << "," << decomposition_;
-          return oss.str();
-        }
 
         void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
@@ -110,7 +102,6 @@ namespace viennacl{
         }
 
       private:
-        std::size_t group_size_;
         std::size_t num_groups_;
         unsigned int decomposition_;
 
@@ -124,7 +115,7 @@ namespace viennacl{
         bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       public:
-        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), group_size_row_(gs1), group_size_col_(gs2), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
+        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
 
         static std::string csv_format() {
           return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";
@@ -133,24 +124,19 @@ namespace viennacl{
         std::string csv_representation() const{
           std::ostringstream oss;
           oss << vectorization_
-                 << "," << group_size_row_
-                 << "," << group_size_col_
+                 << "," << local_size_1_
+                 << "," << local_size_2_
                  << "," << num_groups_row_
                  << "," << num_groups_col_
                  << "," << decomposition_;
           return oss.str();
         }
 
-        void set_local_sizes(std::size_t & s1, std::size_t & s2, std::size_t /*kernel_id*/) const{
-          s1 = group_size_row_;
-          s2 = group_size_col_;
-        }
-
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
-          k.global_work_size(0,group_size_row_*num_groups_row_);
-          k.global_work_size(1,group_size_col_*num_groups_col_);
+          k.global_work_size(0,local_size_1_*num_groups_row_);
+          k.global_work_size(1,local_size_2_*num_groups_col_);
 
           scheduler::statement_node const & first_node = statements.front().second;
           k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun())));
@@ -207,9 +193,6 @@ namespace viennacl{
         }
 
       private:
-        std::size_t group_size_row_;
-        std::size_t group_size_col_;
-
         std::size_t num_groups_row_;
         std::size_t num_groups_col_;
 
