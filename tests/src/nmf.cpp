@@ -47,17 +47,20 @@ float matrix_compare(viennacl::matrix<ScalarType>& res,
 }
 
 
-void fill_random(std::vector<ScalarType>& v)
+void fill_random(std::vector< std::vector<ScalarType> >& v)
 {
-    for(std::size_t j = 0; j < v.size(); j++)
-        v[j] = static_cast<ScalarType>(rand()) / RAND_MAX;
+    for(std::size_t i = 0; i < v.size(); i++)
+    {
+      for (std::size_t j = 0; j < v[i].size(); ++j)
+        v[i][j] = static_cast<ScalarType>(rand()) / RAND_MAX;
+    }
 }
 
 
 void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 {
-    std::vector<ScalarType> stl_w(m * k);
-    std::vector<ScalarType> stl_h(k * n);
+    std::vector< std::vector<ScalarType> > stl_w(m, std::vector<ScalarType>(k));
+    std::vector< std::vector<ScalarType> > stl_h(k, std::vector<ScalarType>(n));
 
     viennacl::matrix<ScalarType> v_ref(m, n);
     viennacl::matrix<ScalarType> w_ref(m, k);
@@ -66,8 +69,8 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
     fill_random(stl_w);
     fill_random(stl_h);
 
-    viennacl::fast_copy(&stl_w[0], &stl_w[0] + stl_w.size(), w_ref);
-    viennacl::fast_copy(&stl_h[0], &stl_h[0] + stl_h.size(), h_ref);
+    viennacl::copy(stl_w, w_ref);
+    viennacl::copy(stl_h, h_ref);
 
     v_ref = viennacl::linalg::prod(w_ref, h_ref);  //reference
 
@@ -78,10 +81,8 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
     viennacl::matrix<ScalarType> w_nmf(m, k);
     viennacl::matrix<ScalarType> h_nmf(k, n);
 
-    viennacl::fast_copy(&stl_w[0], &stl_w[0] + stl_w.size(), w_nmf);
-    viennacl::fast_copy(&stl_h[0], &stl_h[0] + stl_h.size(), h_nmf);
-
-
+    viennacl::copy(stl_w, w_nmf);
+    viennacl::copy(stl_h, h_nmf);
 
     viennacl::linalg::nmf_config conf;
     viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
@@ -106,7 +107,7 @@ int main()
   test_nmf(3, 2, 3);
   test_nmf(16, 7, 12);
   test_nmf(160, 73, 200);
-  test_nmf(1000, 15, 1000);
+  test_nmf(687, 15, 713);
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
