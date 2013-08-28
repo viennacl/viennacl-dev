@@ -398,10 +398,6 @@ int main(int , char **)
     createHeaders("matrix_prod_col_row_col");
     createHeaders("matrix_prod_col_col_row");
     createHeaders("matrix_prod_col_col_col");
-    createHeaders("matrix_solve_col_col");
-    createHeaders("matrix_solve_col_row");
-    createHeaders("matrix_solve_row_col");
-    createHeaders("matrix_solve_row_row");
     createHeaders("rand");
     createHeaders("svd");
     createHeaders("spai");

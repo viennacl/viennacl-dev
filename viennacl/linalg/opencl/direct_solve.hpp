@@ -24,11 +24,10 @@
 
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/tools/matrix_solve_kernel_class_deducer.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
-
+#include "viennacl/linalg/opencl/kernels/matrix_solve.hpp"
 
 namespace viennacl
 {
@@ -77,7 +76,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
         KernelClass::init(ctx);
 
         std::stringstream ss;
@@ -100,7 +99,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
         KernelClass::init(ctx);
 
         std::stringstream ss;
@@ -124,7 +123,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(B).context());
 
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
         KernelClass::init(ctx);
 
         std::stringstream ss;
@@ -147,7 +146,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_A.lhs()).context());
 
-        typedef typename viennacl::tools::MATRIX_SOLVE_KERNEL_CLASS_DEDUCER< matrix_base<NumericT, F1>, matrix_base<NumericT, F2> >::ResultType    KernelClass;
+        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
         KernelClass::init(ctx);
 
         std::stringstream ss;

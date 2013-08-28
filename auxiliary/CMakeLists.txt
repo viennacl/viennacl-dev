@@ -1,6 +1,5 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
-add_executable(generate-blas3-solve-align1  generate-blas3-solve-align1.cpp)
 add_executable(generate-blas3-prod-align1   generate-blas3-prod-align1.cpp)
 add_executable(generate-blas3-prod16-align1 generate-blas3-prod16-align1.cpp)
 add_executable(generate-blas3-prod-amd      generate-blas3-prod-amd.cpp)
@@ -110,50 +109,9 @@ function(generate_blas3_prod_amd outvar)
    set(${outvar} "${outfiles}" PARENT_SCOPE)
 endfunction()
 
-function(generate_blas3_solve_align1 outvar)
-   set(crstr_0 col)
-   set(crstr_1 row)
-   set(tstr_0)
-   set(tstr_1 trans_)
-   set(ulstr_0 lower)
-   set(ulstr_1 upper)
-   set(unitstr_0)
-   set(unitstr_1 unit_)
-   set(outfiles)
-
-   foreach(ar 0 1) # A is column/row major
-   foreach(br 0 1) # A is column/row major
-   foreach(at 0 1) # A is transposed
-   foreach(bt 0 1) # B is transposed
-   foreach(ul 0 1) # upper/lower
-   foreach(un 0 1) # unit
-      set(d "${CMAKE_CURRENT_BINARY_DIR}")
-      set(d "${d}/matrix_solve_${crstr_${ar}}_${crstr_${br}}")
-      set(d "${d}/align1")
-      file(MAKE_DIRECTORY "${d}")
-      set(o "${d}/${tstr_${at}}${unitstr_${un}}${ulstr_${ul}}_${tstr_${bt}}solve.cl")
-      file(RELATIVE_PATH ro "${CMAKE_CURRENT_BINARY_DIR}" "${o}")
-      add_custom_command(OUTPUT "${o}"
-         COMMAND generate-blas3-solve-align1
-            ${ar} ${br} ${at} ${bt} ${ul} ${un} > "${o}"
-         COMMENT "Generating ${ro}"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-         VERBATIM)
-      list(APPEND outfiles "${o}")
-   endforeach()
-   endforeach()
-   endforeach()
-   endforeach()
-   endforeach()
-   endforeach()
-   set(${outvar} "${outfiles}" PARENT_SCOPE)
-endfunction()
 
 # Matrix-Matrix products
 generate_blas3_prod_align1(MATRIX_PROD_SRCS)
-
-# Matrix-Matrix triangular solver
-generate_blas3_solve_align1(MATRIX_SOLVE_SRCS)
 
 set(COMPRESSED_MATRIX_SRCS
    compressed_matrix/align1/block_trans_lu_backward.cl
@@ -233,7 +191,7 @@ foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS
    configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
    list(APPEND CL_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${f}")
 endforeach()
-list(APPEND CL_SRCS ${MATRIX_PROD_SRCS} ${MATRIX_SOLVE_SRCS})
+list(APPEND CL_SRCS ${MATRIX_PROD_SRCS})
 
 configure_file(converter.cpp ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp @ONLY)
 add_executable(converter ${CMAKE_CURRENT_BINARY_DIR}/converter.cpp)
@@ -254,10 +212,6 @@ foreach(d
       matrix_prod_row_col_row
       matrix_prod_row_row_col
       matrix_prod_row_row_row
-      matrix_solve_col_col
-      matrix_solve_col_row
-      matrix_solve_row_col
-      matrix_solve_row_row
       svd
       spai
       rand
