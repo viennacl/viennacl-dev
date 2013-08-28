@@ -217,9 +217,6 @@ set(SPAI_SRCS
    spai/align1/block_r_assembly.cl
    )
 
-set(ILU_SRCS
-   ilu/align1/level_scheduling_substitute.cl
-   )
 
 set(RAND_SRCS
     rand/align1/_mwc64x.cl
@@ -229,7 +226,7 @@ set(RAND_SRCS
 
 set(CL_SRCS)
 foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS ELL_MATRIX_SRCS HYB_MATRIX_SRCS
-      SVD_SRCS SPAI_SRCS ILU_SRCS
+      SVD_SRCS SPAI_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
@@ -263,7 +260,6 @@ foreach(d
       matrix_solve_row_row
       svd
       spai
-      ilu
       rand
       )
    set(f "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels/${d}")

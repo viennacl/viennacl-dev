@@ -29,7 +29,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/kernels/ilu_kernels.h"
+#include "viennacl/linalg/opencl/kernels/ilu.hpp"
 
 
 namespace viennacl
@@ -53,8 +53,8 @@ namespace viennacl
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-          viennacl::linalg::kernels::ilu<ScalarType, 1>::init(ctx);
-          viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::ilu<ScalarType, 1>::program_name(), "level_scheduling_substitute");
+          viennacl::linalg::opencl::kernels::ilu<ScalarType>::init(ctx);
+          viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<ScalarType>::program_name(), "level_scheduling_substitute");
 
           viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
                                    vec,
