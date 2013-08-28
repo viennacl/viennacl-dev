@@ -158,6 +158,12 @@ namespace viennacl
         typedef typename orientation_functor<T>::type  type;
       };
 
+      template <typename SCALARTYPE, typename F>
+      struct orientation_functor< matrix_base<SCALARTYPE, F> >
+      {
+        typedef F     type;
+      };
+
       template <typename LHS, typename RHS>
       struct orientation_functor< matrix_expression<LHS, RHS, op_trans> >
       {
