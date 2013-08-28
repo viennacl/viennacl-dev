@@ -31,7 +31,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/kernels/compressed_matrix_kernels.h"
 #include "viennacl/linalg/kernels/coordinate_matrix_kernels.h"
-#include "viennacl/linalg/kernels/ell_matrix_kernels.h"
+#include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
 #include "viennacl/linalg/kernels/hyb_matrix_kernels.h"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
 
@@ -573,7 +573,7 @@ namespace viennacl
         assert(mat.size2() == vec.size());
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::init(ctx);
+        viennacl::linalg::opencl::kernels::ell_matrix<TYPE>::init(ctx);
         result.clear();
 
         viennacl::ocl::packed_cl_uint layout_vec;
@@ -590,7 +590,7 @@ namespace viennacl
 
         std::stringstream ss;
         ss << "vec_mul_" << 1;//(ALIGNMENT != 1?4:1);
-        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::ell_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<TYPE>::program_name(), "vec_mul");
 
         unsigned int thread_num = 128;
         unsigned int group_num = 256;
@@ -630,8 +630,8 @@ namespace viennacl
                            viennacl::matrix_base<NumericT, F> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
-        viennacl::linalg::kernels::ell_matrix<ScalarType, ALIGNMENT>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::ell_matrix<ScalarType, ALIGNMENT>::program_name(), "d_mat_mul");
+        viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(), "d_mat_mul");
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;
@@ -676,8 +676,8 @@ namespace viennacl
                            viennacl::matrix_base<NumericT, F> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
-        viennacl::linalg::kernels::ell_matrix<ScalarType, ALIGNMENT>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::ell_matrix<ScalarType, ALIGNMENT>::program_name(), "d_tr_mat_mul");
+        viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(), "d_tr_mat_mul");
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;
