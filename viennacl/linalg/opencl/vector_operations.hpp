@@ -399,7 +399,7 @@ namespace viennacl
                                  size_vec1,
                                  viennacl::traits::opencl_handle(vec2),
                                  size_vec2,
-                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(partial_result)
                                 )
                               );
@@ -441,7 +441,7 @@ namespace viennacl
                                     cl_uint(viennacl::traits::stride(temp)),
                                     cl_uint(viennacl::traits::size(temp)),
                                     cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
+                                    viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result) )
                               );
       }
@@ -510,14 +510,14 @@ namespace viennacl
                                                          viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
                                                          viennacl::traits::opencl_handle(y2), detail::make_layout(y2),
                                                          viennacl::traits::opencl_handle(y3), detail::make_layout(y3),
-                                                         viennacl::ocl::local_mem(sizeof(T) * 4 * inner_prod_kernel_4.local_work_size()),
+                                                         viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 4 * inner_prod_kernel_4.local_work_size()),
                                                          viennacl::traits::opencl_handle(temp)
                                                         ) );
 
               ksum.local_work_size(0, work_groups);
               ksum.global_work_size(0, 4 * work_groups);
               viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                          viennacl::ocl::local_mem(sizeof(T) * 4 * ksum.local_work_size()),
+                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 4 * ksum.local_work_size()),
                                           viennacl::traits::opencl_handle(result),
                                           cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
                                           cl_uint(viennacl::traits::stride(result))
@@ -536,14 +536,14 @@ namespace viennacl
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
                                                           viennacl::traits::opencl_handle(y2), detail::make_layout(y2),
-                                                          viennacl::ocl::local_mem(sizeof(T) * 3 * inner_prod_kernel_3.local_work_size()),
+                                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 3 * inner_prod_kernel_3.local_work_size()),
                                                           viennacl::traits::opencl_handle(temp)
                                                          ) );
 
               ksum.local_work_size(0, work_groups);
               ksum.global_work_size(0, 3 * work_groups);
               viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                          viennacl::ocl::local_mem(sizeof(T) * 3 * ksum.local_work_size()),
+                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 3 * ksum.local_work_size()),
                                           viennacl::traits::opencl_handle(result),
                                           cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
                                           cl_uint(viennacl::traits::stride(result))
@@ -560,14 +560,14 @@ namespace viennacl
               viennacl::ocl::enqueue(inner_prod_kernel_2( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
                                                           viennacl::traits::opencl_handle(y1), detail::make_layout(y1),
-                                                          viennacl::ocl::local_mem(sizeof(T) * 2 * inner_prod_kernel_2.local_work_size()),
+                                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 2 * inner_prod_kernel_2.local_work_size()),
                                                           viennacl::traits::opencl_handle(temp)
                                                         ) );
 
               ksum.local_work_size(0, work_groups);
               ksum.global_work_size(0, 2 * work_groups);
               viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                          viennacl::ocl::local_mem(sizeof(T) * 2 * ksum.local_work_size()),
+                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 2 * ksum.local_work_size()),
                                           viennacl::traits::opencl_handle(result),
                                           cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
                                           cl_uint(viennacl::traits::stride(result))
@@ -582,14 +582,14 @@ namespace viennacl
               vector_base<T> const & y0 = vec_tuple.const_at(current_index    );
               viennacl::ocl::enqueue(inner_prod_kernel_1( viennacl::traits::opencl_handle(x), layout_x,
                                                           viennacl::traits::opencl_handle(y0), detail::make_layout(y0),
-                                                          viennacl::ocl::local_mem(sizeof(T) * 1 * inner_prod_kernel_1.local_work_size()),
+                                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 1 * inner_prod_kernel_1.local_work_size()),
                                                           viennacl::traits::opencl_handle(temp)
                                                         ) );
 
               ksum.local_work_size(0, work_groups);
               ksum.global_work_size(0, 1 * work_groups);
               viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                          viennacl::ocl::local_mem(sizeof(T) * 1 * ksum.local_work_size()),
+                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 1 * ksum.local_work_size()),
                                           viennacl::traits::opencl_handle(result),
                                           cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
                                           cl_uint(viennacl::traits::stride(result))
@@ -618,14 +618,14 @@ namespace viennacl
                                                           viennacl::traits::opencl_handle(y5), detail::make_layout(y5),
                                                           viennacl::traits::opencl_handle(y6), detail::make_layout(y6),
                                                           viennacl::traits::opencl_handle(y7), detail::make_layout(y7),
-                                                          viennacl::ocl::local_mem(sizeof(T) * 8 * inner_prod_kernel_8.local_work_size()),
+                                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 8 * inner_prod_kernel_8.local_work_size()),
                                                           viennacl::traits::opencl_handle(temp)
                                                         ) );
 
               ksum.local_work_size(0, work_groups);
               ksum.global_work_size(0, 8 * work_groups);
               viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                          viennacl::ocl::local_mem(sizeof(T) * 8 * ksum.local_work_size()),
+                                          viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * 8 * ksum.local_work_size()),
                                           viennacl::traits::opencl_handle(result),
                                           cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
                                           cl_uint(viennacl::traits::stride(result))
@@ -703,7 +703,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::stride(vec)),
                                  cl_uint(viennacl::traits::size(vec)),
                                  cl_uint(norm_id),
-                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
                                  viennacl::traits::opencl_handle(partial_result) )
                               );
       }
@@ -740,7 +740,7 @@ namespace viennacl
                                     cl_uint(viennacl::traits::stride(temp)),
                                     cl_uint(viennacl::traits::size(temp)),
                                     cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
+                                    viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
                                     result)
                               );
       }
@@ -761,11 +761,13 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 1);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        std::vector<T> temp_cpu(work_groups);
+        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
+
+        CPUVectorType temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
-        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
       }
 
@@ -803,7 +805,7 @@ namespace viennacl
                                       cl_uint(viennacl::traits::stride(temp)),
                                       cl_uint(viennacl::traits::size(temp)),
                                       cl_uint(2),
-                                      viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
+                                      viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
                                       result)
                               );
       }
@@ -824,11 +826,13 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 2);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        std::vector<T> temp_cpu(work_groups);
+        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
+
+        CPUVectorType temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
-        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result += *it;
         result = std::sqrt(result);
       }
@@ -866,7 +870,7 @@ namespace viennacl
                                      cl_uint(viennacl::traits::stride(temp)),
                                      cl_uint(viennacl::traits::size(temp)),
                                      cl_uint(0),
-                                     viennacl::ocl::local_mem(sizeof(T) * ksum.local_work_size()),
+                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
                                      result)
                               );
       }
@@ -887,11 +891,13 @@ namespace viennacl
         norm_reduction_impl(vec, temp, 0);
 
         // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        std::vector<T> temp_cpu(work_groups);
+        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
+
+        CPUVectorType temp_cpu(work_groups);
         viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
         result = 0;
-        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
           result = std::max(result, *it);
       }
 
@@ -924,7 +930,7 @@ namespace viennacl
                                  cl_uint(viennacl::traits::start(vec)),
                                  cl_uint(viennacl::traits::stride(vec)),
                                  cl_uint(viennacl::traits::size(vec)),
-                                 viennacl::ocl::local_mem(sizeof(T) * k.local_work_size()),
+                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
                                  viennacl::ocl::local_mem(sizeof(cl_uint) * k.local_work_size()), h));
 
         //read value:
