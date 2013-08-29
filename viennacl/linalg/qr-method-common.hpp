@@ -20,7 +20,7 @@
 
 #include <cmath>
 
-#include "viennacl/linalg/kernels/svd_kernels.h"
+#include "viennacl/linalg/opencl/kernels/svd.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
@@ -106,7 +106,7 @@ namespace viennacl
         typedef typename MatrixType::value_type                                   ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-        viennacl::ocl::kernel & kernel = viennacl::ocl::get_kernel(viennacl::linalg::kernels::svd<CPU_ScalarType, 1>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
+        viennacl::ocl::kernel & kernel = viennacl::ocl::get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
 
         viennacl::ocl::enqueue(kernel(A,
                                       static_cast<cl_uint>(A.internal_size1()),
@@ -151,7 +151,7 @@ namespace viennacl
 
         std::string kernel_name = copy_col ? SVD_COPY_COL_KERNEL : SVD_COPY_ROW_KERNEL;
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), kernel_name);
+        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<SCALARTYPE>::program_name(), kernel_name);
 
         viennacl::ocl::enqueue(kernel(
                                       A,
@@ -213,7 +213,7 @@ namespace viennacl
         viennacl::vector<SCALARTYPE, ALIGNMENT> S(sh.size());
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::kernels::svd<SCALARTYPE, 1>::program_name(), SVD_BIDIAG_PACK_KERNEL);
+        viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<SCALARTYPE>::program_name(), SVD_BIDIAG_PACK_KERNEL);
 
         viennacl::ocl::enqueue(kernel(
                                       A,

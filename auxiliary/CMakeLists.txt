@@ -1,22 +1,5 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(SVD_SRCS
-   svd/align1/bidiag_pack.cl
-   svd/align1/col_reduce_lcl_array.cl
-   svd/align1/copy_col.cl
-   svd/align1/copy_row.cl
-   svd/align1/final_iter_update.cl
-   svd/align1/givens_next.cl
-   svd/align1/givens_prev.cl
-   svd/align1/house_update_A_left.cl
-   svd/align1/house_update_A_right.cl
-   svd/align1/house_update_QL.cl
-   svd/align1/house_update_QR.cl
-   svd/align1/inverse_signs.cl
-   svd/align1/transpose_inplace.cl
-   svd/align1/update_qr_column.cl
-   )
-
 
 set(RAND_SRCS
     rand/align1/_mwc64x.cl
@@ -25,7 +8,7 @@ set(RAND_SRCS
     )
 
 set(CL_SRCS)
-foreach(f IN LISTS SVD_SRCS SPAI_SRCS RAND_SRCS)
+foreach(f IN LISTS RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
    configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
@@ -40,8 +23,6 @@ target_link_libraries(converter ${Boost_LIBRARIES})
 set(KERNEL_HDRS)
 set(KERNEL_SRCS)
 foreach(d
-      svd
-      spai
       rand
       )
    set(f "${PROJECT_BINARY_DIR}/viennacl/linalg/kernels/${d}")
