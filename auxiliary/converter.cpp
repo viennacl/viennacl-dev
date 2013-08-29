@@ -387,7 +387,6 @@ void createHeaders(const char * dirname)
 int main(int , char **)
 {
     createHeaders("compressed_matrix");
-    createHeaders("coordinate_matrix");
     createHeaders("rand");
     createHeaders("svd");
     createHeaders("spai");

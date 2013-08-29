@@ -30,7 +30,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/kernels/compressed_matrix_kernels.h"
-#include "viennacl/linalg/kernels/coordinate_matrix_kernels.h"
+#include "viennacl/linalg/opencl/kernels/coordinate_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/hyb_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
@@ -493,8 +493,8 @@ namespace viennacl
                       viennacl::linalg::detail::row_info_types info_selector)
         {
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-          viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::init(ctx);
-          viennacl::ocl::kernel & row_info_kernel = ctx.get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, MAT_ALIGNMENT>::program_name(), "row_info_extractor");
+          viennacl::linalg::opencl::kernels::coordinate_matrix<SCALARTYPE>::init(ctx);
+          viennacl::ocl::kernel & row_info_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<SCALARTYPE>::program_name(), "row_info_extractor");
           unsigned int thread_num = 256; //k.local_work_size(0);
 
           row_info_kernel.local_work_size(0, thread_num);
@@ -522,7 +522,7 @@ namespace viennacl
                            viennacl::vector_base<SCALARTYPE> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::init(ctx);
+        viennacl::linalg::opencl::kernels::coordinate_matrix<SCALARTYPE>::init(ctx);
 
         result.clear();
 
@@ -540,7 +540,7 @@ namespace viennacl
 
         //std::cout << "prod(coordinate_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::coordinate_matrix<SCALARTYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<SCALARTYPE>::program_name(), "vec_mul");
         unsigned int thread_num = 256; //k.local_work_size(0);
 
         k.local_work_size(0, thread_num);
