@@ -32,7 +32,7 @@
 #include "viennacl/linalg/detail/op_executor.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
-#include "viennacl/rand/utils.hpp"
+//#include "viennacl/rand/utils.hpp"
 #include "viennacl/context.hpp"
 #include "viennacl/traits/handle.hpp"
 
@@ -133,12 +133,12 @@ namespace viennacl
   };
 
 
-#ifdef VIENNACL_WITH_OPENCL
-  template<class SCALARTYPE, class DISTRIBUTION>
-  rand::random_vector_t<SCALARTYPE, DISTRIBUTION> random_vector(unsigned int size, DISTRIBUTION const & distribution){
-      return rand::random_vector_t<SCALARTYPE,DISTRIBUTION>(size,distribution);
-  }
-#endif
+//#ifdef VIENNACL_WITH_OPENCL
+//  template<class SCALARTYPE, class DISTRIBUTION>
+//  rand::random_vector_t<SCALARTYPE, DISTRIBUTION> random_vector(unsigned int size, DISTRIBUTION const & distribution){
+//      return rand::random_vector_t<SCALARTYPE,DISTRIBUTION>(size,distribution);
+//  }
+//#endif
 
 
   //

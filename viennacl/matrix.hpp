@@ -31,7 +31,7 @@
 #include "viennacl/tools/matrix_size_deducer.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
-#include "viennacl/rand/utils.hpp"
+//#include "viennacl/rand/utils.hpp"
 #include "viennacl/traits/handle.hpp"
 
 namespace viennacl
@@ -142,12 +142,12 @@ namespace viennacl
 
 
 
-#ifdef VIENNACL_WITH_OPENCL
-  template<class SCALARTYPE, class DISTRIBUTION>
-  rand::random_matrix_t<SCALARTYPE, DISTRIBUTION> random_matrix(unsigned int size1, unsigned int size2, DISTRIBUTION const & distribution){
-      return rand::random_matrix_t<SCALARTYPE,DISTRIBUTION>(size1,size2,distribution);
-  }
-#endif
+//#ifdef VIENNACL_WITH_OPENCL
+//  template<class SCALARTYPE, class DISTRIBUTION>
+//  rand::random_matrix_t<SCALARTYPE, DISTRIBUTION> random_matrix(unsigned int size1, unsigned int size2, DISTRIBUTION const & distribution){
+//      return rand::random_matrix_t<SCALARTYPE,DISTRIBUTION>(size1,size2,distribution);
+//  }
+//#endif
 
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression

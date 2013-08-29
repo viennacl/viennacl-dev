@@ -125,7 +125,6 @@ if(ENABLE_MTL4)
 endif()
 
 include_directories(
-   ${PROJECT_BINARY_DIR}
    ${PROJECT_SOURCE_DIR}
    ${OPENCL_INCLUDE_DIRS})
 

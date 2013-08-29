@@ -77,8 +77,6 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # Subdirectories
 ################
 
-add_subdirectory(auxiliary)
-
 if(BUILD_EXAMPLES)
    add_subdirectory(examples)
 endif()
@@ -201,7 +199,6 @@ if(ENABLE_DIST)
              cmake/ViennaCLCommon.cmake
              cmake/ViennaCLConfig.cmake.in
              cmake/ViennaCLConfigVersion.cmake.in
-             auxiliary/README
              build/README)
       configure_file(${f} "${DIST_SOURCES_DIR}/${f}" COPYONLY)
    endforeach()
