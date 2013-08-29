@@ -30,10 +30,10 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/generate_utils.hpp"
+#include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"
 
-#include "viennacl/generator/generate_template_base.hpp"
+#include "viennacl/generator/profile_base.hpp"
 
 #include "viennacl/tools/tools.hpp"
 

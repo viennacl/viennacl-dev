@@ -186,18 +186,6 @@ namespace viennacl{
           result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
       };
 
-//      static std::size_t size(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
-//        return call_on_vector(type, element, size_fun());
-//      }
-
-//      static std::size_t size1(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
-//        return call_on_matrix(type, element, size1_fun());
-//      }
-
-//      static std::size_t size2(scheduler::statement_node_type type, scheduler::lhs_rhs_element element){
-//        return call_on_matrix(type, element, size2_fun());
-//      }
-
       template<class T, class U>
       struct is_same_type { enum { value = 0 }; };
 

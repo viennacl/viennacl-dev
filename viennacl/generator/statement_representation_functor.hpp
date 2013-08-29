@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/statement_representation.hpp
-    @brief Functor to enqueue the leaves of an expression tree
+/** @file viennacl/generator/statement_representation_functor.hpp
+    @brief Functor to generate the string id of a statement
 */
 
 #include <set>
@@ -34,9 +34,9 @@
 
 #include "viennacl/ocl/kernel.hpp"
 
-#include "viennacl/generator/generate_utils.hpp"
+#include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/mapped_types.hpp"
+#include "viennacl/generator/mapped_objects.hpp"
 
 namespace viennacl{
 
@@ -44,7 +44,7 @@ namespace viennacl{
 
     namespace detail{
 
-      class representation_functor : public traversal_functor{
+      class statement_representation_functor : public traversal_functor{
         private:
           unsigned int get_id(void * handle) const{
             unsigned int i = 0;
@@ -73,7 +73,7 @@ namespace viennacl{
         public:
           typedef void result_type;
 
-          representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
+          statement_representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
 
           template<class ScalarType>
           result_type operator()(ScalarType const & /*scal*/) const {
@@ -82,7 +82,7 @@ namespace viennacl{
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
-          //Scalar mapping
+          /** @brief Scalar mapping */
           template<class ScalarType>
           result_type operator()(scalar<ScalarType> const & scal) const {
             *ptr_++='s'; //scalar
@@ -90,7 +90,7 @@ namespace viennacl{
             append_id(ptr_, get_id((void*)&scal));
           }
 
-          //Vector mapping
+          /** @brief Vector mapping */
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
             *ptr_++='v'; //vector
@@ -102,7 +102,7 @@ namespace viennacl{
             append_id(ptr_, get_id((void*)&vec));
           }
 
-          //Implicit vector mapping
+          /** @brief Implicit vector mapping */
           template<class ScalarType>
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             *ptr_++='i'; //implicit
@@ -114,7 +114,7 @@ namespace viennacl{
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
-          //Matrix mapping
+          /** @brief Matrix mapping */
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
             *ptr_++='m'; //vector
@@ -131,7 +131,7 @@ namespace viennacl{
             append_id(ptr_, get_id((void*)&mat));
           }
 
-          //Implicit matrix mapping
+          /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             *ptr_++='i'; //implicit

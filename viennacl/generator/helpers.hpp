@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/generate_utils.hpp
-    @brief Internal upper layer to the scheduler
+/** @file viennacl/generator/helpers.hpp
+    @brief several code generation helpers
 */
 
 #include <set>
@@ -39,14 +39,17 @@ namespace viennacl{
 
     namespace detail{
 
+    /** @brief generate the string for a pointer kernel argument */
       static std::string generate_value_kernel_argument(std::string const & scalartype, std::string const & name){
         return scalartype + ' ' + name + ",";
       }
 
+      /** @brief generate the string for a pointer kernel argument */
       static std::string generate_pointer_kernel_argument(std::string const & address_space, std::string const & scalartype, std::string const & name){
         return address_space +  " " + scalartype + "* " + name + ",";
       }
 
+      /** @brief generate a string from an operation_node_type */
       static const char * generate(operation_node_type type){
         // unary expression
         switch(type){
@@ -67,12 +70,14 @@ namespace viennacl{
         }
       }
 
+      /** @brief checks whether an operator is both a binary node and a leaf */
       inline bool is_binary_leaf_operator(operation_node_type const & op_type) {
         return op_type == scheduler::OPERATION_BINARY_INNER_PROD_TYPE
              ||op_type == scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
              ||op_type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE;
       }
 
+      /** @brief checks whether an operator is arithmetic or not */
       inline bool is_arithmetic_operator(operation_node_type const & op_type) {
         return op_type == scheduler::OPERATION_BINARY_ASSIGN_TYPE
              ||op_type == scheduler::OPERATION_BINARY_ADD_TYPE
@@ -88,31 +93,7 @@ namespace viennacl{
 
       }
 
-      class traversal_functor{
-        public:
-          void call_before_expansion() const { }
-          void call_after_expansion() const { }
-      };
-
-      class prototype_generation_traversal : public traversal_functor{
-        private:
-          std::set<std::string> & already_generated_;
-          std::string & str_;
-          unsigned int vector_size_;
-          mapping_type const & mapping_;
-        public:
-          prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapping_type const & mapping) : already_generated_(already_generated), str_(str), vector_size_(vector_size), mapping_(mapping){ }
-
-          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
-              if( (node_type==detail::LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                ||(node_type==detail::RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-                  append_kernel_arguments(already_generated_, str_, vector_size_, *mapping_.at(std::make_pair(root_node,node_type)));
-          }
-      };
-
-
-
-
+      /** @brief Recursively execute a functor on a statement */
       template<class Fun>
       static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf /* see forwards.h for default argument */){
 
@@ -156,6 +137,31 @@ namespace viennacl{
         }
       }
 
+      /** @brief base functor class for traversing a statement */
+      class traversal_functor{
+        public:
+          void call_before_expansion() const { }
+          void call_after_expansion() const { }
+      };
+
+      /** @brief functor for generating the prototype of a statement */
+      class prototype_generation_traversal : public traversal_functor{
+        private:
+          std::set<std::string> & already_generated_;
+          std::string & str_;
+          unsigned int vector_size_;
+          mapping_type const & mapping_;
+        public:
+          prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapping_type const & mapping) : already_generated_(already_generated), str_(str), vector_size_(vector_size), mapping_(mapping){ }
+
+          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
+              if( (node_type==detail::LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                ||(node_type==detail::RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
+                  append_kernel_arguments(already_generated_, str_, vector_size_, *mapping_.at(std::make_pair(root_node,node_type)));
+          }
+      };
+
+      /** @brief functor for fetching the elements of a statement */
       class fetch_traversal : public traversal_functor{
         private:
           std::set<std::string> & fetched_;
@@ -202,6 +208,7 @@ namespace viennacl{
       }
 
 
+      /** @brief functor for generating the expression string from a statement */
       class expression_generation_traversal : public traversal_functor{
         private:
           std::pair<std::string, std::string> index_string_;

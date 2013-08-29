@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/mapped_types.hpp
-    @brief Internal upper layer to the scheduler
+/** @file viennacl/generator/mapped_objects.hpp
+    @brief Map ViennaCL objects to generator wrappers
 */
 
 #include <string>
@@ -38,7 +38,7 @@ namespace viennacl{
 
       /** @brief Base class for mapping viennacl datastructure to generator-friendly structures
        */
-      class mapped_container{
+      class mapped_object{
         protected:
           struct node_info{
               node_info() : mapping(NULL), statement(NULL), root_node(NULL) { }
@@ -50,7 +50,7 @@ namespace viennacl{
           virtual std::string append_vector_size(std::string const & scalartype, unsigned int) const { return scalartype; }
 
         public:
-          mapped_container(std::string const & scalartype) : scalartype_(scalartype){          }
+          mapped_object(std::string const & scalartype) : scalartype_(scalartype){          }
           virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str, unsigned int) const{ return str; }
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
@@ -61,15 +61,15 @@ namespace viennacl{
             else
               return generate_default(index);
           }
-          virtual ~mapped_container(){ }
+          virtual ~mapped_object(){ }
         protected:
           std::string access_name_;
           std::string scalartype_;
       };
 
-      class mapped_binary_leaf : public mapped_container{
+      class mapped_binary_leaf : public mapped_object{
         public:
-          mapped_binary_leaf(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_binary_leaf(std::string const & scalartype) : mapped_object(scalartype){ }
           mapping_type const & mapping() const { return *info_.mapping; }
           scheduler::statement const & statement() const { return *info_.statement; }
           scheduler::statement_node const & root_node() const { return *info_.root_node; }
@@ -105,11 +105,11 @@ namespace viennacl{
       };
 
       /** @brief Mapping of a host scalar to a generator class */
-      class mapped_host_scalar : public mapped_container{
+      class mapped_host_scalar : public mapped_object{
           friend class map_functor;
           std::string generate_default(std::pair<std::string, std::string> const &) const{ return name_;  }
         public:
-          mapped_host_scalar(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_host_scalar(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string const & name() { return name_; }
           std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int) const{
             if(already_generated.insert(name_).second)
@@ -122,12 +122,12 @@ namespace viennacl{
       };
 
       /** @brief Base class for datastructures passed by pointer */
-      class mapped_handle : public mapped_container{
+      class mapped_handle : public mapped_object{
           virtual std::string offset(std::pair<std::string, std::string> const & index) const = 0;
           virtual void append_optional_arguments(std::string &) const{ }
           std::string generate_default(std::pair<std::string, std::string> const & index) const{ return name_  + '[' + offset(index) + ']'; }
         public:
-          mapped_handle(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_handle(std::string const & scalartype) : mapped_object(scalartype){ }
 
           std::string const & name() const { return name_; }
 
@@ -164,7 +164,7 @@ namespace viennacl{
           std::string name_;
       };
 
-      /** @brief Base class for scalar */
+      /** @brief Mapping of a scalar to a generator class */
       class mapped_scalar : public mapped_handle{
           friend class map_functor;
         private:
@@ -174,6 +174,7 @@ namespace viennacl{
       };
 
 
+      /** @brief Base class for mapping buffer-based objects to a generator class */
       class mapped_buffer : public mapped_handle{
         protected:
           std::string append_vector_size(std::string const & scalartype, unsigned int vector_size) const {
@@ -186,8 +187,8 @@ namespace viennacl{
           mapped_buffer(std::string const & scalartype) : mapped_handle(scalartype){ }
           virtual std::string generate(std::pair<std::string, std::string> const & index, int vector_element) const{
             if(vector_element>-1)
-              return mapped_container::generate(index, vector_element)+".s"+utils::to_string(vector_element);
-            return mapped_container::generate(index, vector_element);
+              return mapped_object::generate(index, vector_element)+".s"+utils::to_string(vector_element);
+            return mapped_object::generate(index, vector_element);
           }
 
       };
@@ -279,13 +280,13 @@ namespace viennacl{
       };
 
       /** @brief Mapping of a implicit vector to a generator class */
-      class mapped_implicit_vector : public mapped_container{
+      class mapped_implicit_vector : public mapped_object{
           friend class map_functor;
           std::string value_name_;
           std::string index_name_;
           bool is_value_static_;
         public:
-          mapped_implicit_vector(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_implicit_vector(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /*index*/) const{
             return value_name_;
           }
@@ -299,12 +300,12 @@ namespace viennacl{
       };
 
       /** @brief Mapping of a implicit matrix to a generator class */
-      class mapped_implicit_matrix : public mapped_container{
+      class mapped_implicit_matrix : public mapped_object{
           friend class map_functor;
           std::string value_name_;
           bool is_diag_;
         public:
-          mapped_implicit_matrix(std::string const & scalartype) : mapped_container(scalartype){ }
+          mapped_implicit_matrix(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /* index */) const{
             return value_name_;
           }
@@ -315,16 +316,16 @@ namespace viennacl{
           }
       };
 
-      static std::string generate(std::pair<std::string, std::string> const & index, int vector_element, mapped_container const & s){
+      static std::string generate(std::pair<std::string, std::string> const & index, int vector_element, mapped_object const & s){
         return s.generate(index, vector_element);
       }
 
-      static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_container & s){
+      static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s){
         if(mapped_handle * p = dynamic_cast<mapped_handle  *>(&s))
           p->fetch(index, vectorization, fetched, stream);
       }
 
-      static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_container const & s){
+      static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_object const & s){
         return s.append_kernel_arguments(already_generated, str, vector_size);
       }
 

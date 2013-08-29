@@ -21,18 +21,18 @@
 
 /** @file viennacl/generator/templates/saxpy.hpp
  *
- * Kernel template for the SAXPY operation
+ * Kernel template for the saxpy-like operation
 */
 
 #include <vector>
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/mapped_types.hpp"
-#include "viennacl/generator/generate_utils.hpp"
+#include "viennacl/generator/mapped_objects.hpp"
+#include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"
 
-#include "viennacl/generator/generate_template_base.hpp"
+#include "viennacl/generator/profile_base.hpp"
 
 #include "viennacl/tools/tools.hpp"
 

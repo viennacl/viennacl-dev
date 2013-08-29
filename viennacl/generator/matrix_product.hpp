@@ -19,17 +19,17 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/matrix_product.hpp
+/** @file viennacl/generator/matrix_product.hpp
  *
- * Kernel template for the vector reduction operation
+ * Kernel template for the matrix product operation
 */
 
 #include <vector>
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/generate_template_base.hpp"
-#include "viennacl/generator/mapped_types.hpp"
+#include "viennacl/generator/profile_base.hpp"
+#include "viennacl/generator/mapped_objects.hpp"
 #include "viennacl/generator/utils.hpp"
 
 #include "viennacl/forwards.h"

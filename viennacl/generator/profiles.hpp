@@ -32,11 +32,11 @@
 
 #include "viennacl/tools/shared_ptr.hpp"
 
-#include "viennacl/generator/generate_template_base.hpp"
-#include "viennacl/generator/generate_saxpy.hpp"
-#include "viennacl/generator/generate_scalar_reduction.hpp"
-#include "viennacl/generator/generate_vector_reduction.hpp"
-#include "viennacl/generator/generate_matrix_product.hpp"
+#include "viennacl/generator/profile_base.hpp"
+#include "viennacl/generator/saxpy.hpp"
+#include "viennacl/generator/scalar_reduction.hpp"
+#include "viennacl/generator/vector_reduction.hpp"
+#include "viennacl/generator/matrix_product.hpp"
 
 namespace viennacl{
 
@@ -57,10 +57,12 @@ namespace viennacl{
       typedef std::map<device_type, device_architecture_map> device_type_map;
       typedef std::map<vendor_id_type, device_type_map> database_type;
 
+      /** @brief Set a default of a generation to a particular device for a particular operation */
         inline void set_generation_default_to(database_type & map, vendor_id_type vendor_id, device_architecture_family family, expression_key_type expression, std::string const & device_name){
             map[vendor_id][CL_DEVICE_TYPE_GPU][family][""][expression] = map[vendor_id][CL_DEVICE_TYPE_GPU][family][device_name][expression];
         }
 
+        /** @brief Set a default of a generation to a particular device for all operations */
         inline void set_all_generation_default_to(database_type & map, vendor_id_type vendor_id, device_architecture_family family, std::string const & device_name){
             set_generation_default_to(map,vendor_id,family,std::make_pair(VECTOR_SAXPY_TYPE,4),device_name);
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_SAXPY_TYPE,4),device_name);
@@ -83,6 +85,7 @@ namespace viennacl{
             set_generation_default_to(map,vendor_id,family,std::make_pair(MATRIX_PRODUCT_TT_TYPE,8),device_name);
         }
 
+        /** @brief Initialize the database */
       static database_type init_database(){
         database_type map;
 
@@ -255,6 +258,7 @@ namespace viennacl{
       }
       static database_type database = init_database();
 
+      /** @brief If the fallback is too harsh, use a very conservative profile */
       static profile_base * handle_failure(viennacl::ocl::device const & device, expression_descriptor const & descriptor, tools::shared_ptr<profile_base> const & profile){
         //Returns default if the profile is invalid
         if(profile->is_invalid(device, descriptor.scalartype_size))
@@ -262,6 +266,7 @@ namespace viennacl{
         return profile.get();
       }
 
+      /** @brief Get the profile for a device and a descriptor */
       static profile_base * get(viennacl::ocl::device const & device, expression_descriptor const & descriptor){
         device_type dev_type = device.type();
         vendor_id_type vendor_id = device.vendor_id();

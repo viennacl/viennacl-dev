@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/map_generate_prototype.hpp
-    @brief Functor to map a statement and generate the prototype
+/** @file viennacl/generator/map_functor.hpp
+    @brief Functor to map the statements to the types defined in mapped_objects.hpp
 */
 
 #include <set>
@@ -31,9 +31,9 @@
 
 #include "viennacl/tools/shared_ptr.hpp"
 
-#include "viennacl/generator/generate_utils.hpp"
+#include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/mapped_types.hpp"
+#include "viennacl/generator/mapped_objects.hpp"
 
 namespace viennacl{
 
@@ -41,6 +41,7 @@ namespace viennacl{
 
     namespace detail{
 
+      /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
           std::string create_name(unsigned int & current_arg, std::map<void *, std::size_t> & memory, void * handle) const{
             if(handle==NULL)
@@ -56,7 +57,7 @@ namespace viennacl{
 
           map_functor(std::map<void *, std::size_t> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
 
-          //Binary leaf
+          /** @brief Binary leaf */
           template<class T>
           result_type binary_leaf(scheduler::statement const * statement, statement_node const * root_node, mapping_type const * mapping) const {
             T * p = new T("float");
@@ -75,7 +76,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Scalar mapping
+          /** @brief Scalar mapping */
           template<class ScalarType>
           result_type operator()(scalar<ScalarType> const & scal) const {
             mapped_scalar * p = new mapped_scalar(utils::type_to_string<ScalarType>::value());
@@ -83,7 +84,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Vector mapping
+          /** @brief Vector mapping */
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
             mapped_vector * p = new mapped_vector(utils::type_to_string<ScalarType>::value());
@@ -95,7 +96,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Implicit vector mapping
+          /** @brief Implicit vector mapping */
           template<class ScalarType>
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             mapped_implicit_vector * p = new mapped_implicit_vector(utils::type_to_string<ScalarType>::value());
@@ -107,7 +108,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Matrix mapping
+          /** @brief Matrix mapping */
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
             mapped_matrix * p = new mapped_matrix(utils::type_to_string<ScalarType>::value());
@@ -124,7 +125,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Implicit matrix mapping
+          /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             mapped_implicit_matrix * p = new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value());
@@ -135,7 +136,7 @@ namespace viennacl{
             return container_ptr_type(p);
           }
 
-          //Traversal functor
+          /** @brief Traversal functor */
           void operator()(scheduler::statement const * statement, scheduler::statement_node const * root_node, detail::node_type node_type) const {
             const key_type key(root_node, node_type);
             if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)

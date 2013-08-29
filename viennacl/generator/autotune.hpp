@@ -25,9 +25,6 @@
  * User interface for the autotuning procedure
 */
 
-//#define VIENNACL_AUTOTUNER_PRINT_BEST
-#define VIENNACL_AUTOTUNER_PRINT_LAST
-
 #include <ctime>
 #include <iomanip>
 #include <cmath>
@@ -35,6 +32,7 @@
 
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/infos.hpp"
+
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/generate.hpp"
 

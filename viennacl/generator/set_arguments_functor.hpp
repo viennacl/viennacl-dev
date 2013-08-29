@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/enqueue_tree.hpp
-    @brief Functor to enqueue the leaves of an expression tree
+/** @file viennacl/generator/set_arguments_functor.hpp
+    @brief Functor to set the arguments of a statement into a kernel
 */
 
 #include <set>
@@ -38,9 +38,9 @@
 
 #include "viennacl/ocl/kernel.hpp"
 
-#include "viennacl/generator/generate_utils.hpp"
+#include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/mapped_types.hpp"
+#include "viennacl/generator/mapped_objects.hpp"
 
 
 namespace viennacl{
@@ -49,11 +49,11 @@ namespace viennacl{
 
     namespace detail{
 
-      class enqueue_functor : public traversal_functor{
+      class set_arguments_functor : public traversal_functor{
         public:
           typedef void result_type;
 
-          enqueue_functor(std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel) : memory_(memory), current_arg_(current_arg), kernel_(kernel){ }
+          set_arguments_functor(std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel) : memory_(memory), current_arg_(current_arg), kernel_(kernel){ }
 
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
@@ -61,14 +61,14 @@ namespace viennacl{
             kernel_.arg(current_arg_++, cl_scalartype(scal));
           }
 
-          //Scalar mapping
+          /** @brief Scalar mapping */
           template<class ScalarType>
           result_type operator()(scalar<ScalarType> const & scal) const {
             if(memory_.insert((void*)&scal).second)
               kernel_.arg(current_arg_++, scal.handle().opencl_handle());
           }
 
-          //Vector mapping
+          /** @brief Vector mapping */
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
             if(memory_.insert((void*)&vec).second){
@@ -80,7 +80,7 @@ namespace viennacl{
             }
           }
 
-          //Implicit vector mapping
+          /** @brief Implicit vector mapping */
           template<class ScalarType>
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
@@ -92,7 +92,7 @@ namespace viennacl{
             }
           }
 
-          //Matrix mapping
+          /** @brief Matrix mapping */
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
             typedef typename matrix_base<ScalarType, Layout>::size_type size_type;
@@ -109,14 +109,14 @@ namespace viennacl{
             }
           }
 
-          //Implicit matrix mapping
+          /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             if(mat.is_value_static()==false)
               kernel_.arg(current_arg_++, mat.value());
           }
 
-          //Traversal functor:
+          /** @brief Traversal functor: */
           void operator()(scheduler::statement const * /*statement*/, scheduler::statement_node const * root_node, detail::node_type node_type) const {
             if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->lhs, *this);

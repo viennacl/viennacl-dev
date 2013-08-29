@@ -19,9 +19,9 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/tgenerate_template_base.hpp
+/** @file viennacl/generator/profile_base.hpp
  *
- * Base classes for the templates
+ * Base classes for the profiles
 */
 
 #include <list>
@@ -34,15 +34,15 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/generate_utils.hpp"
-#include "viennacl/generator/map_generate_prototype.hpp"
+#include "viennacl/generator/helpers.hpp"
+#include "viennacl/generator/map_functor.hpp"
 
 namespace viennacl{
 
   namespace generator{
 
 
-    /** @brief Base class for an optimization profile */
+    /** @brief Base class for an operation profile */
     class profile_base{
       public:
         typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_type;
