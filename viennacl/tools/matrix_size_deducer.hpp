@@ -125,10 +125,10 @@ namespace viennacl
                                viennacl::op_vector_diag>
     {
       static std::size_t size1(viennacl::vector_base<T> const & lhs,
-                               const int k) { return lhs.size() + std::abs(k); }
+                               const int k) { return lhs.size() + static_cast<std::size_t>(std::fabs(double(k))); }
 
       static std::size_t size2(viennacl::vector_base<T> const & lhs,
-                               const int k) { return lhs.size() + std::abs(k); }
+                               const int k) { return lhs.size() + static_cast<std::size_t>(std::fabs(double(k))); }
     };
 
 
