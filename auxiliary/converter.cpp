@@ -388,7 +388,6 @@ int main(int , char **)
 {
     createHeaders("compressed_matrix");
     createHeaders("coordinate_matrix");
-    createHeaders("hyb_matrix");
     createHeaders("rand");
     createHeaders("svd");
     createHeaders("spai");

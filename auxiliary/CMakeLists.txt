@@ -27,9 +27,6 @@ set(COORDINATE_MATRIX_SRCS
    coordinate_matrix/align1/row_info_extractor.cl
    coordinate_matrix/align128/dummy)
 
-set(HYB_MATRIX_SRCS
-   hyb_matrix/align1/vec_mul.cl)
-
 set(SVD_SRCS
    svd/align1/bidiag_pack.cl
    svd/align1/col_reduce_lcl_array.cl
@@ -66,7 +63,7 @@ set(RAND_SRCS
     )
 
 set(CL_SRCS)
-foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS HYB_MATRIX_SRCS
+foreach(f IN LISTS COMPRESSED_MATRIX_SRCS COORDINATE_MATRIX_SRCS
       SVD_SRCS SPAI_SRCS
       RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
@@ -85,7 +82,6 @@ set(KERNEL_SRCS)
 foreach(d
       compressed_matrix
       coordinate_matrix
-      hyb_matrix
       svd
       spai
       rand

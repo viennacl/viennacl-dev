@@ -32,7 +32,7 @@
 #include "viennacl/linalg/kernels/compressed_matrix_kernels.h"
 #include "viennacl/linalg/kernels/coordinate_matrix_kernels.h"
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
-#include "viennacl/linalg/kernels/hyb_matrix_kernels.h"
+#include "viennacl/linalg/opencl/kernels/hyb_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
 
 
@@ -718,7 +718,7 @@ namespace viennacl
         assert(mat.size2() == vec.size());
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::init(ctx);
+        viennacl::linalg::opencl::kernels::hyb_matrix<TYPE>::init(ctx);
 
         result.clear();
 
@@ -734,7 +734,7 @@ namespace viennacl
         layout_result.size   = cl_uint(viennacl::traits::size(result));
         layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
 
-        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::kernels::hyb_matrix<TYPE, ALIGNMENT>::program_name(), "vec_mul");
+        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<TYPE>::program_name(), "vec_mul");
 
         unsigned int thread_num = 256;
         unsigned int group_num = 32;
