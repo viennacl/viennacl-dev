@@ -17,17 +17,6 @@ set(SVD_SRCS
    svd/align1/update_qr_column.cl
    )
 
-set(SPAI_SRCS
-   spai/align1/assemble_blocks.cl
-   spai/align1/block_bv_assembly.cl
-   spai/align1/block_least_squares.cl
-   spai/align1/block_q_mult.cl
-   spai/align1/block_qr.cl
-   spai/align1/block_qr_assembly.cl
-   spai/align1/block_qr_assembly_1.cl
-   spai/align1/block_r_assembly.cl
-   )
-
 
 set(RAND_SRCS
     rand/align1/_mwc64x.cl

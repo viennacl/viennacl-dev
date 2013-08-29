@@ -135,7 +135,7 @@ namespace viennacl
                          const spai_tag& tag): tag_(tag), spai_m_(viennacl::traits::context(A))
             {
                 viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-                viennacl::linalg::kernels::spai<ScalarType, 1>::init(ctx);
+                viennacl::linalg::opencl::kernels::spai<ScalarType>::init(ctx);
 
                 MatrixType At(A.size1(), A.size2(), viennacl::context(ctx));
                 UBLASSparseMatrixType ubls_A, ubls_spai_m;

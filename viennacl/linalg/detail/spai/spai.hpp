@@ -61,8 +61,7 @@
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/ocl/backend.hpp"
-#include "viennacl/linalg/kernels/spai_source.h"
-#include "viennacl/linalg/kernels/spai_kernels.h"
+#include "viennacl/linalg/opencl/kernels/spai.hpp"
 
 
 
@@ -318,7 +317,8 @@ namespace viennacl
           viennacl::ocl::handle<cl_mem> g_is_update_vcl = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
                                                                                    static_cast<unsigned int>(sizeof(cl_uint)*(g_is_update.size())),
                                                                                    &(g_is_update[0]));
-          viennacl::ocl::kernel& ls_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_least_squares");
+          viennacl::linalg::opencl::kernels::spai<ScalarType>::init(opencl_ctx);
+          viennacl::ocl::kernel& ls_kernel = opencl_ctx.get_kernel(viennacl::linalg::opencl::kernels::spai<ScalarType>::program_name(), "block_least_squares");
           ls_kernel.local_work_size(0, 1);
           ls_kernel.global_work_size(0, 256);
           viennacl::ocl::enqueue(ls_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_bv_vcl.handle(), g_bv_vcl.handle1(), m_v_vcl.handle(),
@@ -546,7 +546,8 @@ namespace viennacl
                                                                                        static_cast<unsigned int>(sizeof(cl_uint)*g_is_update.size()),
                                                                                        &(g_is_update[0]));
 
-              viennacl::ocl::kernel& assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "assemble_blocks");
+              viennacl::linalg::opencl::kernels::spai<ScalarType>::init(opencl_ctx);
+              viennacl::ocl::kernel& assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::opencl::kernels::spai<ScalarType>::program_name(), "assemble_blocks");
               assembly_kernel.local_work_size(0, 1);
               assembly_kernel.global_work_size(0, 256);
               viennacl::ocl::enqueue(assembly_kernel(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),

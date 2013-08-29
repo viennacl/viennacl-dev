@@ -48,8 +48,7 @@
 
 #include "viennacl/linalg/detail/spai/block_matrix.hpp"
 #include "viennacl/linalg/detail/spai/block_vector.hpp"
-#include "viennacl/linalg/kernels/spai_source.h"
-#include "viennacl/linalg/kernels/spai_kernels.h"
+#include "viennacl/linalg/opencl/kernels/spai.hpp"
 
 namespace viennacl
 {
@@ -425,7 +424,8 @@ namespace viennacl
                                                                                      &(g_is_update[0]));
             //local memory
             //viennacl::ocl::enqueue(k(vcl_vec, size, viennacl::ocl::local_mem(sizeof(SCALARTYPE) * k.local_work_size()), temp));
-            viennacl::ocl::kernel& qr_kernel = opencl_ctx.get_kernel(viennacl::linalg::kernels::spai<ScalarType, 1>::program_name(), "block_qr");
+            viennacl::linalg::opencl::kernels::spai<ScalarType>::init(opencl_ctx);
+            viennacl::ocl::kernel& qr_kernel = opencl_ctx.get_kernel(viennacl::linalg::opencl::kernels::spai<ScalarType>::program_name(), "block_qr");
             qr_kernel.local_work_size(0, local_c_n);
             qr_kernel.global_work_size(0, 256);
             viennacl::ocl::enqueue(qr_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle1(), g_bv_vcl.handle(),
