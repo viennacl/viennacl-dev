@@ -775,8 +775,8 @@ namespace viennacl
         VectorType old_result = x;
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
-        viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::kernels::compressed_matrix<ScalarType, MAT_ALIGNMENT>::program_name(), "jacobi");
+        viennacl::linalg::opencl::kernels::compressed_matrix<ScalarType>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<ScalarType>::program_name(), "jacobi");
 
         for (unsigned int i=0; i<iterations; ++i)
         {

@@ -1,27 +1,5 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
-
-set(COMPRESSED_MATRIX_SRCS
-   compressed_matrix/align1/block_trans_lu_backward.cl
-   compressed_matrix/align1/block_trans_unit_lu_forward.cl
-   compressed_matrix/align1/jacobi.cl
-   compressed_matrix/align1/lu_backward.cl
-   compressed_matrix/align1/lu_forward.cl
-   compressed_matrix/align1/trans_lu_backward.cl
-   compressed_matrix/align1/trans_lu_forward.cl
-   compressed_matrix/align1/trans_unit_lu_backward.cl
-   compressed_matrix/align1/trans_unit_lu_forward.cl
-   compressed_matrix/align1/trans_unit_lu_forward_slow.cl
-   compressed_matrix/align1/row_info_extractor.cl
-   compressed_matrix/align1/unit_lu_backward.cl
-   compressed_matrix/align1/unit_lu_forward.cl
-   compressed_matrix/align1/vec_mul.cl
-   compressed_matrix/align1/vec_mul_cpu.cl
-   compressed_matrix/align1/d_mat_mul.cl
-   compressed_matrix/align1/d_tr_mat_mul.cl
-   compressed_matrix/align4/vec_mul.cl
-   compressed_matrix/align8/vec_mul.cl)
-
 set(SVD_SRCS
    svd/align1/bidiag_pack.cl
    svd/align1/col_reduce_lcl_array.cl
@@ -58,7 +36,7 @@ set(RAND_SRCS
     )
 
 set(CL_SRCS)
-foreach(f IN LISTS COMPRESSED_MATRIX_SRCS SVD_SRCS SPAI_SRCS RAND_SRCS)
+foreach(f IN LISTS SVD_SRCS SPAI_SRCS RAND_SRCS)
    get_filename_component(d "${CMAKE_CURRENT_BINARY_DIR}/${f}" PATH)
    file(MAKE_DIRECTORY "${d}")
    configure_file(${f} "${CMAKE_CURRENT_BINARY_DIR}/${f}" COPYONLY)
@@ -73,7 +51,6 @@ target_link_libraries(converter ${Boost_LIBRARIES})
 set(KERNEL_HDRS)
 set(KERNEL_SRCS)
 foreach(d
-      compressed_matrix
       svd
       spai
       rand

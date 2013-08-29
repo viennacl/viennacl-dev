@@ -215,7 +215,7 @@ int main()
   // -----------------------------------------
 
   //set up test config:
-  conf.program_name(viennacl::linalg::kernels::compressed_matrix<float, 1>::program_name());
+  conf.program_name(viennacl::linalg::opencl::kernels::compressed_matrix<float>::program_name());
 
   run_matrix_benchmark<float>(conf, paras);
 
@@ -231,7 +231,7 @@ int main()
    paras.add_data_node(viennacl::io::tag::numeric, viennacl::io::val::dbl);
    paras.add_data_node(viennacl::io::tag::alignment, "1");
 
-    conf.program_name(viennacl::linalg::kernels::compressed_matrix<double, 1>::program_name());
+    conf.program_name(viennacl::linalg::opencl::kernels::compressed_matrix<double>::program_name());
    // -----------------------------------------
     run_matrix_benchmark<double>(conf, paras);
   }

@@ -142,7 +142,8 @@ namespace viennacl
       std::size_t max_col = 0;
       for (std::size_t i=0; i<cpu_matrix.size(); ++i)
       {
-        nonzeros += cpu_matrix[i].size();
+        if (cpu_matrix[i].size() > 0)
+        nonzeros += ((cpu_matrix[i].size() - 1) / ALIGNMENT + 1) * ALIGNMENT;
         if (cpu_matrix[i].size() > 0)
           max_col = std::max<std::size_t>(max_col, (cpu_matrix[i].rbegin())->first);
       }
@@ -153,9 +154,9 @@ namespace viennacl
     }
 
 #ifdef VIENNACL_WITH_UBLAS
-    template <typename ScalarType, typename F, std::size_t IB, typename IA, typename TA, unsigned int ALIGNMENT>
+    template <typename ScalarType, typename F, std::size_t IB, typename IA, typename TA>
     void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
-              viennacl::compressed_matrix<ScalarType, ALIGNMENT> & gpu_matrix)
+              viennacl::compressed_matrix<ScalarType, 1> & gpu_matrix)
     {
       //we just need to copy the CSR arrays:
       viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), ublas_matrix.size1() + 1);
