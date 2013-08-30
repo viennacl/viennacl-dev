@@ -45,16 +45,20 @@ namespace viennacl{
 
     /** @brief Class for handling code generation
      *
-     *  Encapsulate statements packing*/
+     *  It is meant to be only used along with the scheduler.*/
     class code_generator{
       public:
+        /** @brief typedef of the key used in the forced profiles. Contains the expression type and the size of the scalartype */
         typedef std::pair<expression_type, std::size_t> forced_profile_key_type;
       private:
         typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
         typedef std::map<forced_profile_key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
 
-        /** @brief Check for the data access flow of a node : Row-major + Trans and Col-Major + NoTrans are equal in this regard */
+        /** @brief Check for the data access flow of a node.
+        *
+        * Row-major + Trans and Col-Major + NoTrans are equal in this regard. This prevents too much code duplication in the kernel templates.
+        */
         static bool is_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
@@ -69,6 +73,7 @@ namespace viennacl{
           }
         }
 
+        /** @brief Checks for the data access flow of the LHS of a node */
         static bool is_lhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
@@ -77,6 +82,7 @@ namespace viennacl{
             return root_node.lhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
         }
 
+        /** @brief Checks for the data access flow of the RHS of a node */
         static bool is_rhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
           if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
@@ -178,7 +184,10 @@ namespace viennacl{
           }
         }
 
-        /** @brief Sets the kernel arguments and enqueue the kernels associated with a list of statements*/
+        /** @brief Sets the kernel arguments and enqueue the kernels associated with a list of statements.
+        *
+        *   The kernels are named 'kernel_'index of device in context'_'index of kernel in program'
+        */
         template<class StatementsType>
         void set_expression_arguments(profile_base const & profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
           for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
@@ -277,7 +286,10 @@ namespace viennacl{
           return stream.str();
         }
 
-        /** @brief Creates the CUDA program string from the set of expressions in the object */
+        /** @brief Creates the CUDA device code from the set of expressions in the object
+        *
+        *   Performs just a direct translation...
+        */
         std::string make_cuda_program_string() const {
           //Creates OpenCL string with #ifdef and attributes
           utils::kernel_generation_stream stream;
@@ -332,7 +344,12 @@ namespace viennacl{
         forced_profiles_type forced_profiles_;
     };
 
-    /** @brief Creates the program associated with a generator object and fills the kernels */
+    /** @brief Creates the program associated with a generator object and fills the kernels. Checks the context for the program and possibly (re)compile it.
+    *
+    *   @param generator the generator to work on
+    *   @param kernels this list will be filled with the kernels associated with the generator
+    *   @param force_recompilation if true, the program will be recompiled
+    */
     inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
       char* program_name = (char*)malloc(256*sizeof(char));
       generator.make_program_name(program_name);
@@ -360,24 +377,28 @@ namespace viennacl{
       }
     }
 
+    /** @brief Convenience function to get the OpenCL program string for a single statement */
     inline std::string get_opencl_program_string(viennacl::scheduler::statement const & s){
       generator::code_generator gen;
       gen.add(s,s.array()[0]);
       return gen.make_opencl_program_string();
     }
 
-    inline std::string get_cuda_program_string(viennacl::scheduler::statement const & s){
+    /** @brief Convenience function to get the CUDA device code for a single statement */
+    inline std::string get_cuda_device_code(viennacl::scheduler::statement const & s){
       generator::code_generator gen;
       gen.add(s, s.array()[0]);
       return gen.make_cuda_program_string();
     }
 
+    /** @brief Generate and enqueue a statement+root_node into the current queue */
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
       generator::code_generator gen;
       gen.add(s,root_node);
       viennacl::generator::enqueue(gen);
     }
 
+    /** @brief Generate and enqueue a statement into the current queue, assumes the root_node is the first node of the statement */
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s){
       generate_enqueue_statement(s, s.array()[0]);
     }

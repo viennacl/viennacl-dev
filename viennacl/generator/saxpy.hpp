@@ -48,7 +48,7 @@ namespace viennacl{
 
         std::string csv_representation() const{
           std::ostringstream oss;
-          oss << vectorization_
+          oss << vector_size_
               << "," << local_size_1_
               << "," << num_groups_
               << "," << decomposition_;
@@ -65,7 +65,7 @@ namespace viennacl{
 
           scheduler::statement_node const & first_node = statements.front().second;
           viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs, utils::internal_size_fun());
-          k.arg(n_arg++, cl_uint(N/vectorization_));
+          k.arg(n_arg++, cl_uint(N/vector_size_));
         }
         void kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
           arguments_string += detail::generate_value_kernel_argument("unsigned int", "N");
@@ -82,9 +82,11 @@ namespace viennacl{
           std::set<std::string>  fetched;
           for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
             for(detail::mapping_type::const_reverse_iterator iit = it->rbegin() ; iit != it->rend() ; ++iit)
+              //Useless to fetch cpu scalars into registers
               if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(iit->second.get()))
-                p->fetch( std::make_pair("i","0"), vectorization_, fetched, stream);
+                p->fetch( std::make_pair("i","0"), vector_size_, fetched, stream);
 
+          //Generates all the expression, in order
           std::size_t i = 0;
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             std::string str;
@@ -94,6 +96,7 @@ namespace viennacl{
 
           //Writes back
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+             //Gets the mapped object at the LHS of each expression
             if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(&it->second, detail::LHS_NODE_TYPE)).get()))
               p->write_back( std::make_pair("i", "0"), fetched, stream);
 
@@ -123,7 +126,7 @@ namespace viennacl{
 
         std::string csv_representation() const{
           std::ostringstream oss;
-          oss << vectorization_
+          oss << vector_size_
                  << "," << local_size_1_
                  << "," << local_size_2_
                  << "," << num_groups_row_
@@ -170,7 +173,7 @@ namespace viennacl{
           for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
             for(detail::mapping_type::const_reverse_iterator it2 = it->rbegin() ; it2 != it->rend() ; ++it2)
               if(detail::mapped_matrix * p = dynamic_cast<detail::mapped_matrix *>(it2->second.get()))
-                p->fetch(std::make_pair("i", "j"), vectorization_, fetched, stream);
+                p->fetch(std::make_pair("i", "j"), vector_size_, fetched, stream);
 
 
           std::size_t i = 0;

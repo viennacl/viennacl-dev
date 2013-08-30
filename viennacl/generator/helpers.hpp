@@ -179,6 +179,10 @@ namespace viennacl{
           }
       };
 
+      /** @brief functor for fetching the LHS of a statement's node
+      *
+      *   Forwards to fetch_traversal functor if the LHS is not a leaf
+      */
       static void fetch_all_lhs(std::set<std::string> & fetched
                                 , scheduler::statement const & statement
                                 , scheduler::statement_node const & root_node
@@ -193,6 +197,10 @@ namespace viennacl{
 
       }
 
+      /** @brief functor for fetching the RHS of a statement's node
+      *
+      *   Forwards to fetch_traversal functor if the RHS is not a leaf
+      */
       static void fetch_all_rhs(std::set<std::string> & fetched
                                 , scheduler::statement const & statement
                                 , scheduler::statement_node const & root_node

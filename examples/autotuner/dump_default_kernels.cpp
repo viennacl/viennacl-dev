@@ -50,7 +50,7 @@ void dump_gemm_kernel(std::string const & device_name)
 //    dump_string_to_file("gemm_tt_" + scalartype_name + "_" + device_name + ".cl", viennacl::generator::get_opencl_program_string(stt));
 
     //CUDA
-    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(saa));
+    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_device_code(saa));
 //    dump_string_to_file("gemm_ta_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(sta));
 //    dump_string_to_file("gemm_at_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(sat));
 //    dump_string_to_file("gemm_tt_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(stt));

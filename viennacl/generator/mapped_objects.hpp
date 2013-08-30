@@ -67,6 +67,8 @@ namespace viennacl{
           std::string scalartype_;
       };
 
+      /** @brief Base class for mapping binary leaves (inner product-based, matrix vector product-base, matrix-matrix product based...)
+       */
       class mapped_binary_leaf : public mapped_object{
         public:
           mapped_binary_leaf(std::string const & scalartype) : mapped_object(scalartype){ }
@@ -78,12 +80,14 @@ namespace viennacl{
           node_info info_;
       };
 
+      /** @brief Mapping of a matrix product */
       class mapped_matrix_product : public mapped_binary_leaf{
           friend class map_functor;
         public:
           mapped_matrix_product(std::string const & scalartype) : mapped_binary_leaf(scalartype){ }
       };
 
+      /** @brief Base class for mapping a reduction */
       class mapped_reduction : public mapped_binary_leaf{
         public:
           mapped_reduction(std::string const & scalartype) : mapped_binary_leaf(scalartype){ }
@@ -92,12 +96,14 @@ namespace viennacl{
           operation_node_type reduction_type_;
       };
 
+      /** @brief Mapping of a scalar reduction (based on inner product) */
       class mapped_scalar_reduction : public mapped_reduction{
           friend class map_functor;
         public:
           mapped_scalar_reduction(std::string const & scalartype) : mapped_reduction(scalartype){ }
       };
 
+      /** @brief Mapping of a vector reduction (based on matrix-vector product) */
       class mapped_vector_reduction : public mapped_reduction{
           friend class map_functor;
         public:

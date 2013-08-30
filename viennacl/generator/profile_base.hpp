@@ -64,19 +64,32 @@ namespace viennacl{
           s << csv_representation();
         }
 
+        /** @brief Generates the body of the associated kernel function
+         *
+         *  @param kernel_id If this profile requires multiple kernel, the index for which the core should be generated
+         *  @param statements the statements for which the code should be generated
+         *  @param mapping the mapping of the statement_nodes to the mapped_objects
+         */
         virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const = 0;
 
       public:
-        profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : vectorization_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
+        /** @brief The constructor */
+        profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : vector_size_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
 
+        /** @brief The destructor */
         virtual ~profile_base(){ }
 
+        /** @brief Configures the range and enqueues the arguments associated with the profile */
         virtual void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
 
         virtual void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const = 0;
 
-        unsigned int vectorization() const { return vectorization_; }
+        /** @brief Get the vector size of the kernel */
+        unsigned int vector_size() const { return vector_size_; }
 
+        /** @brief csv representation of an operation
+         *
+         *  Useful when writing to a file */
         virtual std::string csv_representation() const = 0;
 
         /** @brief returns whether or not the profile is likely to be slow on a particular device
@@ -109,8 +122,15 @@ namespace viennacl{
               || invalid_impl(dev, scalartype_size);
         }
 
+        /** @brief Returns the number of kernels needed by this operation */
         std::size_t num_kernels() const{ return num_kernels_; }
 
+        /** @brief Generates the code associated with this profile onto the provided stream
+         *  Redirects to the virtual core() method
+         *
+         *  @param stream Stream onto which the code should be generated
+         *  @param device_offset the index of the device in the context (used for the kernel name)
+         *  @param statements the statements associated with this profile */
         virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset, statements_type const & statements) const {
           std::vector<detail::mapping_type> mapping(statements.size());
 
@@ -128,7 +148,7 @@ namespace viennacl{
           }
 
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, vectorization(), mapping[std::distance(statements.begin(), it)]));
+            detail::traverse(it->first, it->second, detail::prototype_generation_traversal(already_generated, prototype, vector_size(), mapping[std::distance(statements.begin(), it)]));
           }
 
           prototype.erase(prototype.size()-1); //Last comma pruned
@@ -151,7 +171,7 @@ namespace viennacl{
         }
 
       protected:
-        unsigned int vectorization_;
+        unsigned int vector_size_;
         std::size_t local_size_1_;
         std::size_t local_size_2_;
         std::size_t num_kernels_;
