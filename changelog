@@ -2,6 +2,35 @@
 **** ViennaCL Change Logs ****
 ******************************
 
+*** Version 1.5.x ***
+
+-- Version 1.5.0 --
+This new minor release number update focuses on performance, increased convenience in the API, and on making ViennaCL more accessible from languages other than C++.
+In addition to many internal improvements both in terms of performance and flexibility, the following changes are visible to users:
+- API-change: User-provided OpenCL kernels extract their kernels automatically. A call to add_kernel() is now obsolete, hence the function was removed.
+- API-change: Device class has been extend and supports all informations defined in the OpenCL 1.1 standard through member functions. Duplicate compute_units() and max_work_group_size() have been removed (thanks for Shantanu Agarwal for the input).
+- Vectors and matrices can be instantiated with integers. Operations so far only supported for signed integers.
+- Added support for element_prod() and element_div() for dense matrices.
+- Added element_pow() for vectors and matrices.
+- Added norm_frobenius() for computing the Frobenius norm of dense matrices.
+- Added unary element-wise operations: element_sin(), element_sqrt(), etc.
+- Multiple OpenCL contexts can now be used in a multi-threaded setting (one thread per context).
+- Added micro-scheduler for attaching the OpenCL kernel generator to the user API.
+- Complete rewrite of the generator. Now uses the scheduler for specifying the operation. Includes a full device database for portable high performance of GEMM kernels.
+- Multiple inner products with a common vector can now be computed efficiently via e.g. inner_prod(x, tie(y, z));
+- Added support for prod(A, B), where A is either a compressed_matrix or ell_matrix and B is a row-major dense matrix (kindly provided by Albert Zaharovits).
+- Added diag() function for extracting the diagonal of a vector to a matrix, or for generating a square matrix from a vector with the vector elements on a diagonal (similar to MATLAB)
+- Added row() and col() functions for extracting a certain row or column of a matrix to a vector.
+- Sparse matrix-vector products now also work with vector strides and ranges.
+- Added async_copy() for vectors to allow for a better overlap of computation and communication.
+- Added compressed_compressed_matrix type for the efficient representation of CSR matrices with only few nonzero rows.
+- Added possibility to switch command queues in OpenCL contexts (thanks to Evan Bollig).
+- The OpenCL kernel launch logic no longer attempts to re-launch the kernel with smaller work sizes if an error is encountered (thanks to Peter Burka for pointing this out)
+- Reduced overhead for lenghty expressions involving temporaries (at the cost of increased compilation times).
+- vector and matrix are now padded to dimensions being multiples of 128 per default. This greatly improves GEMM performance for arbitrary sizes.
+- Completely eliminated the OpenCL kernel conversion step in the developer repository and the source-release. This also eliminates the need for Boost.
+
+
 *** Version 1.4.x ***
 
 -- Version 1.4.2 --

@@ -1,6 +1,37 @@
 
 \chapter{Change Logs} %\addcontentsline{toc}{chapter}{Change Logs}
 
+\section*{Version 1.5.x}
+
+\subsection*{Version 1.5.0}
+This new minor release number update focuses on performance, increased convenience in the API, and on making ViennaCL more accessible from languages other than C++.
+In addition to many internal improvements both in terms of performance and flexibility, the following changes are visible to users:
+\begin{itemize}
+ \item API-change: User-provided OpenCL kernels extract their kernels automatically. A call to \lstinline|add_kernel()| is now obsolete, hence the function was removed.
+ \item API-change: Device class has been extend and supports all informations defined in the OpenCL 1.1 standard through member functions. Duplicate \lstinline|compute_units()| and \lstinline|max_work_group_size()| have been removed (thanks for Shantanu Agarwal for the input).
+ \item Vectors and matrices can be instantiated with integers. Operations so far only supported for signed integers.
+ \item Added support for \lstinline|element_prod()| and \lstinline|element_div()| for dense matrices.
+ \item Added \lstinline|element_pow()| for vectors and matrices.
+ \item Added \lstinline|norm_frobenius()| for computing the Frobenius norm of dense matrices.
+ \item Added unary element-wise operations: \lstinline|element_sin()|, \lstinline|element_sqrt()|, etc.
+ \item Multiple OpenCL contexts can now be used in a multi-threaded setting (one thread per context).
+ \item Added micro-scheduler for attaching the OpenCL kernel generator to the user API.
+ \item Complete rewrite of the generator. Now uses the scheduler for specifying the operation. Includes a full device database for portable high performance of GEMM kernels.
+ \item Multiple inner products with a common vector can now be computed efficiently via e.g.~\lstinline|inner_prod(x, tie(y, z));|
+ \item Added support for \lstinline|prod(A, B)|, where \lstinline|A| is either a \lstinline|compressed_matrix| or \lstinline|ell_matrix| and \lstinline|B| is a row-major dense matrix (kindly provided by Albert Zaharovits).
+ \item Added \lstinline|diag()| function for extracting the diagonal of a vector to a matrix, or for generating a square matrix from a vector with the vector elements on a diagonal (similar to MATLAB)
+ \item Added \lstinline|row()| and \lstinline|col()| functions for extracting a certain row or column of a matrix to a vector.
+ \item Sparse matrix-vector products now also work with vector strides and ranges.
+ \item Added \lstinline|async_copy()| for vectors to allow for a better overlap of computation and communication.
+ \item Added \lstinline|compressed_compressed_matrix| type for the efficient representation of CSR matrices with only few nonzero rows.
+ \item Added possibility to switch command queues in OpenCL contexts (thanks to Evan Bollig).
+ \item The OpenCL kernel launch logic no longer attempts to re-launch the kernel with smaller work sizes if an error is encountered (thanks to Peter Burka for pointing this out)
+ \item Reduced overhead for lenghty expressions involving temporaries (at the cost of increased compilation times).
+ \item \lstinline|vector| and \lstinline|matrix| are now padded to dimensions being multiples of 128 per default. This greatly improves GEMM performance for arbitrary sizes.
+ \item Completely eliminated the OpenCL kernel conversion step in the developer repository and the source-release. This also eliminates the need for Boost.
+\end{itemize}
+
+
 \section*{Version 1.4.x}
 
 \subsection*{Version 1.4.2}
