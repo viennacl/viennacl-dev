@@ -152,8 +152,8 @@ namespace viennacl
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
-      typedef typename result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
-      typedef typename result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
+      typedef typename viennacl::result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
+      typedef typename viennacl::result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
 
     public:
       typedef vcl_size_t       size_type;
