@@ -61,7 +61,6 @@
   #include "viennacl/linalg/spai.hpp"
   #include "viennacl/linalg/svd.hpp"
   #include "viennacl/fft.hpp"
-  #include "viennacl/io/kernel_parameters.hpp"
   #include "viennacl/generator/generate.hpp"
 #endif
 
