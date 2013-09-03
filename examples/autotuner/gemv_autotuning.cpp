@@ -175,10 +175,10 @@ void run_autotune(autotuner_options const & options){
     autotune::tuning_config<config_type> conf;
 
     std::vector<unsigned int> tmp;
-    tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) vector.push_back(i);
-    tmp = get_values_in_comas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) local_size_1.push_back(i);
-    tmp = get_values_in_comas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) local_size_2.push_back(i);
-    tmp = get_values_in_comas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i+=tmp[2]) num_groups.push_back(i);
+    tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) vector.push_back(i);
+    tmp = get_values_in_commas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) local_size_1.push_back(i);
+    tmp = get_values_in_commas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i*=2) local_size_2.push_back(i);
+    tmp = get_values_in_commas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i = tmp[0] ; i <= tmp[1] ; i+=tmp[2]) num_groups.push_back(i);
 
     conf.add_tuning_param("vector",vector);
     conf.add_tuning_param("local_size1",local_size_1);

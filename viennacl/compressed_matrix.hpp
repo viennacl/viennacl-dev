@@ -123,7 +123,7 @@ namespace viennacl
           num_entries = 1;
 
         //set up matrix entries:
-        detail::copy_impl(cpu_matrix, gpu_matrix, num_entries);
+        viennacl::detail::copy_impl(cpu_matrix, gpu_matrix, num_entries);
       }
     }
 

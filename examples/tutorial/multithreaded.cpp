@@ -51,8 +51,8 @@ void thread_func(std::string * message, std::size_t thread_id) //Note: using ref
   std::size_t N = 6;
 
   viennacl::context ctx(viennacl::ocl::get_context(thread_id));
-  viennacl::vector<T> u(viennacl::scalar_vector<T>(N, 1.0 * (thread_id + 1), ctx));
-  viennacl::vector<T> v = viennacl::scalar_vector<T>(N, 2.0 * (thread_id + 1), ctx);
+  viennacl::vector<T> u(viennacl::scalar_vector<T>(N, T(1) * (thread_id + 1), ctx));
+  viennacl::vector<T> v = viennacl::scalar_vector<T>(N, T(2) * (thread_id + 1), ctx);
   viennacl::matrix<T> A = viennacl::linalg::outer_prod(u, v);
   viennacl::vector<T> x(u);
 

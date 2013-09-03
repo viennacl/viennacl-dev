@@ -59,7 +59,7 @@ enum operation_type{
 };
 
 template<typename ScalarType>
-float run_benchmark(size_t size, operation_type type)
+ScalarType run_benchmark(size_t size, operation_type type)
 {
     std::size_t n_bytes = size*sizeof(ScalarType);
     std::size_t n_transfers;
@@ -92,7 +92,7 @@ float run_benchmark(size_t size, operation_type type)
     double time = timer.get()/(double)N_RUNS;
     delete statement;
 
-    return (n_bytes*n_transfers)/time / 1e9;
+    return ScalarType((n_bytes*n_transfers) / time / 1e9);
 }
 
 

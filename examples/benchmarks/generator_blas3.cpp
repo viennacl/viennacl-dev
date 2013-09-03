@@ -84,7 +84,7 @@ unsigned int run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
     viennacl::backend::finish();
     double time = timer.get()/(double)N_RUNS;
     delete statement;
-    return 2*pow(size/static_cast<double>(1000.0),3)/time;
+    return static_cast<unsigned int>(2*pow(size/static_cast<double>(1000.0),3)/time);
 }
 
 int main(){

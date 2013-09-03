@@ -26,6 +26,9 @@
 #include <assert.h>
 
 #include "viennacl/forwards.h"
+#include "viennacl/scalar.hpp"
+#include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl
@@ -70,6 +73,7 @@ namespace viennacl
 
       // helper routines for extracting the scalar type
       inline float convert_to_float(float f) { return f; }
+      inline float convert_to_float(double d) { return static_cast<float>(d); }
       inline float convert_to_float(lhs_rhs_element const & el)
       {
         if (el.type_family == SCALAR_TYPE_FAMILY && el.subtype == HOST_SCALAR_TYPE && el.numeric_type == FLOAT_TYPE)

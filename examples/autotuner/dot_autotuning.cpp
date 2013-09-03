@@ -157,7 +157,7 @@ unsigned int run_benchmark(size_t size, autotuner_options options, typename conf
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/(double)n_runs;
-    return 1e-9*2*size*sizeof(ScalarType)/time;
+    return ScalarType(1e-9*2*size*sizeof(ScalarType)/time);
 }
 
 template<class ScalarType>
@@ -174,9 +174,9 @@ void run_autotune(autotuner_options const & options){
     viennacl::scalar<ScalarType> s = 0;
 
     std::vector<unsigned int> tmp;
-    tmp = get_values_in_comas(options.local_size_interval); std::vector<int> local_size; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size.push_back(i);
-    tmp = get_values_in_comas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i=tmp[0] ; i<=tmp[1]; i+=tmp[2]) { num_groups.push_back(i); }
-    tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    tmp = get_values_in_commas(options.local_size_interval); std::vector<int> local_size; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size.push_back(i);
+    tmp = get_values_in_commas(options.num_groups_interval); std::vector<int> num_groups; for(unsigned int i=tmp[0] ; i<=tmp[1]; i+=tmp[2]) { num_groups.push_back(i); }
+    tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
     std::vector<int> decomposition;
     if(options.decomposition=="global")
         decomposition.push_back(0);

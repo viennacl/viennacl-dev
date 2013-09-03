@@ -89,9 +89,9 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
 }
 
 template<typename ScalarType>
-double diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
+ScalarType diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
   ScalarType other = gs;
-  return (s - other) / std::max (s, other);
+  return (s - other) / std::max(s, other);
 }
 
 
@@ -133,7 +133,7 @@ int test_vector ( Epsilon const& epsilon) {
     NumericT alpha = 3.14;
     NumericT beta = 3.51;
 
-    // --------------------------------------------------------------------------      
+    // --------------------------------------------------------------------------
 
     {
     std::cout << "w = x + y ..." << std::endl;

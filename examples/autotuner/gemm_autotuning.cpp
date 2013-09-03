@@ -205,8 +205,8 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
     for(unsigned int r = 0 ; r < n_runs; ++r)
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
-    double time = timer.get()/(double)n_runs;
-    return 2*pow(size/static_cast<double>(1000.0),3)/time;
+    double time = timer.get()/n_runs;
+    return static_cast<unsigned int>(2*pow(size/static_cast<double>(1000.0),3)/time);
 }
 
 template<class ScalarType>
@@ -232,13 +232,13 @@ void run_autotune(autotuner_options options){
     rounds_config.push_back(std::make_pair(3072,100));
 
     std::vector<unsigned int> tmp;
-    tmp = get_values_in_comas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_1.push_back(i);
-    tmp = get_values_in_comas(options.cache_width_interval); std::vector<int> cache_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) cache_width.push_back(i);
-    tmp = get_values_in_comas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_2.push_back(i);
-    tmp = get_values_in_comas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
-    tmp = get_values_in_comas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
-    tmp = get_values_in_comas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
-    tmp = get_values_in_comas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    tmp = get_values_in_commas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_1.push_back(i);
+    tmp = get_values_in_commas(options.cache_width_interval); std::vector<int> cache_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) cache_width.push_back(i);
+    tmp = get_values_in_commas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_2.push_back(i);
+    tmp = get_values_in_commas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
+    tmp = get_values_in_commas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
+    tmp = get_values_in_commas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
+    tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
     std::vector<int> lhs_storage;
     if(options.lhs_fetch_method=="global")
         lhs_storage.push_back(0);
@@ -359,7 +359,7 @@ int main(int argc, char* argv[]){
         std::cout << "Operation : GEMM" << std::endl;
         std::cout << "-------------------" << std::endl;
         std::cout << "layout : " << options.layout << std::endl;
-        std::cout << "scalatype : " << options.scalartype << std::endl;
+        std::cout << "scalartype : " << options.scalartype << std::endl;
         std::cout << "ms : [" << options.ms_interval << "]" << std::endl;
         std::cout << "ks : [" << options.ks_interval << "]" <<  std::endl;
         std::cout << "ns : [" << options.ns_interval << "]" <<  std::endl;
