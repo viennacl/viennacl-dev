@@ -150,12 +150,10 @@ if(ENABLE_DIST)
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DISTDIR}/doc"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_SOURCE_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"
+         "${PROJECT_BINARY_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen"
          "${DISTDIR}/doc/doxygen"
-      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_SOURCE_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/doc/Doxyfile.in" "${DISTDIR}/doc/Doxyfile.in"
@@ -214,52 +212,15 @@ if(ENABLE_DIST)
 
       # Set up directory layout:
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DIST_SOURCES_DIR}"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/compressed_matrix" "${DIST_SOURCES_DIR}/auxiliary/compressed_matrix"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/coordinate_matrix" "${DIST_SOURCES_DIR}/auxiliary/coordinate_matrix"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/ell_matrix" "${DIST_SOURCES_DIR}/auxiliary/ell_matrix"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/hyb_matrix" "${DIST_SOURCES_DIR}/auxiliary/hyb_matrix"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/matrix_col" "${DIST_SOURCES_DIR}/auxiliary/matrix_col"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/matrix_row" "${DIST_SOURCES_DIR}/auxiliary/matrix_row"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/scalar" "${DIST_SOURCES_DIR}/auxiliary/scalar"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/vector" "${DIST_SOURCES_DIR}/auxiliary/vector"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/fft" "${DIST_SOURCES_DIR}/auxiliary/fft"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/svd" "${DIST_SOURCES_DIR}/auxiliary/svd"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/spai" "${DIST_SOURCES_DIR}/auxiliary/spai"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/nmf" "${DIST_SOURCES_DIR}/auxiliary/nmf"
-      COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${PROJECT_SOURCE_DIR}/auxiliary/ilu" "${DIST_SOURCES_DIR}/auxiliary/ilu"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/dump_random" "${DIST_SOURCES_DIR}/auxiliary/random"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/CMakeLists.txt" "${DIST_SOURCES_DIR}/auxiliary/CMakeLists.txt"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/converter.cpp" "${DIST_SOURCES_DIR}/auxiliary/converter.cpp"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-prod-align1.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-prod-align1.cpp"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-prod16-align1.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-prod16-align1.cpp"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-prod-amd.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-prod-amd.cpp"
-      COMMAND "${CMAKE_COMMAND}" -E copy
-         "${PROJECT_SOURCE_DIR}/auxiliary/generate-blas3-solve-align1.cpp" "${DIST_SOURCES_DIR}/auxiliary/generate-blas3-solve-align1.cpp"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/CL" "${DIST_SOURCES_DIR}/CL"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/examples" "${DIST_SOURCES_DIR}/examples"
+
+      COMMAND "${CMAKE_COMMAND}" -E copy_directory
+         "${PROJECT_SOURCE_DIR}/libviennacl" "${DIST_SOURCES_DIR}/libviennacl"
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DIST_SOURCES_DIR}/tests"
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DIST_SOURCES_DIR}/tests/src"
@@ -282,9 +243,6 @@ if(ENABLE_DIST)
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/viennacl" "${DIST_SOURCES_DIR}/viennacl"
-
-      COMMAND "${CMAKE_COMMAND}" -E remove_directory
-         "${DIST_SOURCES_DIR}/viennacl/linalg/kernels"
 
       # Create archive:
       COMMAND "${CMAKE_COMMAND}" -E tar czf ViennaCL-${VERSION}-src.tar.gz
