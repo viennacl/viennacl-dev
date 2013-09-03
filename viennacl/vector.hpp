@@ -214,7 +214,7 @@ namespace viennacl
     public:
       typedef scalar<SCALARTYPE>            value_type;
       typedef long                          difference_type;
-      typedef backend::mem_handle           handle_type;
+      typedef viennacl::backend::mem_handle handle_type;
 
       //const_vector_iterator() {};
 
@@ -363,7 +363,7 @@ namespace viennacl
     public:
       typedef scalar<SCALARTYPE>                                value_type;
       typedef SCALARTYPE                                        cpu_value_type;
-      typedef backend::mem_handle                               handle_type;
+      typedef viennacl::backend::mem_handle                     handle_type;
       typedef SizeType                                        size_type;
       typedef DistanceType                                     difference_type;
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;

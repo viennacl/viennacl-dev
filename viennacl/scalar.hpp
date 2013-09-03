@@ -250,7 +250,7 @@ namespace viennacl
     {
       typedef scalar<SCALARTYPE>         self_type;
     public:
-      typedef backend::mem_handle                               handle_type;
+      typedef viennacl::backend::mem_handle                     handle_type;
       typedef vcl_size_t                                        size_type;
 
       /** @brief Returns the underlying host scalar type. */

@@ -234,7 +234,7 @@ namespace viennacl
       typedef SCALARTYPE                                                          cpu_value_type;
       typedef SizeType                                                            size_type;
       typedef DistanceType                                                        difference_type;
-      typedef backend::mem_handle                                                 handle_type;
+      typedef viennacl::backend::mem_handle                                       handle_type;
       typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
 
