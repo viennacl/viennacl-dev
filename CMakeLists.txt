@@ -162,6 +162,9 @@ if(ENABLE_DIST)
          "${PROJECT_SOURCE_DIR}/examples" "${DISTDIR}/examples"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
+         "${PROJECT_SOURCE_DIR}/libviennacl" "${DIST_SOURCES_DIR}/libviennacl"
+
+      COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/external" "${DISTDIR}/external"
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DISTDIR}/tests"
