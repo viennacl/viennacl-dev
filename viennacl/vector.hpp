@@ -400,7 +400,7 @@ namespace viennacl
       }
 
       // CUDA or host memory:
-      explicit vector_base(SCALARTYPE * ptr_to_mem, size_type vec_size, viennacl::memory_types mem_type, std::size_t start = 0, difference_type stride = 1)
+      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, std::size_t start = 0, difference_type stride = 1)
         : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
       {
         if (mem_type == viennacl::CUDA_MEMORY)
@@ -1014,8 +1014,8 @@ namespace viennacl
 
     explicit vector(size_type vec_size, viennacl::context ctx) : base_type(vec_size, ctx) {}
 
-    explicit vector(SCALARTYPE * ptr_to_mem, size_type vec_size, viennacl::memory_types mem_type, size_type start = 0, difference_type stride = 1)
-        : base_type(ptr_to_mem, vec_size, mem_type, start, stride) {}
+    explicit vector(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, size_type start = 0, difference_type stride = 1)
+        : base_type(ptr_to_mem, mem_type, vec_size, start, stride) {}
 
 #ifdef VIENNACL_WITH_OPENCL
     /** @brief Create a vector from existing OpenCL memory

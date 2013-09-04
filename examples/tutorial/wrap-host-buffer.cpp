@@ -65,8 +65,8 @@ int main()
   //
 
   // wrap host buffer within ViennaCL vectors:
-  viennacl::vector<ScalarType> vcl_vec1(&(host_x[0]), size, viennacl::MAIN_MEMORY); // Third parameter specifies that this is CUDA memory rather than host memory
-  viennacl::vector<ScalarType> vcl_vec2(&(host_y[0]), size, viennacl::MAIN_MEMORY); // Third parameter specifies that this is CUDA memory rather than host memory
+  viennacl::vector<ScalarType> vcl_vec1(&(host_x[0]), viennacl::MAIN_MEMORY, size); // Second parameter specifies that this is host memory rather than CUDA memory
+  viennacl::vector<ScalarType> vcl_vec2(&(host_y[0]), viennacl::MAIN_MEMORY, size); // Second parameter specifies that this is host memory rather than CUDA memory
 
   // reset values to 0 and 1, respectively
   vcl_vec1 = viennacl::scalar_vector<ScalarType>(size, ScalarType(1.0));
