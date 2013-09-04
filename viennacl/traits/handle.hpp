@@ -176,12 +176,16 @@ namespace viennacl
       return viennacl::traits::handle(obj).opencl_handle();
     }
 
-    inline cl_char  opencl_handle(char   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline cl_short opencl_handle(short  val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline cl_int   opencl_handle(int    val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline cl_long  opencl_handle(long   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline float    opencl_handle(float  val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
-    inline double   opencl_handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_char   opencl_handle(char            val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_short  opencl_handle(short           val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_int    opencl_handle(int             val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_long   opencl_handle(long            val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_uchar  opencl_handle(unsigned char   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_ushort opencl_handle(unsigned short  val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_uint   opencl_handle(unsigned int    val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline cl_ulong  opencl_handle(unsigned long   val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline float     opencl_handle(float           val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
+    inline double    opencl_handle(double          val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
 
 #endif

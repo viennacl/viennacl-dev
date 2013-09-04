@@ -1614,6 +1614,43 @@ namespace viennacl
           *result = tmp_buffer[0];
       }
 
+      template <typename T>
+      __global__ void vector_sum_kernel_unsigned_integers(
+                const T * vec1,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                unsigned int option, //0: use max, 1: just sum
+                T * result)
+      {
+        __shared__ T tmp_buffer[128];
+        T thread_sum = 0;
+        for (unsigned int i = threadIdx.x; i<size1; i += blockDim.x)
+        {
+          if (option > 0)
+            thread_sum += vec1[i*inc1+start1];
+          else
+            thread_sum = (thread_sum > vec1[i*inc1+start1]) ? thread_sum : vec1[i*inc1+start1];
+        }
+
+        tmp_buffer[threadIdx.x] = thread_sum;
+
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          __syncthreads();
+          if (threadIdx.x < stride)
+          {
+            if (option > 0)
+              tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x + stride];
+            else
+              tmp_buffer[threadIdx.x] = tmp_buffer[threadIdx.x] > tmp_buffer[threadIdx.x + stride] ? tmp_buffer[threadIdx.x] : tmp_buffer[threadIdx.x + stride];
+          }
+        }
+
+        if (threadIdx.x == 0)
+          *result = tmp_buffer[0];
+      }
+
       namespace detail
       {
         struct vector_sum_kernel_launcher_integers
@@ -1630,6 +1667,24 @@ namespace viennacl
                                                   static_cast<unsigned int>(viennacl::traits::size(temp)),
                                                   static_cast<unsigned int>(option),
                                                   detail::cuda_arg<value_type>(result) );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
+          }
+        };
+
+        struct vector_sum_kernel_launcher_unsigned_integers
+        {
+          template <typename T, typename S3>
+          static void apply(vector_base<T> const & temp,
+                            unsigned int option,
+                            S3 & result)
+          {
+            typedef T        value_type;
+            vector_sum_kernel_unsigned_integers<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+                                                            static_cast<unsigned int>(viennacl::traits::start(temp)),
+                                                            static_cast<unsigned int>(viennacl::traits::stride(temp)),
+                                                            static_cast<unsigned int>(viennacl::traits::size(temp)),
+                                                            static_cast<unsigned int>(option),
+                                                            detail::cuda_arg<value_type>(result) );
             VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
           }
         };
@@ -1654,6 +1709,18 @@ namespace viennacl
 
         template <typename T>
         struct vector_sum_kernel_launcher : public vector_sum_kernel_launcher_integers {};
+
+        template <>
+        struct vector_sum_kernel_launcher<unsigned char>  : public vector_sum_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct vector_sum_kernel_launcher<unsigned short>  : public vector_sum_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct vector_sum_kernel_launcher<unsigned int>  : public vector_sum_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct vector_sum_kernel_launcher<unsigned long>  : public vector_sum_kernel_launcher_unsigned_integers {};
 
         template <>
         struct vector_sum_kernel_launcher<float>  : public vector_sum_kernel_launcher_floats {};
@@ -2288,6 +2355,60 @@ namespace viennacl
           group_buffer[blockIdx.x] = tmp_buffer[0];
       }
 
+      template <typename T>
+      __global__ void norm_kernel_unsigned_integers(
+                 const T * vec,
+                unsigned int start1,
+                unsigned int inc1,
+                unsigned int size1,
+                unsigned int norm_selector,
+                T * group_buffer)
+      {
+        __shared__ T tmp_buffer[128];
+
+        T tmp = 0;
+        unsigned int work_per_thread = (size1 - 1) / (gridDim.x * blockDim.x) + 1;
+        unsigned int group_start = blockIdx.x * work_per_thread * blockDim.x;
+        unsigned int group_stop  = (blockIdx.x + 1) * work_per_thread * blockDim.x;
+        group_stop = (group_stop > size1) ? size1 : group_stop;
+
+        if (norm_selector == 1) //norm_1
+        {
+          for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+            tmp += vec[i*inc1 + start1];
+        }
+        else if (norm_selector == 0) //norm_inf
+        {
+          for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+            tmp = (tmp > vec[i*inc1 + start1]) ? tmp : vec[i*inc1 + start1];
+        }
+
+        tmp_buffer[threadIdx.x] = tmp;
+
+        if (norm_selector > 0) //parallel reduction for norm_1 or norm_2:
+        {
+          for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+          {
+            __syncthreads();
+            if (threadIdx.x < stride)
+              tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+          }
+        }
+        else
+        {
+          //norm_inf:
+          for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+          {
+            __syncthreads();
+            if (threadIdx.x < stride)
+              tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x] > tmp_buffer[threadIdx.x+stride]) ? tmp_buffer[threadIdx.x] : tmp_buffer[threadIdx.x+stride];
+          }
+        }
+
+        if (threadIdx.x == 0)
+          group_buffer[blockIdx.x] = tmp_buffer[0];
+      }
+
 
       namespace detail
       {
@@ -2310,6 +2431,26 @@ namespace viennacl
           }
         };
 
+        struct norm_kernel_launcher_unsigned_integers
+        {
+          template <typename T>
+          static void apply(vector_base<T> const & vec1,
+                            vector_base<T> & temp,
+                            unsigned int option)
+          {
+            typedef T        value_type;
+            norm_kernel_unsigned_integers<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                                       static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                                       static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                                       static_cast<unsigned int>(option),
+                                                       detail::cuda_arg<value_type>(temp)
+                                                      );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
+          }
+        };
+
+
         struct norm_kernel_launcher_floats
         {
           template <typename T>
@@ -2331,6 +2472,18 @@ namespace viennacl
 
         template <typename T>
         struct norm_kernel_launcher : public norm_kernel_launcher_integers {};
+
+        template <>
+        struct norm_kernel_launcher<unsigned char>  : public norm_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct norm_kernel_launcher<unsigned short>  : public norm_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct norm_kernel_launcher<unsigned int>  : public norm_kernel_launcher_unsigned_integers {};
+
+        template <>
+        struct norm_kernel_launcher<unsigned long>  : public norm_kernel_launcher_unsigned_integers {};
 
         template <>
         struct norm_kernel_launcher<float>  : public norm_kernel_launcher_floats {};

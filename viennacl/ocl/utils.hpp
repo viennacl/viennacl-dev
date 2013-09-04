@@ -58,6 +58,11 @@ namespace viennacl
     template <> struct type_to_string<int>    { static std::string apply() { return "int";   } };
     template <> struct type_to_string<long>   { static std::string apply() { return "long";  } };
 
+    template <> struct type_to_string<unsigned char>   { static std::string apply() { return "uchar";  } };
+    template <> struct type_to_string<unsigned short>  { static std::string apply() { return "ushort"; } };
+    template <> struct type_to_string<unsigned int>    { static std::string apply() { return "uint";   } };
+    template <> struct type_to_string<unsigned long>   { static std::string apply() { return "ulong";  } };
+
     template <> struct type_to_string<float>  { static std::string apply() { return "float";  } };
     template <> struct type_to_string<double> { static std::string apply() { return "double"; } };
 
