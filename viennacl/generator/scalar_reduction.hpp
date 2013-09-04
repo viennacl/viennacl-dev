@@ -86,7 +86,7 @@ namespace viennacl{
               switch(array[0].lhs.numeric_type){
                 case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
                 case scheduler::DOUBLE_TYPE: scalartype_name = "double"; size_of_scalartype = sizeof(double); break;
-                default: throw "not implemented"; break;
+                default: throw "not implemented";
               }
               for(scheduler::statement::container_type::const_iterator iit = array.begin() ; iit != array.end() ; ++iit){
                 if(iit->op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
