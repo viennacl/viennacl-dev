@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/scheduler/statement.hpp
+/** @file viennacl/scheduler/forwards.h
     @brief Provides the datastructures for dealing with a single statement such as 'x = y + z;'
 */
 

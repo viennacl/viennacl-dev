@@ -268,6 +268,7 @@ namespace viennacl
          * @param g_res container of residuals
          * @param g_is_update container with indicators which blocks are active
          * @param tag spai tag
+         * @param ctx         Optional context in which the auxiliary data is created (one out of multiple OpenCL contexts, CUDA, host)
          */
         template<typename SparseVectorType, typename ScalarType>
         void least_square_solve(std::vector<SparseVectorType> & A_v_c,

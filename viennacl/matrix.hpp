@@ -248,6 +248,7 @@ namespace viennacl
       *
       * @param rows     Number of rows
       * @param columns  Number of columns
+      * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
       */
       explicit matrix_base(size_type rows, size_type columns, viennacl::context ctx = viennacl::context())
           : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
@@ -751,6 +752,7 @@ namespace viennacl
       *
       * @param rows     Number of rows
       * @param columns  Number of columns
+      * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
       */
       explicit matrix(size_type rows, size_type columns, viennacl::context ctx = viennacl::context()) : base_type(rows, columns, ctx) {}
 

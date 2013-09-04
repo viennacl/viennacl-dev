@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file fft.hpp
+/** @file viennacl/fft.hpp
     @brief All routines related to the Fast Fourier Transform. Experimental.
 */
 

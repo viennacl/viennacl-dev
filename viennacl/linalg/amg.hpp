@@ -217,6 +217,7 @@ namespace viennacl
     * @param A_setup    Operators matrices on all levels from setup phase
     * @param P_setup    Prolongation/Interpolation operators on all levels from setup phase
     * @param tag    AMG preconditioner tag
+    * @param ctx      Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
     */
     template <typename InternalType1, typename InternalType2>
     void amg_transform_gpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag, viennacl::context ctx)
@@ -292,6 +293,7 @@ namespace viennacl
     * @param residual    Residual vector on all levels
     * @param A      Operators matrices on all levels from setup phase
     * @param tag    AMG preconditioner tag
+    * @param ctx      Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
     */
     template <typename InternalVectorType, typename SparseMatrixType>
     void amg_setup_apply (InternalVectorType & result, InternalVectorType & rhs, InternalVectorType & residual, SparseMatrixType const & A, amg_tag const & tag, viennacl::context ctx)

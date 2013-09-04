@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/scheduler/execute_vector assign.hpp
+/** @file viennacl/scheduler/execute_vector_assign.hpp
     @brief Deals with the execution of x = RHS; for a vector x and any compatible right hand side expression RHS.
 */
 

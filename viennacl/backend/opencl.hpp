@@ -49,6 +49,7 @@ namespace viennacl
        *
        * @param size_in_bytes   Number of bytes to allocate
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
+       * @param ctx             Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
        *
        */
       inline cl_mem memory_create(viennacl::ocl::context const & ctx, std::size_t size_in_bytes, const void * host_ptr = NULL)
@@ -91,6 +92,7 @@ namespace viennacl
        * @param dst_offset    Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
        * @param bytes_to_copy Number of bytes to be copied
        * @param ptr           Pointer to the first byte to be written
+       * @param async         Whether the operation should be asynchronous
        */
       inline void memory_write(viennacl::ocl::handle<cl_mem> & dst_buffer,
                         std::size_t dst_offset,
@@ -117,6 +119,7 @@ namespace viennacl
        * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
        * @param bytes_to_copy      Number of bytes to be read
        * @param ptr                Location in main RAM where to read data should be written to
+       * @param async         Whether the operation should be asynchronous
        */
       inline void memory_read(viennacl::ocl::handle<cl_mem> const & src_buffer,
                        std::size_t src_offset,

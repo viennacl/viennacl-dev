@@ -66,9 +66,10 @@ namespace viennacl{
 
         /** @brief Generates the body of the associated kernel function
          *
-         *  @param kernel_id If this profile requires multiple kernel, the index for which the core should be generated
+         *  @param kernel_id  If this profile requires multiple kernel, the index for which the core should be generated
+         *  @param stream     The output stream the kernel is written to
          *  @param statements the statements for which the code should be generated
-         *  @param mapping the mapping of the statement_nodes to the mapped_objects
+         *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
         virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const = 0;
 
@@ -106,7 +107,9 @@ namespace viennacl{
         }
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
-         *  @param dev the given device*/
+         *  @param dev               the given device
+         *  @param scalartype_size   Local memory required to execute the kernel
+         */
         bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const{
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());

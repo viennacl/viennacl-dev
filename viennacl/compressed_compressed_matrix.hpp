@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file compressed_compressed_matrix.hpp
+/** @file viennacl/compressed_compressed_matrix.hpp
     @brief Implementation of the compressed_compressed_matrix class (CSR format with a relatively small number of nonzero rows)
 */
 
@@ -404,11 +404,13 @@ namespace viennacl
         /** @brief Sets the row, column and value arrays of the compressed matrix
         *
         * @param row_jumper     Pointer to an array holding the indices of the first element of each row (starting with zero). E.g. row_jumper[10] returns the index of the first entry of the 11th row. The array length is 'cols + 1'
+        * @param row_indices    Array holding the indices of the nonzero rows
         * @param col_buffer     Pointer to an array holding the column index of each entry. The array length is 'nonzeros'
         * @param elements       Pointer to an array holding the entries of the sparse matrix. The array length is 'elements'
         * @param rows           Number of rows of the sparse matrix
         * @param cols           Number of columns of the sparse matrix
-        * @param nonzeros       Number of nonzeros
+        * @param nonzero_rows   Number of nonzero rows
+        * @param nonzeros       Total number of nonzero entries
         */
         void set(const void * row_jumper,
                  const void * row_indices,

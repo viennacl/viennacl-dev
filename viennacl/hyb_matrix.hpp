@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file hyb_matrix.hpp
+/** @file viennacl/hyb_matrix.hpp
     @brief Implementation of the hyb_matrix class
 
     Contributed by Volodymyr Kysenko.

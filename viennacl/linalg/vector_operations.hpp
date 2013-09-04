@@ -152,6 +152,7 @@ namespace viennacl
     *
     * @param vec1   The vector to which the value should be assigned
     * @param alpha  The value to be assigned
+    * @param up_to_internal_size    Whether 'alpha' should be written to padded memory as well. This is used for setting all entries to zero, including padded memory.
     */
     template <typename T>
     void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
@@ -250,7 +251,7 @@ namespace viennacl
     }
 
 
-
+/** @brief Helper macro for generating binary element-wise operations such as element_prod(), element_div(), element_pow() without unnecessary code duplication */
 #define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
     template <typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
@@ -292,6 +293,7 @@ namespace viennacl
 
 #undef VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS
 
+/** @brief Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
     template <typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> > \
@@ -335,6 +337,7 @@ namespace viennacl
 
     //implementation of inner product:
     //namespace {
+
     /** @brief Computes the inner product of two vectors - dispatcher interface
      *
      * @param vec1 The first vector

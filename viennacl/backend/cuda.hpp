@@ -131,6 +131,7 @@ namespace viennacl
        * @param dst_offset    Offset of the first written byte from the beginning of 'dst_buffer' (in bytes)
        * @param bytes_to_copy Number of bytes to be copied
        * @param ptr           Pointer to the first byte to be written
+       * @param async              Whether the operation should be asynchronous
        */
       inline void memory_write(handle_type & dst_buffer,
                                std::size_t dst_offset,
@@ -159,6 +160,7 @@ namespace viennacl
        * @param src_offset         Offset of the first byte to be read from the beginning of src_buffer (in bytes_
        * @param bytes_to_copy      Number of bytes to be read
        * @param ptr                Location in main RAM where to read data should be written to
+       * @param async              Whether the operation should be asynchronous
        */
       inline void memory_read(handle_type const & src_buffer,
                               std::size_t src_offset,

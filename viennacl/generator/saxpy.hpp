@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/saxpy.hpp
+/** @file viennacl/generator/saxpy.hpp
  *
  * Kernel template for the saxpy-like operation
 */

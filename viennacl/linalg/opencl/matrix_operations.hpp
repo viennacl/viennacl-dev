@@ -469,10 +469,10 @@ namespace viennacl
       //
 
       // Binary operations A = B .* C and A = B ./ C
-      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
+      /** @brief Implementation of binary element-wise operations A = OP(B,C)
       *
-      * @param vec1   The result vector (or -range, or -slice)
-      * @param proxy  The proxy object holding v2 and the operation
+      * @param A      The result matrix (or -range, or -slice)
+      * @param proxy  The proxy object holding B, C, and the operation
       */
       template <typename T, typename F, typename OP>
       void element_op(matrix_base<T, F> & A,
@@ -516,10 +516,10 @@ namespace viennacl
 
       // Unary operations
 
-      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
+      /** @brief Implementation of unary element-wise operations A = OP(B)
       *
-      * @param vec1   The result vector (or -range, or -slice)
-      * @param proxy  The proxy object holding v2 and the operation
+      * @param A      The result matrix (or -range, or -slice)
+      * @param proxy  The proxy object holding B and the operation
       */
       template <typename T, typename F, typename OP>
       void element_op(matrix_base<T, F> & A,

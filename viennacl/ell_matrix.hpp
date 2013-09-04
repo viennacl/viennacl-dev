@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file ell_matrix.hpp
+/** @file viennacl/ell_matrix.hpp
     @brief Implementation of the ell_matrix class
 
     Contributed by Volodymyr Kysenko.

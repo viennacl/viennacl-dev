@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/builtin_database.hpp
+/** @file viennacl/generator/profiles.hpp
  *
  * Vendor-specific parameters for the generated kernels
 */

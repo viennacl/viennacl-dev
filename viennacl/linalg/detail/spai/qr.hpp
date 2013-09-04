@@ -364,11 +364,12 @@ namespace viennacl
           //parallel QR for GPU
           /** @brief Inplace QR factorization via Householder reflections c.f. Gene H. Golub, Charles F. Van Loan "Matrix Computations" 3rd edition p.224 performed on GPU
           *
-          * @param g_I container of row indices
-          * @param g_J container of column indices
+          * @param g_I         container of row indices
+          * @param g_J         container of column indices
           * @param g_A_I_J_vcl contigious matrices, GPU memory is used
-          * @param g_bv_vcl contigios vectors beta, GPU memory is used
+          * @param g_bv_vcl    contigiuos vectors beta, GPU memory is used
           * @param g_is_update container of indicators that show active blocks
+          * @param ctx         Optional context in which the auxiliary data is created (one out of multiple OpenCL contexts, CUDA, host)
           */
           template<typename ScalarType>
           void block_qr(std::vector<std::vector<unsigned int> >& g_I,

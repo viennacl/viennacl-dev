@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/templates/scalar_reduction.hpp
+/** @file viennacl/generator/scalar_reduction.hpp
  *
  * Kernel template for the scalar reduction operation
 */

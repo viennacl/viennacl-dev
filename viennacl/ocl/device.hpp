@@ -676,7 +676,7 @@ namespace viennacl
         /** @brief OpenCL C version string. Returns the highest OpenCL C version supported by the compiler for this device.
           *
           * This version string has the following format:
-          *   OpenCL<space>C<space><major_version.minor_version><space><vendor-specific information>
+          *   OpenCL[space]C[space][major_version.minor_version][space][vendor-specific information]
           * The major_version.minor_version value must be 1.1 if CL_DEVICE_VERSION is OpenCL 1.1.
           * The major_version.minor_version value returned can be 1.0 or 1.1 if CL_DEVICE_VERSION is OpenCL 1.0.
           * If OpenCL C 1.1 is returned, this implies that the language feature set defined in section 6 of the OpenCL 1.1 specification is supported by the OpenCL 1.0 device.
@@ -969,7 +969,8 @@ namespace viennacl
           * Returns the following device properties:
           * name, vendor, type, availability, max compute units, max work group size, global mem size, local mem size, local mem type, host unified memory
           *
-          * @param indent   Number of optional blanks to be added at the start of each line
+          * @param indent      Number of optional blanks to be added at the start of each line
+          * @param indent_char Character to be used for indenting
           */
         std::string info(std::size_t indent = 0, char indent_char = ' ') const
         {
@@ -992,6 +993,7 @@ namespace viennacl
         /** @brief Returns an info string with all device properties defined in the OpenCL 1.1 standard, listed in alphabetical order. Use info() for a short overview.
         *
         * @param indent   Number of optional blanks to be added at the start of each line
+        * @param indent_char Character to be used for indenting
         */
         std::string full_info(std::size_t indent = 0, char indent_char = ' ') const
         {

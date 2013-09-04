@@ -319,6 +319,7 @@ namespace viennacl
           * @param g_bv_vcl block of beta vectors
           * @param g_A_I_J_u_vcl block of matrices A(I, \\tilde J)
           * @param g_is_update indicators, that show if a certain block should be processed
+          * @param ctx         Optional context in which the auxiliary data is created (one out of multiple OpenCL contexts, CUDA, host)
           */
           template<typename ScalarType>
           void block_q_multiplication(const std::vector<std::vector<unsigned int> >& g_J_u,
@@ -391,6 +392,7 @@ namespace viennacl
           * @param g_is_update container with update indicators
           * @param is_empty_block indicator if all previous blocks A(\\tilde I, \\tilde J) - are empty, in case if they are empty kernel with smaller number of
                                   arguments is used
+          * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
           */
           template<typename ScalarType>
           void assemble_qr_block(
@@ -482,6 +484,7 @@ namespace viennacl
           * @param g_bv_vcl block of beta vectors from previous iteration
           * @param g_bv_vcl_u block of updated beta vectors got after recent QR factorization
           * @param g_is_update container with identificators that shows which block should be modified
+          * @param ctx         Optional context in which the auxiliary data is created (one out of multiple OpenCL contexts, CUDA, host)
           */
           template<typename ScalarType>
           void assemble_r(std::vector<std::vector<unsigned int> >& g_I, std::vector<std::vector<unsigned int> >& g_J,

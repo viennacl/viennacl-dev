@@ -145,7 +145,7 @@ namespace viennacl
       * Implementation of the convenience expression result = prod(sp_mat, d_mat);
       *
       * @param sp_mat             The sparse matrix
-      * @param trans(d_mat)       The transposed dense matrix
+      * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
       template< typename TYPE, unsigned int ALIGNMENT, typename F>

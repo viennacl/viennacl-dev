@@ -50,9 +50,7 @@ namespace viennacl{
 
           /** @brief The constructor
            *
-           *  @param min minimal value
-           *  @param max maximal value
-           *  @param policy for increasing the tuning parameter
+           *  @param values    The set of values which this particular tuning parameter can take
            */
           tuning_param(std::vector<int> const & values) : values_(values){ reset();  }
 
@@ -163,11 +161,14 @@ namespace viennacl{
 
       /** @brief Fills a timing map for a given statement and a benchmark configuration
        *
-       * @tparam OpT type of the statement
-       * @tparam ConfigType type of the benchmark configuration
-       * @param timings the timings to fill
-       * @param op the given statement
-       * @param the given config */
+       * @tparam OpT         type of the statement
+       * @tparam ConfigType  type of the benchmark configuration
+       * @param timings      the timings to fill
+       * @param op           the given statement
+       * @param config       the given configuration
+       * @param n_runs       Number of runs for the benchmark
+       * @param out          Pointer to output file stream for writing to file (if not NULL)
+       */
       template<class ConfigType>
       void benchmark(std::map<double, typename ConfigType::profile_type> * timings, scheduler::statement const & op, code_generator::forced_profile_key_type const & key, tuning_config<ConfigType> & config, unsigned int n_runs, std::ofstream * out){
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();

@@ -229,6 +229,7 @@ namespace viennacl
       *
       * @param vec1   The vector to which the value should be assigned
       * @param alpha  The value to be assigned
+      * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
       */
       template <typename T>
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
@@ -462,9 +463,9 @@ namespace viennacl
 
       /** @brief Computes multiple inner products where one argument is common to all inner products. <x, y1>, <x, y2>, ..., <x, yN>
       *
-      * @param vec1 The first vector
-      * @param vec2 The second vector
-      * @param result The result scalar (on the gpu)
+      * @param x          The common vector
+      * @param vec_tuple  The tuple of vectors y1, y2, ..., yN
+      * @param result     The result vector
       */
       template <typename T>
       void inner_prod_impl(vector_base<T> const & x,

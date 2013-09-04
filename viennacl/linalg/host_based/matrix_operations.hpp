@@ -597,7 +597,7 @@ namespace viennacl
 
       /** @brief Implementation of the element-wise operations A = B .* C and A = B ./ C    (using MATLAB syntax)
       *
-      * @param vec1   The result vector (or -range, or -slice)
+      * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B, C, and the operation
       */
       template <typename NumericT, typename F, typename OP>

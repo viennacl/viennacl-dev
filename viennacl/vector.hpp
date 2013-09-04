@@ -1648,7 +1648,7 @@ namespace viennacl
 
   //global functions for handling vectors:
   /** @brief Output stream. Output format is ublas compatible.
-  * @param s    STL output stream
+  * @param os   STL output stream
   * @param val  The vector that should be printed
   */
   template <typename T>
@@ -1962,7 +1962,7 @@ namespace viennacl
 
   /** @brief Operator overload for the expression alpha * v1, where alpha is a scalar expression and v1 is a ViennaCL vector.
   *
-  * @param value   The host scalar (float or double)
+  * @param expr    The scalar expression
   * @param vec     A ViennaCL vector
   */
   template <typename LHS, typename RHS, typename OP, typename T>

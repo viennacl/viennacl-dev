@@ -237,6 +237,7 @@ namespace viennacl
       *
       * @param vec1   The vector to which the value should be assigned
       * @param alpha  The value to be assigned
+      * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
       */
       template <typename T>
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)

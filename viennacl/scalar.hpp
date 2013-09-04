@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file scalar.hpp
+/** @file viennacl/scalar.hpp
     @brief Implementation of the ViennaCL scalar class
 */
 

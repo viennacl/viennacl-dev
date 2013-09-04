@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file ilu.hpp
+/** @file viennacl/linalg/ilu.hpp
     @brief Implementations of incomplete factorization preconditioners. Convenience header file.
 */
 

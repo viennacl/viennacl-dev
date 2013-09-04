@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file coordinate_matrix.hpp
+/** @file viennacl/coordinate_matrix.hpp
     @brief Implementation of the coordinate_matrix class
 */
 
@@ -209,6 +209,7 @@ namespace viennacl
         * @param rows     Number of rows
         * @param cols     Number of columns
         * @param nonzeros Optional number of nonzeros for memory preallocation
+        * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
         */
         coordinate_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0, viennacl::context ctx = viennacl::context()) :
           rows_(rows), cols_(cols), nonzeros_(nonzeros)

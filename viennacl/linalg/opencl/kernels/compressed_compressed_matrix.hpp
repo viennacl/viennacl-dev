@@ -6,7 +6,7 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
-/** @file viennacl/linalg/opencl/kernels/vector.hpp
+/** @file viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp
  *  @brief OpenCL kernel file for vector operations */
 namespace viennacl
 {
