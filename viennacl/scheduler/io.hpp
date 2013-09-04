@@ -91,6 +91,13 @@ namespace viennacl
             default: throw statement_not_supported_exception("Cannot convert unary operation to string");
           }
         }
+        else if (op_elem.type_family == OPERATION_INVALID_TYPE_FAMILY)
+        {
+          if (op_elem.type == OPERATION_INVALID_TYPE)
+            return "OPERATION_INVALID_TYPE";
+          else
+            throw statement_not_supported_exception("Unknown invalid operation type when converting to string");
+        }
         else
           throw statement_not_supported_exception("Unknown operation family when converting to string");
       }
@@ -212,6 +219,10 @@ namespace viennacl
               default: throw statement_not_supported_exception("Cannot convert column-major matrix type to string");
             }
           }
+        }
+        else if (element.type_family == INVALID_TYPE_FAMILY)
+        {
+          return "INVALID_TYPE_FAMILY";
         }
         else
           throw statement_not_supported_exception("Unknown operation family when converting to string");

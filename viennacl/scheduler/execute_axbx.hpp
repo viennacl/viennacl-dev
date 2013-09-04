@@ -175,7 +175,7 @@ namespace viennacl
                   &&  z.rhs.type_family == SCALAR_TYPE_FAMILY)
               {
                 lhs_rhs_element u = root_node.lhs;
-                lhs_rhs_element v = leaf.rhs;
+                lhs_rhs_element v = leaf.lhs;
                 lhs_rhs_element w = z.lhs;
                 lhs_rhs_element beta = z.rhs;
 

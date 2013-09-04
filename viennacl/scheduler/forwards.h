@@ -48,6 +48,8 @@ namespace viennacl
     /** @brief Optimization enum for grouping operations into unary or binary operations. Just for optimization of lookups. */
     enum operation_node_type_family
     {
+      OPERATION_INVALID_TYPE_FAMILY = 0,
+
       // unary or binary expression
       OPERATION_UNARY_TYPE_FAMILY,
       OPERATION_BINARY_TYPE_FAMILY
@@ -56,6 +58,8 @@ namespace viennacl
     /** @brief Enumeration for identifying the possible operations */
     enum operation_node_type
     {
+      OPERATION_INVALID_TYPE = 0,
+
       // unary expression
       OPERATION_UNARY_ABS_TYPE,
       OPERATION_UNARY_ACOS_TYPE,
@@ -151,6 +155,8 @@ namespace viennacl
     /** @brief Groups the type of a node in the statement tree. Used for faster dispatching */
     enum statement_node_type_family
     {
+      INVALID_TYPE_FAMILY = 0,
+
       // LHS or RHS are again an expression:
       COMPOSITE_OPERATION_FAMILY,
 
@@ -167,7 +173,7 @@ namespace viennacl
     /** @brief Encodes the type of a node in the statement tree. */
     enum statement_node_subtype
     {
-      INVALID_SUBTYPE, //when type is COMPOSITE_OPERATION_FAMILY
+      INVALID_SUBTYPE = 0, //when type is COMPOSITE_OPERATION_FAMILY
 
       HOST_SCALAR_TYPE,
       DEVICE_SCALAR_TYPE,
@@ -190,7 +196,7 @@ namespace viennacl
     /** @brief Encodes the type of a node in the statement tree. */
     enum statement_node_numeric_type
     {
-      INVALID_NUMERIC_TYPE, //when type is COMPOSITE_OPERATION_FAMILY
+      INVALID_NUMERIC_TYPE = 0, //when type is COMPOSITE_OPERATION_FAMILY
 
       CHAR_TYPE,
       UCHAR_TYPE,
@@ -647,7 +653,17 @@ namespace viennacl
           array_[current_index].op.type        = operation_node_type(result_of::op_type_info<OP>::id);
 
           // set LHS and RHS:
+          if (array_[current_index].op.type_family == OPERATION_UNARY_TYPE_FAMILY)
+          {
+            // unary expression: set rhs to invalid:
+            array_[current_index].rhs.type_family  = INVALID_TYPE_FAMILY;
+            array_[current_index].rhs.subtype      = INVALID_SUBTYPE;
+            array_[current_index].rhs.numeric_type = INVALID_NUMERIC_TYPE;
+            return add_lhs(current_index, next_free, proxy.lhs());
+          }
+
           return add_rhs(current_index, add_lhs(current_index, next_free, proxy.lhs()), proxy.rhs());
+
         }
 
         container_type   array_;
