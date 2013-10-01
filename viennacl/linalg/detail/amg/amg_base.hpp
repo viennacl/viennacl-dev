@@ -1242,9 +1242,6 @@ namespace viennacl
             */
             void slice_new (unsigned int level, InternalType1 const & A)
             {
-              typedef typename SparseMatrixType::const_iterator1 ConstRowIterator;
-              typedef typename SparseMatrixType::const_iterator2 ConstColIterator;
-
               // Determine index offset of all the slices (index of A[level] when the respective slice starts).
             #ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for

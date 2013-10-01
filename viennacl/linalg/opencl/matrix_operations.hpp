@@ -254,8 +254,6 @@ namespace viennacl
       template <typename NumericT, typename F>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT, F> & mat)
       {
-        typedef NumericT        value_type;
-
         // Step 1: set everything to zero
         matrix_assign(mat, NumericT(0));
 
@@ -317,8 +315,6 @@ namespace viennacl
       template <typename NumericT, typename F>
       void matrix_diag_to_vector(const matrix_base<NumericT, F> & mat, int k, vector_base<NumericT> & vec)
       {
-        typedef NumericT        value_type;
-
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         typedef viennacl::linalg::opencl::kernels::vector<NumericT>  KernelClass;
@@ -376,8 +372,6 @@ namespace viennacl
       template <typename NumericT, typename F>
       void matrix_row(const matrix_base<NumericT, F> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
-        typedef NumericT        value_type;
-
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         typedef viennacl::linalg::opencl::kernels::vector<NumericT>  KernelClass;
@@ -421,8 +415,6 @@ namespace viennacl
       template <typename NumericT, typename F>
       void matrix_column(const matrix_base<NumericT, F> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
-        typedef NumericT        value_type;
-
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         typedef viennacl::linalg::opencl::kernels::vector<NumericT>  KernelClass;

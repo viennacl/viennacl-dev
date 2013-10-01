@@ -210,8 +210,6 @@ namespace viennacl
 
       inline void execute_impl(statement const & s, statement_node const & root_node)
       {
-        typedef statement::container_type   StatementContainer;
-
         if (   root_node.lhs.type_family != SCALAR_TYPE_FAMILY
             && root_node.lhs.type_family != VECTOR_TYPE_FAMILY
             && root_node.lhs.type_family != MATRIX_TYPE_FAMILY)

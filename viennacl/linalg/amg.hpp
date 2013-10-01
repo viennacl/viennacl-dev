@@ -71,11 +71,7 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_setup(InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
       unsigned int i, iterations, c_points, f_points;
       detail::amg::amg_slicing<InternalType1,InternalType2> Slicing;
@@ -149,7 +145,7 @@ namespace viennacl
     template <typename MatrixType, typename InternalType1, typename InternalType2>
     void amg_init(MatrixType const & mat, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
-      typedef typename MatrixType::value_type ScalarType;
+      //typedef typename MatrixType::value_type ScalarType;
       typedef typename InternalType1::value_type SparseMatrixType;
 
       if (tag.get_coarselevels() > 0)
@@ -182,7 +178,7 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_transform_cpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type MatrixType;
+      //typedef typename InternalType1::value_type MatrixType;
 
       // Resize internal data structures to actual size.
       A.resize(tag.get_coarselevels()+1);
@@ -222,9 +218,6 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_transform_gpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag, viennacl::context ctx)
     {
-      typedef typename InternalType1::value_type MatrixType;
-      typedef typename InternalType2::value_type::value_type ScalarType;
-
       // Resize internal data structures to actual size.
       A.resize(tag.get_coarselevels()+1);
       P.resize(tag.get_coarselevels());

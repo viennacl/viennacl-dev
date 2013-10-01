@@ -71,7 +71,7 @@ namespace viennacl
     void amg_interpol_direct(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
+      //typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
@@ -173,7 +173,7 @@ namespace viennacl
     void amg_interpol_classic(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
+      //typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;
@@ -362,10 +362,10 @@ namespace viennacl
     void amg_interpol_ag(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
+      //typedef typename InternalType2::value_type PointVectorType;
+      //typedef typename SparseMatrixType::value_type ScalarType;
+      //typedef typename SparseMatrixType::iterator1 InternalRowIterator;
+      //typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
       unsigned int x;
       amg_point *pointx, *pointy;
@@ -406,7 +406,7 @@ namespace viennacl
     void amg_interpol_sa(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
+      //typedef typename InternalType2::value_type PointVectorType;
       typedef typename SparseMatrixType::value_type ScalarType;
       typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       typedef typename SparseMatrixType::iterator2 InternalColIterator;

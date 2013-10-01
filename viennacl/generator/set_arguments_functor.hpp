@@ -95,7 +95,7 @@ namespace viennacl{
           /** @brief Matrix mapping */
           template<class ScalarType, class Layout>
           result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
-            typedef typename matrix_base<ScalarType, Layout>::size_type size_type;
+            //typedef typename matrix_base<ScalarType, Layout>::size_type size_type;
             if(memory_.insert((void*)&mat).second){
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
               if(viennacl::traits::start1(mat)>0)

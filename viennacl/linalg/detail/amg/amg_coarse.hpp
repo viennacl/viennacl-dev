@@ -156,13 +156,6 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_coarse_classic_onepass(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
-
       amg_point* c_point, *point1, *point2;
       unsigned int i;
 
@@ -251,12 +244,7 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2>
     void amg_coarse_classic(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type SparseMatrixType;
       typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
       bool add_C;
       amg_point *c_point, *point1, *point2;
@@ -379,13 +367,6 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse_rs0(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
-
       unsigned int total_points;
 
       // Slice matrix into parts such that points are distributed among threads
@@ -460,13 +441,6 @@ namespace viennacl
     template <typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse_rs3(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
-      typedef typename InternalType1::value_type SparseMatrixType;
-      typedef typename InternalType2::value_type PointVectorType;
-      typedef typename SparseMatrixType::value_type ScalarType;
-
-      typedef typename SparseMatrixType::iterator1 InternalRowIterator;
-      typedef typename SparseMatrixType::iterator2 InternalColIterator;
-
       amg_point *c_point, *point1, *point2;
       bool add_C;
       unsigned int i, j;
