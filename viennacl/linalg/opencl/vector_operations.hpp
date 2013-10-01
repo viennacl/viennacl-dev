@@ -899,7 +899,7 @@ namespace viennacl
 
         result = 0;
         for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result = std::max(result, *it);
+          result = std::max(result, static_cast<T>(*it));
       }
 
 
