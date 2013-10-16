@@ -768,7 +768,6 @@ int run_test(double epsilon)
 {
     //typedef float               ScalarType;
     typedef boost::numeric::ublas::matrix<ScalarType>       MatrixType;
-    typedef boost::numeric::ublas::vector<ScalarType>       VectorType;
 
     typedef viennacl::matrix<ScalarType, T>    VCLMatrixType;
 

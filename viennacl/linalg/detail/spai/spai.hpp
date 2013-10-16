@@ -143,7 +143,6 @@ namespace viennacl
         void initProjectSubMatrix(const SparseMatrixType& A_in, const std::vector<unsigned int>& J, std::vector<unsigned int>& I,
                                   DenseMatrixType& A_out)
         {
-          typedef typename DenseMatrixType::value_type ScalarType;
           A_out.resize(I.size(), J.size(), false);
           for(std::size_t j = 0; j < J.size(); ++j)
           {
@@ -726,10 +725,7 @@ namespace viennacl
                          boost::numeric::ublas::compressed_matrix<ScalarType>& cpu_M, //output
                          viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& M,
                          const spai_tag& tag){
-            typedef typename boost::numeric::ublas::vector<ScalarType> VectorType;
             typedef typename viennacl::linalg::detail::spai::sparse_vector<ScalarType> SparseVectorType;
-            typedef typename boost::numeric::ublas::matrix<ScalarType> DenseMatrixType;
-            typedef typename boost::numeric::ublas::compressed_matrix<ScalarType> CPUMatrixType;
             //typedef typename viennacl::compressed_matrix<ScalarType> GPUSparseMatrixType;
             //sparse matrix transpose...
             unsigned int cur_iter = 0;

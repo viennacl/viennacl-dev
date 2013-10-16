@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "viennacl.hpp"
-#include "helper.hpp"
+#include "init_matrix.hpp"
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"

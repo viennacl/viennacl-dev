@@ -93,7 +93,6 @@ int main (int, const char **)
 {
   typedef double               ScalarType;     //feel free to change this to 'double' if supported by your hardware
   typedef boost::numeric::ublas::matrix<ScalarType>        MatrixType;
-  typedef boost::numeric::ublas::vector<ScalarType>        VectorType;
   typedef viennacl::matrix<ScalarType, viennacl::column_major>        VCLMatrixType;
   typedef viennacl::vector<ScalarType>        VCLVectorType;
 

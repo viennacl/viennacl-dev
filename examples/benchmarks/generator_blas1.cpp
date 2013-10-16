@@ -99,7 +99,6 @@ ScalarType run_benchmark(size_t size, operation_type type)
 int main(){
     typedef std::vector< viennacl::ocl::platform > platforms_type;
     typedef std::vector<viennacl::ocl::device> devices_type;
-    typedef std::vector<cl_device_id> cl_devices_type;
 
     platforms_type platforms = viennacl::ocl::get_platforms();
     size_t num_platforms = platforms.size();

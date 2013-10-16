@@ -97,7 +97,6 @@ namespace viennacl
         template <typename MatrixType, typename VectorType>
         void backwardSolve(const MatrixType& R, const VectorType& y, VectorType& x)
         {
-          typedef typename MatrixType::value_type ScalarType;
           for (long i = R.size2()-1; i >= 0 ; i--)
           {
             x(i) = y(i);

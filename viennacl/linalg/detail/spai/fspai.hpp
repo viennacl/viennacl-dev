@@ -240,8 +240,6 @@ namespace viennacl
           template <typename MatrixType, typename VectorType>
           void cholesky_solve(MatrixType const & L, VectorType & b)
           {
-            typedef typename VectorType::value_type  ScalarType;
-
             // inplace forward solve L x = b
             for (std::size_t i=0; i<L.size1(); ++i)
             {
