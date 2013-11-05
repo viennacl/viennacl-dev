@@ -21,7 +21,7 @@ SET(VIENNACL_SRC_DIST ON)
 
 # For out-of-the-box support on MacOS:
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  INCLUDE_DIRECTORIES("/opt/local/include") 
+  INCLUDE_DIRECTORIES("/opt/local/include")
   set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -84,6 +84,8 @@ if(BUILD_TESTING)
 endif()
 
 add_subdirectory(doc)
+
+add_subdirectory(libviennacl)
 
 # Install
 #########

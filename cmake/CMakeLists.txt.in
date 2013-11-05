@@ -33,7 +33,7 @@ include(ViennaCLCommon)
 # For out-of-the-box support on MacOS:
 IF (ENABLE_OPENCL)
   IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    INCLUDE_DIRECTORIES("/opt/local/include") 
+    INCLUDE_DIRECTORIES("/opt/local/include")
     set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ENDIF(ENABLE_OPENCL)
@@ -56,6 +56,9 @@ endif()
 if(BUILD_TESTING)
    add_subdirectory(tests)
 endif()
+
+add_subdirectory(libviennacl)
+
 
 # Install
 #########
