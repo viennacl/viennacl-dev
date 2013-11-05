@@ -24,7 +24,6 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/device.hpp"
 
-#include <sys/time.h>
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 
