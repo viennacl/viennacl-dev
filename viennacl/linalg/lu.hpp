@@ -22,6 +22,8 @@
     @brief Implementations of LU factorization for row-major and column-major dense matrices.
 */
 
+#include <algorithm>    //for std::min
+
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
 

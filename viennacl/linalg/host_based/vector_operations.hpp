@@ -23,6 +23,8 @@
 */
 
 #include <cmath>
+#include <algorithm>  //for std::max and std::min
+
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
