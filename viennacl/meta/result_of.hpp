@@ -421,6 +421,60 @@ namespace viennacl
         typedef typename cpu_value_type<T>::type    type;
       };
 
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::compressed_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T>
+      struct cpu_value_type<viennacl::compressed_compressed_matrix<T> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::coordinate_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::ell_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::hyb_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::circulant_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::hankel_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::toeplitz_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
+      template <typename T, unsigned int ALIGNMENT>
+      struct cpu_value_type<viennacl::vandermonde_matrix<T, ALIGNMENT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
       template <typename T1, typename T2, typename OP>
       struct cpu_value_type<viennacl::matrix_expression<T1, T2, OP> >
       {
