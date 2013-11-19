@@ -100,11 +100,10 @@ ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & ma
 // -------------------------------------------------------------
 //
 
-template <typename NumericT, typename Epsilon,
+template <typename NumericT,
           typename UblasMatrixType, typename UblasVectorType,
           typename VCLMatrixType, typename VCLVectorType1, typename VCLVectorType2>
-int test_prod_rank1(Epsilon const & epsilon,
-                    UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2,
+int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2,
                     VCLMatrixType & vcl_m1, VCLVectorType1 & vcl_v1, VCLVectorType2 & vcl_v2)
 {
    int retval = EXIT_SUCCESS;
@@ -121,7 +120,7 @@ int test_prod_rank1(Epsilon const & epsilon,
 
    ublas_m1 += ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
    {
       std::cout << "# Error at operation: rank 1 update" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
@@ -135,7 +134,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_m1 += NumericT(4) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += NumericT(2) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * NumericT(2);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
    {
       std::cout << "# Error at operation: scaled rank 1 update - CPU Scalar" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
@@ -147,7 +146,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_m1 += NumericT(4) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::scalar<NumericT>(2) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * viennacl::scalar<NumericT>(2);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
    {
       std::cout << "# Error at operation: scaled rank 1 update - GPU Scalar" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
@@ -162,7 +161,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v1 = viennacl::linalg::prod(ublas_m1, ublas_v2);
    vcl_v1   = viennacl::linalg::prod(vcl_m1, vcl_v2);
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( fabs(diff(ublas_v1, vcl_v1)) > 0 )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -178,7 +177,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v1 = alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) + beta * ublas_v1;
    vcl_v1   = alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) + beta * vcl_v1;
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( fabs(diff(ublas_v1, vcl_v1)) > 0 )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -193,7 +192,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( fabs(diff(ublas_v2, vcl_v2)) > 0 )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -204,7 +203,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2;
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( fabs(diff(ublas_v2, vcl_v2)) > 0 )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -219,8 +218,8 @@ int test_prod_rank1(Epsilon const & epsilon,
 //
 // -------------------------------------------------------------
 //
-template< typename NumericT, typename F, typename Epsilon >
-int test(Epsilon const& epsilon)
+template< typename NumericT, typename F>
+int test()
 {
    int retval = EXIT_SUCCESS;
 
@@ -283,8 +282,7 @@ int test(Epsilon const& epsilon)
    std::cout << "------------ Testing rank-1-updates and matrix-vector products ------------------" << std::endl;
 
    std::cout << "* m = full, v1 = full, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_native, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -299,8 +297,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = full, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_native, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -316,8 +313,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = full, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_native, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -336,8 +332,7 @@ int test(Epsilon const& epsilon)
 
 
    std::cout << "* m = full, v1 = range, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_range, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -353,8 +348,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = range, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_range, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -370,8 +364,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = range, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_range, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -390,8 +383,7 @@ int test(Epsilon const& epsilon)
    // v1 = slice
 
    std::cout << "* m = full, v1 = slice, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_slice, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -407,8 +399,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = slice, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_slice, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -424,8 +415,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = full, v1 = slice, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_native, vcl_v1_slice, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -443,8 +433,7 @@ int test(Epsilon const& epsilon)
    ///////////////////////////// matrix_range
 
    std::cout << "* m = range, v1 = full, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_native, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -460,8 +449,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = full, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_native, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -477,8 +465,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = full, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_native, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -497,8 +484,7 @@ int test(Epsilon const& epsilon)
 
 
    std::cout << "* m = range, v1 = range, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_range, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -514,8 +500,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = range, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_range, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -531,8 +516,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = range, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_range, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -551,8 +535,7 @@ int test(Epsilon const& epsilon)
    // v1 = slice
 
    std::cout << "* m = range, v1 = slice, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_slice, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -568,8 +551,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = slice, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_slice, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -585,8 +567,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = range, v1 = slice, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_range, vcl_v1_slice, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -604,8 +585,7 @@ int test(Epsilon const& epsilon)
    ///////////////////////////// matrix_slice
 
    std::cout << "* m = slice, v1 = full, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_native, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -621,8 +601,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = slice, v1 = full, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_native, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -638,8 +617,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = slice, v1 = full, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_native, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -658,8 +636,7 @@ int test(Epsilon const& epsilon)
 
 
    std::cout << "* m = slice, v1 = range, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_range, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -675,8 +652,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = slice, v1 = range, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_range, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -692,8 +668,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = slice, v1 = range, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_range, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -712,8 +687,7 @@ int test(Epsilon const& epsilon)
    // v1 = slice
 
    std::cout << "* m = slice, v1 = slice, v2 = full" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_slice, vcl_v2_native);
    if (retval == EXIT_FAILURE)
    {
@@ -729,8 +703,7 @@ int test(Epsilon const& epsilon)
 
 
    std::cout << "* m = slice, v1 = slice, v2 = range" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_slice, vcl_v2_range);
    if (retval == EXIT_FAILURE)
    {
@@ -746,8 +719,7 @@ int test(Epsilon const& epsilon)
       ublas_m1(i,j) = (i+j);
 
    std::cout << "* m = slice, v1 = slice, v2 = slice" << std::endl;
-   retval = test_prod_rank1<NumericT>(epsilon,
-                                      ublas_m1, ublas_v1, ublas_v2,
+   retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
                                       vcl_m1_slice, vcl_v1_slice, vcl_v2_slice);
    if (retval == EXIT_FAILURE)
    {
@@ -780,12 +752,10 @@ int main()
    std::cout << std::endl;
    {
       typedef int NumericT;
-      NumericT epsilon = NumericT(1.0E-3);
       std::cout << "# Testing setup:" << std::endl;
-      std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: int" << std::endl;
       std::cout << "  layout: row-major" << std::endl;
-      retval = test<NumericT, viennacl::row_major>(epsilon);
+      retval = test<NumericT, viennacl::row_major>();
       if( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
@@ -796,12 +766,10 @@ int main()
    std::cout << std::endl;
    {
       typedef int NumericT;
-      NumericT epsilon = NumericT(1.0E-3);
       std::cout << "# Testing setup:" << std::endl;
-      std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: int" << std::endl;
       std::cout << "  layout: column-major" << std::endl;
-      retval = test<NumericT, viennacl::column_major>(epsilon);
+      retval = test<NumericT, viennacl::column_major>();
       if( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
@@ -818,12 +786,10 @@ int main()
    {
       {
          typedef long NumericT;
-         NumericT epsilon = 1.0E-11;
          std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
          std::cout << "  numeric: double" << std::endl;
          std::cout << "  layout: row-major" << std::endl;
-         retval = test<NumericT, viennacl::row_major>(epsilon);
+         retval = test<NumericT, viennacl::row_major>();
             if( retval == EXIT_SUCCESS )
                std::cout << "# Test passed" << std::endl;
             else
@@ -834,12 +800,10 @@ int main()
       std::cout << std::endl;
       {
          typedef long NumericT;
-         NumericT epsilon = 1.0E-11;
          std::cout << "# Testing setup:" << std::endl;
-         std::cout << "  eps:     " << epsilon << std::endl;
          std::cout << "  numeric: double" << std::endl;
          std::cout << "  layout: column-major" << std::endl;
-         retval = test<NumericT, viennacl::column_major>(epsilon);
+         retval = test<NumericT, viennacl::column_major>();
             if( retval == EXIT_SUCCESS )
                std::cout << "# Test passed" << std::endl;
             else

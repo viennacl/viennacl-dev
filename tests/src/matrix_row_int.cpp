@@ -27,19 +27,16 @@ int main (int, const char **)
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
 
-  double epsilon = 1e-4;
   std::cout << "# Testing setup:" << std::endl;
-  std::cout << "  eps:     " << epsilon << std::endl;
   std::cout << "  numeric: int" << std::endl;
   std::cout << " --- row-major ---" << std::endl;
-  if (run_test<viennacl::row_major, int>(epsilon) != EXIT_SUCCESS)
+  if (run_test<viennacl::row_major, int>() != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << "# Testing setup:" << std::endl;
-  std::cout << "  eps:     " << epsilon << std::endl;
   std::cout << "  numeric: long" << std::endl;
   std::cout << " --- row-major ---" << std::endl;
-  if (run_test<viennacl::row_major, long>(epsilon) != EXIT_SUCCESS)
+  if (run_test<viennacl::row_major, long>() != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << std::endl;
