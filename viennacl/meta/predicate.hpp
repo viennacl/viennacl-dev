@@ -28,7 +28,11 @@
 #include "viennacl/forwards.h"
 
 #ifdef VIENNACL_WITH_OPENCL
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include "CL/cl.h"
+#endif
 #endif
 
 namespace viennacl
