@@ -162,10 +162,11 @@ namespace viennacl
       amg_influence (level, A, Pointvector, tag);
 
       // Traverse through points and calculate initial influence measure
+      long i;
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (i) shared (Pointvector)
 #endif
-      for (long i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
+      for (i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
   Pointvector[level][i]->calc_influence();
 
        // Do initial sorting
