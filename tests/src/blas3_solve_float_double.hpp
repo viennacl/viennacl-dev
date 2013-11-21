@@ -60,7 +60,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 
@@ -74,8 +74,8 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 
    for (std::size_t i=0;i<v1.size(); ++i)
    {
-      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -90,14 +90,14 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   double ret = 0;
-   double act = 0;
+   ScalarType ret = 0;
+   ScalarType act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -117,7 +117,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 template <typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
 void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, Epsilon const & epsilon)
 {
-   double act_diff = fabs(diff(B_ref, B_check));
+   double act_diff = std::fabs(diff(B_ref, B_check));
    if( act_diff > epsilon )
    {
      std::cout << " FAILED!" << std::endl;

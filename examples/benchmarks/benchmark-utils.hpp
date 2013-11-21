@@ -77,14 +77,14 @@ public:
   {
     struct timeval tval;
     gettimeofday(&tval, NULL);
-    ts = tval.tv_sec * 1000000 + tval.tv_usec;
+    ts = static_cast<double>(tval.tv_sec * 1000000 + tval.tv_usec);
   }
 
   double get() const
   {
     struct timeval tval;
     gettimeofday(&tval, NULL);
-    double end_time = tval.tv_sec * 1000000 + tval.tv_usec;
+    double end_time = static_cast<double>(tval.tv_sec * 1000000 + tval.tv_usec);
 
     return static_cast<double>(end_time-ts) / 1000000.0;
   }

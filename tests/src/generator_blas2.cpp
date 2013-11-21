@@ -19,6 +19,7 @@
 // *** System
 //
 #include <iostream>
+#include <cmath>
 
 //
 // *** Boost
@@ -42,7 +43,7 @@
 #include "viennacl/generator/generate.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
-    if ( double delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
+    if ( double delta = std::fabs ( diff ( cpu, gpu) ) > epsilon ) {\
         std::cout << "# Error at operation: " #op << std::endl;\
         std::cout << "  diff: " << delta << std::endl;\
         retval = EXIT_FAILURE;\
@@ -58,14 +59,14 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   double ret = 0;
-   double act = 0;
+   ScalarType ret = 0;
+   ScalarType act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -79,8 +80,8 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
     for ( unsigned int i=0; i<v1.size(); ++i ) {
-        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
+        if ( std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = std::fabs ( v2_cpu[i] - v1[i] ) / std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }
@@ -109,16 +110,16 @@ int test( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size1; ++i){
         for(unsigned int j=0 ; j<size2; ++j){
-            cA(i,j)=(double)std::rand()/RAND_MAX;
+            cA(i,j)=static_cast<NumericT>(std::rand()/RAND_MAX);
         }
     }
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = (double)std::rand()/RAND_MAX;
+        cx(i) = static_cast<NumericT>(std::rand()/RAND_MAX);
     }
 
     for(unsigned int i=0; i<size1; ++i){
-        cy(i) = (double)std::rand()/RAND_MAX;
+        cy(i) = static_cast<NumericT>(std::rand()/RAND_MAX);
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;

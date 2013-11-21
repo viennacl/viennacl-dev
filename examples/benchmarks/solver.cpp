@@ -110,7 +110,7 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
   viennacl::backend::finish();
   double exec_time = timer.get();
   std::cout << "Exec. time: " << exec_time << std::endl;
-  std::cout << "Est. "; printOps(ops, exec_time / BENCHMARK_RUNS);
+  std::cout << "Est. "; printOps(static_cast<double>(ops), exec_time / BENCHMARK_RUNS);
   residual -= viennacl::linalg::prod(matrix, result);
   std::cout << "Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
   std::cout << "Estimated rel. residual: " << solver.error() << std::endl;

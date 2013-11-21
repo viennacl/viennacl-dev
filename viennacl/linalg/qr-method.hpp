@@ -474,8 +474,8 @@ namespace viennacl
                             H(i, i) -= x;
 
                         s = std::fabs(H(n, n - 1)) + std::fabs(H(n - 1, n - 2));
-                        x = y = 0.75 * s;
-                        w = (-0.4375) * s * s;
+                        x = y = SCALARTYPE(0.75) * s;
+                        w = SCALARTYPE(-0.4375) * s * s;
                     }
 
                     // MATLAB's new ad hoc shift
@@ -491,7 +491,7 @@ namespace viennacl
                             for (int i = 0; i <= n; i++)
                                 H(i, i) -= s;
                             exshift += s;
-                            x = y = w = (SCALARTYPE)0.964;
+                            x = y = w = SCALARTYPE(0.964);
                         }
                     }
 

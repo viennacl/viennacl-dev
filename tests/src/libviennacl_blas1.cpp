@@ -431,8 +431,8 @@ int main()
   std::cout << std::endl << "-- Testing xROT...";
   for (std::size_t i=0; i<size/4; ++i)
   {
-    float tmp            =  0.6 * ref_float_x[2 + 3*i] + 0.8 * ref_float_y[1 + 2*i];
-    ref_float_y[1 + 2*i] = -0.8 * ref_float_x[2 + 3*i] + 0.6 * ref_float_y[1 + 2*i];;
+    float tmp            =  0.6f * ref_float_x[2 + 3*i] + 0.8f * ref_float_y[1 + 2*i];
+    ref_float_y[1 + 2*i] = -0.8f * ref_float_x[2 + 3*i] + 0.6f * ref_float_y[1 + 2*i];;
     ref_float_x[2 + 3*i] = tmp;
 
     double tmp2           =  0.6 * ref_double_x[2 + 3*i] + 0.8 * ref_double_y[1 + 2*i];
@@ -608,7 +608,7 @@ int main()
   ViennaCLHostiSamax(my_host_backend, size/3,
                      &idx,
                      viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 0, 2);
-  check(ref_index, idx, eps_float);
+  check(static_cast<float>(ref_index), static_cast<float>(idx), eps_float);
   idx = 0;
   ViennaCLHostiDamax(my_host_backend, size/3,
                      &idx,

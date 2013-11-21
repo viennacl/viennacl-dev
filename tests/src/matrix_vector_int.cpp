@@ -120,10 +120,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
 
    ublas_m1 += ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
-   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
+   if( diff(ublas_m1, vcl_m1) != 0 )
    {
       std::cout << "# Error at operation: rank 1 update" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_m1, vcl_m1) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -134,10 +134,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_m1 += NumericT(4) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += NumericT(2) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * NumericT(2);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
+   if( diff(ublas_m1, vcl_m1) != 0 )
    {
       std::cout << "# Error at operation: scaled rank 1 update - CPU Scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_m1, vcl_m1) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -146,10 +146,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_m1 += NumericT(4) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::scalar<NumericT>(2) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * viennacl::scalar<NumericT>(2);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > 0 )
+   if( diff(ublas_m1, vcl_m1) != 0 )
    {
       std::cout << "# Error at operation: scaled rank 1 update - GPU Scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_m1, vcl_m1) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -161,10 +161,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_v1 = viennacl::linalg::prod(ublas_m1, ublas_v2);
    vcl_v1   = viennacl::linalg::prod(vcl_m1, vcl_v2);
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > 0 )
+   if( diff(ublas_v1, vcl_v1) != 0 )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_v1, vcl_v1) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -177,10 +177,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_v1 = alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) + beta * ublas_v1;
    vcl_v1   = alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) + beta * vcl_v1;
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > 0 )
+   if( diff(ublas_v1, vcl_v1) != 0 )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_v1, vcl_v1) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -192,10 +192,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > 0 )
+   if( diff(ublas_v2, vcl_v2) != 0 )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_v2, vcl_v2) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -203,10 +203,10 @@ int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, Ubla
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2;
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > 0 )
+   if( diff(ublas_v2, vcl_v2) != 0 )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << diff(ublas_v2, vcl_v2) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------

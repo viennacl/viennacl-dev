@@ -44,7 +44,7 @@
 #include "viennacl/scheduler/io.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
-    if ( float delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
+    if ( float delta = std::fabs ( diff ( cpu, gpu) ) > epsilon ) {\
         std::cout << "# Error at operation: " #op << std::endl;\
         std::cout << "  diff: " << delta << std::endl;\
         retval = EXIT_FAILURE;\
@@ -66,7 +66,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -80,8 +80,8 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
     for ( unsigned int i=0; i<v1.size(); ++i ) {
-        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
+        if ( std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = std::fabs ( v2_cpu[i] - v1[i] ) / std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }

@@ -82,15 +82,15 @@ int main()
   float  eps_float  = 1e-5;
   double eps_double = 1e-12;
 
-  std::vector<float> ref_float_x(size1); for (std::size_t i=0; i<size1; ++i) ref_float_x[i] = i;
-  std::vector<float> ref_float_y(size2); for (std::size_t i=0; i<size2; ++i) ref_float_y[i] = size2 - i;
-  std::vector<float> ref_float_A(size1*size2); for (std::size_t i=0; i<size1*size2; ++i) ref_float_A[i] = 3*i;
-  std::vector<float> ref_float_B(size1*size2); for (std::size_t i=0; i<size1*size2; ++i) ref_float_B[i] = 2*i;
+  std::vector<float> ref_float_x(size1); for (std::size_t i=0; i<size1; ++i) ref_float_x[i] = static_cast<float>(i);
+  std::vector<float> ref_float_y(size2); for (std::size_t i=0; i<size2; ++i) ref_float_y[i] = static_cast<float>(size2 - i);
+  std::vector<float> ref_float_A(size1*size2); for (std::size_t i=0; i<size1*size2; ++i) ref_float_A[i] = static_cast<float>(3*i);
+  std::vector<float> ref_float_B(size1*size2); for (std::size_t i=0; i<size1*size2; ++i) ref_float_B[i] = static_cast<float>(2*i);
 
-  std::vector<double> ref_double_x(size1, 1.0); for (std::size_t i=0; i<size1; ++i) ref_double_x[i] = i;
-  std::vector<double> ref_double_y(size2, 2.0); for (std::size_t i=0; i<size2; ++i) ref_double_y[i] = size2 - i;
-  std::vector<double> ref_double_A(size1*size2, 3.0); for (std::size_t i=0; i<size1*size2; ++i) ref_double_A[i] = 3*i;
-  std::vector<double> ref_double_B(size1*size2, 4.0); for (std::size_t i=0; i<size1*size2; ++i) ref_double_B[i] = 2*i;
+  std::vector<double> ref_double_x(size1, 1.0); for (std::size_t i=0; i<size1; ++i) ref_double_x[i] = static_cast<double>(i);
+  std::vector<double> ref_double_y(size2, 2.0); for (std::size_t i=0; i<size2; ++i) ref_double_y[i] = static_cast<double>(size2 - i);
+  std::vector<double> ref_double_A(size1*size2, 3.0); for (std::size_t i=0; i<size1*size2; ++i) ref_double_A[i] = static_cast<double>(3*i);
+  std::vector<double> ref_double_B(size1*size2, 4.0); for (std::size_t i=0; i<size1*size2; ++i) ref_double_B[i] = static_cast<double>(2*i);
 
   // Host setup
   ViennaCLHostBackend my_host_backend = NULL;

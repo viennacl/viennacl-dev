@@ -64,7 +64,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 
@@ -77,8 +77,8 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 
    for (std::size_t i=0;i<v1.size(); ++i)
    {
-      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -100,7 +100,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -143,7 +143,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -160,7 +160,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -176,7 +176,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -197,7 +197,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -214,7 +214,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -231,7 +231,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -250,7 +250,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -267,7 +267,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -284,7 +284,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -305,7 +305,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -321,7 +321,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {
@@ -338,7 +338,7 @@ int test_prod(Epsilon const& epsilon,
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
    }
-   act_diff = fabs(diff(C, vcl_C));
+   act_diff = std::fabs(diff(C, vcl_C));
 
    if( act_diff > epsilon )
    {

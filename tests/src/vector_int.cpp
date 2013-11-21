@@ -75,28 +75,28 @@ ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const &
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType, typename ViennaCLVectorType>
-ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
+template <typename ScalarType, typename VCLVectorType>
+ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
-  ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
-  viennacl::backend::finish();
-  viennacl::copy(vcl_vec, v2_cpu);
+   ublas::vector<ScalarType> v2_cpu(v2.size());
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
+   viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
-  for (unsigned int i=0;i<v1.size(); ++i)
-  {
-    v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]);
-  }
+   for (unsigned int i=0;i<v1.size(); ++i)
+   {
+      if (v2_cpu[i] != v1[i])
+        return 1;
+   }
 
-  return ublas::norm_inf(v2_cpu);
+   return 0;
 }
-
 
 template <typename T1, typename T2>
 int check(T1 const & t1, T2 const & t2)
 {
   int retval = EXIT_SUCCESS;
 
-  if (std::abs(diff(t1, t2)) != 0)
+  if (diff(t1, t2) != 0)
   {
     std::cout << "# Error! Difference: " << std::abs(diff(t1, t2)) << std::endl;
     retval = EXIT_FAILURE;

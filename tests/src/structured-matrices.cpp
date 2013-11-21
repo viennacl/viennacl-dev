@@ -96,7 +96,7 @@ ScalarType diff(dense_matrix<ScalarType> const & m1, dense_matrix<ScalarType> co
     if ( (d1 == 0) && (d2 == 0) )
       return 0;
 
-    return sqrt(df / std::max<ScalarType>(d1, d2));
+    return std::sqrt(df / std::max<ScalarType>(d1, d2));
 }
 
 
@@ -112,7 +112,7 @@ ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
         norm_ref += ref[i] * ref[i];
     }
 
-    return sqrt(df / norm_ref) ;
+    return std::sqrt(df / norm_ref) ;
 }
 
 template <typename ScalarType>
@@ -178,7 +178,7 @@ int toeplitz_test(ScalarType epsilon)
       for(std::size_t j = 0; j < TOEPLITZ_SIZE; j++)
       {
         m1(i,j) = static_cast<ScalarType>(i) - static_cast<ScalarType>(j);
-        m2(i,j) = m1(i,j) * m1(i,j) + 1;
+        m2(i,j) = m1(i,j) * m1(i,j) + ScalarType(1);
       }
 
     for(std::size_t i = 0; i < TOEPLITZ_SIZE; i++)
@@ -381,8 +381,8 @@ int vandermonde_test(ScalarType epsilon)
     for(std::size_t i = 0; i < m1.size1(); i++)
       for(std::size_t j = 0; j < m1.size2(); j++)
       {
-        m1(i,j) = pow(ScalarType(1.0 + i/1000.0), ScalarType(j));
-        m2(i,j) = pow(ScalarType(1.0 - i/2000.0), ScalarType(j));
+        m1(i,j) = std::pow(ScalarType(1.0 + i/1000.0), ScalarType(j));
+        m2(i,j) = std::pow(ScalarType(1.0 - i/2000.0), ScalarType(j));
       }
 
     for(std::size_t i = 0; i < input_ref.size(); i++)
@@ -432,7 +432,7 @@ int vandermonde_test(ScalarType epsilon)
 
     for(std::size_t j = 0; j < m1.size2(); j++)
     {
-      m1(4, j) = pow(ScalarType(1.0001), ScalarType(j));
+      m1(4, j) = std::pow(ScalarType(1.0001), ScalarType(j));
     }
 
     viennacl::copy(vcl_vandermonde1, m2);

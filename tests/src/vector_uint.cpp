@@ -75,22 +75,20 @@ ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const &
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType, typename ViennaCLVectorType>
-ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
+template <typename ScalarType, typename VCLVectorType>
+ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
-  ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
-  viennacl::backend::finish();
-  viennacl::copy(vcl_vec, v2_cpu);
+   ublas::vector<ScalarType> v2_cpu(v2.size());
+   viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
+   viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
-  ScalarType inf_norm = 0;
-  for (unsigned int i=0;i<v1.size(); ++i)
-  {
-    ScalarType val = std::fabs(v2_cpu[i] - v1[i]);
-    if (val > inf_norm)
-      inf_norm = val;
-  }
+   for (unsigned int i=0;i<v1.size(); ++i)
+   {
+      if (v2_cpu[i] != v1[i])
+        return 1;
+   }
 
-  return inf_norm;
+   return 0;
 }
 
 

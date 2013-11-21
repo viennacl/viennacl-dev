@@ -58,7 +58,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 
@@ -71,8 +71,8 @@ ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
-      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -93,7 +93,7 @@ ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & ma
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -126,10 +126,10 @@ int test_prod_rank1(Epsilon const & epsilon,
 
    ublas_m1 += ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( std::fabs(diff(ublas_m1, vcl_m1)) > epsilon )
    {
       std::cout << "# Error at operation: rank 1 update" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_m1, vcl_m1)) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -140,10 +140,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_m1 += NumericT(4.2) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += NumericT(2.1) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * NumericT(2.1);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( std::fabs(diff(ublas_m1, vcl_m1)) > epsilon )
    {
       std::cout << "# Error at operation: scaled rank 1 update - CPU Scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_m1, vcl_m1)) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -152,10 +152,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_m1 += NumericT(4.2) * ublas::outer_prod(ublas_v1, ublas_v2);
    vcl_m1 += viennacl::scalar<NumericT>(2.1) * viennacl::linalg::outer_prod(vcl_v1, vcl_v2);
    vcl_m1 += viennacl::linalg::outer_prod(vcl_v1, vcl_v2) * viennacl::scalar<NumericT>(2.1);  //check proper compilation
-   if( fabs(diff(ublas_m1, vcl_m1)) > epsilon )
+   if( std::fabs(diff(ublas_m1, vcl_m1)) > epsilon )
    {
       std::cout << "# Error at operation: scaled rank 1 update - GPU Scalar" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_m1, vcl_m1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_m1, vcl_m1)) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -167,10 +167,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v1 = viennacl::linalg::prod(ublas_m1, ublas_v2);
    vcl_v1   = viennacl::linalg::prod(vcl_m1, vcl_v2);
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -183,10 +183,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v1 = alpha * viennacl::linalg::prod(ublas_m1, ublas_v2) + beta * ublas_v1;
    vcl_v1   = alpha * viennacl::linalg::prod(vcl_m1, vcl_v2) + beta * vcl_v1;
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -198,10 +198,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1);
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1);
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -209,10 +209,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v2 = alpha * viennacl::linalg::prod(trans(ublas_m1), ublas_v1) + beta * ublas_v2;
    vcl_v2   = alpha * viennacl::linalg::prod(trans(vcl_m1), vcl_v1) + beta * vcl_v2;
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -224,10 +224,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v2 = row(ublas_m1, std::size_t(7));
    vcl_v2   = row(vcl_m1, std::size_t(7));
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -235,10 +235,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    ublas_v1 = column(ublas_m1, std::size_t(7));
    vcl_v1   = column(vcl_m1, std::size_t(7));
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -254,10 +254,10 @@ int test_prod_rank1(Epsilon const & epsilon,
      ublas_v2[i] = ublas_m1(i + 3, i);
    vcl_v2   = diag(vcl_m1, static_cast<int>(-3));
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: diagonal extraction from matrix" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -267,10 +267,10 @@ int test_prod_rank1(Epsilon const & epsilon,
      A(i + (A.size1() - ublas_m1.size2()), i) = ublas_v2[i];
    vcl_m2 = diag(vcl_v2, static_cast<int>(ublas_m1.size2()) - static_cast<int>(A.size1()));
 
-   if( fabs(diff(A, vcl_m2)) > epsilon )
+   if( std::fabs(diff(A, vcl_m2)) > epsilon )
    {
       std::cout << "# Error at operation: Matrix assignment from diagonal" << std::endl;
-      std::cout << "  diff: " << fabs(diff(A, vcl_m2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(A, vcl_m2)) << std::endl;
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
@@ -300,10 +300,10 @@ int test_solve(Epsilon const & epsilon,
    std::cout << "Upper triangular solver" << std::endl;
    ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::upper_tag());
    vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::upper_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -312,10 +312,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::unit_upper_tag());
    vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::unit_upper_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -324,10 +324,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::lower_tag());
    vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::lower_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -336,10 +336,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(ublas_m1, ublas_v1, ublas::unit_lower_tag());
    vcl_v1 = viennacl::linalg::solve(vcl_m1, vcl_v1, viennacl::linalg::unit_lower_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -352,10 +352,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::upper_tag());
    vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::upper_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -364,10 +364,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::unit_upper_tag());
    vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::unit_upper_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: unit upper triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -376,10 +376,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::lower_tag());
    vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::lower_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -388,10 +388,10 @@ int test_solve(Epsilon const & epsilon,
    viennacl::copy(ublas_v1, vcl_v1);
    ublas_v1 = ublas::solve(trans(ublas_m1), ublas_v1, ublas::unit_lower_tag());
    vcl_v1 = viennacl::linalg::solve(trans(vcl_m1), vcl_v1, viennacl::linalg::unit_lower_tag());
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: unit lower triangular solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -472,10 +472,10 @@ int test(Epsilon const& epsilon)
    }
    vcl_matrix.resize(2*num_rows, 2*num_cols, true);
    viennacl::copy(vcl_matrix, matrix);
-   if( fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to larger)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -489,10 +489,10 @@ int test(Epsilon const& epsilon)
    std::cout << "Matrix resizing (to smaller)" << std::endl;
    matrix.resize(result.size(), rhs.size(), true);
    vcl_matrix.resize(result.size(), rhs.size(), true);
-   if( fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to smaller)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
       return EXIT_FAILURE;
    }
    */
@@ -1035,10 +1035,10 @@ int test(Epsilon const& epsilon)
    //viennacl::copy(square_matrix, vcl_square_matrix);
    viennacl::linalg::lu_substitute(vcl_square_matrix, vcl_lu_rhs);
 
-   if( fabs(diff(lu_rhs, vcl_lu_rhs)) > epsilon )
+   if( std::fabs(diff(lu_rhs, vcl_lu_rhs)) > epsilon )
    {
       std::cout << "# Error at operation: dense solver" << std::endl;
-      std::cout << "  diff: " << fabs(diff(lu_rhs, vcl_lu_rhs)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(lu_rhs, vcl_lu_rhs)) << std::endl;
       retval = EXIT_FAILURE;
    }
 

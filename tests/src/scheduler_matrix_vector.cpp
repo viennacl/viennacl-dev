@@ -61,7 +61,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
+      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
 
@@ -74,8 +74,8 @@ ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 
    for (unsigned int i=0;i<v1.size(); ++i)
    {
-      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
+      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -96,7 +96,7 @@ ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & ma
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -135,10 +135,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -149,10 +149,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -163,10 +163,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -179,10 +179,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }*/
 
@@ -195,10 +195,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }*/
 
@@ -211,10 +211,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }*/
 
@@ -232,10 +232,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -249,10 +249,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -266,10 +266,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -285,10 +285,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -299,10 +299,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -313,10 +313,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -328,10 +328,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -342,10 +342,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -356,10 +356,10 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
-      std::cout << "  diff: " << fabs(diff(ublas_v2, vcl_v2)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
       retval = EXIT_FAILURE;
    }
 
@@ -442,10 +442,10 @@ int test(Epsilon const& epsilon)
    }
    vcl_matrix.resize(2*num_rows, 2*num_cols, true);
    viennacl::copy(vcl_matrix, matrix);
-   if( fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to larger)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
       return EXIT_FAILURE;
    }
 
@@ -459,10 +459,10 @@ int test(Epsilon const& epsilon)
    std::cout << "Matrix resizing (to smaller)" << std::endl;
    matrix.resize(result.size(), rhs.size(), true);
    vcl_matrix.resize(result.size(), rhs.size(), true);
-   if( fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to smaller)" << std::endl;
-      std::cout << "  diff: " << fabs(diff(matrix, vcl_matrix)) << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
       return EXIT_FAILURE;
    }
    */
