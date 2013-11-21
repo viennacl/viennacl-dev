@@ -24,6 +24,7 @@
 
 // include necessary system headers
 #include <iostream>
+#include <cstdlib>
 
 //include ViennaCL headers
 #include "viennacl/ocl/device.hpp"
