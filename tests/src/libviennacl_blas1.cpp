@@ -65,7 +65,7 @@ ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & v
 template <typename T, typename U, typename EpsilonT>
 void check(T const & t, U const & u, EpsilonT eps)
 {
-  EpsilonT rel_error = diff(t,u);
+  EpsilonT rel_error = static_cast<EpsilonT>(diff(t,u));
   if (rel_error > eps)
   {
     std::cerr << "Relative error: " << rel_error << std::endl;

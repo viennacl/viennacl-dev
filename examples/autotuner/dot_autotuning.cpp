@@ -136,7 +136,7 @@ viennacl::scheduler::statement make_statement(autotuner_options /*options*/, vie
 }
 
 template<typename ScalarType>
-unsigned int run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
+double run_benchmark(size_t size, autotuner_options options, typename config<ScalarType>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -157,7 +157,7 @@ unsigned int run_benchmark(size_t size, autotuner_options options, typename conf
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/(double)n_runs;
-    return ScalarType(1e-9*2*size*sizeof(ScalarType)/time);
+    return 1e-9*2.0*static_cast<double>(size*sizeof(ScalarType))/time;
 }
 
 template<class ScalarType>

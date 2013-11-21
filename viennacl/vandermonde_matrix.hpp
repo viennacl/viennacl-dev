@@ -178,7 +178,7 @@ namespace viennacl {
 
         for(std::size_t i = 0; i < size; i++) {
             for(std::size_t j = 0; j < size; j++) {
-                com_dst(i, j) = pow(tmp[i], static_cast<int>(j));
+                com_dst(i, j) = std::pow(tmp[i], static_cast<int>(j));
             }
         }
     }

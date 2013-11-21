@@ -65,7 +65,7 @@ namespace viennacl{
             else
               while(val>0)
               {
-                  *ptr++='0' + static_cast<char>(val % 10);
+                  *ptr++=static_cast<char>('0') + static_cast<char>(val % 10);
                   val /= 10;
               }
           }

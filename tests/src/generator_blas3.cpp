@@ -60,7 +60,7 @@ using namespace boost::numeric;
 //
 static const unsigned int min_large_block_size = 32;
 static const unsigned int max_large_block_size = 128;
-static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
+static const unsigned int n_large_blocks = static_cast<unsigned int>(std::log(max_large_block_size/min_large_block_size)/std::log(2)+1.0);
 
 static const unsigned int min_alignment = 1;
 static const unsigned int max_alignment = 8;
@@ -85,8 +85,8 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   double ret = 0;
-   double act = 0;
+   ScalarType ret = 0;
+   ScalarType act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {

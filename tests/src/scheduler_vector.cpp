@@ -417,7 +417,7 @@ int test(Epsilon const& epsilon,
 
   std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
 #define GENERATE_UNARY_OP_TEST(OPNAME) \
-  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), 0.21); \
+  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), NumericT(0.21)); \
   ublas_v2 = NumericT(3.1415) * ublas_v1; \
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
