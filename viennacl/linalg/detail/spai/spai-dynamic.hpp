@@ -277,7 +277,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < g_J.size(); ++i)
+            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
               if(g_is_update[i])
               {
@@ -370,7 +370,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < g_I.size(); ++i)
+            for(long i = 0; i < static_cast<long>(g_I.size()); ++i)
             {
               for(std::size_t j = g_J[i].size(); j < g_I[i].size(); ++j)
                   g_I_q[i].push_back(g_I[i][j]);
@@ -601,7 +601,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < g_J.size(); ++i)
+            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
               if(g_is_update[i])
               {
@@ -623,7 +623,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < g_J.size(); ++i)
+            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
               g_J[i].insert(g_J[i].end(), g_J_u[i].begin(), g_J_u[i].end());
               g_I[i].insert(g_I[i].end(), g_I_u[i].begin(), g_I_u[i].end());

@@ -79,7 +79,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-          for (std::size_t i = 0; i < size1; ++i)
+          for (long i = 0; i < static_cast<long>(size1); ++i)
             data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha;
         }
         else
@@ -87,7 +87,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-          for (std::size_t i = 0; i < size1; ++i)
+          for (long i = 0; i < static_cast<long>(size1); ++i)
             data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha;
         }
       }
@@ -129,7 +129,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
           }
           else
@@ -137,7 +137,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
           }
         }
@@ -148,7 +148,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
           }
           else
@@ -156,7 +156,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
           }
         }
@@ -199,7 +199,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
           }
           else
@@ -207,7 +207,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
           }
         }
@@ -218,7 +218,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
           }
           else
@@ -226,7 +226,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (std::size_t i = 0; i < size1; ++i)
+            for (long i = 0; i < static_cast<long>(size1); ++i)
               data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
           }
         }
@@ -258,7 +258,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for if (loop_bound > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < loop_bound; ++i)
+        for (long i = 0; i < static_cast<long>(loop_bound); ++i)
           data_vec1[i*inc1+start1] = data_alpha;
       }
 
@@ -286,7 +286,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
         {
           value_type temp = data_vec2[i*inc2+start2];
           data_vec2[i*inc2+start2] = data_vec1[i*inc1+start1];
@@ -326,7 +326,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
           OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2], data_vec3[i*inc3+start3]);
       }
 
@@ -355,7 +355,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
           OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2]);
       }
 
@@ -393,7 +393,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
           temp += data_vec1[i*inc1+start1] * data_vec2[i*inc2+start2];
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
@@ -459,7 +459,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
           temp += std::fabs(data_vec1[i*inc1+start1]);
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
@@ -488,7 +488,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for reduction(+: temp) private(data) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
         {
           data = data_vec1[i*inc1+start1];
           temp += data * data;
@@ -595,7 +595,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for private(temp1, temp2) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-        for (std::size_t i = 0; i < size1; ++i)
+        for (long i = 0; i < static_cast<long>(size1); ++i)
         {
           temp1 = data_vec1[i*inc1+start1];
           temp2 = data_vec2[i*inc2+start2];

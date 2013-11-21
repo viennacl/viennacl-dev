@@ -57,7 +57,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row=0; row < num_rows; ++row)
+          for (long row=0; row < static_cast<long>(num_rows); ++row)
           {
             unsigned int eq_row = elim_row_index[row];
             ScalarType vec_entry = vec_buf[eq_row];

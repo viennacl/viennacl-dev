@@ -203,7 +203,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t i=0; i<block_indices_.size(); ++i)
+          for (long i=0; i<static_cast<long>(block_indices_.size()); ++i)
           {
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;
@@ -380,7 +380,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t i=0; i<block_indices_.size(); ++i)
+          for (long i=0; i<static_cast<long>(block_indices_.size()); ++i)
           {
             // Step 1: Extract blocks
             std::size_t block_size = block_indices_[i].second - block_indices_[i].first;

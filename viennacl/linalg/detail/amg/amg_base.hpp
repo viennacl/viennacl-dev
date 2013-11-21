@@ -1246,7 +1246,7 @@ namespace viennacl
             #ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for
             #endif
-              for (unsigned int i=0; i<=threads_; ++i)
+              for (long i=0; i<=static_cast<long>(threads_); ++i)
               {
                 // Offset of first piece is zero. Pieces 1,...,threads-1 have equal size while the last one might be greater.
                 if (i == 0) Offset[i][level] = 0;
@@ -1271,7 +1271,7 @@ namespace viennacl
             #ifdef VIENNACL_WITH_OPENMP
               #pragma omp parallel for private (x,y,point)
             #endif
-              for (unsigned int i=0; i<threads_; ++i)
+              for (long i=0; i<static_cast<long>(threads_); ++i)
               {
                 // Allocate space for the matrix slice and the pointvector.
                 A_slice[i][level] = SparseMatrixType(Offset[i+1][level]-Offset[i][level],Offset[i+1][level]-Offset[i][level]);
@@ -1321,7 +1321,7 @@ namespace viennacl
           typedef typename SparseMatrixType::iterator1 InternalRowIterator;
           typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
-          unsigned int x,y,z;
+          long x,y,z;
           ScalarType prod;
           RES = SparseMatrixType(A.size1(), B.size2());
           RES.clear();
@@ -1329,7 +1329,7 @@ namespace viennacl
     #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y,z,prod) shared (A,B,RES)
     #endif
-          for (x=0; x<A.size1(); ++x)
+          for (x=0; x<static_cast<long>(A.size1()); ++x)
           {
             InternalRowIterator row_iter = A.begin1();
             row_iter += x;
@@ -1361,7 +1361,7 @@ namespace viennacl
           typedef typename SparseMatrixType::iterator1 InternalRowIterator;
           typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
-          unsigned int x,y1,y2,z;
+          long x,y1,y2,z;
           amg_sparsevector<ScalarType> row;
           RES = SparseMatrixType(P.size2(), P.size2());
           RES.clear();
@@ -1369,7 +1369,7 @@ namespace viennacl
     #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y1,y2,z,row) shared (A,P,RES)
     #endif
-          for (x=0; x<P.size2(); ++x)
+          for (x=0; x<static_cast<long>(P.size2()); ++x)
           {
             row = amg_sparsevector<ScalarType>(A.size2());
             InternalRowIterator row_iter = P.begin1(true);

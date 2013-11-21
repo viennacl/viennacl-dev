@@ -89,8 +89,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
           }
           else
@@ -98,8 +98,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
           }
         }
@@ -110,8 +110,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
           }
           else
@@ -119,8 +119,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
           }
         }
@@ -181,8 +181,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -190,8 +190,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -199,8 +199,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -208,8 +208,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -220,8 +220,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -229,8 +229,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -238,8 +238,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -247,8 +247,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -314,8 +314,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -323,8 +323,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -332,8 +332,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -341,8 +341,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t row = 0; row < A_size1; ++row)
-              for (std::size_t col = 0; col < A_size2; ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (long col = 0; col < static_cast<long>(A_size2); ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -353,8 +353,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -362,8 +362,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -371,8 +371,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -380,8 +380,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for (std::size_t col = 0; col < A_size2; ++col)
-              for (std::size_t row = 0; row < A_size1; ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (long row = 0; row < static_cast<long>(A_size1); ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -415,8 +415,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
+          for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
               wrapper_A(row, col) = alpha;
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
@@ -426,8 +426,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
+          for (long col = 0; col < static_cast<long>(A_size2); ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
               wrapper_A(row, col) = alpha;
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
@@ -458,7 +458,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-        for (std::size_t row = 0; row < A_size1; ++row)
+        for (long row = 0; row < static_cast<long>(A_size1); ++row)
           wrapper_A(row, row) = alpha;
       }
 
@@ -643,8 +643,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
+          for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
@@ -655,8 +655,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
+          for (long col = 0; col < static_cast<long>(A_size2); ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
 
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
@@ -702,8 +702,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
-            for (std::size_t col = 0; col < A_size2; ++col)
+          for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            for (long col = 0; col < static_cast<long>(A_size2); ++col)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
         }
         else
@@ -711,8 +711,8 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < A_size2; ++col)
-            for (std::size_t row = 0; row < A_size1; ++row)
+          for (long col = 0; col < static_cast<long>(A_size2); ++col)
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
         }
       }
@@ -764,7 +764,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size1; ++row)
+          for (long row = 0; row < static_cast<long>(A_size1); ++row)
           {
             value_type temp = 0;
             for (std::size_t col = 0; col < A_size2; ++col)
@@ -848,7 +848,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < A_size2; ++row)
+          for (long row = 0; row < static_cast<long>(A_size2); ++row)
           {
             value_type temp = 0;
             for (std::size_t col = 0; col < A_size1; ++col)

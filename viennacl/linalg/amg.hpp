@@ -526,7 +526,7 @@ namespace viennacl
       void smooth_jacobi(int level, int const iterations, VectorType & x, VectorType const & rhs) const
       {
         VectorType old_result (x.size());
-        unsigned int index;
+        long index;
         ScalarType sum = 0, diag = 1;
 
         for (int i=0; i<iterations; ++i)
@@ -536,7 +536,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (sum,diag) shared (rhs,x)
 #endif
-          for (index=0; index<A_setup[level].size1(); ++index)
+          for (index=0; index < static_cast<long>(A_setup[level].size1()); ++index)
           {
             InternalConstRowIterator row_iter = A_setup[level].begin1();
             row_iter += index;

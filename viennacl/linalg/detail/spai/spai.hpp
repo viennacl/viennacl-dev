@@ -173,7 +173,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < M_v.size(); ++i){
+            for (long i = 0; i < static_cast<long>(M_v.size()); ++i){
                 build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
                 initProjectSubMatrix(A, g_J[i], g_I[i], g_A_I_J[i]);
                 //print_matrix(g_A_I_J[i]);
@@ -197,7 +197,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < M_v.size(); ++i){
+            for (long i = 0; i < static_cast<long>(M_v.size()); ++i){
                 build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
             }
         }
@@ -334,7 +334,7 @@ namespace viennacl
           VIENNACL_ERR_CHECK(vcl_err);
           //fan out vector in parallel
           //#pragma omp parallel for
-          for(std::size_t i = 0; i < M_v.size(); ++i)
+          for(long i = 0; i < static_cast<long>(M_v.size()); ++i)
           {
             if(g_is_update[i])
             {
@@ -380,7 +380,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(std::size_t i = 0; i < M_v.size(); ++i){
+            for (long i = 0; i < static_cast<long>(M_v.size()); ++i){
                 if(g_is_update[i]){
                     VectorType y = boost::numeric::ublas::zero_vector<ScalarType>(g_I[i].size());
                     //std::cout<<y<<std::endl;

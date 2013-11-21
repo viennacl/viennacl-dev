@@ -84,7 +84,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (max,diag_sign) shared (A,Pointvector)
 #endif
-      for (unsigned int i=0; i<A[level].size1(); ++i)
+      for (long i=0; i<static_cast<long>(A[level].size1()); ++i)
       {
         diag_sign = 1;
         if (A[level](i,i) < 0)
@@ -157,7 +157,6 @@ namespace viennacl
     void amg_coarse_classic_onepass(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
     {
       amg_point* c_point, *point1, *point2;
-      unsigned int i;
 
       // Check and save all strong influences
       amg_influence (level, A, Pointvector, tag);
@@ -166,7 +165,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for private (i) shared (Pointvector)
 #endif
-      for (i=0; i<Pointvector[level].size(); ++i)
+      for (long i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
   Pointvector[level][i]->calc_influence();
 
        // Do initial sorting
@@ -201,7 +200,7 @@ namespace viennacl
       // If a point is neither C nor F point but is nevertheless influenced by other points make it F point
       // (this situation can happen when this point does not influence other points and the points that influence this point became F points already)
       /*#pragma omp parallel for private (i,point1)
-      for (i=0; i<Pointvector[level].size(); ++i)
+      for (long i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
       {
         point1 = Pointvector[level][i];
         if (point1->is_undecided())
@@ -377,7 +376,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for shared (total_points,Slicing,level)
 #endif
-      for (unsigned int i=0; i<Slicing.threads_; ++i)
+      for (long i=0; i<static_cast<long>(Slicing.threads_); ++i)
       {
         amg_coarse_classic(level,Slicing.A_slice[i],Slicing.Pointvector_slice[i],tag);
 
@@ -396,7 +395,7 @@ namespace viennacl
       #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for shared (Slicing)
       #endif
-        for (unsigned int i=0; i<Slicing.threads_; ++i)
+        for (long i=0; i<static_cast<long>(Slicing.threads_); ++i)
         {
           // If no higher coarse level can be found on slice i (saved in Slicing.Offset[i+1][level+1]) then pull C point(s) to the next level
           if (Slicing.Offset[i+1][level+1] == 0)
@@ -591,7 +590,7 @@ namespace viennacl
           typedef typename SparseMatrixType::iterator1 InternalRowIterator;
           typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
-          unsigned int x,y;
+          long x,y;
           ScalarType diag;
           amg_point *pointx, *pointy;
 
@@ -603,7 +602,7 @@ namespace viennacl
     #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for private (x,y,diag) shared (A)
     #endif
-          for (x=0; x<A[level].size1(); ++x)
+          for (x=0; x<static_cast<long>(A[level].size1()); ++x)
           {
             InternalRowIterator row_iter = A[level].begin1();
             row_iter += x;
