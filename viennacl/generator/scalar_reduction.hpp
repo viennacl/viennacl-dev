@@ -104,7 +104,7 @@ namespace viennacl{
               //set size argument
               scheduler::statement_node const * current_node = &(*it);
 
-              std::size_t vector_size;
+              std::size_t vector_size = 0;
               //The LHS of the prod is a vector
               if(current_node->lhs.type_family==scheduler::VECTOR_TYPE_FAMILY)
               {
