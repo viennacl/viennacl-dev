@@ -319,61 +319,15 @@ namespace viennacl
           //apply_cpu(vec);
         }
 
-        // CPU fallback:
-        /*void apply_cpu(vector<ScalarType> & vec) const
-        {
-          if (vec.handle().get_active_handle_id() != viennacl::MAIN_MEMORY)
-          {
-            viennacl::memory_types old_memory_location = viennacl::memory_domain(vec);
-            viennacl::switch_memory_domain(vec, viennacl::MAIN_MEMORY);
-
-            ScalarType * vector_entries = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(vec);
-
-            for (std::size_t i=0; i<block_indices_.size(); ++i)
-            {
-              detail::ilu_vector_range<ScalarType *, ScalarType>  vec_range(vector_entries, block_indices_[i].first, LU_blocks[i].size2());
-
-              unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
-              unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());
-              ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LU_blocks[i].handle());
-
-              viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), unit_lower_tag());
-              viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), upper_tag());
-            }
-
-            viennacl::switch_memory_domain(vec, old_memory_location);
-          }
-          else //apply directly:
-          {
-            ScalarType * vector_entries = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(vec);
-
-            for (std::size_t i=0; i<block_indices_.size(); ++i)
-            {
-              detail::ilu_vector_range<ScalarType *, ScalarType>  vec_range(vector_entries, block_indices_[i].first, LU_blocks[i].size2());
-
-              unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle1());
-              unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_blocks[i].handle2());
-              ScalarType   const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(LU_blocks[i].handle());
-
-              viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), unit_lower_tag());
-              viennacl::linalg::host_based::detail::csr_inplace_solve<ScalarType>(row_buffer, col_buffer, elements, vec_range, LU_blocks[i].size2(), upper_tag());
-            }
-          }
-
-        } */
 
       private:
 
         void init(MatrixType const & A)
         {
-          std::vector< std::map<unsigned int, ScalarType> > temp;
-
           viennacl::context host_context(viennacl::MAIN_MEMORY);
           viennacl::compressed_matrix<ScalarType> mat(host_context);
 
-          //mat = A;  //TODO: Get this working again! Otherwise huge overhead in conversion.
-          viennacl::copy(A, temp);
-          viennacl::copy(temp, mat);
+          mat = A;
 
           unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(mat.handle1());
 
