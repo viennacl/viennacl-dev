@@ -51,7 +51,7 @@ namespace viennacl
         * @param krylov_dim     The maximum dimension of the Krylov space before restart (number of restarts is found by max_iterations / krylov_dim)
         */
         gmres_tag(double tol = 1e-10, unsigned int max_iterations = 300, unsigned int krylov_dim = 20)
-         : tol_(tol), iterations_(max_iterations), krylov_dim_(krylov_dim), iters_taken_(0) {};
+         : tol_(tol), iterations_(max_iterations), krylov_dim_(krylov_dim), iters_taken_(0) {}
 
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }

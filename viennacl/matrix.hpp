@@ -195,7 +195,7 @@ namespace viennacl
 
       matrix_iterator(MATRIXTYPE & mat,
                       std::size_t start_row,
-                      std::size_t start_col) : mat_(mat), row_(start_row), col_(start_col) {};
+                      std::size_t start_col) : mat_(mat), row_(start_row), col_(start_col) {}
 
       value_type operator*(void) { return mat_(row_, col_); }
       self_type & operator++(void) { viennacl::tools::MATRIX_ITERATOR_INCREMENTER<ROWCOL, MATRIXTYPE>::apply(mat_, row_, col_); return *this; }
@@ -746,7 +746,7 @@ namespace viennacl
       typedef typename base_type::size_type             size_type;
 
       /** @brief The default constructor. Does not allocate any memory. */
-      explicit matrix() : base_type() {};
+      explicit matrix() : base_type() {}
 
       /** @brief Creates the matrix with the given dimensions
       *

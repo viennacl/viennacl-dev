@@ -49,7 +49,7 @@ namespace viennacl
         */
         explicit entry_proxy(unsigned int mem_offset,
                              handle_type & mem_handle)
-         : index_(mem_offset), mem_handle_(mem_handle) {};
+         : index_(mem_offset), mem_handle_(mem_handle) {}
 
 
         //operators:
@@ -188,7 +188,7 @@ namespace viennacl
         */
         explicit const_entry_proxy(unsigned int mem_offset,
                                    handle_type const & mem_handle)
-         : index_(mem_offset), mem_handle_(mem_handle) {};
+         : index_(mem_offset), mem_handle_(mem_handle) {}
 
 
         //type conversion:

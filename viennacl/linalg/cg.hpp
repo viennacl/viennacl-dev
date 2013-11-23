@@ -50,7 +50,7 @@ namespace viennacl
         * @param tol              Relative tolerance for the residual (solver quits if ||r|| < tol * ||r_initial||)
         * @param max_iterations   The maximum number of iterations
         */
-        cg_tag(double tol = 1e-8, unsigned int max_iterations = 300) : tol_(tol), iterations_(max_iterations) {};
+        cg_tag(double tol = 1e-8, unsigned int max_iterations = 300) : tol_(tol), iterations_(max_iterations) {}
 
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }

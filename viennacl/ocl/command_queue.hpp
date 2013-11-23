@@ -45,7 +45,7 @@ namespace viennacl
     class command_queue
     {
       public:
-        command_queue() {};
+        command_queue() {}
         command_queue(viennacl::ocl::handle<cl_command_queue> h) : handle_(h) {}
 
         //Copy constructor:

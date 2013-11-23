@@ -211,9 +211,9 @@ namespace viennacl
         }
 
         /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
-        void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); };
+        void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
-        void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); };
+        void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); }
       private:
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;

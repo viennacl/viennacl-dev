@@ -83,7 +83,7 @@ namespace viennacl
                     unsigned int coarselevels = 0)
             : coarse_(coarse), interpol_(interpol),
               threshold_(threshold), interpolweight_(interpolweight), jacobiweight_(jacobiweight),
-              presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels) {};
+              presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels) {}
 
             // Getter-/Setter-Functions
             void set_coarse(unsigned int coarse) { if (coarse > 0) coarse_ = coarse; }

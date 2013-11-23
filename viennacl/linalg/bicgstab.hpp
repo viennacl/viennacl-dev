@@ -50,7 +50,7 @@ namespace viennacl
         * @param max_iters_before_restart   The maximum number of iterations before BiCGStab is reinitialized (to avoid accumulation of round-off errors)
         */
         bicgstab_tag(double tol = 1e-8, std::size_t max_iters = 400, std::size_t max_iters_before_restart = 200)
-          : tol_(tol), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {};
+          : tol_(tol), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {}
 
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }

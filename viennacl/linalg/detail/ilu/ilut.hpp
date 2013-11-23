@@ -53,7 +53,7 @@ namespace viennacl
         */
         ilut_tag(unsigned int entries_per_row = 20,
                  double drop_tolerance = 1e-4,
-                 bool with_level_scheduling = false) : entries_per_row_(entries_per_row), drop_tolerance_(drop_tolerance), use_level_scheduling_(with_level_scheduling) {};
+                 bool with_level_scheduling = false) : entries_per_row_(entries_per_row), drop_tolerance_(drop_tolerance), use_level_scheduling_(with_level_scheduling) {}
 
         void set_drop_tolerance(double tol)
         {

@@ -216,7 +216,7 @@ namespace viennacl
       typedef long                          difference_type;
       typedef viennacl::backend::mem_handle handle_type;
 
-      //const_vector_iterator() {};
+      //const_vector_iterator() {}
 
       /** @brief Constructor
       *   @param vec    The vector over which to iterate
@@ -227,7 +227,7 @@ namespace viennacl
       const_vector_iterator(vector_base<SCALARTYPE> const & vec,
                             std::size_t index,
                             std::size_t start = 0,
-                            vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {};
+                            vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Constructor for vector-like treatment of arbitrary buffers
       *   @param elements  The buffer over which to iterate
@@ -238,7 +238,7 @@ namespace viennacl
       const_vector_iterator(handle_type const & elements,
                             std::size_t index,
                             std::size_t start = 0,
-                            vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {};
+                            vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Dereferences the iterator and returns the value of the element. For convenience only, performance is poor due to OpenCL overhead! */
       value_type operator*(void) const
@@ -312,11 +312,11 @@ namespace viennacl
       typedef typename base_type::handle_type               handle_type;
       typedef typename base_type::difference_type           difference_type;
 
-      vector_iterator() : base_type(), elements_(NULL) {};
+      vector_iterator() : base_type(), elements_(NULL) {}
       vector_iterator(handle_type & elements,
                       std::size_t index,
                       std::size_t start = 0,
-                      vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {};
+                      vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
       /** @brief Constructor
       *   @param vec    The vector over which to iterate
       *   @param index  The starting index of the iterator
@@ -326,8 +326,8 @@ namespace viennacl
       vector_iterator(vector_base<SCALARTYPE> & vec,
                       std::size_t index,
                       std::size_t start = 0,
-                      vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {};
-      //vector_iterator(base_type const & b) : base_type(b) {};
+                      vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
+      //vector_iterator(base_type const & b) : base_type(b) {}
 
       typename base_type::value_type operator*(void)
       {

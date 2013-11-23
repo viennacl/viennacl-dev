@@ -73,7 +73,7 @@ namespace viennacl
         lanczos_tag(double factor = 0.75,
                     std::size_t numeig = 10,
                     int met = 0,
-                    std::size_t krylov = 100) : factor_(factor), num_eigenvalues_(numeig), method_(met), krylov_size_(krylov) {};
+                    std::size_t krylov = 100) : factor_(factor), num_eigenvalues_(numeig), method_(met), krylov_size_(krylov) {}
 
         /** @brief Sets the number of eigenvalues */
         void num_eigenvalues(int numeig){ num_eigenvalues_ = numeig; }
