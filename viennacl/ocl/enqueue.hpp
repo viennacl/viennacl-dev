@@ -28,8 +28,10 @@
 #include <CL/cl.h>
 #endif
 
+#include "viennacl/ocl/backend.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/command_queue.hpp"
+#include "viennacl/ocl/context.hpp"
 
 namespace viennacl
 {

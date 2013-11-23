@@ -25,7 +25,7 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/vector.hpp"
-#include "viennacl/ocl/context.hpp"
+#include "viennacl/ocl/backend.hpp"
 
 #include "viennacl/toeplitz_matrix.hpp"
 #include "viennacl/fft.hpp"

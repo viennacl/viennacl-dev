@@ -26,7 +26,6 @@
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/kernel.hpp"
-#include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/opencl/kernels/scalar.hpp"
 #include "viennacl/meta/predicate.hpp"

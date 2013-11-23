@@ -22,15 +22,6 @@
     @brief Simple enable-if variant that uses the SFINAE pattern
 */
 
-#include <string>
-#include <fstream>
-#include <sstream>
-#include "viennacl/forwards.h"
-
-
-#include <vector>
-#include <map>
-
 namespace viennacl
 {
     /** @brief Simple enable-if variant that uses the SFINAE pattern */

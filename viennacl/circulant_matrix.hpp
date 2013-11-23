@@ -24,7 +24,7 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/vector.hpp"
-#include "viennacl/ocl/context.hpp"
+#include "viennacl/ocl/backend.hpp"
 
 #include "viennacl/linalg/circulant_matrix_operations.hpp"
 

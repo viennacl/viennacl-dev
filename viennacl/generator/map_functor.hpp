@@ -26,6 +26,8 @@
 #include <set>
 
 #include "viennacl/forwards.h"
+#include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/forwards.h"
 

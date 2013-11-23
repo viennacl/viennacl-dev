@@ -32,7 +32,11 @@
 
 #include "viennacl/tools/shared_ptr.hpp"
 
+#include "viennacl/ocl/backend.hpp"
 #include "viennacl/ocl/kernel.hpp"
+
+#include "viennacl/traits/start.hpp"
+#include "viennacl/traits/stride.hpp"
 
 #include "viennacl/generator/helpers.hpp"
 #include "viennacl/generator/utils.hpp"

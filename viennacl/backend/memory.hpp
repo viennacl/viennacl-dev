@@ -28,6 +28,7 @@
 #include "viennacl/backend/mem_handle.hpp"
 #include "viennacl/context.hpp"
 #include "viennacl/traits/handle.hpp"
+#include "viennacl/traits/context.hpp"
 #include "viennacl/backend/util.hpp"
 
 #include "viennacl/backend/cpu_ram.hpp"

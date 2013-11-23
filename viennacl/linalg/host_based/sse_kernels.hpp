@@ -28,6 +28,9 @@
 #include <omp.h>
 #endif
 
+#include <iostream>
+#include <vector>
+
 //for std::min
 #include <algorithm>
 

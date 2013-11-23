@@ -23,7 +23,6 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"

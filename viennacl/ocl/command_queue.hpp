@@ -31,7 +31,6 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include "viennacl/ocl/context.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
 

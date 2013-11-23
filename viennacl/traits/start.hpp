@@ -27,6 +27,8 @@
 #include <sstream>
 #include "viennacl/forwards.h"
 
+#include "viennacl/meta/result_of.hpp"
+
 namespace viennacl
 {
   namespace traits

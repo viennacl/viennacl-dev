@@ -21,9 +21,8 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 
-#include <examples/benchmarks/benchmark-utils.hpp>
-
 #include "viennacl/linalg/qr-method-common.hpp"
+#include "viennacl/linalg/prod.hpp"
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>

@@ -25,11 +25,12 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include "viennacl/forwards.h"
-#include "viennacl/tools/adapter.hpp"
-
+#include <cmath>
 #include <vector>
 #include <map>
+
+#include "viennacl/forwards.h"
+#include "viennacl/tools/adapter.hpp"
 
 namespace viennacl
 {

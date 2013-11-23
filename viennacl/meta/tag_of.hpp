@@ -23,6 +23,11 @@
     @brief Dispatch facility for distinguishing between ublas, STL and ViennaCL types
 */
 
+#include <vector>
+#include <map>
+
+#include "viennacl/forwards.h"
+
 #ifdef VIENNACL_WITH_UBLAS
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>

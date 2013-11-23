@@ -29,7 +29,6 @@
 #endif
 
 #include "viennacl/ocl/forwards.h"
-#include "viennacl/ocl/backend.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"

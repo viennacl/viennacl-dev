@@ -48,6 +48,8 @@
 
 #include <cstddef>
 #include <cassert>
+#include <string>
+
 #include "viennacl/meta/enable_if.hpp"
 
 /** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */

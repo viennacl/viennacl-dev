@@ -22,7 +22,7 @@
     @brief Implementations for the OpenCL backend functionality
 */
 
-
+#include <cassert>
 #include <vector>
 #include "viennacl/tools/shared_ptr.hpp"
 

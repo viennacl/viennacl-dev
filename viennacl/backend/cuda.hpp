@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cassert>
 #include "viennacl/tools/shared_ptr.hpp"
 
 // includes CUDA

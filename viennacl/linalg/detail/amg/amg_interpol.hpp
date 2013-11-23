@@ -24,14 +24,14 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <cmath>
-#include "viennacl/linalg/amg.hpp"
+#include "viennacl/linalg/detail/amg/amg_base.hpp"
 
 #include <map>
 #ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
 
-#include "amg_debug.hpp"
+#include "viennacl/linalg/detail/amg/amg_debug.hpp"
 
 namespace viennacl
 {

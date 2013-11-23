@@ -25,6 +25,8 @@
 
 #include "viennacl/forwards.h"
 
+#include <vector>
+
 namespace viennacl
 {
   namespace scheduler

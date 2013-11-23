@@ -24,6 +24,9 @@
     Contributed by Philippe Tillet.
 */
 
+#include <cstdlib>
+#include <algorithm>
+
 namespace viennacl
 {
   namespace tools

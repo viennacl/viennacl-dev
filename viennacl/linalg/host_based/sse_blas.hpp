@@ -36,6 +36,9 @@
 #include <emmintrin.h>
 #endif
 
+#include <cstddef>
+#include <cmath>
+
 namespace viennacl
 {
   namespace linalg

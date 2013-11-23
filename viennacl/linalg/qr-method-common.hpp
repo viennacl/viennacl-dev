@@ -20,6 +20,9 @@
 
 #include <cmath>
 
+#include "viennacl/ocl/device.hpp"
+#include "viennacl/ocl/handle.hpp"
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/linalg/opencl/kernels/svd.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/vector.hpp"

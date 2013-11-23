@@ -24,6 +24,7 @@
     AMG code contributed by Markus Wagner
 */
 
+#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <cmath>
 #include <set>

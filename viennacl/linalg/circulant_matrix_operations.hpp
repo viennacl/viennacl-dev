@@ -23,9 +23,7 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/ocl/device.hpp"
-#include "viennacl/ocl/handle.hpp"
-#include "viennacl/ocl/kernel.hpp"
+#include "viennacl/ocl/backend.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
