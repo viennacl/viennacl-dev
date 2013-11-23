@@ -242,6 +242,7 @@ namespace viennacl
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
               generate_coordinate_matrix_vec_mul(source, numeric_string);
+              generate_coordinate_matrix_row_info_extractor(source, numeric_string);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
