@@ -1426,7 +1426,7 @@ namespace viennacl
           std::size_t col_begin = csr_row_buffer[row];
           std::size_t col_end   = csr_row_buffer[row + 1];
 
-          for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+          for(std::size_t item_id = col_begin; item_id < col_end; item_id++)
           {
               sum += (vec_buf[csr_col_buffer[item_id] * vec.stride() + vec.start()] * csr_elements[item_id]);
           }
