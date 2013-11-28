@@ -47,7 +47,7 @@ namespace viennacl
         * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
         * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
         */
-        explicit entry_proxy(unsigned int mem_offset,
+        explicit entry_proxy(vcl_size_t mem_offset,
                              handle_type & mem_handle)
          : index_(mem_offset), mem_handle_(mem_handle) {}
 
@@ -186,7 +186,7 @@ namespace viennacl
         * @param mem_offset The memory offset in multiples of sizeof(SCALARTYPE) relative to the memory pointed to by the handle
         * @param mem_handle A viennacl::ocl::handle for the memory buffer on the GPU.
         */
-        explicit const_entry_proxy(unsigned int mem_offset,
+        explicit const_entry_proxy(vcl_size_t mem_offset,
                                    handle_type const & mem_handle)
          : index_(mem_offset), mem_handle_(mem_handle) {}
 
