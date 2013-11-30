@@ -124,8 +124,8 @@ int main()
   viennacl::vector<double> *opencl_double_y = NULL;
   if( viennacl::ocl::current_device().double_support() )
   {
-    *opencl_double_x = viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
-    *opencl_double_y = viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
+    opencl_double_x = new viennacl::vector<double>(viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id))));
+    opencl_double_y = new viennacl::vector<double>(viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id))));
   }
 
   ViennaCLOpenCLBackend_impl my_opencl_backend_impl;
@@ -646,7 +646,14 @@ int main()
   }
 #endif
 
-
+#ifdef VIENNACL_WITH_OPENCL
+  //cleanup
+  if( viennacl::ocl::current_device().double_support() )
+  {
+    delete opencl_double_x;
+    delete opencl_double_y;
+  }
+#endif
 
   //
   //  That's it.
