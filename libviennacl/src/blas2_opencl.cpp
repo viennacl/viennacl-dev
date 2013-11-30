@@ -34,10 +34,10 @@
 
 ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t m, size_t n, float alpha, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 cl_mem x, size_t offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, float alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                  float beta,
-                                 cl_mem y, size_t offy, int incy)
+                                 cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -71,10 +71,10 @@ ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
 
 ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t m, size_t n, double alpha, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 cl_mem x, size_t offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, double alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                  double beta,
-                                 cl_mem y, size_t offy, int incy)
+                                 cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -112,8 +112,8 @@ ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
 
 ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t n, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 cl_mem x, size_t offx, int incx)
+                                 ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -163,8 +163,8 @@ ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
 
 ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t n, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 cl_mem x, size_t offx, int incx)
+                                 ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -218,11 +218,11 @@ ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
 
 ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
                                 ViennaCLOrder order,
-                                size_t m, size_t n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 float alpha,
-                                cl_mem x, size_t offx, int incx,
-                                cl_mem y, size_t offy, int incy,
-                                cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda)
+                                cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -250,11 +250,11 @@ ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
 
 ViennaCLStatus ViennaCLOpenCLDger(ViennaCLOpenCLBackend backend,
                                 ViennaCLOrder order,
-                                size_t m, size_t n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 double alpha,
-                                cl_mem x, size_t offx, int incx,
-                                cl_mem y, size_t offy, int incy,
-                                cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda)
+                                cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   if (order == ViennaCLRowMajor)
   {

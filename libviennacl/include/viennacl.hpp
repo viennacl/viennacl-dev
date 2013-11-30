@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 
+typedef int ViennaCLInt;
 
 /************** Enums ***************/
 
@@ -94,7 +95,7 @@ typedef ViennaCLCUDABackend_impl*   ViennaCLCUDABackend;
 
 struct ViennaCLOpenCLBackend_impl
 {
-  std::size_t context_id;
+  ViennaCLInt context_id;
 };
 typedef ViennaCLOpenCLBackend_impl*   ViennaCLOpenCLBackend;
 
@@ -150,7 +151,7 @@ struct ViennaCLScalar_impl
 #endif
   char * host_mem;
 
-  size_t   offset;
+  ViennaCLInt   offset;
 };
 
 typedef ViennaCLScalar_impl*    ViennaCLScalar;
@@ -172,9 +173,9 @@ struct ViennaCLVector_impl
 #endif
   char * host_mem;
 
-  size_t   offset;
-  int      inc;
-  size_t   size;
+  ViennaCLInt   offset;
+  ViennaCLInt   inc;
+  ViennaCLInt   size;
 };
 
 typedef ViennaCLVector_impl*    ViennaCLVector;
@@ -196,15 +197,15 @@ struct ViennaCLMatrix_impl
 #endif
   char * host_mem;
 
-  size_t   size1;
-  size_t   start1;
-  int      stride1;
-  size_t   internal_size1;
+  ViennaCLInt   size1;
+  ViennaCLInt   start1;
+  ViennaCLInt   stride1;
+  ViennaCLInt   internal_size1;
 
-  size_t   size2;
-  size_t   start2;
-  size_t   stride2;
-  size_t   internal_size2;
+  ViennaCLInt   size2;
+  ViennaCLInt   start2;
+  ViennaCLInt   stride2;
+  ViennaCLInt   internal_size2;
 };
 
 typedef ViennaCLMatrix_impl*    ViennaCLMatrix;
@@ -214,32 +215,32 @@ typedef ViennaCLMatrix_impl*    ViennaCLMatrix;
 
 // IxASUM
 
-ViennaCLStatus ViennaCLiamax(size_t *alpha, ViennaCLVector x);
+ViennaCLStatus ViennaCLiamax(ViennaCLInt *alpha, ViennaCLVector x);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLCUDABackend backend, int n,
-                                  size_t *alpha,
-                                  float *x, int offx, int incx);
-ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLCUDABackend backend, int n,
-                                  size_t *alpha,
-                                  double *x, int offx, int incx);
+ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                  ViennaCLInt *alpha,
+                                  float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                  ViennaCLInt *alpha,
+                                  double *x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLOpenCLBackend backend, size_t n,
-                                    size_t *alpha,
-                                    cl_mem x, size_t offx, int incx);
-ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLOpenCLBackend backend, size_t n,
-                                    size_t *alpha,
-                                    cl_mem x, size_t offx, int incx);
+ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                    ViennaCLInt *alpha,
+                                    cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                    ViennaCLInt *alpha,
+                                    cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
-ViennaCLStatus ViennaCLHostiSamax(ViennaCLHostBackend backend, size_t n,
-                                  size_t *alpha,
-                                  float *x, size_t offx, int incx);
-ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend backend, size_t n,
-                                  size_t *alpha,
-                                  double *x, size_t offx, int incx);
+ViennaCLStatus ViennaCLHostiSamax(ViennaCLHostBackend backend, ViennaCLInt n,
+                                  ViennaCLInt *alpha,
+                                  float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend backend, ViennaCLInt n,
+                                  ViennaCLInt *alpha,
+                                  double *x, ViennaCLInt offx, ViennaCLInt incx);
 
 
 // xASUM
@@ -247,29 +248,29 @@ ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend backend, size_t n,
 ViennaCLStatus ViennaCLasum(ViennaCLHostScalar *alpha, ViennaCLVector x);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASasum(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDASasum(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, int offx, int incx);
-ViennaCLStatus ViennaCLCUDADasum(ViennaCLCUDABackend backend, int n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLCUDADasum(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, int offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    float *alpha,
-                                   cl_mem x, size_t offx, int incx);
-ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    double *alpha,
-                                   cl_mem x, size_t offx, int incx);
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
-ViennaCLStatus ViennaCLHostSasum(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostSasum(ViennaCLHostBackend backend, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, size_t offx, int incx);
-ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend backend, size_t n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend backend, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, size_t offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 
 
 
@@ -278,35 +279,35 @@ ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend backend, size_t n,
 ViennaCLStatus ViennaCLaxpy(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLVector y);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  float alpha,
-                                 float *x, int offx, int incx,
-                                 float *y, int offy, int incy);
-ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLCUDABackend backend, int n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  double alpha,
-                                 double *x, int offx, int incx,
-                                 double *y, int offy, int incy);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    float alpha,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
-ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    double alpha,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
-ViennaCLStatus ViennaCLHostSaxpy(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostSaxpy(ViennaCLHostBackend backend, ViennaCLInt n,
                                  float alpha,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy);
-ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend backend, size_t n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend backend, ViennaCLInt n,
                                  double alpha,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 
 
 // xCOPY
@@ -314,93 +315,93 @@ ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend backend, size_t n,
 ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaCLVector y);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, int n,
-                                 float *x, int offx, int incx,
-                                 float *y, int offy, int incy);
-ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, int n,
-                                 double *x, int offx, int incx,
-                                 double *y, int offy, int incy);
+ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLOpenCLBackend backend, size_t n,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
-ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLOpenCLBackend backend, size_t n,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
+ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
-ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend backend, size_t n,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy);
-ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend backend, size_t n,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy);
+ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend backend, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend backend, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 
 // xDOT
 
 ViennaCLStatus ViennaCLdot(ViennaCLHostScalar *alpha, ViennaCLVector x, ViennaCLVector y);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASdot(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDASdot(ViennaCLCUDABackend backend, ViennaCLInt n,
                                 float *alpha,
-                                float *x, int offx, int incx,
-                                float *y, int offy, int incy);
-ViennaCLStatus ViennaCLCUDADdot(ViennaCLCUDABackend backend, int n,
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLCUDADdot(ViennaCLCUDABackend backend, ViennaCLInt n,
                                 double *alpha,
-                                double *x, int offx, int incx,
-                                double *y, int offy, int incy);
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                   float *alpha,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy);
-ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLOpenCLBackend backend, size_t n,
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                   double *alpha,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy);
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
-ViennaCLStatus ViennaCLHostSdot(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostSdot(ViennaCLHostBackend backend, ViennaCLInt n,
                                 float *alpha,
-                                float *x, size_t offx, int incx,
-                                float *y, size_t offy, int incy);
-ViennaCLStatus ViennaCLHostDdot(ViennaCLHostBackend backend, size_t n,
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLHostDdot(ViennaCLHostBackend backend, ViennaCLInt n,
                                 double *alpha,
-                                double *x, size_t offx, int incx,
-                                double *y, size_t offy, int incy);
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy);
 
 // xNRM2
 
 ViennaCLStatus ViennaCLnrm2(ViennaCLHostScalar *alpha, ViennaCLVector x);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, int offx, int incx);
-ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLCUDABackend backend, int n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, int offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    float *alpha,
-                                   cl_mem x, size_t offx, int incx);
-ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    double *alpha,
-                                   cl_mem x, size_t offx, int incx);
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
-ViennaCLStatus ViennaCLHostSnrm2(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostSnrm2(ViennaCLHostBackend backend, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, size_t offx, int incx);
-ViennaCLStatus ViennaCLHostDnrm2(ViennaCLHostBackend backend, size_t n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLHostDnrm2(ViennaCLHostBackend backend, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, size_t offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 
 
 // xROT
@@ -409,34 +410,34 @@ ViennaCLStatus ViennaCLrot(ViennaCLVector     x,     ViennaCLVector y,
                            ViennaCLHostScalar c, ViennaCLHostScalar s);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASrot(ViennaCLCUDABackend backend, int n,
-                                float *x, int offx, int incx,
-                                float *y, int offy, int incy,
+ViennaCLStatus ViennaCLCUDASrot(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy,
                                 float c, float s);
-ViennaCLStatus ViennaCLCUDADrot(ViennaCLCUDABackend backend, int n,
-                                double *x, int offx, int incx,
-                                double *y, int offy, int incy,
+ViennaCLStatus ViennaCLCUDADrot(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy,
                                 double c, double s);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLOpenCLBackend backend, size_t n,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy,
+ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                   float c, float s);
-ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLOpenCLBackend backend, size_t n,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy,
+ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                   double c, double s);
 #endif
 
-ViennaCLStatus ViennaCLHostSrot(ViennaCLHostBackend backend, size_t n,
-                                float *x, size_t offx, int incx,
-                                float *y, size_t offy, int incy,
+ViennaCLStatus ViennaCLHostSrot(ViennaCLHostBackend backend, ViennaCLInt n,
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy,
                                 float c, float s);
-ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend backend, size_t n,
-                                double *x, size_t offx, int incx,
-                                double *y, size_t offy, int incy,
+ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend backend, ViennaCLInt n,
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy,
                                 double c, double s);
 
 
@@ -446,29 +447,29 @@ ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend backend, size_t n,
 ViennaCLStatus ViennaCLscal(ViennaCLHostScalar alpha, ViennaCLVector x);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASscal(ViennaCLCUDABackend backend, int n,
+ViennaCLStatus ViennaCLCUDASscal(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  float alpha,
-                                 float *x, int offx, int incx);
-ViennaCLStatus ViennaCLCUDADscal(ViennaCLCUDABackend backend, int n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLCUDADscal(ViennaCLCUDABackend backend, ViennaCLInt n,
                                  double alpha,
-                                 double *x, int offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLOpenCLBackend backend, size_t n,
+ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    float alpha,
-                                   cl_mem x, size_t offx, int incx);
-ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLOpenCLBackend backend, size_t n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLOpenCLBackend backend, ViennaCLInt n,
                                    double alpha,
-                                   cl_mem x, size_t offx, int incx);
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
-ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend backend, size_t n,
+ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend backend, ViennaCLInt n,
                                  float alpha,
-                                 float *x, size_t offx, int incx);
-ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend backend, size_t n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
+ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend backend, ViennaCLInt n,
                                  double alpha,
-                                 double *x, size_t offx, int incx);
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 
 
 // xSWAP
@@ -476,29 +477,29 @@ ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend backend, size_t n,
 ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaCLVector y);
 
 #ifdef VIENNACL_WITH_CUDA
-ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, int n,
-                                 float *x, int offx, int incx,
-                                 float *y, int offy, int incy);
-ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, int n,
-                                 double *x, int offx, int incx,
-                                 double *y, int offy, int incy);
+ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, size_t n,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
-ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLOpenCLBackend backend, size_t n,
-                                   cl_mem x, size_t offx, int incx,
-                                   cl_mem y, size_t offy, int incy);
+ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLOpenCLBackend backend, ViennaCLInt n,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
-ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend backend, size_t n,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy);
-ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend backend, size_t n,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy);
+ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend backend, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
+ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend backend, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 
 
 
@@ -511,45 +512,45 @@ ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCL
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDASgemv(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 int m, int n, float alpha, float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *x, int offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, float alpha, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float beta,
-                                 float *y, int offy, int incy);
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
 ViennaCLStatus ViennaCLCUDADgemv(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 int m, int n, double alpha, double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *x, int offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, double alpha, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double beta,
-                                 double *y, int offy, int incy);
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLTranspose transA,
-                                   size_t m, size_t n, float alpha, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem x, size_t offx, int incx,
+                                   ViennaCLInt m, ViennaCLInt n, float alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                    float beta,
-                                   cl_mem y, size_t offy, int incy);
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLTranspose transA,
-                                   size_t m, size_t n, double alpha, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem x, size_t offx, int incx,
+                                   ViennaCLInt m, ViennaCLInt n, double alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                    double beta,
-                                   cl_mem y, size_t offy, int incy);
+                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy);
 #endif
 
 ViennaCLStatus ViennaCLHostSgemv(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t m, size_t n, float alpha, float *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 float *x, size_t offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, float alpha, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float beta,
-                                 float *y, size_t offy, int incy);
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy);
 ViennaCLStatus ViennaCLHostDgemv(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 size_t m, size_t n, double alpha, double *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 double *x, size_t offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, double alpha, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double beta,
-                                 double *y, size_t offy, int incy);
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy);
 
 // xTRSV: Ax <- x
 
@@ -558,33 +559,33 @@ ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaCLVector x, ViennaCLUplo upl
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDAStrsv(ViennaCLCUDABackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 int n, float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *x, int offx, int incx);
+                                 ViennaCLInt n, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
 ViennaCLStatus ViennaCLCUDADtrsv(ViennaCLCUDABackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 int n, double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *x, int offx, int incx);
+                                 ViennaCLInt n, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
                                    ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                   size_t n, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem x, size_t offx, int incx);
+                                   ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
                                    ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                   size_t n, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem x, size_t offx, int incx);
+                                   ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx);
 #endif
 
 ViennaCLStatus ViennaCLHostStrsv(ViennaCLHostBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 size_t n, float *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 float *x, size_t offx, int incx);
+                                 ViennaCLInt n, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx);
 ViennaCLStatus ViennaCLHostDtrsv(ViennaCLHostBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 size_t n, double *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 double *x, size_t offx, int incx);
+                                 ViennaCLInt n, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx);
 
 
 // xGER: A <- alpha * x * y + A
@@ -594,50 +595,50 @@ ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLV
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDASger(ViennaCLCUDABackend backend,
                                 ViennaCLOrder order,
-                                int m, int n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 float alpha,
-                                float *x, int offx, int incx,
-                                float *y, int offy, int incy,
-                                float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda);
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy,
+                                float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 ViennaCLStatus ViennaCLCUDADger(ViennaCLCUDABackend backend,
                                 ViennaCLOrder order,
-                                int m,  int n,
+                                ViennaCLInt m,  ViennaCLInt n,
                                 double alpha,
-                                double *x, int offx, int incx,
-                                double *y, int offy, int incy,
-                                double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda);
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy,
+                                double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
                                   ViennaCLOrder order,
-                                  size_t m, size_t n,
+                                  ViennaCLInt m, ViennaCLInt n,
                                   float alpha,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy,
-                                  cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda);
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                  cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 ViennaCLStatus ViennaCLOpenCLDger(ViennaCLOpenCLBackend backend,
                                   ViennaCLOrder order,
-                                  size_t m, size_t n,
-                                  cl_mem x, size_t offx, int incx,
-                                  cl_mem y, size_t offy, int incy,
-                                  double alpha, cl_mem A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda);
+                                  ViennaCLInt m, ViennaCLInt n,
+                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                  double alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 #endif
 
 ViennaCLStatus ViennaCLHostSger(ViennaCLHostBackend backend,
                                 ViennaCLOrder order,
-                                size_t m, size_t n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 float alpha,
-                                float *x, size_t offx, int incx,
-                                float *y, size_t offy, int incy,
-                                float *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda);
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy,
+                                float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 ViennaCLStatus ViennaCLHostDger(ViennaCLHostBackend backend,
                                 ViennaCLOrder order,
-                                size_t m, size_t n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 double alpha,
-                                double *x, size_t offx, int incx,
-                                double *y, size_t offy, int incy,
-                                double *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda);
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy,
+                                double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 
 
 
@@ -650,57 +651,57 @@ ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCL
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDASgemm(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                 int m, int n, int k,
+                                 ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  float alpha,
-                                 float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *B, int offB_row, int offB_col, int incB_row, int incB_col, int ldb,
+                                 float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                  float beta,
-                                 float *C, int offC_row, int offC_col, int incC_row, int incC_col, int ldc);
+                                 float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLCUDADgemm(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                 int m, int n, int k,
+                                 ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  double alpha,
-                                 double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *B, int offB_row, int offB_col, int incB_row, int incB_col, int ldb,
+                                 double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                  double beta,
-                                 double *C, int offC_row, int offC_col, int incC_row, int incC_col, int ldc);
+                                 double *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLSgemm(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                   size_t m, size_t n, size_t k,
+                                   ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                    float alpha,
-                                   cl_mem *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb,
+                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                    float beta,
-                                   cl_mem *C, size_t offC_row, size_t offC_col, int incC_row, int incC_col, size_t ldc);
+                                   cl_mem *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLOpenCLDgemm(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                   size_t m, size_t n, size_t k,
+                                   ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                    double alpha,
-                                   cl_mem *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb,
+                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                    double beta,
-                                   cl_mem *C, size_t offC_row, size_t offC_col, int incC_row, int incC_col, size_t ldc);
+                                   cl_mem *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 #endif
 
 ViennaCLStatus ViennaCLHostSgemm(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                 size_t m, size_t n, size_t k,
+                                 ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  float alpha,
-                                 float *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 float *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb,
+                                 float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                  float beta,
-                                 float *C, size_t offC_row, size_t offC_col, int incC_row, int incC_col, size_t ldc);
+                                 float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLHostDgemm(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
-                                 size_t m, size_t n, size_t k,
+                                 ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  double alpha,
-                                 double *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 double *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb,
+                                 double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                  double beta,
-                                 double *C, size_t offC_row, size_t offC_col, int incC_row, int incC_col, size_t ldc);
+                                 double *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 
 
 // xTRSM: B <- alpha * A^{-1} B
@@ -710,45 +711,45 @@ ViennaCLStatus ViennaCLtrsm(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCL
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDAStrsm(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                 int m, int n,
+                                 ViennaCLInt m, ViennaCLInt n,
                                  float alpha,
-                                 float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *B, int offB_row, int offB_col, int incB_row, int incB_col, int ldb);
+                                 float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 ViennaCLStatus ViennaCLCUDADtrsm(ViennaCLCUDABackend backend,
                                  ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                 int m, int n,
+                                 ViennaCLInt m, ViennaCLInt n,
                                  double alpha,
-                                 double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *B, int offB_row, int offB_col, int incB_row, int incB_col, int ldb);
+                                 double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLStrsm(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                   size_t m, size_t n,
+                                   ViennaCLInt m, ViennaCLInt n,
                                    float alpha,
-                                   cl_mem *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb);
+                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 ViennaCLStatus ViennaCLOpenCLDtrsm(ViennaCLOpenCLBackend backend,
                                    ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                   size_t m, size_t n,
+                                   ViennaCLInt m, ViennaCLInt n,
                                    double alpha,
-                                   cl_mem *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                   cl_mem *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb);
+                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 #endif
 
 ViennaCLStatus ViennaCLHostStrsm(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                 size_t m, size_t n,
+                                 ViennaCLInt m, ViennaCLInt n,
                                  float alpha,
-                                 float *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 float *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb);
+                                 float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 ViennaCLStatus ViennaCLHostDtrsm(ViennaCLHostBackend backend,
                                  ViennaCLOrder order, ViennaCLUplo uplo, ViennaCLTranspose transA, ViennaCLDiag diag, ViennaCLTranspose transB,
-                                 size_t m, size_t n,
+                                 ViennaCLInt m, ViennaCLInt n,
                                  double alpha,
-                                 double *A, size_t offA_row, size_t offA_col, int incA_row, int incA_col, size_t lda,
-                                 double *B, size_t offB_row, size_t offB_col, int incB_row, int incB_col, size_t ldb);
+                                 double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
 
 #ifdef __cplusplus
 }

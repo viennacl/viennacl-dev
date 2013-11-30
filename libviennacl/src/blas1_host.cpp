@@ -35,9 +35,9 @@
 
 // IxAMAX
 
-ViennaCLStatus ViennaCLHostiSamax(ViennaCLHostBackend /*backend*/, size_t n,
-                                 size_t *index,
-                                 float *x, size_t offx, int incx)
+ViennaCLStatus ViennaCLHostiSamax(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 ViennaCLInt *index,
+                                 float *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -45,9 +45,9 @@ ViennaCLStatus ViennaCLHostiSamax(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend /*backend*/, size_t n,
-                                 size_t *index,
-                                 double *x, size_t offx, int incx)
+ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 ViennaCLInt *index,
+                                 double *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -59,9 +59,9 @@ ViennaCLStatus ViennaCLHostiDamax(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xASUM
 
-ViennaCLStatus ViennaCLHostSasum(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostSasum(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, size_t offx, int incx)
+                                 float *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -69,9 +69,9 @@ ViennaCLStatus ViennaCLHostSasum(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, size_t offx, int incx)
+                                 double *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -83,10 +83,10 @@ ViennaCLStatus ViennaCLHostDasum(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xAXPY
 
-ViennaCLStatus ViennaCLHostSaxpy(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostSaxpy(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  float alpha,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy)
+                                 float *x, ViennaCLInt offx, int incx,
+                                 float *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -95,10 +95,10 @@ ViennaCLStatus ViennaCLHostSaxpy(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  double alpha,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy)
+                                 double *x, ViennaCLInt offx, int incx,
+                                 double *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -110,9 +110,9 @@ ViennaCLStatus ViennaCLHostDaxpy(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xCOPY
 
-ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend /*backend*/, size_t n,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy)
+ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, int incx,
+                                 float *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -121,9 +121,9 @@ ViennaCLStatus ViennaCLHostScopy(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend /*backend*/, size_t n,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy)
+ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, int incx,
+                                 double *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -134,10 +134,10 @@ ViennaCLStatus ViennaCLHostDcopy(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xAXPY
 
-ViennaCLStatus ViennaCLHostSdot(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostSdot(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                 float *alpha,
-                                float *x, size_t offx, int incx,
-                                float *y, size_t offy, int incy)
+                                float *x, ViennaCLInt offx, int incx,
+                                float *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -146,10 +146,10 @@ ViennaCLStatus ViennaCLHostSdot(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDdot(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostDdot(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                 double *alpha,
-                                double *x, size_t offx, int incx,
-                                double *y, size_t offy, int incy)
+                                double *x, ViennaCLInt offx, int incx,
+                                double *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -160,9 +160,9 @@ ViennaCLStatus ViennaCLHostDdot(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xNRM2
 
-ViennaCLStatus ViennaCLHostSnrm2(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostSnrm2(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  float *alpha,
-                                 float *x, size_t offx, int incx)
+                                 float *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -170,9 +170,9 @@ ViennaCLStatus ViennaCLHostSnrm2(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDnrm2(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostDnrm2(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  double *alpha,
-                                 double *x, size_t offx, int incx)
+                                 double *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -183,9 +183,9 @@ ViennaCLStatus ViennaCLHostDnrm2(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xROT
 
-ViennaCLStatus ViennaCLHostSrot(ViennaCLHostBackend /*backend*/, size_t n,
-                                float *x, size_t offx, int incx,
-                                float *y, size_t offy, int incy,
+ViennaCLStatus ViennaCLHostSrot(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                float *x, ViennaCLInt offx, int incx,
+                                float *y, ViennaCLInt offy, int incy,
                                 float c, float s)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
@@ -195,9 +195,9 @@ ViennaCLStatus ViennaCLHostSrot(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend /*backend*/, size_t n,
-                                double *x, size_t offx, int incx,
-                                double *y, size_t offy, int incy,
+ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                double *x, ViennaCLInt offx, int incx,
+                                double *y, ViennaCLInt offy, int incy,
                                 double c, double s)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
@@ -211,9 +211,9 @@ ViennaCLStatus ViennaCLHostDrot(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xSCAL
 
-ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  float alpha,
-                                 float *x, size_t offx, int incx)
+                                 float *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -221,9 +221,9 @@ ViennaCLStatus ViennaCLHostSscal(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend /*backend*/, size_t n,
+ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
                                  double alpha,
-                                 double *x, size_t offx, int incx)
+                                 double *x, ViennaCLInt offx, int incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
 
@@ -233,9 +233,9 @@ ViennaCLStatus ViennaCLHostDscal(ViennaCLHostBackend /*backend*/, size_t n,
 
 // xSWAP
 
-ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend /*backend*/, size_t n,
-                                 float *x, size_t offx, int incx,
-                                 float *y, size_t offy, int incy)
+ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 float *x, ViennaCLInt offx, int incx,
+                                 float *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);
@@ -244,9 +244,9 @@ ViennaCLStatus ViennaCLHostSswap(ViennaCLHostBackend /*backend*/, size_t n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend /*backend*/, size_t n,
-                                 double *x, size_t offx, int incx,
-                                 double *y, size_t offy, int incy)
+ViennaCLStatus ViennaCLHostDswap(ViennaCLHostBackend /*backend*/, ViennaCLInt n,
+                                 double *x, ViennaCLInt offx, int incx,
+                                 double *y, ViennaCLInt offy, int incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, n, offy, incy);

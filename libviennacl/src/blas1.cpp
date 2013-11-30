@@ -35,7 +35,7 @@
 
 // IxAMAX
 
-ViennaCLStatus ViennaCLiamax(size_t *index, ViennaCLVector x)
+ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, ViennaCLVector x)
 {
   viennacl::backend::mem_handle v1_handle;
 

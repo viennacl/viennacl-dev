@@ -592,7 +592,7 @@ int main()
 
   // IAMAX
   std::cout << std::endl << "-- Testing IxASUM...";
-  size_t ref_index = 0;
+  ViennaCLInt ref_index = 0;
   ref_float_alpha = 0;
   for (std::size_t i=0; i<size/3; ++i)
   {
@@ -604,7 +604,7 @@ int main()
   }
 
   std::cout << std::endl << "Host: ";
-  size_t idx = 0;
+  ViennaCLInt idx = 0;
   ViennaCLHostiSamax(my_host_backend, size/3,
                      &idx,
                      viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 0, 2);
