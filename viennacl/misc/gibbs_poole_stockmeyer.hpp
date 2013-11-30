@@ -185,7 +185,7 @@ namespace viennacl
 
     int current_dof = 0;
 
-    while (current_dof < n) // for all components of the graph apply GPS algorithm
+    while (current_dof < static_cast<int>(n)) // for all components of the graph apply GPS algorithm
     {
         // determine node g with mimimal degree among all nodes which
         // are not yet in result array r

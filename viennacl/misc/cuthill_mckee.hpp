@@ -86,13 +86,13 @@ namespace viennacl
     template <typename IndexT>
     bool comb_inc(std::vector<IndexT> & comb, std::size_t n)
     {
-      std::size_t m;
-      std::size_t k;
+      IndexT m;
+      IndexT k;
 
-      m = comb.size();
+      m = static_cast<IndexT>(comb.size());
       // calculate k as highest possible index such that (*comb)[k-1] can be incremented
       k = m;
-      while ( (k > 0) && ( ((k == m) && (comb[k-1] == n-1)) ||
+      while ( (k > 0) && ( ((k == m) && (comb[k-1] == static_cast<IndexT>(n)-1)) ||
                            ((k <  m) && (comb[k-1] == comb[k] - 1) )) )
       {
         k--;
@@ -105,7 +105,7 @@ namespace viennacl
 
       // and all higher index positions of comb are calculated just as directly following integer values
       // Example (1, 4, 7) -> (1, 5, 6) -> (1, 5, 7) -> (1, 6, 7) -> done   for n=7
-      for (int i = k; i < m; i++)
+      for (IndexT i = k; i < m; i++)
         comb[i] = comb[k-1] + (i - k);
       return true;
     }
@@ -542,7 +542,7 @@ namespace viennacl
       comb.resize(1);
       comb[0] = 0;
 
-      std::size_t bw_best = 0;
+      IndexT bw_best = 0;
 
       //
       // Loop over all combinations of g <= gmax root nodes
