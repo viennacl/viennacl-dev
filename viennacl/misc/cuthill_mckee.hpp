@@ -22,7 +22,7 @@
 /** @file viennacl/misc/cuthill_mckee.hpp
 *    @brief Implementation of several flavors of the Cuthill-McKee algorithm.  Experimental.
 *
-*   Contributed by Philipp Grabenweger, interface adjustments by Karl Rupp.
+*   Contributed by Philipp Grabenweger, interface adjustments and performance tweaks by Karl Rupp.
 */
 
 #include <iostream>
@@ -128,7 +128,14 @@ namespace viennacl
     inline bool cuthill_mckee_comp_func(std::vector<int> const & a,
                                         std::vector<int> const & b)
     {
-        return (a[1] < b[1]);
+      return (a[1] < b[1]);
+    }
+
+    template <typename IndexT>
+    bool cuthill_mckee_comp_func_pair(std::pair<IndexT, IndexT> const & a,
+                                      std::pair<IndexT, IndexT> const & b)
+    {
+        return (a.second < b.second);
     }
 
   }
@@ -154,74 +161,102 @@ namespace viennacl
    * @return permutation vector r. r[l] = i means that the new label of node i will be l.
    *
    */
-  template <typename MatrixType>
-  std::vector<int> reorder(MatrixType const & matrix, cuthill_mckee_tag)
+  template <typename IndexT, typename ValueT>
+  std::vector<IndexT> reorder(std::vector< std::map<IndexT, ValueT> > const & matrix, cuthill_mckee_tag)
   {
-    std::size_t n = matrix.size();
-    std::vector<int> r;
-    std::vector<bool> inr(n, false); // status array which remembers which nodes have been added to r
-    std::deque<int> q;
-    std::vector< std::vector<int> > nodes;
-    std::vector<int> tmp(2);
-    int p = 0;
-    int c;
+    typedef std::pair<IndexT, IndexT> NodeIdDegreePair; //first member is the node ID, second member is the node degree
 
-    int deg;
-    int deg_min;
+    std::vector<IndexT> permutation(matrix.size());
+    std::vector<bool>   dof_assigned_to_node(matrix.size(), false);   //flag vector indicating whether node i has received a new dof
+    std::deque<IndexT>  node_assignment_queue;
+    std::vector< NodeIdDegreePair > local_neighbor_nodes(matrix.size());
 
-    r.reserve(n);
-    nodes.reserve(n);
+    std::size_t current_dof = 0;  //the dof to be assigned
 
-    do
+    while (current_dof < matrix.size()) //outer loop for each strongly connected component (there may be more than one)
     {
-        // under all nodes not yet in r determine one with minimal degree
-        deg_min = -1;
-        for (std::size_t i = 0; i < n; i++)
+      //
+      // preprocessing: Determine node degrees for nodes which have not been assigned
+      //
+      std::size_t current_min_degree = matrix.size();
+      std::size_t node_with_minimum_degree = 0;
+      bool found_unassigned_node = false;
+      for (std::size_t i=0; i<matrix.size(); ++i)
+      {
+        if (!dof_assigned_to_node[i])
         {
-            if (!inr[i])
-            {
-                deg = matrix[i].size() - 1; // node degree
-                if (deg_min < 0 || deg < deg_min)
-                {
-                    p = i; // node number
-                    deg_min = deg;
-                }
-            }
+          if (matrix[i].size() == 0)  //This is an isolated node, so assign DOF right away
+          {
+            permutation[current_dof] = i;  //TODO: Invert this!
+            dof_assigned_to_node[i] = true;
+            ++current_dof;
+            continue;
+          }
+
+          if (!found_unassigned_node) //initialize minimum degree on first node without new dof
+          {
+            current_min_degree = matrix[i].size();
+            node_with_minimum_degree = i;
+            found_unassigned_node = true;
+          }
+
+          if (matrix[i].size() < current_min_degree) //found a node with smaller degree
+          {
+            current_min_degree = matrix[i].size();
+            node_with_minimum_degree = i;
+          }
         }
-        q.push_back(p); // push that node p with minimal degree on q
+      }
 
-        do
+      //
+      // Stage 2: Distribute dofs on this closely connected (sub-)graph in a breath-first manner
+      //
+      if (found_unassigned_node) // there's work to be done
+      {
+        node_assignment_queue.push_back(node_with_minimum_degree);
+        while (!node_assignment_queue.empty())
         {
-            c = q.front();
-            q.pop_front();
-            if (!inr[c])
+          // Grab first node from queue
+          std::size_t node_id = node_assignment_queue.front();
+          node_assignment_queue.pop_front();
+
+          // Assign dof if a new dof hasn't been assigned yet
+          if (!dof_assigned_to_node[node_id])
+          {
+            permutation[current_dof] = node_id;  //TODO: Invert this!
+            ++current_dof;
+            dof_assigned_to_node[node_id] = true;
+
+            //
+            // Get all neighbors of that node:
+            //
+            std::size_t num_neighbors = 0;
+            for (typename std::map<IndexT, ValueT>::const_iterator neighbor_it  = matrix[node_id].begin();
+                                                                   neighbor_it != matrix[node_id].end();
+                                                                 ++neighbor_it)
             {
-                r.push_back(c);
-                inr[c] = true;
-
-                // add all neighbouring nodes of c which are not yet in r to nodes
-                nodes.resize(0);
-                for (typename MatrixType::value_type::const_iterator it =  matrix[c].begin(); it != matrix[c].end(); it++)
-                {
-                    if (it->first == c) continue;
-                    if (inr[it->first]) continue;
-
-                    tmp[0] = it->first;
-                    tmp[1] = matrix[it->first].size() - 1;
-                    nodes.push_back(tmp);
-                }
-
-                // sort nodes by node degree
-                std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
-                for (std::vector< std::vector<int> >::iterator it = nodes.begin(); it != nodes.end(); it++)
-                {
-                    q.push_back((*it)[0]);
-                }
+              if (!dof_assigned_to_node[neighbor_it->first])
+              {
+                local_neighbor_nodes[num_neighbors] = NodeIdDegreePair(neighbor_it->first, matrix[neighbor_it->first].size());
+                ++num_neighbors;
+              }
             }
-        } while (q.size() != 0);
-    } while (r.size() < n);
 
-    return r;
+            // Sort neighbors by increasing node degree
+            std::sort(local_neighbor_nodes.begin(), local_neighbor_nodes.begin() + num_neighbors, detail::cuthill_mckee_comp_func_pair<IndexT>);
+
+            // Push neighbors to queue
+            for (std::size_t i=0; i<num_neighbors; ++i)
+              node_assignment_queue.push_back(local_neighbor_nodes[i].first);
+
+          } // if node doesn't have a new dof yet
+
+        } // while nodes in queue
+      }
+    }
+
+
+    return permutation;
   }
 
 
