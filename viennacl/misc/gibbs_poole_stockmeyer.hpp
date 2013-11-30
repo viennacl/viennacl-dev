@@ -153,7 +153,7 @@ namespace viennacl
                            gibbs_poole_stockmeyer_tag)
   {
     std::size_t n = matrix.size();
-    std::vector<int> r;
+    std::vector<int> r(n);
     std::vector< std::vector<int> > rl;
     std::size_t l = 0;
     int state;
@@ -181,10 +181,11 @@ namespace viennacl
     int deg;
     int ind_min;
 
-    r.reserve(n);
     nodes.reserve(n);
 
-    while (r.size() < n) // for all components of the graph apply GPS algorithm
+    int current_dof = 0;
+
+    while (current_dof < n) // for all components of the graph apply GPS algorithm
     {
         // determine node g with mimimal degree among all nodes which
         // are not yet in result array r
@@ -367,7 +368,7 @@ namespace viennacl
                     for (std::size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
-                        r.push_back(nodes[j][0]);
+                        r[nodes[j][0]] = current_dof++;
                         inr[nodes[j][0]] = true;
                     }
                 }
@@ -396,7 +397,7 @@ namespace viennacl
                     for (std::size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
-                        r.push_back(nodes[j][0]);
+                        r[nodes[j][0]] = current_dof++;
                         inr[nodes[j][0]] = true;
                     }
                 }
@@ -416,7 +417,7 @@ namespace viennacl
                         }
                     }
                     rl[l].push_back(ind_min);
-                    r.push_back(ind_min);
+                    r[ind_min] = current_dof++;
                     inr[ind_min] = true;
                     state = 3;
                     break;

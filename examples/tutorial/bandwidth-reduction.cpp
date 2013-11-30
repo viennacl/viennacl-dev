@@ -41,14 +41,10 @@
 std::vector< std::map<int, double> > reorder_matrix(std::vector< std::map<int, double> > const & matrix, std::vector<int> const & r)
 {
     std::vector< std::map<int, double> > matrix2(r.size());
-    std::vector<std::size_t> r2(r.size());
 
     for (std::size_t i = 0; i < r.size(); i++)
-        r2[r[i]] = i;
-
-    for (std::size_t i = 0; i < r.size(); i++)
-        for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++)
-            matrix2[i][r2[it->first]] = it->second;
+      for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
+        matrix2[r[i]][r[it->first]] = it->second;
 
     return matrix2;
 }
@@ -79,24 +75,21 @@ int calc_bw(std::vector< std::map<int, double> > const & matrix)
 
 
 // Calculate the bandwidth of a reordered matrix
-int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std::vector<int> const & r)
+template <typename IndexT>
+int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std::vector<IndexT> const & r)
 {
-    std::vector<int> r2(r.size());
     int bw = 0;
-
-    for (std::size_t i = 0; i < r.size(); i++)
-        r2[r[i]] = i;
 
     for (std::size_t i = 0; i < r.size(); i++)
     {
       int min_index = matrix.size();
       int max_index = 0;
-      for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++)
+      for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
       {
-        if (r2[it->first] > max_index)
-          max_index = r2[it->first];
-        if (r2[it->first] < min_index)
-          min_index = r2[it->first];
+        if (r[it->first] > max_index)
+          max_index = r[it->first];
+        if (r[it->first] < min_index)
+          min_index = r[it->first];
       }
       if (max_index > min_index)
         bw = std::max(bw, max_index - min_index);
@@ -266,6 +259,7 @@ int main(int, char **)
   // Reorder using Cuthill-McKee algorithm
   //
   std::cout << "-- Cuthill-McKee algorithm --" << std::endl;
+  r = viennacl::reorder(matrix2, viennacl::cuthill_mckee_tag());
   r = viennacl::reorder(matrix2, viennacl::cuthill_mckee_tag());
   std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
 
