@@ -77,6 +77,7 @@ namespace viennacl
         vcl_size_t data_index = 0;
         vcl_size_t current_fraction = 0;
 
+        group_boundaries.set(0, 0);
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
               ++row_it)
@@ -91,7 +92,7 @@ namespace viennacl
             ++data_index;
           }
 
-          if (data_index > (current_fraction + 1) / static_cast<double>(group_num) * num_entries)    //split data equally over 64 groups
+          while (data_index > (current_fraction + 1) / static_cast<double>(group_num) * num_entries)    //split data equally over 64 groups
             group_boundaries.set(++current_fraction, data_index);
         }
 
@@ -99,9 +100,9 @@ namespace viennacl
         group_boundaries.set(group_num, data_index);
         //group_boundaries[1] = data_index; //for one compute unit
 
-        /*std::cout << "Group boundaries: " << std::endl;
-        for (vcl_size_t i=0; i<group_boundaries.size(); ++i)
-          std::cout << group_boundaries[i] << std::endl;*/
+        //std::cout << "Group boundaries: " << std::endl;
+        //for (vcl_size_t i=0; i<group_boundaries.size(); ++i)
+        //  std::cout << group_boundaries[i] << std::endl;
 
         viennacl::backend::memory_create(gpu_matrix.group_boundaries_, group_boundaries.raw_size(), traits::context(gpu_matrix.group_boundaries_), group_boundaries.get());
         viennacl::backend::memory_create(gpu_matrix.coord_buffer_,         coord_buffer.raw_size(), traits::context(gpu_matrix.coord_buffer_),     coord_buffer.get());

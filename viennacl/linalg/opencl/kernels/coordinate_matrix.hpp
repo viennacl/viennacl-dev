@@ -35,10 +35,9 @@ namespace viennacl
           source.append("{ \n");
           source.append("  uint2 tmp; \n");
           source.append("  "); source.append(numeric_string); source.append(" val; \n");
-          source.append("  uint last_index  = get_local_size(0) - 1; \n");
           source.append("  uint group_start = group_boundaries[get_group_id(0)]; \n");
           source.append("  uint group_end   = group_boundaries[get_group_id(0) + 1]; \n");
-          source.append("  uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / get_local_size(0) : 0;   // -1 in order to have correct behavior if group_end - group_start == j * get_local_size(0) \n");
+          source.append("  uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / get_local_size(0) : 0; \n");   // -1 in order to have correct behavior if group_end - group_start == j * get_local_size(0)
 
           source.append("  uint local_index = 0; \n");
 
@@ -50,10 +49,10 @@ namespace viennacl
 
           //check for carry from previous loop run:
           source.append("    if (get_local_id(0) == 0 && k > 0) { \n");
-          source.append("      if (tmp.x == shared_rows[last_index]) \n");
-          source.append("        val += inter_results[last_index]; \n");
+          source.append("      if (tmp.x == shared_rows[get_local_size(0)-1]) \n");
+          source.append("        val += inter_results[get_local_size(0)-1]; \n");
           source.append("      else \n");
-          source.append("        result[shared_rows[last_index] * layout_result.y + layout_result.x] = inter_results[last_index]; \n");
+          source.append("        result[shared_rows[get_local_size(0)-1] * layout_result.y + layout_result.x] = inter_results[get_local_size(0)-1]; \n");
           source.append("    } \n");
 
           //segmented parallel reduction begin
@@ -71,17 +70,16 @@ namespace viennacl
           source.append("    } \n");
           //segmented parallel reduction end
 
-          source.append("    if (get_local_id(0) != last_index && \n");
-          source.append("      shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1] && \n");
-          source.append("      inter_results[get_local_id(0)] != 0) { \n");
+          source.append("    if (local_index < group_end && get_local_id(0) < get_local_size(0) - 1 && \n");
+          source.append("      shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1]) { \n");
           source.append("      result[tmp.x * layout_result.y + layout_result.x] = inter_results[get_local_id(0)]; \n");
           source.append("    } \n");
 
           source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("  }  \n"); //for k
 
-          source.append("  if (get_local_id(0) == last_index && inter_results[last_index] != 0) \n");
-          source.append("    result[tmp.x * layout_result.y + layout_result.x] = inter_results[last_index]; \n");
+          source.append("  if (local_index + 1 == group_end) \n");  //write results of last active entry (this may not necessarily be the case already)
+          source.append("    result[tmp.x * layout_result.y + layout_result.x] = inter_results[get_local_id(0)]; \n");
           source.append("} \n");
 
         }

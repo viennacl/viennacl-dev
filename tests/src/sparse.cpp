@@ -182,14 +182,14 @@ int strided_matrix_vector_product_test(Epsilon epsilon,
     ublas_matrix2(4, 1) = 7.0; ublas_matrix2(4, 2) = -5.0;
     project(result, ublas::slice(1, 3, 5))     = ublas::prod(ublas_matrix2, project(rhs, ublas::slice(3, 2, 4)));
 
-    VCL_MatrixT vcl_compressed_matrix2;
-    viennacl::copy(ublas_matrix2, vcl_compressed_matrix2);
+    VCL_MatrixT vcl_sparse_matrix2;
+    viennacl::copy(ublas_matrix2, vcl_sparse_matrix2);
     viennacl::vector<NumericT> vec(4);
     vec(0) = rhs(3);
     vec(1) = rhs(5);
     vec(2) = rhs(7);
     vec(3) = rhs(9);
-    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, viennacl::project(vcl_rhs, viennacl::slice(3, 2, 4)));
+    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_sparse_matrix2, viennacl::project(vcl_rhs, viennacl::slice(3, 2, 4)));
 
     if( std::fabs(diff(result, vcl_result)) > epsilon )
     {
@@ -203,7 +203,7 @@ int strided_matrix_vector_product_test(Epsilon epsilon,
     vcl_result(10) = 1.0;
     vcl_result(13) = 1.0;
 
-    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_compressed_matrix2, vec);
+    viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_sparse_matrix2, vec);
 
     if( std::fabs(diff(result, vcl_result)) > epsilon )
     {
@@ -706,8 +706,8 @@ int test(Epsilon const& epsilon)
   }
 
   std::cout << "Testing products: coordinate_matrix, strided vectors" << std::endl;
-  std::cout << " --> SKIPPING <--" << std::endl;
-  //retval = strided_matrix_vector_product_test<NumericT, viennacl::coordinate_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  //std::cout << " --> SKIPPING <--" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::coordinate_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
   if (retval != EXIT_SUCCESS)
     return retval;
 
