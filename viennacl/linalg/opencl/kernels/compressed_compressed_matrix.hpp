@@ -33,9 +33,6 @@ namespace viennacl
           source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
           source.append("          uint4 layout_result) \n");
           source.append("{ \n");
-          source.append("  for (unsigned int row = get_global_id(0); row < layout_result.z; row += get_global_size(0)) \n");
-          source.append("    result[row * layout_result.y + layout_result.x] = 0; \n");
-
           source.append("  for (unsigned int i = get_global_id(0); i < nonzero_rows; i += get_global_size(0)) \n");
           source.append("  { \n");
           source.append("    "); source.append(numeric_string); source.append(" dot_prod = 0; \n");

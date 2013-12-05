@@ -466,6 +466,8 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::compressed_compressed_matrix<TYPE>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_compressed_matrix<TYPE>::program_name(), "vec_mul");
 
+        result.clear();
+
         viennacl::ocl::packed_cl_uint layout_vec;
         layout_vec.start  = cl_uint(viennacl::traits::start(vec));
         layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
