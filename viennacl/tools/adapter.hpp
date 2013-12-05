@@ -52,7 +52,7 @@ namespace viennacl
       public:
         typedef self_type     iterator1;
         typedef self_type     iterator2;
-        typedef std::size_t   size_type;
+        typedef vcl_size_t   size_type;
 
         const_sparse_matrix_adapted_iterator(std::vector<std::map<SizeType, SCALARTYPE> > const & mat, int i, int j)
          : mat_(mat), i_(i), j_(j)
@@ -181,7 +181,7 @@ namespace viennacl
 
         typedef const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, true, false>   const_reverse_iterator1;
         typedef SCALARTYPE    value_type;
-        typedef std::size_t   size_type;
+        typedef vcl_size_t   size_type;
 
         const_sparse_matrix_adapter(std::vector<std::map<SizeType, SCALARTYPE> > const & mat)
          : mat_(mat), size1_(mat_.size()), size2_(mat_.size()) {}
@@ -234,7 +234,7 @@ namespace viennacl
       public:
         typedef self_type     iterator1;
         typedef self_type     iterator2;
-        typedef std::size_t   size_type;
+        typedef vcl_size_t   size_type;
 
         sparse_matrix_adapted_iterator(std::vector<std::map<SizeType, SCALARTYPE> > & mat, int i, int j)
          : mat_(mat), i_(i), j_(j)
@@ -356,8 +356,8 @@ namespace viennacl
          : BaseType(mat), mat_(mat), size1_(mat_.size()), size2_(mat_.size()) {}
 
         sparse_matrix_adapter(std::vector<std::map<SizeType, SCALARTYPE> > & mat,
-                              std::size_t num_rows,
-                              std::size_t num_cols)
+                              vcl_size_t num_rows,
+                              vcl_size_t num_cols)
          : BaseType(mat, num_rows, num_cols), mat_(mat), size1_(num_rows), size2_(num_cols) {}
 
         iterator1 begin1() { return iterator1(mat_, 0, 0); }

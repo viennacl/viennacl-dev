@@ -71,15 +71,15 @@ namespace viennacl
         */
 
         lanczos_tag(double factor = 0.75,
-                    std::size_t numeig = 10,
+                    vcl_size_t numeig = 10,
                     int met = 0,
-                    std::size_t krylov = 100) : factor_(factor), num_eigenvalues_(numeig), method_(met), krylov_size_(krylov) {}
+                    vcl_size_t krylov = 100) : factor_(factor), num_eigenvalues_(numeig), method_(met), krylov_size_(krylov) {}
 
         /** @brief Sets the number of eigenvalues */
         void num_eigenvalues(int numeig){ num_eigenvalues_ = numeig; }
 
           /** @brief Returns the number of eigenvalues */
-        std::size_t num_eigenvalues() const { return num_eigenvalues_; }
+        vcl_size_t num_eigenvalues() const { return num_eigenvalues_; }
 
           /** @brief Sets the exponent of epsilon */
         void factor(double fct) { factor_ = fct; }
@@ -91,7 +91,7 @@ namespace viennacl
         void krylov_size(int max) { krylov_size_ = max; }
 
         /** @brief Returns the size of the kylov space */
-        std::size_t  krylov_size() const { return krylov_size_; }
+        vcl_size_t  krylov_size() const { return krylov_size_; }
 
         /** @brief Sets the reorthogonalization method */
         void method(int met){ method_ = met; }
@@ -102,9 +102,9 @@ namespace viennacl
 
       private:
         double factor_;
-        std::size_t num_eigenvalues_;
+        vcl_size_t num_eigenvalues_;
         int method_; // see enum defined above for possible values
-        std::size_t krylov_size_;
+        vcl_size_t krylov_size_;
 
     };
 
@@ -449,16 +449,16 @@ namespace viennacl
       boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
 
       std::vector<CPU_ScalarType> eigenvalues;
-      std::size_t matrix_size = matrix.size1();
+      vcl_size_t matrix_size = matrix.size1();
       VectorT r(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 
-      for(std::size_t i=0; i<s.size(); ++i)
+      for(vcl_size_t i=0; i<s.size(); ++i)
         s[i] = 3.0 * get_B() + get_T() - 1.5;
 
       detail::copy_vec_to_vec(s,r);
 
-      std::size_t size_krylov = (matrix_size < tag.krylov_size()) ? matrix_size
+      vcl_size_t size_krylov = (matrix_size < tag.krylov_size()) ? matrix_size
                                                                   : tag.krylov_size();
 
       switch(tag.method())
@@ -476,7 +476,7 @@ namespace viennacl
 
       std::vector<CPU_ScalarType> largest_eigenvalues;
 
-      for(std::size_t i = 1; i<=tag.num_eigenvalues(); i++)
+      for(vcl_size_t i = 1; i<=tag.num_eigenvalues(); i++)
         largest_eigenvalues.push_back(eigenvalues[size_krylov-i]);
 
 

@@ -157,7 +157,7 @@ namespace viennacl
           viennacl::backend::memory_write(mem_handle_, sizeof(SCALARTYPE)*index_, sizeof(SCALARTYPE), &value);
         }
 
-        std::size_t index_;
+        vcl_size_t index_;
         viennacl::backend::mem_handle & mem_handle_;
     }; //entry_proxy
 
@@ -224,7 +224,7 @@ namespace viennacl
           return temp;
         }
 
-        std::size_t index_;
+        vcl_size_t index_;
         viennacl::backend::mem_handle const & mem_handle_;
     }; //entry_proxy
 

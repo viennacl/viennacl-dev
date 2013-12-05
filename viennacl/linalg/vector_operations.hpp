@@ -47,7 +47,7 @@ namespace viennacl
   {
     template <typename T, typename ScalarType1>
     void av(vector_base<T> & vec1,
-            vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+            vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)"));
 
@@ -76,8 +76,8 @@ namespace viennacl
 
     template <typename T, typename ScalarType1, typename ScalarType2>
     void avbv(vector_base<T> & vec1,
-              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-              vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+              vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+              vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -113,8 +113,8 @@ namespace viennacl
 
     template <typename T, typename ScalarType1, typename ScalarType2>
     void avbv_v(vector_base<T> & vec1,
-                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -803,7 +803,7 @@ namespace viennacl
     * @return The result. Note that the result must be a CPU scalar
     */
     template <typename T>
-    std::size_t index_norm_inf(vector_base<T> const & vec)
+    vcl_size_t index_norm_inf(vector_base<T> const & vec)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -829,7 +829,7 @@ namespace viennacl
     * @param vec    The vector expression
     */
     template <typename LHS, typename RHS, typename OP>
-    std::size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec)
+    vcl_size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
       return index_norm_inf(temp);

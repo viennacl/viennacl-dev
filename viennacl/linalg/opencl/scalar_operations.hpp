@@ -49,7 +49,7 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType1>::value
                                   >::type
       as(S1 & s1,
-         S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+         S2 const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
 
@@ -83,8 +83,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       asbs(S1 & s1,
-           S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-           S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+           S2 const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+           S3 const & s3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
         assert( &viennacl::traits::opencl_handle(s2).context() == &viennacl::traits::opencl_handle(s3).context() && bool("Operands not in the same OpenCL context!"));
@@ -134,8 +134,8 @@ namespace viennacl
                                     && viennacl::is_any_scalar<ScalarType2>::value
                                   >::type
       asbs_s(S1 & s1,
-             S2 const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-             S3 const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+             S2 const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+             S3 const & s3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert( &viennacl::traits::opencl_handle(s1).context() == &viennacl::traits::opencl_handle(s2).context() && bool("Operands not in the same OpenCL context!"));
         assert( &viennacl::traits::opencl_handle(s2).context() == &viennacl::traits::opencl_handle(s3).context() && bool("Operands not in the same OpenCL context!"));

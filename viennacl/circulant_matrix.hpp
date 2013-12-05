@@ -56,7 +56,7 @@ namespace viennacl
          * @param rows      Number of rows of the matrix
          * @param cols      Number of columns of the matrix
          */
-        explicit circulant_matrix(std::size_t rows, std::size_t cols) : elements_(rows)
+        explicit circulant_matrix(vcl_size_t rows, vcl_size_t cols) : elements_(rows)
         {
           assert(rows == cols && bool("Circulant matrix must be square!"));
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
@@ -68,7 +68,7 @@ namespace viennacl
         * @param sz         New size of matrix
         * @param preserve   If true, existing values are preserved.
         */
-        void resize(std::size_t sz, bool preserve = true)
+        void resize(vcl_size_t sz, bool preserve = true)
         {
             elements_.resize(sz, preserve);
         }
@@ -89,19 +89,19 @@ namespace viennacl
         /**
          * @brief Returns the number of rows of the matrix
          */
-        std::size_t size1() const { return elements_.size(); }
+        vcl_size_t size1() const { return elements_.size(); }
 
         /**
          * @brief Returns the number of columns of the matrix
          */
-        std::size_t size2() const { return elements_.size(); }
+        vcl_size_t size2() const { return elements_.size(); }
 
         /** @brief Returns the internal size of matrix representtion.
         *   Usually required for launching OpenCL kernels only
         *
         *   @return Internal size of matrix representation
         */
-        std::size_t internal_size() const { return elements_.internal_size(); }
+        vcl_size_t internal_size() const { return elements_.internal_size(); }
 
         /**
          * @brief Read-write access to a single element of the matrix
@@ -110,7 +110,7 @@ namespace viennacl
          * @param col_index  Column index of accessed element
          * @return Proxy for matrix entry
          */
-        entry_proxy<SCALARTYPE> operator()(std::size_t row_index, std::size_t col_index)
+        entry_proxy<SCALARTYPE> operator()(vcl_size_t row_index, vcl_size_t col_index)
         {
             int index = static_cast<int>(row_index) - static_cast<int>(col_index);
 
@@ -174,14 +174,14 @@ namespace viennacl
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_src, MATRIXTYPE& com_dst) {
-        std::size_t size = circ_src.size1();
+        vcl_size_t size = circ_src.size1();
         assert(size == com_dst.size1() && bool("Size mismatch"));
         assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
         copy(circ_src, tmp);
 
-        for (std::size_t i = 0; i < size; i++) {
-            for (std::size_t j = 0; j < size; j++) {
+        for (vcl_size_t i = 0; i < size; i++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 int index = static_cast<int>(i) - static_cast<int>(j);
                 if (index < 0)
                   index = size + index;
@@ -198,13 +198,13 @@ namespace viennacl
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_dst) {
-        std::size_t size = circ_dst.size1();
+        vcl_size_t size = circ_dst.size1();
         assert(size == com_src.size1() && bool("Size mismatch"));
         assert(size == com_src.size2() && bool("Size mismatch"));
 
         std::vector<SCALARTYPE> tmp(size);
 
-        for(std::size_t i = 0; i < size; i++) tmp[i] = com_src(i, 0);
+        for(vcl_size_t i = 0; i < size; i++) tmp[i] = com_src(i, 0);
 
         copy(tmp, circ_dst);
     }
@@ -235,14 +235,14 @@ namespace viennacl
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     std::ostream & operator<<(std::ostream& s, circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix)
     {
-        std::size_t size = gpu_matrix.size1();
+        vcl_size_t size = gpu_matrix.size1();
         std::vector<SCALARTYPE> tmp(size);
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](";
 
-        for(std::size_t i = 0; i < size; i++) {
+        for(vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(std::size_t j = 0; j < size; j++) {
+            for(vcl_size_t j = 0; j < size; j++) {
                 int index = (int)i - (int)j;
                 if(index < 0) index = size + index;
                 s << tmp[index];

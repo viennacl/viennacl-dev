@@ -123,7 +123,7 @@ namespace viennacl
         {
           // std::cout << "K = " << k << std::endl;
 
-          std::size_t iter = 0;
+          vcl_size_t iter = 0;
           for (iter = 0; iter < detail::ITER_MAX; iter++)
           {
             // test for split
@@ -222,7 +222,7 @@ namespace viennacl
             CPU_ScalarType c = 1;
             CPU_ScalarType s = 1;
 
-            for (std::size_t i = l + 1; i <= static_cast<std::size_t>(k); i++)
+            for (vcl_size_t i = l + 1; i <= static_cast<vcl_size_t>(k); i++)
             {
               g = e[i];
               y = q[i];
@@ -286,11 +286,11 @@ namespace viennacl
       bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT> & D,
-                          std::size_t start)
+                          vcl_size_t start)
       {
 
-        std::size_t row_start = start;
-        std::size_t col_start = start;
+        vcl_size_t row_start = start;
+        vcl_size_t col_start = start;
 
         if(row_start + 1 >= A.size1())
           return false;
@@ -328,7 +328,7 @@ namespace viennacl
       bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
-                          std::size_t row_start, std::size_t col_start)
+                          vcl_size_t row_start, vcl_size_t col_start)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
@@ -373,11 +373,11 @@ namespace viennacl
       bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& S,
-                          std::size_t start)
+                          vcl_size_t start)
       {
 
-        std::size_t row_start = start;
-        std::size_t col_start = start + 1;
+        vcl_size_t row_start = start;
+        vcl_size_t col_start = start + 1;
 
         if(col_start + 1 >= A.size2())
           return false;
@@ -413,7 +413,7 @@ namespace viennacl
       bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
-                          std::size_t row_start, std::size_t col_start)
+                          vcl_size_t row_start, vcl_size_t col_start)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
@@ -458,11 +458,11 @@ namespace viennacl
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)
       {
-        std::size_t row_num = Ai.size1();
-        std::size_t col_num = Ai.size2();
+        vcl_size_t row_num = Ai.size1();
+        vcl_size_t col_num = Ai.size2();
 
-        std::size_t to = std::min(row_num, col_num);
-        std::size_t big_to = std::max(row_num, col_num);
+        vcl_size_t to = std::min(row_num, col_num);
+        vcl_size_t big_to = std::max(row_num, col_num);
 
         //for storing householder vector
         viennacl::vector<SCALARTYPE, ALIGNMENT> hh_vector(big_to);
@@ -470,7 +470,7 @@ namespace viennacl
         eye(QL);
         eye(QR);
 
-        for(std::size_t i = 0; i < to; i++)
+        for(vcl_size_t i = 0; i < to; i++)
         {
           householder_c(Ai, QL, hh_vector, i, i);
           householder_r(Ai, QR, hh_vector, i, i+1);
@@ -494,10 +494,10 @@ namespace viennacl
       viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
       viennacl::linalg::opencl::kernels::svd<SCALARTYPE>::init(ctx);
 
-      std::size_t row_num = A.size1();
-      std::size_t col_num = A.size2();
+      vcl_size_t row_num = A.size1();
+      vcl_size_t col_num = A.size2();
 
-      std::size_t to = std::min(row_num, col_num);
+      vcl_size_t to = std::min(row_num, col_num);
 
 
       //viennacl::vector<SCALARTYPE, ALIGNMENT> d(to);
@@ -520,7 +520,7 @@ namespace viennacl
       boost::numeric::ublas::matrix<SCALARTYPE> h_Sigma(row_num, col_num);
       h_Sigma.clear();
 
-      for (std::size_t i = 0; i < to; i++)
+      for (vcl_size_t i = 0; i < to; i++)
         h_Sigma(i, i) = dh[i];
 
       copy(h_Sigma, A);

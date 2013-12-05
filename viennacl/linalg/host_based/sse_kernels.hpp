@@ -47,10 +47,10 @@ namespace viennacl
 
         // returns true if the matrix is hermitian (or real symmetric), false otherwise
         template <typename ScalarType>
-        bool isHermitian(ScalarType ** const A, std::size_t n)
+        bool isHermitian(ScalarType ** const A, vcl_size_t n)
         {
-          for(std::size_t i=0;i<n;i++)
-            for(std::size_t j=i;j<n;j++)
+          for(vcl_size_t i=0;i<n;i++)
+            for(vcl_size_t j=i;j<n;j++)
               if(A[i][j] != conjIfComplex(A[j][i]))
                 return false;
           return true;
@@ -58,10 +58,10 @@ namespace viennacl
 
         // returns the bandwidth of a hermitian (or real symmetric) matrix
         template <typename ScalarType>
-        std::size_t getHermitianBandwidth(ScalarType ** const A, std::size_t n)
+        vcl_size_t getHermitianBandwidth(ScalarType ** const A, vcl_size_t n)
         {
-          for(std::size_t i=n-1;i>=0;i--)
-            for(std::size_t j=0;j<n-i;j++)
+          for(vcl_size_t i=n-1;i>=0;i--)
+            for(vcl_size_t j=0;j<n-i;j++)
               if(A[i+j][j]!=ScalarType(0))
                 return 2*i+1;
           return 0;
@@ -70,7 +70,7 @@ namespace viennacl
         // helper for tridiagonalizeBandedMatrix
         // does a householder similarity transform to eliminate a range of nonzeros in a row of a hermitian matrix
         template <typename ScalarType>
-        void eliminateHermitian(ScalarType ** A, std::size_t row, std::size_t from, std::size_t to, std::size_t width, ScalarType * ss)
+        void eliminateHermitian(ScalarType ** A, vcl_size_t row, vcl_size_t from, vcl_size_t to, vcl_size_t width, ScalarType * ss)
         {
           if(from>=to)
             return;
@@ -84,14 +84,14 @@ namespace viennacl
             //this is wierd syntax that also works with std::complex
             if(std::abs(A[row][row+from]-ScalarType(1))>std::abs(A[row][row+from]+ScalarType(1)))
               norm=-norm;
-            for(std::size_t i=row+from;i<row+to;i++)
+            for(vcl_size_t i=row+from;i<row+to;i++)
               A[row][i]/=norm;
             A[row][row+from]+=ScalarType(1);
 
             //apply the similarity transformation
 
             //left transformation
-            for(std::size_t j=row+1;j<row+width;j++)
+            for(vcl_size_t j=row+1;j<row+width;j++)
             {
               ScalarType s=_dotc(to-from,&A[row][row+from],&A[j][row+from]);
               s=-s/A[row][row+from];
@@ -99,21 +99,21 @@ namespace viennacl
             }
 
             //conjugate householder reflector for right transformation
-            for(std::size_t i=row+from;i<row+to;i++)
+            for(vcl_size_t i=row+from;i<row+to;i++)
               A[row][i]=conjIfComplex(A[row][i]);
 
             //right transformation (cache aligned)
-            for(std::size_t i=0;i<width;i++)
+            for(vcl_size_t i=0;i<width;i++)
               ss[i]=ScalarType(0);
-            for(std::size_t i=from;i<to;i++)
+            for(vcl_size_t i=from;i<to;i++)
               _axpy(&A[row+i][row],ss,width,conjIfComplex(A[row][row+i]));
-            for(std::size_t i=0;i<width;i++)
+            for(vcl_size_t i=0;i<width;i++)
               ss[i]=-ss[i]/A[row][row+from];
-            for(std::size_t i=from;i<to;i++)
+            for(vcl_size_t i=from;i<to;i++)
               _axpy(ss,&A[row+i][row],width,A[row][row+i]);
 
             //clean up the householder reflector
-            for(std::size_t col=row+from;col<row+to;col++)
+            for(vcl_size_t col=row+from;col<row+to;col++)
               A[row][col]=conjIfComplex(A[col][row]);
 
           }
@@ -124,16 +124,16 @@ namespace viennacl
         // bandwidth should be an odd integer, such as 3 for an already tridiagonal matrix
         // based on http://www.netlib.org/lapack/lawnspdf/lawn208.pdf
         template<typename ScalarType>
-        void tridiagonalizeHermitianBandedMatrix(ScalarType ** A, std::size_t n, std::size_t bandwidth)
+        void tridiagonalizeHermitianBandedMatrix(ScalarType ** A, vcl_size_t n, vcl_size_t bandwidth)
         {
           if(bandwidth<=3)
             return;
 
-          std::size_t belowDiagonal=(bandwidth-1)/2;
+          vcl_size_t belowDiagonal=(bandwidth-1)/2;
           ScalarType *ss=new ScalarType[bandwidth+belowDiagonal];
 
           //eliminate and chase bulges where the elimination makes a bulge
-          std::size_t k=0;
+          vcl_size_t k=0;
           for(;k<n-belowDiagonal;k++)
           {
 
@@ -141,8 +141,8 @@ namespace viennacl
               eliminateHermitian(A,k,1,1+belowDiagonal,std::min(n-k,2*belowDiagonal+1),ss);
 
               //chase the bulge
-              for(std::size_t bulgeStart=k+1;bulgeStart<n-belowDiagonal;bulgeStart+=belowDiagonal)
-                  for(std::size_t i=0;i<belowDiagonal-1;i++)
+              for(vcl_size_t bulgeStart=k+1;bulgeStart<n-belowDiagonal;bulgeStart+=belowDiagonal)
+                  for(vcl_size_t i=0;i<belowDiagonal-1;i++)
                       eliminateHermitian(A,bulgeStart+i,belowDiagonal,std::min(n-bulgeStart-i,belowDiagonal*2-i),std::min(n-bulgeStart-i,bandwidth+belowDiagonal),ss);
           }
 
@@ -156,14 +156,14 @@ namespace viennacl
         // reduces a hermitian (or symmetric real) matrix to a hermitian (or symmetric real) banded matrix with bandwidth 2*block_size+1
         // using householder similarity transformations, so eigenvalues are preserved. reduceToBandedMatrix(A,1) reduces the matrix to tridiagonal
         template<typename ScalarType>
-        void reduceHermitianToBandedMatrix(ScalarType ** A, std::size_t n, std::size_t block_size, std::size_t num_threads)
+        void reduceHermitianToBandedMatrix(ScalarType ** A, vcl_size_t n, vcl_size_t block_size, vcl_size_t num_threads)
         {
           ScalarType* norms=new ScalarType[block_size];
           ScalarType* ss=new ScalarType[n];
 
-          for (std::size_t k=0;k<n-block_size;k+=block_size)
+          for (vcl_size_t k=0;k<n-block_size;k+=block_size)
           {
-            for(std::size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
+            for(vcl_size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
             {
 
               //this is the same as the norm of the column, since it's hermetian
@@ -176,12 +176,12 @@ namespace viennacl
                 //this is wierd syntax that also works with std::complex
                 if(std::abs(A[k+bi][k+bi+block_size]-ScalarType(1))>std::abs(A[k+bi][k+bi+block_size]+ScalarType(1)))
                     norms[bi]=-norms[bi];
-                for(std::size_t i=k+bi+block_size;i<n;i++)
+                for(vcl_size_t i=k+bi+block_size;i<n;i++)
                     A[k+bi][i]/=norms[bi];
                 A[k+bi][k+bi+block_size]+=ScalarType(1);
 
                 // Apply transformation to remaining rows within the block
-                for(std::size_t j=k+bi+1;j<k+block_size;j++)
+                for(vcl_size_t j=k+bi+1;j<k+block_size;j++)
                 {
                     ScalarType s=_dotc(n-k-bi-block_size,&A[k+bi][k+bi+block_size],&A[j][k+bi+block_size]);
                     s=-s/A[k+bi][k+bi+block_size];
@@ -197,10 +197,10 @@ namespace viennacl
   #pragma omp parallel for
             for(int j=k+block_size;j<(int)n;j++)
   #else
-            for(std::size_t j=k+block_size;j<n;j++)
+            for(vcl_size_t j=k+block_size;j<n;j++)
   #endif
             {
-              for(std::size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
+              for(vcl_size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
               {
                 if(norms[bi]!=ScalarType(0))
                 {
@@ -212,8 +212,8 @@ namespace viennacl
             }
 
             //conjugate householder reflectors for right transformations
-            for(std::size_t bi=0;bi<block_size;bi++)
-              for(std::size_t i=k+bi+block_size;i<n;i++)
+            for(vcl_size_t bi=0;bi<block_size;bi++)
+              for(vcl_size_t i=k+bi+block_size;i<n;i++)
                 A[k+bi][i]=conjIfComplex(A[k+bi][i]);
 
             //right transformations (cache aligned)
@@ -221,31 +221,31 @@ namespace viennacl
   #pragma omp parallel for
             for(int section=0;section<(int)num_threads;section++)
   #else
-            for(std::size_t section=0;section<num_threads;section++)
+            for(vcl_size_t section=0;section<num_threads;section++)
   #endif
             {
-              std::size_t start=((n-k)*(section+0))/num_threads+k;
-              std::size_t end  =((n-k)*(section+1))/num_threads+k;
-              std::size_t length=end-start;
-              for(std::size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
+              vcl_size_t start=((n-k)*(section+0))/num_threads+k;
+              vcl_size_t end  =((n-k)*(section+1))/num_threads+k;
+              vcl_size_t length=end-start;
+              for(vcl_size_t bi=0;bi<std::min(block_size,n-k-block_size);bi++)
               {
                 if(norms[bi]!=ScalarType(0))
                 {
-                  for(std::size_t i=start;i<end;i++)
+                  for(vcl_size_t i=start;i<end;i++)
                     ss[i]=ScalarType(0);
-                  for(std::size_t i=k+bi+block_size;i<n;i++)
+                  for(vcl_size_t i=k+bi+block_size;i<n;i++)
                     _axpy(&A[i][start],ss+start,length,conjIfComplex(A[k+bi][i]));
-                  for(std::size_t i=start;i<end;i++)
+                  for(vcl_size_t i=start;i<end;i++)
                     ss[i]=-ss[i]/A[k+bi][k+bi+block_size];
-                  for(std::size_t i=k+bi+block_size;i<n;i++)
+                  for(vcl_size_t i=k+bi+block_size;i<n;i++)
                     _axpy(ss+start,&A[i][start],length,A[k+bi][i]);
                 }
               }
             }
 
             //clean up householder reflectors
-            for(std::size_t row=k;row<k+block_size;row++)
-              for(std::size_t col=row+block_size;col<n;col++)
+            for(vcl_size_t row=k;row<k+block_size;row++)
+              for(vcl_size_t col=row+block_size;col<n;col++)
                 A[row][col]=conjIfComplex(A[col][row]);
           }
           delete [] norms;
@@ -263,7 +263,7 @@ namespace viennacl
       * @param num_threads  The number of threads to be used with OpenMP
       */
       template<typename ScalarType>
-      void inplace_tred2(ScalarType ** A, std::size_t n, std::size_t block_size = 1, std::size_t num_threads = 1)
+      void inplace_tred2(ScalarType ** A, vcl_size_t n, vcl_size_t block_size = 1, vcl_size_t num_threads = 1)
       {
         if(!detail::isHermitian(A,n))
           std::cerr << "ViennaCL: Warning in inplace_tred2(): Matrix is not hermitian (or real symmetric)" << std::endl;
@@ -271,7 +271,7 @@ namespace viennacl
         // Don't touch the whole matrix if the bandwidth is already small.
         // There's nothing numerically significant about n*4,
         // it's just a point I chose to switch to assuming the matrix is full.
-        std::size_t bandwidth=detail::getHermitianBandwidth(A,n);
+        vcl_size_t bandwidth=detail::getHermitianBandwidth(A,n);
         if(bandwidth*bandwidth*num_threads<n*4 || 2*block_size+1>bandwidth)
           detail::tridiagonalizeHermitianBandedMatrix(A,n,bandwidth);
         else
@@ -292,34 +292,34 @@ namespace viennacl
       * @param block_size   The block size to be used
       */
       template <typename ScalarType>
-      bool lu_factorize_row_major(ScalarType ** A, std::size_t m, std::size_t n, std::size_t * piv = NULL, std::size_t block_size = 8)
+      bool lu_factorize_row_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t * piv = NULL, vcl_size_t block_size = 8)
       {
         // Use a parallel "left-looking", row-operation-based, block Crout/Doolittle algorithm.
         if(piv)
-          for(std::size_t i=0; i<m; i++)
+          for(vcl_size_t i=0; i<m; i++)
             piv[i]=i;
         bool pivsign=true;
 
         // Outer loop.
-            for(std::size_t j=0; j<std::min(m,n); j+=block_size)
+            for(vcl_size_t j=0; j<std::min(m,n); j+=block_size)
         {
                   block_size=std::min(std::min(m-j,n-j),block_size);
 
           //do Gaussian elimination with partial pivoting in the block
           //(in the first few columns of the matrix)
-          for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t bi=0;bi<block_size;bi++)
           {
             // Find pivot and exchange if necessary.
-            std::size_t p=j+bi;
+            vcl_size_t p=j+bi;
             if(piv)
             {
-              for(std::size_t i=j+bi+1; i<m; i++)
+              for(vcl_size_t i=j+bi+1; i<m; i++)
                 if(std::abs(A[i][j+bi])>std::abs(A[p][j+bi]))
                   p=i;
 
               if (p!=j+bi)
               {
-                for(std::size_t k=0; k<n; k++)
+                for(vcl_size_t k=0; k<n; k++)
                 {
                   ScalarType t=A[p][k];
                   A[p][k]=A[j+bi][k];
@@ -327,7 +327,7 @@ namespace viennacl
                 }
 
                 //swap pivot vector
-                std::size_t k = piv[p];
+                vcl_size_t k = piv[p];
                 piv[p] = piv[j+bi];
                 piv[j+bi] = k;
                 pivsign = !pivsign;
@@ -339,16 +339,16 @@ namespace viennacl
             if(elimVal==ScalarType(0))
             {
               //apply previous transformations from the block to the top of the submatrix
-              for(std::size_t row=j+1;row<j+bi;row++)
-                for(std::size_t bi_=0;bi_<row-j;bi_++)
+              for(vcl_size_t row=j+1;row<j+bi;row++)
+                for(vcl_size_t bi_=0;bi_<row-j;bi_++)
                   if(A[row][j+bi_]!=ScalarType(0))
                     _axpy(&(A[j+bi_][j+block_size]),&(A[row][j+block_size]),n-j-block_size,-A[row][j+bi_]);
               return pivsign;
             }
-            for(std::size_t row=j+bi+1;row<m;row++)
+            for(vcl_size_t row=j+bi+1;row<m;row++)
             {
               ScalarType multiplier=A[row][j+bi]/elimVal;
-                for(std::size_t col=j+bi;col<j+block_size;col++)
+                for(vcl_size_t col=j+bi;col<j+block_size;col++)
                   A[row][col]-=multiplier*A[j+bi][col];
                     A[row][j+bi]=multiplier;
             }
@@ -366,8 +366,8 @@ namespace viennacl
           //L L L L * * * *
 
           //apply previous transformations from the block to the top of the submatrix
-          for(std::size_t row=j+1;row<j+block_size;row++)
-            for(std::size_t bi=0;bi<row-j;bi++)
+          for(vcl_size_t row=j+1;row<j+block_size;row++)
+            for(vcl_size_t bi=0;bi<row-j;bi++)
               if(A[row][j+bi]!=ScalarType(0))
                 _axpy(&(A[j+bi][j+block_size]),&(A[row][j+block_size]),n-j-block_size,-A[row][j+bi]);
 
@@ -387,9 +387,9 @@ namespace viennacl
   #pragma omp parallel for
           for(int row=j+block_size;row<(int)m;row++)
   #else
-          for(std::size_t row=j+block_size;row<m;row++)
+          for(vcl_size_t row=j+block_size;row<m;row++)
   #endif
-          for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t bi=0;bi<block_size;bi++)
             if(A[row][j+bi]!=ScalarType(0))
                 _axpy(&(A[j+bi][j+block_size]),&(A[row][j+block_size]),n-j-block_size,-A[row][j+bi]);
         }
@@ -404,16 +404,16 @@ namespace viennacl
       * @param block_size   The block size to be used
       */
       template <typename ScalarType>
-          std::vector<ScalarType> inplace_qr_col_major(ScalarType ** A, std::size_t m, std::size_t n, std::size_t block_size = 8)
+          std::vector<ScalarType> inplace_qr_col_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t block_size = 8)
       {
         std::vector<ScalarType> betas(std::min(m,n));
         ScalarType* norms=new ScalarType[block_size];
 
-        for(std::size_t k=0; k<std::min(m,n); k+=block_size)
+        for(vcl_size_t k=0; k<std::min(m,n); k+=block_size)
         {
           block_size=std::min(std::min(m-k,n-k),block_size);
 
-          for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t bi=0;bi<block_size;bi++)
           {
 
             // Compute 2-norm of k+bi-th column below the diagonal
@@ -425,12 +425,12 @@ namespace viennacl
               //this is wierd syntax that also works with std::complex
               if(std::abs(A[k+bi][k+bi]-ScalarType(1))>std::abs(A[k+bi][k+bi]+ScalarType(1)))
                 norms[bi]*=-1;
-              for(std::size_t i=k+bi;i<m;i++)
+              for(vcl_size_t i=k+bi;i<m;i++)
                 A[k+bi][i]/=norms[bi];
               A[k+bi][k+bi]+=ScalarType(1);
 
               // Apply transformation to columns within the block
-              for(std::size_t j=k+bi+1; j<k+block_size; j++)
+              for(vcl_size_t j=k+bi+1; j<k+block_size; j++)
               {
                 ScalarType s=_dotc(m-k-bi,&A[k+bi][k+bi],&A[j][k+bi]);
                 s = -s/A[k+bi][k+bi];
@@ -446,10 +446,10 @@ namespace viennacl
   #pragma omp parallel for
           for(int j=k+block_size; j<(int)n; j++)
   #else
-          for(std::size_t j=k+block_size; j<n; j++)
+          for(vcl_size_t j=k+block_size; j<n; j++)
   #endif
           {
-            for(std::size_t bi=0;bi<block_size;bi++)
+            for(vcl_size_t bi=0;bi<block_size;bi++)
             {
               if(norms[bi]!=ScalarType(0))
                           {
@@ -462,10 +462,10 @@ namespace viennacl
         }
 
         //normalize the householder reflectors and store the betas
-        for(std::size_t j=0;j<std::min(m,n);j++)
+        for(vcl_size_t j=0;j<std::min(m,n);j++)
         {
           ScalarType beta=A[j][j];
-          for(std::size_t i=j+1;i<m;i++)
+          for(vcl_size_t i=j+1;i<m;i++)
             A[j][i]/=beta;
           A[j][j]=betas[j];//R diagonal values were stored temporarily in betas
           betas[j]=beta;
@@ -484,7 +484,7 @@ namespace viennacl
       * @param num_threads  Number of threads to be used
       */
       template <typename ScalarType>
-      std::vector<ScalarType> inplace_qr_row_major(ScalarType ** A, std::size_t m, std::size_t n, std::size_t block_size = 8, std::size_t num_threads = 1)
+      std::vector<ScalarType> inplace_qr_row_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t block_size = 8, vcl_size_t num_threads = 1)
       {
         std::vector<ScalarType> betas(std::min(m,n));
         ScalarType* norms=new ScalarType[block_size];
@@ -492,19 +492,19 @@ namespace viennacl
 
         //allocate O(m) memory for temporary column-major storage of the block for blas functions
         ScalarType** block_cols=new ScalarType*[block_size];
-        for(std::size_t i=0;i<block_size;i++)
+        for(vcl_size_t i=0;i<block_size;i++)
           block_cols[i]=new ScalarType[m];
 
-        for(std::size_t k=0; k<std::min(m,n); k+=block_size)
+        for(vcl_size_t k=0; k<std::min(m,n); k+=block_size)
         {
           block_size=std::min(std::min(m-k,n-k),block_size);
 
           //copy the block to column-major storage for cache alignment (necessary for _nrm2)
-          for(std::size_t i=0;i<m-k;i++)
-            for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t i=0;i<m-k;i++)
+            for(vcl_size_t bi=0;bi<block_size;bi++)
               block_cols[bi][i]=A[k+i][k+bi];
 
-          for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t bi=0;bi<block_size;bi++)
           {
 
             // Compute 2-norm of k+bi-th column below the diagonal
@@ -516,12 +516,12 @@ namespace viennacl
               //this is wierd syntax that also works with std::complex
               if(std::abs(block_cols[bi][bi]-ScalarType(1))>std::abs(block_cols[bi][bi]+ScalarType(1)))
                 norms[bi]*=-1;
-              for(std::size_t i=bi;i<m-k;i++)
+              for(vcl_size_t i=bi;i<m-k;i++)
                 block_cols[bi][i]/=norms[bi];
               block_cols[bi][bi]+=ScalarType(1);
 
               // Apply transformation to columns within the block
-              for(std::size_t j=bi+1; j<block_size; j++)
+              for(vcl_size_t j=bi+1; j<block_size; j++)
               {
                 ScalarType s=_dotc(m-k-bi,&block_cols[bi][bi],&block_cols[j][bi]);
                 s = -s/block_cols[bi][bi];
@@ -533,8 +533,8 @@ namespace viennacl
           }
 
           //copy the block back to row-major storage
-          for(std::size_t i=0;i<m-k;i++)
-            for(std::size_t bi=0;bi<block_size;bi++)
+          for(vcl_size_t i=0;i<m-k;i++)
+            for(vcl_size_t bi=0;bi<block_size;bi++)
               A[k+i][k+bi]=block_cols[bi][i];
 
           //apply transformations from block to remaining rows to the right of the block in parallel
@@ -542,23 +542,23 @@ namespace viennacl
   #pragma omp parallel for
           for(int section=0;section<(int)num_threads;section++)
   #else
-          for(std::size_t section=0;section<num_threads;section++)
+          for(vcl_size_t section=0;section<num_threads;section++)
   #endif
           {
-            std::size_t start=((n-k-block_size)*(section+0))/num_threads+k+block_size;
-            std::size_t end  =((n-k-block_size)*(section+1))/num_threads+k+block_size;
-            std::size_t length=end-start;
-            for(std::size_t bi=0;bi<block_size;bi++)
+            vcl_size_t start=((n-k-block_size)*(section+0))/num_threads+k+block_size;
+            vcl_size_t end  =((n-k-block_size)*(section+1))/num_threads+k+block_size;
+            vcl_size_t length=end-start;
+            for(vcl_size_t bi=0;bi<block_size;bi++)
             {
               if(norms[bi]!=ScalarType(0))
               {
-                for(std::size_t i=start;i<end;i++)
+                for(vcl_size_t i=start;i<end;i++)
                   ss[i]=ScalarType(0);
-                for(std::size_t i=k+bi;i<m;i++)
+                for(vcl_size_t i=k+bi;i<m;i++)
                   _axpy(&A[i][start],ss+start,length,A[i][k+bi]);
-                for(std::size_t i=start;i<end;i++)
+                for(vcl_size_t i=start;i<end;i++)
                   ss[i]=-ss[i]/A[k+bi][k+bi];
-                for(std::size_t i=k+bi;i<m;i++)
+                for(vcl_size_t i=k+bi;i<m;i++)
                   _axpy(ss+start,&A[i][start],length,A[i][k+bi]);
               }
             }
@@ -566,17 +566,17 @@ namespace viennacl
         }
 
         //normalize the householder reflectors and store the betas
-        for(std::size_t j=0;j<std::min(m,n);j++)
+        for(vcl_size_t j=0;j<std::min(m,n);j++)
         {
           ScalarType beta=A[j][j];
-          for(std::size_t i=j+1;i<m;i++)
+          for(vcl_size_t i=j+1;i<m;i++)
             A[i][j]/=beta;
           A[j][j]=betas[j];//R diagonal values were stored temporarily in betas
           betas[j]=beta;
         }
 
         delete [] norms;
-        for(std::size_t i=0;i<block_size;i++)
+        for(vcl_size_t i=0;i<block_size;i++)
           delete [] block_cols[i];
         delete [] block_cols;
         delete [] ss;

@@ -42,8 +42,8 @@ namespace viennacl
       public:
         nmf_config(double val_epsilon = 1e-4,
                    double val_epsilon_stagnation = 1e-5,
-                   std::size_t num_max_iters = 10000,
-                   std::size_t num_check_iters = 100)
+                   vcl_size_t num_max_iters = 10000,
+                   vcl_size_t num_check_iters = 100)
          : eps_(val_epsilon), stagnation_eps_(val_epsilon_stagnation),
            max_iters_(num_max_iters),
            check_after_steps_( (num_check_iters > 0) ? num_check_iters : 1),
@@ -62,20 +62,20 @@ namespace viennacl
         void stagnation_tolerance(double e) { stagnation_eps_ = e; }
 
         /** @brief Returns the maximum number of iterations for the NMF algorithm */
-        std::size_t max_iterations() const { return max_iters_; }
+        vcl_size_t max_iterations() const { return max_iters_; }
         /** @brief Sets the maximum number of iterations for the NMF algorithm */
-        void max_iterations(std::size_t m) { max_iters_ = m; }
+        void max_iterations(vcl_size_t m) { max_iters_ = m; }
 
 
         /** @brief Returns the number of iterations of the last NMF run using this configuration object */
-        std::size_t iters() const { return iters_; }
+        vcl_size_t iters() const { return iters_; }
 
 
         /** @brief Number of steps after which the convergence of NMF should be checked (again) */
-        std::size_t check_after_steps() const { return check_after_steps_; }
+        vcl_size_t check_after_steps() const { return check_after_steps_; }
 
         /** @brief Set the number of steps after which the convergence of NMF should be checked (again) */
-        void check_after_steps(std::size_t c) { if (c > 0) check_after_steps_ = c; }
+        void check_after_steps(vcl_size_t c) { if (c > 0) check_after_steps_ = c; }
 
 
         template <typename ScalarType>
@@ -87,9 +87,9 @@ namespace viennacl
       private:
         double eps_;
         double stagnation_eps_;
-        std::size_t max_iters_;
-        std::size_t check_after_steps_;
-        mutable std::size_t iters_;
+        vcl_size_t max_iters_;
+        vcl_size_t check_after_steps_;
+        mutable vcl_size_t iters_;
     };
 
 
@@ -115,7 +115,7 @@ namespace viennacl
       assert(V.size1() == W.size1() && V.size2() == H.size2() && bool("Dimensions of W and H don't allow for V = W * H"));
       assert(W.size2() == H.size1() && bool("Dimensions of W and H don't match, prod(W, H) impossible"));
 
-      std::size_t k = W.size2();
+      vcl_size_t k = W.size2();
       conf.iters_ = 0;
 
       viennacl::matrix<ScalarType> wn(V.size1(), k);
@@ -134,7 +134,7 @@ namespace viennacl
       bool stagnation_flag = false;
 
 
-      for (std::size_t i = 0; i < conf.max_iterations(); i++)
+      for (vcl_size_t i = 0; i < conf.max_iterations(); i++)
       {
         conf.iters_ = i + 1;
         {

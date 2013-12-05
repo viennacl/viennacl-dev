@@ -56,14 +56,14 @@ namespace viennacl
     //
     /** @brief Generic resize routine for resizing a matrix (ViennaCL, uBLAS, etc.) to a new size/dimension */
     template <typename MatrixType>
-    void resize(MatrixType & matrix, std::size_t rows, std::size_t cols)
+    void resize(MatrixType & matrix, vcl_size_t rows, vcl_size_t cols)
     {
       matrix.resize(rows, cols);
     }
 
     /** @brief Generic resize routine for resizing a vector (ViennaCL, uBLAS, etc.) to a new size */
     template <typename VectorType>
-    void resize(VectorType & vec, std::size_t new_size)
+    void resize(VectorType & vec, vcl_size_t new_size)
     {
       vec.resize(new_size);
     }
@@ -73,8 +73,8 @@ namespace viennacl
     //ublas needs separate treatment:
     template <typename ScalarType>
     void resize(boost::numeric::ublas::compressed_matrix<ScalarType> & matrix,
-                std::size_t rows,
-                std::size_t cols)
+                vcl_size_t rows,
+                vcl_size_t cols)
     {
       matrix.resize(rows, cols, false); //Note: omitting third parameter leads to compile time error (not implemented in ublas <= 1.42)
     }
@@ -84,15 +84,15 @@ namespace viennacl
     #ifdef VIENNACL_WITH_MTL4
     template <typename ScalarType>
     void resize(mtl::compressed2D<ScalarType> & matrix,
-                std::size_t rows,
-                std::size_t cols)
+                vcl_size_t rows,
+                vcl_size_t cols)
     {
       matrix.change_dim(rows, cols);
     }
 
     template <typename ScalarType>
     void resize(mtl::dense_vector<ScalarType> & vec,
-                std::size_t new_size)
+                vcl_size_t new_size)
     {
       vec.change_dim(new_size);
     }
@@ -100,35 +100,35 @@ namespace viennacl
 
     #ifdef VIENNACL_WITH_EIGEN
     inline void resize(Eigen::MatrixXf & m,
-                       std::size_t new_rows,
-                       std::size_t new_cols)
+                       vcl_size_t new_rows,
+                       vcl_size_t new_cols)
     {
       m.resize(new_rows, new_cols);
     }
 
     inline void resize(Eigen::MatrixXd & m,
-                       std::size_t new_rows,
-                       std::size_t new_cols)
+                       vcl_size_t new_rows,
+                       vcl_size_t new_cols)
     {
       m.resize(new_rows, new_cols);
     }
 
     template <typename T, int options>
     inline void resize(Eigen::SparseMatrix<T, options> & m,
-                       std::size_t new_rows,
-                       std::size_t new_cols)
+                       vcl_size_t new_rows,
+                       vcl_size_t new_cols)
     {
       m.resize(new_rows, new_cols);
     }
 
     inline void resize(Eigen::VectorXf & v,
-                       std::size_t new_size)
+                       vcl_size_t new_size)
     {
       v.resize(new_size);
     }
 
     inline void resize(Eigen::VectorXd & v,
-                       std::size_t new_size)
+                       vcl_size_t new_size)
     {
       v.resize(new_size);
     }

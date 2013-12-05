@@ -84,7 +84,7 @@ namespace viennacl
     * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
     *
     */
-    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
+    inline void memory_create(mem_handle & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
     {
       if (size_in_bytes > 0)
       {
@@ -119,7 +119,7 @@ namespace viennacl
     }
 
     /*
-    inline void memory_create(mem_handle & handle, std::size_t size_in_bytes, const void * host_ptr = NULL)
+    inline void memory_create(mem_handle & handle, vcl_size_t size_in_bytes, const void * host_ptr = NULL)
     {
       viennacl::context  ctx(default_memory_type());
       memory_create(handle, size_in_bytes, ctx, host_ptr);
@@ -139,9 +139,9 @@ namespace viennacl
     */
     inline void memory_copy(mem_handle const & src_buffer,
                             mem_handle & dst_buffer,
-                            std::size_t src_offset,
-                            std::size_t dst_offset,
-                            std::size_t bytes_to_copy)
+                            vcl_size_t src_offset,
+                            vcl_size_t dst_offset,
+                            vcl_size_t bytes_to_copy)
     {
       assert( src_buffer.get_active_handle_id() == dst_buffer.get_active_handle_id() && bool("memory_copy() must be called on buffers from the same domain") );
 
@@ -218,8 +218,8 @@ namespace viennacl
     * @param async              Whether the operation should be asynchronous
     */
     inline void memory_write(mem_handle & dst_buffer,
-                             std::size_t dst_offset,
-                             std::size_t bytes_to_write,
+                             vcl_size_t dst_offset,
+                             vcl_size_t bytes_to_write,
                              const void * ptr,
                              bool async = false)
     {
@@ -259,8 +259,8 @@ namespace viennacl
     * @param async              Whether the operation should be asynchronous
     */
     inline void memory_read(mem_handle const & src_buffer,
-                            std::size_t src_offset,
-                            std::size_t bytes_to_read,
+                            vcl_size_t src_offset,
+                            vcl_size_t bytes_to_read,
                             void * ptr,
                             bool async = false)
     {
@@ -296,14 +296,14 @@ namespace viennacl
     namespace detail
     {
       template <typename T>
-      std::size_t element_size(memory_types /* mem_type */)
+      vcl_size_t element_size(memory_types /* mem_type */)
       {
         return sizeof(T);
       }
 
 
       template <>
-      inline std::size_t element_size<unsigned long>(memory_types
+      inline vcl_size_t element_size<unsigned long>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
 #endif
@@ -317,7 +317,7 @@ namespace viennacl
       }
 
       template <>
-      inline std::size_t element_size<long>(memory_types
+      inline vcl_size_t element_size<long>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
 #endif
@@ -332,7 +332,7 @@ namespace viennacl
 
 
       template <>
-      inline std::size_t element_size<unsigned int>(memory_types
+      inline vcl_size_t element_size<unsigned int>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
 #endif
@@ -346,7 +346,7 @@ namespace viennacl
       }
 
       template <>
-      inline std::size_t element_size<int>(memory_types
+      inline vcl_size_t element_size<int>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                            mem_type  //in order to compile cleanly at -Wextra in GCC
 #endif
@@ -380,8 +380,8 @@ namespace viennacl
         return;
       }
 
-      std::size_t size_dst = detail::element_size<DataType>(handle.get_active_handle_id());
-      std::size_t size_src = detail::element_size<DataType>(new_ctx.memory_type());
+      vcl_size_t size_dst = detail::element_size<DataType>(handle.get_active_handle_id());
+      vcl_size_t size_src = detail::element_size<DataType>(new_ctx.memory_type());
 
       if (size_dst != size_src)  // OpenCL data element size not the same as host data element size
       {
@@ -472,8 +472,8 @@ namespace viennacl
       if (handle_dst.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
         handle_dst.switch_active_handle_id(default_memory_type());
 
-      std::size_t element_size_src = detail::element_size<DataType>(handle_src.get_active_handle_id());
-      std::size_t element_size_dst = detail::element_size<DataType>(handle_dst.get_active_handle_id());
+      vcl_size_t element_size_src = detail::element_size<DataType>(handle_src.get_active_handle_id());
+      vcl_size_t element_size_dst = detail::element_size<DataType>(handle_dst.get_active_handle_id());
 
       if (element_size_src != element_size_dst)
       {
@@ -490,7 +490,7 @@ namespace viennacl
         {
           case MAIN_MEMORY:
             src_data = reinterpret_cast<DataType const *>(handle_src.ram_handle().get());
-            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+            for (vcl_size_t i=0; i<buffer_dst.size(); ++i)
               buffer_dst.set(i, src_data[i]);
             break;
 
@@ -498,7 +498,7 @@ namespace viennacl
           case OPENCL_MEMORY:
             buffer_src.resize(handle_src, handle_src.raw_size() / element_size_src);
             opencl::memory_read(handle_src.opencl_handle(), 0, buffer_src.raw_size(), buffer_src.get());
-            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+            for (vcl_size_t i=0; i<buffer_dst.size(); ++i)
               buffer_dst.set(i, buffer_src[i]);
             break;
 #endif
@@ -506,7 +506,7 @@ namespace viennacl
           case CUDA_MEMORY:
             buffer_src.resize(handle_src, handle_src.raw_size() / element_size_src);
             cuda::memory_read(handle_src.cuda_handle(), 0, buffer_src.raw_size(), buffer_src.get());
-            for (std::size_t i=0; i<buffer_dst.size(); ++i)
+            for (vcl_size_t i=0; i<buffer_dst.size(); ++i)
               buffer_dst.set(i, buffer_src[i]);
             break;
 #endif

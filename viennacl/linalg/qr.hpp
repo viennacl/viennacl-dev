@@ -50,7 +50,7 @@ namespace viennacl
     {
 
       template <typename MatrixType, typename VectorType>
-      typename MatrixType::value_type setup_householder_vector_ublas(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, std::size_t j)
+      typename MatrixType::value_type setup_householder_vector_ublas(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, vcl_size_t j)
       {
         using boost::numeric::ublas::range;
         using boost::numeric::ublas::project;
@@ -90,7 +90,7 @@ namespace viennacl
 
       template <typename MatrixType, typename VectorType>
       typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type
-      setup_householder_vector_viennacl(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, std::size_t j)
+      setup_householder_vector_viennacl(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, vcl_size_t j)
       {
         using viennacl::range;
         using viennacl::project;
@@ -131,20 +131,20 @@ namespace viennacl
 
       // Apply (I - beta v v^T) to the k-th column of A, where v is the reflector starting at j-th row/column
       template <typename MatrixType, typename VectorType, typename ScalarType>
-      void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, std::size_t j, std::size_t k)
+      void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         ScalarType v_in_col = A(j,k);
-        for (std::size_t i=j+1; i<A.size1(); ++i)
+        for (vcl_size_t i=j+1; i<A.size1(); ++i)
           v_in_col += v[i] * A(i,k);
 
         //assert(v[j] == 1.0);
 
-        for (std::size_t i=j; i<A.size1(); ++i)
+        for (vcl_size_t i=j; i<A.size1(); ++i)
           A(i,k) -= beta * v_in_col * v[i];
       }
 
       template <typename MatrixType, typename VectorType, typename ScalarType>
-      void householder_reflect_ublas(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, std::size_t j, std::size_t k)
+      void householder_reflect_ublas(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         using boost::numeric::ublas::range;
         using boost::numeric::ublas::project;
@@ -158,7 +158,7 @@ namespace viennacl
       }
 
       template <typename MatrixType, typename VectorType, typename ScalarType>
-      void householder_reflect_viennacl(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, std::size_t j, std::size_t k)
+      void householder_reflect_viennacl(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         using viennacl::range;
         using viennacl::project;
@@ -181,24 +181,24 @@ namespace viennacl
 
       // Apply (I - beta v v^T) to A, where v is the reflector starting at j-th row/column
       template <typename MatrixType, typename VectorType, typename ScalarType>
-      void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, std::size_t j)
+      void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, vcl_size_t j)
       {
-        std::size_t column_end = A.size2();
+        vcl_size_t column_end = A.size2();
 
-        for (std::size_t k=j; k<column_end; ++k) //over columns
+        for (vcl_size_t k=j; k<column_end; ++k) //over columns
           householder_reflect(A, v, beta, j, k);
       }
 
 
       template <typename MatrixType, typename VectorType>
-      void write_householder_to_A(MatrixType & A, VectorType const & v, std::size_t j)
+      void write_householder_to_A(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
-        for (std::size_t i=j+1; i<A.size1(); ++i)
+        for (vcl_size_t i=j+1; i<A.size1(); ++i)
           A(i,j) = v[i];
       }
 
       template <typename MatrixType, typename VectorType>
-      void write_householder_to_A_ublas(MatrixType & A, VectorType const & v, std::size_t j)
+      void write_householder_to_A_ublas(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
         using boost::numeric::ublas::range;
         using boost::numeric::ublas::project;
@@ -208,7 +208,7 @@ namespace viennacl
       }
 
       template <typename MatrixType, typename VectorType>
-      void write_householder_to_A_viennacl(MatrixType & A, VectorType const & v, std::size_t j)
+      void write_householder_to_A_viennacl(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
         using viennacl::range;
         using viennacl::project;
@@ -225,7 +225,7 @@ namespace viennacl
       * @param block_size   The block size to be used. The number of columns of A must be a multiple of block_size
       */
       template<typename MatrixType>
-      std::vector<typename MatrixType::value_type> inplace_qr_ublas(MatrixType & A, std::size_t block_size = 32)
+      std::vector<typename MatrixType::value_type> inplace_qr_ublas(MatrixType & A, vcl_size_t block_size = 32)
       {
         typedef typename MatrixType::value_type   ScalarType;
         typedef boost::numeric::ublas::matrix_range<MatrixType>  MatrixRange;
@@ -241,16 +241,16 @@ namespace viennacl
         MatrixType W(A.size1(), block_size); W.clear(); W.resize(A.size1(), block_size);
 
         //run over A in a block-wise manner:
-        for (std::size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
+        for (vcl_size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
         {
-          std::size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
+          vcl_size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
 
           //determine Householder vectors:
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             betas[j+k] = detail::setup_householder_vector_ublas(A, v, matrix_1x1, j+k);
 
-            for (std::size_t l = k; l < effective_block_size; ++l)
+            for (vcl_size_t l = k; l < effective_block_size; ++l)
               detail::householder_reflect_ublas(A, v, matrix_1x1, betas[j+k], j+k, j+l);
 
             detail::write_householder_to_A_ublas(A, v, j+k);
@@ -260,7 +260,7 @@ namespace viennacl
           // Setup Y:
           //
           Y.clear();  Y.resize(A.size1(), block_size);
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             //write Householder to Y:
             Y(j+k,k) = 1.0;
@@ -278,7 +278,7 @@ namespace viennacl
 
 
           //k-th column of W is given by -beta * (Id + W*Y^T) v_k, where W and Y have k-1 columns
-          for (std::size_t k = 1; k < effective_block_size; ++k)
+          for (vcl_size_t k = 1; k < effective_block_size; ++k)
           {
             MatrixRange Y_old = project(Y, range(j, A.size1()), range(0, k));
             MatrixRange v_k   = project(Y, range(j, A.size1()), range(k, k+1));
@@ -319,7 +319,7 @@ namespace viennacl
       */
       template<typename MatrixType>
       std::vector< typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type >
-      inplace_qr_viennacl(MatrixType & A, std::size_t block_size = 16)
+      inplace_qr_viennacl(MatrixType & A, vcl_size_t block_size = 16)
       {
         typedef typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type   ScalarType;
         typedef viennacl::matrix_range<MatrixType>  MatrixRange;
@@ -338,15 +338,15 @@ namespace viennacl
         MatrixType z(A.size1(), 1);
 
         //run over A in a block-wise manner:
-        for (std::size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
+        for (vcl_size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
         {
-          std::size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
+          vcl_size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
 
           //determine Householder vectors:
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             betas[j+k] = detail::setup_householder_vector_viennacl(A, v, matrix_1x1, j+k);
-            for (std::size_t l = k; l < effective_block_size; ++l)
+            for (vcl_size_t l = k; l < effective_block_size; ++l)
               detail::householder_reflect_viennacl(A, v, matrix_1x1, betas[j+k], j+k, j+l);
 
             detail::write_householder_to_A_viennacl(A, v, j+k);
@@ -356,7 +356,7 @@ namespace viennacl
           // Setup Y:
           //
           Y.clear();
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             //write Householder to Y:
             Y(j+k,k) = 1.0;
@@ -376,7 +376,7 @@ namespace viennacl
 
 
           //k-th column of W is given by -beta * (Id + W*Y^T) v_k, where W and Y have k-1 columns
-          for (std::size_t k = 1; k < effective_block_size; ++k)
+          for (vcl_size_t k = 1; k < effective_block_size; ++k)
           {
             MatrixRange Y_old = project(Y, range(j, A.size1()), range(0, k));
             MatrixRange v_k   = project(Y, range(j, A.size1()), range(k, k+1));
@@ -423,7 +423,7 @@ namespace viennacl
       */
       template<typename MatrixType>
       std::vector< typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type >
-      inplace_qr_hybrid(MatrixType & A, std::size_t block_size = 16)
+      inplace_qr_hybrid(MatrixType & A, vcl_size_t block_size = 16)
       {
         typedef typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type   ScalarType;
 
@@ -445,9 +445,9 @@ namespace viennacl
 
 
         //run over A in a block-wise manner:
-        for (std::size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
+        for (vcl_size_t j = 0; j < std::min(A.size1(), A.size2()); j += block_size)
         {
-          std::size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
+          vcl_size_t effective_block_size = std::min(std::min(A.size1(), A.size2()), j+block_size) - j;
           UblasMatrixRange ublasA_part = boost::numeric::ublas::project(ublasA,
                                                                         boost::numeric::ublas::range(0, A.size1()),
                                                                         boost::numeric::ublas::range(j, j + effective_block_size));
@@ -458,11 +458,11 @@ namespace viennacl
                         );
 
           //determine Householder vectors:
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             betas[j+k] = detail::setup_householder_vector_ublas(ublasA, v, matrix_1x1, j+k);
 
-            for (std::size_t l = k; l < effective_block_size; ++l)
+            for (vcl_size_t l = k; l < effective_block_size; ++l)
               detail::householder_reflect_ublas(ublasA, v, matrix_1x1, betas[j+k], j+k, j+l);
 
             detail::write_householder_to_A_ublas(ublasA, v, j+k);
@@ -472,7 +472,7 @@ namespace viennacl
           // Setup Y:
           //
           ublasY.clear();  ublasY.resize(A.size1(), block_size);
-          for (std::size_t k = 0; k < effective_block_size; ++k)
+          for (vcl_size_t k = 0; k < effective_block_size; ++k)
           {
             //write Householder to Y:
             ublasY(j+k,k) = 1.0;
@@ -500,7 +500,7 @@ namespace viennacl
 
 
           //k-th column of W is given by -beta * (Id + W*Y^T) v_k, where W and Y have k-1 columns
-          for (std::size_t k = 1; k < effective_block_size; ++k)
+          for (vcl_size_t k = 1; k < effective_block_size; ++k)
           {
             UblasMatrixRange Y_old = boost::numeric::ublas::project(ublasY,
                                                                     boost::numeric::ublas::range(j, A.size1()),
@@ -573,23 +573,23 @@ namespace viennacl
       //
       // Recover R from upper-triangular part of A:
       //
-      std::size_t i_max = std::min(R.size1(), R.size2());
-      for (std::size_t i=0; i<i_max; ++i)
-        for (std::size_t j=i; j<R.size2(); ++j)
+      vcl_size_t i_max = std::min(R.size1(), R.size2());
+      for (vcl_size_t i=0; i<i_max; ++i)
+        for (vcl_size_t j=i; j<R.size2(); ++j)
           R(i,j) = A(i,j);
 
       //
       // Recover Q by applying all the Householder reflectors to the identity matrix:
       //
-      for (std::size_t i=0; i<Q.size1(); ++i)
+      for (vcl_size_t i=0; i<Q.size1(); ++i)
         Q(i,i) = 1.0;
 
-      std::size_t j_max = std::min(A.size1(), A.size2());
-      for (std::size_t j=0; j<j_max; ++j)
+      vcl_size_t j_max = std::min(A.size1(), A.size2());
+      for (vcl_size_t j=0; j<j_max; ++j)
       {
-        std::size_t col_index = j_max - j - 1;
+        vcl_size_t col_index = j_max - j - 1;
         v[col_index] = 1.0;
-        for (std::size_t i=col_index+1; i<A.size1(); ++i)
+        for (vcl_size_t i=col_index+1; i<A.size1(); ++i)
           v[i] = A(i, col_index);
 
         if (betas[col_index] != 0)
@@ -612,14 +612,14 @@ namespace viennacl
       //
       // Apply Q^T = (I - beta_m v_m v_m^T) \times ... \times (I - beta_0 v_0 v_0^T) by applying all the Householder reflectors to b:
       //
-      for (std::size_t col_index=0; col_index<std::min(A.size1(), A.size2()); ++col_index)
+      for (vcl_size_t col_index=0; col_index<std::min(A.size1(), A.size2()); ++col_index)
       {
         ScalarType v_in_b = b[col_index];
-        for (std::size_t i=col_index+1; i<A.size1(); ++i)
+        for (vcl_size_t i=col_index+1; i<A.size1(); ++i)
           v_in_b += A(i, col_index) * b[i];
 
         b[col_index] -= betas[col_index] * v_in_b;
-        for (std::size_t i=col_index+1; i<A.size1(); ++i)
+        for (vcl_size_t i=col_index+1; i<A.size1(); ++i)
           b[i] -= betas[col_index] * A(i, col_index) * v_in_b;
       }
     }
@@ -644,7 +644,7 @@ namespace viennacl
      * @param block_size   The block size to be used.
      */
     template<typename T, typename F, unsigned int ALIGNMENT>
-    std::vector<T> inplace_qr(viennacl::matrix<T, F, ALIGNMENT> & A, std::size_t block_size = 16)
+    std::vector<T> inplace_qr(viennacl::matrix<T, F, ALIGNMENT> & A, vcl_size_t block_size = 16)
     {
       return detail::inplace_qr_hybrid(A, block_size);
     }
@@ -655,7 +655,7 @@ namespace viennacl
      * @param block_size   The block size to be used.
      */
     template<typename MatrixType>
-    std::vector<typename MatrixType::value_type> inplace_qr(MatrixType & A, std::size_t block_size = 16)
+    std::vector<typename MatrixType::value_type> inplace_qr(MatrixType & A, vcl_size_t block_size = 16)
     {
       return detail::inplace_qr_ublas(A, block_size);
     }

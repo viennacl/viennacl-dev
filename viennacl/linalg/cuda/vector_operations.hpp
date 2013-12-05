@@ -116,7 +116,7 @@ namespace viennacl
 
       template <typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
-              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+              vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         typedef T        value_type;
 
@@ -407,8 +407,8 @@ namespace viennacl
 
       template <typename T, typename ScalarType1, typename ScalarType2>
       void avbv(vector_base<T> & vec1,
-                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         typedef T        value_type;
 
@@ -713,8 +713,8 @@ namespace viennacl
 
       template <typename T, typename ScalarType1, typename ScalarType2>
       void avbv_v(vector_base<T> & vec1,
-                  vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         typedef T        value_type;
 
@@ -2049,7 +2049,7 @@ namespace viennacl
 
         static viennacl::vector<value_type> temp(8 * VIENNACL_MDOT_WORKGROUP_NUM);
 
-        std::size_t current_index = 0;
+        vcl_size_t current_index = 0;
         while (vec_tuple.const_size() > current_index)
         {
           switch (vec_tuple.const_size() - current_index)
@@ -2506,7 +2506,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
@@ -2524,7 +2524,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 1);
@@ -2551,7 +2551,7 @@ namespace viennacl
       {
         typedef T       value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
@@ -2570,7 +2570,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 2);
@@ -2598,7 +2598,7 @@ namespace viennacl
       {
         typedef T      value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
@@ -2618,7 +2618,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<value_type> temp(work_groups);
 
         detail::norm_kernel_launcher<T>::apply(vec1, temp, 0);
@@ -2694,7 +2694,7 @@ namespace viennacl
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
       template <typename T>
-      std::size_t index_norm_inf(vector_base<T> const & vec1)
+      vcl_size_t index_norm_inf(vector_base<T> const & vec1)
       {
         typedef T       value_type;
 
@@ -2712,7 +2712,7 @@ namespace viennacl
 
         unsigned int ret = 0;
         viennacl::backend::memory_read(h, 0, sizeof(unsigned int), &ret);
-        return static_cast<std::size_t>(ret);
+        return static_cast<vcl_size_t>(ret);
       }
 
       ///////////////////////////////////////////

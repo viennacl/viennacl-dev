@@ -53,7 +53,7 @@ namespace viennacl
 
       template <typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
-              vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+              vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -66,8 +66,8 @@ namespace viennacl
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
-        k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
+                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -95,8 +95,8 @@ namespace viennacl
 
       template <typename T, typename ScalarType1, typename ScalarType2>
       void avbv(vector_base<T> & vec1,
-                vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -122,8 +122,8 @@ namespace viennacl
                                 + (flip_sign_beta ? 1 : 0);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
-        k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
+                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -161,8 +161,8 @@ namespace viennacl
 
       template <typename T, typename ScalarType1, typename ScalarType2>
       void avbv_v(vector_base<T> & vec1,
-                  vector_base<T> const & vec2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  vector_base<T> const & vec3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -188,8 +188,8 @@ namespace viennacl
                                 + (flip_sign_beta ? 1 : 0);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
-        k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
+                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         viennacl::ocl::packed_cl_uint size_vec1;
         size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
@@ -238,8 +238,8 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
-        k.global_work_size(0, std::min<std::size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<std::size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
+                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
 
         cl_uint size = up_to_internal_size ? cl_uint(vec1.internal_size()) : cl_uint(viennacl::traits::size(vec1));
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
@@ -425,7 +425,7 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
         temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
@@ -478,7 +478,7 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::init(ctx);
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
 
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(x));
         temp.resize(8 * work_groups, ctx); // bring default-constructed vectors to the correct size:
@@ -492,7 +492,7 @@ namespace viennacl
         viennacl::ocl::kernel & inner_prod_kernel_4 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod4");
         viennacl::ocl::kernel & inner_prod_kernel_8 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<T>::program_name(), "inner_prod8");
 
-        std::size_t current_index = 0;
+        vcl_size_t current_index = 0;
         while (current_index < vec_tuple.const_size())
         {
           switch (vec_tuple.const_size() - current_index)
@@ -658,7 +658,7 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
         temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
@@ -725,7 +725,7 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
@@ -755,7 +755,7 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
@@ -790,7 +790,7 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
@@ -820,7 +820,7 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
@@ -855,7 +855,7 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results
@@ -885,7 +885,7 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        std::size_t work_groups = 128;
+        vcl_size_t work_groups = 128;
         viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
         // Step 1: Compute the partial work group results

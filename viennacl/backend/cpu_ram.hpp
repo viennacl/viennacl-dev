@@ -61,7 +61,7 @@ namespace viennacl
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
        *
        */
-      inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
+      inline handle_type  memory_create(vcl_size_t size_in_bytes, const void * host_ptr = NULL)
       {
         if (!host_ptr)
           return handle_type(new char[size_in_bytes], detail::array_deleter<char>());
@@ -71,7 +71,7 @@ namespace viennacl
         // copy data:
         char * raw_ptr = new_handle.get();
         const char * data_ptr = static_cast<const char *>(host_ptr);
-        for (std::size_t i=0; i<size_in_bytes; ++i)
+        for (vcl_size_t i=0; i<size_in_bytes; ++i)
           raw_ptr[i] = data_ptr[i];
 
         return new_handle;
@@ -87,14 +87,14 @@ namespace viennacl
        */
       inline void memory_copy(handle_type const & src_buffer,
                               handle_type & dst_buffer,
-                              std::size_t src_offset,
-                              std::size_t dst_offset,
-                              std::size_t bytes_to_copy)
+                              vcl_size_t src_offset,
+                              vcl_size_t dst_offset,
+                              vcl_size_t bytes_to_copy)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-        for (std::size_t i=0; i<bytes_to_copy; ++i)
+        for (vcl_size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = src_buffer.get()[i + src_offset];
       }
 
@@ -106,14 +106,14 @@ namespace viennacl
        * @param ptr           Pointer to the first byte to be written
        */
       inline void memory_write(handle_type & dst_buffer,
-                               std::size_t dst_offset,
-                               std::size_t bytes_to_copy,
+                               vcl_size_t dst_offset,
+                               vcl_size_t bytes_to_copy,
                                const void * ptr,
                                bool /*async*/)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-        for (std::size_t i=0; i<bytes_to_copy; ++i)
+        for (vcl_size_t i=0; i<bytes_to_copy; ++i)
           dst_buffer.get()[i+dst_offset] = static_cast<const char *>(ptr)[i];
       }
 
@@ -125,14 +125,14 @@ namespace viennacl
        * @param ptr                Location in main RAM where to read data should be written to
        */
       inline void memory_read(handle_type const & src_buffer,
-                              std::size_t src_offset,
-                              std::size_t bytes_to_copy,
+                              vcl_size_t src_offset,
+                              vcl_size_t bytes_to_copy,
                               void * ptr,
                               bool /*async*/)
       {
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-        for (std::size_t i=0; i<bytes_to_copy; ++i)
+        for (vcl_size_t i=0; i<bytes_to_copy; ++i)
           static_cast<char *>(ptr)[i] = src_buffer.get()[i+src_offset];
       }
 

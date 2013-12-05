@@ -39,7 +39,7 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::av(), taking care of the argument unwrapping */
       template <typename ScalarType1>
       void as(lhs_rhs_element & s1,
-              lhs_rhs_element const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+              lhs_rhs_element const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         assert(   s1.type_family == SCALAR_TYPE_FAMILY && (s1.subtype == HOST_SCALAR_TYPE || s1.subtype == DEVICE_SCALAR_TYPE)
                && s2.type_family == SCALAR_TYPE_FAMILY && (s2.subtype == HOST_SCALAR_TYPE || s2.subtype == DEVICE_SCALAR_TYPE)
@@ -65,8 +65,8 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::avbv(), taking care of the argument unwrapping */
       template <typename ScalarType1, typename ScalarType2>
       void asbs(lhs_rhs_element & s1,
-                lhs_rhs_element const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                lhs_rhs_element const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                lhs_rhs_element const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                lhs_rhs_element const & s3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(   s1.type_family == SCALAR_TYPE_FAMILY && (s1.subtype == HOST_SCALAR_TYPE || s1.subtype == DEVICE_SCALAR_TYPE)
                && s2.type_family == SCALAR_TYPE_FAMILY && (s2.subtype == HOST_SCALAR_TYPE || s2.subtype == DEVICE_SCALAR_TYPE)
@@ -95,8 +95,8 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::avbv_v(), taking care of the argument unwrapping */
       template <typename ScalarType1, typename ScalarType2>
       void asbs_s(lhs_rhs_element & s1,
-                  lhs_rhs_element const & s2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  lhs_rhs_element const & s3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  lhs_rhs_element const & s2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  lhs_rhs_element const & s3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(   s1.type_family == SCALAR_TYPE_FAMILY && (s1.subtype == HOST_SCALAR_TYPE || s1.subtype == DEVICE_SCALAR_TYPE)
                && s2.type_family == SCALAR_TYPE_FAMILY && (s2.subtype == HOST_SCALAR_TYPE || s2.subtype == DEVICE_SCALAR_TYPE)

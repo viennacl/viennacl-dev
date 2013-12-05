@@ -168,8 +168,8 @@ namespace viennacl
       RHS & rhs() const { return rhs_; }
 
       /** @brief Returns the size of the result vector */
-      std::size_t size1() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size1(lhs_, rhs_); }
-      std::size_t size2() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size2(lhs_, rhs_); }
+      vcl_size_t size1() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size1(lhs_, rhs_); }
+      vcl_size_t size2() const { return viennacl::tools::MATRIX_SIZE_DEDUCER<LHS, RHS, OP>::size2(lhs_, rhs_); }
 
     private:
       /** @brief The left hand side operand */
@@ -194,8 +194,8 @@ namespace viennacl
       typedef typename MATRIXTYPE::value_type       value_type;
 
       matrix_iterator(MATRIXTYPE & mat,
-                      std::size_t start_row,
-                      std::size_t start_col) : mat_(mat), row_(start_row), col_(start_col) {}
+                      vcl_size_t start_row,
+                      vcl_size_t start_col) : mat_(mat), row_(start_row), col_(start_col) {}
 
       value_type operator*(void) { return mat_(row_, col_); }
       self_type & operator++(void) { viennacl::tools::MATRIX_ITERATOR_INCREMENTER<ROWCOL, MATRIXTYPE>::apply(mat_, row_, col_); return *this; }
@@ -1034,8 +1034,8 @@ namespace viennacl
     }
     else
     {
-      assert( (gpu_matrix.size1() == static_cast<std::size_t>(cpu_matrix.rows()))
-              && (gpu_matrix.size2() == static_cast<std::size_t>(cpu_matrix.cols()))
+      assert( (gpu_matrix.size1() == static_cast<vcl_size_t>(cpu_matrix.rows()))
+              && (gpu_matrix.size2() == static_cast<vcl_size_t>(cpu_matrix.cols()))
               && bool("matrix size mismatch")
             );
     }
@@ -1070,8 +1070,8 @@ namespace viennacl
     }
     else
     {
-      assert( (gpu_matrix.size1() == static_cast<std::size_t>(cpu_matrix.rows()))
-              && (gpu_matrix.size2() == static_cast<std::size_t>(cpu_matrix.cols()))
+      assert( (gpu_matrix.size1() == static_cast<vcl_size_t>(cpu_matrix.rows()))
+              && (gpu_matrix.size2() == static_cast<vcl_size_t>(cpu_matrix.cols()))
               && bool("matrix size mismatch")
             );
     }

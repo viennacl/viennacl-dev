@@ -47,22 +47,22 @@ namespace viennacl
     namespace host_based
     {
       //saxpy, daxpy, caxpy, zaxpy
-      template <class T> inline void _axpy(const T*, T*, std::size_t, T);
+      template <class T> inline void _axpy(const T*, T*, vcl_size_t, T);
 
       //sdot, ddot, cdotu, zdotu
-      template <class T> inline T    _dot (std::size_t, const T*, const T*);
+      template <class T> inline T    _dot (vcl_size_t, const T*, const T*);
 
       //sdot, ddot, cdotc, zdotc
-      template <class T> inline T    _dotc(std::size_t, const T*, const T*);
+      template <class T> inline T    _dotc(vcl_size_t, const T*, const T*);
 
       //sswap, dswap, cswap, zswap
-      template <class T> inline void _swap(std::size_t, T*, T*);
+      template <class T> inline void _swap(vcl_size_t, T*, T*);
 
       //scopy, dcopy, ccopy, zcopy
-      template <class T> inline void _copy(std::size_t, T*, T*);
+      template <class T> inline void _copy(vcl_size_t, T*, T*);
 
       //snrm2, dnrm2, euclidian norm of complex vectors
-      template <class T> inline T    _nrm2(const T*, std::size_t);
+      template <class T> inline T    _nrm2(const T*, vcl_size_t);
 
       namespace detail
       {
@@ -70,35 +70,35 @@ namespace viennacl
       }
 
       template <class T>
-      inline void _axpy(const T* x, T* y, std::size_t n, T a)
+      inline void _axpy(const T* x, T* y, vcl_size_t n, T a)
       {
-        for(std::size_t i=0;i<n;i++)
+        for(vcl_size_t i=0;i<n;i++)
           y[i]+=a*x[i];
       }
 
       template <class T>
-      inline T _dot(std::size_t n, const T* x, const T* y)
+      inline T _dot(vcl_size_t n, const T* x, const T* y)
       {
         T sum(0);
-        for(std::size_t i=0;i<n;i++)
+        for(vcl_size_t i=0;i<n;i++)
           sum+=x[i]*y[i];
         return sum;
       }
 
       template <class T>
-      inline T _dotc(std::size_t n, const T* x, const T* y)
+      inline T _dotc(vcl_size_t n, const T* x, const T* y)
       {
         T sum(0);
-        for(std::size_t i=0;i<n;i++)
+        for(vcl_size_t i=0;i<n;i++)
           sum+=detail::conjIfComplex(x[i])*y[i];
         return sum;
       }
 
       template <class T>
-      inline void _swap(std::size_t n, T* sx, T* sy)
+      inline void _swap(vcl_size_t n, T* sx, T* sy)
       {
         T t;
-        for(std::size_t i=0;i<n;i++)
+        for(vcl_size_t i=0;i<n;i++)
         {
           t=sx[i];
           sx[i]=sy[i];
@@ -107,14 +107,14 @@ namespace viennacl
       }
 
       template <class T>
-      inline void _copy(std::size_t n, T* cx, T* cy)
+      inline void _copy(vcl_size_t n, T* cx, T* cy)
       {
-        for(std::size_t i=0;i<n;i++)
+        for(vcl_size_t i=0;i<n;i++)
           cx[i]=cy[i];
       }
 
       template <class T>
-      inline T _nrm2(const T* x, std::size_t n)
+      inline T _nrm2(const T* x, vcl_size_t n)
       {
         //based on http://www.netlib.org/blas/snrm2.f, but works with std::complex
 
@@ -124,7 +124,7 @@ namespace viennacl
           return std::abs(x[0]);
         T scale(0);
         T scaledSquareSum(1);
-        for(std::size_t i=0;i<n;i++){
+        for(vcl_size_t i=0;i<n;i++){
           if(x[i]!=T(0)){
             T absXi=std::abs(x[i]);
             if(std::abs(x[i])>std::abs(scale)){
@@ -150,7 +150,7 @@ namespace viennacl
       }
 
       template <>
-      inline std::complex<double> _nrm2(const std::complex<double>* x, std::size_t n)
+      inline std::complex<double> _nrm2(const std::complex<double>* x, vcl_size_t n)
       {
         //based on http://www.netlib.org/blas/snrm2.f
 
@@ -160,7 +160,7 @@ namespace viennacl
           return std::abs(x[0]);
         double scale=0.0;
         double scaledSquareSum=1.0;
-        for(std::size_t i=0;i<n;i++){
+        for(vcl_size_t i=0;i<n;i++){
           if(x[i].real()!=0.0){
             double absXi=std::abs(x[i].real());
             if(absXi>scale){
@@ -190,7 +190,7 @@ namespace viennacl
       }
 
       template <>
-      inline std::complex<float> _nrm2(const std::complex<float>* x, std::size_t n)
+      inline std::complex<float> _nrm2(const std::complex<float>* x, vcl_size_t n)
       {
         //based on http://www.netlib.org/blas/snrm2.f
 
@@ -200,7 +200,7 @@ namespace viennacl
           return std::abs(x[0]);
         float scale=0.0;
         float scaledSquareSum=1.0;
-        for(std::size_t i=0;i<n;i++){
+        for(vcl_size_t i=0;i<n;i++){
           if(x[i].real()!=0.0){
             float absXi=std::abs(x[i].real());
             if(absXi>scale){
@@ -235,17 +235,17 @@ namespace viennacl
 
       //saxpy
       template <>
-      inline void _axpy<float>(const float* x, float* y, std::size_t n, float a)
+      inline void _axpy<float>(const float* x, float* y, vcl_size_t n, float a)
       {
 
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(float)!=0)
-          for(std::size_t i=0;i<n;i++)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         else
         {
           //process unaligned section of arrays
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return;
@@ -286,24 +286,24 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 8
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
 
       //daxpy
       template <>
-      inline void _axpy<double>(const double* x, double* y, std::size_t n, double a)
+      inline void _axpy<double>(const double* x, double* y, vcl_size_t n, double a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(double)!=0)
-          for(std::size_t i=0;i<n;i++)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
         {
           //process unaligned section of arrays
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return;
@@ -344,21 +344,21 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 4
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
 
       //sdot
       template <>
-      inline float _dot<float>(std::size_t n, const float* x, const float* y)
+      inline float _dot<float>(vcl_size_t n, const float* x, const float* y)
       {
 
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(float)!=0)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
         {
           float sum=0;
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -367,7 +367,7 @@ namespace viennacl
 
           //process unaligned section of array
           float sum=0;
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return sum;
@@ -403,12 +403,12 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
           float sums[8];
-          float* pSums=(float*)((((std::size_t)sums)&(~15))+16);
+          float* pSums=(float*)((((vcl_size_t)sums)&(~15))+16);
           _mm_store_ps(pSums,sumReg);
 
           return sum+pSums[0]+pSums[1]+pSums[2]+pSums[3];
@@ -417,13 +417,13 @@ namespace viennacl
 
       //ddot
       template <>
-      inline double _dot(std::size_t n, const double* x, const double* y)
+      inline double _dot(vcl_size_t n, const double* x, const double* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(double)!=0)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
         {
           double sum=0;
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -431,7 +431,7 @@ namespace viennacl
         {
           //process unaligned section of array
           double sum=0;
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return sum;
@@ -468,12 +468,12 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
           double sums[4];
-          double* pSums=(double*)((((std::size_t)sums)&(~15))+16);
+          double* pSums=(double*)((((vcl_size_t)sums)&(~15))+16);
           sum0=_mm_add_pd(sum0,sum1);
           _mm_store_pd(pSums,sum0);
 
@@ -482,24 +482,24 @@ namespace viennacl
       }
 
       //conjugated dot products are the same as non-conjugated dot products for real numbers
-      template <> inline float  _dotc<float >(std::size_t n, const float  *x, const float  *y){return _dot(n,x,y);}
-      template <> inline double _dotc<double>(std::size_t n, const double *x, const double *y){return _dot(n,x,y);}
+      template <> inline float  _dotc<float >(vcl_size_t n, const float  *x, const float  *y){return _dot(n,x,y);}
+      template <> inline double _dotc<double>(vcl_size_t n, const double *x, const double *y){return _dot(n,x,y);}
 
   #if defined VIENNACL_WITH_COMPLEX
 
       //caxpy
       template <>
-      inline void _axpy<std::complex<float> >(const std::complex<float>* x, std::complex<float>* y, std::size_t n, std::complex<float> a)
+      inline void _axpy<std::complex<float> >(const std::complex<float>* x, std::complex<float>* y, vcl_size_t n, std::complex<float> a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(std::complex<float>)!=0)
-          for(std::size_t i=0;i<n;i++)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
         {
           //process unaligned section of arrays
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return;
@@ -565,18 +565,18 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 4
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
 
       //zaxpy
       template <>
-      inline void _axpy<std::complex<double> >(const std::complex<double>* x, std::complex<double>* y, std::size_t n, std::complex<double> a)
+      inline void _axpy<std::complex<double> >(const std::complex<double>* x, std::complex<double>* y, vcl_size_t n, std::complex<double> a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16||((std::size_t)y)%16)
-          for(std::size_t i=0;i<n;i++)
+        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
+          for(vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
@@ -644,13 +644,13 @@ namespace viennacl
 
       //cdotu
       template <>
-      inline std::complex<float> _dot<std::complex<float> >(std::size_t n, const std::complex<float>* x, const std::complex<float>* y)
+      inline std::complex<float> _dot<std::complex<float> >(vcl_size_t n, const std::complex<float>* x, const std::complex<float>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(std::complex<float>)!=0)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
         {
           std::complex<float> sum(0);
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -658,7 +658,7 @@ namespace viennacl
         {
           //process unaligned section of arrays
           std::complex<float> sum(0);
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return sum;
@@ -724,12 +724,12 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
           std::complex<float> sums[4];
-          std::complex<float>* pSums=(std::complex<float>*)((((std::size_t)sums)&(~15))+16);
+          std::complex<float>* pSums=(std::complex<float>*)((((vcl_size_t)sums)&(~15))+16);
           pSums[0]=std::complex<float>(0);
           pSums[1]=std::complex<float>(0);
           _mm_store_ps((float*)pSums,sumReg);
@@ -740,13 +740,13 @@ namespace viennacl
 
       //zdotu
       template <>
-      inline std::complex<double> _dot<std::complex<double> >(std::size_t n, const std::complex<double>* x, const std::complex<double>* y)
+      inline std::complex<double> _dot<std::complex<double> >(vcl_size_t n, const std::complex<double>* x, const std::complex<double>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16||((std::size_t)y)%16)
+        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
         {
           std::complex<double> sum(0);
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -814,7 +814,7 @@ namespace viennacl
 
           //move the sums from the xmm registers to aligned memory on the stack
           std::complex<double> sums[2];
-          std::complex<double>* pSums=(std::complex<double>*)((((std::size_t)sums)&(~15))+16);
+          std::complex<double>* pSums=(std::complex<double>*)((((vcl_size_t)sums)&(~15))+16);
           pSums[0]=std::complex<double>(0);
           _mm_store_pd((double*)pSums,sumReg);
 
@@ -824,13 +824,13 @@ namespace viennacl
 
       //cdotc
       template <>
-      inline std::complex<float> _dotc<std::complex<float> >(std::size_t n, const std::complex<float>* x, const std::complex<float>* y)
+      inline std::complex<float> _dotc<std::complex<float> >(vcl_size_t n, const std::complex<float>* x, const std::complex<float>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16!=((std::size_t)y)%16||((std::size_t)x)%sizeof(std::complex<float>)!=0)
+        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
         {
           std::complex<float> sum(0);
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
           return sum;
         }
@@ -838,7 +838,7 @@ namespace viennacl
         {
           //process unaligned section of arrays
           std::complex<float> sum(0);
-          while(((std::size_t)x)%16)
+          while(((vcl_size_t)x)%16)
           {
             if(n<=0)
               return sum;
@@ -904,12 +904,12 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
           std::complex<float> sums[4];
-          std::complex<float>* pSums=(std::complex<float>*)((((std::size_t)sums)&(~15))+16);
+          std::complex<float>* pSums=(std::complex<float>*)((((vcl_size_t)sums)&(~15))+16);
           sumReg=_mm_shuffle_ps(sumReg,sumReg,0xB1);//swap real and imag
           _mm_store_ps((float*)pSums,sumReg);
 
@@ -919,13 +919,13 @@ namespace viennacl
 
       //zdotc
       template <>
-      inline std::complex<double> _dotc<std::complex<double> >(std::size_t n, const std::complex<double>* x, const std::complex<double>* y)
+      inline std::complex<double> _dotc<std::complex<double> >(vcl_size_t n, const std::complex<double>* x, const std::complex<double>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((std::size_t)x)%16||((std::size_t)y)%16)
+        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
         {
           std::complex<double> sum(0);
-          for(std::size_t i=0;i<n;i++)
+          for(vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
           return sum;
         }
@@ -994,7 +994,7 @@ namespace viennacl
 
           //move the sums from the xmm registers to aligned memory on the stack
           std::complex<double> sums[2];
-          std::complex<double>* pSums=(std::complex<double>*)((((std::size_t)sums)&(~15))+16);
+          std::complex<double>* pSums=(std::complex<double>*)((((vcl_size_t)sums)&(~15))+16);
           sumReg=_mm_shuffle_pd(sumReg,sumReg,0x1);//swap real and imag
           _mm_store_pd((double*)pSums,sumReg);
 

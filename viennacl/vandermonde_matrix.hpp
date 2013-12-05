@@ -57,7 +57,7 @@ namespace viennacl {
          * @param rows      Number of rows of the matrix
          * @param cols      Number of columns of the matrix
          */
-        explicit vandermonde_matrix(std::size_t rows, std::size_t cols) : elements_(rows)
+        explicit vandermonde_matrix(vcl_size_t rows, vcl_size_t cols) : elements_(rows)
         {
           assert(rows == cols && bool("Vandermonde matrix must be square in this release!"));
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
@@ -69,7 +69,7 @@ namespace viennacl {
         * @param sz         New size of matrix
         * @param preserve   If true, existing values are preserved.
         */
-        void resize(std::size_t sz, bool preserve = true) {
+        void resize(vcl_size_t sz, bool preserve = true) {
             elements_.resize(sz, preserve);
         }
 
@@ -89,19 +89,19 @@ namespace viennacl {
         /**
          * @brief Returns the number of rows of the matrix
          */
-        std::size_t size1() const { return elements_.size(); }
+        vcl_size_t size1() const { return elements_.size(); }
 
         /**
          * @brief Returns the number of columns of the matrix
          */
-        std::size_t size2() const { return elements_.size(); }
+        vcl_size_t size2() const { return elements_.size(); }
 
         /** @brief Returns the internal size of matrix representtion.
         *   Usually required for launching OpenCL kernels only
         *
         *   @return Internal size of matrix representation
         */
-        std::size_t internal_size() const { return elements_.internal_size(); }
+        vcl_size_t internal_size() const { return elements_.internal_size(); }
 
         /**
          * @brief Read-write access to a base element of the matrix
@@ -109,7 +109,7 @@ namespace viennacl {
          * @param row_index  Row index of accessed element
          * @return Proxy for matrix entry
          */
-        entry_proxy<SCALARTYPE> operator()(std::size_t row_index)
+        entry_proxy<SCALARTYPE> operator()(vcl_size_t row_index)
         {
             return elements_[row_index];
         }
@@ -121,7 +121,7 @@ namespace viennacl {
          * @param col_index  Column index of accessed element
          * @return Proxy for matrix entry
          */
-        SCALARTYPE operator()(std::size_t row_index, std::size_t col_index) const
+        SCALARTYPE operator()(vcl_size_t row_index, vcl_size_t col_index) const
         {
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
 
@@ -170,14 +170,14 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_src, MATRIXTYPE& com_dst)
     {
-        std::size_t size = vander_src.size1();
+        vcl_size_t size = vander_src.size1();
         assert(size == com_dst.size1() && bool("Size mismatch"));
         assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
         copy(vander_src, tmp);
 
-        for(std::size_t i = 0; i < size; i++) {
-            for(std::size_t j = 0; j < size; j++) {
+        for(vcl_size_t i = 0; i < size; i++) {
+            for(vcl_size_t j = 0; j < size; j++) {
                 com_dst(i, j) = std::pow(tmp[i], static_cast<int>(j));
             }
         }
@@ -192,12 +192,12 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_dst)
     {
-        std::size_t size = vander_dst.size1();
+        vcl_size_t size = vander_dst.size1();
         assert(size == com_src.size1() && bool("Size mismatch"));
         assert(size == com_src.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
 
-        for(std::size_t i = 0; i < size; i++)
+        for(vcl_size_t i = 0; i < size; i++)
             tmp[i] = com_src(i, 1);
 
         copy(tmp, vander_dst);
@@ -220,14 +220,14 @@ namespace viennacl {
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     std::ostream & operator<<(std::ostream& s, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix)
     {
-        std::size_t size = gpu_matrix.size1();
+        vcl_size_t size = gpu_matrix.size1();
         std::vector<SCALARTYPE> tmp(size);
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](\n";
 
-        for(std::size_t i = 0; i < size; i++) {
+        for(vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(std::size_t j = 0; j < size; j++) {
+            for(vcl_size_t j = 0; j < size; j++) {
                 s << pow(tmp[i], static_cast<SCALARTYPE>(j));
                 if(j < (size - 1)) s << ",";
             }

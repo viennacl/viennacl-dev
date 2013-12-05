@@ -55,7 +55,7 @@ namespace viennacl
       template <typename VectorType1, typename VectorType2>
       void copy_vec_to_vec(VectorType1 const & src, VectorType2 & dest)
       {
-        for (std::size_t i=0; i<src.size(); ++i)
+        for (vcl_size_t i=0; i<src.size(); ++i)
           dest[i] = src[i];
       }
     }
@@ -76,7 +76,7 @@ namespace viennacl
       typedef typename viennacl::result_of::value_type<VectorT>::type           ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-      std::size_t size = betas.size();
+      vcl_size_t size = betas.size();
       std::vector<CPU_ScalarType>  x_temp(size);
 
 
@@ -86,14 +86,14 @@ namespace viennacl
       double rel_error = std::numeric_limits<CPU_ScalarType>::epsilon();
       beta_bisect.push_back(0);
 
-      for(std::size_t i = 1; i < size; i++){
+      for(vcl_size_t i = 1; i < size; i++){
               beta_bisect.push_back(betas[i] * betas[i]);
       }
 
       double xmin = alphas[size - 1] - std::fabs(betas[size - 1]);
       double xmax = alphas[size - 1] + std::fabs(betas[size - 1]);
 
-      for(std::size_t i = 0; i < size - 1; i++)
+      for(vcl_size_t i = 0; i < size - 1; i++)
       {
         double h = std::fabs(betas[i]) + std::fabs(betas[i + 1]);
         if (alphas[i] + h > xmax)
@@ -112,7 +112,7 @@ namespace viennacl
 
       double x0 = xmax;
 
-      for(std::size_t i = 0; i < size; i++)
+      for(vcl_size_t i = 0; i < size; i++)
       {
         x_temp[i] = xmax;
         wu.push_back(xmin);
@@ -136,9 +136,9 @@ namespace viennacl
         double x1 = (xu + x0) / 2.0;
         while (x0 - xu > 2.0 * rel_error * (std::fabs(xu) + std::fabs(x0)) + eps1)
         {
-          std::size_t a = 0;
+          vcl_size_t a = 0;
           double q = 1;
-          for(std::size_t i = 0; i < size; i++)
+          for(vcl_size_t i = 0; i < size; i++)
           {
             if(q != 0)
               q = alphas[i] - x1 - beta_bisect[i] / q;
@@ -149,7 +149,7 @@ namespace viennacl
               a++;
           }
 
-          if (a <= static_cast<std::size_t>(k))
+          if (a <= static_cast<vcl_size_t>(k))
           {
             xu = x1;
             if(a < 1)

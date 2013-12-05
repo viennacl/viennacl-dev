@@ -40,16 +40,16 @@ namespace viennacl
       template <typename CPU_MATRIX, typename SCALARTYPE>
       void copy_impl(const CPU_MATRIX & cpu_matrix,
                      compressed_compressed_matrix<SCALARTYPE> & gpu_matrix,
-                     std::size_t nonzero_rows,
-                     std::size_t nonzeros)
+                     vcl_size_t nonzero_rows,
+                     vcl_size_t nonzeros)
       {
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), nonzero_rows + 1);
         viennacl::backend::typesafe_host_array<unsigned int> row_indices(gpu_matrix.handle3(), nonzero_rows);
         viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), nonzeros);
         std::vector<SCALARTYPE> elements(nonzeros);
 
-        std::size_t row_index  = 0;
-        std::size_t data_index = 0;
+        vcl_size_t row_index  = 0;
+        vcl_size_t data_index = 0;
 
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
@@ -120,8 +120,8 @@ namespace viennacl
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
       {
         //determine nonzero rows and total nonzeros:
-        std::size_t num_entries = 0;
-        std::size_t nonzero_rows = 0;
+        vcl_size_t num_entries = 0;
+        vcl_size_t nonzero_rows = 0;
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
               ++row_it)
@@ -163,16 +163,16 @@ namespace viennacl
     void copy(const std::vector< std::map<SizeType, SCALARTYPE> > & cpu_matrix,
               compressed_compressed_matrix<SCALARTYPE> & gpu_matrix )
     {
-      std::size_t nonzero_rows = 0;
-      std::size_t nonzeros = 0;
-      std::size_t max_col = 0;
-      for (std::size_t i=0; i<cpu_matrix.size(); ++i)
+      vcl_size_t nonzero_rows = 0;
+      vcl_size_t nonzeros = 0;
+      vcl_size_t max_col = 0;
+      for (vcl_size_t i=0; i<cpu_matrix.size(); ++i)
       {
         if (cpu_matrix[i].size() > 0)
           ++nonzero_rows;
         nonzeros += cpu_matrix[i].size();
         if (cpu_matrix[i].size() > 0)
-          max_col = std::max<std::size_t>(max_col, (cpu_matrix[i].rbegin())->first);
+          max_col = std::max<vcl_size_t>(max_col, (cpu_matrix[i].rbegin())->first);
       }
 
       viennacl::detail::copy_impl(tools::const_sparse_matrix_adapter<SCALARTYPE, SizeType>(cpu_matrix, cpu_matrix.size(), max_col + 1),
@@ -220,8 +220,8 @@ namespace viennacl
         viennacl::backend::memory_read(gpu_matrix.handle(),  0, sizeof(SCALARTYPE)* gpu_matrix.nnz(), &(elements[0]));
 
         //fill the cpu_matrix:
-        std::size_t data_index = 0;
-        for (std::size_t i = 1; i < row_buffer.size(); ++i)
+        vcl_size_t data_index = 0;
+        for (vcl_size_t i = 1; i < row_buffer.size(); ++i)
         {
           while (data_index < row_buffer[i])
           {
@@ -279,7 +279,7 @@ namespace viennacl
         * @param nonzeros     Optional number of nonzeros for memory preallocation
         * @param ctx          Context in which to create the matrix. Uses the default context if omitted
         */
-        explicit compressed_compressed_matrix(std::size_t rows, std::size_t cols, std::size_t nonzero_rows = 0, std::size_t nonzeros = 0, viennacl::context ctx = viennacl::context())
+        explicit compressed_compressed_matrix(vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzero_rows = 0, vcl_size_t nonzeros = 0, viennacl::context ctx = viennacl::context())
           : rows_(rows), cols_(cols), nonzero_rows_(nonzero_rows), nonzeros_(nonzeros)
         {
           row_buffer_.switch_active_handle_id(ctx.memory_type());
@@ -313,7 +313,7 @@ namespace viennacl
         * @param cols     Number of columns
         * @param ctx      Context in which to create the matrix
         */
-        explicit compressed_compressed_matrix(std::size_t rows, std::size_t cols, viennacl::context ctx)
+        explicit compressed_compressed_matrix(vcl_size_t rows, vcl_size_t cols, viennacl::context ctx)
           : rows_(rows), cols_(cols), nonzeros_(0)
         {
           row_buffer_.switch_active_handle_id(ctx.memory_type());
@@ -355,7 +355,7 @@ namespace viennacl
 
 #ifdef VIENNACL_WITH_OPENCL
         explicit compressed_compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_row_indices, cl_mem mem_col_buffer, cl_mem mem_elements,
-                                              std::size_t rows, std::size_t cols, std::size_t nonzero_rows, std::size_t nonzeros) :
+                                              vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzero_rows, vcl_size_t nonzeros) :
           rows_(rows), cols_(cols), nonzero_rows_(nonzero_rows), nonzeros_(nonzeros)
         {
             row_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
@@ -416,10 +416,10 @@ namespace viennacl
                  const void * row_indices,
                  const void * col_buffer,
                  const SCALARTYPE * elements,
-                 std::size_t rows,
-                 std::size_t cols,
-                 std::size_t nonzero_rows,
-                 std::size_t nonzeros)
+                 vcl_size_t rows,
+                 vcl_size_t cols,
+                 vcl_size_t nonzero_rows,
+                 vcl_size_t nonzeros)
         {
           assert( (rows > 0)         && bool("Error in compressed_compressed_matrix::set(): Number of rows must be larger than zero!"));
           assert( (cols > 0)         && bool("Error in compressed_compressed_matrix::set(): Number of columns must be larger than zero!"));
@@ -439,13 +439,13 @@ namespace viennacl
         }
 
         /** @brief  Returns the number of rows */
-        const std::size_t & size1() const { return rows_; }
+        const vcl_size_t & size1() const { return rows_; }
         /** @brief  Returns the number of columns */
-        const std::size_t & size2() const { return cols_; }
+        const vcl_size_t & size2() const { return cols_; }
         /** @brief  Returns the number of nonzero entries */
-        const std::size_t & nnz1() const { return nonzero_rows_; }
+        const vcl_size_t & nnz1() const { return nonzero_rows_; }
         /** @brief  Returns the number of nonzero entries */
-        const std::size_t & nnz() const { return nonzeros_; }
+        const vcl_size_t & nnz() const { return nonzeros_; }
 
         /** @brief  Returns the OpenCL handle to the row index array */
         const handle_type & handle1() const { return row_buffer_; }
@@ -480,10 +480,10 @@ namespace viennacl
 
       private:
 
-        std::size_t rows_;
-        std::size_t cols_;
-        std::size_t nonzero_rows_;
-        std::size_t nonzeros_;
+        vcl_size_t rows_;
+        vcl_size_t cols_;
+        vcl_size_t nonzero_rows_;
+        vcl_size_t nonzeros_;
         handle_type row_buffer_;
         handle_type row_indices_;
         handle_type col_buffer_;

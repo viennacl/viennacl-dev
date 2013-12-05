@@ -87,7 +87,7 @@ namespace viennacl
         void apply(VectorType & vec) const
         {
           assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));
-          for (std::size_t i=0; i<diag_A.size(); ++i)
+          for (vcl_size_t i=0; i<diag_A.size(); ++i)
             vec[i] /= diag_A[i];
         }
 

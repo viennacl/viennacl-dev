@@ -54,7 +54,7 @@ namespace viennacl
                                        std::list< viennacl::backend::mem_handle > & row_buffers,
                                        std::list< viennacl::backend::mem_handle > & col_buffers,
                                        std::list< viennacl::backend::mem_handle > & element_buffers,
-                                       std::list< std::size_t > & row_elimination_num_list,
+                                       std::list< vcl_size_t > & row_elimination_num_list,
                                        bool setup_U)
       {
         ScalarType   const * diagonal_buf = viennacl::linalg::host_based::detail::extract_raw_pointer<ScalarType>(diagonal_LU.handle());
@@ -65,18 +65,18 @@ namespace viennacl
         //
         // Step 1: Determine row elimination order for each row and build up meta information about the number of entries taking part in each elimination step:
         //
-        std::vector<std::size_t> row_elimination(LU.size1());
-        std::map<std::size_t, std::map<std::size_t, std::size_t> > row_entries_per_elimination_step;
+        std::vector<vcl_size_t> row_elimination(LU.size1());
+        std::map<vcl_size_t, std::map<vcl_size_t, vcl_size_t> > row_entries_per_elimination_step;
 
-        std::size_t max_elimination_runs = 0;
-        for (std::size_t row2 = 0; row2 < LU.size1(); ++row2)
+        vcl_size_t max_elimination_runs = 0;
+        for (vcl_size_t row2 = 0; row2 < LU.size1(); ++row2)
         {
-          std::size_t row = setup_U ? (LU.size1() - row2) - 1 : row2;
+          vcl_size_t row = setup_U ? (LU.size1() - row2) - 1 : row2;
 
-          std::size_t row_begin = row_buffer[row];
-          std::size_t row_end   = row_buffer[row+1];
+          vcl_size_t row_begin = row_buffer[row];
+          vcl_size_t row_end   = row_buffer[row+1];
           unsigned int elimination_index = 0;  //Note: first run corresponds to elimination_index = 1 (otherwise, type issues with int <-> unsigned int would arise
-          for (std::size_t i = row_begin; i < row_end; ++i)
+          for (vcl_size_t i = row_begin; i < row_end; ++i)
           {
             unsigned int col = col_buffer[i];
             if ( (!setup_U && col < row) || (setup_U && col > row) )
@@ -86,7 +86,7 @@ namespace viennacl
             }
           }
           row_elimination[row] = elimination_index + 1;
-          max_elimination_runs = std::max<std::size_t>(max_elimination_runs, elimination_index + 1);
+          max_elimination_runs = std::max<vcl_size_t>(max_elimination_runs, elimination_index + 1);
         }
 
         //std::cout << "Number of elimination runs: " << max_elimination_runs << std::endl;
@@ -96,20 +96,20 @@ namespace viennacl
         //
 
         //std::cout << "Elimination order: " << std::endl;
-        //for (std::size_t i=0; i<row_elimination.size(); ++i)
+        //for (vcl_size_t i=0; i<row_elimination.size(); ++i)
         //  std::cout << row_elimination[i] << ", ";
         //std::cout << std::endl;
 
-        //std::size_t summed_rows = 0;
-        for (std::size_t elimination_run = 1; elimination_run <= max_elimination_runs; ++elimination_run)
+        //vcl_size_t summed_rows = 0;
+        for (vcl_size_t elimination_run = 1; elimination_run <= max_elimination_runs; ++elimination_run)
         {
-          std::map<std::size_t, std::size_t> const & current_elimination_info = row_entries_per_elimination_step[elimination_run];
+          std::map<vcl_size_t, vcl_size_t> const & current_elimination_info = row_entries_per_elimination_step[elimination_run];
 
           // count cols and entries handled in this elimination step
-          std::size_t num_tainted_cols = current_elimination_info.size();
-          std::size_t num_entries = 0;
+          vcl_size_t num_tainted_cols = current_elimination_info.size();
+          vcl_size_t num_entries = 0;
 
-          for (std::map<std::size_t, std::size_t>::const_iterator it  = current_elimination_info.begin();
+          for (std::map<vcl_size_t, vcl_size_t>::const_iterator it  = current_elimination_info.begin();
                                                                   it != current_elimination_info.end();
                                                                 ++it)
             num_entries += it->second;
@@ -137,21 +137,21 @@ namespace viennacl
 
             row_elimination_num_list.push_back(num_tainted_cols);
 
-            std::size_t k=0;
-            std::size_t nnz_index = 0;
+            vcl_size_t k=0;
+            vcl_size_t nnz_index = 0;
             elim_row_buffer.set(0, 0);
 
-            for (std::map<std::size_t, std::size_t>::const_iterator it  = current_elimination_info.begin();
+            for (std::map<vcl_size_t, vcl_size_t>::const_iterator it  = current_elimination_info.begin();
                                                                     it != current_elimination_info.end();
                                                                   ++it)
             {
-              //std::size_t col = setup_U ? (elimination_matrix.size() - it->first) - 1 : col2;
-              std::size_t row = it->first;
+              //vcl_size_t col = setup_U ? (elimination_matrix.size() - it->first) - 1 : col2;
+              vcl_size_t row = it->first;
               elim_row_index_array.set(k, row);
 
-              std::size_t row_begin = row_buffer[row];
-              std::size_t row_end   = row_buffer[row+1];
-              for (std::size_t i = row_begin; i < row_end; ++i)
+              vcl_size_t row_begin = row_buffer[row];
+              vcl_size_t row_end   = row_buffer[row+1];
+              for (vcl_size_t i = row_begin; i < row_end; ++i)
               {
                 unsigned int col = col_buffer[i];
                 if ( (!setup_U && col < row) || (setup_U && col > row) ) //entry of L/U
@@ -194,7 +194,7 @@ namespace viennacl
                                 std::list< viennacl::backend::mem_handle > & row_buffers,
                                 std::list< viennacl::backend::mem_handle > & col_buffers,
                                 std::list< viennacl::backend::mem_handle > & element_buffers,
-                                std::list< std::size_t > & row_elimination_num_list)
+                                std::list< vcl_size_t > & row_elimination_num_list)
       {
         level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, false);
       }
@@ -211,7 +211,7 @@ namespace viennacl
                                 std::list< viennacl::backend::mem_handle > & row_buffers,
                                 std::list< viennacl::backend::mem_handle > & col_buffers,
                                 std::list< viennacl::backend::mem_handle > & element_buffers,
-                                std::list< std::size_t > & row_elimination_num_list)
+                                std::list< vcl_size_t > & row_elimination_num_list)
       {
         level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, true);
       }
@@ -226,15 +226,15 @@ namespace viennacl
                                        std::list< viennacl::backend::mem_handle > const & row_buffers,
                                        std::list< viennacl::backend::mem_handle > const & col_buffers,
                                        std::list< viennacl::backend::mem_handle > const & element_buffers,
-                                       std::list< std::size_t > const & row_elimination_num_list)
+                                       std::list< vcl_size_t > const & row_elimination_num_list)
       {
         typedef typename std::list< viennacl::backend::mem_handle >::const_iterator  ListIterator;
         ListIterator row_index_array_it = row_index_arrays.begin();
         ListIterator row_buffers_it = row_buffers.begin();
         ListIterator col_buffers_it = col_buffers.begin();
         ListIterator element_buffers_it = element_buffers.begin();
-        typename std::list< std::size_t>::const_iterator row_elimination_num_it = row_elimination_num_list.begin();
-        for (std::size_t i=0; i<row_index_arrays.size(); ++i)
+        typename std::list< vcl_size_t>::const_iterator row_elimination_num_it = row_elimination_num_list.begin();
+        for (vcl_size_t i=0; i<row_index_arrays.size(); ++i)
         {
           viennacl::linalg::detail::level_scheduling_substitute(vec, *row_index_array_it, *row_buffers_it, *col_buffers_it, *element_buffers_it, *row_elimination_num_it);
 

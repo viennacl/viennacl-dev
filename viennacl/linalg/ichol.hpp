@@ -61,7 +61,7 @@ namespace viennacl
       unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
       //std::cout << A.size1() << std::endl;
-      for (std::size_t i=0; i<A.size1(); ++i)
+      for (vcl_size_t i=0; i<A.size1(); ++i)
       {
         unsigned int row_i_begin = row_buffer[i];
         unsigned int row_i_end   = row_buffer[i+1];

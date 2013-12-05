@@ -44,7 +44,7 @@ namespace viennacl
         * @param tfac      If the eigenvalue does not change more than this termination factor, the algorithm stops
         * @param max_iters Maximum number of iterations for the power iteration
         */
-        power_iter_tag(double tfac = 1e-8, std::size_t max_iters = 50000) : termination_factor_(tfac), max_iterations_(max_iters) {}
+        power_iter_tag(double tfac = 1e-8, vcl_size_t max_iters = 50000) : termination_factor_(tfac), max_iterations_(max_iters) {}
 
         /** @brief Sets the factor for termination */
         void factor(double fct){ termination_factor_ = fct; }
@@ -52,12 +52,12 @@ namespace viennacl
           /** @brief Returns the factor for termination */
         double factor() const { return termination_factor_; }
 
-        std::size_t max_iterations() const { return max_iterations_; }
-        void max_iterations(std::size_t new_max) { max_iterations_ = new_max; }
+        vcl_size_t max_iterations() const { return max_iterations_; }
+        void max_iterations(vcl_size_t new_max) { max_iterations_ = new_max; }
 
       private:
         double termination_factor_;
-        std::size_t max_iterations_;
+        vcl_size_t max_iterations_;
 
     };
 
@@ -82,7 +82,7 @@ namespace viennacl
       VectorT r(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 
-      for(std::size_t i=0; i<s.size(); ++i)
+      for(vcl_size_t i=0; i<s.size(); ++i)
         s[i] = (i % 3) * CPU_ScalarType(0.1234) - CPU_ScalarType(0.5);   //'random' starting vector
 
       detail::copy_vec_to_vec(s,r);
@@ -94,7 +94,7 @@ namespace viennacl
       CPU_ScalarType norm_prev = 0;
       long numiter = 0;
 
-      for (std::size_t i=0; i<tag.max_iterations(); ++i)
+      for (vcl_size_t i=0; i<tag.max_iterations(); ++i)
       {
         if (std::fabs(norm - norm_prev) / std::fabs(norm) < epsilon)
           break;

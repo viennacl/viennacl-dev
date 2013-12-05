@@ -83,7 +83,7 @@ namespace viennacl
        * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
        *
        */
-      inline handle_type  memory_create(std::size_t size_in_bytes, const void * host_ptr = NULL)
+      inline handle_type  memory_create(vcl_size_t size_in_bytes, const void * host_ptr = NULL)
       {
         void * dev_ptr = NULL;
         VIENNACL_CUDA_ERROR_CHECK( cudaMalloc(&dev_ptr, size_in_bytes) );
@@ -112,9 +112,9 @@ namespace viennacl
        */
       inline void memory_copy(handle_type const & src_buffer,
                               handle_type & dst_buffer,
-                              std::size_t src_offset,
-                              std::size_t dst_offset,
-                              std::size_t bytes_to_copy)
+                              vcl_size_t src_offset,
+                              vcl_size_t dst_offset,
+                              vcl_size_t bytes_to_copy)
       {
         assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
         assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
@@ -135,8 +135,8 @@ namespace viennacl
        * @param async              Whether the operation should be asynchronous
        */
       inline void memory_write(handle_type & dst_buffer,
-                               std::size_t dst_offset,
-                               std::size_t bytes_to_copy,
+                               vcl_size_t dst_offset,
+                               vcl_size_t bytes_to_copy,
                                const void * ptr,
                                bool async = false)
       {
@@ -164,8 +164,8 @@ namespace viennacl
        * @param async              Whether the operation should be asynchronous
        */
       inline void memory_read(handle_type const & src_buffer,
-                              std::size_t src_offset,
-                              std::size_t bytes_to_copy,
+                              vcl_size_t src_offset,
+                              vcl_size_t bytes_to_copy,
                               void * ptr,
                               bool async = false)
       {

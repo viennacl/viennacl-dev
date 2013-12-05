@@ -42,7 +42,7 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::av(), taking care of the argument unwrapping */
       template <typename ScalarType1>
       void ax(lhs_rhs_element & x1,
-              lhs_rhs_element const & x2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+              lhs_rhs_element const & x2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         assert(x1.type_family == x2.type_family && bool("Arguments are not of the same type family!"));
 
@@ -65,8 +65,8 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::avbv(), taking care of the argument unwrapping */
       template <typename ScalarType1, typename ScalarType2>
       void axbx(lhs_rhs_element & x1,
-                lhs_rhs_element const & x2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                lhs_rhs_element const & x3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                lhs_rhs_element const & x2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                lhs_rhs_element const & x3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(   x1.type_family == x2.type_family
                && x2.type_family == x3.type_family
@@ -97,8 +97,8 @@ namespace viennacl
       /** @brief Wrapper for viennacl::linalg::avbv_v(), taking care of the argument unwrapping */
       template <typename ScalarType1, typename ScalarType2>
       void axbx_x(lhs_rhs_element & x1,
-                  lhs_rhs_element const & x2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  lhs_rhs_element const & x3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  lhs_rhs_element const & x2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  lhs_rhs_element const & x3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(   x1.type_family == x2.type_family
                && x2.type_family == x3.type_family

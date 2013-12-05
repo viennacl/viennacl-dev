@@ -49,8 +49,8 @@ namespace viennacl{
 
         bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
-        std::size_t lmem_used(std::size_t scalartype_size) const {
-          std::size_t lmem_used = 0;
+        vcl_size_t lmem_used(vcl_size_t scalartype_size) const {
+          vcl_size_t lmem_used = 0;
           if(use_lhs_shared_)
             lmem_used += (ml_ + 1) * (cache_width_ + 1) * scalartype_size;
           if(use_rhs_shared_)
@@ -71,7 +71,7 @@ namespace viennacl{
         }
 
 
-        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
+        bool invalid_impl(viennacl::ocl::device const & /*dev*/, vcl_size_t /*scalartype_size*/) const{
           static const unsigned int alignment = 128;
           return ml_ > alignment
               || cache_width_ > alignment
@@ -87,7 +87,7 @@ namespace viennacl{
       public:
         /** @brief The user constructor */
         matrix_product(unsigned int vectorization
-                , std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
+                , vcl_size_t local_size1, vcl_size_t cache_width, vcl_size_t local_size2
                 , unsigned int ms, unsigned int ks, unsigned int ns
                 , bool use_lhs_shared, bool use_rhs_shared) : profile_base(vectorization,local_size1, local_size2,1){
           local_size1_ = local_size1;
@@ -120,7 +120,7 @@ namespace viennacl{
           return oss.str();
         }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
+        void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
           //set M, N
           scheduler::statement_node const & first_node = statements.front().second;
           unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
@@ -210,7 +210,7 @@ namespace viennacl{
 
         void fetch_element_to_local_mem(utils::kernel_generation_stream & stream,
                                 std::string const & lmem_name,
-                                std::size_t lmem_size2,
+                                vcl_size_t lmem_size2,
                                 std::string const & global_ptr,
                                 detail::mapped_matrix const & mat,
                                 access_flow flow,
@@ -236,7 +236,7 @@ namespace viennacl{
         }
         void fetch_to_local_mem(utils::kernel_generation_stream & stream,
                                 std::string const & lmem_name,
-                                std::size_t lmem_size2,
+                                vcl_size_t lmem_size2,
                                 std::string const & global_ptr,
                                 unsigned int bound1,
                                 unsigned int bound2,
@@ -275,7 +275,7 @@ namespace viennacl{
 
         }
 
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(vcl_size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           //////////////////
           /// INIT
@@ -291,7 +291,7 @@ namespace viennacl{
 
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             scheduler::statement::container_type const & exprs = it->first.array();
-            std::size_t i = std::distance(statements.begin(), it);
+            vcl_size_t i = std::distance(statements.begin(), it);
             for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
                 prod = (detail::mapped_matrix_product *)mapping.at(i).at(std::make_pair(&(*iit), detail::PARENT_NODE_TYPE)).get();
@@ -419,11 +419,11 @@ namespace viennacl{
           /// //////////////
 
 
-          std::size_t local_lhs_size1 = ml_ ;
-          std::size_t local_lhs_size2 = cache_width_ + 1;
+          vcl_size_t local_lhs_size1 = ml_ ;
+          vcl_size_t local_lhs_size2 = cache_width_ + 1;
 
-          std::size_t local_rhs_size1 = cache_width_;
-          std::size_t local_rhs_size2 = nl_ + 1;
+          vcl_size_t local_rhs_size1 = cache_width_;
+          vcl_size_t local_rhs_size2 = nl_ + 1;
 
           ///Result Values
           for(unsigned int m=0; m< ms_res; ++m)
@@ -693,16 +693,16 @@ namespace viennacl{
         }
 
       private:
-        std::size_t local_size1_;
-        std::size_t local_size2_;
-        std::size_t cache_width_;
+        vcl_size_t local_size1_;
+        vcl_size_t local_size2_;
+        vcl_size_t cache_width_;
 
-        std::size_t ml_;
-        std::size_t nl_;
+        vcl_size_t ml_;
+        vcl_size_t nl_;
 
-        std::size_t ms_;
-        std::size_t ks_;
-        std::size_t ns_;
+        vcl_size_t ms_;
+        vcl_size_t ks_;
+        vcl_size_t ns_;
 
         bool use_lhs_shared_;
         bool use_rhs_shared_;

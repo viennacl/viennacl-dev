@@ -47,8 +47,8 @@ namespace viennacl
     struct MATRIX_SIZE_DEDUCER
     {
       //Standard case: size1 from lhs, size2 from rhs (fits most cases)
-      static std::size_t size1(LHS & lhs, RHS & /*rhs*/) { return lhs.size1(); }
-      static std::size_t size2(LHS & /*lhs*/, RHS & rhs) { return rhs.size2(); }
+      static vcl_size_t size1(LHS & lhs, RHS & /*rhs*/) { return lhs.size1(); }
+      static vcl_size_t size2(LHS & /*lhs*/, RHS & rhs) { return rhs.size2(); }
     };
 
     /** \cond */
@@ -58,10 +58,10 @@ namespace viennacl
                                const viennacl::vector_base<ScalarType>,
                                viennacl::op_prod>
     {
-      static std::size_t size1(viennacl::vector_base<ScalarType> const & lhs,
+      static vcl_size_t size1(viennacl::vector_base<ScalarType> const & lhs,
                                viennacl::vector_base<ScalarType> const & /*rhs*/) { return lhs.size(); }
 
-      static std::size_t size2(viennacl::vector_base<ScalarType> const & /*lhs*/,
+      static vcl_size_t size2(viennacl::vector_base<ScalarType> const & /*lhs*/,
                                viennacl::vector_base<ScalarType> const & rhs) { return rhs.size(); }
     };
 
@@ -72,10 +72,10 @@ namespace viennacl
                                const ScalarType,
                                viennacl::op_mult>
     {
-      static std::size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+      static vcl_size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(lhs.lhs(), lhs.rhs()); }
 
-      static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+      static vcl_size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
 
@@ -85,10 +85,10 @@ namespace viennacl
                                const ScalarType,
                                viennacl::op_mult>
     {
-      static std::size_t size1(viennacl::matrix_base<T, F> const & lhs,
+      static vcl_size_t size1(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size1(); }
 
-      static std::size_t size2(viennacl::matrix_base<T, F> const & lhs,
+      static vcl_size_t size2(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size2(); }
     };
 
@@ -99,10 +99,10 @@ namespace viennacl
                                const ScalarType,
                                viennacl::op_div>
     {
-      static std::size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+      static vcl_size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(lhs.lhs(), lhs.rhs()); }
 
-      static std::size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+      static vcl_size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
                                ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
     };
 
@@ -112,10 +112,10 @@ namespace viennacl
                                const ScalarType,
                                viennacl::op_div>
     {
-      static std::size_t size1(viennacl::matrix_base<T, F> const & lhs,
+      static vcl_size_t size1(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size1(); }
 
-      static std::size_t size2(viennacl::matrix_base<T, F> const & lhs,
+      static vcl_size_t size2(viennacl::matrix_base<T, F> const & lhs,
                                ScalarType const & /*rhs*/) { return lhs.size2(); }
     };
 
@@ -125,11 +125,11 @@ namespace viennacl
                                const int,
                                viennacl::op_vector_diag>
     {
-      static std::size_t size1(viennacl::vector_base<T> const & lhs,
-                               const int k) { return lhs.size() + static_cast<std::size_t>(std::fabs(double(k))); }
+      static vcl_size_t size1(viennacl::vector_base<T> const & lhs,
+                               const int k) { return lhs.size() + static_cast<vcl_size_t>(std::fabs(double(k))); }
 
-      static std::size_t size2(viennacl::vector_base<T> const & lhs,
-                               const int k) { return lhs.size() + static_cast<std::size_t>(std::fabs(double(k))); }
+      static vcl_size_t size2(viennacl::vector_base<T> const & lhs,
+                               const int k) { return lhs.size() + static_cast<vcl_size_t>(std::fabs(double(k))); }
     };
 
 
@@ -145,9 +145,9 @@ namespace viennacl
                                MatrixType,
                                viennacl::op_trans>
     {
-      static std::size_t size1(const MatrixType & lhs,
+      static vcl_size_t size1(const MatrixType & lhs,
                                const MatrixType & /*rhs*/) { return lhs.size2(); }
-      static std::size_t size2(const MatrixType & lhs,
+      static vcl_size_t size2(const MatrixType & lhs,
                                const MatrixType & /*rhs*/) { return lhs.size1(); }
     };
 
@@ -158,11 +158,11 @@ namespace viennacl
                                const viennacl::matrix_base<ScalarType, F2>,
                                viennacl::op_mat_mat_prod>
     {
-      static std::size_t size1(viennacl::matrix_expression<T1,
+      static vcl_size_t size1(viennacl::matrix_expression<T1,
                                                            T1,
                                                            op_trans> const & lhs,
                                viennacl::matrix_base<ScalarType, F2> const & /*rhs*/) { return lhs.lhs().size2(); }
-      static std::size_t size2(viennacl::matrix_expression<T1,
+      static vcl_size_t size2(viennacl::matrix_expression<T1,
                                                            T1,
                                                            op_trans> const & /*lhs*/,
                                viennacl::matrix_base<ScalarType, F2> const & rhs) { return rhs.size2(); }
@@ -177,11 +177,11 @@ namespace viennacl
                                                                  T2, op_trans>,
                                viennacl::op_mat_mat_prod>
     {
-      static std::size_t size1(viennacl::matrix_base<ScalarType, F1> const & lhs,
+      static vcl_size_t size1(viennacl::matrix_base<ScalarType, F1> const & lhs,
                                viennacl::matrix_expression<T2,
                                                            T2,
                                                            op_trans> const & /*rhs*/) { return lhs.size1(); }
-      static std::size_t size2(viennacl::matrix_base<ScalarType, F1> const & /*lhs*/,
+      static vcl_size_t size2(viennacl::matrix_base<ScalarType, F1> const & /*lhs*/,
                                viennacl::matrix_expression<T2,
                                                            T2,
                                                            op_trans> const & rhs) { return rhs.lhs().size1(); }
@@ -202,9 +202,9 @@ namespace viennacl
       typedef viennacl::matrix_expression<T1, T1, op_trans>   LHSType;
       typedef viennacl::matrix_expression<T2, T2, op_trans>   RHSType;
 
-      static std::size_t size1(LHSType const & lhs,
+      static vcl_size_t size1(LHSType const & lhs,
                                RHSType const & /*rhs*/) { return lhs.lhs().size2(); }
-      static std::size_t size2(LHSType const & /*lhs*/,
+      static vcl_size_t size2(LHSType const & /*lhs*/,
                                RHSType const & rhs) { return rhs.lhs().size1(); }
     };
     /** \endcond */

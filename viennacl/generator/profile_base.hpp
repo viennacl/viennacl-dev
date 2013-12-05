@@ -51,12 +51,12 @@ namespace viennacl{
       protected:
         friend std::ostream & operator<<(std::ostream &, profile_base const &);
 
-        virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
+        virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, vcl_size_t /*scalartype_size*/) const { return false; }
         virtual bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
-        virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
+        virtual vcl_size_t lmem_used(vcl_size_t /*scalartype_size*/) const { return 0; }
 
-        void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const {
+        void configure_local_sizes(viennacl::ocl::kernel & k, vcl_size_t /*kernel_id*/) const {
           k.local_work_size(0,local_size_1_);
           k.local_work_size(1,local_size_2_);
         }
@@ -72,17 +72,17 @@ namespace viennacl{
          *  @param statements the statements for which the code should be generated
          *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
-        virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const = 0;
+        virtual void core(vcl_size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const = 0;
 
       public:
         /** @brief The constructor */
-        profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : vector_size_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
+        profile_base(unsigned int vectorization, vcl_size_t local_size_1, vcl_size_t local_size_2, vcl_size_t num_kernels) : vector_size_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
 
         /** @brief The destructor */
         virtual ~profile_base(){ }
 
         /** @brief Configures the range and enqueues the arguments associated with the profile */
-        virtual void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
+        virtual void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
 
         virtual void kernel_arguments(statements_type  const & statements, std::string & arguments_string) const = 0;
 
@@ -99,7 +99,7 @@ namespace viennacl{
         bool is_slow(viennacl::ocl::device const & dev) const{
           bool res = false;
           if(dev.type()==CL_DEVICE_TYPE_GPU){
-            std::size_t warp_size = 32;
+            vcl_size_t warp_size = 32;
             if(dev.vendor_id()==4098)
               warp_size = 64;
             res = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
@@ -111,12 +111,12 @@ namespace viennacl{
          *  @param dev               the given device
          *  @param scalartype_size   Local memory required to execute the kernel
          */
-        bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const{
+        bool is_invalid(viennacl::ocl::device const & dev, vcl_size_t scalartype_size) const{
           //Query device informations
-          size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
-          size_t max_workgroup_size = dev.max_work_group_size();
+          vcl_size_t lmem_available = static_cast<vcl_size_t>(dev.local_mem_size());
+          vcl_size_t max_workgroup_size = dev.max_work_group_size();
 
-          std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
+          std::vector<vcl_size_t> max_work_item_sizes = dev.max_work_item_sizes();
           bool invalid_work_group_sizes = local_size_1_*local_size_2_ > max_workgroup_size
               || local_size_1_ > max_work_item_sizes[0]
               || local_size_2_ > max_work_item_sizes[1]; // uses too much resources
@@ -127,7 +127,7 @@ namespace viennacl{
         }
 
         /** @brief Returns the number of kernels needed by this operation */
-        std::size_t num_kernels() const{ return num_kernels_; }
+        vcl_size_t num_kernels() const{ return num_kernels_; }
 
         /** @brief Generates the code associated with this profile onto the provided stream
          *  Redirects to the virtual core() method
@@ -135,7 +135,7 @@ namespace viennacl{
          *  @param stream Stream onto which the code should be generated
          *  @param device_offset the index of the device in the context (used for the kernel name)
          *  @param statements the statements associated with this profile */
-        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset, statements_type const & statements) const {
+        virtual void operator()(utils::kernel_generation_stream & stream, vcl_size_t device_offset, statements_type const & statements) const {
           std::vector<detail::mapping_type> mapping(statements.size());
 
           ///Get Prototype, initialize mapping
@@ -144,9 +144,9 @@ namespace viennacl{
           kernel_arguments(statements, prototype);
 
           {
-            std::map<void *, std::size_t> memory;
+            std::map<void *, vcl_size_t> memory;
             unsigned int current_arg = 0;
-            std::size_t i = 0;
+            vcl_size_t i = 0;
             for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
               detail::traverse(it->first, it->second, detail::map_functor(memory,current_arg,mapping[i++]));
           }
@@ -158,7 +158,7 @@ namespace viennacl{
           prototype.erase(prototype.size()-1); //Last comma pruned
 
           //Generate
-          for(std::size_t n = 0 ; n < num_kernels() ; ++n){
+          for(vcl_size_t n = 0 ; n < num_kernels() ; ++n){
             //stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << local_size_1_ << "," << local_size_2_ << "," << 1 << ")))" << std::endl;
             stream << "__kernel " << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
@@ -176,9 +176,9 @@ namespace viennacl{
 
       protected:
         unsigned int vector_size_;
-        std::size_t local_size_1_;
-        std::size_t local_size_2_;
-        std::size_t num_kernels_;
+        vcl_size_t local_size_1_;
+        vcl_size_t local_size_2_;
+        vcl_size_t num_kernels_;
     };
 
 

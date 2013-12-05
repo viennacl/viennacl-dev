@@ -44,7 +44,7 @@ namespace viennacl
 
     /** @brief Generic filler routine for setting an entry of a matrix to a particular value */
     template <typename MatrixType, typename SCALARTYPE>
-    void fill(MatrixType & matrix, std::size_t row_index, std::size_t col_index, SCALARTYPE value)
+    void fill(MatrixType & matrix, vcl_size_t row_index, vcl_size_t col_index, SCALARTYPE value)
     {
       matrix(row_index, col_index) = value;
     }
@@ -53,8 +53,8 @@ namespace viennacl
     /** @brief Generic filler routine for setting an entry of a matrix to a particular value. Special case for Eigen sparse matrices. */
     template <typename T, int options, typename SCALARTYPE>
     inline void fill(Eigen::SparseMatrix<T, options> & m,
-                     std::size_t row_index,
-                     std::size_t col_index,
+                     vcl_size_t row_index,
+                     vcl_size_t col_index,
                      SCALARTYPE value
                     )
     {

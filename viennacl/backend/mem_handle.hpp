@@ -200,10 +200,10 @@ namespace viennacl
         }
 
         /** @brief Returns the number of bytes of the currently active buffer */
-        std::size_t raw_size() const               { return size_in_bytes_; }
+        vcl_size_t raw_size() const               { return size_in_bytes_; }
 
         /** @brief Sets the size of the currently active buffer. Use with care! */
-        void        raw_size(std::size_t new_size) { size_in_bytes_ = new_size; }
+        void        raw_size(vcl_size_t new_size) { size_in_bytes_ = new_size; }
 
       private:
         memory_types active_handle_;
@@ -214,7 +214,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_CUDA
         cuda_handle_type        cuda_handle_;
 #endif
-        std::size_t size_in_bytes_;
+        vcl_size_t size_in_bytes_;
     };
 
 

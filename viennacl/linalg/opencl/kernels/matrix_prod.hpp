@@ -222,8 +222,8 @@ namespace viennacl
                                         bool row_major_A, bool row_major_B, bool row_major_C,
                                         bool transpose_A, bool transpose_B)
         {
-          //std::size_t vector_size =  4;
-          std::size_t block_size  = 16;
+          //vcl_size_t vector_size =  4;
+          vcl_size_t block_size  = 16;
 
           //start OpenCL code:
           source.append("__kernel void prod16_");
@@ -275,7 +275,7 @@ namespace viennacl
           source.append("  __local "); source.append(numeric_string); source.append(" As[256]; \n");
 
           source.append("  "); source.append(numeric_string); source.append(" cv[16] = {");
-          for (std::size_t i=0; i<block_size-1; ++i)
+          for (vcl_size_t i=0; i<block_size-1; ++i)
             source.append("0,");
           source.append("0}; \n");
 

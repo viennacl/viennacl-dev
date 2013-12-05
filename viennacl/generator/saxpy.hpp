@@ -55,9 +55,9 @@ namespace viennacl{
           return oss.str();
         }
 
-        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
+        vector_saxpy(unsigned int v, vcl_size_t gs, vcl_size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
           k.global_work_size(0,local_size_1_*num_groups_);
@@ -73,7 +73,7 @@ namespace viennacl{
 
       private:
 
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(vcl_size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -87,7 +87,7 @@ namespace viennacl{
                 p->fetch( std::make_pair("i","0"), vector_size_, fetched, stream);
 
           //Generates all the expression, in order
-          std::size_t i = 0;
+          vcl_size_t i = 0;
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             std::string str;
             detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
@@ -105,7 +105,7 @@ namespace viennacl{
         }
 
       private:
-        std::size_t num_groups_;
+        vcl_size_t num_groups_;
         unsigned int decomposition_;
 
     };
@@ -114,11 +114,11 @@ namespace viennacl{
 
     class matrix_saxpy : public profile_base{
 
-        bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
+        bool invalid_impl(viennacl::ocl::device const & /*dev*/, vcl_size_t /*scalartype_size*/) const{ return false; }
         bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       public:
-        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
+        matrix_saxpy(unsigned int v, vcl_size_t gs1, vcl_size_t gs2, vcl_size_t ng1, vcl_size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
 
         static std::string csv_format() {
           return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";
@@ -135,7 +135,7 @@ namespace viennacl{
           return oss.str();
         }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
           k.global_work_size(0,local_size_1_*num_groups_row_);
@@ -152,7 +152,7 @@ namespace viennacl{
         }
 
       private:
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(vcl_size_t /*kernel_id*/, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
 
           for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
             for(detail::mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
@@ -176,7 +176,7 @@ namespace viennacl{
                 p->fetch(std::make_pair("i", "j"), vector_size_, fetched, stream);
 
 
-          std::size_t i = 0;
+          vcl_size_t i = 0;
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             std::string str;
             detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping[i++]));
@@ -196,8 +196,8 @@ namespace viennacl{
         }
 
       private:
-        std::size_t num_groups_row_;
-        std::size_t num_groups_col_;
+        vcl_size_t num_groups_row_;
+        vcl_size_t num_groups_col_;
 
         unsigned int decomposition_;
     };

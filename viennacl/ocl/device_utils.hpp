@@ -35,6 +35,7 @@
 #include <map>
 #include <string>
 
+#include "viennacl/forwards.h"
 
 namespace viennacl
 {
@@ -66,7 +67,7 @@ namespace viennacl
       /*-NVidia-*/
       if(vendor_id==nvidia_id){
         //GeForce
-        std::size_t found=0;
+        vcl_size_t found=0;
         if((found= name.find("GeForce",0)) != std::string::npos){
           if((found = name.find_first_of("123456789", found)) != std::string::npos){
             switch (name[found]) {

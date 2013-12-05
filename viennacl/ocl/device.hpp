@@ -518,7 +518,7 @@ namespace viennacl
             max_work_item_sizes_valid_ = true;
           }
 
-          for (std::size_t i=0; i<result.size(); ++i)
+          for (vcl_size_t i=0; i<result.size(); ++i)
             result[i] = max_work_item_sizes_[i];
 
           return result;
@@ -972,7 +972,7 @@ namespace viennacl
           * @param indent      Number of optional blanks to be added at the start of each line
           * @param indent_char Character to be used for indenting
           */
-        std::string info(std::size_t indent = 0, char indent_char = ' ') const
+        std::string info(vcl_size_t indent = 0, char indent_char = ' ') const
         {
           std::string line_indent(indent, indent_char);
           std::ostringstream oss;
@@ -995,7 +995,7 @@ namespace viennacl
         * @param indent   Number of optional blanks to be added at the start of each line
         * @param indent_char Character to be used for indenting
         */
-        std::string full_info(std::size_t indent = 0, char indent_char = ' ') const
+        std::string full_info(vcl_size_t indent = 0, char indent_char = ' ') const
         {
           std::string line_indent(indent, indent_char);
           std::ostringstream oss;
@@ -1141,7 +1141,7 @@ namespace viennacl
         std::string convert_to_string(std::vector<size_t> const & vec) const
         {
           std::ostringstream oss;
-          for (std::size_t i=0; i<vec.size(); ++i)
+          for (vcl_size_t i=0; i<vec.size(); ++i)
             oss << vec[i] << " ";
 
           return oss.str();

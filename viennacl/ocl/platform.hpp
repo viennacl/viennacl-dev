@@ -40,7 +40,7 @@ namespace viennacl
     {
 
       public:
-        platform(std::size_t pf_index = 0)
+        platform(vcl_size_t pf_index = 0)
         {
           cl_int err;
           cl_uint num_platforms;

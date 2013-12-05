@@ -145,7 +145,7 @@ namespace viennacl
           // Generate index sets J_k, k=0,...,N-1
           //
           template <typename MatrixType>
-          void generateJ(MatrixType const & A, std::vector<std::vector<std::size_t> > & J)
+          void generateJ(MatrixType const & A, std::vector<std::vector<vcl_size_t> > & J)
           {
             for (typename MatrixType::const_iterator1 row_it  = A.begin1();
                                                       row_it != A.end1();
@@ -174,12 +174,12 @@ namespace viennacl
           template <typename ScalarType, typename MatrixType, typename VectorType>
           void fill_blocks(std::vector< std::map<unsigned int, ScalarType> > & A,
                           std::vector<MatrixType> & blocks,
-                          std::vector<std::vector<std::size_t> > const & J,
+                          std::vector<std::vector<vcl_size_t> > const & J,
                           std::vector<VectorType> & Y)
           {
-            for (std::size_t k=0; k<A.size(); ++k)
+            for (vcl_size_t k=0; k<A.size(); ++k)
             {
-              std::vector<std::size_t> const & Jk = J[k];
+              std::vector<vcl_size_t> const & Jk = J[k];
               VectorType & yk = Y[k];
               MatrixType & block_k = blocks[k];
 
@@ -187,17 +187,17 @@ namespace viennacl
               block_k.resize(Jk.size(), Jk.size());
               block_k.clear();
 
-              for (std::size_t i=0; i<Jk.size(); ++i)
+              for (vcl_size_t i=0; i<Jk.size(); ++i)
               {
-                std::size_t row_index = Jk[i];
+                vcl_size_t row_index = Jk[i];
                 std::map<unsigned int, ScalarType> & A_row = A[row_index];
 
                 //fill y_k:
                 yk[i] = A_row[k];
 
-                for (std::size_t j=0; j<Jk.size(); ++j)
+                for (vcl_size_t j=0; j<Jk.size(); ++j)
                 {
-                  std::size_t col_index = Jk[j];
+                  vcl_size_t col_index = Jk[j];
                   if (col_index <= row_index && A_row.find(col_index) != A_row.end()) //block is symmetric, thus store only lower triangular part
                     block_k(i, j) = A_row[col_index];
                 }
@@ -212,7 +212,7 @@ namespace viennacl
           template <typename MatrixType>
           void cholesky_decompose(MatrixType & A)
           {
-            for (std::size_t k=0; k<A.size2(); ++k)
+            for (vcl_size_t k=0; k<A.size2(); ++k)
             {
               if (A(k,k) <= 0)
               {
@@ -224,10 +224,10 @@ namespace viennacl
 
               A(k,k) = std::sqrt(A(k,k));
 
-              for (std::size_t i=k+1; i<A.size1(); ++i)
+              for (vcl_size_t i=k+1; i<A.size1(); ++i)
               {
                 A(i,k) /= A(k,k);
-                for (std::size_t j=k+1; j<=i; ++j)
+                for (vcl_size_t j=k+1; j<=i; ++j)
                   A(i,j) -= A(i,k) * A(j,k);
               }
             }
@@ -241,21 +241,21 @@ namespace viennacl
           void cholesky_solve(MatrixType const & L, VectorType & b)
           {
             // inplace forward solve L x = b
-            for (std::size_t i=0; i<L.size1(); ++i)
+            for (vcl_size_t i=0; i<L.size1(); ++i)
             {
-              for (std::size_t j=0; j<i; ++j)
+              for (vcl_size_t j=0; j<i; ++j)
                 b[i] -= L(i,j) * b[j];
               b[i] /= L(i,i);
             }
 
             // inplace backward solve L^T x = b:
-            for (std::size_t i=L.size1()-1; ; --i)
+            for (vcl_size_t i=L.size1()-1; ; --i)
             {
-              for (std::size_t k=i+1; k<L.size1(); ++k)
+              for (vcl_size_t k=i+1; k<L.size1(); ++k)
                 b[i] -= L(k,i) * b[k];
               b[i] /= L(i,i);
 
-              if (i==0) //std::size_t might be unsigned, therefore manual check for equality with zero here
+              if (i==0) //vcl_size_t might be unsigned, therefore manual check for equality with zero here
                 break;
             }
           }
@@ -270,21 +270,21 @@ namespace viennacl
                         MatrixType & L,
                         MatrixType & L_trans,
                         std::vector<VectorType1> & Y,
-                        std::vector<std::vector<std::size_t> > & J)
+                        std::vector<std::vector<vcl_size_t> > & J)
           {
             typedef typename VectorType1::value_type    ScalarType;
             typedef std::vector<std::map<unsigned int, ScalarType> >     STLSparseMatrixType;
 
             STLSparseMatrixType L_temp(A.size1());
 
-            for (std::size_t k=0; k<A.size1(); ++k)
+            for (vcl_size_t k=0; k<A.size1(); ++k)
             {
-              std::vector<std::size_t> const & Jk = J[k];
+              std::vector<vcl_size_t> const & Jk = J[k];
               VectorType1 const & yk = Y[k];
 
               //compute L(k,k):
               ScalarType Lkk = A(k,k);
-              for (std::size_t i=0; i<Jk.size(); ++i)
+              for (vcl_size_t i=0; i<Jk.size(); ++i)
                 Lkk -= A(Jk[i],k) * yk[i];
 
               Lkk = ScalarType(1) / std::sqrt(Lkk);
@@ -292,7 +292,7 @@ namespace viennacl
               L_trans(k,k) = Lkk;
 
               //write lower diagonal entries:
-              for (std::size_t i=0; i<Jk.size(); ++i)
+              for (vcl_size_t i=0; i<Jk.size(); ++i)
               {
                 L_temp[Jk[i]][k] = -Lkk * yk[i];
                 L_trans(k, Jk[i]) = -Lkk * yk[i];
@@ -301,7 +301,7 @@ namespace viennacl
 
 
             //build L from L_temp
-            for (std::size_t i=0; i<L_temp.size(); ++i)
+            for (vcl_size_t i=0; i<L_temp.size(); ++i)
               for (typename std::map<unsigned int, ScalarType>::const_iterator it = L_temp[i].begin();
                   it != L_temp[i].end();
                 ++it)
@@ -336,7 +336,7 @@ namespace viennacl
             // Step 1: Generate pattern indices
             //
             //std::cout << "computeFSPAI(): Generating pattern..." << std::endl;
-            std::vector<std::vector<std::size_t> > J(A.size1());
+            std::vector<std::vector<vcl_size_t> > J(A.size1());
             generateJ(PatternA, J);
 
             //
@@ -351,7 +351,7 @@ namespace viennacl
             // Step 3: Cholesky-factor blocks
             //
             //std::cout << "computeFSPAI(): Cholesky-factorization..." << std::endl;
-            for (std::size_t i=0; i<subblocks_A.size(); ++i)
+            for (vcl_size_t i=0; i<subblocks_A.size(); ++i)
             {
               //std::cout << "Block before: " << subblocks_A[i] << std::endl;
               cholesky_decompose(subblocks_A[i]);
@@ -359,8 +359,8 @@ namespace viennacl
             }
 
 
-            /*std::size_t num_bytes = 0;
-            for (std::size_t i=0; i<subblocks_A.size(); ++i)
+            /*vcl_size_t num_bytes = 0;
+            for (vcl_size_t i=0; i<subblocks_A.size(); ++i)
               num_bytes += 8*subblocks_A[i].size1()*subblocks_A[i].size2();*/
             //std::cout << "Memory for FSPAI matrix: " << num_bytes / (1024.0 * 1024.0) << " MB" << std::endl;
 
@@ -368,13 +368,13 @@ namespace viennacl
             // Step 4: Solve for y_k
             //
             //std::cout << "computeFSPAI(): Cholesky-solve..." << std::endl;
-            for (std::size_t i=0; i<y_k.size(); ++i)
+            for (vcl_size_t i=0; i<y_k.size(); ++i)
             {
               if (subblocks_A[i].size1() > 0) //block might be empty...
               {
                 //y_k[i].resize(subblocks_A[i].size1());
                 //std::cout << "y_k[" << i << "]: ";
-                //for (std::size_t j=0; j<y_k[i].size(); ++j)
+                //for (vcl_size_t j=0; j<y_k[i].size(); ++j)
                 //  std::cout << y_k[i][j] << " ";
                 //std::cout << std::endl;
                 cholesky_solve(subblocks_A[i], y_k[i]);

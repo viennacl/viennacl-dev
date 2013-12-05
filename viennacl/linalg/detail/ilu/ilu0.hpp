@@ -88,7 +88,7 @@ namespace viennacl
 
       // Note: Line numbers in the following refer to the algorithm in Saad's book
 
-      for (std::size_t i=1; i<A.size1(); ++i)  // Line 1
+      for (vcl_size_t i=1; i<A.size1(); ++i)  // Line 1
       {
         unsigned int row_i_begin = row_buffer[i];
         unsigned int row_i_end   = row_buffer[i+1];
@@ -358,14 +358,14 @@ namespace viennacl
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
-        std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
+        std::list< vcl_size_t > multifrontal_L_row_elimination_num_list_;
 
         viennacl::vector<ScalarType> multifrontal_U_diagonal_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
-        std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
+        std::list< vcl_size_t > multifrontal_U_row_elimination_num_list_;
 
     };
 

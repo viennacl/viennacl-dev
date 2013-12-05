@@ -152,7 +152,7 @@ namespace viennacl{
               utils::call_on_element(root_node->rhs, *this);
             else if(node_type==PARENT_NODE_TYPE){
               const char * op_expr = detail::generate(root_node->op.type);
-              std::size_t n = std::strlen(op_expr);
+              vcl_size_t n = std::strlen(op_expr);
               std::memcpy(ptr_, op_expr, n);
               ptr_+=n;
             }

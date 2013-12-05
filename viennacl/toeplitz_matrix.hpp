@@ -56,7 +56,7 @@ namespace viennacl {
         * @param rows      Number of rows of the matrix
         * @param cols      Number of columns of the matrix
         */
-        explicit toeplitz_matrix(std::size_t rows, std::size_t cols) : elements_(rows * 2)
+        explicit toeplitz_matrix(vcl_size_t rows, vcl_size_t cols) : elements_(rows * 2)
         {
           assert(rows == cols && bool("Toeplitz matrix must be square!"));
           (void)cols;  // avoid 'unused parameter' warning in optimized builds
@@ -69,7 +69,7 @@ namespace viennacl {
         * @param sz         New size of matrix
         * @param preserve   If true, existing values are preserved.
         */
-        void resize(std::size_t sz, bool preserve = true) {
+        void resize(vcl_size_t sz, bool preserve = true) {
             elements_.resize(sz * 2, preserve);
         }
 
@@ -90,19 +90,19 @@ namespace viennacl {
         /**
          * @brief Returns the number of rows of the matrix
          */
-        std::size_t size1() const { return elements_.size() / 2; }
+        vcl_size_t size1() const { return elements_.size() / 2; }
 
         /**
          * @brief Returns the number of columns of the matrix
          */
-        std::size_t size2() const { return elements_.size() / 2; }
+        vcl_size_t size2() const { return elements_.size() / 2; }
 
         /** @brief Returns the internal size of matrix representtion.
         *   Usually required for launching OpenCL kernels only
         *
         *   @return Internal size of matrix representation
         */
-        std::size_t internal_size() const { return elements_.internal_size(); }
+        vcl_size_t internal_size() const { return elements_.internal_size(); }
 
 
         /**
@@ -112,7 +112,7 @@ namespace viennacl {
          * @param col_index  Column index of accessed element
          * @return Proxy for matrix entry
          */
-        entry_proxy<SCALARTYPE> operator()(std::size_t row_index, std::size_t col_index)
+        entry_proxy<SCALARTYPE> operator()(vcl_size_t row_index, vcl_size_t col_index)
         {
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
 
@@ -154,7 +154,7 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE> const & cpu_vec, toeplitz_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
-        std::size_t size = gpu_mat.size1();
+        vcl_size_t size = gpu_mat.size1();
         assert((size * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
         std::vector<SCALARTYPE> rvrs(cpu_vec.size());
         std::copy(cpu_vec.begin(), cpu_vec.end(), rvrs.begin());
@@ -176,7 +176,7 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(toeplitz_matrix<SCALARTYPE, ALIGNMENT> const & gpu_mat, std::vector<SCALARTYPE> & cpu_vec)
     {
-        std::size_t size = gpu_mat.size1();
+        vcl_size_t size = gpu_mat.size1();
         assert((size * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size * 2);
         copy(gpu_mat.elements(), tmp);
@@ -196,14 +196,14 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(toeplitz_matrix<SCALARTYPE, ALIGNMENT> const & tep_src, MATRIXTYPE & com_dst)
     {
-        std::size_t size = tep_src.size1();
+        vcl_size_t size = tep_src.size1();
         assert(size == com_dst.size1() && bool("Size mismatch"));
         assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(tep_src.size1() * 2 - 1);
         copy(tep_src, tmp);
 
-        for(std::size_t i = 0; i < size; i++)
-            for(std::size_t j = 0; j < size; j++)
+        for(vcl_size_t i = 0; i < size; i++)
+            for(vcl_size_t j = 0; j < size; j++)
                 com_dst(i, j) = tmp[static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size) - 1];
     }
 
@@ -216,7 +216,7 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE const & com_src, toeplitz_matrix<SCALARTYPE, ALIGNMENT>& tep_dst)
     {
-        std::size_t size = tep_dst.size1();
+        vcl_size_t size = tep_dst.size1();
         assert(size == com_src.size1() && bool("Size mismatch"));
         assert(size == com_src.size2() && bool("Size mismatch"));
 
@@ -225,7 +225,7 @@ namespace viennacl {
         for(int i = size - 1; i >= 0; i--)
             tmp[size - i - 1] = com_src(i, 0);
 
-        for(std::size_t i = 1; i < size; i++)
+        for(vcl_size_t i = 1; i < size; i++)
             tmp[size + i - 1] = com_src(0, i);
 
         copy(tmp, tep_dst);
@@ -257,14 +257,14 @@ namespace viennacl {
     template<class SCALARTYPE, unsigned int ALIGNMENT>
     std::ostream & operator<<(std::ostream & s, toeplitz_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix)
     {
-        std::size_t size = gpu_matrix.size1();
+        vcl_size_t size = gpu_matrix.size1();
         std::vector<SCALARTYPE> tmp(2*size - 1);
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](";
 
-        for(std::size_t i = 0; i < size; i++) {
+        for(vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(std::size_t j = 0; j < size; j++) {
+            for(vcl_size_t j = 0; j < size; j++) {
                 s << tmp[static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size - 1)];
                 //s << (int)i - (int)j;
                 if(j < (size - 1)) s << ",";

@@ -47,12 +47,12 @@ namespace viennacl
     void copy(const CPU_MATRIX & cpu_matrix,
                      coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
-      std::size_t group_num = 64;
+      vcl_size_t group_num = 64;
 
       // Step 1: Determine nonzeros:
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
       {
-        std::size_t num_entries = 0;
+        vcl_size_t num_entries = 0;
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
               ++row_it)
@@ -74,8 +74,8 @@ namespace viennacl
         viennacl::backend::typesafe_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.internal_nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
 
-        std::size_t data_index = 0;
-        std::size_t current_fraction = 0;
+        vcl_size_t data_index = 0;
+        vcl_size_t current_fraction = 0;
 
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
@@ -100,7 +100,7 @@ namespace viennacl
         //group_boundaries[1] = data_index; //for one compute unit
 
         /*std::cout << "Group boundaries: " << std::endl;
-        for (std::size_t i=0; i<group_boundaries.size(); ++i)
+        for (vcl_size_t i=0; i<group_boundaries.size(); ++i)
           std::cout << group_boundaries[i] << std::endl;*/
 
         viennacl::backend::memory_create(gpu_matrix.group_boundaries_, group_boundaries.raw_size(), traits::context(gpu_matrix.group_boundaries_), group_boundaries.get());
@@ -149,7 +149,7 @@ namespace viennacl
         viennacl::backend::memory_read(gpu_matrix.handle(),   0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
 
         //fill the cpu_matrix:
-        for (std::size_t index = 0; index < gpu_matrix.nnz(); ++index)
+        for (vcl_size_t index = 0; index < gpu_matrix.nnz(); ++index)
           cpu_matrix(coord_buffer[2*index], coord_buffer[2*index+1]) = elements[index];
 
       }
@@ -211,7 +211,7 @@ namespace viennacl
         * @param nonzeros Optional number of nonzeros for memory preallocation
         * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
         */
-        coordinate_matrix(std::size_t rows, std::size_t cols, std::size_t nonzeros = 0, viennacl::context ctx = viennacl::context()) :
+        coordinate_matrix(vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros = 0, viennacl::context ctx = viennacl::context()) :
           rows_(rows), cols_(cols), nonzeros_(nonzeros)
         {
           if (nonzeros > 0)
@@ -243,7 +243,7 @@ namespace viennacl
         * @param cols     Number of columns
         * @param ctx      Context in which to create the matrix
         */
-        explicit coordinate_matrix(std::size_t rows, std::size_t cols, viennacl::context ctx)
+        explicit coordinate_matrix(vcl_size_t rows, vcl_size_t cols, viennacl::context ctx)
           : rows_(rows), cols_(cols), nonzeros_(0)
         {
           group_boundaries_.switch_active_handle_id(ctx.memory_type());
@@ -262,7 +262,7 @@ namespace viennacl
 
 
         /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
-        void reserve(std::size_t new_nonzeros)
+        void reserve(vcl_size_t new_nonzeros)
         {
           if (new_nonzeros > nonzeros_)  //TODO: Do we need to initialize new memory with zero?
           {
@@ -271,7 +271,7 @@ namespace viennacl
             viennacl::backend::memory_shallow_copy(coord_buffer_, coord_buffer_old);
             viennacl::backend::memory_shallow_copy(elements_, elements_old);
 
-            std::size_t internal_new_nnz = viennacl::tools::align_to_multiple<std::size_t>(new_nonzeros, ALIGNMENT);
+            vcl_size_t internal_new_nnz = viennacl::tools::align_to_multiple<vcl_size_t>(new_nonzeros, ALIGNMENT);
             viennacl::backend::typesafe_host_array<unsigned int> size_deducer(coord_buffer_);
             viennacl::backend::memory_create(coord_buffer_, size_deducer.element_size() * 2 * internal_new_nnz, viennacl::traits::context(coord_buffer_));
             viennacl::backend::memory_create(elements_,     sizeof(SCALARTYPE)  * internal_new_nnz,             viennacl::traits::context(elements_));
@@ -289,7 +289,7 @@ namespace viennacl
         * @param new_size2    New number of columns
         * @param preserve     If true, the old values are preserved. At present, old values are always discarded.
         */
-        void resize(std::size_t new_size1, std::size_t new_size2, bool preserve = true)
+        void resize(vcl_size_t new_size1, vcl_size_t new_size2, bool preserve = true)
         {
           assert (new_size1 > 0 && new_size2 > 0);
 
@@ -307,7 +307,7 @@ namespace viennacl
             //std::cout << "Cropping STL matrix of size " << stl_sparse_matrix.size() << std::endl;
             if (new_size2 < cols_ && rows_ > 0)
             {
-              for (std::size_t i=0; i<stl_sparse_matrix.size(); ++i)
+              for (vcl_size_t i=0; i<stl_sparse_matrix.size(); ++i)
               {
                 std::list<unsigned int> to_delete;
                 for (typename std::map<unsigned int, SCALARTYPE>::iterator it = stl_sparse_matrix[i].begin();
@@ -335,13 +335,13 @@ namespace viennacl
 
 
         /** @brief  Returns the number of rows */
-        std::size_t size1() const { return rows_; }
+        vcl_size_t size1() const { return rows_; }
         /** @brief  Returns the number of columns */
-        std::size_t size2() const { return cols_; }
+        vcl_size_t size2() const { return cols_; }
         /** @brief  Returns the number of nonzero entries */
-        std::size_t nnz() const { return nonzeros_; }
+        vcl_size_t nnz() const { return nonzeros_; }
         /** @brief  Returns the number of internal nonzero entries */
-        std::size_t internal_nnz() const { return viennacl::tools::align_to_multiple<std::size_t>(nonzeros_, ALIGNMENT); }
+        vcl_size_t internal_nnz() const { return viennacl::tools::align_to_multiple<vcl_size_t>(nonzeros_, ALIGNMENT); }
 
         /** @brief  Returns the OpenCL handle to the (row, column) index array */
         const handle_type & handle12() const { return coord_buffer_; }
@@ -350,7 +350,7 @@ namespace viennacl
         /** @brief  Returns the OpenCL handle to the group start index array */
         const handle_type & handle3() const { return group_boundaries_; }
 
-        std::size_t groups() const { return group_num_; }
+        vcl_size_t groups() const { return group_num_; }
 
         #if defined(_MSC_VER) && _MSC_VER < 1500      //Visual Studio 2005 needs special treatment
         template <typename CPU_MATRIX>
@@ -368,10 +368,10 @@ namespace viennacl
         coordinate_matrix & operator=(coordinate_matrix const &);
 
 
-        std::size_t rows_;
-        std::size_t cols_;
-        std::size_t nonzeros_;
-        std::size_t group_num_;
+        vcl_size_t rows_;
+        vcl_size_t cols_;
+        vcl_size_t nonzeros_;
+        vcl_size_t group_num_;
         handle_type coord_buffer_;
         handle_type elements_;
         handle_type group_boundaries_;

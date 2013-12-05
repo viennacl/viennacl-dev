@@ -71,7 +71,7 @@ namespace viennacl
                                      viennacl::backend::mem_handle const & row_buffer,
                                      viennacl::backend::mem_handle const & col_buffer,
                                      viennacl::backend::mem_handle const & element_buffer,
-                                     std::size_t num_rows
+                                     vcl_size_t num_rows
                                     )
         {
           level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),

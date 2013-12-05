@@ -196,7 +196,7 @@ namespace viennacl
 
       viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
-      for (std::size_t i=0; i<cpu_vector.size(); ++i)
+      for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
         temp_buffer[i * gpu_vector_slice.stride()] = cpu_vector[i];
 
       viennacl::backend::memory_write(gpu_vector_slice.handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
@@ -221,7 +221,7 @@ namespace viennacl
       std::vector<SCALARTYPE> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
       viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(SCALARTYPE)*gpu_vector_slice.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
-      for (std::size_t i=0; i<cpu_vector.size(); ++i)
+      for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
         cpu_vector[i] = temp_buffer[i * gpu_vector_slice.stride()];
     }
   }

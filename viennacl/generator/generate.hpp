@@ -49,7 +49,7 @@ namespace viennacl{
     class code_generator{
       public:
         /** @brief typedef of the key used in the forced profiles. Contains the expression type and the size of the scalartype */
-        typedef std::pair<expression_type, std::size_t> forced_profile_key_type;
+        typedef std::pair<expression_type, vcl_size_t> forced_profile_key_type;
       private:
         typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
@@ -190,7 +190,7 @@ namespace viennacl{
         */
         template<class StatementsType>
         void set_expression_arguments(profile_base const & profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
-          for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
+          for(vcl_size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
             char str[32];
             std::sprintf(str,"kernel_%d_%d",device_offset,kernel_id);
@@ -278,7 +278,7 @@ namespace viennacl{
           stream <<  "#endif\n";
           stream << std::endl;
 
-          std::size_t device_offset =0;
+          vcl_size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
             for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
               get_profile(*it,iit->first)(stream,device_offset++,iit->second);
@@ -293,7 +293,7 @@ namespace viennacl{
         std::string make_cuda_program_string() const {
           //Creates OpenCL string with #ifdef and attributes
           utils::kernel_generation_stream stream;
-          std::size_t device_offset =0;
+          vcl_size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
             for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
               get_profile(*it,iit->first)(stream,device_offset++,iit->second);

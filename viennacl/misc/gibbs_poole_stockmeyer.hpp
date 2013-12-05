@@ -34,6 +34,8 @@
 #include <deque>
 #include <cmath>
 
+#include "viennacl/forwards.h"
+
 #include "viennacl/misc/cuthill_mckee.hpp"
 
 namespace viennacl
@@ -48,7 +50,7 @@ namespace viennacl
         int w;
 
         w = 0;
-        for (std::size_t i = 0; i < l.size(); i++)
+        for (vcl_size_t i = 0; i < l.size(); i++)
         {
             w = std::max(w, static_cast<int>(l[i].size()));
         }
@@ -71,7 +73,7 @@ namespace viennacl
         std::vector<bool> inr(n, true);
         std::deque<int> q;
 
-        for (std::size_t i = 0; i < rg.size(); i++)
+        for (vcl_size_t i = 0; i < rg.size(); i++)
         {
             inr[rg[i]] = false;
         }
@@ -114,14 +116,14 @@ namespace viennacl
             rgc.push_back(tmp);
         } while (true);
 
-        for (std::size_t i = 0; i < rgc.size(); i++)
+        for (vcl_size_t i = 0; i < rgc.size(); i++)
         {
             ind[0] = i;
             ind[1] = rgc[i].size();
             sort_ind.push_back(ind);
         }
         std::sort(sort_ind.begin(), sort_ind.end(), detail::cuthill_mckee_comp_func);
-        for (std::size_t i = 0; i < rgc.size(); i++)
+        for (vcl_size_t i = 0; i < rgc.size(); i++)
         {
             rgc_sorted.push_back(rgc[sort_ind[rgc.size()-1-i][0]]);
         }
@@ -152,10 +154,10 @@ namespace viennacl
   std::vector<int> reorder(MatrixType const & matrix,
                            gibbs_poole_stockmeyer_tag)
   {
-    std::size_t n = matrix.size();
+    vcl_size_t n = matrix.size();
     std::vector<int> r(n);
     std::vector< std::vector<int> > rl;
-    std::size_t l = 0;
+    vcl_size_t l = 0;
     int state;
     bool state_end;
     std::vector< std::vector<int> > nodes;
@@ -190,7 +192,7 @@ namespace viennacl
         // determine node g with mimimal degree among all nodes which
         // are not yet in result array r
         deg_min = -1;
-        for (std::size_t i = 0; i < n; i++)
+        for (vcl_size_t i = 0; i < n; i++)
         {
             if (!inr[i])
             {
@@ -210,21 +212,21 @@ namespace viennacl
           detail::generate_layering(matrix, lg, g);
 
           nodes.resize(0);
-          for (std::size_t i = 0; i < lg.back().size(); i++)
+          for (vcl_size_t i = 0; i < lg.back().size(); i++)
           {
               tmp[0] = lg.back()[i];
               tmp[1] = matrix[lg.back()[i]].size() - 1;
               nodes.push_back(tmp);
           }
           std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
-          for (std::size_t i = 0; i < nodes.size(); i++)
+          for (vcl_size_t i = 0; i < nodes.size(); i++)
           {
               lg.back()[i] = nodes[i][0];
           }
 
           m_min = -1;
           new_g = false;
-          for (std::size_t i = 0; i < lg.back().size(); i++)
+          for (vcl_size_t i = 0; i < lg.back().size(); i++)
           {
               lh.clear();
               detail::generate_layering(matrix, lh, lg.back()[i]);
@@ -249,17 +251,17 @@ namespace viennacl
         // calculate ls as layering intersection and rg as remaining
         // graph
         lap.clear();
-        for (std::size_t i = 0; i < lg.size(); i++)
+        for (vcl_size_t i = 0; i < lg.size(); i++)
         {
-            for (std::size_t j = 0; j < lg[i].size(); j++)
+            for (vcl_size_t j = 0; j < lg[i].size(); j++)
             {
                 lap[lg[i][j]].resize(2);
                 lap[lg[i][j]][0] = i;
             }
         }
-        for (std::size_t i = 0; i < lh.size(); i++)
+        for (vcl_size_t i = 0; i < lh.size(); i++)
         {
-            for (std::size_t j = 0; j < lh[i].size(); j++)
+            for (vcl_size_t j = 0; j < lh[i].size(); j++)
             {
                 lap[lh[i][j]][1] = lg.size() - 1 - i;
             }
@@ -288,22 +290,22 @@ namespace viennacl
         wvs.resize(ls.size());
         wvsg.resize(ls.size());
         wvsh.resize(ls.size());
-        for (std::size_t i = 0; i < rgc.size(); i++)
+        for (vcl_size_t i = 0; i < rgc.size(); i++)
         {
-            for (std::size_t j = 0; j < ls.size(); j++)
+            for (vcl_size_t j = 0; j < ls.size(); j++)
             {
                 wvs[j] = ls[j].size();
                 wvsg[j] = ls[j].size();
                 wvsh[j] = ls[j].size();
             }
-            for (std::size_t j = 0; j < rgc[i].size(); j++)
+            for (vcl_size_t j = 0; j < rgc[i].size(); j++)
             {
                 (wvsg[lap[rgc[i][j]][0]])++;
                 (wvsh[lap[rgc[i][j]][1]])++;
             }
             k3 = 0;
             k4 = 0;
-            for (std::size_t j = 0; j < ls.size(); j++)
+            for (vcl_size_t j = 0; j < ls.size(); j++)
             {
                 if (wvsg[j] > wvs[j])
                 {
@@ -316,14 +318,14 @@ namespace viennacl
             }
             if (k3 < k4 || (k3 == k4 && k1 <= k2) )
             {
-                for (std::size_t j = 0; j < rgc[i].size(); j++)
+                for (vcl_size_t j = 0; j < rgc[i].size(); j++)
                 {
                     ls[lap[rgc[i][j]][0]].push_back(rgc[i][j]);
                 }
             }
             else
             {
-                for (std::size_t j = 0; j < rgc[i].size(); j++)
+                for (vcl_size_t j = 0; j < rgc[i].size(); j++)
                 {
                     ls[lap[rgc[i][j]][1]].push_back(rgc[i][j]);
                 }
@@ -345,7 +347,7 @@ namespace viennacl
                 break;
 
               case 2:
-                for (std::size_t i = 0; i < rl[l-1].size(); i++)
+                for (vcl_size_t i = 0; i < rl[l-1].size(); i++)
                 {
                     isn.assign(n, false);
                     for (std::map<int, double>::const_iterator it = matrix[rl[l-1][i]].begin();
@@ -356,7 +358,7 @@ namespace viennacl
                         isn[it->first] = true;
                     }
                     nodes.resize(0);
-                    for (std::size_t j = 0; j < ls[l].size(); j++)
+                    for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
                         if (inr[ls[l][j]]) continue;
                         if (!isn[ls[l][j]]) continue;
@@ -365,7 +367,7 @@ namespace viennacl
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
-                    for (std::size_t j = 0; j < nodes.size(); j++)
+                    for (vcl_size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
                         r[nodes[j][0]] = current_dof++;
@@ -374,7 +376,7 @@ namespace viennacl
                 }
 
               case 3:
-                for (std::size_t i = 0; i < rl[l].size(); i++)
+                for (vcl_size_t i = 0; i < rl[l].size(); i++)
                 {
                     isn.assign(n, false);
                     for (std::map<int, double>::const_iterator it = matrix[rl[l][i]].begin();
@@ -385,7 +387,7 @@ namespace viennacl
                         isn[it->first] = true;
                     }
                     nodes.resize(0);
-                    for (std::size_t j = 0; j < ls[l].size(); j++)
+                    for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
                         if (inr[ls[l][j]]) continue;
                         if (!isn[ls[l][j]]) continue;
@@ -394,7 +396,7 @@ namespace viennacl
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
-                    for (std::size_t j = 0; j < nodes.size(); j++)
+                    for (vcl_size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
                         r[nodes[j][0]] = current_dof++;
@@ -406,7 +408,7 @@ namespace viennacl
                 if (rl[l].size() < ls[l].size())
                 {
                     deg_min = -1;
-                    for (std::size_t j = 0; j < ls[l].size(); j++)
+                    for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
                         if (inr[ls[l][j]]) continue;
                         deg = matrix[ls[l][j]].size() - 1;

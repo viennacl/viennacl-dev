@@ -197,25 +197,25 @@ namespace viennacl
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >
       {
-        typedef std::size_t   type;
+        typedef vcl_size_t   type;
       };
 
       template <>
       struct size_type<Eigen::VectorXf>
       {
-        typedef std::size_t   type;
+        typedef vcl_size_t   type;
       };
 
       template <>
       struct size_type<Eigen::VectorXd>
       {
-        typedef std::size_t   type;
+        typedef vcl_size_t   type;
       };
 
       template <typename T, int options>
       struct size_type<Eigen::SparseMatrix<T, options> >
       {
-        typedef std::size_t   type;
+        typedef vcl_size_t   type;
       };
       #endif
       /** \endcond */
@@ -523,13 +523,13 @@ namespace viennacl
         typedef boost::numeric::ublas::vector<T>   type;
       };
 
-      template <typename T, typename U, std::size_t A, typename B, typename C>
+      template <typename T, typename U, vcl_size_t A, typename B, typename C>
       struct vector_for_matrix< boost::numeric::ublas::compressed_matrix<T, U, A, B, C> >
       {
         typedef boost::numeric::ublas::vector<T>   type;
       };
 
-      template <typename T, typename U, std::size_t A, typename B, typename C>
+      template <typename T, typename U, vcl_size_t A, typename B, typename C>
       struct vector_for_matrix< boost::numeric::ublas::coordinate_matrix<T, U, A, B, C> >
       {
         typedef boost::numeric::ublas::vector<T>   type;

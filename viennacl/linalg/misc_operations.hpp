@@ -51,7 +51,7 @@ namespace viennacl
                                   viennacl::backend::mem_handle const & row_buffer,
                                   viennacl::backend::mem_handle const & col_buffer,
                                   viennacl::backend::mem_handle const & element_buffer,
-                                  std::size_t num_rows
+                                  vcl_size_t num_rows
                                   )
       {
         assert( viennacl::traits::handle(vec).get_active_handle_id() == row_index_array.get_active_handle_id() && bool("Incompatible memory domains"));

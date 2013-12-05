@@ -124,7 +124,7 @@ namespace viennacl
       //TODO: Assert CPU_ScalarType == double
 
       //std::cout << "Starting CG" << std::endl;
-      std::size_t problem_size = viennacl::traits::size(rhs);
+      vcl_size_t problem_size = viennacl::traits::size(rhs);
       VectorType result(rhs);
       viennacl::traits::clear(result);
 

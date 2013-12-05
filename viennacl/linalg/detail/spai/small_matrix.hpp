@@ -58,17 +58,17 @@ namespace viennacl
           // Constructs an orthonormal sparse matrix M (with M^T M = Id). Is composed of elementary 2x2 rotation matrices with suitable renumbering.
           //
           template <typename MatrixType>
-          void make_rotation_matrix(MatrixType & mat, std::size_t new_size, std::size_t off_diagonal_distance = 4)
+          void make_rotation_matrix(MatrixType & mat, vcl_size_t new_size, vcl_size_t off_diagonal_distance = 4)
           {
             mat.resize(new_size, new_size, false);
             mat.clear();
 
             double val = 1.0 / std::sqrt(2.0);
 
-            for (std::size_t i=0; i<new_size; ++i)
+            for (vcl_size_t i=0; i<new_size; ++i)
               mat(i,i) = val;
 
-            for (std::size_t i=off_diagonal_distance; i<new_size; ++i)
+            for (vcl_size_t i=off_diagonal_distance; i<new_size; ++i)
             {
               mat(i-off_diagonal_distance, i) = val; mat(i, i-off_diagonal_distance) = -val;
             }
@@ -83,13 +83,13 @@ namespace viennacl
               double det = 1.0;
 
               MatrixType mLu(mat_r() );
-              boost::numeric::ublas::permutation_matrix<std::size_t> pivots(mat_r().size1() );
+              boost::numeric::ublas::permutation_matrix<vcl_size_t> pivots(mat_r().size1() );
 
               int is_singular = static_cast<int>(lu_factorize(mLu, pivots));
 
               if (!is_singular)
               {
-                  for (std::size_t i=0; i < pivots.size(); ++i)
+                  for (vcl_size_t i=0; i < pivots.size(); ++i)
                   {
                       if (pivots(i) != i)
                           det *= -1.0;

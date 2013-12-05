@@ -44,7 +44,7 @@ namespace viennacl
   {
     protected:
       typedef vcl_size_t        size_type;
-      implicit_vector_base(size_type s, std::size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
+      implicit_vector_base(size_type s, vcl_size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
       implicit_vector_base(size_type s, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
 
     public:
@@ -59,7 +59,7 @@ namespace viennacl
 
       bool is_value_static() const { return value_.second; }
 
-      std::size_t index() const { return index_.second; }
+      vcl_size_t index() const { return index_.second; }
 
       bool has_index() const { return index_.first; }
 
@@ -78,7 +78,7 @@ namespace viennacl
 
     protected:
       size_type size_;
-      std::pair<bool, std::size_t> index_;
+      std::pair<bool, vcl_size_t> index_;
       std::pair<SCALARTYPE, bool> value_;
       viennacl::context ctx_;
   };
@@ -225,8 +225,8 @@ namespace viennacl
       *   @param stride Stride for the support of vector_slice
       */
       const_vector_iterator(vector_base<SCALARTYPE> const & vec,
-                            std::size_t index,
-                            std::size_t start = 0,
+                            vcl_size_t index,
+                            vcl_size_t start = 0,
                             vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Constructor for vector-like treatment of arbitrary buffers
@@ -236,8 +236,8 @@ namespace viennacl
       *   @param stride    Stride for the support of vector_slice
       */
       const_vector_iterator(handle_type const & elements,
-                            std::size_t index,
-                            std::size_t start = 0,
+                            vcl_size_t index,
+                            vcl_size_t start = 0,
                             vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Dereferences the iterator and returns the value of the element. For convenience only, performance is poor due to OpenCL overhead! */
@@ -267,19 +267,19 @@ namespace viennacl
       }
       self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff * stride_, start_, stride_); }
 
-      //std::size_t index() const { return index_; }
+      //vcl_size_t index() const { return index_; }
       /** @brief Offset of the current element index with respect to the beginning of the buffer */
-      std::size_t offset() const { return start_ + index_ * stride_; }
+      vcl_size_t offset() const { return start_ + index_ * stride_; }
 
       /** @brief Index increment in the underlying buffer when incrementing the iterator to the next element */
-      std::size_t stride() const { return stride_; }
+      vcl_size_t stride() const { return stride_; }
       handle_type const & handle() const { return elements_; }
 
     protected:
       /** @brief  The index of the entry the iterator is currently pointing to */
       handle_type const & elements_;
-      std::size_t index_;  //offset from the beginning of elements_
-      std::size_t start_;
+      vcl_size_t index_;  //offset from the beginning of elements_
+      vcl_size_t start_;
       vcl_ptrdiff_t stride_;
   };
 
@@ -314,8 +314,8 @@ namespace viennacl
 
       vector_iterator() : base_type(), elements_(NULL) {}
       vector_iterator(handle_type & elements,
-                      std::size_t index,
-                      std::size_t start = 0,
+                      vcl_size_t index,
+                      vcl_size_t start = 0,
                       vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
       /** @brief Constructor
       *   @param vec    The vector over which to iterate
@@ -324,8 +324,8 @@ namespace viennacl
       *   @param stride Stride for slices
       */
       vector_iterator(vector_base<SCALARTYPE> & vec,
-                      std::size_t index,
-                      std::size_t start = 0,
+                      vcl_size_t index,
+                      vcl_size_t start = 0,
                       vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
       //vector_iterator(base_type const & b) : base_type(b) {}
 
@@ -400,7 +400,7 @@ namespace viennacl
       }
 
       // CUDA or host memory:
-      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, std::size_t start = 0, difference_type stride = 1)
+      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, difference_type stride = 1)
         : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
       {
         if (mem_type == viennacl::CUDA_MEMORY)
@@ -953,7 +953,7 @@ namespace viennacl
 
         if (new_size != size_)
         {
-          std::size_t new_internal_size = viennacl::tools::align_to_multiple<std::size_t>(new_size, alignment);
+          vcl_size_t new_internal_size = viennacl::tools::align_to_multiple<vcl_size_t>(new_size, alignment);
 
           std::vector<SCALARTYPE> temp(size_);
           if (preserve && size_ > 0)
@@ -1171,24 +1171,24 @@ namespace viennacl
 
       vector_tuple(std::vector<VectorType const *> const & vecs) : const_vectors_(vecs.size()), non_const_vectors_()
       {
-        for (std::size_t i=0; i<vecs.size(); ++i)
+        for (vcl_size_t i=0; i<vecs.size(); ++i)
           const_vectors_[i] = vecs[i];
       }
 
       vector_tuple(std::vector<VectorType *> const & vecs) : const_vectors_(vecs.size()), non_const_vectors_(vecs.size())
       {
-        for (std::size_t i=0; i<vecs.size(); ++i)
+        for (vcl_size_t i=0; i<vecs.size(); ++i)
         {
               const_vectors_[i] = vecs[i];
           non_const_vectors_[i] = vecs[i];
         }
       }
 
-      std::size_t size()       const { return non_const_vectors_.size(); }
-      std::size_t const_size() const { return     const_vectors_.size(); }
+      vcl_size_t size()       const { return non_const_vectors_.size(); }
+      vcl_size_t const_size() const { return     const_vectors_.size(); }
 
-      VectorType       &       at(std::size_t i) const { return *(non_const_vectors_.at(i)); }
-      VectorType const & const_at(std::size_t i) const { return     *(const_vectors_.at(i)); }
+      VectorType       &       at(vcl_size_t i) const { return *(non_const_vectors_.at(i)); }
+      VectorType const & const_at(vcl_size_t i) const { return     *(const_vectors_.at(i)); }
 
   private:
     std::vector<VectorType const *>   const_vectors_;
@@ -1291,11 +1291,11 @@ namespace viennacl
       }
       else
       {
-        std::size_t gpu_size = (gpu_end - gpu_begin);
+        vcl_size_t gpu_size = (gpu_end - gpu_begin);
         std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * gpu_size);
         viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
-        for (std::size_t i=0; i<gpu_size; ++i)
+        for (vcl_size_t i=0; i<gpu_size; ++i)
         {
           (&(*cpu_begin))[i] = temp_buffer[i * gpu_begin.stride()];
         }
@@ -1456,12 +1456,12 @@ namespace viennacl
       }
       else //writing to slice:
       {
-        std::size_t cpu_size = (cpu_end - cpu_begin);
+        vcl_size_t cpu_size = (cpu_end - cpu_begin);
         std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * cpu_size);
 
         viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
-        for (std::size_t i=0; i<cpu_size; ++i)
+        for (vcl_size_t i=0; i<cpu_size; ++i)
           temp_buffer[i * gpu_begin.stride()] = (&(*cpu_begin))[i];
 
         viennacl::backend::memory_write(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
@@ -1564,7 +1564,7 @@ namespace viennacl
             vector<float, ALIGNMENT> & gpu_vec)
   {
     std::vector<float> entries(eigen_vec.size());
-    for (std::size_t i = 0; i<entries.size(); ++i)
+    for (vcl_size_t i = 0; i<entries.size(); ++i)
       entries[i] = eigen_vec(i);
     viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
   }
@@ -1574,7 +1574,7 @@ namespace viennacl
             vector<double, ALIGNMENT> & gpu_vec)
   {
     std::vector<double> entries(eigen_vec.size());
-    for (std::size_t i = 0; i<entries.size(); ++i)
+    for (vcl_size_t i = 0; i<entries.size(); ++i)
       entries[i] = eigen_vec(i);
     viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
   }

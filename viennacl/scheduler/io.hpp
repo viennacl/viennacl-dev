@@ -250,7 +250,7 @@ namespace viennacl
     namespace detail
     {
       /** @brief Recursive worker routine for printing a whole statement */
-      void print_node(std::ostream & os, viennacl::scheduler::statement const & s, std::size_t node_index, std::size_t indent = 0)
+      void print_node(std::ostream & os, viennacl::scheduler::statement const & s, vcl_size_t node_index, vcl_size_t indent = 0)
       {
         typedef viennacl::scheduler::statement::container_type   StatementNodeContainer;
         typedef viennacl::scheduler::statement::value_type       StatementNode;
@@ -258,7 +258,7 @@ namespace viennacl
         StatementNodeContainer const & nodes = s.array();
         StatementNode const & current_node = nodes[node_index];
 
-        for (std::size_t i=0; i<indent; ++i)
+        for (vcl_size_t i=0; i<indent; ++i)
           os << " ";
 
         os << "Node " << node_index << ": " << current_node << std::endl;

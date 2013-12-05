@@ -76,7 +76,7 @@ namespace viennacl{
       }
     }
 
-    typedef std::pair<expression_type, std::size_t> expression_key_type;
+    typedef std::pair<expression_type, vcl_size_t> expression_key_type;
 
     struct expression_descriptor{
         expression_key_type make_key() const { return expression_key_type(type,scalartype_size); }
@@ -86,7 +86,7 @@ namespace viennacl{
         }
         expression_type_family type_family;
         expression_type type;
-        std::size_t scalartype_size;
+        vcl_size_t scalartype_size;
     };
 
 

@@ -113,7 +113,7 @@ namespace viennacl
         * @param j               Index of the last nonzero index in 'input_vec' after applying the reflection
       */
       template <typename VectorType, typename ScalarType>
-      void gmres_setup_householder_vector(VectorType const & input_vec, VectorType & hh_vec, ScalarType & beta, ScalarType & mu, std::size_t j)
+      void gmres_setup_householder_vector(VectorType const & input_vec, VectorType & hh_vec, ScalarType & beta, ScalarType & mu, vcl_size_t j)
       {
         ScalarType input_j = input_vec(j);
 

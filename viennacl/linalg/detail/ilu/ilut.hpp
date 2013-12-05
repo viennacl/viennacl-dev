@@ -464,14 +464,14 @@ namespace viennacl
         std::list< viennacl::backend::mem_handle > multifrontal_L_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_L_element_buffers_;
-        std::list< std::size_t > multifrontal_L_row_elimination_num_list_;
+        std::list< vcl_size_t > multifrontal_L_row_elimination_num_list_;
 
         viennacl::vector<ScalarType> multifrontal_U_diagonal_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_index_arrays_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_row_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_col_buffers_;
         std::list< viennacl::backend::mem_handle > multifrontal_U_element_buffers_;
-        std::list< std::size_t > multifrontal_U_row_elimination_num_list_;
+        std::list< vcl_size_t > multifrontal_U_row_elimination_num_list_;
     };
 
   }

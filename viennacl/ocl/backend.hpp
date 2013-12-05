@@ -54,7 +54,7 @@ namespace viennacl
             contexts_[id].init();
             //create one queue per device:
             std::vector<viennacl::ocl::device> devices = contexts_[id].devices();
-            for (std::size_t j = 0; j<devices.size(); ++j)
+            for (vcl_size_t j = 0; j<devices.size(); ++j)
               contexts_[id].add_queue(devices[j]);
             initialized_[id] = true;
             /*
@@ -90,7 +90,7 @@ namespace viennacl
           else
           {
             //set devices for context:
-            for (std::size_t j = 0; j<devices.size(); ++j)
+            for (vcl_size_t j = 0; j<devices.size(); ++j)
               contexts_[i].add_device(devices[j]);
           }
         }
@@ -114,7 +114,7 @@ namespace viennacl
           else
           {
             //set devices for context:
-            for (std::size_t j = 0; j<devices.size(); ++j)
+            for (vcl_size_t j = 0; j<devices.size(); ++j)
               contexts_[i].add_device(devices[j]);
 
             //init context:
@@ -127,7 +127,7 @@ namespace viennacl
                               ++qit)
             {
               std::vector<cl_command_queue> const & queues_for_device = qit->second;
-              for (std::size_t j=0; j<queues_for_device.size(); ++j)
+              for (vcl_size_t j=0; j<queues_for_device.size(); ++j)
                 contexts_[i].add_queue(qit->first, queues_for_device[j]);
             }
 
@@ -148,7 +148,7 @@ namespace viennacl
 
           //wrap queue vector into map
           std::map< cl_device_id, std::vector<cl_command_queue> > queues_map;
-          for (std::size_t j = 0; j<devices.size(); ++j)
+          for (vcl_size_t j = 0; j<devices.size(); ++j)
             queues_map[devices[j]].push_back(queue[j]);
 
           setup_context(i, c, devices, queues_map);
@@ -161,13 +161,13 @@ namespace viennacl
         }
 
         /** @brief Sets the maximum number of devices per context. Ignored if a device array is provided as well.  */
-        static void set_context_device_num(long i, std::size_t num)
+        static void set_context_device_num(long i, vcl_size_t num)
         {
           contexts_[i].default_device_num(num);
         }
 
         /** @brief Sets the context device type */
-        static void set_context_platform_index(long i, std::size_t pf_index)
+        static void set_context_platform_index(long i, vcl_size_t pf_index)
         {
           contexts_[i].platform_index(pf_index);
         }
@@ -278,7 +278,7 @@ namespace viennacl
     }
 
     /** @brief Convenience function for setting the number of default devices per context */
-    inline void set_context_device_num(long i, std::size_t num)
+    inline void set_context_device_num(long i, vcl_size_t num)
     {
       viennacl::ocl::backend<>::set_context_device_num(i, num);
     }
@@ -289,7 +289,7 @@ namespace viennacl
      * @param i         Context ID
      * @param pf_index  The platform index as returned by clGetPlatformIDs(). This is not the ID of type cl_platform_id!
      */
-    inline void set_context_platform_index(long i, std::size_t pf_index)
+    inline void set_context_platform_index(long i, vcl_size_t pf_index)
     {
       viennacl::ocl::backend<>::set_context_platform_index(i, pf_index);
     }

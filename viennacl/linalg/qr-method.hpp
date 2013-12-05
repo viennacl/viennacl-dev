@@ -296,7 +296,7 @@ namespace viennacl
                 size_ = 0;
             }
 
-            FastMatrix(std::size_t sz)
+            FastMatrix(vcl_size_t sz)
             {
                 size_ = sz;
                 data.resize(sz * sz);
@@ -324,7 +324,7 @@ namespace viennacl
 
             std::vector<SCALARTYPE> data;
         private:
-            std::size_t size_;
+            vcl_size_t size_;
         };
 
         // Nonsymmetric reduction from Hessenberg to real Schur form.
@@ -790,7 +790,7 @@ namespace viennacl
                             viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                             viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
                             viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
-                            std::size_t start)
+                            vcl_size_t start)
         {
             viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
@@ -849,11 +849,11 @@ namespace viennacl
         void tridiagonal_reduction(viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& A,
                                     viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& Q)
         {
-            std::size_t sz = A.size1();
+            vcl_size_t sz = A.size1();
 
             viennacl::vector<SCALARTYPE> hh_vector(sz);
 
-            for(std::size_t i = 0; i < sz; i++)
+            for(vcl_size_t i = 0; i < sz; i++)
             {
                 householder_twoside(A, Q, hh_vector, i);
             }
@@ -903,7 +903,7 @@ namespace viennacl
             boost::numeric::ublas::matrix<float> eigen_values(A.size1(), A.size1());
             eigen_values.clear();
 
-            for (std::size_t i = 0; i < A.size1(); i++)
+            for (vcl_size_t i = 0; i < A.size1(); i++)
             {
                 if(std::fabs(E(i)) < EPS)
                 {

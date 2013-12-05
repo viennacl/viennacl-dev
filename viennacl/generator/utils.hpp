@@ -156,14 +156,14 @@ namespace viennacl{
       }
 
       struct scalartype_size_fun{
-          typedef std::size_t result_type;
+          typedef vcl_size_t result_type;
           result_type operator()(float const &) const { return sizeof(float); }
           result_type operator()(double const &) const { return sizeof(double); }
           template<class T> result_type operator()(T const &) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
 
       struct internal_size_fun{
-          typedef std::size_t result_type;
+          typedef vcl_size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
       };
@@ -175,13 +175,13 @@ namespace viennacl{
       };
 
       struct internal_size1_fun{
-          typedef std::size_t result_type;
+          typedef vcl_size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size1(t); }
       };
 
       struct internal_size2_fun{
-          typedef std::size_t result_type;
+          typedef vcl_size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
       };

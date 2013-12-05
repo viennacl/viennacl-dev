@@ -71,7 +71,7 @@ namespace viennacl{
 
       public:
 
-        std::size_t lmem_used(std::size_t scalartype_size) const {
+        vcl_size_t lmem_used(vcl_size_t scalartype_size) const {
           return local_size_1_*scalartype_size;
         }
 
@@ -80,7 +80,7 @@ namespace viennacl{
             //set temporary buffer argument
             for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               scheduler::statement::container_type const & array = it->first.array();
-              std::size_t size_of_scalartype;
+              vcl_size_t size_of_scalartype;
               const char * scalartype_name;
               if (array[0].lhs.type_family != scheduler::SCALAR_TYPE_FAMILY) throw "not implemented";
               switch(array[0].lhs.numeric_type){
@@ -104,7 +104,7 @@ namespace viennacl{
               //set size argument
               scheduler::statement_node const * current_node = &(*it);
 
-              std::size_t vector_size = 0;
+              vcl_size_t vector_size = 0;
               //The LHS of the prod is a vector
               if(current_node->lhs.type_family==scheduler::VECTOR_TYPE_FAMILY)
               {
@@ -154,7 +154,7 @@ namespace viennacl{
         unsigned int decomposition() const { return decomposition_; }
 
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
 
           //create temporaries
           init_temporaries(statements);
@@ -163,7 +163,7 @@ namespace viennacl{
           if(kernel_id==0){
             configure_local_sizes(k, 0);
 
-            std::size_t gsize = local_size_1_*num_groups_;
+            vcl_size_t gsize = local_size_1_*num_groups_;
             k.global_work_size(0,gsize);
             k.global_work_size(1,1);
           }
@@ -195,7 +195,7 @@ namespace viennacl{
 
           stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << scalartypes[k] << " sum" << k << " = 0;" << std::endl;
 
           if(decomposition_){
@@ -246,10 +246,10 @@ namespace viennacl{
           stream.dec_tab();
           stream << "}" << std::endl;
           //Declare and fill local memory
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "__local " << scalartypes[k] << " buf" << k << "[" << local_size_1_ << "];" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
@@ -257,7 +257,7 @@ namespace viennacl{
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();
-            for(std::size_t k = 0 ; k < exprs.size() ; ++k){
+            for(vcl_size_t k = 0 ; k < exprs.size() ; ++k){
               stream << "buf" << k << "[lid] += buf" << k << "[lid + " << stride << "];" << std::endl;
             }
             stream.dec_tab();
@@ -268,10 +268,10 @@ namespace viennacl{
           stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
           stream << "if(lid==0){" << std::endl;
           stream.inc_tab();
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "buf" << k << "[0] += buf" << k << "[1];" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "temp"<< k << "[get_group_id(0)] = buf" << k << "[0];" << std::endl;
 
           stream.dec_tab();
@@ -282,20 +282,20 @@ namespace viennacl{
         void core_1(utils::kernel_generation_stream& stream, std::vector<detail::mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "__local " << scalartypes[k] << " buf" << k << "[" << local_size_1_ << "];" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << scalartypes[0] << " sum" << k << " = 0;" << std::endl;
 
           stream << "for(unsigned int i = lid ; i < " << num_groups_ << " ; i += get_local_size(0)){" << std::endl;
           stream.inc_tab();
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "sum" << k << " += temp" << k << "[i];" << std::endl;
           stream.dec_tab();
           stream << "}" << std::endl;
 
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k)
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
@@ -303,7 +303,7 @@ namespace viennacl{
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();
-            for(std::size_t k = 0 ; k < exprs.size() ; ++k){
+            for(vcl_size_t k = 0 ; k < exprs.size() ; ++k){
               stream << "buf" << k << "[lid] += buf" << k << "[lid + " << stride << "];" << std::endl;
             }
             stream.dec_tab();
@@ -313,12 +313,12 @@ namespace viennacl{
           stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
           stream << "if(lid==0){" << std::endl;
           stream.inc_tab();
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k){
+          for(vcl_size_t k = 0 ; k < exprs.size() ; ++k){
             stream << "buf" << k << "[0] += buf" << k << "[1];" << std::endl;
             exprs[k]->access_name("buf"+utils::to_string(k)+"[0]");
           }
 
-          std::size_t i = 0;
+          vcl_size_t i = 0;
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
             std::string str;
             detail::traverse(it->first, it->second, detail::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
@@ -329,7 +329,7 @@ namespace viennacl{
           stream << "}" << std::endl;
         }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
+        void core(vcl_size_t kernel_id, utils::kernel_generation_stream& stream, statements_type const & statements, std::vector<detail::mapping_type> const & mapping) const {
           std::vector<detail::mapped_scalar_reduction*> exprs;
           for(std::vector<detail::mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
             for(detail::mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)

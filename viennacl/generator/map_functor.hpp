@@ -45,7 +45,7 @@ namespace viennacl{
 
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
-          std::string create_name(unsigned int & current_arg, std::map<void *, std::size_t> & memory, void * handle) const{
+          std::string create_name(unsigned int & current_arg, std::map<void *, vcl_size_t> & memory, void * handle) const{
             if(handle==NULL)
               return "arg" + utils::to_string(current_arg_++);
             if(memory.insert(std::make_pair(handle, current_arg)).second)
@@ -57,7 +57,7 @@ namespace viennacl{
         public:
           typedef container_ptr_type result_type;
 
-          map_functor(std::map<void *, std::size_t> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
+          map_functor(std::map<void *, vcl_size_t> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
 
           /** @brief Binary leaf */
           template<class T>
@@ -157,7 +157,7 @@ namespace viennacl{
           }
 
         private:
-          std::map<void *, std::size_t> & memory_;
+          std::map<void *, vcl_size_t> & memory_;
           unsigned int & current_arg_;
           mapping_type & mapping_;
       };

@@ -52,7 +52,7 @@ namespace viennacl
        * @param ctx             Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
        *
        */
-      inline cl_mem memory_create(viennacl::ocl::context const & ctx, std::size_t size_in_bytes, const void * host_ptr = NULL)
+      inline cl_mem memory_create(viennacl::ocl::context const & ctx, vcl_size_t size_in_bytes, const void * host_ptr = NULL)
       {
         //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << " in context " << &ctx << std::endl;
         return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
@@ -68,9 +68,9 @@ namespace viennacl
        */
       inline void memory_copy(viennacl::ocl::handle<cl_mem> const & src_buffer,
                        viennacl::ocl::handle<cl_mem> & dst_buffer,
-                       std::size_t src_offset,
-                       std::size_t dst_offset,
-                       std::size_t bytes_to_copy)
+                       vcl_size_t src_offset,
+                       vcl_size_t dst_offset,
+                       vcl_size_t bytes_to_copy)
       {
         assert( &src_buffer.context() == &dst_buffer.context() && bool("Transfer between memory buffers in different contexts not supported yet!"));
 
@@ -95,8 +95,8 @@ namespace viennacl
        * @param async         Whether the operation should be asynchronous
        */
       inline void memory_write(viennacl::ocl::handle<cl_mem> & dst_buffer,
-                        std::size_t dst_offset,
-                        std::size_t bytes_to_copy,
+                        vcl_size_t dst_offset,
+                        vcl_size_t bytes_to_copy,
                         const void * ptr,
                         bool async = false)
       {
@@ -122,8 +122,8 @@ namespace viennacl
        * @param async         Whether the operation should be asynchronous
        */
       inline void memory_read(viennacl::ocl::handle<cl_mem> const & src_buffer,
-                       std::size_t src_offset,
-                       std::size_t bytes_to_copy,
+                       vcl_size_t src_offset,
+                       vcl_size_t bytes_to_copy,
                        void * ptr,
                        bool async = false)
       {

@@ -43,15 +43,15 @@ namespace viennacl
     {
       typedef matrix<SCALARTYPE, viennacl::row_major>  MatrixType;
 
-      std::size_t max_block_size = 32;
-      std::size_t num_blocks = (A.size2() - 1) / max_block_size + 1;
+      vcl_size_t max_block_size = 32;
+      vcl_size_t num_blocks = (A.size2() - 1) / max_block_size + 1;
       std::vector<SCALARTYPE> temp_buffer(A.internal_size2() * max_block_size);
 
       // Iterate over panels
-      for (std::size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
+      for (vcl_size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
       {
-        std::size_t row_start = panel_id * max_block_size;
-        std::size_t current_block_size = std::min<std::size_t>(A.size1() - row_start, max_block_size);
+        vcl_size_t row_start = panel_id * max_block_size;
+        vcl_size_t current_block_size = std::min<vcl_size_t>(A.size1() - row_start, max_block_size);
 
         viennacl::range     block_range(row_start, row_start + current_block_size);
         viennacl::range remainder_range(row_start + current_block_size, A.size1());
@@ -68,15 +68,15 @@ namespace viennacl
                                        &(temp_buffer[0]));
 
         // Factorize (kij-version):
-        for (std::size_t k=0; k < current_block_size - 1; ++k)
+        for (vcl_size_t k=0; k < current_block_size - 1; ++k)
         {
-          for (std::size_t i=k+1; i < current_block_size; ++i)
+          for (vcl_size_t i=k+1; i < current_block_size; ++i)
           {
             temp_buffer[row_start + i * A.internal_size2() + k] /= temp_buffer[row_start + k * A.internal_size2() + k];  // write l_ik
 
             SCALARTYPE l_ik = temp_buffer[row_start + i * A.internal_size2() + k];
 
-            for (std::size_t j = row_start + k + 1; j < A.size1(); ++j)
+            for (vcl_size_t j = row_start + k + 1; j < A.size1(); ++j)
               temp_buffer[i * A.internal_size2() + j] -= l_ik * temp_buffer[k * A.internal_size2() + j];  // l_ik * a_kj
           }
         }
@@ -119,15 +119,15 @@ namespace viennacl
     {
       typedef matrix<SCALARTYPE, viennacl::column_major>  MatrixType;
 
-      std::size_t max_block_size = 32;
-      std::size_t num_blocks = (A.size1() - 1) / max_block_size + 1;
+      vcl_size_t max_block_size = 32;
+      vcl_size_t num_blocks = (A.size1() - 1) / max_block_size + 1;
       std::vector<SCALARTYPE> temp_buffer(A.internal_size1() * max_block_size);
 
       // Iterate over panels
-      for (std::size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
+      for (vcl_size_t panel_id = 0; panel_id < num_blocks; ++panel_id)
       {
-        std::size_t col_start = panel_id * max_block_size;
-        std::size_t current_block_size = std::min<std::size_t>(A.size1() - col_start, max_block_size);
+        vcl_size_t col_start = panel_id * max_block_size;
+        vcl_size_t current_block_size = std::min<vcl_size_t>(A.size1() - col_start, max_block_size);
 
         viennacl::range     block_range(col_start, col_start + current_block_size);
         viennacl::range remainder_range(col_start + current_block_size, A.size1());
@@ -144,16 +144,16 @@ namespace viennacl
                                        &(temp_buffer[0]));
 
         // Factorize (kji-version):
-        for (std::size_t k=0; k < current_block_size; ++k)
+        for (vcl_size_t k=0; k < current_block_size; ++k)
         {
           SCALARTYPE a_kk = temp_buffer[col_start + k + k * A.internal_size1()];
-          for (std::size_t i=col_start+k+1; i < A.size1(); ++i)
+          for (vcl_size_t i=col_start+k+1; i < A.size1(); ++i)
             temp_buffer[i + k * A.internal_size1()] /= a_kk;  // write l_ik
 
-          for (std::size_t j=k+1; j < current_block_size; ++j)
+          for (vcl_size_t j=k+1; j < current_block_size; ++j)
           {
             SCALARTYPE a_kj = temp_buffer[col_start + k + j * A.internal_size1()];
-            for (std::size_t i=col_start+k+1; i < A.size1(); ++i)
+            for (vcl_size_t i=col_start+k+1; i < A.size1(); ++i)
               temp_buffer[i + j * A.internal_size1()] -= temp_buffer[i + k * A.internal_size1()] * a_kj;  // l_ik * a_kj
           }
         }

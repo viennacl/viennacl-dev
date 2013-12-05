@@ -35,6 +35,8 @@
 #include <deque>
 #include <cmath>
 
+#include "viennacl/forwards.h"
+
 namespace viennacl
 {
 
@@ -49,7 +51,7 @@ namespace viennacl
     {
       IndexT bw = 0;
 
-      for (std::size_t i = 0; i < permutation.size(); i++)
+      for (vcl_size_t i = 0; i < permutation.size(); i++)
       {
         if (!dof_assigned_to_node[i])
           continue;
@@ -84,7 +86,7 @@ namespace viennacl
     // n: int
     //    total number of values out of which comb is taken as selection
     template <typename IndexT>
-    bool comb_inc(std::vector<IndexT> & comb, std::size_t n)
+    bool comb_inc(std::vector<IndexT> & comb, vcl_size_t n)
     {
       IndexT m;
       IndexT k;
@@ -125,7 +127,7 @@ namespace viennacl
       //
       // Step 1: Set root nodes to visited
       //
-      for (std::size_t i=0; i<layer_list.size(); ++i)
+      for (vcl_size_t i=0; i<layer_list.size(); ++i)
       {
         for (typename std::vector<IndexT>::iterator it  = layer_list[i].begin();
                                                     it != layer_list[i].end();
@@ -138,7 +140,7 @@ namespace viennacl
       //
       while (layer_list.back().size() > 0)
       {
-        std::size_t layer_index = layer_list.size();  //parent nodes are at layer 0
+        vcl_size_t layer_index = layer_list.size();  //parent nodes are at layer 0
         layer_list.push_back(std::vector<IndexT>());
 
         for (typename std::vector<IndexT>::iterator it  = layer_list[layer_index].begin();
@@ -169,7 +171,7 @@ namespace viennacl
                            std::vector< std::vector<int> > & l,
                            int s)
     {
-      std::size_t n = matrix.size();
+      vcl_size_t n = matrix.size();
       //std::vector< std::vector<int> > l;
       std::vector<bool> inr(n, false);
       std::vector<int> nlist;
@@ -282,11 +284,11 @@ namespace viennacl
       * @return The next free dof available
       */
     template <typename IndexT, typename ValueT>
-    std::size_t cuthill_mckee_on_strongly_connected_component(std::vector< std::map<IndexT, ValueT> > const & matrix,
+    vcl_size_t cuthill_mckee_on_strongly_connected_component(std::vector< std::map<IndexT, ValueT> > const & matrix,
                                                               std::deque<IndexT> & node_assignment_queue,
                                                               std::vector<bool>  & dof_assigned_to_node,
                                                               std::vector<IndexT> & permutation,
-                                                              std::size_t current_dof)
+                                                              vcl_size_t current_dof)
     {
       typedef std::pair<IndexT, IndexT> NodeIdDegreePair; //first member is the node ID, second member is the node degree
 
@@ -295,7 +297,7 @@ namespace viennacl
       while (!node_assignment_queue.empty())
       {
         // Grab first node from queue
-        std::size_t node_id = node_assignment_queue.front();
+        vcl_size_t node_id = node_assignment_queue.front();
         node_assignment_queue.pop_front();
 
         // Assign dof if a new dof hasn't been assigned yet
@@ -308,7 +310,7 @@ namespace viennacl
           //
           // Get all neighbors of that node:
           //
-          std::size_t num_neighbors = 0;
+          vcl_size_t num_neighbors = 0;
           for (typename std::map<IndexT, ValueT>::const_iterator neighbor_it  = matrix[node_id].begin();
                                                                  neighbor_it != matrix[node_id].end();
                                                                ++neighbor_it)
@@ -324,7 +326,7 @@ namespace viennacl
           std::sort(local_neighbor_nodes.begin(), local_neighbor_nodes.begin() + num_neighbors, detail::cuthill_mckee_comp_func_pair<IndexT>);
 
           // Push neighbors to queue
-          for (std::size_t i=0; i<num_neighbors; ++i)
+          for (vcl_size_t i=0; i<num_neighbors; ++i)
             node_assignment_queue.push_back(local_neighbor_nodes[i].first);
 
         } // if node doesn't have a new dof yet
@@ -365,17 +367,17 @@ namespace viennacl
     std::vector<bool>   dof_assigned_to_node(matrix.size(), false);   //flag vector indicating whether node i has received a new dof
     std::deque<IndexT>  node_assignment_queue;
 
-    std::size_t current_dof = 0;  //the dof to be assigned
+    vcl_size_t current_dof = 0;  //the dof to be assigned
 
     while (current_dof < matrix.size()) //outer loop for each strongly connected component (there may be more than one)
     {
       //
       // preprocessing: Determine node degrees for nodes which have not been assigned
       //
-      std::size_t current_min_degree = matrix.size();
-      std::size_t node_with_minimum_degree = 0;
+      vcl_size_t current_min_degree = matrix.size();
+      vcl_size_t node_with_minimum_degree = 0;
       bool found_unassigned_node = false;
-      for (std::size_t i=0; i<matrix.size(); ++i)
+      for (vcl_size_t i=0; i<matrix.size(); ++i)
       {
         if (!dof_assigned_to_node[i])
         {
@@ -442,17 +444,17 @@ namespace viennacl
         * @return permutation vector r. r[l] = i means that the new label of node i will be l.
         *
        */
-      advanced_cuthill_mckee_tag(double a = 0.0, std::size_t gmax = 1) : starting_node_param_(a), max_root_nodes_(gmax) {}
+      advanced_cuthill_mckee_tag(double a = 0.0, vcl_size_t gmax = 1) : starting_node_param_(a), max_root_nodes_(gmax) {}
 
       double starting_node_param() const { return starting_node_param_;}
       void starting_node_param(double a) { if (a >= 0) starting_node_param_ = a; }
 
-      std::size_t max_root_nodes() const { return max_root_nodes_; }
-      void max_root_nodes(std::size_t gmax) { max_root_nodes_ = gmax; }
+      vcl_size_t max_root_nodes() const { return max_root_nodes_; }
+      void max_root_nodes(vcl_size_t gmax) { max_root_nodes_ = gmax; }
 
     private:
       double starting_node_param_;
-      std::size_t max_root_nodes_;
+      vcl_size_t max_root_nodes_;
   };
 
 
@@ -469,30 +471,30 @@ namespace viennacl
   std::vector<IndexT> reorder(std::vector< std::map<IndexT, ValueT> > const & matrix,
                               advanced_cuthill_mckee_tag const & tag)
   {
-    std::size_t n = matrix.size();
+    vcl_size_t n = matrix.size();
     double a = tag.starting_node_param();
-    std::size_t gmax = tag.max_root_nodes();
+    vcl_size_t gmax = tag.max_root_nodes();
     std::vector<IndexT> permutation(n);
     std::vector<bool>   dof_assigned_to_node(n, false);
     std::vector<IndexT> nodes_in_strongly_connected_component;
     std::vector<IndexT> parent_nodes;
-    std::size_t deg_min;
-    std::size_t deg_max;
-    std::size_t deg_a;
-    std::size_t deg;
+    vcl_size_t deg_min;
+    vcl_size_t deg_max;
+    vcl_size_t deg_a;
+    vcl_size_t deg;
     std::vector<IndexT> comb;
 
     nodes_in_strongly_connected_component.reserve(n);
     parent_nodes.reserve(n);
     comb.reserve(n);
 
-    std::size_t current_dof = 0;
+    vcl_size_t current_dof = 0;
 
     while (current_dof < matrix.size()) // for all strongly connected components
     {
       // get all nodes of the strongly connected component:
       nodes_in_strongly_connected_component.resize(0);
-      for (std::size_t i = 0; i < n; i++)
+      for (vcl_size_t i = 0; i < n; i++)
       {
         if (!dof_assigned_to_node[i])
         {
@@ -515,7 +517,7 @@ namespace viennacl
         if (deg_max == 0 || deg > deg_max)
           deg_max = deg;
       }
-      deg_a = deg_min + static_cast<std::size_t>(a * (deg_max - deg_min));
+      deg_a = deg_min + static_cast<vcl_size_t>(a * (deg_max - deg_min));
 
       // fill array of parent nodes:
       parent_nodes.resize(0);
@@ -536,9 +538,9 @@ namespace viennacl
       std::vector<IndexT> permutation_backup = permutation;
       std::vector<IndexT> permutation_best = permutation;
 
-      std::size_t current_dof_backup = current_dof;
+      vcl_size_t current_dof_backup = current_dof;
 
-      std::size_t g = 1;
+      vcl_size_t g = 1;
       comb.resize(1);
       comb[0] = 0;
 
@@ -583,7 +585,7 @@ namespace viennacl
             break;
 
           comb.resize(g);
-          for (std::size_t i = 0; i < g; i++)
+          for (vcl_size_t i = 0; i < g; i++)
             comb[i] = i;
         }
       }

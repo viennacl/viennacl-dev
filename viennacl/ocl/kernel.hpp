@@ -61,7 +61,7 @@ namespace viennacl
 
 
     public:
-      typedef std::size_t            size_type;
+      typedef vcl_size_t            size_type;
 
       kernel() : handle_(), p_program_(NULL), p_context_(NULL), name_()
       {

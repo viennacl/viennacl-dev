@@ -310,12 +310,12 @@ namespace viennacl
   //
   // Proxies:
   //
-  template <typename SizeType = std::size_t, typename DistanceType = std::ptrdiff_t>
+  template <typename SizeType = vcl_size_t, typename DistanceType = std::ptrdiff_t>
   class basic_range;
 
   typedef basic_range<>  range;
 
-  template <typename SizeType = std::size_t, typename DistanceType = std::ptrdiff_t>
+  template <typename SizeType = vcl_size_t, typename DistanceType = std::ptrdiff_t>
   class basic_slice;
 
   typedef basic_slice<>  slice;
@@ -574,10 +574,10 @@ namespace viennacl
 
 
     template <typename T>
-    std::size_t index_norm_inf(vector_base<T> const & vec);
+    vcl_size_t index_norm_inf(vector_base<T> const & vec);
 
     template <typename LHS, typename RHS, typename OP>
-    std::size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec);
+    vcl_size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec);
 
     //forward definition of prod_impl functions
 

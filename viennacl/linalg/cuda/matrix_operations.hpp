@@ -56,7 +56,7 @@ namespace viennacl
       template <typename NumericT, typename F,
                 typename ScalarType1>
       void am(matrix_base<NumericT, F> & mat1,
-              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         typedef NumericT        value_type;
 
@@ -108,8 +108,8 @@ namespace viennacl
       template <typename NumericT, typename F,
                 typename ScalarType1, typename ScalarType2>
       void ambm(matrix_base<NumericT, F> & mat1,
-                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         typedef NumericT        value_type;
 
@@ -186,8 +186,8 @@ namespace viennacl
       template <typename NumericT, typename F,
                 typename ScalarType1, typename ScalarType2>
       void ambm_m(matrix_base<NumericT, F> & mat1,
-                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  std::size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         typedef NumericT        value_type;
 
@@ -335,29 +335,29 @@ namespace viennacl
         // Step 2: Assign diagonal:
         unsigned int options_alpha = 0;
 
-        std::size_t mat_start = 0;
-        std::size_t mat_stride = 0;
-        std::size_t mat_size = viennacl::traits::size(vec);
+        vcl_size_t mat_start = 0;
+        vcl_size_t mat_stride = 0;
+        vcl_size_t mat_size = viennacl::traits::size(vec);
         if (viennacl::is_row_major<F>::value)
         {
-          std::size_t first_row_index = 0;
-          std::size_t first_col_index = 0;
+          vcl_size_t first_row_index = 0;
+          vcl_size_t first_col_index = 0;
           if (k < 0)
-            first_row_index = std::size_t(-k);
+            first_row_index = vcl_size_t(-k);
           else
-            first_col_index = std::size_t(k);
+            first_col_index = vcl_size_t(k);
           mat_start  =  (viennacl::traits::start1(mat) + first_row_index * viennacl::traits::stride1(mat)) * viennacl::traits::internal_size2(mat)
                        + viennacl::traits::start2(mat) + first_col_index * viennacl::traits::stride2(mat);
           mat_stride = viennacl::traits::stride1(mat) * viennacl::traits::internal_size2(mat) + viennacl::traits::stride2(mat);
         }
         else
         {
-          std::size_t first_row_index = 0;
-          std::size_t first_col_index = 0;
+          vcl_size_t first_row_index = 0;
+          vcl_size_t first_col_index = 0;
           if (k < 0)
-            first_row_index = std::size_t(-k);
+            first_row_index = vcl_size_t(-k);
           else
-            first_col_index = std::size_t(k);
+            first_col_index = vcl_size_t(k);
           mat_start  =    viennacl::traits::start1(mat) + first_row_index * viennacl::traits::stride1(mat)
                        + (viennacl::traits::start2(mat) + first_col_index * viennacl::traits::stride2(mat)) * viennacl::traits::internal_size1(mat);
           mat_stride = viennacl::traits::stride2(mat) * viennacl::traits::internal_size1(mat) + viennacl::traits::stride1(mat);
@@ -383,28 +383,28 @@ namespace viennacl
 
         unsigned int options_alpha = 0;
 
-        std::size_t mat_start = 0;
-        std::size_t mat_stride = 0;
+        vcl_size_t mat_start = 0;
+        vcl_size_t mat_stride = 0;
         if (viennacl::is_row_major<F>::value)
         {
-          std::size_t first_row_index = 0;
-          std::size_t first_col_index = 0;
+          vcl_size_t first_row_index = 0;
+          vcl_size_t first_col_index = 0;
           if (k < 0)
-            first_row_index = std::size_t(-k);
+            first_row_index = vcl_size_t(-k);
           else
-            first_col_index = std::size_t(k);
+            first_col_index = vcl_size_t(k);
           mat_start  =  (viennacl::traits::start1(mat) + first_row_index * viennacl::traits::stride1(mat)) * viennacl::traits::internal_size2(mat)
                        + viennacl::traits::start2(mat) + first_col_index * viennacl::traits::stride2(mat);
           mat_stride = viennacl::traits::stride1(mat) * viennacl::traits::internal_size2(mat) + viennacl::traits::stride2(mat);
         }
         else
         {
-          std::size_t first_row_index = 0;
-          std::size_t first_col_index = 0;
+          vcl_size_t first_row_index = 0;
+          vcl_size_t first_col_index = 0;
           if (k < 0)
-            first_row_index = std::size_t(-k);
+            first_row_index = vcl_size_t(-k);
           else
-            first_col_index = std::size_t(k);
+            first_col_index = vcl_size_t(k);
           mat_start  =    viennacl::traits::start1(mat) + first_row_index * viennacl::traits::stride1(mat)
                        + (viennacl::traits::start2(mat) + first_col_index * viennacl::traits::stride2(mat)) * viennacl::traits::internal_size1(mat);
           mat_stride = viennacl::traits::stride2(mat) * viennacl::traits::internal_size1(mat) + viennacl::traits::stride1(mat);
@@ -430,8 +430,8 @@ namespace viennacl
 
         unsigned int options_alpha = 0;
 
-        std::size_t mat_start = 0;
-        std::size_t mat_stride = 0;
+        vcl_size_t mat_start = 0;
+        vcl_size_t mat_stride = 0;
         if (viennacl::is_row_major<F>::value)
         {
           mat_start  = (viennacl::traits::start1(mat) + i * viennacl::traits::stride1(mat)) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat);
@@ -463,8 +463,8 @@ namespace viennacl
 
         unsigned int options_alpha = 0;
 
-        std::size_t mat_start = 0;
-        std::size_t mat_stride = 0;
+        vcl_size_t mat_start = 0;
+        vcl_size_t mat_stride = 0;
         if (viennacl::is_row_major<F>::value)
         {
           mat_start  = viennacl::traits::start1(mat) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat) + j * viennacl::traits::stride2(mat);
@@ -2478,7 +2478,7 @@ namespace viennacl
       */
       template <typename NumericT, typename F, typename S1>
       void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
-                                S1 const & alpha, std::size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                                S1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,
                                 const vector_base<NumericT> & vec2)
       {

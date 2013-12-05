@@ -144,9 +144,9 @@ namespace viennacl
                                   DenseMatrixType& A_out)
         {
           A_out.resize(I.size(), J.size(), false);
-          for(std::size_t j = 0; j < J.size(); ++j)
+          for(vcl_size_t j = 0; j < J.size(); ++j)
           {
-            for(std::size_t i = 0; i < I.size(); ++i)
+            for(vcl_size_t i = 0; i < I.size(); ++i)
               A_out(i,j) = A_in(I[i],J[j]);
           }
         }
@@ -249,7 +249,7 @@ namespace viennacl
                             SparseVectorType & m)
         {
             unsigned int  cnt = 0;
-            for (std::size_t i = 0; i < J.size(); ++i) {
+            for (vcl_size_t i = 0; i < J.size(); ++i) {
                 m[J[i]] = m_in[start_m_ind + cnt++];
             }
         }
@@ -290,9 +290,9 @@ namespace viennacl
           init_start_inds(g_J, m_inds);
           //create y_v
           std::vector<ScalarType> y_v(y_sz, static_cast<ScalarType>(0));
-          for(std::size_t i = 0; i < M_v.size(); ++i)
+          for(vcl_size_t i = 0; i < M_v.size(); ++i)
           {
-            for(std::size_t j = 0; j < g_I[i].size(); ++j)
+            for(vcl_size_t j = 0; j < g_I[i].size(); ++j)
             {
               if(g_I[i][j] == i)
                 y_v[y_inds[i] + j] = static_cast<ScalarType>(1.0);
@@ -444,10 +444,10 @@ namespace viennacl
 
         template <typename SizeType>
         void write_set_to_array(const std::vector<std::vector<SizeType> >& ind_set, std::vector<cl_uint>& a){
-            std::size_t cnt = 0;
+            vcl_size_t cnt = 0;
             //unsigned int tmp;
-            for(std::size_t i = 0; i < ind_set.size(); ++i){
-                for(std::size_t j = 0; j < ind_set[i].size(); ++j){
+            for(vcl_size_t i = 0; i < ind_set.size(); ++i){
+                for(vcl_size_t j = 0; j < ind_set[i].size(); ++j){
                     a[cnt++] = static_cast<cl_uint>(ind_set[i][j]);
                 }
             }
@@ -598,7 +598,7 @@ namespace viennacl
         template<typename MatrixType>
         void sparse_transpose(const MatrixType& A_in, MatrixType& A){
             typedef typename MatrixType::value_type ScalarType;
-            std::vector<std::map<std::size_t, ScalarType> >   temp_A(A_in.size2());
+            std::vector<std::map<vcl_size_t, ScalarType> >   temp_A(A_in.size2());
             A.resize(A_in.size2(), A_in.size1(), false);
 
             for (typename MatrixType::const_iterator1 row_it = A_in.begin1();
@@ -613,9 +613,9 @@ namespace viennacl
                 }
             }
 
-            for (std::size_t i=0; i<temp_A.size(); ++i)
+            for (vcl_size_t i=0; i<temp_A.size(); ++i)
             {
-                for (typename std::map<std::size_t, ScalarType>::const_iterator it = temp_A[i].begin();
+                for (typename std::map<vcl_size_t, ScalarType>::const_iterator it = temp_A[i].begin();
                      it != temp_A[i].end();
                      ++it)
                     A(i, it->first) = it->second;

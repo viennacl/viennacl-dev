@@ -278,7 +278,7 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_inner_prod(StringType & source, std::string const & numeric_string, std::size_t vector_num)
+        void generate_inner_prod(StringType & source, std::string const & numeric_string, vcl_size_t vector_num)
         {
           std::stringstream ss;
           ss << vector_num;
@@ -287,7 +287,7 @@ namespace viennacl
           source.append("__kernel void inner_prod"); source.append(vector_num_string); source.append("( \n");
           source.append("          __global const "); source.append(numeric_string); source.append(" * x, \n");
           source.append("          uint4 params_x, \n");
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;
@@ -302,7 +302,7 @@ namespace viennacl
           source.append("  unsigned int vec_stop_index  = min((unsigned int)((get_group_id(0) + 1) * get_local_size(0) * entries_per_thread), params_x.z); \n");
 
           // compute partial results within group:
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;
@@ -310,14 +310,14 @@ namespace viennacl
           }
           source.append("  for (unsigned int i = vec_start_index + get_local_id(0); i < vec_stop_index; i += get_local_size(0)) { \n");
           source.append("    ");  source.append(numeric_string); source.append(" val_x = x[i*params_x.y + params_x.x]; \n");
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;
             source.append("    tmp"); source.append(ss.str()); source.append(" += val_x * y"); source.append(ss.str()); source.append("[i * params_y"); source.append(ss.str()); source.append(".y + params_y"); source.append(ss.str()); source.append(".x]; \n");
           }
           source.append("  } \n");
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;
@@ -329,7 +329,7 @@ namespace viennacl
           source.append("  { \n");
           source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    if (get_local_id(0) < stride) { \n");
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;
@@ -340,7 +340,7 @@ namespace viennacl
           source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
 
           source.append("  if (get_local_id(0) == 0) { \n");
-          for (std::size_t i=0; i<vector_num; ++i)
+          for (vcl_size_t i=0; i<vector_num; ++i)
           {
             ss.str("");
             ss << i;

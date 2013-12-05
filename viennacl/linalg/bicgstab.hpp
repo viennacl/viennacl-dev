@@ -49,19 +49,19 @@ namespace viennacl
         * @param max_iters        The maximum number of iterations
         * @param max_iters_before_restart   The maximum number of iterations before BiCGStab is reinitialized (to avoid accumulation of round-off errors)
         */
-        bicgstab_tag(double tol = 1e-8, std::size_t max_iters = 400, std::size_t max_iters_before_restart = 200)
+        bicgstab_tag(double tol = 1e-8, vcl_size_t max_iters = 400, vcl_size_t max_iters_before_restart = 200)
           : tol_(tol), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {}
 
         /** @brief Returns the relative tolerance */
         double tolerance() const { return tol_; }
         /** @brief Returns the maximum number of iterations */
-        std::size_t max_iterations() const { return iterations_; }
+        vcl_size_t max_iterations() const { return iterations_; }
         /** @brief Returns the maximum number of iterations before a restart*/
-        std::size_t max_iterations_before_restart() const { return iterations_before_restart_; }
+        vcl_size_t max_iterations_before_restart() const { return iterations_before_restart_; }
 
         /** @brief Return the number of solver iterations: */
-        std::size_t iters() const { return iters_taken_; }
-        void iters(std::size_t i) const { iters_taken_ = i; }
+        vcl_size_t iters() const { return iters_taken_; }
+        void iters(vcl_size_t i) const { iters_taken_ = i; }
 
         /** @brief Returns the estimated relative error at the end of the solver run */
         double error() const { return last_error_; }
@@ -70,11 +70,11 @@ namespace viennacl
 
       private:
         double tol_;
-        std::size_t iterations_;
-        std::size_t iterations_before_restart_;
+        vcl_size_t iterations_;
+        vcl_size_t iterations_before_restart_;
 
         //return values from solver
-        mutable std::size_t iters_taken_;
+        mutable vcl_size_t iters_taken_;
         mutable double last_error_;
     };
 
@@ -116,8 +116,8 @@ namespace viennacl
         return result;
 
       bool restart_flag = true;
-      std::size_t last_restart = 0;
-      for (std::size_t i = 0; i < tag.max_iterations(); ++i)
+      vcl_size_t last_restart = 0;
+      for (vcl_size_t i = 0; i < tag.max_iterations(); ++i)
       {
         if (restart_flag)
         {
@@ -212,7 +212,7 @@ namespace viennacl
         return result;
 
       bool restart_flag = true;
-      std::size_t last_restart = 0;
+      vcl_size_t last_restart = 0;
       for (unsigned int i = 0; i < tag.max_iterations(); ++i)
       {
         if (restart_flag)

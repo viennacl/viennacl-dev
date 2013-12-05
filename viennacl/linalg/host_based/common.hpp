@@ -51,21 +51,21 @@ namespace viennacl
             typedef NumericT   value_type;
 
             vector_array_wrapper(value_type * A,
-                                 std::size_t start,
-                                 std::size_t inc)
+                                 vcl_size_t start,
+                                 vcl_size_t inc)
              : A_(A),
                start_(start),
                inc_(inc) {}
 
-            value_type & operator()(std::size_t i)
+            value_type & operator()(vcl_size_t i)
             {
               return A_[i * inc_ + start_];
             }
 
           private:
             value_type * A_;
-            std::size_t start_;
-            std::size_t inc_;
+            vcl_size_t start_;
+            vcl_size_t inc_;
         };
 
 
@@ -100,24 +100,24 @@ namespace viennacl
             typedef NumericT   value_type;
 
             matrix_array_wrapper(value_type * A,
-                                 std::size_t start1, std::size_t start2,
-                                 std::size_t inc1,   std::size_t inc2,
-                                 std::size_t internal_size1, std::size_t internal_size2)
+                                 vcl_size_t start1, vcl_size_t start2,
+                                 vcl_size_t inc1,   vcl_size_t inc2,
+                                 vcl_size_t internal_size1, vcl_size_t internal_size2)
              : A_(A),
                start1_(start1), start2_(start2),
                inc1_(inc1), inc2_(inc2),
                internal_size1_(internal_size1), internal_size2_(internal_size2) {}
 
-            value_type & operator()(std::size_t i, std::size_t j)
+            value_type & operator()(vcl_size_t i, vcl_size_t j)
             {
               return A_[F::mem_index(i * inc1_ + start1_, j * inc2_ + start2_, internal_size1_, internal_size2_)];
             }
 
           private:
             value_type * A_;
-            std::size_t start1_, start2_;
-            std::size_t inc1_, inc2_;
-            std::size_t internal_size1_, internal_size2_;
+            vcl_size_t start1_, start2_;
+            vcl_size_t inc1_, inc2_;
+            vcl_size_t internal_size1_, internal_size2_;
         };
 
         template <typename NumericT, typename MajorityCategory>
@@ -129,24 +129,24 @@ namespace viennacl
             typedef NumericT   value_type;
 
             matrix_array_wrapper(value_type * A,
-                                 std::size_t start1, std::size_t start2,
-                                 std::size_t inc1,   std::size_t inc2,
-                                 std::size_t internal_size1, std::size_t internal_size2)
+                                 vcl_size_t start1, vcl_size_t start2,
+                                 vcl_size_t inc1,   vcl_size_t inc2,
+                                 vcl_size_t internal_size1, vcl_size_t internal_size2)
              : A_(A),
                start1_(start1), start2_(start2),
                inc1_(inc1), inc2_(inc2),
                internal_size1_(internal_size1), internal_size2_(internal_size2) {}
 
-            value_type & operator()(std::size_t i, std::size_t j)
+            value_type & operator()(vcl_size_t i, vcl_size_t j)
             {
               return A_[F::mem_index(j * inc1_ + start1_, i * inc2_ + start2_, internal_size1_, internal_size2_)];  //swapping row and column indices here
             }
 
           private:
             value_type * A_;
-            std::size_t start1_, start2_;
-            std::size_t inc1_, inc2_;
-            std::size_t internal_size1_, internal_size2_;
+            vcl_size_t start1_, start2_;
+            vcl_size_t inc1_, inc2_;
+            vcl_size_t internal_size1_, internal_size2_;
         };
 
       }

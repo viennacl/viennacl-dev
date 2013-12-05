@@ -71,8 +71,8 @@ namespace viennacl
           template<typename VectorType, typename MatrixType>
           void write_to_block(VectorType& con_A_I_J, unsigned int start_ind,  const std::vector<unsigned int>& I, const std::vector<unsigned int>& J, MatrixType& m){
               m.resize(I.size(), J.size(), false);
-              for(std::size_t i = 0; i < J.size(); ++i){
-                  for(std::size_t j = 0; j < I.size(); ++j){
+              for(vcl_size_t i = 0; i < J.size(); ++i){
+                  for(vcl_size_t j = 0; j < I.size(); ++j){
                       m(j,i) = con_A_I_J[start_ind + i*I.size() + j];
                   }
               }
@@ -83,7 +83,7 @@ namespace viennacl
                                       const std::vector<std::vector<unsigned int> >& g_I, const std::vector<std::vector<unsigned int> >& g_J){
               typedef typename VectorType::value_type ScalarType;
               std::vector<boost::numeric::ublas::matrix<ScalarType> > com_A_I_J(g_I.size());
-              for(std::size_t i = 0; i < g_I.size(); ++i){
+              for(vcl_size_t i = 0; i < g_I.size(); ++i){
                   write_to_block( con_A_I_J, blocks_ind[i], g_I[i], g_J[i], com_A_I_J[i]);
                   std::cout<<com_A_I_J[i]<<std::endl;
               }
@@ -93,9 +93,9 @@ namespace viennacl
               typedef typename VectorType::value_type ScalarType;
               std::vector<boost::numeric::ublas::vector<ScalarType> > com_v(g_J.size());
               //Print<ScalarType>(std::cout, con_v.begin(), con_v.end());
-              for(std::size_t i = 0; i < g_J.size(); ++i){
+              for(vcl_size_t i = 0; i < g_J.size(); ++i){
                   com_v[i].resize(g_J[i].size());
-                  for(std::size_t j = 0; j < g_J[i].size(); ++j){
+                  for(vcl_size_t j = 0; j < g_J[i].size(); ++j){
                       com_v[i](j) = con_v[block_ind[i] + j];
                   }
                   std::cout<<com_v[i]<<std::endl;
@@ -114,7 +114,7 @@ namespace viennacl
                                           unsigned int& sz, std::vector<cl_uint>& blocks_ind, std::vector<cl_uint>& matrix_dims)
           {
               sz = 0;
-              for(std::size_t i = 0; i < g_I.size(); ++i){
+              for(vcl_size_t i = 0; i < g_I.size(); ++i){
                   sz += static_cast<unsigned int>(g_I[i].size()*g_J[i].size());
                   matrix_dims[2*i] = static_cast<cl_uint>(g_I[i].size());
                   matrix_dims[2*i + 1] = static_cast<cl_uint>(g_J[i].size());
@@ -129,7 +129,7 @@ namespace viennacl
           template <typename SizeType>
           void get_size(const std::vector<std::vector<SizeType> >& inds, SizeType & size){
               size = 0;
-              for (std::size_t i = 0; i < inds.size(); ++i) {
+              for (vcl_size_t i = 0; i < inds.size(); ++i) {
                   size += static_cast<unsigned int>(inds[i].size());
               }
           }
@@ -140,7 +140,7 @@ namespace viennacl
           */
           template <typename SizeType>
           void init_start_inds(const std::vector<std::vector<SizeType> >& inds, std::vector<cl_uint>& start_inds){
-              for(std::size_t i = 0; i < inds.size(); ++i){
+              for(vcl_size_t i = 0; i < inds.size(); ++i){
                   start_inds[i+1] = start_inds[i] + static_cast<cl_uint>(inds[i].size());
               }
           }
@@ -154,7 +154,7 @@ namespace viennacl
           template<typename MatrixType, typename ScalarType>
           void dot_prod(const MatrixType& A,  unsigned int beg_ind, ScalarType& res){
               res = static_cast<ScalarType>(0);
-              for(std::size_t i = beg_ind; i < A.size1(); ++i){
+              for(vcl_size_t i = beg_ind; i < A.size1(); ++i){
                   res += A(i, beg_ind-1)*A(i, beg_ind-1);
               }
           }
@@ -296,7 +296,7 @@ namespace viennacl
           void get_max_block_size(const std::vector<std::vector<SizeType> >& inds, SizeType & max_size)
           {
               max_size = 0;
-              for(std::size_t i = 0; i < inds.size(); ++i){
+              for(vcl_size_t i = 0; i < inds.size(); ++i){
                   if(inds[i].size() > max_size){
                       max_size = static_cast<SizeType>(inds[i].size());
                   }
@@ -332,9 +332,9 @@ namespace viennacl
           {
               typedef typename MatrixType::value_type ScalarType;
               ScalarType inn_prod = static_cast<ScalarType>(0);
-              for(std::size_t i = 0; i < R.size2(); ++i){
+              for(vcl_size_t i = 0; i < R.size2(); ++i){
                   custom_dot_prod(R, y, static_cast<unsigned int>(i), inn_prod);
-                  for(std::size_t j = i; j < R.size1(); ++j){
+                  for(vcl_size_t j = i; j < R.size1(); ++j){
                       if(i == j){
                           y(j) -= b_v(i)*inn_prod;
                       }
@@ -354,7 +354,7 @@ namespace viennacl
           void apply_q_trans_mat(const MatrixType& R, const VectorType& b_v, MatrixType& A)
           {
               VectorType tmp_v;
-              for(std::size_t i = 0; i < A.size2(); ++i){
+              for(vcl_size_t i = 0; i < A.size2(); ++i){
                   tmp_v = (VectorType)column(A,i);
                   apply_q_trans_vec(R, b_v, tmp_v);
                   column(A,i) = tmp_v;

@@ -56,10 +56,10 @@ namespace viennacl
     namespace detail
     {
       //static const float EPS = 0.00001f;
-      //static const std::size_t ITER_MAX = 50;
+      //static const vcl_size_t ITER_MAX = 50;
 
       static const double EPS = 1e-10;
-      static const std::size_t ITER_MAX = 50;
+      static const vcl_size_t ITER_MAX = 50;
 
       template <typename SCALARTYPE>
       SCALARTYPE pythag(SCALARTYPE a, SCALARTYPE b)
@@ -78,7 +78,7 @@ namespace viennacl
       typename VectorType::value_type norm_lcl(VectorType const & x, unsigned int size)
       {
         typename VectorType::value_type x_norm = 0.0;
-        for(std::size_t i = 0; i < size; i++)
+        for(vcl_size_t i = 0; i < size; i++)
           x_norm += std::pow(x[i], 2);
         return std::sqrt(x_norm);
       }
@@ -87,7 +87,7 @@ namespace viennacl
       void normalize(VectorType & x, unsigned int size)
       {
         typename VectorType::value_type x_norm = norm_lcl(x, size);
-        for(std::size_t i = 0; i < size; i++)
+        for(vcl_size_t i = 0; i < size; i++)
             x[i] /= x_norm;
       }
 
@@ -146,8 +146,8 @@ namespace viennacl
       template <typename SCALARTYPE, unsigned int ALIGNMENT>
       void copy_vec(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& V,
-                    std::size_t row_start,
-                    std::size_t col_start,
+                    vcl_size_t row_start,
+                    vcl_size_t col_start,
                     bool copy_col
       )
       {
@@ -173,10 +173,10 @@ namespace viennacl
       void prepare_householder_vector(
                                     viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                                     viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
-                                    std::size_t size,
-                                    std::size_t row_start,
-                                    std::size_t col_start,
-                                    std::size_t start,
+                                    vcl_size_t size,
+                                    vcl_size_t row_start,
+                                    vcl_size_t col_start,
+                                    vcl_size_t start,
                                     bool is_column
                                     )
       {
@@ -198,7 +198,7 @@ namespace viennacl
       {
         std::vector<SCALARTYPE> foo(A.size1() * A.size1(), 0);
 
-        for(std::size_t i = 0; i < A.size1(); i++)
+        for(vcl_size_t i = 0; i < A.size1(); i++)
         {
           foo[i*A.size1() + i] = 1;
         }
