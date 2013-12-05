@@ -525,9 +525,6 @@ namespace viennacl
                      const viennacl::vector_base<SCALARTYPE> & vec,
                            viennacl::vector_base<SCALARTYPE> & result)
       {
-        assert(   vec.start() == 0 &&    vec.stride() == 1 && bool("Strided matrix-vector product for COO not supported!"));
-        assert(result.start() == 0 && result.stride() == 1 && bool("Strided matrix-vector product for COO not supported!"));
-
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<SCALARTYPE>::init(ctx);
 
