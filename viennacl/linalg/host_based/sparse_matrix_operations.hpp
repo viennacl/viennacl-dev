@@ -1227,20 +1227,18 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (long item_id = 0; item_id < static_cast<long>(sp_mat.maxnnz()); ++item_id) {
-
-            for (vcl_size_t row = 0; row < sp_mat.size1(); ++row) {
-
+          for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+          {
+            for (long item_id = 0; item_id < static_cast<long>(sp_mat.maxnnz()); ++item_id)
+            {
               vcl_size_t offset = row + item_id * sp_mat.internal_size1();
               NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
               unsigned int sp_mat_col = sp_mat_coords[offset];
 
-              if( sp_mat_val != 0) {
-
-                for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
-
-                  result_wrapper( row, col) += sp_mat_val * d_mat_wrapper( sp_mat_col, col);
-                }
+              if( sp_mat_val != 0)
+              {
+                for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                  result_wrapper(row, col) += sp_mat_val * d_mat_wrapper( sp_mat_col, col);
               }
             }
           }
