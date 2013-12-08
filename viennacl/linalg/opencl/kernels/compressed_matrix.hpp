@@ -92,117 +92,74 @@ namespace viennacl
           source.append("}; \n");
         }
 
-        template <typename StringType>
-        void generate_compressed_matrix_d_mat_mul(StringType & source, std::string const & numeric_string)
+        namespace detail
         {
-          source.append("__kernel void d_mat_mul( \n");
-          source.append("          __global const unsigned int * sp_mat_row_indices, \n");
-          source.append("          __global const unsigned int * sp_mat_col_indices, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * sp_mat_elements, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * d_mat, \n");
-          source.append("          unsigned int d_mat_row_start, \n");
-          source.append("          unsigned int d_mat_col_start, \n");
-          source.append("          unsigned int d_mat_row_inc, \n");
-          source.append("          unsigned int d_mat_col_inc, \n");
-          source.append("          unsigned int d_mat_row_size, \n");
-          source.append("          unsigned int d_mat_col_size, \n");
-          source.append("          unsigned int d_mat_internal_rows, \n");
-          source.append("          unsigned int d_mat_internal_cols, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("          unsigned int result_row_start, \n");
-          source.append("          unsigned int result_col_start, \n");
-          source.append("          unsigned int result_row_inc, \n");
-          source.append("          unsigned int result_col_inc, \n");
-          source.append("          unsigned int result_row_size, \n");
-          source.append("          unsigned int result_col_size, \n");
-          source.append("          unsigned int result_internal_rows, \n");
-          source.append("          unsigned int result_internal_cols) { \n");
+          template <typename StringType>
+          void generate_compressed_matrix_dense_matrix_mult(StringType & source, std::string const & numeric_string, bool is_transposed)
+          {
+            if (is_transposed)
+              source.append("__kernel void d_tr_mat_mul( \n");
+            else
+              source.append("__kernel void d_mat_mul( \n");
+            source.append("          __global const unsigned int * sp_mat_row_indices, \n");
+            source.append("          __global const unsigned int * sp_mat_col_indices, \n");
+            source.append("          __global const "); source.append(numeric_string); source.append(" * sp_mat_elements, \n");
+            source.append("          __global const "); source.append(numeric_string); source.append(" * d_mat, \n");
+            source.append("          unsigned int d_mat_row_start, \n");
+            source.append("          unsigned int d_mat_col_start, \n");
+            source.append("          unsigned int d_mat_row_inc, \n");
+            source.append("          unsigned int d_mat_col_inc, \n");
+            source.append("          unsigned int d_mat_row_size, \n");
+            source.append("          unsigned int d_mat_col_size, \n");
+            source.append("          unsigned int d_mat_internal_rows, \n");
+            source.append("          unsigned int d_mat_internal_cols, \n");
+            source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
+            source.append("          unsigned int result_row_start, \n");
+            source.append("          unsigned int result_col_start, \n");
+            source.append("          unsigned int result_row_inc, \n");
+            source.append("          unsigned int result_col_inc, \n");
+            source.append("          unsigned int result_row_size, \n");
+            source.append("          unsigned int result_col_size, \n");
+            source.append("          unsigned int result_internal_rows, \n");
+            source.append("          unsigned int result_internal_cols) { \n");
 
-            // split work rows (sparse matrix rows) to thread groups
-          source.append("  for (unsigned int row = get_group_id(0); row < result_row_size; row += get_num_groups(0)) { \n");
+              // split work rows (sparse matrix rows) to thread groups
+            source.append("  for (unsigned int row = get_group_id(0); row < result_row_size; row += get_num_groups(0)) { \n");
 
-          source.append("    unsigned int row_start = sp_mat_row_indices[row]; \n");
-          source.append("    unsigned int row_end = sp_mat_row_indices[row+1]; \n");
+            source.append("    unsigned int row_start = sp_mat_row_indices[row]; \n");
+            source.append("    unsigned int row_end = sp_mat_row_indices[row+1]; \n");
 
-              // split result cols between threads in a thread group
-          source.append("    for ( unsigned int col = get_local_id(0); col < result_col_size; col += get_local_size(0) ) { \n");
+                // split result cols between threads in a thread group
+            source.append("    for ( unsigned int col = get_local_id(0); col < result_col_size; col += get_local_size(0) ) { \n");
 
-          source.append("      "); source.append(numeric_string); source.append(" r = 0; \n");
+            source.append("      "); source.append(numeric_string); source.append(" r = 0; \n");
 
-          source.append("      for (unsigned int k = row_start; k < row_end; k ++) { \n");
+            source.append("      for (unsigned int k = row_start; k < row_end; k ++) { \n");
 
-          source.append("        unsigned int j = sp_mat_col_indices[k]; \n");
-          source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elements[k]; \n");
+            source.append("        unsigned int j = sp_mat_col_indices[k]; \n");
+            source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elements[k]; \n");
 
-          source.append("        "); source.append(numeric_string); source.append(" y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols + \n");
-          source.append("                          d_mat_col_start + col * d_mat_col_inc ]; \n");
-          source.append("        r += x * y; \n");
-          source.append("      } \n");
+            source.append("        "); source.append(numeric_string);
+            if (is_transposed)
+              source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start +   j * d_mat_col_inc ]; \n");
+            else
+              source.append(" y = d_mat[ (d_mat_row_start +   j * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + col * d_mat_col_inc ]; \n");
+            source.append("        r += x * y; \n");
+            source.append("      } \n");
 
-          source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + \n");
-          source.append("        result_col_start + col * result_col_inc ] = r; \n");
-          source.append("    } \n");
-          source.append("  } \n");
+            source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + result_col_start + col * result_col_inc ] = r; \n");
+            source.append("    } \n");
+            source.append("  } \n");
 
-          source.append("} \n");
+            source.append("} \n");
 
+          }
         }
-
         template <typename StringType>
-        void generate_compressed_matrix_d_tr_mat_mul(StringType & source, std::string const & numeric_string)
+        void generate_compressed_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
-
-          source.append("__kernel void d_tr_mat_mul( \n");
-          source.append("          __global const unsigned int * sp_mat_row_indices, \n");
-          source.append("          __global const unsigned int * sp_mat_col_indices, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * sp_mat_elements, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * d_mat, \n");
-          source.append("          unsigned int d_mat_row_start, \n");
-          source.append("          unsigned int d_mat_col_start, \n");
-          source.append("          unsigned int d_mat_row_inc, \n");
-          source.append("          unsigned int d_mat_col_inc, \n");
-          source.append("          unsigned int d_mat_row_size, \n");
-          source.append("          unsigned int d_mat_col_size, \n");
-          source.append("          unsigned int d_mat_internal_rows, \n");
-          source.append("          unsigned int d_mat_internal_cols, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("          unsigned int result_row_start, \n");
-          source.append("          unsigned int result_col_start, \n");
-          source.append("          unsigned int result_row_inc, \n");
-          source.append("          unsigned int result_col_inc, \n");
-          source.append("          unsigned int result_row_size, \n");
-          source.append("          unsigned int result_col_size, \n");
-          source.append("          unsigned int result_internal_rows, \n");
-          source.append("          unsigned int result_internal_cols ) { \n");
-
-            // split work rows (sparse matrix rows) to thread groups
-          source.append("  for (unsigned int row = get_group_id(0); row < result_row_size; row += get_num_groups(0)) { \n");
-
-          source.append("    unsigned int row_start = sp_mat_row_indices[row]; \n");
-          source.append("    unsigned int row_end = sp_mat_row_indices[row+1]; \n");
-
-              // split result cols between threads in a thread group
-          source.append("    for ( unsigned int col = get_local_id(0); col < result_col_size; col += get_local_size(0) ) { \n");
-
-          source.append("      "); source.append(numeric_string); source.append(" r = 0; \n");
-                // TODO check to see if uncoalesced read from d_mat can be avoided
-                // possible solution is that threads in a group unroll the k loop (danger: lots of threads idle in many blocks)
-          source.append("      for (unsigned int k = row_start; k < row_end; k ++) { \n");
-
-          source.append("       unsigned int j = sp_mat_col_indices[k]; \n");
-          source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elements[k]; \n");
-
-          source.append("        "); source.append(numeric_string); source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + \n");
-          source.append("                          d_mat_col_start + j * d_mat_col_inc ]; \n");
-          source.append("        r += x * y; \n");
-          source.append("      } \n");
-
-          source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + \n");
-          source.append("        result_col_start + col * result_col_inc ] = r; \n");
-          source.append("    } \n");
-          source.append("  } \n");
-
-          source.append("} \n");
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true);
         }
 
         template <typename StringType>
@@ -1096,8 +1053,7 @@ namespace viennacl
                 generate_compressed_matrix_unit_lu_backward(source, numeric_string);
                 generate_compressed_matrix_unit_lu_forward(source, numeric_string);
               }
-              generate_compressed_matrix_d_mat_mul(source, numeric_string);
-              generate_compressed_matrix_d_tr_mat_mul(source, numeric_string);
+              generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
               generate_compressed_matrix_row_info_extractor(source, numeric_string);
               generate_compressed_matrix_vec_mul(source, numeric_string);
               generate_compressed_matrix_vec_mul4(source, numeric_string);
