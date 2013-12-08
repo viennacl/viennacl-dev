@@ -1,10 +1,6 @@
 
 # do not build tests by default, since they require Boost
-if (VIENNACL_SRC_DIST)
- option(BUILD_TESTING "Build the tests " ON)
-else (VIENNACL_SRC_DIST)
- option(BUILD_TESTING "Build the tests " OFF)
-endif(VIENNACL_SRC_DIST)
+option(BUILD_TESTING "Build the tests " OFF)
 
 include(CTest)
 include(CMakeDependentOption)
