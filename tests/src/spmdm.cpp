@@ -79,6 +79,10 @@ int test(NumericT epsilon)
     return EXIT_FAILURE;
   }
 
+  // add some extra weight to diagonal in order to avoid issues with round-off errors
+  for (std::size_t i=0; i<ublas_lhs.size1(); ++i)
+    ublas_lhs(i,i) *= 1.5;
+
   std::size_t cols_rhs = 13;
 
   viennacl::compressed_matrix<NumericT> compressed_lhs;
@@ -104,7 +108,7 @@ int test(NumericT epsilon)
 
   for (unsigned int i = 0; i < ublas_rhs1.size1(); i++)
     for (unsigned int j = 0; j < ublas_rhs1.size2(); j++)
-      ublas_rhs1(i,j) = random<NumericT>();
+      ublas_rhs1(i,j) = NumericT(0.5) + NumericT(0.1) * random<NumericT>();
   viennacl::copy( ublas_rhs1, rhs1);
 
   ublas_rhs2 = ublas::trans( ublas_rhs1);
