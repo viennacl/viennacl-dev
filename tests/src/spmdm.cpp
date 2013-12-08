@@ -69,7 +69,7 @@ int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matr
   return EXIT_SUCCESS;
 }
 
-template <typename NumericT>
+template <typename NumericT, typename ResultLayoutT, typename FactorLayoutT>
 int test(NumericT epsilon)
 {
   int retVal = EXIT_SUCCESS;
@@ -92,20 +92,18 @@ int test(NumericT epsilon)
   viennacl::ell_matrix<NumericT>        ell_lhs;
   viennacl::coordinate_matrix<NumericT> coo_lhs;
 
-//  ublas::matrix<ScalarType> ublas_result( size/2, size/2);
-//  viennacl::matrix<ScalarType> result( size/2, size/2);
   ublas::matrix<NumericT> ublas_result;
-  viennacl::matrix<NumericT> result;
+  viennacl::matrix<NumericT, ResultLayoutT> result;
 
   viennacl::copy( ublas_lhs, compressed_lhs);
   viennacl::copy( ublas_lhs, ell_lhs);
   viennacl::copy( ublas_lhs, coo_lhs);
 
   ublas::matrix<NumericT> ublas_rhs1(ublas_lhs.size2(), cols_rhs);
-  viennacl::matrix<NumericT> rhs1(ublas_lhs.size2(), cols_rhs);
+  viennacl::matrix<NumericT, FactorLayoutT> rhs1(ublas_lhs.size2(), cols_rhs);
 
   ublas::matrix<NumericT> ublas_rhs2;
-  viennacl::matrix<NumericT> rhs2;
+  viennacl::matrix<NumericT, FactorLayoutT> rhs2;
 
   ublas::matrix<NumericT> temp(ublas_rhs1.size1(), cols_rhs);
 
@@ -211,11 +209,43 @@ int main()
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  eps:     " << epsilon << std::endl;
     std::cout << "  numeric: float" << std::endl;
-    retval = test<NumericT>(epsilon);
+    std::cout << "  layout:  row-major, row-major" << std::endl;
+    retval = test<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
     if( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
+
+    std::cout << "# Testing setup:" << std::endl;
+    std::cout << "  eps:     " << epsilon << std::endl;
+    std::cout << "  numeric: float" << std::endl;
+    std::cout << "  layout:  row-major, column-major" << std::endl;
+    retval = test<NumericT, viennacl::row_major, viennacl::column_major>(epsilon);
+    if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+    else
+        return retval;
+
+    std::cout << "# Testing setup:" << std::endl;
+    std::cout << "  eps:     " << epsilon << std::endl;
+    std::cout << "  numeric: float" << std::endl;
+    std::cout << "  layout:  column-major, row-major" << std::endl;
+    retval = test<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
+    if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+    else
+        return retval;
+
+    std::cout << "# Testing setup:" << std::endl;
+    std::cout << "  eps:     " << epsilon << std::endl;
+    std::cout << "  numeric: float" << std::endl;
+    std::cout << "  layout:  column-major, column-major" << std::endl;
+    retval = test<NumericT, viennacl::column_major, viennacl::column_major>(epsilon);
+    if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+    else
+        return retval;
+
   }
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
@@ -231,7 +261,38 @@ int main()
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: double" << std::endl;
-      retval = test<NumericT>(epsilon);
+      std::cout << "  layout:  row-major, row-major" << std::endl;
+      retval = test<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
+      if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+      else
+        return retval;
+
+      std::cout << "# Testing setup:" << std::endl;
+      std::cout << "  eps:     " << epsilon << std::endl;
+      std::cout << "  numeric: double" << std::endl;
+      std::cout << "  layout:  row-major, column-major" << std::endl;
+      retval = test<NumericT, viennacl::row_major, viennacl::column_major>(epsilon);
+      if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+      else
+        return retval;
+
+      std::cout << "# Testing setup:" << std::endl;
+      std::cout << "  eps:     " << epsilon << std::endl;
+      std::cout << "  numeric: double" << std::endl;
+      std::cout << "  layout:  column-major, row-major" << std::endl;
+      retval = test<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
+      if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+      else
+        return retval;
+
+      std::cout << "# Testing setup:" << std::endl;
+      std::cout << "  eps:     " << epsilon << std::endl;
+      std::cout << "  numeric: double" << std::endl;
+      std::cout << "  layout:  column-major, column-major" << std::endl;
+      retval = test<NumericT, viennacl::column_major, viennacl::column_major>(epsilon);
       if( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else

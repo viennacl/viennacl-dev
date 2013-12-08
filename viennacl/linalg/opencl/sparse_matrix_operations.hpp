@@ -117,10 +117,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<TYPE, F> & d_mat,
-                           viennacl::matrix_base<TYPE, F> & result) {
+                     const viennacl::matrix_base<TYPE, F1> & d_mat,
+                           viennacl::matrix_base<TYPE, F2> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
@@ -148,12 +148,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F>,
-                                                        const viennacl::matrix_base<TYPE, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F1>,
+                                                        const viennacl::matrix_base<TYPE, F1>,
                                                         viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<TYPE, F> & result) {
+                      viennacl::matrix_base<TYPE, F2> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
@@ -572,10 +572,10 @@ namespace viennacl
       * @param d_mat  The dense matrix
       * @param result The result vector
       */
-      template<typename NumericT, typename F, unsigned int ALIGNMENT>
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result)
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
@@ -612,12 +612,12 @@ namespace viennacl
       * @param d_mat  The dense matrix
       * @param result The result vector
       */
-      template<typename NumericT, typename F, unsigned int ALIGNMENT>
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result)
+                           viennacl::matrix_base<NumericT, F2> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
@@ -711,10 +711,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
@@ -755,12 +755,12 @@ namespace viennacl
       * @param d_mat      The dense transposed matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);

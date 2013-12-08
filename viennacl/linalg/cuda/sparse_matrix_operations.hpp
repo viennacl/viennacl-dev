@@ -231,10 +231,10 @@ namespace viennacl
       * @param d_mat    The dense matrix
       * @param result   The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<TYPE, F> & d_mat,
-                           viennacl::matrix_base<TYPE, F> & result) {
+                     const viennacl::matrix_base<TYPE, F1> & d_mat,
+                           viennacl::matrix_base<TYPE, F2> & result) {
         compressed_matrix_d_mat_mul_kernel<<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
@@ -314,12 +314,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix proxy
       * @param result             The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F>
+      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F>,
-                                                        const viennacl::matrix_base<TYPE, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F1>,
+                                                        const viennacl::matrix_base<TYPE, F1>,
                                                         viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<TYPE, F> & result) {
+                      viennacl::matrix_base<TYPE, F2> & result) {
 
         compressed_matrix_d_tr_mat_mul_kernel<<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
@@ -1024,10 +1024,10 @@ namespace viennacl
       * @param d_mat      The Dense Matrix
       * @param result     The Result Matrix
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F>
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         coordinate_matrix_d_mat_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
                                                          detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
@@ -1138,12 +1138,12 @@ namespace viennacl
       * @param d_mat      The Dense Transposed Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         coordinate_matrix_d_tr_mat_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
                                                            detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
@@ -1305,10 +1305,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ell_matrix_d_mat_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                   detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
@@ -1397,12 +1397,12 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ell_matrix_d_tr_mat_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                      detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),

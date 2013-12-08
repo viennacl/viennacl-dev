@@ -1802,21 +1802,21 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename F, typename LHS, typename RHS>
-      struct op_executor<matrix_base<T, F>, op_assign, matrix_expression<const LHS, const RHS, op_prod> >
+      template <typename T, typename F1, typename LHS, typename RHS>
+      struct op_executor<matrix_base<T, F1>, op_assign, matrix_expression<const LHS, const RHS, op_prod> >
       {
-        template < typename SparseMatrixType >
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const SparseMatrixType,
-                                                                     const viennacl::matrix_base<T, F>,
+        template < typename SparseMatrixType, typename F2 >
+        static void apply(matrix_base<T, F1> & lhs, matrix_expression<const SparseMatrixType,
+                                                                     const viennacl::matrix_base<T, F2>,
                                                                      viennacl::op_prod> const & proxy)
         {
           viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
         }
 
-        template < typename SparseMatrixType >
-        static void apply(matrix_base<T, F> & lhs, matrix_expression<const SparseMatrixType,
-                                                                     const viennacl::matrix_expression< const viennacl::matrix_base<T, F>,
-                                                                                                        const viennacl::matrix_base<T, F>,
+        template < typename SparseMatrixType, typename F2 >
+        static void apply(matrix_base<T, F1> & lhs, matrix_expression<const SparseMatrixType,
+                                                                     const viennacl::matrix_expression< const viennacl::matrix_base<T, F2>,
+                                                                                                        const viennacl::matrix_base<T, F2>,
                                                                                                         viennacl::op_trans >,
                                                                      viennacl::op_prod> const & proxy)
         {

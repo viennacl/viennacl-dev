@@ -137,10 +137,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F>
+      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ScalarType   const * sp_mat_elements   = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_row_buffer = detail::extract_raw_pointer<unsigned int>(sp_mat.handle1());
@@ -163,12 +163,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
@@ -212,12 +212,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F>
+      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                   const viennacl::matrix_base<NumericT, F>,
+                const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                   const viennacl::matrix_base<NumericT, F1>,
                                                    viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<NumericT, F> & result) {
+                      viennacl::matrix_base<NumericT, F2> & result) {
 
         ScalarType   const * sp_mat_elements   = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_row_buffer = detail::extract_raw_pointer<unsigned int>(sp_mat.handle1());
@@ -240,12 +240,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
@@ -981,10 +981,10 @@ namespace viennacl
       * @param d_mat      The Dense Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle12());
@@ -1006,12 +1006,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1072,12 +1072,12 @@ namespace viennacl
       * @param d_mat      The Dense Transposed Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle12());
@@ -1099,12 +1099,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1186,10 +1186,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result dense matrix
       */
-      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F>
+      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F> & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result)
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result)
       {
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle2());
@@ -1211,12 +1211,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
@@ -1284,12 +1284,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F>
+      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
-                                                        const viennacl::matrix_base<NumericT, F>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F> & result) {
+                           viennacl::matrix_base<NumericT, F2> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle2());
@@ -1311,12 +1311,12 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
             d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F::orientation_category, false>
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
             result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
-        if ( detail::is_row_major(typename F::orientation_category()) ) {
+        if ( detail::is_row_major(typename F1::orientation_category()) ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
