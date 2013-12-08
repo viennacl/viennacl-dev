@@ -43,7 +43,7 @@
 #include "boost/numeric/ublas/io.hpp"
 #include "boost/numeric/ublas/matrix_expression.hpp"
 #include "boost/numeric/ublas/detail/matrix_assign.hpp"
-//#include "boost/thread/thread.hpp"
+
 #include "viennacl/linalg/detail/spai/block_matrix.hpp"
 #include "viennacl/linalg/detail/spai/block_vector.hpp"
 
