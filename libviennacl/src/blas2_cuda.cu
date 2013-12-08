@@ -37,10 +37,10 @@
 
 ViennaCLStatus ViennaCLCUDASgemv(ViennaCLCUDABackend /*backend*/,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 int m, int n, float alpha, float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *x, int offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, float alpha, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float beta,
-                                 float *y, int offy, int incy)
+                                 float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -74,10 +74,10 @@ ViennaCLStatus ViennaCLCUDASgemv(ViennaCLCUDABackend /*backend*/,
 
 ViennaCLStatus ViennaCLCUDADgemv(ViennaCLCUDABackend /*backend*/,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
-                                 int m, int n, double alpha, double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *x, int offx, int incx,
+                                 ViennaCLInt m, ViennaCLInt n, double alpha, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double beta,
-                                 double *y, int offy, int incy)
+                                 double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -115,8 +115,8 @@ ViennaCLStatus ViennaCLCUDADgemv(ViennaCLCUDABackend /*backend*/,
 
 ViennaCLStatus ViennaCLCUDAStrsv(ViennaCLCUDABackend /*backend*/,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 int n, float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 float *x, int offx, int incx)
+                                 ViennaCLInt n, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -166,8 +166,8 @@ ViennaCLStatus ViennaCLCUDAStrsv(ViennaCLCUDABackend /*backend*/,
 
 ViennaCLStatus ViennaCLCUDADtrsv(ViennaCLCUDABackend /*backend*/,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
-                                 int n, double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda,
-                                 double *x, int offx, int incx)
+                                 ViennaCLInt n, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                 double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -221,11 +221,11 @@ ViennaCLStatus ViennaCLCUDADtrsv(ViennaCLCUDABackend /*backend*/,
 
 ViennaCLStatus ViennaCLCUDASger(ViennaCLCUDABackend /*backend*/,
                                 ViennaCLOrder order,
-                                int m, int n,
+                                ViennaCLInt m, ViennaCLInt n,
                                 float alpha,
-                                float *x, int offx, int incx,
-                                float *y, int offy, int incy,
-                                float *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda)
+                                float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                float *y, ViennaCLInt offy, ViennaCLInt incy,
+                                float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   if (order == ViennaCLRowMajor)
   {
@@ -253,11 +253,11 @@ ViennaCLStatus ViennaCLCUDASger(ViennaCLCUDABackend /*backend*/,
 
 ViennaCLStatus ViennaCLCUDADger(ViennaCLCUDABackend /*backend*/,
                                 ViennaCLOrder order,
-                                int m,  int n,
+                                ViennaCLInt m,  ViennaCLInt n,
                                 double alpha,
-                                double *x, int offx, int incx,
-                                double *y, int offy, int incy,
-                                double *A, int offA_row, int offA_col, int incA_row, int incA_col, int lda)
+                                double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                double *y, ViennaCLInt offy, ViennaCLInt incy,
+                                double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   if (order == ViennaCLRowMajor)
   {
