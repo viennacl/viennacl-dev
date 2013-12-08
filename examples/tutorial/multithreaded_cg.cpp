@@ -67,62 +67,74 @@ using namespace boost::numeric;
 
 #include <boost/thread.hpp>
 
-template <typename T>
-void thread_func(std::string * message, std::size_t thread_id) //Note: using references instead of pointers leads to some troubles with boost.thread
+template <typename NumericT>
+class worker
 {
-  //
-  // Set up some ublas objects
-  //
-  ublas::vector<T> rhs;
-  ublas::vector<T> ref_result;
-  ublas::compressed_matrix<T> ublas_matrix;
+public:
+  worker(std::size_t tid) : thread_id_(tid) {}
 
-  //
-  // Read system from file
-  //
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
+  void operator()()
   {
-    std::cout << "Error reading Matrix file" << std::endl;
-    return;
+    //
+    // Set up some ublas objects
+    //
+    ublas::vector<NumericT> rhs;
+    ublas::vector<NumericT> ref_result;
+    ublas::compressed_matrix<NumericT> ublas_matrix;
+
+    //
+    // Read system from file
+    //
+    if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
+    {
+      std::cout << "Error reading Matrix file" << std::endl;
+      return;
+    }
+
+    if (!readVectorFromFile("../examples/testdata/rhs65025.txt", rhs))
+    {
+      std::cout << "Error reading RHS file" << std::endl;
+      return;
+    }
+
+    if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
+    {
+      std::cout << "Error reading Result file" << std::endl;
+      return;
+    }
+
+    //
+    // Set up some ViennaCL objects in the respective context
+    //
+    viennacl::context ctx(viennacl::ocl::get_context(thread_id_));
+
+    std::size_t vcl_size = rhs.size();
+    viennacl::compressed_matrix<NumericT> vcl_compressed_matrix(ctx);
+    viennacl::vector<NumericT> vcl_rhs(vcl_size, ctx);
+    viennacl::vector<NumericT> vcl_ref_result(vcl_size, ctx);
+
+    viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
+    viennacl::copy(ref_result.begin(), ref_result.end(), vcl_ref_result.begin());
+
+
+    //
+    // Transfer ublas-matrix to GPU:
+    //
+    viennacl::copy(ublas_matrix, vcl_compressed_matrix);
+
+    viennacl::vector<NumericT> vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag());
+
+    std::stringstream ss;
+    ss << "Result of thread " << thread_id_ << " on device " << viennacl::ocl::get_context(thread_id_).devices()[0].name() << ": " << vcl_result[0] << ", should: " << ref_result[0] << std::endl;
+    message_ = ss.str();
   }
 
-  if (!readVectorFromFile("../examples/testdata/rhs65025.txt", rhs))
-  {
-    std::cout << "Error reading RHS file" << std::endl;
-    return;
-  }
+  std::string message() const { return message_; }
 
-  if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
-  {
-    std::cout << "Error reading Result file" << std::endl;
-    return;
-  }
-
-  //
-  // Set up some ViennaCL objects in the respective context
-  //
-  viennacl::context ctx(viennacl::ocl::get_context(thread_id));
-
-  std::size_t vcl_size = rhs.size();
-  viennacl::compressed_matrix<T> vcl_compressed_matrix(ctx);
-  viennacl::vector<T> vcl_rhs(vcl_size, ctx);
-  viennacl::vector<T> vcl_ref_result(vcl_size, ctx);
-
-  viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-  viennacl::copy(ref_result.begin(), ref_result.end(), vcl_ref_result.begin());
-
-
-  //
-  // Transfer ublas-matrix to GPU:
-  //
-  viennacl::copy(ublas_matrix, vcl_compressed_matrix);
-
-  viennacl::vector<T> vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag());
-
-  std::stringstream ss;
-  ss << "Result of thread " << thread_id << " on device " << viennacl::ocl::get_context(thread_id).devices()[0].name() << ": " << vcl_result[0] << ", should: " << ref_result[0] << std::endl;
-  *message = ss.str();
-}
+private:
+  std::string message_;
+  std::size_t thread_id_;
+};
 
 
 int main()
@@ -155,16 +167,16 @@ int main()
   // Part 2: Now let two threads operate on two GPUs in parallel
   //
 
-  std::string message0;
-  std::string message1;
-  boost::thread worker_0(thread_func<ScalarType>, &message0, 0);
-  boost::thread worker_1(thread_func<ScalarType>, &message1, 1);
+  worker<ScalarType> work_functor0(0);
+  worker<ScalarType> work_functor1(1);
+  boost::thread worker_thread_0(boost::ref(work_functor0));
+  boost::thread worker_thread_1(boost::ref(work_functor1));
 
-  worker_0.join();
-  worker_1.join();
+  worker_thread_0.join();
+  worker_thread_1.join();
 
-  std::cout << message0 << std::endl;
-  std::cout << message1 << std::endl;
+  std::cout << work_functor0.message() << std::endl;
+  std::cout << work_functor1.message() << std::endl;
 
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
