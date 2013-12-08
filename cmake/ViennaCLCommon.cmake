@@ -147,7 +147,9 @@ configure_file(cmake/ViennaCLConfig.cmake.in
 configure_file(cmake/ViennaCLConfigVersion.cmake.in
    ${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake @ONLY)
 
-export(PACKAGE ViennaCL)
+if (CMAKE_MINOR_VERSION GREATER 6)  # export(PACKAGE ...) introduced with CMake 2.8.0
+  export(PACKAGE ViennaCL)
+endif()
 
 # Install
 #########
