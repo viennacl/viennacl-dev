@@ -34,7 +34,9 @@
 //
 // Boost includes
 //
+#include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/lu.hpp>

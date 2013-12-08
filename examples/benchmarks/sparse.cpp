@@ -28,6 +28,9 @@
 
 #define VIENNACL_WITH_UBLAS 1
 
+#include <boost/numeric/ublas/triangular.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/operation_sparse.hpp>
 #include <boost/numeric/ublas/lu.hpp>
@@ -98,7 +101,6 @@ int run_benchmark()
 
   viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size());
   viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size());
-  viennacl::vector<ScalarType> vcl_vec3(ublas_vec1.size());
 
   //cpu to gpu:
   viennacl::copy(ublas_matrix, vcl_compressed_matrix_1);

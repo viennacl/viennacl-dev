@@ -35,6 +35,7 @@
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/operation_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
@@ -70,7 +71,7 @@ int main()
   //
   // Set up some ublas objects
   //
-  ublas::vector<ScalarType> rhs(size, ScalarType(size));
+  ublas::vector<ScalarType> rhs = ublas::scalar_vector<ScalarType>(size, ScalarType(size));
   ublas::compressed_matrix<ScalarType> ublas_matrix(size, size);
 
   ublas_matrix(0,0) =  2.0f; ublas_matrix(0,1) = -1.0f;
