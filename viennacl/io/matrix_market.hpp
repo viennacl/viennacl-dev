@@ -304,7 +304,7 @@ namespace viennacl
         }
       }
 
-      std::cout << linenum << " lines read." << std::endl;
+      //std::cout << linenum << " lines read." << std::endl;
       reader.close();
       return linenum;
     }
