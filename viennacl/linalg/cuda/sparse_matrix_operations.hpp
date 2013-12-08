@@ -203,15 +203,13 @@ namespace viennacl
 
           for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
-            float r = 0;
+            T r = 0;
 
             for (unsigned int k = row_start; k < row_end; k++) {
 
               unsigned int j = sp_mat_col_indices[k];
-              float x = sp_mat_elements[k];
-
-              float y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols +
-                                d_mat_col_start + col * d_mat_col_inc ];
+              T x = sp_mat_elements[k];
+              T y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + col * d_mat_col_inc ];
 
               r += x * y;
             }
@@ -289,15 +287,13 @@ namespace viennacl
 
           for ( unsigned int col = threadIdx.x; col < result_col_size; col += blockDim.x) {
 
-            float r = 0;
+            T r = 0;
 
             for (unsigned int k = row_start; k < row_end; k++) {
 
               unsigned int j = sp_mat_col_indices[k];
-              float x = sp_mat_elements[k];
-
-              float y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols +
-                                d_mat_col_start + j * d_mat_col_inc ];
+              T x = sp_mat_elements[k];
+              T y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + j * d_mat_col_inc ];
 
               r += x * y;
             }
@@ -854,7 +850,6 @@ namespace viennacl
 
         uint2 tmp;
         T val;
-        uint last_index  = blockDim.x - 1;
         uint group_start = group_boundaries[blockIdx.x];
         uint group_end   = group_boundaries[blockIdx.x + 1];
         uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
@@ -871,10 +866,10 @@ namespace viennacl
           //check for carry from previous loop run:
           if (threadIdx.x == 0 && k > 0)
           {
-            if (tmp.x == shared_rows[last_index])
-              val += inter_results[last_index];
+            if (tmp.x == shared_rows[blockDim.x-1])
+              val += inter_results[blockDim.x-1];
             else
-              result[shared_rows[last_index] * inc_result + start_result] += inter_results[last_index];
+              result[shared_rows[blockDim.x-1] * inc_result + start_result] = inter_results[blockDim.x-1];
           }
 
           //segmented parallel reduction begin
@@ -893,18 +888,17 @@ namespace viennacl
           }
           //segmented parallel reduction end
 
-          if (threadIdx.x != last_index &&
-              shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1] &&
-              inter_results[threadIdx.x] != 0)
+          if (local_index < group_end && threadIdx.x < blockDim.x-1 &&
+              shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1])
           {
-            result[tmp.x * inc_result + start_result] += inter_results[threadIdx.x];
+            result[tmp.x * inc_result + start_result] = inter_results[threadIdx.x];
           }
 
           __syncthreads();
         } //for k
 
-        if (threadIdx.x == last_index && inter_results[last_index] != 0)
-          result[tmp.x * inc_result + start_result] += inter_results[last_index];
+        if (local_index + 1 == group_end)
+          result[tmp.x * inc_result + start_result] = inter_results[threadIdx.x];
       }
 
 
@@ -923,8 +917,6 @@ namespace viennacl
       {
         result.clear();
 
-        assert(vec.start() == 0 && vec.stride() == 1 && result.start() == 0 && result.stride() == 1 && bool("Vector strides unsupported for COO using CUDA"));
-
         coordinate_matrix_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(mat.handle12().cuda_handle()),
                                                       detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
@@ -937,6 +929,9 @@ namespace viennacl
                                                      );
         VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_vec_mul_kernel");
       }
+
+
+
 
       template <typename ScalarType, typename NumericT>
       __global__ void coordinate_matrix_d_mat_mul_kernel(const unsigned int * coords, //(row_index, column_index)
@@ -959,8 +954,65 @@ namespace viennacl
                                                          unsigned int result_row_size,
                                                          unsigned int result_col_size,
                                                          unsigned int result_internal_rows,
-                                                         unsigned int result_internal_cols) {
+                                                         unsigned int result_internal_cols)
+      {
+        __shared__ unsigned int shared_rows[128];
+        __shared__ NumericT inter_results[128];
 
+        uint2 tmp;
+        NumericT val;
+        uint group_start = group_boundaries[blockIdx.x];
+        uint group_end   = group_boundaries[blockIdx.x + 1];
+        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+
+        uint local_index = 0;
+
+        for (uint result_col = 0; result_col < result_col_size; ++result_col)
+        {
+          for (uint k = 0; k < k_end; ++k)
+          {
+            local_index = group_start + k * blockDim.x + threadIdx.x;
+
+            tmp = (local_index < group_end) ? ((const uint2 *)coords)[local_index] : ::make_uint2(0, 0);
+            val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + tmp.y * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + result_col * d_mat_col_inc ] : 0;
+
+            //check for carry from previous loop run:
+            if (threadIdx.x == 0 && k > 0)
+            {
+              if (tmp.x == shared_rows[blockDim.x-1])
+                val += inter_results[blockDim.x-1];
+              else
+                result[(shared_rows[blockDim.x-1] * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[blockDim.x-1];
+            }
+
+            //segmented parallel reduction begin
+            __syncthreads();
+            shared_rows[threadIdx.x] = tmp.x;
+            inter_results[threadIdx.x] = val;
+            NumericT left = 0;
+            __syncthreads();
+
+            for (unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+            {
+              left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
+              __syncthreads();
+              inter_results[threadIdx.x] += left;
+              __syncthreads();
+            }
+            //segmented parallel reduction end
+
+            if (local_index < group_end && threadIdx.x < blockDim.x-1 &&
+                shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1])
+            {
+              result[(tmp.x * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[threadIdx.x];
+            }
+
+            __syncthreads();
+          } //for k
+
+          if (local_index + 1 == group_end)
+            result[(tmp.x  * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[threadIdx.x];
+        }
       }
 
 
@@ -972,13 +1024,13 @@ namespace viennacl
       * @param d_mat      The Dense Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F>
-      void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
+      template<typename NumericT, unsigned int ALIGNMENT, typename F>
+      void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & sp_mat,
                      const viennacl::matrix_base<NumericT, F> & d_mat,
                            viennacl::matrix_base<NumericT, F> & result) {
 
-        coordinate_matrix_d_mat_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
-                                                         detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+        coordinate_matrix_d_mat_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                         detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
                                                          detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
 
                                                          detail::cuda_arg<NumericT>(d_mat),
@@ -1017,9 +1069,65 @@ namespace viennacl
                                                            unsigned int result_row_size,
                                                            unsigned int result_col_size,
                                                            unsigned int result_internal_rows,
-                                                           unsigned int result_internal_cols) {
+                                                           unsigned int result_internal_cols)
+      {
+        __shared__ unsigned int shared_rows[128];
+        __shared__ NumericT inter_results[128];
 
-        VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_mat_mul_kernel");
+        uint2 tmp;
+        NumericT val;
+        uint group_start = group_boundaries[blockIdx.x];
+        uint group_end   = group_boundaries[blockIdx.x + 1];
+        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+
+        uint local_index = 0;
+
+        for (uint result_col = 0; result_col < result_col_size; ++result_col)
+        {
+          for (uint k = 0; k < k_end; ++k)
+          {
+            local_index = group_start + k * blockDim.x + threadIdx.x;
+
+            tmp = (local_index < group_end) ? ((const uint2 *)coords)[local_index] : ::make_uint2(0, 0);
+            val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + tmp.y * d_mat_col_inc ] : 0;
+
+            //check for carry from previous loop run:
+            if (threadIdx.x == 0 && k > 0)
+            {
+              if (tmp.x == shared_rows[blockDim.x-1])
+                val += inter_results[blockDim.x-1];
+              else
+                result[(shared_rows[blockDim.x-1] * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[blockDim.x-1];
+            }
+
+            //segmented parallel reduction begin
+            __syncthreads();
+            shared_rows[threadIdx.x] = tmp.x;
+            inter_results[threadIdx.x] = val;
+            NumericT left = 0;
+            __syncthreads();
+
+            for (unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+            {
+              left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
+              __syncthreads();
+              inter_results[threadIdx.x] += left;
+              __syncthreads();
+            }
+            //segmented parallel reduction end
+
+            if (local_index < group_end && threadIdx.x < blockDim.x-1 &&
+                shared_rows[threadIdx.x] != shared_rows[threadIdx.x + 1])
+            {
+              result[(tmp.x * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[threadIdx.x];
+            }
+
+            __syncthreads();
+          } //for k
+
+          if (local_index + 1 == group_end)
+            result[(tmp.x  * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[threadIdx.x];
+        }
       }
 
       /** @brief Carries out Compressed Matrix(COO)-Dense Transposed Matrix multiplication
@@ -1037,22 +1145,22 @@ namespace viennacl
                                                         viennacl::op_trans > & d_mat,
                            viennacl::matrix_base<NumericT, F> & result) {
 
-        coordinate_matrix_d_mat_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
-                                                         detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
-                                                         detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+        coordinate_matrix_d_tr_mat_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
 
-                                                         detail::cuda_arg<NumericT>(d_mat.lhs()),
-                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
-                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
-                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
-                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+                                                           detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
 
-                                                         detail::cuda_arg<NumericT>(result),
-                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
-                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
-                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
-                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
-                                                        );
+                                                           detail::cuda_arg<NumericT>(result),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                          );
 
         VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
       }

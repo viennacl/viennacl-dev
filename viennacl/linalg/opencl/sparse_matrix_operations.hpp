@@ -564,6 +564,89 @@ namespace viennacl
       }
 
 
+      /** @brief Carries out sparse-matrix-dense-matrix multiplication, where the sparse matrix is a coordinate_matrix
+      *
+      * Implementation of the convenience expression result = prod(A, B); with A being sparse (COO) and B being dense
+      *
+      * @param mat    The sparse matrix (COO format)
+      * @param d_mat  The dense matrix
+      * @param result The result vector
+      */
+      template<typename NumericT, typename F, unsigned int ALIGNMENT>
+      void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
+                     const viennacl::matrix_base<NumericT, F> & d_mat,
+                           viennacl::matrix_base<NumericT, F> & result)
+      {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
+
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "d_mat_mul");
+
+        result.clear();
+
+        unsigned int thread_num = 256; //k.local_work_size(0);
+        k.local_work_size(0, thread_num);
+        k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
+
+        viennacl::ocl::enqueue(k(mat.handle12().opencl_handle(), mat.handle().opencl_handle(), mat.handle3().opencl_handle(),
+                                 viennacl::traits::opencl_handle(d_mat),
+                                 cl_uint(viennacl::traits::start1(d_mat)),          cl_uint(viennacl::traits::start2(d_mat)),
+                                 cl_uint(viennacl::traits::stride1(d_mat)),         cl_uint(viennacl::traits::stride2(d_mat)),
+                                 cl_uint(viennacl::traits::size1(d_mat)),           cl_uint(viennacl::traits::size2(d_mat)),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat)),  cl_uint(viennacl::traits::internal_size2(d_mat)),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)*k.local_work_size(0)),
+                                 viennacl::ocl::local_mem(sizeof(NumericT)*k.local_work_size(0))) );
+
+      }
+
+      /** @brief Carries out sparse-matrix-dense-matrix multiplication, where the sparse matrix is a coordinate_matrix
+      *
+      * Implementation of the convenience expression result = prod(A, trans(B)); with A being sparse (COO) and B being dense
+      *
+      * @param mat    The sparse matrix (COO format)
+      * @param d_mat  The dense matrix
+      * @param result The result vector
+      */
+      template<typename NumericT, typename F, unsigned int ALIGNMENT>
+      void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F>,
+                                                        const viennacl::matrix_base<NumericT, F>,
+                                                        viennacl::op_trans > & d_mat,
+                           viennacl::matrix_base<NumericT, F> & result)
+      {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
+
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "d_tr_mat_mul");
+
+        result.clear();
+
+        unsigned int thread_num = 256; //k.local_work_size(0);
+        k.local_work_size(0, thread_num);
+        k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
+
+        viennacl::ocl::enqueue(k(mat.handle12().opencl_handle(), mat.handle().opencl_handle(), mat.handle3().opencl_handle(),
+                                 viennacl::traits::opencl_handle(d_mat),
+                                 cl_uint(viennacl::traits::start1(d_mat.lhs())),          cl_uint(viennacl::traits::start2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::stride1(d_mat.lhs())),         cl_uint(viennacl::traits::stride2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::size1(d_mat.lhs())),           cl_uint(viennacl::traits::size2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat.lhs())),  cl_uint(viennacl::traits::internal_size2(d_mat.lhs())),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result)),
+                                 viennacl::ocl::local_mem(sizeof(cl_uint)*k.local_work_size(0)),
+                                 viennacl::ocl::local_mem(sizeof(NumericT)*k.local_work_size(0))) );
+
+      }
+
+
       //
       // ELL Matrix
       //

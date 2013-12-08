@@ -84,6 +84,103 @@ namespace viennacl
 
         }
 
+        namespace detail
+        {
+          template <typename StringType>
+          void generate_coordinate_matrix_dense_matrix_mul(StringType & source, std::string const & numeric_string, bool is_transposed)
+          {
+            if (is_transposed)
+              source.append("__kernel void d_tr_mat_mul( \n");
+            else
+              source.append("__kernel void d_mat_mul( \n");
+            source.append("  __global const uint2 * coords,  \n");//(row_index, column_index)
+            source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+            source.append("  __global const uint  * group_boundaries, \n");
+            source.append("  __global const "); source.append(numeric_string); source.append(" * d_mat, \n");
+            source.append("  unsigned int d_mat_row_start, \n");
+            source.append("  unsigned int d_mat_col_start, \n");
+            source.append("  unsigned int d_mat_row_inc, \n");
+            source.append("  unsigned int d_mat_col_inc, \n");
+            source.append("  unsigned int d_mat_row_size, \n");
+            source.append("  unsigned int d_mat_col_size, \n");
+            source.append("  unsigned int d_mat_internal_rows, \n");
+            source.append("  unsigned int d_mat_internal_cols, \n");
+            source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
+            source.append("  unsigned int result_row_start, \n");
+            source.append("  unsigned int result_col_start, \n");
+            source.append("  unsigned int result_row_inc, \n");
+            source.append("  unsigned int result_col_inc, \n");
+            source.append("  unsigned int result_row_size, \n");
+            source.append("  unsigned int result_col_size, \n");
+            source.append("  unsigned int result_internal_rows, \n");
+            source.append("  unsigned int result_internal_cols, \n");
+            source.append("  __local unsigned int * shared_rows, \n");
+            source.append("  __local "); source.append(numeric_string); source.append(" * inter_results) \n");
+            source.append("{ \n");
+            source.append("  uint2 tmp; \n");
+            source.append("  "); source.append(numeric_string); source.append(" val; \n");
+            source.append("  uint group_start = group_boundaries[get_group_id(0)]; \n");
+            source.append("  uint group_end   = group_boundaries[get_group_id(0) + 1]; \n");
+            source.append("  uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / get_local_size(0) : 0; \n");   // -1 in order to have correct behavior if group_end - group_start == j * get_local_size(0)
+
+            source.append("  uint local_index = 0; \n");
+
+            source.append("  for (uint result_col = 0; result_col < result_col_size; ++result_col) { \n");
+            source.append("   for (uint k = 0; k < k_end; ++k) { \n");
+            source.append("    local_index = group_start + k * get_local_size(0) + get_local_id(0); \n");
+
+            source.append("    tmp = (local_index < group_end) ? coords[local_index] : (uint2) 0; \n");
+            if (is_transposed)
+              source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start +      tmp.y * d_mat_col_inc ] : 0; \n");
+            else
+              source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start +      tmp.y * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + result_col * d_mat_col_inc ] : 0; \n");
+
+            //check for carry from previous loop run:
+            source.append("    if (get_local_id(0) == 0 && k > 0) { \n");
+            source.append("      if (tmp.x == shared_rows[get_local_size(0)-1]) \n");
+            source.append("        val += inter_results[get_local_size(0)-1]; \n");
+            source.append("      else \n");
+            source.append("        result[(shared_rows[get_local_size(0)-1] * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_size(0)-1]; \n");
+            source.append("    } \n");
+
+            //segmented parallel reduction begin
+            source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+            source.append("    shared_rows[get_local_id(0)] = tmp.x; \n");
+            source.append("    inter_results[get_local_id(0)] = val; \n");
+            source.append("    "); source.append(numeric_string); source.append(" left = 0; \n");
+            source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+            source.append("    for (unsigned int stride = 1; stride < get_local_size(0); stride *= 2) { \n");
+            source.append("      left = (get_local_id(0) >= stride && tmp.x == shared_rows[get_local_id(0) - stride]) ? inter_results[get_local_id(0) - stride] : 0; \n");
+            source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+            source.append("      inter_results[get_local_id(0)] += left; \n");
+            source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+            source.append("    } \n");
+            //segmented parallel reduction end
+
+            source.append("    if (local_index < group_end && get_local_id(0) < get_local_size(0) - 1 && \n");
+            source.append("      shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1]) { \n");
+            source.append("      result[(tmp.x * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            source.append("    } \n");
+
+            source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+            source.append("   }  \n"); //for k
+
+            source.append("   if (local_index + 1 == group_end) \n");  //write results of last active entry (this may not necessarily be the case already)
+            source.append("    result[(tmp.x  * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            source.append("  } \n"); //for result_col
+            source.append("} \n");
+
+          }
+        }
+
+        template <typename StringType>
+        void generate_coordinate_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
+        {
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true);
+        }
+
         template <typename StringType>
         void generate_coordinate_matrix_row_info_extractor(StringType & source, std::string const & numeric_string)
         {
@@ -240,6 +337,7 @@ namespace viennacl
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
               generate_coordinate_matrix_vec_mul(source, numeric_string);
+              generate_coordinate_matrix_dense_matrix_multiplication(source, numeric_string);
               generate_coordinate_matrix_row_info_extractor(source, numeric_string);
 
               std::string prog_name = program_name();
