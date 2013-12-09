@@ -157,7 +157,7 @@ namespace viennacl
       void arg(unsigned int pos, cl_uint val)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Setting unsigned long kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
+        std::cout << "ViennaCL: Setting unsigned int kernel argument " << val << " at pos " << pos << " for kernel " << name_ << std::endl;
         #endif
         cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_uint), (void*)&val);
         VIENNACL_ERR_CHECK(err);

@@ -6,6 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/linalg/opencl/common.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/compressed_matrix.hpp
  *  @brief OpenCL kernel file for compressed_matrix operations */
 namespace viennacl
@@ -94,13 +96,14 @@ namespace viennacl
 
         namespace detail
         {
+          /** @brief Generate kernel for C = A * B with A being a compressed_matrix, B and C dense */
           template <typename StringType>
-          void generate_compressed_matrix_dense_matrix_mult(StringType & source, std::string const & numeric_string, bool is_transposed)
+          void generate_compressed_matrix_dense_matrix_mult(StringType & source, std::string const & numeric_string,
+                                                            bool B_transposed, bool B_row_major, bool C_row_major)
           {
-            if (is_transposed)
-              source.append("__kernel void d_tr_mat_mul( \n");
-            else
-              source.append("__kernel void d_mat_mul( \n");
+            source.append("__kernel void ");
+            source.append(viennacl::linalg::opencl::detail::sparse_dense_matmult_kernel_name(B_transposed, B_row_major, C_row_major));
+            source.append("( \n");
             source.append("          __global const unsigned int * sp_mat_row_indices, \n");
             source.append("          __global const unsigned int * sp_mat_col_indices, \n");
             source.append("          __global const "); source.append(numeric_string); source.append(" * sp_mat_elements, \n");
@@ -140,14 +143,21 @@ namespace viennacl
             source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elements[k]; \n");
 
             source.append("        "); source.append(numeric_string);
-            if (is_transposed)
+            if (B_transposed && B_row_major)
               source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start +   j * d_mat_col_inc ]; \n");
-            else
+            else if (B_transposed && !B_row_major)
+              source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc)                       + (d_mat_col_start +  j * d_mat_col_inc) * d_mat_internal_rows ]; \n");
+            else if (!B_transposed && B_row_major)
               source.append(" y = d_mat[ (d_mat_row_start +   j * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + col * d_mat_col_inc ]; \n");
+            else
+              source.append(" y = d_mat[ (d_mat_row_start +   j * d_mat_row_inc)                       + (d_mat_col_start + col * d_mat_col_inc) * d_mat_internal_rows ]; \n");
             source.append("        r += x * y; \n");
             source.append("      } \n");
 
-            source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + result_col_start + col * result_col_inc ] = r; \n");
+            if (C_row_major)
+              source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + result_col_start + col * result_col_inc ] = r; \n");
+            else
+              source.append("      result[ (result_row_start + row * result_row_inc)                        + (result_col_start + col * result_col_inc) * result_internal_rows ] = r; \n");
             source.append("    } \n");
             source.append("  } \n");
 
@@ -158,8 +168,15 @@ namespace viennacl
         template <typename StringType>
         void generate_compressed_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
-          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false);
-          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false, false, false);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false, false,  true);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false,  true, false);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false,  true,  true);
+
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true, false, false);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true, false,  true);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true,  true, false);
+          detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true,  true,  true);
         }
 
         template <typename StringType>

@@ -34,7 +34,7 @@
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/hyb_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
-
+#include "viennacl/linalg/opencl/common.hpp"
 
 namespace viennacl
 {
@@ -42,6 +42,7 @@ namespace viennacl
   {
     namespace opencl
     {
+
       //
       // Compressed matrix
       //
@@ -124,7 +125,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(), "d_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
 
         viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(d_mat),
@@ -157,7 +159,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(), "d_tr_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
 
         viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(d_mat.lhs()),
@@ -580,7 +583,8 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "d_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
 
         result.clear();
 
@@ -622,7 +626,8 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "d_tr_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
 
         result.clear();
 
@@ -718,7 +723,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(), "d_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;
@@ -764,7 +770,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(), "d_tr_mat_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;

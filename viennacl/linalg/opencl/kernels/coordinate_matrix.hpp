@@ -6,6 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/linalg/opencl/common.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/coordinate_matrix.hpp
  *  @brief OpenCL kernel file for coordinate_matrix operations */
 namespace viennacl
@@ -86,13 +88,14 @@ namespace viennacl
 
         namespace detail
         {
+          /** @brief Generate kernel for C = A * B with A being a compressed_matrix, B and C dense */
           template <typename StringType>
-          void generate_coordinate_matrix_dense_matrix_mul(StringType & source, std::string const & numeric_string, bool is_transposed)
+          void generate_coordinate_matrix_dense_matrix_mul(StringType & source, std::string const & numeric_string,
+                                                           bool B_transposed, bool B_row_major, bool C_row_major)
           {
-            if (is_transposed)
-              source.append("__kernel void d_tr_mat_mul( \n");
-            else
-              source.append("__kernel void d_mat_mul( \n");
+            source.append("__kernel void ");
+            source.append(viennacl::linalg::opencl::detail::sparse_dense_matmult_kernel_name(B_transposed, B_row_major, C_row_major));
+            source.append("( \n");
             source.append("  __global const uint2 * coords,  \n");//(row_index, column_index)
             source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
             source.append("  __global const uint  * group_boundaries, \n");
@@ -130,17 +133,24 @@ namespace viennacl
             source.append("    local_index = group_start + k * get_local_size(0) + get_local_id(0); \n");
 
             source.append("    tmp = (local_index < group_end) ? coords[local_index] : (uint2) 0; \n");
-            if (is_transposed)
+            if (B_transposed && B_row_major)
               source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start +      tmp.y * d_mat_col_inc ] : 0; \n");
-            else
+            if (B_transposed && !B_row_major)
+              source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc)                       + (d_mat_col_start +      tmp.y * d_mat_col_inc) * d_mat_internal_rows ] : 0; \n");
+            else if (!B_transposed && B_row_major)
               source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start +      tmp.y * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + result_col * d_mat_col_inc ] : 0; \n");
+            else
+              source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start +      tmp.y * d_mat_row_inc)                       + (d_mat_col_start + result_col * d_mat_col_inc) * d_mat_internal_rows ] : 0; \n");
 
             //check for carry from previous loop run:
             source.append("    if (get_local_id(0) == 0 && k > 0) { \n");
             source.append("      if (tmp.x == shared_rows[get_local_size(0)-1]) \n");
             source.append("        val += inter_results[get_local_size(0)-1]; \n");
             source.append("      else \n");
-            source.append("        result[(shared_rows[get_local_size(0)-1] * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_size(0)-1]; \n");
+            if (C_row_major)
+              source.append("        result[(shared_rows[get_local_size(0)-1] * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_size(0)-1]; \n");
+            else
+              source.append("        result[(shared_rows[get_local_size(0)-1] * result_row_inc + result_row_start)                        + (result_col_start + result_col * result_col_inc) * result_internal_rows ] = inter_results[get_local_size(0)-1]; \n");
             source.append("    } \n");
 
             //segmented parallel reduction begin
@@ -160,14 +170,20 @@ namespace viennacl
 
             source.append("    if (local_index < group_end && get_local_id(0) < get_local_size(0) - 1 && \n");
             source.append("      shared_rows[get_local_id(0)] != shared_rows[get_local_id(0) + 1]) { \n");
-            source.append("      result[(tmp.x * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            if (C_row_major)
+              source.append("      result[(tmp.x * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            else
+              source.append("      result[(tmp.x * result_row_inc + result_row_start)                        + (result_col_start + result_col * result_col_inc) * result_internal_rows ] = inter_results[get_local_id(0)]; \n");
             source.append("    } \n");
 
             source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
             source.append("   }  \n"); //for k
 
             source.append("   if (local_index + 1 == group_end) \n");  //write results of last active entry (this may not necessarily be the case already)
-            source.append("    result[(tmp.x  * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            if (C_row_major)
+              source.append("    result[(tmp.x  * result_row_inc + result_row_start) * result_internal_cols + result_col_start + result_col * result_col_inc ] = inter_results[get_local_id(0)]; \n");
+            else
+              source.append("    result[(tmp.x  * result_row_inc + result_row_start)                        + (result_col_start + result_col * result_col_inc) * result_internal_rows ] = inter_results[get_local_id(0)]; \n");
             source.append("  } \n"); //for result_col
             source.append("} \n");
 
@@ -177,8 +193,15 @@ namespace viennacl
         template <typename StringType>
         void generate_coordinate_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
-          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false);
-          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false, false, false);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false, false,  true);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false,  true, false);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, false,  true,  true);
+
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true, false, false);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true, false,  true);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true,  true, false);
+          detail::generate_coordinate_matrix_dense_matrix_mul(source, numeric_string, true,  true,  true);
         }
 
         template <typename StringType>

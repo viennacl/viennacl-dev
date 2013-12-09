@@ -6,6 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/linalg/opencl/common.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/ell_matrix.hpp
  *  @brief OpenCL kernel file for ell_matrix operations */
 namespace viennacl
@@ -57,121 +59,93 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
-        void generate_ell_mat_mul(StringType & source, std::string const & numeric_string)
+        namespace detail
         {
-          source.append("__kernel void d_mat_mul( \n");
-          source.append("    __global const unsigned int * sp_mat_coords, \n");
-          source.append("    __global const "); source.append(numeric_string); source.append(" * sp_mat_elems, \n");
-          source.append("    unsigned int sp_mat_row_num, \n");
-          source.append("    unsigned int sp_mat_col_num, \n");
-          source.append("    unsigned int sp_mat_internal_row_num, \n");
-          source.append("    unsigned int sp_mat_items_per_row, \n");
-          source.append("    unsigned int sp_mat_aligned_items_per_row, \n");
-          source.append("    __global const "); source.append(numeric_string); source.append("* d_mat, \n");
-          source.append("    unsigned int d_mat_row_start, \n");
-          source.append("    unsigned int d_mat_col_start, \n");
-          source.append("    unsigned int d_mat_row_inc, \n");
-          source.append("    unsigned int d_mat_col_inc, \n");
-          source.append("    unsigned int d_mat_row_size, \n");
-          source.append("    unsigned int d_mat_col_size, \n");
-          source.append("    unsigned int d_mat_internal_rows, \n");
-          source.append("    unsigned int d_mat_internal_cols, \n");
-          source.append("    __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("    unsigned int result_row_start, \n");
-          source.append("    unsigned int result_col_start, \n");
-          source.append("    unsigned int result_row_inc, \n");
-          source.append("    unsigned int result_col_inc, \n");
-          source.append("    unsigned int result_row_size, \n");
-          source.append("    unsigned int result_col_size, \n");
-          source.append("    unsigned int result_internal_rows, \n");
-          source.append("    unsigned int result_internal_cols) { \n");
+          template <typename StringType>
+          void generate_ell_matrix_dense_matrix_mul(StringType & source, std::string const & numeric_string,
+                                                    bool B_transposed, bool B_row_major, bool C_row_major)
+          {
+            source.append("__kernel void ");
+            source.append(viennacl::linalg::opencl::detail::sparse_dense_matmult_kernel_name(B_transposed, B_row_major, C_row_major));
+            source.append("( \n");
+            source.append("    __global const unsigned int * sp_mat_coords, \n");
+            source.append("    __global const "); source.append(numeric_string); source.append(" * sp_mat_elems, \n");
+            source.append("    unsigned int sp_mat_row_num, \n");
+            source.append("    unsigned int sp_mat_col_num, \n");
+            source.append("    unsigned int sp_mat_internal_row_num, \n");
+            source.append("    unsigned int sp_mat_items_per_row, \n");
+            source.append("    unsigned int sp_mat_aligned_items_per_row, \n");
+            source.append("    __global const "); source.append(numeric_string); source.append("* d_mat, \n");
+            source.append("    unsigned int d_mat_row_start, \n");
+            source.append("    unsigned int d_mat_col_start, \n");
+            source.append("    unsigned int d_mat_row_inc, \n");
+            source.append("    unsigned int d_mat_col_inc, \n");
+            source.append("    unsigned int d_mat_row_size, \n");
+            source.append("    unsigned int d_mat_col_size, \n");
+            source.append("    unsigned int d_mat_internal_rows, \n");
+            source.append("    unsigned int d_mat_internal_cols, \n");
+            source.append("    __global "); source.append(numeric_string); source.append(" * result, \n");
+            source.append("    unsigned int result_row_start, \n");
+            source.append("    unsigned int result_col_start, \n");
+            source.append("    unsigned int result_row_inc, \n");
+            source.append("    unsigned int result_col_inc, \n");
+            source.append("    unsigned int result_row_size, \n");
+            source.append("    unsigned int result_col_size, \n");
+            source.append("    unsigned int result_internal_rows, \n");
+            source.append("    unsigned int result_internal_cols) { \n");
 
-          source.append("    uint glb_id = get_global_id(0); \n");
-          source.append("    uint glb_sz = get_global_size(0); \n");
+            source.append("    uint glb_id = get_global_id(0); \n");
+            source.append("    uint glb_sz = get_global_size(0); \n");
 
-          source.append("    for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) { \n");
-          source.append("      uint row = rc % sp_mat_row_num; \n");
-          source.append("      uint col = rc / sp_mat_row_num; \n");
+            source.append("    for( uint rc = glb_id; rc < (sp_mat_row_num * result_col_size); rc += glb_sz) { \n");
+            source.append("      uint row = rc % sp_mat_row_num; \n");
+            source.append("      uint col = rc / sp_mat_row_num; \n");
 
-          source.append("      uint offset = row; \n");
-          source.append("      "); source.append(numeric_string); source.append(" r = ("); source.append(numeric_string); source.append(")0; \n");
+            source.append("      uint offset = row; \n");
+            source.append("      "); source.append(numeric_string); source.append(" r = ("); source.append(numeric_string); source.append(")0; \n");
 
-          source.append("      for( uint k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) { \n");
+            source.append("      for( uint k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) { \n");
 
-          source.append("        uint j = sp_mat_coords[offset]; \n");
-          source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elems[offset]; \n");
+            source.append("        uint j = sp_mat_coords[offset]; \n");
+            source.append("        "); source.append(numeric_string); source.append(" x = sp_mat_elems[offset]; \n");
 
-          source.append("        if(x != ("); source.append(numeric_string); source.append(")0) { \n");
-          source.append("          "); source.append(numeric_string); source.append(" y = d_mat[ (d_mat_row_start + j * d_mat_row_inc) * d_mat_internal_cols + \n");
-          source.append("                            d_mat_col_start + col * d_mat_col_inc ]; \n");
-          source.append("          r += x*y; \n");
-          source.append("        } \n");
-          source.append("      } \n");
+            source.append("        if(x != ("); source.append(numeric_string); source.append(")0) { \n");
+            source.append("          "); source.append(numeric_string);
+            if (B_transposed && B_row_major)
+              source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + j * d_mat_col_inc ]; \n");
+            else if (B_transposed && !B_row_major)
+              source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc)                       + (d_mat_col_start + j * d_mat_col_inc) * d_mat_internal_rows ]; \n");
+            else if (!B_transposed && B_row_major)
+              source.append(" y = d_mat[ (d_mat_row_start +   j * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + col * d_mat_col_inc ]; \n");
+            else
+              source.append(" y = d_mat[ (d_mat_row_start +   j * d_mat_row_inc)                       + (d_mat_col_start + col * d_mat_col_inc) * d_mat_internal_rows ]; \n");
 
-          source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + \n");
-          source.append("               result_col_start + col * result_col_inc ] = r; \n");
-          source.append("    } \n");
-          source.append("} \n");
+            source.append("          r += x*y; \n");
+            source.append("        } \n");
+            source.append("      } \n");
 
+            if (C_row_major)
+              source.append("      result[ (result_row_start + row * result_row_inc) * result_internal_cols + result_col_start + col * result_col_inc ] = r; \n");
+            else
+              source.append("      result[ (result_row_start + row * result_row_inc)                        + (result_col_start + col * result_col_inc) * result_internal_rows ] = r; \n");
+            source.append("    } \n");
+            source.append("} \n");
+
+          }
         }
 
         template <typename StringType>
-        void generate_ell_trans_mat_mul(StringType & source, std::string const & numeric_string)
+        void generate_ell_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, false, false, false);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, false, false,  true);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, false,  true, false);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, false,  true,  true);
 
-          source.append("__kernel void d_tr_mat_mul( \n");
-          source.append("  __global const unsigned int * sp_mat_coords, \n");
-          source.append("  __global const "); source.append(numeric_string); source.append(" * sp_mat_elems, \n");
-          source.append("  unsigned int sp_mat_row_num, \n");
-          source.append("  unsigned int sp_mat_col_num, \n");
-          source.append("  unsigned int sp_mat_internal_row_num, \n");
-          source.append("  unsigned int sp_mat_items_per_row, \n");
-          source.append("  unsigned int sp_mat_aligned_items_per_row, \n");
-          source.append("  __global const "); source.append(numeric_string); source.append("* d_mat, \n");
-          source.append("  unsigned int d_mat_row_start, \n");
-          source.append("  unsigned int d_mat_col_start, \n");
-          source.append("  unsigned int d_mat_row_inc, \n");
-          source.append("  unsigned int d_mat_col_inc, \n");
-          source.append("  unsigned int d_mat_row_size, \n");
-          source.append("  unsigned int d_mat_col_size, \n");
-          source.append("  unsigned int d_mat_internal_rows, \n");
-          source.append("  unsigned int d_mat_internal_cols, \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("  unsigned int result_row_start, \n");
-          source.append("  unsigned int result_col_start, \n");
-          source.append("  unsigned int result_row_inc, \n");
-          source.append("  unsigned int result_col_inc, \n");
-          source.append("  unsigned int result_row_size, \n");
-          source.append("  unsigned int result_col_size, \n");
-          source.append("  unsigned int result_internal_rows, \n");
-          source.append("  unsigned int result_internal_cols) { \n");
-
-          source.append("  uint glb_id = get_global_id(0); \n");
-          source.append("  uint glb_sz = get_global_size(0); \n");
-
-          source.append("  for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) { \n");
-          source.append("    uint row = rc % sp_mat_row_num; \n");
-          source.append("    uint col = rc / sp_mat_row_num; \n");
-
-          source.append("    uint offset = row; \n");
-          source.append("    "); source.append(numeric_string); source.append(" r = ("); source.append(numeric_string); source.append(")0; \n");
-
-          source.append("    for( uint k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) { \n");
-
-          source.append("      uint j = sp_mat_coords[offset]; \n");
-          source.append("      "); source.append(numeric_string); source.append(" x = sp_mat_elems[offset]; \n");
-
-          source.append("      if(x != ("); source.append(numeric_string); source.append(")0) { \n");
-          source.append("        "); source.append(numeric_string); source.append(" y = d_mat[ (d_mat_row_start + col * d_mat_row_inc) * d_mat_internal_cols + \n");
-          source.append("                          d_mat_col_start + j * d_mat_col_inc ]; \n");
-          source.append("        r += x*y; \n");
-          source.append("      } \n");
-          source.append("    } \n");
-          source.append("    result[ (result_row_start + row * result_row_inc) * result_internal_cols + \n");
-          source.append("             result_col_start + col * result_col_inc ] = r; \n");
-          source.append("  } \n");
-          source.append("} \n");
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, true, false, false);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, true, false,  true);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, true,  true, false);
+          detail::generate_ell_matrix_dense_matrix_mul(source, numeric_string, true,  true,  true);
         }
 
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
@@ -200,8 +174,7 @@ namespace viennacl
 
               // fully parametrized kernels:
               generate_ell_vec_mul(source, numeric_string);
-              generate_ell_mat_mul(source, numeric_string);
-              generate_ell_trans_mat_mul(source, numeric_string);
+              generate_ell_matrix_dense_matrix_multiplication(source, numeric_string);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

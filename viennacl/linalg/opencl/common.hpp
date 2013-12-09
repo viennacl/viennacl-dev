@@ -35,6 +35,32 @@ namespace viennacl
 
       namespace detail
       {
+        /** @brief Returns the OpenCL kernel string for the operation C = A * B with A sparse, B, C dense matrices. */
+        inline std::string sparse_dense_matmult_kernel_name(bool B_transposed, bool B_row_major, bool C_row_major)
+        {
+          if (B_transposed)
+          {
+            if (B_row_major && C_row_major)
+              return "trans_mat_mult_row_row";
+            if (B_row_major && !C_row_major)
+              return "trans_mat_mult_row_col";
+            if (!B_row_major && C_row_major)
+              return "trans_mat_mult_col_row";
+
+            return "trans_mat_mult_col_col";
+          }
+
+          if (B_row_major && C_row_major)
+            return "mat_mult_row_row";
+          if (B_row_major && !C_row_major)
+            return "mat_mult_row_col";
+          if (!B_row_major && C_row_major)
+            return "mat_mult_col_row";
+
+          return "mat_mult_col_col";
+        }
+
+
         inline std::string op_to_string(op_abs)   { return "abs";   }
         inline std::string op_to_string(op_acos)  { return "acos";  }
         inline std::string op_to_string(op_asin)  { return "asin";  }

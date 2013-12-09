@@ -6,6 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/linalg/opencl/common.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/hyb_matrix.hpp
  *  @brief OpenCL kernel file for hyb_matrix operations */
 namespace viennacl
