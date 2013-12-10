@@ -1434,6 +1434,166 @@ namespace viennacl
 
       }
 
+      //
+      // Hybrid Matrix
+      //
+      /** @brief Carries out sparse-matrix-dense-matrix multiplication with a hyb_matrix
+      *
+      * Implementation of the convenience expression C = prod(A, B);
+      *
+      * @param mat    The sparse matrix A
+      * @param d_mat  The dense matrix B
+      * @param result The dense result matrix C
+      */
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
+                     const viennacl::matrix_base<NumericT, F1> & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result)
+      {
+        NumericT const * d_mat_data = detail::extract_raw_pointer<NumericT>(d_mat);
+        NumericT       * result_data = detail::extract_raw_pointer<NumericT>(result);
+
+        vcl_size_t d_mat_start1 = viennacl::traits::start1(d_mat);
+        vcl_size_t d_mat_start2 = viennacl::traits::start2(d_mat);
+        vcl_size_t d_mat_inc1   = viennacl::traits::stride1(d_mat);
+        vcl_size_t d_mat_inc2   = viennacl::traits::stride2(d_mat);
+        vcl_size_t d_mat_internal_size1  = viennacl::traits::internal_size1(d_mat);
+        vcl_size_t d_mat_internal_size2  = viennacl::traits::internal_size2(d_mat);
+
+        vcl_size_t result_start1 = viennacl::traits::start1(result);
+        vcl_size_t result_start2 = viennacl::traits::start2(result);
+        vcl_size_t result_inc1   = viennacl::traits::stride1(result);
+        vcl_size_t result_inc2   = viennacl::traits::stride2(result);
+        vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
+        vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
+
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
+            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
+            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        NumericT     const * elements       = detail::extract_raw_pointer<NumericT>(mat.handle());
+        unsigned int const * coords         = detail::extract_raw_pointer<unsigned int>(mat.handle2());
+        NumericT     const * csr_elements   = detail::extract_raw_pointer<NumericT>(mat.handle5());
+        unsigned int const * csr_row_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle3());
+        unsigned int const * csr_col_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle4());
+
+
+        for (vcl_size_t result_col = 0; result_col < result.size2(); ++result_col)
+        {
+          for(vcl_size_t row = 0; row < mat.size1(); ++row)
+          {
+            NumericT sum = 0;
+
+            //
+            // Part 1: Process ELL part
+            //
+            for(unsigned int item_id = 0; item_id < mat.internal_ellnnz(); ++item_id)
+            {
+              vcl_size_t offset = row + item_id * mat.internal_size1();
+              NumericT val = elements[offset];
+
+              if(val != 0)
+              {
+                unsigned int col = coords[offset];
+                sum += d_mat_wrapper(col, result_col) * val;
+              }
+            }
+
+            //
+            // Part 2: Process HYB/CSR part
+            //
+            vcl_size_t col_begin = csr_row_buffer[row];
+            vcl_size_t col_end   = csr_row_buffer[row + 1];
+
+            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+              sum += d_mat_wrapper(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
+
+            result_wrapper(row, result_col) = sum;
+          }
+        } // for result_col
+      }
+
+
+      /** @brief Carries out sparse-matrix-transposed-dense-matrix multiplication with a hyb_matrix
+      *
+      * Implementation of the convenience expression C = prod(A, trans(B));
+      *
+      * @param mat    The sparse matrix A
+      * @param d_mat  The dense matrix B
+      * @param result The dense result matrix C
+      */
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                        const viennacl::matrix_base<NumericT, F1>,
+                                                        viennacl::op_trans > & d_mat,
+                           viennacl::matrix_base<NumericT, F2> & result)
+      {
+        NumericT const * d_mat_data = detail::extract_raw_pointer<NumericT>(d_mat);
+        NumericT       * result_data = detail::extract_raw_pointer<NumericT>(result);
+
+        vcl_size_t d_mat_start1 = viennacl::traits::start1(d_mat.lhs());
+        vcl_size_t d_mat_start2 = viennacl::traits::start2(d_mat.lhs());
+        vcl_size_t d_mat_inc1   = viennacl::traits::stride1(d_mat.lhs());
+        vcl_size_t d_mat_inc2   = viennacl::traits::stride2(d_mat.lhs());
+        vcl_size_t d_mat_internal_size1  = viennacl::traits::internal_size1(d_mat.lhs());
+        vcl_size_t d_mat_internal_size2  = viennacl::traits::internal_size2(d_mat.lhs());
+
+        vcl_size_t result_start1 = viennacl::traits::start1(result);
+        vcl_size_t result_start2 = viennacl::traits::start2(result);
+        vcl_size_t result_inc1   = viennacl::traits::stride1(result);
+        vcl_size_t result_inc2   = viennacl::traits::stride2(result);
+        vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
+        vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
+
+        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
+            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
+            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        NumericT     const * elements       = detail::extract_raw_pointer<NumericT>(mat.handle());
+        unsigned int const * coords         = detail::extract_raw_pointer<unsigned int>(mat.handle2());
+        NumericT     const * csr_elements   = detail::extract_raw_pointer<NumericT>(mat.handle5());
+        unsigned int const * csr_row_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle3());
+        unsigned int const * csr_col_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle4());
+
+
+        for (vcl_size_t result_col = 0; result_col < result.size2(); ++result_col)
+        {
+          for(vcl_size_t row = 0; row < mat.size1(); ++row)
+          {
+            NumericT sum = 0;
+
+            //
+            // Part 1: Process ELL part
+            //
+            for(unsigned int item_id = 0; item_id < mat.internal_ellnnz(); ++item_id)
+            {
+              vcl_size_t offset = row + item_id * mat.internal_size1();
+              NumericT val = elements[offset];
+
+              if(val != 0)
+              {
+                unsigned int col = coords[offset];
+                sum += d_mat_wrapper(result_col, col) * val;
+              }
+            }
+
+            //
+            // Part 2: Process HYB/CSR part
+            //
+            vcl_size_t col_begin = csr_row_buffer[row];
+            vcl_size_t col_end   = csr_row_buffer[row + 1];
+
+            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+              sum += d_mat_wrapper(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
+
+            result_wrapper(row, result_col) = sum;
+          }
+        } // for result_col
+      }
+
 
     } // namespace host_based
   } //namespace linalg

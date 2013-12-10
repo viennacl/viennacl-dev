@@ -91,6 +91,7 @@ int test(NumericT epsilon)
   viennacl::compressed_matrix<NumericT> compressed_lhs;
   viennacl::ell_matrix<NumericT>        ell_lhs;
   viennacl::coordinate_matrix<NumericT> coo_lhs;
+  viennacl::hyb_matrix<NumericT>     hyb_lhs;
 
   ublas::matrix<NumericT> ublas_result;
   viennacl::matrix<NumericT, ResultLayoutT> result;
@@ -98,6 +99,7 @@ int test(NumericT epsilon)
   viennacl::copy( ublas_lhs, compressed_lhs);
   viennacl::copy( ublas_lhs, ell_lhs);
   viennacl::copy( ublas_lhs, coo_lhs);
+  viennacl::copy( ublas_lhs, hyb_lhs);
 
   ublas::matrix<NumericT> ublas_rhs1(ublas_lhs.size2(), cols_rhs);
   viennacl::matrix<NumericT, FactorLayoutT> rhs1(ublas_lhs.size2(), cols_rhs);
@@ -147,6 +149,18 @@ int test(NumericT epsilon)
 
   /******************************************************************/
 
+#ifndef VIENNACL_WITH_CUDA
+  std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
+  result.clear();
+  result = viennacl::linalg::prod( hyb_lhs, rhs1);
+
+  temp.clear();
+  viennacl::copy( result, temp);
+  check_matrices(ublas_result, temp, epsilon);
+#endif
+
+  /******************************************************************/
+
   /* gold result */
   ublas_result = ublas::prod( ublas_lhs, ublas::trans(ublas_rhs2));
 
@@ -176,6 +190,18 @@ int test(NumericT epsilon)
   temp.clear();
   viennacl::copy( result, temp);
   check_matrices(ublas_result, temp, epsilon);
+
+  /******************************************************************/
+
+#ifndef VIENNACL_WITH_CUDA
+  std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
+  result.clear();
+  result = viennacl::linalg::prod( hyb_lhs, viennacl::trans(rhs2));
+
+  temp.clear();
+  viennacl::copy( result, temp);
+  check_matrices(ublas_result, temp, epsilon);
+#endif
 
   /******************************************************************/
   if(retVal == EXIT_SUCCESS) {

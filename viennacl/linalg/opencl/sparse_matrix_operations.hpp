@@ -814,8 +814,6 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::hyb_matrix<TYPE>::init(ctx);
 
-        result.clear();
-
         viennacl::ocl::packed_cl_uint layout_vec;
         layout_vec.start  = cl_uint(viennacl::traits::start(vec));
         layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
@@ -852,6 +850,87 @@ namespace viennacl
                                 )
         );
       }
+
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      void prod_impl( const viennacl::hyb_matrix<NumericT, ALIGNMENT>& mat,
+                      const viennacl::matrix_base<NumericT, F1> & d_mat,
+                            viennacl::matrix_base<NumericT, F2> & result)
+      {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
+
+        unsigned int thread_num = 256;
+        unsigned int group_num = 32;
+
+        k.local_work_size(0, thread_num);
+        k.global_work_size(0, thread_num * group_num);
+
+        viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(),
+                                 mat.handle().opencl_handle(),
+                                 mat.handle3().opencl_handle(),
+                                 mat.handle4().opencl_handle(),
+                                 mat.handle5().opencl_handle(),
+                                 cl_uint(mat.size1()),
+                                 cl_uint(mat.internal_size1()),
+                                 cl_uint(mat.ell_nnz()),
+                                 cl_uint(mat.internal_ellnnz()),
+                                 viennacl::traits::opencl_handle(d_mat),
+                                 cl_uint(viennacl::traits::start1(d_mat)),          cl_uint(viennacl::traits::start2(d_mat)),
+                                 cl_uint(viennacl::traits::stride1(d_mat)),         cl_uint(viennacl::traits::stride2(d_mat)),
+                                 cl_uint(viennacl::traits::size1(d_mat)),           cl_uint(viennacl::traits::size2(d_mat)),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat)),  cl_uint(viennacl::traits::internal_size2(d_mat)),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result))
+                                )
+        );
+      }
+
+      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      void prod_impl( const viennacl::hyb_matrix<NumericT, ALIGNMENT>& mat,
+                      const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
+                                                         const viennacl::matrix_base<NumericT, F1>,
+                                                         viennacl::op_trans > & d_mat,
+                            viennacl::matrix_base<NumericT, F2> & result)
+      {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
+        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
+                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
+
+        unsigned int thread_num = 256;
+        unsigned int group_num = 32;
+
+        k.local_work_size(0, thread_num);
+        k.global_work_size(0, thread_num * group_num);
+
+        viennacl::ocl::enqueue(k(mat.handle2().opencl_handle(),
+                                 mat.handle().opencl_handle(),
+                                 mat.handle3().opencl_handle(),
+                                 mat.handle4().opencl_handle(),
+                                 mat.handle5().opencl_handle(),
+                                 cl_uint(mat.size1()),
+                                 cl_uint(mat.internal_size1()),
+                                 cl_uint(mat.ell_nnz()),
+                                 cl_uint(mat.internal_ellnnz()),
+                                 viennacl::traits::opencl_handle(d_mat.lhs()),
+                                 cl_uint(viennacl::traits::start1(d_mat.lhs())),          cl_uint(viennacl::traits::start2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::stride1(d_mat.lhs())),         cl_uint(viennacl::traits::stride2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::size1(d_mat.lhs())),           cl_uint(viennacl::traits::size2(d_mat.lhs())),
+                                 cl_uint(viennacl::traits::internal_size1(d_mat.lhs())),  cl_uint(viennacl::traits::internal_size2(d_mat.lhs())),
+                                 viennacl::traits::opencl_handle(result),
+                                 cl_uint(viennacl::traits::start1(result)),         cl_uint(viennacl::traits::start2(result)),
+                                 cl_uint(viennacl::traits::stride1(result)),        cl_uint(viennacl::traits::stride2(result)),
+                                 cl_uint(viennacl::traits::size1(result)),          cl_uint(viennacl::traits::size2(result)),
+                                 cl_uint(viennacl::traits::internal_size1(result)), cl_uint(viennacl::traits::internal_size2(result))
+                                )
+        );
+      }
+
 
     } // namespace opencl
   } //namespace linalg
