@@ -149,7 +149,6 @@ int test(NumericT epsilon)
 
   /******************************************************************/
 
-#ifndef VIENNACL_WITH_CUDA
   std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
   result.clear();
   result = viennacl::linalg::prod( hyb_lhs, rhs1);
@@ -157,7 +156,6 @@ int test(NumericT epsilon)
   temp.clear();
   viennacl::copy( result, temp);
   check_matrices(ublas_result, temp, epsilon);
-#endif
 
   /******************************************************************/
 
@@ -193,7 +191,6 @@ int test(NumericT epsilon)
 
   /******************************************************************/
 
-#ifndef VIENNACL_WITH_CUDA
   std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
   result.clear();
   result = viennacl::linalg::prod( hyb_lhs, viennacl::trans(rhs2));
@@ -201,7 +198,6 @@ int test(NumericT epsilon)
   temp.clear();
   viennacl::copy( result, temp);
   check_matrices(ublas_result, temp, epsilon);
-#endif
 
   /******************************************************************/
   if(retVal == EXIT_SUCCESS) {
