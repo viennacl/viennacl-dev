@@ -1,7 +1,4 @@
 
-# do not build tests by default, since they require Boost
-option(BUILD_TESTING "Build the tests " OFF)
-
 include(CTest)
 include(CMakeDependentOption)
 

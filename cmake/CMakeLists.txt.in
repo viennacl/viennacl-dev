@@ -28,6 +28,9 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
+# do not build tests by default, since they require Boost
+option(BUILD_TESTING "Build the tests " OFF)
+
 include(ViennaCLCommon)
 
 # For out-of-the-box support on MacOS:
