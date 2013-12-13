@@ -13,14 +13,14 @@ $> cmake ..
 $> make
 </pre>
 
-(Note that parallel builds using e.g. `make -j4` won't work straight away because the OpenCL kernels need to be build first. Only after the kernels are built, you can interrupt the build process and issue `make -j4`). Additional build options are available when calling `cmake-gui` instead of `cmake`
+(Feel free to use parallel builds through `make -j4`, but keep in mind that each build might take up to one GB of RAM)
 
 Feedback from developers on Windows on the build process of the developer version are welcome.
 
 System requirements for the developer version:
 
-* Boost libraries >= 1.45 (older versions require to define `USE_OLD_BOOST_FILESYSTEM_VERSION` in auxiliary/converter.cpp)
-* CMake 2.8 or higher
+* Boost libraries >= 1.45 (feel free to disable `BUILD_TESTING` and `ENABLE_UBLAS` in CMake in order to build without Boost)
+* CMake 2.8 or higher (for building the tests and examples)
 * A not-too-ancient C++ compiler
 
 Optional:
