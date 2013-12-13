@@ -871,6 +871,9 @@ namespace viennacl
                   vcl_size_t C_size1, vcl_size_t C_size2, vcl_size_t A_size2,
                   NumericT alpha, NumericT beta)
         {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
           for (vcl_size_t i=0; i<C_size1; ++i)
           {
             for (vcl_size_t j=0; j<C_size2; ++j)
