@@ -874,7 +874,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
           #pragma omp parallel for
 #endif
-          for (vcl_size_t i=0; i<C_size1; ++i)
+          for (long i=0; i<static_cast<long>(C_size1); ++i)
           {
             for (vcl_size_t j=0; j<C_size2; ++j)
             {
