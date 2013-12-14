@@ -47,6 +47,7 @@ namespace viennacl
          : eps_(val_epsilon), stagnation_eps_(val_epsilon_stagnation),
            max_iters_(num_max_iters),
            check_after_steps_( (num_check_iters > 0) ? num_check_iters : 1),
+           print_relative_error_(false),
            iters_(0) {}
 
         /** @brief Returns the relative tolerance for convergence */
@@ -66,17 +67,19 @@ namespace viennacl
         /** @brief Sets the maximum number of iterations for the NMF algorithm */
         void max_iterations(vcl_size_t m) { max_iters_ = m; }
 
-
         /** @brief Returns the number of iterations of the last NMF run using this configuration object */
         vcl_size_t iters() const { return iters_; }
 
 
         /** @brief Number of steps after which the convergence of NMF should be checked (again) */
         vcl_size_t check_after_steps() const { return check_after_steps_; }
-
         /** @brief Set the number of steps after which the convergence of NMF should be checked (again) */
         void check_after_steps(vcl_size_t c) { if (c > 0) check_after_steps_ = c; }
 
+        /** @brief Returns the flag specifying whether the relative tolerance should be printed in each iteration */
+        bool print_relative_error() const { return print_relative_error_; }
+        /** @brief Specify whether the relative error should be printed at each convergence check after 'num_check_iters' steps */
+        void print_relative_error(bool b) { print_relative_error_ = b; }
 
         template <typename ScalarType>
         friend void nmf(viennacl::matrix<ScalarType> const & V,
@@ -89,6 +92,7 @@ namespace viennacl
         double stagnation_eps_;
         vcl_size_t max_iters_;
         vcl_size_t check_after_steps_;
+        bool print_relative_error_;
         mutable vcl_size_t iters_;
     };
 
@@ -165,7 +169,8 @@ namespace viennacl
           if (i == 0)
             diff_init = diff_val;
 
-          std::cout << diff_val / diff_init << std::endl;
+          if (conf.print_relative_error())
+            std::cout << diff_val / diff_init << std::endl;
 
           // Approximation check
           if (diff_val / diff_init < conf.tolerance())

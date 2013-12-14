@@ -85,6 +85,8 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
     viennacl::copy(stl_h, h_nmf);
 
     viennacl::linalg::nmf_config conf;
+    conf.print_relative_error(true);
+    conf.max_iterations(5000); //5000 iterations are enough for the test
     viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
 
     viennacl::matrix<ScalarType> v_nmf = viennacl::linalg::prod(w_nmf, h_nmf);
@@ -106,8 +108,8 @@ int main()
   test_nmf(3, 3, 3);
   test_nmf(3, 2, 3);
   test_nmf(16, 7, 12);
-  test_nmf(160, 73, 200);
-  test_nmf(687, 15, 713);
+  test_nmf(140, 73, 180);
+  test_nmf(427, 21, 523);
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
