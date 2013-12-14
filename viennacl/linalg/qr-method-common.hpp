@@ -193,19 +193,6 @@ namespace viennacl
         //std::cout << "2: "  << D << "\n";
       }
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
-      void eye(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A)
-      {
-        std::vector<SCALARTYPE> foo(A.size1() * A.size1(), 0);
-
-        for(vcl_size_t i = 0; i < A.size1(); i++)
-        {
-          foo[i*A.size1() + i] = 1;
-        }
-
-        viennacl::fast_copy(&foo[0], &foo[0] + foo.size(), A);
-      }
-
       template <typename SCALARTYPE, unsigned int ALIGNMENT, typename VectorType>
       void bidiag_pack(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                        VectorType & dh,

@@ -458,6 +458,8 @@ namespace viennacl
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)
       {
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(QL).context());
+
         vcl_size_t row_num = Ai.size1();
         vcl_size_t col_num = Ai.size2();
 
@@ -467,8 +469,8 @@ namespace viennacl
         //for storing householder vector
         viennacl::vector<SCALARTYPE, ALIGNMENT> hh_vector(big_to);
 
-        eye(QL);
-        eye(QR);
+        QL = viennacl::identity_matrix<SCALARTYPE>(QL.size1(), ctx);
+        QR = viennacl::identity_matrix<SCALARTYPE>(QR.size1(), ctx);
 
         for(vcl_size_t i = 0; i < to; i++)
         {

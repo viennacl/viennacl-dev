@@ -60,7 +60,7 @@ namespace viennacl
                                         tmp1,
                                         tmp2,
                                         static_cast<cl_uint>(matrix.size1()),
-                                        static_cast<cl_uint>(matrix.internal_size1()),
+                                        static_cast<cl_uint>(matrix.internal_size2()),
                                         static_cast<cl_uint>(l),
                                         static_cast<cl_uint>(m - 1)
                                 ));
@@ -296,20 +296,19 @@ namespace viennacl
                 size_ = 0;
             }
 
-            FastMatrix(vcl_size_t sz)
+            FastMatrix(vcl_size_t sz, vcl_size_t internal_size) : size_(sz), internal_size_(internal_size)
             {
-                size_ = sz;
-                data.resize(sz * sz);
+                data.resize(internal_size * internal_size);
             }
 
             SCALARTYPE& operator()(int i, int j)
             {
-                return data[i * size_ + j];
+                return data[i * internal_size_ + j];
             }
 
             SCALARTYPE* row(int i)
             {
-                return &data[i * size_];
+                return &data[i * internal_size_];
             }
 
             SCALARTYPE* begin()
@@ -325,6 +324,7 @@ namespace viennacl
             std::vector<SCALARTYPE> data;
         private:
             vcl_size_t size_;
+            vcl_size_t internal_size_;
         };
 
         // Nonsymmetric reduction from Hessenberg to real Schur form.
@@ -340,7 +340,7 @@ namespace viennacl
 
             int nn = vcl_H.size1();
 
-            FastMatrix<SCALARTYPE> H(nn);//, V(nn);
+            FastMatrix<SCALARTYPE> H(nn, vcl_H.internal_size2());//, V(nn);
 
             std::vector<SCALARTYPE> buf(5 * nn);
             viennacl::vector<SCALARTYPE> buf_vcl(5 * nn);
@@ -876,7 +876,7 @@ namespace viennacl
 
             viennacl::linalg::opencl::kernels::svd<SCALARTYPE>::init(ctx);
 
-            detail::eye(Q);
+            Q = viennacl::identity_matrix<SCALARTYPE>(Q.size1(), ctx);
 
             // reduce to tridiagonal form
             detail::tridiagonal_reduction(A, Q);
