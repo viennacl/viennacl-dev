@@ -210,11 +210,11 @@ void test_svd(const std::string & fn, ScalarType EPS)
 template <typename ScalarType>
 void time_svd(std::size_t sz1, std::size_t sz2)
 {
+  viennacl::matrix<ScalarType> Ai(sz1, sz2), QL(sz1, sz1), QR(sz2, sz2);
 
-  std::vector<ScalarType> in(sz1 * sz2);
+  std::vector<ScalarType> in(Ai.internal_size1() * Ai.internal_size2());
   random_fill(in);
 
-  viennacl::matrix<ScalarType> Ai(sz1, sz2), QL(sz1, sz1), QR(sz2, sz2);
   viennacl::fast_copy(&in[0], &in[0] + in.size(), Ai);
 
 
