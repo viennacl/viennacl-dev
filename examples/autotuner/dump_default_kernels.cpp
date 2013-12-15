@@ -35,8 +35,8 @@ void dump_gemm_kernel(std::string const & device_name)
     viennacl::matrix<ScalarType> A;
     viennacl::matrix<ScalarType> B;
     viennacl::matrix<ScalarType> C;
-    ScalarType alpha;
-    ScalarType beta;
+    ScalarType alpha = ScalarType(1.0);
+    ScalarType beta  = ScalarType(1.0);
 
     viennacl::scheduler::statement saa(C, viennacl::op_assign(), alpha*viennacl::linalg::prod(A,B) + beta*C);
     viennacl::scheduler::statement sta(C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(A),B) + beta*C);
