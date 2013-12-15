@@ -650,7 +650,9 @@ ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCL
 
 #ifdef VIENNACL_WITH_CUDA
 ViennaCLStatus ViennaCLCUDASgemm(ViennaCLCUDABackend backend,
-                                 ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                 ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderC,
                                  ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  float alpha,
                                  float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
@@ -658,7 +660,9 @@ ViennaCLStatus ViennaCLCUDASgemm(ViennaCLCUDABackend backend,
                                  float beta,
                                  float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLCUDADgemm(ViennaCLCUDABackend backend,
-                                 ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                 ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderC,
                                  ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  double alpha,
                                  double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
@@ -669,25 +673,31 @@ ViennaCLStatus ViennaCLCUDADgemm(ViennaCLCUDABackend backend,
 
 #ifdef VIENNACL_WITH_OPENCL
 ViennaCLStatus ViennaCLOpenCLSgemm(ViennaCLOpenCLBackend backend,
-                                   ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                   ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                   ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                   ViennaCLOrder orderC,
                                    ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                    float alpha,
-                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
-                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
+                                   cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                    float beta,
-                                   cl_mem *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
+                                   cl_mem C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLOpenCLDgemm(ViennaCLOpenCLBackend backend,
-                                   ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                   ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                   ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                   ViennaCLOrder orderC,
                                    ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                    double alpha,
-                                   cl_mem *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
-                                   cl_mem *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
+                                   cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                   cl_mem B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
                                    double beta,
-                                   cl_mem *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
+                                   cl_mem C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 #endif
 
 ViennaCLStatus ViennaCLHostSgemm(ViennaCLHostBackend backend,
-                                 ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                 ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderC,
                                  ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  float alpha,
                                  float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
@@ -695,7 +705,9 @@ ViennaCLStatus ViennaCLHostSgemm(ViennaCLHostBackend backend,
                                  float beta,
                                  float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 ViennaCLStatus ViennaCLHostDgemm(ViennaCLHostBackend backend,
-                                 ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                 ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                 ViennaCLOrder orderC,
                                  ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
                                  double alpha,
                                  double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
@@ -705,7 +717,7 @@ ViennaCLStatus ViennaCLHostDgemm(ViennaCLHostBackend backend,
 
 
 // xTRSM: B <- alpha * A^{-1} B
-
+/*
 ViennaCLStatus ViennaCLtrsm(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCLMatrix B);
 
 #ifdef VIENNACL_WITH_CUDA
@@ -750,6 +762,7 @@ ViennaCLStatus ViennaCLHostDtrsm(ViennaCLHostBackend backend,
                                  double alpha,
                                  double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                  double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb);
+*/
 
 #ifdef __cplusplus
 }

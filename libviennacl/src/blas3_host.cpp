@@ -47,18 +47,22 @@ namespace detail
                                        NumericT beta,
                                        NumericT *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
   {
+    ViennaCLInt A_size1 = (transA == ViennaCLTrans) ? k : m;
+    ViennaCLInt A_size2 = (transA == ViennaCLTrans) ? m : k;
+
+    ViennaCLInt B_size1 = (transB == ViennaCLTrans) ? n : k;
+    ViennaCLInt B_size2 = (transB == ViennaCLTrans) ? k : n;
 
     /////// A row-major
-
     if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
     {
       viennacl::matrix_base<NumericT> matA(A, viennacl::MAIN_MEMORY,
-                                           m, offA_row, incA_row, m,
-                                           k, offA_col, incA_col, lda);
+                                           A_size1, offA_row, incA_row, m,
+                                           A_size2, offA_col, incA_col, lda);
 
       viennacl::matrix_base<NumericT> matB(B, viennacl::MAIN_MEMORY,
-                                           k, offB_row, incB_row, k,
-                                           n, offB_col, incB_col, ldb);
+                                           B_size1, offB_row, incB_row, k,
+                                           B_size2, offB_col, incB_col, ldb);
 
       viennacl::matrix_base<NumericT> matC(C, viennacl::MAIN_MEMORY,
                                            m, offC_row, incC_row, m,
@@ -69,12 +73,12 @@ namespace detail
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
     {
       viennacl::matrix_base<NumericT> matA(A, viennacl::MAIN_MEMORY,
-                                           m, offA_row, incA_row, m,
-                                           k, offA_col, incA_col, lda);
+                                           A_size1, offA_row, incA_row, m,
+                                           A_size2, offA_col, incA_col, lda);
 
       viennacl::matrix_base<NumericT> matB(B, viennacl::MAIN_MEMORY,
-                                           k, offB_row, incB_row, k,
-                                           n, offB_col, incB_col, ldb);
+                                           B_size1, offB_row, incB_row, k,
+                                           B_size2, offB_col, incB_col, ldb);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::MAIN_MEMORY,
                                                                    m, offC_row, incC_row, ldc,
@@ -85,12 +89,12 @@ namespace detail
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
     {
       viennacl::matrix_base<NumericT> matA(A, viennacl::MAIN_MEMORY,
-                                           m, offA_row, incA_row, m,
-                                           k, offA_col, incA_col, lda);
+                                           A_size1, offA_row, incA_row, m,
+                                           A_size2, offA_col, incA_col, lda);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::MAIN_MEMORY,
-                                                                   k, offB_row, incB_row, ldb,
-                                                                   n, offB_col, incB_col, n);
+                                                                   B_size1, offB_row, incB_row, ldb,
+                                                                   B_size2, offB_col, incB_col, n);
 
       viennacl::matrix_base<NumericT> matC(C, viennacl::MAIN_MEMORY,
                                            m, offC_row, incC_row, m,
@@ -101,12 +105,12 @@ namespace detail
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
     {
       viennacl::matrix_base<NumericT> matA(A, viennacl::MAIN_MEMORY,
-                                           m, offA_row, incA_row, m,
-                                           k, offA_col, incA_col, lda);
+                                           A_size1, offA_row, incA_row, m,
+                                           A_size2, offA_col, incA_col, lda);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::MAIN_MEMORY,
-                                                                   k, offB_row, incB_row, ldb,
-                                                                   n, offB_col, incB_col, n);
+                                                                   B_size1, offB_row, incB_row, ldb,
+                                                                   B_size2, offB_col, incB_col, n);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::MAIN_MEMORY,
                                                                    m, offC_row, incC_row, ldc,
@@ -117,15 +121,15 @@ namespace detail
 
     /////// A column-major
 
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
+    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
     {
       viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::MAIN_MEMORY,
-                                                                   m, offA_row, incA_row, lda,
-                                                                   k, offA_col, incA_col, k);
+                                                                   A_size1, offA_row, incA_row, lda,
+                                                                   A_size2, offA_col, incA_col, k);
 
       viennacl::matrix_base<NumericT> matB(B, viennacl::MAIN_MEMORY,
-                                           k, offB_row, incB_row, k,
-                                           n, offB_col, incB_col, ldb);
+                                           B_size1, offB_row, incB_row, k,
+                                           B_size2, offB_col, incB_col, ldb);
 
       viennacl::matrix_base<NumericT> matC(C, viennacl::MAIN_MEMORY,
                                            m, offC_row, incC_row, m,
@@ -133,15 +137,15 @@ namespace detail
 
       detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
     }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
+    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
     {
       viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::MAIN_MEMORY,
-                                                                   m, offA_row, incA_row, lda,
-                                                                   k, offA_col, incA_col, k);
+                                                                   A_size1, offA_row, incA_row, lda,
+                                                                   A_size2, offA_col, incA_col, k);
 
       viennacl::matrix_base<NumericT> matB(B, viennacl::MAIN_MEMORY,
-                                           k, offB_row, incB_row, k,
-                                           n, offB_col, incB_col, ldb);
+                                           B_size1, offB_row, incB_row, k,
+                                           B_size2, offB_col, incB_col, ldb);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::MAIN_MEMORY,
                                                                    m, offC_row, incC_row, ldc,
@@ -149,15 +153,15 @@ namespace detail
 
       detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
     }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
+    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
     {
       viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::MAIN_MEMORY,
-                                                                   m, offA_row, incA_row, lda,
-                                                                   k, offA_col, incA_col, k);
+                                                                   A_size1, offA_row, incA_row, lda,
+                                                                   A_size2, offA_col, incA_col, k);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::MAIN_MEMORY,
-                                                                   k, offB_row, incB_row, ldb,
-                                                                   n, offB_col, incB_col, n);
+                                                                   B_size1, offB_row, incB_row, ldb,
+                                                                   B_size2, offB_col, incB_col, n);
 
       viennacl::matrix_base<NumericT> matC(C, viennacl::MAIN_MEMORY,
                                         m, offC_row, incC_row, m,
@@ -165,15 +169,15 @@ namespace detail
 
       detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
     }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
+    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
     {
       viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::MAIN_MEMORY,
-                                                                   m, offA_row, incA_row, lda,
-                                                                   k, offA_col, incA_col, k);
+                                                                   A_size1, offA_row, incA_row, lda,
+                                                                   A_size2, offA_col, incA_col, k);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::MAIN_MEMORY,
-                                                                   k, offB_row, incB_row, ldb,
-                                                                   n, offB_col, incB_col, n);
+                                                                   B_size1, offB_row, incB_row, ldb,
+                                                                   B_size2, offB_col, incB_col, n);
 
       viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::MAIN_MEMORY,
                                                                    m, offC_row, incC_row, ldc,
