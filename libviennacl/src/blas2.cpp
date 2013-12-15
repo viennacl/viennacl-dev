@@ -19,6 +19,8 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
+
 #include "init_vector.hpp"
 #include "init_matrix.hpp"
 

@@ -19,6 +19,8 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
+
 #include "blas3.hpp"
 
 //include basic scalar and vector types of ViennaCL
@@ -40,7 +42,7 @@
 namespace detail
 {
   template <typename NumericT>
-  ViennaCLStatus ViennaCLOpenCLgemm_impl(ViennaCLOpenCLBackend backend,
+  ViennaCLStatus ViennaCLOpenCLgemm_impl(ViennaCLBackend backend,
                                          ViennaCLOrder orderA, ViennaCLTranspose transA,
                                          ViennaCLOrder orderB, ViennaCLTranspose transB,
                                          ViennaCLOrder orderC,
@@ -61,15 +63,15 @@ namespace detail
 
     if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
     {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            A_size1, offA_row, incA_row, m,
                                            A_size2, offA_col, incA_col, lda);
 
-      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            B_size1, offB_row, incB_row, k,
                                            B_size2, offB_col, incB_col, ldb);
 
-      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            m, offC_row, incC_row, m,
                                            n, offC_col, incC_col, ldc);
 
@@ -77,15 +79,15 @@ namespace detail
     }
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
     {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            A_size1, offA_row, incA_row, m,
                                            A_size2, offA_col, incA_col, lda);
 
-      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            B_size1, offB_row, incB_row, k,
                                            B_size2, offB_col, incB_col, ldb);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    m, offC_row, incC_row, ldc,
                                                                    n, offC_col, incC_col, n);
 
@@ -93,15 +95,15 @@ namespace detail
     }
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
     {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            A_size1, offA_row, incA_row, m,
                                            A_size2, offA_col, incA_col, lda);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    B_size1, offB_row, incB_row, ldb,
                                                                    B_size2, offB_col, incB_col, n);
 
-      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            m, offC_row, incC_row, m,
                                            n, offC_col, incC_col, ldc);
 
@@ -109,15 +111,15 @@ namespace detail
     }
     else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
     {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            A_size1, offA_row, incA_row, m,
                                            A_size2, offA_col, incA_col, lda);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    B_size1, offB_row, incB_row, ldb,
                                                                    B_size2, offB_col, incB_col, n);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    m, offC_row, incC_row, ldc,
                                                                    n, offC_col, incC_col, n);
 
@@ -128,15 +130,15 @@ namespace detail
 
     else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
     {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    A_size1, offA_row, incA_row, lda,
                                                                    A_size2, offA_col, incA_col, k);
 
-      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            B_size1, offB_row, incB_row, k,
                                            B_size2, offB_col, incB_col, ldb);
 
-      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            m, offC_row, incC_row, m,
                                            n, offC_col, incC_col, ldc);
 
@@ -144,15 +146,15 @@ namespace detail
     }
     else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
     {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    A_size1, offA_row, incA_row, lda,
                                                                    A_size2, offA_col, incA_col, k);
 
-      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            B_size1, offB_row, incB_row, k,
                                            B_size2, offB_col, incB_col, ldb);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    m, offC_row, incC_row, ldc,
                                                                    n, offC_col, incC_col, n);
 
@@ -160,15 +162,15 @@ namespace detail
     }
     else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
     {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    A_size1, offA_row, incA_row, lda,
                                                                    A_size2, offA_col, incA_col, k);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    B_size1, offB_row, incB_row, ldb,
                                                                    B_size2, offB_col, incB_col, n);
 
-      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                            m, offC_row, incC_row, m,
                                            n, offC_col, incC_col, ldc);
 
@@ -176,15 +178,15 @@ namespace detail
     }
     else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
     {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    A_size1, offA_row, incA_row, lda,
                                                                    A_size2, offA_col, incA_col, k);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    B_size1, offB_row, incB_row, ldb,
                                                                    B_size2, offB_col, incB_col, n);
 
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->context_id),
+      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                                    m, offC_row, incC_row, ldc,
                                                                    n, offC_col, incC_col, n);
 
@@ -197,7 +199,7 @@ namespace detail
 }
 
 
-ViennaCLStatus ViennaCLOpenCLSgemm(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLSgemm(ViennaCLBackend backend,
                                    ViennaCLOrder orderA, ViennaCLTranspose transA,
                                    ViennaCLOrder orderB, ViennaCLTranspose transB,
                                    ViennaCLOrder orderC,
@@ -220,7 +222,7 @@ ViennaCLStatus ViennaCLOpenCLSgemm(ViennaCLOpenCLBackend backend,
                                                 C, offC_row, offC_col, incC_row, incC_col, ldc);
 }
 
-ViennaCLStatus ViennaCLOpenCLDgemm(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLDgemm(ViennaCLBackend backend,
                                    ViennaCLOrder orderA, ViennaCLTranspose transA,
                                    ViennaCLOrder orderB, ViennaCLTranspose transB,
                                    ViennaCLOrder orderC,

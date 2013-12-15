@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"

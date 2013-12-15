@@ -43,9 +43,10 @@ int main()
   viennacl::vector<float> host_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::MAIN_MEMORY));
 
   // Create backend:
-  ViennaCLHostBackend my_host_backend = NULL;
+  ViennaCLBackend my_backend;
+  ViennaCLBackendCreate(&my_backend);
 
-  ViennaCLHostSswap(my_host_backend, size/2,
+  ViennaCLHostSswap(my_backend, size/2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_x), 1, 2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_y), 0, 2);
 
@@ -58,12 +59,10 @@ int main()
   //
 
 #ifdef VIENNACL_WITH_CUDA
-  ViennaCLCUDABackend my_cuda_backend = NULL;
-
   viennacl::vector<float> cuda_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::CUDA_MEMORY));
   viennacl::vector<float> cuda_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
 
-  ViennaCLCUDASswap(my_cuda_backend, size/2,
+  ViennaCLCUDASswap(my_backend, size/2,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 2,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_y), 1, 2);
 
@@ -81,11 +80,9 @@ int main()
   viennacl::vector<float> opencl_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
   viennacl::vector<float> opencl_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
 
-  ViennaCLOpenCLBackend_impl my_opencl_backend_impl;
-  my_opencl_backend_impl.context_id = context_id;
-  ViennaCLOpenCLBackend my_opencl_backend = &my_opencl_backend_impl;
+  ViennaCLBackendSetOpenCLContextID(my_backend, context_id);
 
-  ViennaCLOpenCLSswap(my_opencl_backend, size/2,
+  ViennaCLOpenCLSswap(my_backend, size/2,
                       viennacl::traits::opencl_handle(opencl_x).get(), 1, 2,
                       viennacl::traits::opencl_handle(opencl_y).get(), 1, 2);
 
@@ -93,6 +90,8 @@ int main()
   std::cout << "opencl_x: " << opencl_x << std::endl;
   std::cout << "opencl_y: " << opencl_y << std::endl;
 #endif
+
+  ViennaCLBackendDestroy(&my_backend);
 
   //
   //  That's it.

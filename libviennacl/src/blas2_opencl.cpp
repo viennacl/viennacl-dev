@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"
@@ -32,7 +33,7 @@
 
 // xGEMV
 
-ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
                                  ViennaCLInt m, ViennaCLInt n, float alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
@@ -41,9 +42,9 @@ ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                      m, offA_row, incA_row, m,
                                      n, offA_col, incA_col, lda);
     v2 *= beta;
@@ -56,7 +57,7 @@ ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
   {
     viennacl::vector_base<float> v1(x, n, offx, incx);
     viennacl::vector_base<float> v2(y, m, offy, incy);
-    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                              m, offA_row, incA_row, lda,
                                                              n, offA_col, incA_col, n);
     v2 *= beta;
@@ -69,7 +70,7 @@ ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLOpenCLBackend backend,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLBackend backend,
                                  ViennaCLOrder order, ViennaCLTranspose transA,
                                  ViennaCLInt m, ViennaCLInt n, double alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
@@ -78,9 +79,9 @@ ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                       m, offA_row, incA_row, m,
                                       n, offA_col, incA_col, lda);
     v2 *= beta;
@@ -91,9 +92,9 @@ ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
   }
   else
   {
-    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                               m, offA_row, incA_row, lda,
                                                               n, offA_col, incA_col, n);
     v2 *= beta;
@@ -110,15 +111,15 @@ ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLOpenCLBackend backend,
 
 // xTRSV
 
-ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
                                  ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<float> v(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<float> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                      n, offA_row, incA_row, n,
                                      n, offA_col, incA_col, lda);
     if (transA == ViennaCLTrans)
@@ -138,8 +139,8 @@ ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
   }
   else
   {
-    viennacl::vector_base<float> v(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<float> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                              n, offA_row, incA_row, lda,
                                                              n, offA_col, incA_col, n);
     if (transA == ViennaCLTrans)
@@ -161,15 +162,15 @@ ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLOpenCLBackend backend,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLBackend backend,
                                  ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
                                  ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<double> v(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                       n, offA_row, incA_row, n,
                                       n, offA_col, incA_col, lda);
     if (transA == ViennaCLTrans)
@@ -189,8 +190,8 @@ ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
   }
   else
   {
-    viennacl::vector_base<double> v(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                               n, offA_row, incA_row, lda,
                                                               n, offA_col, incA_col, n);
     if (transA == ViennaCLTrans)
@@ -216,7 +217,7 @@ ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLOpenCLBackend backend,
 
 // xGER
 
-ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLSger(ViennaCLBackend backend,
                                 ViennaCLOrder order,
                                 ViennaCLInt m, ViennaCLInt n,
                                 float alpha,
@@ -226,9 +227,9 @@ ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                      m, offA_row, incA_row, m,
                                      n, offA_col, incA_col, lda);
 
@@ -236,9 +237,9 @@ ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
   }
   else
   {
-    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<float, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                              m, offA_row, incA_row, lda,
                                                              n, offA_col, incA_col, n);
 
@@ -248,7 +249,7 @@ ViennaCLStatus ViennaCLOpenCLSger(ViennaCLOpenCLBackend backend,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDger(ViennaCLOpenCLBackend backend,
+ViennaCLStatus ViennaCLOpenCLDger(ViennaCLBackend backend,
                                 ViennaCLOrder order,
                                 ViennaCLInt m, ViennaCLInt n,
                                 double alpha,
@@ -258,9 +259,9 @@ ViennaCLStatus ViennaCLOpenCLDger(ViennaCLOpenCLBackend backend,
 {
   if (order == ViennaCLRowMajor)
   {
-    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                       m, offA_row, incA_row, m,
                                       n, offA_col, incA_col, lda);
 
@@ -268,9 +269,9 @@ ViennaCLStatus ViennaCLOpenCLDger(ViennaCLOpenCLBackend backend,
   }
   else
   {
-    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->context_id));
-    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->context_id));
-    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->context_id),
+    viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+    viennacl::matrix_base<double, viennacl::column_major> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
                                                               m, offA_row, incA_row, lda,
                                                               n, offA_col, incA_col, n);
 

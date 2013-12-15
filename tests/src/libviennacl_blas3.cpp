@@ -100,13 +100,7 @@ T get_value(std::vector<T> & array, ViennaCLInt i, ViennaCLInt j,
 
 
 
-void test_blas(ViennaCLHostBackend my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-               ViennaCLCUDABackend my_cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-               ViennaCLOpenCLBackend my_opencl_backend,
-#endif
+void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,
                std::vector<float> & C_float, std::vector<double> & C_double,
                std::vector<float> & A_float, std::vector<double> & A_double,
@@ -188,7 +182,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
     }
 
   // Run GEMM and compare results:
-  ViennaCLHostSgemm(my_host_backend,
+  ViennaCLHostSgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0f,
@@ -198,7 +192,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_C_float), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
   check(C_float, host_C_float, eps_float);
 
-  ViennaCLHostDgemm(my_host_backend,
+  ViennaCLHostDgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0,
@@ -209,7 +203,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
   check(C_double, host_C_double, eps_double);
 
 #ifdef VIENNACL_WITH_CUDA
-  ViennaCLCUDASgemm(my_cuda_backend,
+  ViennaCLCUDASgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0f,
@@ -219,7 +213,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_C_float), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
   check(C_float, cuda_C_float, eps_float);
 
-  ViennaCLCUDADgemm(my_cuda_backend,
+  ViennaCLCUDADgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0,
@@ -231,7 +225,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
 #endif
 
 #ifdef VIENNACL_WITH_OPENCL
-  ViennaCLOpenCLSgemm(my_opencl_backend,
+  ViennaCLOpenCLSgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0f,
@@ -243,7 +237,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
 
   if (opencl_A_double != NULL && opencl_B_double != NULL && opencl_C_double != NULL)
   {
-    ViennaCLOpenCLDgemm(my_opencl_backend,
+    ViennaCLOpenCLDgemm(my_backend,
                       order_A, trans_A, order_B, trans_B, order_C,
                       C_size1, C_size2, size_k,
                       1.0,
@@ -259,13 +253,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
 }
 
 
-void test_blas(ViennaCLHostBackend my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-               ViennaCLCUDABackend cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-               ViennaCLOpenCLBackend opencl_backend,
-#endif
+void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,
                std::vector<float> & C_float, std::vector<double> & C_double,
                std::vector<float> & A_float, std::vector<double> & A_double,
@@ -287,13 +275,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
                )
 {
   std::cout << "    -> trans-trans: ";
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             order_C, order_A, order_B,
@@ -308,13 +290,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "    -> trans-no:    ";
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             order_C, order_A, order_B,
@@ -329,13 +305,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "    -> no-trans:    ";
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             order_C, order_A, order_B,
@@ -350,13 +320,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "    -> no-no:       ";
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             order_C, order_A, order_B,
@@ -372,13 +336,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
 
 }
 
-void test_blas(ViennaCLHostBackend my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-               ViennaCLCUDABackend cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-               ViennaCLOpenCLBackend opencl_backend,
-#endif
+void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,
                std::vector<float> & C_float, std::vector<double> & C_double,
                std::vector<float> & A_float, std::vector<double> & A_double,
@@ -399,13 +357,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
                )
 {
   std::cout << "  -> C: row, A: row, B: row" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLRowMajor, ViennaCLRowMajor, ViennaCLRowMajor,
@@ -419,13 +371,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: row, A: row, B: col" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLRowMajor, ViennaCLRowMajor, ViennaCLColumnMajor,
@@ -439,13 +385,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: row, A: col, B: row" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLRowMajor, ViennaCLColumnMajor, ViennaCLRowMajor,
@@ -459,13 +399,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: row, A: col, B: col" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLRowMajor, ViennaCLColumnMajor, ViennaCLColumnMajor,
@@ -480,13 +414,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
 
 
   std::cout << "  -> C: col, A: row, B: row" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLColumnMajor, ViennaCLRowMajor, ViennaCLRowMajor,
@@ -500,13 +428,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: col, A: row, B: col" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLColumnMajor, ViennaCLRowMajor, ViennaCLColumnMajor,
@@ -520,13 +442,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: col, A: col, B: row" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLColumnMajor, ViennaCLColumnMajor, ViennaCLRowMajor,
@@ -540,13 +456,7 @@ void test_blas(ViennaCLHostBackend my_host_backend,
             );
 
   std::cout << "  -> C: col, A: col, B: col" << std::endl;
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double, A_float, A_double, B_float, B_double,
             ViennaCLColumnMajor, ViennaCLColumnMajor, ViennaCLColumnMajor,
@@ -593,7 +503,9 @@ int main()
 
 
   // Host setup
-  ViennaCLHostBackend my_host_backend = NULL;
+  ViennaCLBackend my_backend;
+  ViennaCLBackendCreate(&my_backend);
+
   viennacl::vector<float> host_C_float(size, viennacl::context(viennacl::MAIN_MEMORY));  viennacl::copy(C_float, host_C_float);
   viennacl::vector<float> host_A_float(size, viennacl::context(viennacl::MAIN_MEMORY));  viennacl::copy(A_float, host_A_float);
   viennacl::vector<float> host_B_float(size, viennacl::context(viennacl::MAIN_MEMORY));  viennacl::copy(B_float, host_B_float);
@@ -604,7 +516,6 @@ int main()
 
   // CUDA setup
 #ifdef VIENNACL_WITH_CUDA
-  ViennaCLCUDABackend my_cuda_backend = NULL;
   viennacl::vector<float> cuda_C_float(size, viennacl::context(viennacl::CUDA_MEMORY));  viennacl::copy(C_float, cuda_C_float);
   viennacl::vector<float> cuda_A_float(size, viennacl::context(viennacl::CUDA_MEMORY));  viennacl::copy(A_float, cuda_A_float);
   viennacl::vector<float> cuda_B_float(size, viennacl::context(viennacl::CUDA_MEMORY));  viennacl::copy(B_float, cuda_B_float);
@@ -632,9 +543,7 @@ int main()
     opencl_B_double = new viennacl::vector<double>(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(B_double, *opencl_B_double);
   }
 
-  ViennaCLOpenCLBackend_impl my_opencl_backend_impl;
-  my_opencl_backend_impl.context_id = context_id;
-  ViennaCLOpenCLBackend my_opencl_backend = &my_opencl_backend_impl;
+  ViennaCLBackendSetOpenCLContextID(my_backend, context_id);
 #endif
 
   // consistency checks:
@@ -670,13 +579,7 @@ int main()
 
   std::cout << std::endl;
 
-  test_blas(my_host_backend,
-#ifdef VIENNACL_WITH_CUDA
-            my_cuda_backend,
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-            my_opencl_backend,
-#endif
+  test_blas(my_backend,
             eps_float, eps_double,
             C_float, C_double,
             A_float, A_double,
@@ -705,7 +608,10 @@ int main()
     delete opencl_A_double;
     delete opencl_B_double;
   }
+
 #endif
+
+  ViennaCLBackendDestroy(&my_backend);
 
   //
   //  That's it.

@@ -19,6 +19,8 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
+
 #include "blas3.hpp"
 
 //include basic scalar and vector types of ViennaCL
@@ -36,7 +38,7 @@
 namespace detail
 {
   template <typename NumericT>
-  ViennaCLStatus ViennaCLHostgemm_impl(ViennaCLHostBackend /*backend*/,
+  ViennaCLStatus ViennaCLHostgemm_impl(ViennaCLBackend /*backend*/,
                                        ViennaCLOrder orderA, ViennaCLTranspose transA,
                                        ViennaCLOrder orderB, ViennaCLTranspose transB,
                                        ViennaCLOrder orderC,
@@ -192,7 +194,7 @@ namespace detail
 }
 
 
-ViennaCLStatus ViennaCLHostSgemm(ViennaCLHostBackend backend,
+ViennaCLStatus ViennaCLHostSgemm(ViennaCLBackend backend,
                                    ViennaCLOrder orderA, ViennaCLTranspose transA,
                                    ViennaCLOrder orderB, ViennaCLTranspose transB,
                                    ViennaCLOrder orderC,
@@ -215,7 +217,7 @@ ViennaCLStatus ViennaCLHostSgemm(ViennaCLHostBackend backend,
                                               C, offC_row, offC_col, incC_row, incC_col, ldc);
 }
 
-ViennaCLStatus ViennaCLHostDgemm(ViennaCLHostBackend backend,
+ViennaCLStatus ViennaCLHostDgemm(ViennaCLBackend backend,
                                    ViennaCLOrder orderA, ViennaCLTranspose transA,
                                    ViennaCLOrder orderB, ViennaCLTranspose transB,
                                    ViennaCLOrder orderC,

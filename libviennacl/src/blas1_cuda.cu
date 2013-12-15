@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include "viennacl.hpp"
+#include "viennacl_private.hpp"
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"
@@ -38,7 +39,7 @@
 
 // IxAMAX
 
-ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                   ViennaCLInt *index,
                                   float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -48,7 +49,7 @@ ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                   ViennaCLInt *index,
                                   double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -62,7 +63,7 @@ ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xASUM
 
-ViennaCLStatus ViennaCLCUDASasum(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float *alpha,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -72,7 +73,7 @@ ViennaCLStatus ViennaCLCUDASasum(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADasum(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double *alpha,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -85,7 +86,7 @@ ViennaCLStatus ViennaCLCUDADasum(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xAXPY
 
-ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float alpha,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float *y, ViennaCLInt offy, ViennaCLInt incy)
@@ -97,7 +98,7 @@ ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double alpha,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double *y, ViennaCLInt offy, ViennaCLInt incy)
@@ -112,7 +113,7 @@ ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xCOPY
 
-ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDAScopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
@@ -123,7 +124,7 @@ ViennaCLStatus ViennaCLCUDAScopy(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADcopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
@@ -136,7 +137,7 @@ ViennaCLStatus ViennaCLCUDADcopy(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xDOT
 
-ViennaCLStatus ViennaCLCUDASdot(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                 float *alpha,
                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
                                 float *y, ViennaCLInt offy, ViennaCLInt incy)
@@ -148,7 +149,7 @@ ViennaCLStatus ViennaCLCUDASdot(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADdot(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                 double *alpha,
                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
                                 double *y, ViennaCLInt offy, ViennaCLInt incy)
@@ -162,7 +163,7 @@ ViennaCLStatus ViennaCLCUDADdot(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xNRM2
 
-ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float *alpha,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -172,7 +173,7 @@ ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double *alpha,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -186,7 +187,7 @@ ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xROT
 
-ViennaCLStatus ViennaCLCUDASrot(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
                                 float *y, ViennaCLInt offy, ViennaCLInt incy,
                                 float c, float s)
@@ -198,7 +199,7 @@ ViennaCLStatus ViennaCLCUDASrot(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADrot(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
                                 double *y, ViennaCLInt offy, ViennaCLInt incy,
                                 double c, double s)
@@ -214,7 +215,7 @@ ViennaCLStatus ViennaCLCUDADrot(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xSCAL
 
-ViennaCLStatus ViennaCLCUDASscal(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float alpha,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -224,7 +225,7 @@ ViennaCLStatus ViennaCLCUDASscal(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADscal(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double alpha,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
@@ -237,7 +238,7 @@ ViennaCLStatus ViennaCLCUDADscal(ViennaCLCUDABackend backend, ViennaCLInt n,
 
 // xSWAP
 
-ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDASswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  float *x, ViennaCLInt offx, ViennaCLInt incx,
                                  float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
@@ -248,7 +249,7 @@ ViennaCLStatus ViennaCLCUDASswap(ViennaCLCUDABackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADswap(ViennaCLCUDABackend backend, ViennaCLInt n,
+ViennaCLStatus ViennaCLCUDADswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
                                  double *x, ViennaCLInt offx, ViennaCLInt incx,
                                  double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
