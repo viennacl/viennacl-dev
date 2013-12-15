@@ -57,9 +57,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(s1).context());
         viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "as_cpu" : "as_gpu"));
@@ -103,12 +101,8 @@ namespace viennacl
         else
           kernel_name = "asbs_gpu_gpu";
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
-        cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                + (reciprocal_beta ? 2 : 0)
-                                + (flip_sign_beta ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), kernel_name);
         k.local_work_size(0, 1);
@@ -154,12 +148,8 @@ namespace viennacl
         else
           kernel_name = "asbs_s_gpu_gpu";
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
-        cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                + (reciprocal_beta ? 2 : 0)
-                                + (flip_sign_beta ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), kernel_name);
         k.local_work_size(0, 1);

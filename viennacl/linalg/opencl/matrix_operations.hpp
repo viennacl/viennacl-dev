@@ -72,9 +72,7 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "am_cpu" : "am_gpu"));
@@ -117,12 +115,8 @@ namespace viennacl
         else
           kernel_name = "ambm_gpu_gpu";
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
-        cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                + (reciprocal_beta ? 2 : 0)
-                                + (flip_sign_beta ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
@@ -171,12 +165,8 @@ namespace viennacl
         else
           kernel_name = "ambm_m_gpu_gpu";
 
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
-        cl_uint options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                + (reciprocal_beta ? 2 : 0)
-                                + (flip_sign_beta ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
@@ -669,8 +659,8 @@ namespace viennacl
           //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
           viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
 
-          k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size1(C), 16));
-          k.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(viennacl::traits::size2(C), 16));
+          k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size1(C)), 16));
+          k.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size2(C)), 16));
           k.local_work_size(0, 16);
           k.local_work_size(1, 16);
 
@@ -974,10 +964,7 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
-
-        cl_uint options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                + (reciprocal_alpha ? 2 : 0)
-                                + (flip_sign_alpha ? 1 : 0);
+        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 

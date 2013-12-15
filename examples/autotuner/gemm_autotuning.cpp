@@ -151,7 +151,7 @@ struct config{
                         , params.at("ms").current()
                         , params.at("ks").current()
                         , params.at("ns").current(),
-                         static_cast<bool>(params.at("lhs_storage").current()),static_cast<bool>(params.at("rhs_storage").current()));
+                         static_cast<bool>(params.at("lhs_storage").current() > 0),static_cast<bool>(params.at("rhs_storage").current() > 0));
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
@@ -280,7 +280,7 @@ void run_autotune(autotuner_options options){
     code_generator::forced_profile_key_type key = make_key(options.layout,sizeof(ScalarType));
     for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
         timings.clear();
-        unsigned int k = std::distance(rounds_config.begin(),it);
+        unsigned int k = static_cast<unsigned int>(std::distance(rounds_config.begin(),it));
         unsigned int size=it->first;
         unsigned int n_keep=it->second;
         MatrixT A(size,size);
@@ -306,7 +306,7 @@ void run_autotune(autotuner_options options){
         fastest_firsts.clear();
         viennacl::backend::finish();
         for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
-            unsigned int n = std::distance(timings.begin(),itt);
+            unsigned int n = static_cast<unsigned int>(std::distance(timings.begin(),itt));
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
         }

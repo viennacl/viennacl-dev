@@ -303,7 +303,7 @@ namespace viennacl
         // Assign dof if a new dof hasn't been assigned yet
         if (!dof_assigned_to_node[node_id])
         {
-          permutation[node_id] = current_dof;  //TODO: Invert this!
+          permutation[node_id] = static_cast<IndexT>(current_dof);  //TODO: Invert this!
           ++current_dof;
           dof_assigned_to_node[node_id] = true;
 
@@ -317,7 +317,7 @@ namespace viennacl
           {
             if (!dof_assigned_to_node[neighbor_it->first])
             {
-              local_neighbor_nodes[num_neighbors] = NodeIdDegreePair(neighbor_it->first, matrix[neighbor_it->first].size());
+              local_neighbor_nodes[num_neighbors] = NodeIdDegreePair(neighbor_it->first, static_cast<IndexT>(matrix[neighbor_it->first].size()));
               ++num_neighbors;
             }
           }
@@ -383,7 +383,7 @@ namespace viennacl
         {
           if (matrix[i].size() == 1)  //This is an isolated node, so assign DOF right away
           {
-            permutation[i] = current_dof;
+            permutation[i] = static_cast<IndexT>(current_dof);
             dof_assigned_to_node[i] = true;
             ++current_dof;
             continue;
@@ -409,7 +409,7 @@ namespace viennacl
       //
       if (found_unassigned_node) // there's work to be done
       {
-        node_assignment_queue.push_back(node_with_minimum_degree);
+        node_assignment_queue.push_back(static_cast<IndexT>(node_with_minimum_degree));
         current_dof = detail::cuthill_mckee_on_strongly_connected_component(matrix, node_assignment_queue, dof_assigned_to_node, permutation, current_dof);
       }
     }
@@ -498,7 +498,7 @@ namespace viennacl
       {
         if (!dof_assigned_to_node[i])
         {
-          nodes_in_strongly_connected_component.push_back(i);
+          nodes_in_strongly_connected_component.push_back(static_cast<IndexT>(i));
           detail::nodes_of_strongly_connected_component(matrix, nodes_in_strongly_connected_component);
           break;
         }
@@ -586,7 +586,7 @@ namespace viennacl
 
           comb.resize(g);
           for (vcl_size_t i = 0; i < g; i++)
-            comb[i] = i;
+            comb[i] = static_cast<IndexT>(i);
         }
       }
 

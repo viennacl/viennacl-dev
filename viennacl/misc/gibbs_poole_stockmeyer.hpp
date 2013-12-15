@@ -118,8 +118,8 @@ namespace viennacl
 
         for (vcl_size_t i = 0; i < rgc.size(); i++)
         {
-            ind[0] = i;
-            ind[1] = rgc[i].size();
+            ind[0] = static_cast<int>(i);
+            ind[1] = static_cast<int>(rgc[i].size());
             sort_ind.push_back(ind);
         }
         std::sort(sort_ind.begin(), sort_ind.end(), detail::cuthill_mckee_comp_func);
@@ -196,10 +196,10 @@ namespace viennacl
         {
             if (!inr[i])
             {
-                deg = matrix[i].size() - 1; // node degree
+                deg = static_cast<int>(matrix[i].size() - 1); // node degree
                 if (deg_min < 0 || deg < deg_min)
                 {
-                    g = i; // node number
+                    g = static_cast<int>(i); // node number
                     deg_min = deg;
                 }
             }
@@ -215,7 +215,7 @@ namespace viennacl
           for (vcl_size_t i = 0; i < lg.back().size(); i++)
           {
               tmp[0] = lg.back()[i];
-              tmp[1] = matrix[lg.back()[i]].size() - 1;
+              tmp[1] = static_cast<int>(matrix[lg.back()[i]].size() - 1);
               nodes.push_back(tmp);
           }
           std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
@@ -256,14 +256,14 @@ namespace viennacl
             for (vcl_size_t j = 0; j < lg[i].size(); j++)
             {
                 lap[lg[i][j]].resize(2);
-                lap[lg[i][j]][0] = i;
+                lap[lg[i][j]][0] = static_cast<int>(i);
             }
         }
         for (vcl_size_t i = 0; i < lh.size(); i++)
         {
             for (vcl_size_t j = 0; j < lh[i].size(); j++)
             {
-                lap[lh[i][j]][1] = lg.size() - 1 - i;
+                lap[lh[i][j]][1] = static_cast<int>(lg.size() - 1 - i);
             }
         }
         rg.clear();
@@ -282,7 +282,7 @@ namespace viennacl
             }
         }
         // partition remaining graph in connected components
-        rgc = detail::gps_rg_components(matrix, n, rg);
+        rgc = detail::gps_rg_components(matrix, static_cast<int>(n), rg);
 
         // insert nodes of each component of rgc
         k1 = detail::calc_layering_width(lg);
@@ -294,9 +294,9 @@ namespace viennacl
         {
             for (vcl_size_t j = 0; j < ls.size(); j++)
             {
-                wvs[j] = ls[j].size();
-                wvsg[j] = ls[j].size();
-                wvsh[j] = ls[j].size();
+                wvs[j]  = static_cast<int>(ls[j].size());
+                wvsg[j] = static_cast<int>(ls[j].size());
+                wvsh[j] = static_cast<int>(ls[j].size());
             }
             for (vcl_size_t j = 0; j < rgc[i].size(); j++)
             {
@@ -363,7 +363,7 @@ namespace viennacl
                         if (inr[ls[l][j]]) continue;
                         if (!isn[ls[l][j]]) continue;
                         tmp[0] = ls[l][j];
-                        tmp[1] = matrix[ls[l][j]].size() - 1;
+                        tmp[1] = static_cast<int>(matrix[ls[l][j]].size() - 1);
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
@@ -392,7 +392,7 @@ namespace viennacl
                         if (inr[ls[l][j]]) continue;
                         if (!isn[ls[l][j]]) continue;
                         tmp[0] = ls[l][j];
-                        tmp[1] = matrix[ls[l][j]].size() - 1;
+                        tmp[1] = static_cast<int>(matrix[ls[l][j]].size() - 1);
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
@@ -411,7 +411,7 @@ namespace viennacl
                     for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
                         if (inr[ls[l][j]]) continue;
-                        deg = matrix[ls[l][j]].size() - 1;
+                        deg = static_cast<int>(matrix[ls[l][j]].size() - 1);
                         if (deg_min < 0 || deg < deg_min)
                         {
                             ind_min = ls[l][j];

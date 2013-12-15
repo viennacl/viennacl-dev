@@ -43,7 +43,7 @@ ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLBackend backend, ViennaCLInt n,
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
-  *index = viennacl::linalg::index_norm_inf(v1);
+  *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
 }
 
@@ -53,7 +53,7 @@ ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLBackend backend, ViennaCLInt n,
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
-  *index = viennacl::linalg::index_norm_inf(v1);
+  *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
 }
 

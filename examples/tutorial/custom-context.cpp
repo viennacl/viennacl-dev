@@ -101,7 +101,7 @@ int main()
 
   std::cout << "Creating context..." << std::endl;
   cl_int err;
-  cl_context my_context = clCreateContext(0, device_id_array.size(), &(device_id_array[0]), NULL, NULL, &err);
+  cl_context my_context = clCreateContext(0, cl_uint(device_id_array.size()), &(device_id_array[0]), NULL, NULL, &err);
   VIENNACL_ERR_CHECK(err);
 
 

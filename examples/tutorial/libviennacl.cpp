@@ -35,6 +35,8 @@ int main()
 {
   std::size_t size = 10;
 
+  ViennaCLInt half_size = static_cast<ViennaCLInt>(size / 2);
+
   //
   // Part 1: Host-based execution
   //
@@ -46,7 +48,7 @@ int main()
   ViennaCLBackend my_backend;
   ViennaCLBackendCreate(&my_backend);
 
-  ViennaCLHostSswap(my_backend, size/2,
+  ViennaCLHostSswap(my_backend, half_size,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_x), 1, 2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_y), 0, 2);
 
@@ -62,7 +64,7 @@ int main()
   viennacl::vector<float> cuda_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::CUDA_MEMORY));
   viennacl::vector<float> cuda_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
 
-  ViennaCLCUDASswap(my_backend, size/2,
+  ViennaCLCUDASswap(my_backend, half_size,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 2,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_y), 1, 2);
 
@@ -76,13 +78,13 @@ int main()
   //
 
 #ifdef VIENNACL_WITH_OPENCL
-  std::size_t context_id = 0;
+  long context_id = 0;
   viennacl::vector<float> opencl_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
   viennacl::vector<float> opencl_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
 
   ViennaCLBackendSetOpenCLContextID(my_backend, context_id);
 
-  ViennaCLOpenCLSswap(my_backend, size/2,
+  ViennaCLOpenCLSswap(my_backend, half_size,
                       viennacl::traits::opencl_handle(opencl_x).get(), 1, 2,
                       viennacl::traits::opencl_handle(opencl_y).get(), 1, 2);
 

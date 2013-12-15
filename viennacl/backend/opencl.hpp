@@ -55,7 +55,7 @@ namespace viennacl
       inline cl_mem memory_create(viennacl::ocl::context const & ctx, vcl_size_t size_in_bytes, const void * host_ptr = NULL)
       {
         //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << " in context " << &ctx << std::endl;
-        return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, size_in_bytes, const_cast<void *>(host_ptr));
+        return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, static_cast<unsigned int>(size_in_bytes), const_cast<void *>(host_ptr));
       }
 
       /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' in the OpenCL context to memory starting at address 'dst_buffer + dst_offset' in the same OpenCL context.

@@ -195,9 +195,9 @@ namespace viennacl{
                                 , utils::kernel_generation_stream & stream
                                 , detail::mapping_type const & mapping){
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          detail::traverse(statement, statement.array()[root_node.lhs.node_index], detail::fetch_traversal(fetched, index, vectorization, stream, mapping));
+          detail::traverse(statement, statement.array()[root_node.lhs.node_index], detail::fetch_traversal(fetched, index, static_cast<unsigned int>(vectorization), stream, mapping));
         else
-          detail::fetch(index, vectorization,fetched, stream, *mapping.at(std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
+          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *mapping.at(std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
 
       }
 
@@ -213,9 +213,9 @@ namespace viennacl{
                                 , utils::kernel_generation_stream & stream
                                 , detail::mapping_type const & mapping){
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          detail::traverse(statement, statement.array()[root_node.rhs.node_index], detail::fetch_traversal(fetched, index, vectorization, stream, mapping));
+          detail::traverse(statement, statement.array()[root_node.rhs.node_index], detail::fetch_traversal(fetched, index, static_cast<unsigned int>(vectorization), stream, mapping));
         else
-          detail::fetch(index, vectorization,fetched, stream, *mapping.at(std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
+          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *mapping.at(std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
 
       }
 

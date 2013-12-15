@@ -90,7 +90,7 @@ namespace viennacl{
               }
               for(scheduler::statement::container_type::const_iterator iit = array.begin() ; iit != array.end() ; ++iit){
                 if(iit->op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
-                  temporaries_.push_back(std::make_pair(scalartype_name, viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*size_of_scalartype)));
+                  temporaries_.push_back(std::make_pair(scalartype_name, viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, static_cast<unsigned int>(num_groups_*size_of_scalartype))));
                 }
               }
             }
@@ -253,7 +253,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
-          for(unsigned int stride = local_size_1_/2 ; stride>1 ; stride /=2){
+          for(vcl_size_t stride = local_size_1_/2 ; stride>1 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();
@@ -299,7 +299,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid] = sum" << k << ";" << std::endl;
 
           //Reduce local memory
-          for(unsigned int stride = local_size_1_/2 ; stride>1 ; stride /=2){
+          for(vcl_size_t stride = local_size_1_/2 ; stride>1 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream << "if(lid < " << stride << "){" << std::endl;
             stream.inc_tab();

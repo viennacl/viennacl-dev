@@ -50,7 +50,7 @@ ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, ViennaCLVector x)
     {
       viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
 
-      *index = viennacl::linalg::index_norm_inf(v1);
+      *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
       return ViennaCLSuccess;
     }
 
@@ -58,7 +58,7 @@ ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, ViennaCLVector x)
     {
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
 
-      *index = viennacl::linalg::index_norm_inf(v1);
+      *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
       return ViennaCLSuccess;
     }
 

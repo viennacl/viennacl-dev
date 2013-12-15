@@ -256,7 +256,7 @@ namespace viennacl
       /** @brief Sets an OpenCL local memory object at the provided position */
       void arg(unsigned int pos, const local_mem & mem)
       {
-        unsigned int size =  mem.size();
+        cl_uint size = static_cast<cl_uint>(mem.size());
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
         std::cout << "ViennaCL: Setting local memory kernel argument of size " << size << " bytes at pos " << pos << " for kernel " << name_ << std::endl;
         #endif

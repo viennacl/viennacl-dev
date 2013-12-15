@@ -308,7 +308,7 @@ namespace viennacl
           typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
 
           // For each device:
-          unsigned int j = 0;
+          vcl_size_t j = 0;
           for (QueueContainer::const_iterator it=queues_.begin(); it != queues_.end(); it++,j++)
           {
               const std::vector<viennacl::ocl::command_queue> & qv = (it->second);
@@ -583,7 +583,7 @@ namespace viennacl
             err = clGetContextInfo(h_.get(), CL_CONTEXT_DEVICES, VIENNACL_OCL_MAX_DEVICE_NUM * sizeof(cl_device_id), NULL, &temp);
             VIENNACL_ERR_CHECK(err);
             assert(temp > 0 && bool("ViennaCL: FATAL error: Provided context does not contain any devices!"));
-            num_devices = temp / sizeof(cl_device_id);
+            num_devices = static_cast<cl_uint>(temp / sizeof(cl_device_id));
 
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
             std::cout << "ViennaCL: Reusing context with " << num_devices << " devices." << std::endl;
@@ -609,13 +609,13 @@ namespace viennacl
         cl_device_type device_type_;
         viennacl::ocl::handle<cl_context> h_;
         std::vector< viennacl::ocl::device > devices_;
-        unsigned int current_device_id_;
+        vcl_size_t current_device_id_;
         vcl_size_t default_device_num_;
         ProgramContainer programs_;
         std::map< cl_device_id, std::vector< viennacl::ocl::command_queue> > queues_;
         std::string build_options_;
         vcl_size_t pf_index_;
-        unsigned int current_queue_id_;
+        vcl_size_t current_queue_id_;
     }; //context
 
 

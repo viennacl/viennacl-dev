@@ -45,7 +45,7 @@ ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
-  *index = viennacl::linalg::index_norm_inf(v1);
+  *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
 }
 
@@ -55,7 +55,7 @@ ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
-  *index = viennacl::linalg::index_norm_inf(v1);
+  *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
 }
 

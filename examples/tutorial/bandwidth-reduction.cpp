@@ -56,7 +56,7 @@ int calc_bw(std::vector< std::map<int, double> > const & matrix)
 
     for (std::size_t i = 0; i < matrix.size(); i++)
     {
-      int min_index = matrix.size();
+      int min_index = static_cast<int>(matrix.size());
       int max_index = 0;
       for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
       {
@@ -82,7 +82,7 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
 
     for (std::size_t i = 0; i < r.size(); i++)
     {
-      int min_index = matrix.size();
+      int min_index = static_cast<int>(matrix.size());
       int max_index = 0;
       for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
       {
@@ -113,7 +113,7 @@ std::vector<int> generate_random_reordering(int n)
 
     for (int i = 0; i < n - 1; i++)
     {
-        j = i + static_cast<std::size_t>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * (n - 1 - i));
+        j = i + static_cast<int>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * (n - 1 - i));
         if (j != i)
         {
             tmp = r[i];
@@ -237,8 +237,8 @@ int main(int, char **)
 {
   srand(42);
   std::cout << "-- Generating matrix --" << std::endl;
-  std::size_t dof_per_dim = 64;   //number of grid points per coordinate direction
-  std::size_t n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
+  int dof_per_dim = 64;   //number of grid points per coordinate direction
+  int n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
   std::vector< std::map<int, double> > matrix = gen_3d_mesh_matrix(dof_per_dim, dof_per_dim, dof_per_dim, false);  //If last parameter is 'true', a tetrahedral grid instead of a hexahedral grid is used.
 
   //

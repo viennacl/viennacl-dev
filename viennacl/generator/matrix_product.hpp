@@ -123,8 +123,8 @@ namespace viennacl{
         void configure_range_enqueue_arguments(vcl_size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
           //set M, N
           scheduler::statement_node const & first_node = statements.front().second;
-          unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
-          unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
+          vcl_size_t M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
+          vcl_size_t N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
 
           //set ND range
           configure_local_sizes(k, kernel_id);
@@ -250,8 +250,8 @@ namespace viennacl{
           stream << aligned_scalartype << " val;" << std::endl;
           //Can unroll
           if(bound2%local_size2_==0 && bound1%local_size1_==0){
-              for(unsigned int j = 0 ; j < bound2 ; j+=local_size2_){
-                  for(unsigned int i = 0 ; i < bound1 ; i+=local_size1_){
+              for(unsigned int j = 0 ; j < bound2 ; j+=static_cast<unsigned int>(local_size2_)){
+                  for(unsigned int i = 0 ; i < bound1 ; i+=static_cast<unsigned int>(local_size1_)){
                       std::string indi = "(get_local_id(0) + " + utils::to_string(i)+")";
                       std::string indj = "(get_local_id(1) + " + utils::to_string(j)+")";
                       fetch_element_to_local_mem(stream,lmem_name,lmem_size2,global_ptr,mat,flow,indi,indj);
@@ -406,9 +406,9 @@ namespace viennacl{
             rhs_value_scalartype = aligned_scalartype;
 
 
-          unsigned int ml_res = ml_, nl_res = nl_, ms_res = ms_, ns_res = ns_;
-          unsigned int ml_lhs = ml_, cache_width_lhs = cache_width_, ms_lhs = ms_, ks_lhs = ks_;
-          unsigned int cache_width_rhs = cache_width_, nl_rhs = nl_, ks_rhs = ks_, ns_rhs = ns_;
+          unsigned int ml_res = static_cast<unsigned int>(ml_), nl_res = static_cast<unsigned int>(nl_), ms_res = static_cast<unsigned int>(ms_), ns_res = static_cast<unsigned int>(ns_);
+          unsigned int ml_lhs = static_cast<unsigned int>(ml_), cache_width_lhs = static_cast<unsigned int>(cache_width_), ms_lhs = static_cast<unsigned int>(ms_), ks_lhs = static_cast<unsigned int>(ks_);
+          unsigned int cache_width_rhs = static_cast<unsigned int>(cache_width_), nl_rhs = static_cast<unsigned int>(nl_), ks_rhs = static_cast<unsigned int>(ks_), ns_rhs = static_cast<unsigned int>(ns_);
 
           transform_block(*assigned,false,ml_res,nl_res,ms_res,ns_res,result_access_flow);
           transform_block(*lhs,use_lhs_shared_,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs,lhs_access_flow);
