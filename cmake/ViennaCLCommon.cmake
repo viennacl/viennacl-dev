@@ -37,6 +37,8 @@ option(ENABLE_OPENCL "Use the OpenCL backend" ON)
 
 option(ENABLE_OPENMP "Use OpenMP acceleration" OFF)
 
+option(ENABLE_CBLAS "Use the CBLAS standards" OFF)
+
 # If you are interested in the impact of different kernel parameters on
 # performance, you may want to give ViennaProfiler a try (see
 # http://sourceforge.net/projects/viennaprofiler/) Set your connection
@@ -98,6 +100,12 @@ if (ENABLE_OPENMP)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -DVIENNACL_WITH_OPENMP")
    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(ENABLE_OPENMP)
+
+if(ENABLE_CBLAS)
+   find_package(CBLAS REQUIRED)
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DVIENNACL_WITH_CBLAS")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVIENNACL_WITH_CBLAS")
+endif()
 
 if(ENABLE_VIENNAPROFILER)
    find_package(ViennaProfiler REQUIRED)

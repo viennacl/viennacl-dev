@@ -1,12 +1,19 @@
 # Targets using CPU-based execution
 foreach(bench blas3 copy scheduler vector)
    add_executable(${bench}bench-cpu ${bench}.cpp)
+   if(ENABLE_CBLAS)
+      target_link_libraries(${bench}bench-cpu ${CBLAS_LIB})
+      set_target_properties(${bench}bench-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_CBLAS")
+   endif(ENABLE_CBLAS)
 endforeach()
 
 if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
     foreach(bench sparse solver)
       add_executable(${bench}bench-cpu ${bench}.cpp)
+      if(ENABLE_CBLAS)
+         target_link_libraries(${bench}bench-cpu ${CBLAS_LIB})
+      endif(ENABLE_CBLAS)
     endforeach()
 endif (ENABLE_UBLAS)
 

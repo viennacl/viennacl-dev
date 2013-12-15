@@ -178,6 +178,12 @@ namespace viennacl
       return result;
     }
 
+    /** @brief Converts an int into a type */
+    template<int N>
+    struct int2type
+    {
+        static const int value = N;
+    };
 
     /** @brief Removes the const qualifier from a type */
     template <typename T>

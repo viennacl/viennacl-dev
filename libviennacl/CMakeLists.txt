@@ -1,6 +1,7 @@
 
 include_directories(${PROJECT_SOURCE_DIR}/libviennacl/include/)
 
+
 if(ENABLE_CUDA)
 
   if(ENABLE_OPENCL)
@@ -29,3 +30,7 @@ else(ENABLE_CUDA)
                                 src/blas3.cpp) #src/blas3_host.cpp)
   endif(ENABLE_OPENCL)
 endif(ENABLE_CUDA)
+
+if(ENABLE_CBLAS)
+   target_link_libraries(viennacl ${CBLAS_LIB})
+endif(ENABLE_CBLAS)

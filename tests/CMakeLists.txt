@@ -11,6 +11,9 @@ foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_do
              vector_float vector_double vector_int vector_uint vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
+   if(ENABLE_CBLAS)
+      target_link_libraries(${PROG}-test-cpu ${CBLAS_LIB})
+   endif(ENABLE_CBLAS)
    add_test(${PROG}-cpu ${PROG}-test-cpu)
 endforeach(PROG)
 
