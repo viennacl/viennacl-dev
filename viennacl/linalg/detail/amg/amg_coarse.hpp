@@ -82,7 +82,7 @@ namespace viennacl
       //unsigned int i;
 
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (max,diag_sign) shared (A,Pointvector)
+      #pragma omp parallel for private (max,diag_sign)
 #endif
       for (long i=0; i<static_cast<long>(A[level].size1()); ++i)
       {
@@ -375,7 +375,7 @@ namespace viennacl
       // Run classical coarsening in parallel
       total_points = 0;
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for shared (total_points,Slicing,level)
+      #pragma omp parallel for shared (total_points,level)
 #endif
       for (long i=0; i<static_cast<long>(Slicing.threads_); ++i)
       {

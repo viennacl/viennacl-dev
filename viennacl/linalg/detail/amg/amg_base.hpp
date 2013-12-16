@@ -1328,7 +1328,7 @@ namespace viennacl
           RES.clear();
 
     #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for private (x,y,z,prod) shared (A,B,RES)
+          #pragma omp parallel for private (x,y,z,prod)
     #endif
           for (x=0; x<static_cast<long>(A.size1()); ++x)
           {
@@ -1368,7 +1368,7 @@ namespace viennacl
           RES.clear();
 
     #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for private (x,y1,y2,z,row) shared (A,P,RES)
+          #pragma omp parallel for private (x,y1,y2,z,row)
     #endif
           for (x=0; x<static_cast<long>(P.size2()); ++x)
           {

@@ -92,7 +92,7 @@ namespace viennacl
 
       // Direct Interpolation (Yang, p.14)
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (pointx,pointy,row_sum,c_sum,temp_res,y,x,diag) shared (P,A,Pointvector,tag)
+      #pragma omp parallel for private (pointx,pointy,row_sum,c_sum,temp_res,y,x,diag)
 #endif
       for (x=0; x < static_cast<long>(Pointvector[level].size()); ++x)
       {
@@ -196,7 +196,7 @@ namespace viennacl
 
       // Classical Interpolation (Yang, p.13-14)
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (pointx,pointy,pointk,pointm,weak_sum,strong_sum,c_sum_row,temp_res,x,y,k,m,diag_sign) shared (A,P,Pointvector)
+      #pragma omp parallel for private (pointx,pointy,pointk,pointm,weak_sum,strong_sum,c_sum_row,temp_res,x,y,k,m,diag_sign)
 #endif
       for (x=0; x < static_cast<long>(Pointvector[level].size()); ++x)
       {
@@ -367,7 +367,7 @@ namespace viennacl
       //typedef typename SparseMatrixType::iterator1 InternalRowIterator;
       //typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
-      unsigned int x;
+      long x;
       amg_point *pointx, *pointy;
       unsigned int c_points = Pointvector[level].get_cpoints();
 
