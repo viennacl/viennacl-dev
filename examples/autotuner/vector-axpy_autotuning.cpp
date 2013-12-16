@@ -116,7 +116,10 @@ template<class ScalarType>
 struct config{
     typedef vector_saxpy profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-      return profile_type(params.at("vector").current(),params.at("local_size").current(),params.at("num_groups").current(), params.at("decomposition").current());
+      return profile_type(viennacl::generator::at(params, std::string("vector")).current(),
+                          viennacl::generator::at(params, std::string("local_size")).current(),
+                          viennacl::generator::at(params, std::string("num_groups")).current(),
+                          viennacl::generator::at(params, std::string("decomposition")).current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);

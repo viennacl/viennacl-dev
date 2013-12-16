@@ -144,14 +144,15 @@ template<class ScalarType>
 struct config{
     typedef matrix_product profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-       profile_type res(params.at("vector").current()
-                        , params.at("local_size1").current()
-                        , params.at("cache_width").current()
-                        , params.at("local_size2").current()
-                        , params.at("ms").current()
-                        , params.at("ks").current()
-                        , params.at("ns").current(),
-                         static_cast<bool>(params.at("lhs_storage").current() > 0),static_cast<bool>(params.at("rhs_storage").current() > 0));
+       profile_type res(  viennacl::generator::at(params, std::string("vector")).current()
+                        , viennacl::generator::at(params, std::string("local_size1")).current()
+                        , viennacl::generator::at(params, std::string("cache_width")).current()
+                        , viennacl::generator::at(params, std::string("local_size2")).current()
+                        , viennacl::generator::at(params, std::string("ms")).current()
+                        , viennacl::generator::at(params, std::string("ks")).current()
+                        , viennacl::generator::at(params, std::string("ns")).current()
+                        , static_cast<bool>(viennacl::generator::at(params, std::string("lhs_storage")).current() > 0)
+                        , static_cast<bool>(viennacl::generator::at(params, std::string("rhs_storage")).current() > 0));
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){

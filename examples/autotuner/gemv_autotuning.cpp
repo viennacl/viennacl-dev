@@ -117,7 +117,10 @@ template<class ScalarType>
 struct config{
     typedef vector_reduction profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-      return profile_type(params.at("vector").current(), params.at("local_size1").current(),params.at("local_size2").current(),params.at("num_groups").current());
+      return profile_type(viennacl::generator::at(params, std::string("vector")).current(),
+                          viennacl::generator::at(params, std::string("local_size1")).current(),
+                          viennacl::generator::at(params, std::string("local_size2")).current(),
+                          viennacl::generator::at(params, std::string("num_groups")).current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);
