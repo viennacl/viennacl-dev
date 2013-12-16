@@ -77,7 +77,7 @@ namespace viennacl{
         public:
           typedef void result_type;
 
-          statement_representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
+          statement_representation_functor(void* (&memory)[64], unsigned int , char *& ptr) : memory_(memory), ptr_(ptr){ }
 
           template<class ScalarType>
           result_type operator()(ScalarType const & /*scal*/) const {
@@ -160,7 +160,6 @@ namespace viennacl{
 
         private:
           void* (&memory_)[64];
-          unsigned int & current_arg_;
           char *& ptr_;
       };
 

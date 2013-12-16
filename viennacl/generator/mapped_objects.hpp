@@ -290,7 +290,6 @@ namespace viennacl{
           friend class map_functor;
           std::string value_name_;
           std::string index_name_;
-          bool is_value_static_;
         public:
           mapped_implicit_vector(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /*index*/) const{
@@ -309,7 +308,6 @@ namespace viennacl{
       class mapped_implicit_matrix : public mapped_object{
           friend class map_functor;
           std::string value_name_;
-          bool is_diag_;
         public:
           mapped_implicit_matrix(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string generate_default(std::pair<std::string, std::string> const & /* index */) const{

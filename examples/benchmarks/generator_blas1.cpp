@@ -62,7 +62,7 @@ template<typename ScalarType>
 ScalarType run_benchmark(size_t size, operation_type type)
 {
     std::size_t n_bytes = size*sizeof(ScalarType);
-    std::size_t n_transfers;
+    std::size_t n_transfers = 2;
     if(type==dot)
       n_transfers = 2;
     else if(type==assign)
@@ -72,11 +72,11 @@ ScalarType run_benchmark(size_t size, operation_type type)
 
     viennacl::scalar<ScalarType> s(0);
 
-    viennacl::scheduler::statement * statement;
+    viennacl::scheduler::statement * statement = NULL;
 
     if(type==dot)
       statement = new viennacl::scheduler::statement(s, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_A, vcl_B));
-    else if(type==assign)
+    else //if(type==assign)
       statement = new viennacl::scheduler::statement(vcl_A, viennacl::op_assign(), vcl_B);
 
     viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
