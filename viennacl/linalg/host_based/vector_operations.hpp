@@ -518,7 +518,7 @@ namespace viennacl
 
         // Note: No max() reduction in OpenMP yet
         for (vcl_size_t i = 0; i < size1; ++i)
-          temp = std::max<value_type>(temp, std::fabs(data_vec1[i*inc1+start1]));
+          temp = std::max<value_type>(temp, static_cast<value_type>(std::fabs(data_vec1[i*inc1+start1])));
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }

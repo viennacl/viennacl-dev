@@ -770,11 +770,11 @@ int run_test()
 
     {
       ublas::matrix<ScalarType> ublas_dummy1 = ublas::identity_matrix<ScalarType>(ublas_A.size1());
-      ublas::matrix<ScalarType> ublas_dummy2 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      ublas::matrix<ScalarType> ublas_dummy2 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3);
       ublas::matrix<ScalarType> ublas_dummy3 = ublas::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
 
       viennacl::matrix<ScalarType> vcl_dummy1 = viennacl::identity_matrix<ScalarType>(ublas_A.size1());
-      viennacl::matrix<ScalarType> vcl_dummy2 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      viennacl::matrix<ScalarType> vcl_dummy2 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3);
       viennacl::matrix<ScalarType> vcl_dummy3 = viennacl::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
 
       std::cout << "Testing initializer CTOR... ";
@@ -791,11 +791,11 @@ int run_test()
 
       ublas_dummy1 = ublas::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
       ublas_dummy2 = ublas::identity_matrix<ScalarType>(ublas_A.size1());
-      ublas_dummy3 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      ublas_dummy3 = ublas::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3);
 
       vcl_dummy1 = viennacl::zero_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1());
       vcl_dummy2 = viennacl::identity_matrix<ScalarType>(ublas_A.size1());
-      vcl_dummy3 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3.0);
+      vcl_dummy3 = viennacl::scalar_matrix<ScalarType>(ublas_A.size1(), ublas_A.size1(), 3);
 
       std::cout << "Testing initializer assignment... ";
       if (   check_for_equality(ublas_dummy1, vcl_dummy1)

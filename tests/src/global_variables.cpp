@@ -64,7 +64,7 @@ int main()
   std::cout << std::endl;
 
   s1 = viennacl::scalar<float>(1.0f);
-  s2 = viennacl::scalar<int>(1.0);
+  s2 = viennacl::scalar<int>(1);
 
   v1 = viennacl::vector<float>(5);
   v2 = viennacl::vector<int>(5);
