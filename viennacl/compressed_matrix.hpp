@@ -104,7 +104,7 @@ namespace viennacl
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
       {
         //determine nonzeros:
-        long num_entries = 0;
+        vcl_size_t num_entries = 0;
         for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
               row_it != cpu_matrix.end1();
               ++row_it)

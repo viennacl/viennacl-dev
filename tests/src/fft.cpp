@@ -29,7 +29,7 @@
 
 typedef float ScalarType;
 
-const ScalarType EPS = 0.06;  //use smaller values in double precision
+const ScalarType EPS = ScalarType(0.06f);  //use smaller values in double precision
 
 typedef ScalarType (*test_function_ptr)(std::vector<ScalarType>&,
                                         std::vector<ScalarType>&,
@@ -127,7 +127,7 @@ void convolve_ref(std::vector<ScalarType>& in1,
                   std::vector<ScalarType>& out)
 {
     out.resize(in1.size());
-    unsigned int data_size = in1.size() >> 1;
+    unsigned int data_size = static_cast<unsigned int>(in1.size()) >> 1;
 
     for(unsigned int n = 0; n < data_size; n++) {
         std::complex<ScalarType> el;
@@ -212,7 +212,7 @@ ScalarType opencl_direct(std::vector<ScalarType>& in,
 
     viennacl::fast_copy(in, input);
 
-    unsigned int size = (input.size() >> 1) / batch_num;
+    unsigned int size = (static_cast<unsigned int>(input.size()) >> 1) / batch_num;
 
     viennacl::detail::fft::direct<ScalarType>(input.handle().opencl_handle(), output.handle().opencl_handle(), size, size, batch_num);
 
@@ -252,7 +252,7 @@ ScalarType opencl_radix2(std::vector<ScalarType>& in,
 
     viennacl::fast_copy(in, input);
 
-    unsigned int size = (input.size() >> 1) / batch_num;
+    unsigned int size = (static_cast<unsigned int>(input.size()) >> 1) / batch_num;
 
     viennacl::detail::fft::radix2<ScalarType>(input.handle().opencl_handle(), size, size, batch_num);
 

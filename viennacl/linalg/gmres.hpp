@@ -92,16 +92,19 @@ namespace viennacl
     {
 
       template <typename SRC_VECTOR, typename DEST_VECTOR>
-      void gmres_copy_helper(SRC_VECTOR const & src, DEST_VECTOR & dest, unsigned int len, unsigned int start = 0)
+      void gmres_copy_helper(SRC_VECTOR const & src, DEST_VECTOR & dest, vcl_size_t len, vcl_size_t start = 0)
       {
-        for (unsigned int i=0; i<len; ++i)
+        for (vcl_size_t i=0; i<len; ++i)
           dest[start+i] = src[start+i];
       }
 
       template <typename ScalarType, typename DEST_VECTOR>
-      void gmres_copy_helper(viennacl::vector<ScalarType> const & src, DEST_VECTOR & dest, unsigned int len, unsigned int start = 0)
+      void gmres_copy_helper(viennacl::vector<ScalarType> const & src, DEST_VECTOR & dest, vcl_size_t len, vcl_size_t start = 0)
       {
-        viennacl::copy(src.begin() + start, src.begin() + start + len, dest.begin() + start);
+        typedef typename viennacl::vector<ScalarType>::difference_type   difference_type;
+        viennacl::copy( src.begin() + static_cast<difference_type>(start),
+                        src.begin() + static_cast<difference_type>(start + len),
+                       dest.begin() + static_cast<difference_type>(start));
       }
 
       /** @brief Computes the householder vector 'hh_vec' which rotates 'input_vec' such that all entries below the j-th entry of 'v' become zero.
@@ -167,7 +170,7 @@ namespace viennacl
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
       typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      unsigned int problem_size = viennacl::traits::size(rhs);
+      unsigned int problem_size = static_cast<unsigned int>(viennacl::traits::size(rhs));
       VectorType result = rhs;
       viennacl::traits::clear(result);
 

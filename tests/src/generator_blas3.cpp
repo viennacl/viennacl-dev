@@ -127,8 +127,8 @@ int test_prod(Epsilon const& epsilon,
 {
    int retval = EXIT_SUCCESS;
    NumericT act_diff = 0;
-   NumericT alpha = 3.14;
-   NumericT beta = 4.51;
+   NumericT alpha = NumericT(3.14);
+   NumericT beta  = NumericT(4.51);
 
 std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
 {
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 
             int retval = EXIT_SUCCESS;
 
-            srand(time(NULL));
+            //srand(time(NULL));
 
             std::cout << std::endl;
             std::cout << "----------------------------------------------" << std::endl;

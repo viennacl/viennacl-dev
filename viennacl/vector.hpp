@@ -364,8 +364,8 @@ namespace viennacl
       typedef scalar<SCALARTYPE>                                value_type;
       typedef SCALARTYPE                                        cpu_value_type;
       typedef viennacl::backend::mem_handle                     handle_type;
-      typedef SizeType                                        size_type;
-      typedef DistanceType                                     difference_type;
+      typedef SizeType                                          size_type;
+      typedef DistanceType                                      difference_type;
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
 
@@ -1055,7 +1055,7 @@ namespace viennacl
     vector(unit_vector<SCALARTYPE> const & v) : base_type(v.size())
     {
       if (v.size() > 0)
-        this->operator()(v.index()) = 1;
+        this->operator()(v.index()) = SCALARTYPE(1);;
     }
 
     /** @brief Creates the vector from the supplied zero vector. */

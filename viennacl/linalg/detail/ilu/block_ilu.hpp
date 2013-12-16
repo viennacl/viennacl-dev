@@ -103,7 +103,7 @@ namespace viennacl
           unsigned int buffer_col_start = A_row_buffer[row];
           unsigned int buffer_col_end   = A_row_buffer[row+1];
 
-          output_row_buffer[row - start_index] = output_counter;
+          output_row_buffer[row - start_index] = static_cast<unsigned int>(output_counter);
 
           for (unsigned int buf_index = buffer_col_start; buf_index < buffer_col_end; ++buf_index)
           {
@@ -114,11 +114,11 @@ namespace viennacl
             if (col >= static_cast<unsigned int>(stop_index))
               continue;
 
-            output_col_buffer[output_counter] = col - start_index;
+            output_col_buffer[output_counter] = static_cast<unsigned int>(col - start_index);
             output_elements[output_counter] = A_elements[buf_index];
             ++output_counter;
           }
-          output_row_buffer[row - start_index + 1] = output_counter;
+          output_row_buffer[row - start_index + 1] = static_cast<unsigned int>(output_counter);
         }
       }
 
@@ -400,11 +400,11 @@ namespace viennacl
                 unsigned int col = col_buffer[buf_index];
 
                 if (row > col) //entry for L
-                  L_transposed[col + block_start][row + block_start] = elements[buf_index];
+                  L_transposed[col + block_start][static_cast<unsigned int>(row + block_start)] = elements[buf_index];
                 else if (row == col)
                   entries_D[row + block_start] = elements[buf_index];
                 else //entry for U
-                  U_transposed[col + block_start][row + block_start] = elements[buf_index];
+                  U_transposed[col + block_start][static_cast<unsigned int>(row + block_start)] = elements[buf_index];
               }
             }
           }

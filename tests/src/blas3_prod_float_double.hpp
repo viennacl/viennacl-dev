@@ -336,10 +336,10 @@ int test_prod(Epsilon const& epsilon)
 
   // ublas reference:
   ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, 3.1415);
+  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, NumericT(3.1415));
 
   ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, 42.0);
+  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, NumericT(42.0));
 
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 

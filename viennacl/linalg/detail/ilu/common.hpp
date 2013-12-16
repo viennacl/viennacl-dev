@@ -75,13 +75,13 @@ namespace viennacl
 
           vcl_size_t row_begin = row_buffer[row];
           vcl_size_t row_end   = row_buffer[row+1];
-          unsigned int elimination_index = 0;  //Note: first run corresponds to elimination_index = 1 (otherwise, type issues with int <-> unsigned int would arise
+          vcl_size_t elimination_index = 0;  //Note: first run corresponds to elimination_index = 1 (otherwise, type issues with int <-> unsigned int would arise
           for (vcl_size_t i = row_begin; i < row_end; ++i)
           {
             unsigned int col = col_buffer[i];
             if ( (!setup_U && col < row) || (setup_U && col > row) )
             {
-              elimination_index = std::max<int>(elimination_index, row_elimination[col]);
+              elimination_index = std::max<vcl_size_t>(elimination_index, row_elimination[col]);
               row_entries_per_elimination_step[row_elimination[col]][row] += 1;
             }
           }

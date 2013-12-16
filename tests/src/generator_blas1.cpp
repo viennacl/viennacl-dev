@@ -121,16 +121,16 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::vector<NumericT> z (size);
     viennacl::scalar<NumericT> gs(0);
 
-    cx = 2.0f*cw;
-    cy = 3.0f*cw;
-    cz = 4.0f*cw;
+    cx = NumericT(2.0f)*cw;
+    cy = NumericT(3.0f)*cw;
+    cz = NumericT(4.0f)*cw;
     viennacl::copy (cw, w);
     viennacl::copy (cx, x);
     viennacl::copy (cy, y);
     viennacl::copy (cz, z);
 
-    NumericT alpha = 3.14;
-    NumericT beta = 3.51;
+    NumericT alpha = NumericT(3.14);
+    NumericT beta  = NumericT(3.51);
 
     // --------------------------------------------------------------------------
 

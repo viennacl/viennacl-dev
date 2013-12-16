@@ -134,7 +134,7 @@ namespace viennacl
 
         /** @brief Returns the index of the represented element
         */
-        unsigned int index() const { return index_; }
+        vcl_size_t index() const { return index_; }
 
         /** @brief Returns the memory viennacl::ocl::handle
         */
