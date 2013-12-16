@@ -26,6 +26,8 @@
 #include <map>
 #include <set>
 #include <list>
+#include <stdexcept>
+
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
 
@@ -89,6 +91,16 @@ namespace viennacl{
         vcl_size_t scalartype_size;
     };
 
+    /** @brief Emulation of C++11's .at() member for std::map<> */
+    template <typename KeyT, typename ValueT>
+    ValueT const & at(std::map<KeyT, ValueT> const & map, KeyT const & key)
+    {
+      typename std::map<KeyT, ValueT>::const_iterator it = map.find(key);
+      if (it != map.end())
+        return it->second;
+
+      throw std::out_of_range("Generator: Key not found in map");
+    }
 
     namespace utils{
       class kernel_generation_stream;

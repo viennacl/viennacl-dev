@@ -270,7 +270,7 @@ namespace viennacl{
       static profile_base * handle_failure(viennacl::ocl::device const & device, expression_descriptor const & descriptor, tools::shared_ptr<profile_base> const & profile){
         //Returns default if the profile is invalid
         if(profile->is_invalid(device, descriptor.scalartype_size))
-          return database.map.at(unknown_id).map.at(device.type()).map.at(UNKNOWN).map.at("").map.at(descriptor.make_key()).get();
+          return at(at(at(at(at(database.map, unknown_id).map, device.type()).map, UNKNOWN).map, std::string("")).map, descriptor.make_key()).get();
         return profile.get();
       }
 
@@ -287,38 +287,38 @@ namespace viennacl{
         database_type::map_type::iterator vendor_it = database.map.find(vendor_id);
         //Vendor not recognized => global default:
         if(vendor_it==database.map.end())
-          return handle_failure(device, descriptor, database.map.at(unknown_id).map.at(dev_type).map.at(UNKNOWN).map.at("").map.at(expression_key));
+          return handle_failure(device, descriptor, at(at(at(at(at(database.map, unknown_id).map, dev_type).map, UNKNOWN).map, std::string("")).map, expression_key));
 
         /*-Device Type-*/
         //std::cout << "Looking up device type..." << std::endl;
         device_type_map::map_type::iterator device_type_it = vendor_it->second.map.find(dev_type);
         //Device type not recognized for this vendor => global default
         if(device_type_it==vendor_it->second.map.end())
-          return handle_failure(device, descriptor, database.map.at(unknown_id).map.at(dev_type).map.at(UNKNOWN).map.at("").map.at(expression_key));
+          return handle_failure(device, descriptor, at(at(at(at(at(database.map, unknown_id).map, dev_type).map, UNKNOWN).map, std::string("")).map, expression_key));
 
         /*-Device Architecture-*/
         //std::cout << "Looking up device architecture..." << std::endl;
         device_architecture_map::map_type::iterator architecture_it = device_type_it->second.map.find(device_architecture);
         if(architecture_it==device_type_it->second.map.end())
-          return handle_failure(device, descriptor, database.map.at(unknown_id).map.at(dev_type).map.at(UNKNOWN).map.at("").map.at(expression_key));
+          return handle_failure(device, descriptor, at(at(at(at(at(database.map, unknown_id).map, dev_type).map, UNKNOWN).map, std::string("")).map, expression_key));
 
         /*-Device Name-*/
         //std::cout << "Looking up device name..." << std::endl;
         device_name_map::map_type::iterator device_name_it = architecture_it->second.map.find(device_name);
         //Name not found => Vendor default
         if(device_name_it==architecture_it->second.map.end())
-          return handle_failure(device, descriptor, database.map.at(vendor_id).map.at(dev_type).map.at(device_architecture).map.at("").map.at(expression_key));
+          return handle_failure(device, descriptor, at(at(at(at(at(database.map, vendor_id).map, dev_type).map, device_architecture).map, std::string("")).map, expression_key));
 
         //std::cout << "Looking up expression name.." << std::endl;
         /*-Expression-*/
         expression_map::map_type::iterator expression_it = device_name_it->second.map.find(expression_key);
         //Expression not found => Vendor default
         if(expression_it==device_name_it->second.map.end())
-          return handle_failure(device, descriptor, database.map.at(vendor_id).map.at(dev_type).map.at(device_architecture).map.at("").map.at(expression_key));
+          return handle_failure(device, descriptor, at(at(at(at(at(database.map, vendor_id).map, dev_type).map, device_architecture).map, std::string("")).map, expression_key));
 
         //std::cout << "Device found in the database! Getting profile..." << std::endl;
         //Everything okay. Return specific profile//
-        return handle_failure(device, descriptor, database.map.at(vendor_id).map.at(dev_type).map.at(device_architecture).map.at(device_name).map.at(expression_key));
+        return handle_failure(device, descriptor, at(at(at(at(at(database.map, vendor_id).map, dev_type).map, device_architecture).map, std::string("")).map, expression_key));
       }
 
     }

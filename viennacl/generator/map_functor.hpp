@@ -51,7 +51,7 @@ namespace viennacl{
             if(memory.insert(std::make_pair(handle, current_arg)).second)
               return "arg" + utils::to_string(current_arg_++);
             else
-              return "arg" + utils::to_string(memory.at(handle));
+              return "arg" + utils::to_string(memory[handle]);
           }
 
         public:

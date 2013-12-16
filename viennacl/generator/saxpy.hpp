@@ -97,7 +97,7 @@ namespace viennacl{
           //Writes back
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
              //Gets the mapped object at the LHS of each expression
-            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(&it->second, detail::LHS_NODE_TYPE)).get()))
+            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(at(mapping.at(std::distance(statements.begin(),it)), std::make_pair(&it->second, detail::LHS_NODE_TYPE)).get()))
               p->write_back( std::make_pair("i", "0"), fetched, stream);
 
           stream.dec_tab();
@@ -185,7 +185,7 @@ namespace viennacl{
 
           //Writes back
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(&it->second,detail::LHS_NODE_TYPE)).get()))
+            if(detail::mapped_handle * p = dynamic_cast<detail::mapped_handle *>(at(mapping.at(std::distance(statements.begin(),it)), std::make_pair(&it->second,detail::LHS_NODE_TYPE)).get()))
               p->write_back(std::make_pair("i", "j"), fetched, stream);
           }
 

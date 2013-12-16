@@ -281,7 +281,7 @@ namespace viennacl{
           /// INIT
           /// //////////////
 
-          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(mapping.at(0).at(std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
+          detail::mapped_matrix const * assigned = static_cast<detail::mapped_matrix const *>(at(mapping.at(0), std::make_pair(&statements.front().second,detail::LHS_NODE_TYPE)).get());
           detail::mapped_matrix_product* prod = NULL;
           detail::mapped_matrix const * lhs = NULL;
           detail::mapped_matrix const * rhs = NULL;
@@ -294,23 +294,23 @@ namespace viennacl{
             vcl_size_t i = std::distance(statements.begin(), it);
             for(scheduler::statement::container_type::const_iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(iit->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
-                prod = (detail::mapped_matrix_product *)mapping.at(i).at(std::make_pair(&(*iit), detail::PARENT_NODE_TYPE)).get();
+                prod = (detail::mapped_matrix_product *)at(mapping.at(i), std::make_pair(&(*iit), detail::PARENT_NODE_TYPE)).get();
                 if(iit->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_lhs_transposed = true;
-                  lhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
+                  lhs = (detail::mapped_matrix const *)at(mapping.at(i), std::make_pair(&exprs[iit->lhs.node_index],detail::LHS_NODE_TYPE)).get();
                 }
                 else{
                   is_lhs_transposed = false;
-                  lhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
+                  lhs = (detail::mapped_matrix const *)at(mapping.at(i), std::make_pair(&(*iit), detail::LHS_NODE_TYPE)).get();
                 }
 
                 if(iit->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY){
                   is_rhs_transposed = true;
-                  rhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
+                  rhs = (detail::mapped_matrix const *)at(mapping.at(i), std::make_pair(&exprs[iit->rhs.node_index], detail::LHS_NODE_TYPE)).get();
                 }
                 else{
                   is_rhs_transposed = false;
-                  rhs = (detail::mapped_matrix const *)mapping.at(i).at(std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
+                  rhs = (detail::mapped_matrix const *)at(mapping.at(i), std::make_pair(&(*iit),detail::RHS_NODE_TYPE)).get();
                 }
 
               }

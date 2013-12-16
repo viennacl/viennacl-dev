@@ -161,7 +161,7 @@ namespace viennacl{
           void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
               if( (node_type==detail::LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                 ||(node_type==detail::RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-                  append_kernel_arguments(already_generated_, str_, vector_size_, *mapping_.at(std::make_pair(root_node,node_type)));
+                  append_kernel_arguments(already_generated_, str_, vector_size_, *at(mapping_, std::make_pair(root_node,node_type)));
           }
       };
 
@@ -179,7 +179,7 @@ namespace viennacl{
           void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, detail::node_type node_type) const {
             if( (node_type==detail::LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
               ||(node_type==detail::RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-              fetch(index_string_, vectorization_, fetched_, stream_, *mapping_.at(std::make_pair(root_node, node_type)));
+              fetch(index_string_, vectorization_, fetched_, stream_, *at(mapping_, std::make_pair(root_node, node_type)));
           }
       };
 
@@ -197,7 +197,7 @@ namespace viennacl{
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           detail::traverse(statement, statement.array()[root_node.lhs.node_index], detail::fetch_traversal(fetched, index, static_cast<unsigned int>(vectorization), stream, mapping));
         else
-          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *mapping.at(std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
+          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *at(mapping, std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
 
       }
 
@@ -215,7 +215,7 @@ namespace viennacl{
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           detail::traverse(statement, statement.array()[root_node.rhs.node_index], detail::fetch_traversal(fetched, index, static_cast<unsigned int>(vectorization), stream, mapping));
         else
-          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *mapping.at(std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
+          detail::fetch(index, static_cast<unsigned int>(vectorization),fetched, stream, *at(mapping, std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
 
       }
 
@@ -238,18 +238,18 @@ namespace viennacl{
             if(node_type==PARENT_NODE_TYPE)
             {
               if(is_binary_leaf_operator(root_node->op.type))
-                str_ += generate(index_string_, vector_element_, *mapping_.at(std::make_pair(root_node, node_type)));
+                str_ += generate(index_string_, vector_element_, *at(mapping_, std::make_pair(root_node, node_type)));
               else if(is_arithmetic_operator(root_node->op.type))
                 str_ += generate(root_node->op.type);
             }
             else{
               if(node_type==LHS_NODE_TYPE){
                 if(root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += detail::generate(index_string_,vector_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                  str_ += detail::generate(index_string_,vector_element_, *at(mapping_, std::make_pair(root_node,node_type)));
               }
               else if(node_type==RHS_NODE_TYPE){
                 if(root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += detail::generate(index_string_,vector_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                  str_ += detail::generate(index_string_,vector_element_, *at(mapping_, std::make_pair(root_node,node_type)));
               }
             }
           }
@@ -264,7 +264,7 @@ namespace viennacl{
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           detail::traverse(statement, statement.array()[root_node.lhs.node_index], detail::expression_generation_traversal(index, vector_element, str, mapping));
         else
-          str += detail::generate(index, vector_element,*mapping.at(std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
+          str += detail::generate(index, vector_element,*at(mapping, std::make_pair(&root_node,detail::LHS_NODE_TYPE)));
       }
 
 
@@ -277,7 +277,7 @@ namespace viennacl{
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           detail::traverse(statement, statement.array()[root_node.rhs.node_index], detail::expression_generation_traversal(index, vector_element, str, mapping));
         else
-          str += detail::generate(index, vector_element,*mapping.at(std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
+          str += detail::generate(index, vector_element,*at(mapping, std::make_pair(&root_node,detail::RHS_NODE_TYPE)));
       }
 
     }
