@@ -110,7 +110,7 @@ namespace viennacl
         // Find all points that strongly influence current point (Yang, p.5)
         for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
         {
-          unsigned int j = col_iter.index2();
+          unsigned int j = static_cast<unsigned int>(col_iter.index2());
           if (i == j) continue;
           if (diag_sign * (-*col_iter) >= tag.get_threshold() * (diag_sign * (-max)))
           {
@@ -404,7 +404,7 @@ namespace viennacl
             // All points become C points
             for (unsigned int j=0; j<Slicing.A_slice[i][level].size1(); ++j)
               Slicing.Pointvector_slice[i][level].make_cpoint(Slicing.Pointvector_slice[i][level][j]);
-            Slicing.Offset[i+1][level+1] = Slicing.A_slice[i][level].size1();
+            Slicing.Offset[i+1][level+1] = static_cast<unsigned int>(Slicing.A_slice[i][level].size1());
           }
         }
 
@@ -610,7 +610,7 @@ namespace viennacl
             diag = A[level](x,x);
             for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
             {
-              y = col_iter.index2();
+              y = static_cast<long>(col_iter.index2());
               if (y == x || (std::fabs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * std::sqrt(std::fabs(diag*A[level](y,y)))))
               {
                 // Neighborhood x includes point y

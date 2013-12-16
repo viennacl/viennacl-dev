@@ -283,7 +283,7 @@ namespace viennacl
             }
 
             if (elements[data_index] != static_cast<SCALARTYPE>(0.0))
-              cpu_matrix(row-1, col_buffer[data_index]) = elements[data_index];
+              cpu_matrix(row-1, static_cast<vcl_size_t>(col_buffer[data_index])) = elements[data_index];
             ++data_index;
           }
         }

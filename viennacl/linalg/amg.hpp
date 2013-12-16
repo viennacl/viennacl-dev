@@ -88,7 +88,7 @@ namespace viennacl
       for (i=0; i<iterations; ++i)
       {
         // Initialize Pointvector on level i and construct points.
-        Pointvector[i] = PointVectorType(A[i].size1());
+        Pointvector[i] = PointVectorType(static_cast<unsigned int>(A[i].size1()));
         Pointvector[i].init_points();
 
         // Construct C and F points on coarse level (i is fine level, i+1 coarse level).

@@ -91,7 +91,7 @@ namespace viennacl
           {
             typedef typename std::map<SizeType, SCALARTYPE>::const_iterator  col_iterator;
 
-            col_iterator colit = mat_[i_].find(j_);
+            col_iterator colit = mat_[i_].find(static_cast<unsigned int>(j_));
 
             if (colit != mat_[i_].end())
               return colit->second;
@@ -151,14 +151,14 @@ namespace viennacl
 
         const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true> begin() const
         {
-          return const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true>(mat_, i_, 0);
+          return const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true>(mat_, static_cast<int>(i_), 0);
         }
         const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true> end() const
         {
           int end_ = static_cast<int>(mat_[i_].size());
           if (end_ > 0)
             end_ = mat_[i_].rbegin()->first;
-          return const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true>(mat_, i_, end_ + 1);
+          return const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true>(mat_, static_cast<int>(i_), end_ + 1);
         }
 
       private:
@@ -193,10 +193,10 @@ namespace viennacl
         size_type size2() const { return size2_; }
 
         const_iterator1 begin1() const { return const_iterator1(mat_, 0, 0); }
-        const_iterator1 end1() const   { return const_iterator1(mat_, size1(), size2()); }
+        const_iterator1 end1() const   { return const_iterator1(mat_, static_cast<int>(size1()), static_cast<int>(size2())); }
 
-        const_reverse_iterator1 rbegin1() const { return const_reverse_iterator1(mat_, size1() - 1, 0); }
-        const_reverse_iterator1 rend1() const   { return const_reverse_iterator1(mat_, -1, size2()); }
+        const_reverse_iterator1 rbegin1() const { return const_reverse_iterator1(mat_, static_cast<int>(size1() - 1), 0); }
+        const_reverse_iterator1 rend1() const   { return const_reverse_iterator1(mat_, -1, static_cast<int>(size2())); }
 
         const_iterator2 begin2() const { return const_iterator2(mat_, 0, 0); }
         const_iterator2 end2() const   { return const_iterator2(mat_, size1(), size2()); }
@@ -271,7 +271,7 @@ namespace viennacl
         {
           if (is_iterator1)
           {
-            return mat_[i_][j_];
+            return mat_[i_][static_cast<SizeType>(j_)];
           }
           else
             return iter2->second;
@@ -318,14 +318,14 @@ namespace viennacl
 
         sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1> begin() const
         {
-          return sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1>(mat_, i_, 0);
+          return sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1>(mat_, static_cast<int>(i_), 0);
         }
         sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1> end() const
         {
           int end_ = static_cast<int>(mat_[i_].size());
           if (end_ > 0)
             end_ = mat_[i_].rbegin()->first;
-          return sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1>(mat_, i_, end_ + 1);
+          return sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1>(mat_, static_cast<int>(i_), end_ + 1);
         }
 
       private:
@@ -358,10 +358,10 @@ namespace viennacl
         sparse_matrix_adapter(std::vector<std::map<SizeType, SCALARTYPE> > & mat,
                               vcl_size_t num_rows,
                               vcl_size_t num_cols)
-         : BaseType(mat, num_rows, num_cols), mat_(mat), size1_(num_rows), size2_(num_cols) {}
+         : BaseType(mat, num_rows, num_cols), mat_(mat), size1_(static_cast<size_type>(num_rows)), size2_(static_cast<size_type>(num_cols)) {}
 
         iterator1 begin1() { return iterator1(mat_, 0, 0); }
-        iterator1 end1() { return iterator1(mat_, mat_.size(), mat_.back().size()); }
+        iterator1 end1() { return iterator1(mat_, static_cast<int>(mat_.size()), static_cast<int>(mat_.back().size())); }
 
         const_iterator1 begin1() const { return const_iterator1(mat_, 0, 0); }
         const_iterator1 end1() const   { return const_iterator1(mat_, size1(), size2()); }
@@ -374,7 +374,7 @@ namespace viennacl
 
         SCALARTYPE & operator()(size_type i, size_type j) { return mat_[i][j]; }
 
-        void resize(size_type i, size_type j, bool preserve = true)
+        void resize(vcl_size_t i, vcl_size_t j, bool preserve = true)
         {
           if (i>0)
             mat_.resize(i);

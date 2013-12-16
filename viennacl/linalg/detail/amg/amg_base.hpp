@@ -283,7 +283,7 @@ namespace viennacl
             unsigned int size() const { return size_;}
 
             // Returns number of non-zero entries in vector equal to the size of the underlying map.
-            unsigned int internal_size() const { return internal_vector.size(); }
+            unsigned int internal_size() const { return static_cast<unsigned int>(internal_vector.size()); }
             // Delete underlying map.
             void clear() { internal_vector.clear();  }
             // Remove entry at position i.
@@ -461,7 +461,7 @@ namespace viennacl
               AdapterType a (internal_mat, mat.size1(), mat.size2());
               AdapterType a_trans (internal_mat_trans, mat.size2(), mat.size1());
               a.resize(mat.size1(), mat.size2());
-              a_trans.resize (mat.size2(), mat.size1());
+              a_trans.resize(mat.size2(), mat.size1());
               s1 = mat.size1();
               s2 = mat.size2();
               a.clear();
@@ -473,8 +473,8 @@ namespace viennacl
                 {
                   if (*col_iter != 0)
                   {
-                    unsigned int x = col_iter.index1();
-                    unsigned int y = col_iter.index2();
+                    unsigned int x = static_cast<unsigned int>(col_iter.index1());
+                    unsigned int y = static_cast<unsigned int>(col_iter.index2());
                     a (x,y) = *col_iter;
                     a_trans (y,x) = *col_iter;
                   }
@@ -500,8 +500,8 @@ namespace viennacl
                   transposed_mode = false;
 
                   for (iterator1 row_iter = begin1(); row_iter != end1(); ++row_iter)
-                for (iterator2 col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-                  internal_mat_trans[col_iter.index2()][col_iter.index1()] = *col_iter;
+                    for (iterator2 col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+                      internal_mat_trans[col_iter.index2()][col_iter.index1()] = static_cast<unsigned int>(*col_iter);
 
                   transposed_mode = save_mode;
                   transposed = true;
@@ -1251,8 +1251,8 @@ namespace viennacl
               {
                 // Offset of first piece is zero. Pieces 1,...,threads-1 have equal size while the last one might be greater.
                 if (i == 0) Offset[i][level] = 0;
-                else if (i == threads_) Offset[i][level] = A[level].size1();
-                else Offset[i][level] = i*(A[level].size1()/threads_);
+                else if (i == threads_) Offset[i][level] = static_cast<unsigned int>(A[level].size1());
+                else Offset[i][level] = static_cast<unsigned int>(i*(A[level].size1()/threads_));
               }
             }
 
@@ -1281,7 +1281,7 @@ namespace viennacl
                 // Iterate over the part that belongs to thread i (from Offset[i][level] to Offset[i+1][level]).
                 ConstRowIterator row_iter = A[level].begin1();
                 row_iter += Offset[i][level];
-                x = row_iter.index1();
+                x = static_cast<unsigned int>(row_iter.index1());
 
                 while (x < Offset[i+1][level] && row_iter != A[level].end1())
                 {
@@ -1291,7 +1291,7 @@ namespace viennacl
                   Pointvector_slice[i][level].add_point(point);
 
                   ConstColIterator col_iter = row_iter.begin();
-                  y = col_iter.index2();
+                  y = static_cast<unsigned int>(col_iter.index2());
 
                   // Save all coefficients from the matrix slice
                   while (y < Offset[i+1][level] && col_iter != row_iter.end())
@@ -1300,11 +1300,11 @@ namespace viennacl
                 A_slice[i][level](x-Offset[i][level],y-Offset[i][level]) = *col_iter;
 
                     ++col_iter;
-                    y = col_iter.index2();
+                    y = static_cast<unsigned int>(col_iter.index2());
                   }
 
                   ++row_iter;
-                  x = row_iter.index1();
+                  x = static_cast<unsigned int>(row_iter.index1());
                 }
               }
             }
@@ -1324,7 +1324,7 @@ namespace viennacl
 
           long x,y,z;
           ScalarType prod;
-          RES = SparseMatrixType(A.size1(), B.size2());
+          RES = SparseMatrixType(static_cast<unsigned int>(A.size1()), static_cast<unsigned int>(B.size2()));
           RES.clear();
 
     #ifdef VIENNACL_WITH_OPENMP
@@ -1336,13 +1336,13 @@ namespace viennacl
             row_iter += x;
             for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
             {
-              y = col_iter.index2();
+              y = static_cast<unsigned int>(col_iter.index2());
               InternalRowIterator row_iter2 = B.begin1();
               row_iter2 += y;
 
               for(InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
               {
-                z = col_iter2.index2();
+                z = static_cast<unsigned int>(col_iter2.index2());
                 prod = *col_iter * *col_iter2;
                 RES.add(x,z,prod);
               }
@@ -1364,7 +1364,7 @@ namespace viennacl
 
           long x,y1,y2,z;
           amg_sparsevector<ScalarType> row;
-          RES = SparseMatrixType(P.size2(), P.size2());
+          RES = SparseMatrixType(static_cast<unsigned int>(P.size2()), static_cast<unsigned int>(P.size2()));
           RES.clear();
 
     #ifdef VIENNACL_WITH_OPENMP
@@ -1372,19 +1372,19 @@ namespace viennacl
     #endif
           for (x=0; x<static_cast<long>(P.size2()); ++x)
           {
-            row = amg_sparsevector<ScalarType>(A.size2());
+            row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A.size2()));
             InternalRowIterator row_iter = P.begin1(true);
             row_iter += x;
 
             for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
             {
-              y1 = col_iter.index2();
+              y1 = static_cast<long>(col_iter.index2());
               InternalRowIterator row_iter2 = A.begin1();
               row_iter2 += y1;
 
               for(InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
               {
-                y2 = col_iter2.index2();
+                y2 = static_cast<long>(col_iter2.index2());
                 row.add (y2, *col_iter * *col_iter2);
               }
             }
@@ -1396,7 +1396,7 @@ namespace viennacl
 
               for (InternalColIterator col_iter3 = row_iter3.begin(); col_iter3 != row_iter3.end(); ++col_iter3)
               {
-                z = col_iter3.index2();
+                z = static_cast<long>(col_iter3.index2());
                 RES.add (x, z, *col_iter3 * *iter);
               }
             }

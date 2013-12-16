@@ -84,7 +84,7 @@ namespace viennacl
       unsigned int c_points = Pointvector[level].get_cpoints();
 
       // Setup Prolongation/Interpolation matrix
-      P[level] = SparseMatrixType(A[level].size1(),c_points);
+      P[level] = SparseMatrixType(static_cast<unsigned int>(A[level].size1()),c_points);
       P[level].clear();
 
       // Assign indices to C points
@@ -117,7 +117,7 @@ namespace viennacl
           row_sum = c_sum = diag = 0;
           for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
           {
-            y = col_iter.index2();
+            y = static_cast<long>(col_iter.index2());
             if (x == y)// || *col_iter * diag_sign > 0)
             {
               diag += *col_iter;
@@ -188,7 +188,7 @@ namespace viennacl
       unsigned int c_points = Pointvector[level].get_cpoints();
 
       // Setup Prolongation/Interpolation matrix
-      P[level] = SparseMatrixType(A[level].size1(), c_points);
+      P[level] = SparseMatrixType(static_cast<unsigned int>(A[level].size1()), c_points);
       P[level].clear();
 
       // Assign indices to C points
@@ -218,11 +218,11 @@ namespace viennacl
           row_iter += x;
 
           weak_sum = 0;
-          c_sum_row = amg_sparsevector<ScalarType>(A[level].size1());
+          c_sum_row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A[level].size1()));
           c_sum_row.clear();
           for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
           {
-            k = col_iter.index2();
+            k = static_cast<unsigned int>(col_iter.index2());
             pointk = Pointvector[level][k];
 
             // Sum of weakly influencing neighbors + diagonal coefficient
@@ -371,7 +371,7 @@ namespace viennacl
       amg_point *pointx, *pointy;
       unsigned int c_points = Pointvector[level].get_cpoints();
 
-      P[level] = SparseMatrixType(A[level].size1(), c_points);
+      P[level] = SparseMatrixType(static_cast<unsigned int>(A[level].size1()), c_points);
       P[level].clear();
 
       // Assign indices to C points
@@ -416,9 +416,9 @@ namespace viennacl
       unsigned int c_points = Pointvector[level].get_cpoints();
 
       InternalType1 P_tentative = InternalType1(P.size());
-      SparseMatrixType Jacobi = SparseMatrixType(A[level].size1(), A[level].size2());
+      SparseMatrixType Jacobi = SparseMatrixType(static_cast<unsigned int>(A[level].size1()), static_cast<unsigned int>(A[level].size2()));
       Jacobi.clear();
-      P[level] = SparseMatrixType(A[level].size1(), c_points);
+      P[level] = SparseMatrixType(static_cast<unsigned int>(A[level].size1()), c_points);
       P[level].clear();
 
       // Build Jacobi Matrix via filtered A matrix (Vanek et al. p.6)
@@ -432,7 +432,7 @@ namespace viennacl
         row_iter += x;
         for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
         {
-          y = col_iter.index2();
+          y = static_cast<long>(col_iter.index2());
           // Determine the structure of the Jacobi matrix by using a filtered matrix of A:
           // The diagonal consists of the diagonal coefficient minus all coefficients of points not in the neighborhood of x.
           // All other coefficients are the same as in A.
