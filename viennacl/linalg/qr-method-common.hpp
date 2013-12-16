@@ -180,7 +180,7 @@ namespace viennacl
                                     bool is_column
                                     )
       {
-        boost::numeric::ublas::vector<SCALARTYPE> tmp(size, 0);
+        boost::numeric::ublas::vector<SCALARTYPE> tmp = boost::numeric::ublas::scalar_vector<SCALARTYPE>(size, 0);
 
         copy_vec(A, D, row_start, col_start, is_column);
         fast_copy(D.begin(), D.begin() + (size - start), tmp.begin() + start);

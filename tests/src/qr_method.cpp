@@ -167,7 +167,10 @@ void test_eigen(const std::string& fn, bool is_symm)
     std::cout << "Testing matrix of size " << sz << "-by-" << sz << std::endl;
 
     viennacl::matrix<ScalarType> A_input(sz, sz), A_ref(sz, sz), Q(sz, sz);
-    ublas::vector<ScalarType> eigen_ref_re(sz, 0), eigen_ref_im(sz, 0), eigen_re(sz, 0), eigen_im(sz, 0);
+    ublas::vector<ScalarType> eigen_ref_re = ublas::scalar_vector<ScalarType>(sz, 0);
+    ublas::vector<ScalarType> eigen_ref_im = ublas::scalar_vector<ScalarType>(sz, 0);
+    ublas::vector<ScalarType> eigen_re = ublas::scalar_vector<ScalarType>(sz, 0);
+    ublas::vector<ScalarType> eigen_im = ublas::scalar_vector<ScalarType>(sz, 0);
 
     read_matrix_body(f, A_input);
 

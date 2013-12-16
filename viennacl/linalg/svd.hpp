@@ -511,8 +511,8 @@ namespace viennacl
       // second stage
       //std::vector<SCALARTYPE> dh(to, 0);
       //std::vector<SCALARTYPE> sh(to + 1, 0);
-      boost::numeric::ublas::vector<SCALARTYPE> dh(to, 0);
-      boost::numeric::ublas::vector<SCALARTYPE> sh(to + 1, 0);
+      boost::numeric::ublas::vector<SCALARTYPE> dh = boost::numeric::ublas::scalar_vector<SCALARTYPE>(to, 0);
+      boost::numeric::ublas::vector<SCALARTYPE> sh = boost::numeric::ublas::scalar_vector<SCALARTYPE>(to + 1, 0);
 
       detail::bidiag_pack(A, dh, sh);
 
