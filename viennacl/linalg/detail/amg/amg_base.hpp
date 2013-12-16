@@ -501,7 +501,7 @@ namespace viennacl
 
                   for (iterator1 row_iter = begin1(); row_iter != end1(); ++row_iter)
                     for (iterator2 col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-                      internal_mat_trans[col_iter.index2()][col_iter.index1()] = static_cast<unsigned int>(*col_iter);
+                      internal_mat_trans[col_iter.index2()][static_cast<unsigned int>(col_iter.index1())] = *col_iter;
 
                   transposed_mode = save_mode;
                   transposed = true;

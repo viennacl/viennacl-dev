@@ -372,7 +372,7 @@ namespace viennacl
         const_iterator2 begin2() const { return const_iterator2(mat_, 0, 0); }
         const_iterator2 end2() const   { return const_iterator2(mat_, size1(), size2()); }
 
-        SCALARTYPE & operator()(size_type i, size_type j) { return mat_[i][j]; }
+        SCALARTYPE & operator()(vcl_size_t i, vcl_size_t j) { return mat_[i][static_cast<size_type>(j)]; }
 
         void resize(vcl_size_t i, vcl_size_t j, bool preserve = true)
         {
@@ -381,8 +381,8 @@ namespace viennacl
           if (!preserve)
             clear();
 
-          size1_ = i;
-          size2_ = j;
+          size1_ = static_cast<size_type>(i);
+          size2_ = static_cast<size_type>(j);
         }
 
         void clear()
