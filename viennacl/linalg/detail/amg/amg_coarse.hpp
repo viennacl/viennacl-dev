@@ -164,7 +164,7 @@ namespace viennacl
       // Traverse through points and calculate initial influence measure
       long i;
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (i) shared (Pointvector)
+      #pragma omp parallel for private (i)
 #endif
       for (i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
   Pointvector[level][i]->calc_influence();
@@ -375,7 +375,7 @@ namespace viennacl
       // Run classical coarsening in parallel
       total_points = 0;
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for shared (total_points,level)
+      #pragma omp parallel for
 #endif
       for (long i=0; i<static_cast<long>(Slicing.threads_); ++i)
       {
@@ -394,7 +394,7 @@ namespace viennacl
       if (total_points != 0)
       {
       #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for shared (Slicing)
+        #pragma omp parallel for
       #endif
         for (long i=0; i<static_cast<long>(Slicing.threads_); ++i)
         {
@@ -601,7 +601,7 @@ namespace viennacl
           // SA algorithm (Vanek et al. p.6)
           // Build neighborhoods
     #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for private (x,y,diag) shared (A)
+          #pragma omp parallel for private (x,y,diag)
     #endif
           for (x=0; x<static_cast<long>(A[level].size1()); ++x)
           {

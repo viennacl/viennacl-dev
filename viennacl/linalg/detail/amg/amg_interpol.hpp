@@ -379,7 +379,7 @@ namespace viennacl
 
       // Set prolongation such that F point is interpolated (weight=1) by the aggregate it belongs to (Vanek et al p.6)
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (x,pointx) shared (P)
+      #pragma omp parallel for private (x,pointx)
 #endif
       for (x=0; x<static_cast<long>(Pointvector[level].size()); ++x)
       {
@@ -423,7 +423,7 @@ namespace viennacl
 
       // Build Jacobi Matrix via filtered A matrix (Vanek et al. p.6)
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (x,y,diag) shared (A,Pointvector)
+      #pragma omp parallel for private (x,y,diag)
 #endif
       for (x=0; x<static_cast<long>(A[level].size1()); ++x)
       {
