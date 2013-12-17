@@ -33,19 +33,14 @@
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
-#include "viennacl/linalg/host_based/default_blas.hpp"
 #include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/traits/stride.hpp"
-#ifdef VIENNACL_WITH_CBLAS
-#include "viennacl/linalg/host_based/blas_wrapper.hpp"
-#endif
+
 
 // Minimum vector size for using OpenMP on vector operations:
 #ifndef VIENNACL_OPENMP_VECTOR_MIN_SIZE
   #define VIENNACL_OPENMP_VECTOR_MIN_SIZE  5000
 #endif
-
-
 
 namespace viennacl
 {
@@ -259,6 +254,7 @@ namespace viennacl
         vcl_size_t loop_bound  = up_to_internal_size ? vec1.internal_size() : size1;  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
         value_type data_alpha = static_cast<value_type>(alpha);
+
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for if (loop_bound > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
@@ -287,11 +283,15 @@ namespace viennacl
         vcl_size_t start2 = viennacl::traits::start(vec2);
         vcl_size_t inc2   = viennacl::traits::stride(vec2);
 
-#ifdef VIENNACL_WITH_CBLAS
-        cblas_wrapper<value_type>::swap(size1, data_vec1+start1, inc1, data_vec2+start2, inc2);
-#else
-        default_blas::swap(size1, data_vec1+start1, inc1, data_vec2+start2, inc2);
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
+        for (long i = 0; i < static_cast<long>(size1); ++i)
+        {
+          value_type temp = data_vec2[i*inc2+start2];
+          data_vec2[i*inc2+start2] = data_vec1[i*inc1+start1];
+          data_vec1[i*inc1+start1] = temp;
+        }
       }
 
 
@@ -362,6 +362,7 @@ namespace viennacl
 
       ///////////////////////// Norms and inner product ///////////////////
 
+
       //implementation of inner product:
       //namespace {
       /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
@@ -387,11 +388,15 @@ namespace viennacl
         vcl_size_t start2 = viennacl::traits::start(vec2);
         vcl_size_t inc2   = viennacl::traits::stride(vec2);
 
-#ifdef VIENNACL_WITH_CBLAS
-        result = cblas_wrapper<value_type>::dot(size1, data_vec1+start1, inc1, data_vec2+start2, inc2);
-#else
-        result = default_blas::dot(size1, data_vec1+start1, inc1, data_vec2+start2, inc2);
+        value_type temp = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
+        for (long i = 0; i < static_cast<long>(size1); ++i)
+          temp += data_vec1[i*inc1+start1] * data_vec2[i*inc2+start2];
+
+        result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
 
       template <typename T>
@@ -449,8 +454,15 @@ namespace viennacl
         vcl_size_t inc1   = viennacl::traits::stride(vec1);
         vcl_size_t size1  = viennacl::traits::size(vec1);
 
+        value_type temp = 0;
 
-        result = default_blas::asum(size1, data_vec1+start1, inc1);
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+        for (long i = 0; i < static_cast<long>(size1); ++i)
+          temp += static_cast<value_type>(std::fabs(data_vec1[i*inc1+start1]));
+
+        result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
 
       /** @brief Computes the l^2-norm of a vector - implementation
@@ -470,11 +482,19 @@ namespace viennacl
         vcl_size_t inc1   = viennacl::traits::stride(vec1);
         vcl_size_t size1  = viennacl::traits::size(vec1);
 
-#ifdef VIENNACL_WITH_CBLAS
-        result = cblas_wrapper<value_type>::nrm2(size1, data_vec1+start1, inc1);
-#else
-        result = default_blas::nrm2(size1, data_vec1+start1, inc1);
+        value_type temp = 0;
+        value_type data = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for reduction(+: temp) private(data) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
+        for (long i = 0; i < static_cast<long>(size1); ++i)
+        {
+          data = data_vec1[i*inc1+start1];
+          temp += data * data;
+        }
+
+        result = std::sqrt(temp);  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
 
       /** @brief Computes the supremum-norm of a vector

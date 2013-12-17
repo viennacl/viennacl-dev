@@ -25,6 +25,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/backend/blas.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/linalg/sparse_matrix_operations.hpp"
 #include "viennacl/tools/tools.hpp"
@@ -225,7 +226,8 @@ namespace viennacl
   template <class SCALARTYPE, typename F, typename SizeType /* see forwards.h for default type */, typename DistanceType /* see forwards.h for default type */>
   class matrix_base
   {
-      typedef matrix_base<SCALARTYPE, F, SizeType, DistanceType>          self_type;
+      typedef matrix_base<SCALARTYPE, F, SizeType, DistanceType>                  self_type;
+      typedef typename backend::result_of::host_blas_functions<SCALARTYPE>::type  blas_functions_type;
     public:
 
       typedef matrix_iterator<row_iteration, self_type >   iterator1;
@@ -237,7 +239,7 @@ namespace viennacl
       typedef viennacl::backend::mem_handle                                       handle_type;
       typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
-
+      typedef viennacl::backend::blas<blas_functions_type>                        blas_type;
       static const size_type alignment = 128;
 
 
@@ -651,6 +653,8 @@ namespace viennacl
         return elements_.get_active_handle_id();
       }
 
+      const blas_type & blas() const { return blas_; }
+
     protected:
 
       void set_handle(viennacl::backend::mem_handle const & h)
@@ -727,6 +731,7 @@ namespace viennacl
       size_type internal_size1_;
       size_type internal_size2_;
       handle_type elements_;
+      blas_type blas_;
   }; //matrix
 
 

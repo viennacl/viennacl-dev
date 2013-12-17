@@ -35,11 +35,7 @@
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
 #include "viennacl/linalg/detail/op_applier.hpp"
-#include "viennacl/linalg/host_based/default_blas.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
-#ifdef VIENNACL_WITH_CBLAS
-#include "viennacl/linalg/host_based/blas_wrapper.hpp"
-#endif
 
 namespace viennacl
 {
@@ -763,22 +759,34 @@ namespace viennacl
         vcl_size_t start2 = viennacl::traits::start(result);
         vcl_size_t inc2   = viennacl::traits::stride(result);
 
-        bool is_A_row_major = detail::is_row_major(typename F::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
-
-
-#ifdef VIENNACL_WITH_CBLAS
-        if(nlda==1)
-            cblas_wrapper<value_type>::gemv(is_A_row_major,false,A_size1, A_size2, static_cast<value_type>(1)
-                                   , data_A + offA, lda
-                                   , data_x + start1, inc1, static_cast<value_type>(0), data_result + start2, inc2);
-        else
+        if (detail::is_row_major(typename F::orientation_category()))
+        {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
 #endif
-        default_blas::gemv(is_A_row_major,false,A_size1, A_size2, static_cast<value_type>(1)
-                               , data_A + offA, lda, nlda
-                               , data_x + start1, inc1, static_cast<value_type>(0), data_result + start2, inc2);
+          for (long row = 0; row < static_cast<long>(A_size1); ++row)
+          {
+            value_type temp = 0;
+            for (vcl_size_t col = 0; col < A_size2; ++col)
+              temp += data_A[viennacl::row_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+
+            data_result[row * inc2 + start2] = temp;
+          }
+        }
+        else
+        {
+          {
+            value_type temp = data_x[start1];
+            for (vcl_size_t row = 0; row < A_size1; ++row)
+              data_result[row * inc2 + start2] = data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, A_start2, A_internal_size1, A_internal_size2)] * temp;
+          }
+          for (vcl_size_t col = 1; col < A_size2; ++col)  //run through matrix sequentially
+          {
+            value_type temp = data_x[col * inc1 + start1];
+            for (vcl_size_t row = 0; row < A_size1; ++row)
+              data_result[row * inc2 + start2] += data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+          }
+        }
       }
 
 
@@ -818,22 +826,37 @@ namespace viennacl
         vcl_size_t start2 = viennacl::traits::start(result);
         vcl_size_t inc2   = viennacl::traits::stride(result);
 
-        bool is_A_row_major = detail::is_row_major(typename F::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
+        if (detail::is_row_major(typename F::orientation_category()))
+        {
+          {
+            value_type temp = data_x[start1];
+            for (vcl_size_t row = 0; row < A_size2; ++row)
+              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+          }
 
-
-#ifdef VIENNACL_WITH_CBLAS
-        if(nlda==1)
-            cblas_wrapper<value_type>::gemv(is_A_row_major,true,A_size1, A_size2, static_cast<value_type>(1)
-                                   , data_A + offA, lda
-                                   , data_x + start1, inc1, static_cast<value_type>(0), data_result + start2, inc2);
+          for (vcl_size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
+          {
+            value_type temp = data_x[col * inc1 + start1];
+            for (vcl_size_t row = 0; row < A_size2; ++row)
+            {
+              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
+          }
+        }
         else
+        {
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
 #endif
-        default_blas::gemv(is_A_row_major,true,A_size1, A_size2, static_cast<value_type>(1)
-                               , data_A + offA, lda, nlda
-                               , data_x + start1, inc1, static_cast<value_type>(0), data_result + start2, inc2);
+          for (long row = 0; row < static_cast<long>(A_size2); ++row)
+          {
+            value_type temp = 0;
+            for (vcl_size_t col = 0; col < A_size1; ++col)
+              temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+
+            data_result[row * inc2 + start2] = temp;
+          }
+        }
       }
 
 
@@ -884,6 +907,10 @@ namespace viennacl
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
         value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
 
+        bool A_row_major = detail::is_row_major(typename F1::orientation_category());
+        bool B_row_major = detail::is_row_major(typename F2::orientation_category());
+        bool C_row_major = detail::is_row_major(typename F3::orientation_category());
+
         vcl_size_t A_start1 = viennacl::traits::start1(A);
         vcl_size_t A_start2 = viennacl::traits::start2(A);
         vcl_size_t A_inc1   = viennacl::traits::stride1(A);
@@ -908,34 +935,19 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, false,
+                     C_size1, C_size2, A_size2,
+                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+            return;
 
-        bool is_A_row_major = detail::is_row_major(typename F1::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-        bool is_B_row_major = detail::is_row_major(typename F2::orientation_category());
-        vcl_size_t offB = is_B_row_major?B_start1*B_internal_size2 + B_start2:B_start2*B_internal_size1 + B_start1;
-        vcl_size_t ldb = is_B_row_major?B_inc1*B_internal_size2:B_inc2*B_internal_size1;
-        vcl_size_t nldb = is_B_row_major?B_inc2:B_inc1;
-
-        bool is_C_row_major = detail::is_row_major(typename F3::orientation_category());
-        vcl_size_t offC = is_C_row_major?C_start1*C_internal_size2 + C_start2:C_start2*C_internal_size1 + C_start1;
-        vcl_size_t ldc = is_C_row_major?C_inc1*C_internal_size2:C_inc2*C_internal_size1;
-        vcl_size_t nldc = is_C_row_major?C_inc2:C_inc1;
-
-
-#ifdef VIENNACL_WITH_CBLAS
-        bool all_same_layout = (is_A_row_major && is_B_row_major && is_C_row_major)
-                ||(!is_A_row_major && !is_B_row_major && !is_C_row_major);
-        bool no_nonleading_stride = (nlda==1) && (nldb==1) && (nldc==1);
-        if(all_same_layout && no_nonleading_stride)
-            cblas_wrapper<value_type>::gemm(is_A_row_major,false,false,C_size1,C_size2,A_size2
-                                   , alpha, data_A+offA, lda, data_B+offB, ldb, beta, data_C+offC, ldc);
-        else
-#endif
-        default_blas::gemm(is_C_row_major, is_A_row_major, is_B_row_major, false, false,C_size1, C_size2, A_size2
-                           , alpha, data_A+offA,lda,nlda,data_B+offB,ldb,nldb,beta,data_C+offC,ldc,nldc);
+        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
 
 
@@ -959,6 +971,10 @@ namespace viennacl
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
         value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
+
+        bool A_row_major = detail::is_row_major(typename F1::orientation_category());
+        bool B_row_major = detail::is_row_major(typename F2::orientation_category());
+        bool C_row_major = detail::is_row_major(typename F3::orientation_category());
 
         vcl_size_t A_start1 = viennacl::traits::start1(A.lhs());
         vcl_size_t A_start2 = viennacl::traits::start2(A.lhs());
@@ -984,33 +1000,19 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        bool is_A_row_major = detail::is_row_major(typename F1::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, false,
+                     C_size1, C_size2, A_size1,
+                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+            return;
 
-        bool is_B_row_major = detail::is_row_major(typename F2::orientation_category());
-        vcl_size_t offB = is_B_row_major?B_start1*B_internal_size2 + B_start2:B_start2*B_internal_size1 + B_start1;
-        vcl_size_t ldb = is_B_row_major?B_inc1*B_internal_size2:B_inc2*B_internal_size1;
-        vcl_size_t nldb = is_B_row_major?B_inc2:B_inc1;
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-        bool is_C_row_major = detail::is_row_major(typename F3::orientation_category());
-        vcl_size_t offC = is_C_row_major?C_start1*C_internal_size2 + C_start2:C_start2*C_internal_size1 + C_start1;
-        vcl_size_t ldc = is_C_row_major?C_inc1*C_internal_size2:C_inc2*C_internal_size1;
-        vcl_size_t nldc = is_C_row_major?C_inc2:C_inc1;
-
-
-#ifdef VIENNACL_WITH_CBLAS
-        bool all_same_layout = (is_A_row_major && is_B_row_major && is_C_row_major)
-                ||(!is_A_row_major && !is_B_row_major && !is_C_row_major);
-        bool no_nonleading_stride = (nlda==1) && (nldb==1) && (nldc==1);
-        if(all_same_layout && no_nonleading_stride)
-            cblas_wrapper<value_type>::gemm(is_A_row_major,true,false,C_size1,C_size2,A_size1
-                                   , alpha, data_A+offA, lda, data_B+offB, ldb, beta, data_C+offC, ldc);
-        else
-#endif
-        default_blas::gemm(is_C_row_major, is_A_row_major, is_B_row_major, true, false,C_size1, C_size2, A_size1
-                           , alpha, data_A+offA,lda,nlda,data_B+offB,ldb,nldb,beta,data_C+offC,ldc,nldc);
+        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
 
 
@@ -1029,6 +1031,10 @@ namespace viennacl
                      ScalarType beta)
       {
         typedef NumericT        value_type;
+
+        bool A_row_major = detail::is_row_major(typename F1::orientation_category());
+        bool B_row_major = detail::is_row_major(typename F2::orientation_category());
+        bool C_row_major = detail::is_row_major(typename F3::orientation_category());
 
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
@@ -1058,33 +1064,19 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        bool is_A_row_major = detail::is_row_major(typename F1::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, true,
+                     C_size1, C_size2, A_size2,
+                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+            return;
 
-        bool is_B_row_major = detail::is_row_major(typename F2::orientation_category());
-        vcl_size_t offB = is_B_row_major?B_start1*B_internal_size2 + B_start2:B_start2*B_internal_size1 + B_start1;
-        vcl_size_t ldb = is_B_row_major?B_inc1*B_internal_size2:B_inc2*B_internal_size1;
-        vcl_size_t nldb = is_B_row_major?B_inc2:B_inc1;
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-        bool is_C_row_major = detail::is_row_major(typename F3::orientation_category());
-        vcl_size_t offC = is_C_row_major?C_start1*C_internal_size2 + C_start2:C_start2*C_internal_size1 + C_start1;
-        vcl_size_t ldc = is_C_row_major?C_inc1*C_internal_size2:C_inc2*C_internal_size1;
-        vcl_size_t nldc = is_C_row_major?C_inc2:C_inc1;
-
-
-#ifdef VIENNACL_WITH_CBLAS
-        bool all_same_layout = (is_A_row_major && is_B_row_major && is_C_row_major)
-                ||(!is_A_row_major && !is_B_row_major && !is_C_row_major);
-        bool no_nonleading_stride = (nlda==1) && (nldb==1) && (nldc==1);
-        if(all_same_layout && no_nonleading_stride)
-            cblas_wrapper<value_type>::gemm(is_A_row_major,false,true,C_size1,C_size2,A_size2
-                                   , alpha, data_A+offA, lda, data_B+offB, ldb, beta, data_C+offC, ldc);
-        else
-#endif
-        default_blas::gemm(is_C_row_major, is_A_row_major, is_B_row_major, false, true,C_size1, C_size2, A_size2
-                           , alpha, data_A+offA,lda,nlda,data_B+offB,ldb,nldb,beta,data_C+offC,ldc,nldc);
+        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
 
 
@@ -1102,6 +1094,10 @@ namespace viennacl
                      ScalarType beta)
       {
         typedef NumericT        value_type;
+
+        bool A_row_major = detail::is_row_major(typename F1::orientation_category());
+        bool B_row_major = detail::is_row_major(typename F2::orientation_category());
+        bool C_row_major = detail::is_row_major(typename F3::orientation_category());
 
         value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
         value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
@@ -1131,33 +1127,19 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        bool is_A_row_major = detail::is_row_major(typename F1::orientation_category());
-        vcl_size_t offA = is_A_row_major?A_start1*A_internal_size2 + A_start2:A_start2*A_internal_size1 + A_start1;
-        vcl_size_t lda = is_A_row_major?A_inc1*A_internal_size2:A_inc2*A_internal_size1;
-        vcl_size_t nlda = is_A_row_major?A_inc2:A_inc1;
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, true,
+                     C_size1, C_size2, A_size1,
+                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+            return;
 
-        bool is_B_row_major = detail::is_row_major(typename F2::orientation_category());
-        vcl_size_t offB = is_B_row_major?B_start1*B_internal_size2 + B_start2:B_start2*B_internal_size1 + B_start1;
-        vcl_size_t ldb = is_B_row_major?B_inc1*B_internal_size2:B_inc2*B_internal_size1;
-        vcl_size_t nldb = is_B_row_major?B_inc2:B_inc1;
+        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-        bool is_C_row_major = detail::is_row_major(typename F3::orientation_category());
-        vcl_size_t offC = is_C_row_major?C_start1*C_internal_size2 + C_start2:C_start2*C_internal_size1 + C_start1;
-        vcl_size_t ldc = is_C_row_major?C_inc1*C_internal_size2:C_inc2*C_internal_size1;
-        vcl_size_t nldc = is_C_row_major?C_inc2:C_inc1;
-
-
-#ifdef VIENNACL_WITH_CBLAS
-        bool all_same_layout = (is_A_row_major && is_B_row_major && is_C_row_major)
-                ||(!is_A_row_major && !is_B_row_major && !is_C_row_major);
-        bool no_nonleading_stride = (nlda==1) && (nldb==1) && (nldc==1);
-        if(all_same_layout && no_nonleading_stride)
-            cblas_wrapper<value_type>::gemm(is_A_row_major,true,true,C_size1,C_size2,A_size1
-                                   , alpha, data_A+offA, lda, data_B+offB, ldb, beta, data_C+offC, ldc);
-        else
-#endif
-        default_blas::gemm(is_C_row_major, is_A_row_major, is_B_row_major, true, true,C_size1, C_size2, A_size1
-                           , alpha, data_A+offA,lda,nlda,data_B+offB,ldb,nldb,beta,data_C+offC,ldc,nldc);
+        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
       }
 
 
