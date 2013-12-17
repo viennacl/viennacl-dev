@@ -199,7 +199,7 @@ namespace viennacl
 
       value_type operator*(void) { return mat_(row_, col_); }
       self_type & operator++(void) { viennacl::tools::MATRIX_ITERATOR_INCREMENTER<ROWCOL, MATRIXTYPE>::apply(mat_, row_, col_); return *this; }
-      self_type & operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
+      self_type operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
 
       bool operator==(self_type const & other) { return (row_ == other.row_) && (col_ == other.col_); }
       bool operator!=(self_type const & other) { return !(*this == other); }

@@ -114,7 +114,7 @@ namespace viennacl
             ++iter2;
           return *this;
         }
-        self_type & operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
+        self_type operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
 
         self_type operator+=(SizeType offset)
         {
@@ -285,7 +285,7 @@ namespace viennacl
             ++iter2;
           return *this;
         }
-        self_type & operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
+        self_type operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
 
         self_type operator+=(size_type offset)
         {
