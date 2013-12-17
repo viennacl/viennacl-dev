@@ -243,8 +243,8 @@ namespace viennacl
         for(vcl_size_t i = 0; i < size; i++) {
             s << "(";
             for(vcl_size_t j = 0; j < size; j++) {
-                int index = (int)i - (int)j;
-                if(index < 0) index = size + index;
+                long index = static_cast<long>(i) - static_cast<long>(j);
+                if(index < 0) index = static_cast<long>(size) + index;
                 s << tmp[index];
                 //s << index;
                 if(j < (size - 1)) s << ",";

@@ -184,7 +184,7 @@ namespace viennacl
                 inprod = norm2 = 0;
                 sparse_inner_prod(res, A_v_c[res_it->first], inprod);
                 sparse_norm_2(A_v_c[res_it->first], norm2);
-                p.push_back(std::pair<vcl_size_t, ScalarType>(res_it->first, (inprod*inprod)/(norm2*norm2)));
+                p.push_back(std::pair<unsigned int, ScalarType>(res_it->first, (inprod*inprod)/(norm2*norm2)));
               }
             }
 

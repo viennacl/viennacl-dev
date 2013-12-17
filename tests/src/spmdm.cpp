@@ -84,7 +84,7 @@ int test(NumericT epsilon)
 
   // add some extra weight to diagonal in order to avoid issues with round-off errors
   for (std::size_t i=0; i<ublas_lhs.size1(); ++i)
-    ublas_lhs(i,i) *= 1.5;
+    ublas_lhs(i,i) *= NumericT(1.5);
 
   std::size_t cols_rhs = 1;
 

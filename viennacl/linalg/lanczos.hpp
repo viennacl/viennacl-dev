@@ -125,7 +125,7 @@ namespace viennacl
       std::vector<
               typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
               >
-      lanczosPRO (MatrixT const& A, VectorT & r, int size, lanczos_tag const & tag)
+      lanczosPRO (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag const & tag)
       {
 
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
@@ -147,7 +147,7 @@ namespace viennacl
         std::vector<long> l_bound(size/2), u_bound(size/2);
         bool second_step;
         CPU_ScalarType squ_eps, eta, temp, eps, retry_th;
-        long n = r.size();
+        vcl_size_t n = r.size();
         std::vector< std::vector<CPU_ScalarType> > w(2, std::vector<CPU_ScalarType>(size));
         CPU_ScalarType cpu_beta;
 
@@ -182,7 +182,7 @@ namespace viennacl
         betas.push_back(vcl_beta);
 
         long batches = 0;
-        for(i = 1;i < size; i++)
+        for(i = 1;i < static_cast<long>(size); i++)
         {
           r = u - vcl_alpha * r;
           vcl_beta = viennacl::linalg::norm_2(r);
@@ -312,18 +312,17 @@ namespace viennacl
       std::vector<
               typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
               >
-      lanczos (MatrixT const& A, VectorT & r, int size, lanczos_tag)
+      lanczos (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
       {
 
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-        long i;
         ScalarType vcl_beta;
         ScalarType vcl_alpha;
         std::vector<CPU_ScalarType> alphas, betas;
         CPU_ScalarType norm;
-        long n = r.size();
+        vcl_size_t n = r.size();
         VectorT u(n), t(n);
         boost::numeric::ublas::vector<CPU_ScalarType> s(r.size()), u_zero(n), q(n);
         boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
@@ -332,7 +331,7 @@ namespace viennacl
         detail::copy_vec_to_vec(u_zero, u);
         norm = norm_2(r);
 
-        for(i = 0;i < size; i++)
+        for(vcl_size_t i = 0;i < size; i++)
         {
           r /= norm;
           vcl_beta = norm;
@@ -369,7 +368,7 @@ namespace viennacl
       std::vector<
               typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
               >
-      lanczosFRO (MatrixT const& A, VectorT & r, int size, lanczos_tag)
+      lanczosFRO (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
       {
 
         typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
@@ -380,7 +379,7 @@ namespace viennacl
           ScalarType vcl_beta;
           ScalarType vcl_alpha;
           std::vector<CPU_ScalarType> alphas, betas;
-          long n = r.size();
+          vcl_size_t n = r.size();
           VectorT u(n), t(n);
           ScalarType inner_rt;
           boost::numeric::ublas::vector<CPU_ScalarType> u_zero(n), s(r.size()), q(n);
@@ -390,11 +389,11 @@ namespace viennacl
           norm = norm_2(r);
 
 
-          for(long i = 0; i < size; i++)
+          for(vcl_size_t i = 0; i < size; i++)
           {
             r /= norm;
 
-            for(long j = 0; j < i; j++)
+            for(vcl_size_t j = 0; j < i; j++)
             {
               q = boost::numeric::ublas::column(Q, j);
               detail::copy_vec_to_vec(q, t);

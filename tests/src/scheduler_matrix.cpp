@@ -90,10 +90,10 @@ int run_test(double epsilon,
 
   typedef typename viennacl::result_of::cpu_value_type<typename ViennaCLMatrixType1::value_type>::type  cpu_value_type;
 
-  cpu_value_type alpha = 3.1415;
+  cpu_value_type alpha = cpu_value_type(3.1415);
   viennacl::scalar<cpu_value_type>   gpu_alpha = alpha;
 
-  cpu_value_type beta = 2.7182;
+  cpu_value_type beta = cpu_value_type(2.7182);
   viennacl::scalar<cpu_value_type>   gpu_beta = beta;
 
 

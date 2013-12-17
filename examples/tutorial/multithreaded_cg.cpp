@@ -106,7 +106,7 @@ public:
     //
     // Set up some ViennaCL objects in the respective context
     //
-    viennacl::context ctx(viennacl::ocl::get_context(thread_id_));
+    viennacl::context ctx(viennacl::ocl::get_context(static_cast<long>(thread_id_)));
 
     std::size_t vcl_size = rhs.size();
     viennacl::compressed_matrix<NumericT> vcl_compressed_matrix(ctx);
@@ -125,7 +125,7 @@ public:
     viennacl::vector<NumericT> vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag());
 
     std::stringstream ss;
-    ss << "Result of thread " << thread_id_ << " on device " << viennacl::ocl::get_context(thread_id_).devices()[0].name() << ": " << vcl_result[0] << ", should: " << ref_result[0] << std::endl;
+    ss << "Result of thread " << thread_id_ << " on device " << viennacl::ocl::get_context(static_cast<long>(thread_id_)).devices()[0].name() << ": " << vcl_result[0] << ", should: " << ref_result[0] << std::endl;
     message_ = ss.str();
   }
 

@@ -93,8 +93,8 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   double ret = 0;
-   double act = 0;
+   ScalarType ret = 0;
+   ScalarType act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
@@ -362,24 +362,24 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  long matrix_size1 = 29;  //some odd number, not too large
-  long matrix_size2 = 47;  //some odd number, not too large
-  long matrix_size3 = 33;  //some odd number, not too large
-  //long matrix_size1 = 128;  //some odd number, not too large
-  //long matrix_size2 = 64;  //some odd number, not too large
-  //long matrix_size3 = 128;  //some odd number, not too large
-  //long matrix_size1 = 256;  // for testing AMD kernels
-  //long matrix_size2 = 256;  // for testing AMD kernels
-  //long matrix_size3 = 256;  // for testing AMD kernels
+  std::size_t matrix_size1 = 29;  //some odd number, not too large
+  std::size_t matrix_size2 = 47;  //some odd number, not too large
+  std::size_t matrix_size3 = 33;  //some odd number, not too large
+  //std::size_t matrix_size1 = 128;  //some odd number, not too large
+  //std::size_t matrix_size2 = 64;  //some odd number, not too large
+  //std::size_t matrix_size3 = 128;  //some odd number, not too large
+  //std::size_t matrix_size1 = 256;  // for testing AMD kernels
+  //std::size_t matrix_size2 = 256;  // for testing AMD kernels
+  //std::size_t matrix_size3 = 256;  // for testing AMD kernels
 
   // --------------------------------------------------------------------------
 
   // ublas reference:
   ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, 3.1415);
+  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, NumericT(3.1415));
 
   ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, 42.0);
+  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, NumericT(42.0));
 
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 

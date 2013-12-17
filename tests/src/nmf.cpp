@@ -24,7 +24,7 @@
 
 typedef float ScalarType;
 
-const ScalarType EPS = 0.1;
+const ScalarType EPS = ScalarType(0.1);
 
 float matrix_compare(viennacl::matrix<ScalarType>& res,
                      viennacl::matrix<ScalarType>& ref)

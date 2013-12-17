@@ -460,7 +460,7 @@ namespace viennacl
         #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
-          temp += static_cast<value_type>(std::fabs(data_vec1[i*inc1+start1]));
+          temp += static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
@@ -518,7 +518,7 @@ namespace viennacl
 
         // Note: No max() reduction in OpenMP yet
         for (vcl_size_t i = 0; i < size1; ++i)
-          temp = std::max<value_type>(temp, static_cast<value_type>(std::fabs(data_vec1[i*inc1+start1])));
+          temp = std::max<value_type>(temp, static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1]))));  //casting to double in order to avoid problems if T is an integer type
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
@@ -549,7 +549,7 @@ namespace viennacl
         // Note: No suitable reduction in OpenMP yet
         for (vcl_size_t i = 0; i < size1; ++i)
         {
-          data = static_cast<value_type>(std::fabs(data_vec1[i*inc1+start1]));
+          data = static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
           if (data > temp)
           {
             index = i;

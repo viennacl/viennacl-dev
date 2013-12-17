@@ -105,7 +105,7 @@ namespace viennacl
     public:
       typedef typename base_type::size_type size_type;
       typedef SCALARTYPE        const_reference;
-      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(0,true), ctx) {}
+      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(0),true), ctx) {}
   };
 
   /** @brief Represents a vector consisting of ones only. */
@@ -116,7 +116,7 @@ namespace viennacl
     public:
       typedef typename base_type::size_type size_type;
       typedef SCALARTYPE        const_reference;
-      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(1,true), ctx) {}
+      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(1),true), ctx) {}
   };
 
 
@@ -213,7 +213,7 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, ALIGNMENT>    self_type;
     public:
       typedef scalar<SCALARTYPE>            value_type;
-      typedef long                          difference_type;
+      typedef vcl_ptrdiff_t                 difference_type;
       typedef viennacl::backend::mem_handle handle_type;
 
       //const_vector_iterator() {}

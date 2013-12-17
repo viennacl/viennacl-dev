@@ -133,8 +133,8 @@ int test(Epsilon const& epsilon,
 
   NumericT                    cpu_result = 42.0;
   viennacl::scalar<NumericT>  gpu_result = 43.0;
-  NumericT                    alpha      = 3.1415;
-  NumericT                    beta       = 2.7172;
+  NumericT                    alpha      = NumericT(3.1415);
+  NumericT                    beta       = NumericT(2.7172);
 
   //
   // Initializer:

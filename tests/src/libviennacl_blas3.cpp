@@ -527,7 +527,7 @@ int main()
 
   // OpenCL setup
 #ifdef VIENNACL_WITH_OPENCL
-  std::size_t context_id = 0;
+  ViennaCLInt context_id = 0;
   viennacl::vector<float> opencl_C_float(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(C_float, opencl_C_float);
   viennacl::vector<float> opencl_A_float(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(A_float, opencl_A_float);
   viennacl::vector<float> opencl_B_float(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(B_float, opencl_B_float);

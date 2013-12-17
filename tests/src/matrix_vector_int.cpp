@@ -294,7 +294,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -310,7 +310,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -326,7 +326,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    // v1 = range
 
@@ -345,7 +345,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -361,7 +361,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -377,7 +377,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
 
    // v1 = slice
@@ -396,7 +396,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = slice, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -412,7 +412,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = full, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -428,7 +428,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    ///////////////////////////// matrix_range
 
@@ -446,7 +446,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -462,7 +462,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -478,7 +478,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    // v1 = range
 
@@ -497,7 +497,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -513,7 +513,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -529,7 +529,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
 
    // v1 = slice
@@ -548,7 +548,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = slice, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -564,7 +564,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = range, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -580,7 +580,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    ///////////////////////////// matrix_slice
 
@@ -598,7 +598,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = slice, v1 = full, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -614,7 +614,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = slice, v1 = full, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -630,7 +630,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    // v1 = range
 
@@ -649,7 +649,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = slice, v1 = range, v2 = range" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -665,7 +665,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = slice, v1 = range, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,
@@ -682,7 +682,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    // v1 = slice
 
@@ -699,7 +699,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
 
    std::cout << "* m = slice, v1 = slice, v2 = range" << std::endl;
@@ -716,7 +716,7 @@ int test()
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
     for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-      ublas_m1(i,j) = (i+j);
+      ublas_m1(i,j) = NumericT(i+j);
 
    std::cout << "* m = slice, v1 = slice, v2 = slice" << std::endl;
    retval = test_prod_rank1<NumericT>(ublas_m1, ublas_v1, ublas_v2,

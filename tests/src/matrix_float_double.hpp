@@ -90,10 +90,10 @@ int run_test(double epsilon,
 
   typedef typename viennacl::result_of::cpu_value_type<typename ViennaCLMatrixType1::value_type>::type  cpu_value_type;
 
-  cpu_value_type alpha = 3.1415;
+  cpu_value_type alpha = cpu_value_type(3.1415);
   viennacl::scalar<cpu_value_type>   gpu_alpha = alpha;
 
-  cpu_value_type beta = 2.7182;
+  cpu_value_type beta = cpu_value_type(2.7182);
   viennacl::scalar<cpu_value_type>   gpu_beta = beta;
 
 
@@ -362,8 +362,8 @@ int run_test(double epsilon,
 
 
   std::cout << "Testing elementwise multiplication..." << std::endl;
-  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142);
-  ublas_A = 3.1415 * ublas_B;
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), cpu_value_type(1.4142));
+  ublas_A = cpu_value_type(3.1415) * ublas_B;
   viennacl::copy(ublas_A, vcl_A);
   viennacl::copy(ublas_B, vcl_B);
   viennacl::copy(ublas_B, vcl_B);
@@ -443,8 +443,8 @@ int run_test(double epsilon,
     return EXIT_FAILURE;
 
 
-  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142);
-  ublas_A = 3.1415 * ublas_B;
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), cpu_value_type(1.4142));
+  ublas_A = cpu_value_type(3.1415) * ublas_B;
   viennacl::copy(ublas_A, vcl_A);
   viennacl::copy(ublas_B, vcl_B);
 
@@ -526,8 +526,8 @@ int run_test(double epsilon,
   // element_pow
   std::cout << "Testing unary element_pow()..." << std::endl;
 
-  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142);
-  ublas_A = 3.1415 * ublas_B;
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), cpu_value_type(1.4142));
+  ublas_A = cpu_value_type(3.1415) * ublas_B;
   viennacl::copy(ublas_A, vcl_A);
   viennacl::copy(ublas_B, vcl_B);
 
@@ -634,9 +634,9 @@ int run_test(double epsilon,
   std::cout << "Testing unary elementwise operations..." << std::endl;
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
-  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), 1.4142); \
-  ublas_A = 3.1415 * ublas_B; \
-  ublas_C = 2.7172 * ublas_A; \
+  ublas_B = ublas::scalar_matrix<cpu_value_type>(ublas_B.size1(), ublas_B.size2(), cpu_value_type(1.4142)); \
+  ublas_A = cpu_value_type(3.1415) * ublas_B; \
+  ublas_C = cpu_value_type(2.7172) * ublas_A; \
   viennacl::copy(ublas_A, vcl_A); \
   viennacl::copy(ublas_B, vcl_B); \
   viennacl::copy(ublas_C, vcl_C); \

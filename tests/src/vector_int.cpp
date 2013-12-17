@@ -1042,8 +1042,8 @@ int test(UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
   // --------------------------------------------------------------------------
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(1.0) + i;
-    ublas_v2[i] = NumericT(5.0) + i;
+    ublas_v1[i] = NumericT(1.0) + NumericT(i);
+    ublas_v2[i] = NumericT(5.0) + NumericT(i);
   }
 
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());

@@ -116,12 +116,12 @@ namespace viennacl {
         {
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
 
-            int index = static_cast<int>(col_index) - static_cast<int>(row_index);
+            long index = static_cast<long>(col_index) - static_cast<long>(row_index);
 
             if (index < 0)
               index = -index;
             else if
-              (index > 0) index = 2 * size1() - index;
+              (index > 0) index = 2 * static_cast<long>(size1()) - index;
             return elements_[index];
         }
 
@@ -222,7 +222,7 @@ namespace viennacl {
 
         std::vector<SCALARTYPE> tmp(2*size - 1);
 
-        for(int i = size - 1; i >= 0; i--)
+        for(long i = static_cast<long>(size) - 1; i >= 0; i--)
             tmp[size - i - 1] = com_src(i, 0);
 
         for(vcl_size_t i = 1; i < size; i++)

@@ -678,7 +678,7 @@ namespace viennacl
           std::vector< std::map<unsigned int, SCALARTYPE> > cpu_backup(rows_);
           tools::sparse_matrix_adapter<SCALARTYPE> adapted_cpu_backup(cpu_backup, rows_, cols_);
           viennacl::copy(*this, adapted_cpu_backup);
-          cpu_backup[i][j] = 0.0;
+          cpu_backup[i][static_cast<unsigned int>(j)] = 0.0;
           viennacl::copy(adapted_cpu_backup, *this);
 
           index = element_index(i, j);

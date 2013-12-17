@@ -52,7 +52,7 @@ namespace viennacl
 
           viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_GIVENS_NEXT_KERNEL);
 
-          kernel.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(viennacl::traits::size1(matrix), 256));
+          kernel.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size1(matrix)), 256));
           kernel.local_work_size(0, 256);
 
           viennacl::ocl::enqueue(kernel(
@@ -75,7 +75,7 @@ namespace viennacl
                   boost::numeric::ublas::vector<SCALARTYPE> & d,
                   boost::numeric::ublas::vector<SCALARTYPE> & e)
         {
-            int n = Q.size1();
+            int n = static_cast<int>(Q.size1());
 
             boost::numeric::ublas::vector<SCALARTYPE> cs(n), ss(n);
             viennacl::vector<SCALARTYPE> tmp1(n), tmp2(n);
@@ -87,7 +87,7 @@ namespace viennacl
 
             SCALARTYPE f = 0;
             SCALARTYPE tst1 = 0;
-            SCALARTYPE eps = 2 * EPS;
+            SCALARTYPE eps = 2 * static_cast<SCALARTYPE>(EPS);
 
             for (int l = 0; l < n; l++)
             {
@@ -338,7 +338,7 @@ namespace viennacl
         {
             transpose(V);
 
-            int nn = vcl_H.size1();
+            int nn = static_cast<int>(vcl_H.size1());
 
             FastMatrix<SCALARTYPE> H(nn, vcl_H.internal_size2());//, V(nn);
 
@@ -350,7 +350,7 @@ namespace viennacl
 
             int n = nn - 1;
 
-            SCALARTYPE eps = 2 * EPS;
+            SCALARTYPE eps = 2 * static_cast<SCALARTYPE>(EPS);
             SCALARTYPE exshift = 0;
             SCALARTYPE p = 0;
             SCALARTYPE q = 0;

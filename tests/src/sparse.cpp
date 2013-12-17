@@ -225,11 +225,11 @@ int resize_test(Epsilon const& epsilon)
    ublas::compressed_matrix<NumericT> ublas_matrix(5,5);
    VCL_MATRIX vcl_matrix;
 
-   ublas_matrix(0,0) = 10.0; ublas_matrix(0, 1) = 0.1; ublas_matrix(0, 2) = 0.2; ublas_matrix(0, 3) = 0.3; ublas_matrix(0, 4) = 0.4;
-   ublas_matrix(1,0) = 1.0; ublas_matrix(1, 1) = 1.1; ublas_matrix(1, 2) = 1.2; ublas_matrix(1, 3) = 1.3; ublas_matrix(1, 4) = 1.4;
-   ublas_matrix(2,0) = 2.0; ublas_matrix(2, 1) = 2.1; ublas_matrix(2, 2) = 2.2; ublas_matrix(2, 3) = 2.3; ublas_matrix(2, 4) = 2.4;
-   ublas_matrix(3,0) = 3.0; ublas_matrix(3, 1) = 3.1; ublas_matrix(3, 2) = 3.2; ublas_matrix(3, 3) = 3.3; ublas_matrix(3, 4) = 3.4;
-   ublas_matrix(4,0) = 4.0; ublas_matrix(4, 1) = 4.1; ublas_matrix(4, 2) = 4.2; ublas_matrix(4, 3) = 4.3; ublas_matrix(4, 4) = 4.4;
+   ublas_matrix(0,0) = NumericT(10.0); ublas_matrix(0, 1) = NumericT(0.1); ublas_matrix(0, 2) = NumericT(0.2); ublas_matrix(0, 3) = NumericT(0.3); ublas_matrix(0, 4) = NumericT(0.4);
+   ublas_matrix(1,0) = NumericT(1.0);  ublas_matrix(1, 1) = NumericT(1.1); ublas_matrix(1, 2) = NumericT(1.2); ublas_matrix(1, 3) = NumericT(1.3); ublas_matrix(1, 4) = NumericT(1.4);
+   ublas_matrix(2,0) = NumericT(2.0);  ublas_matrix(2, 1) = NumericT(2.1); ublas_matrix(2, 2) = NumericT(2.2); ublas_matrix(2, 3) = NumericT(2.3); ublas_matrix(2, 4) = NumericT(2.4);
+   ublas_matrix(3,0) = NumericT(3.0);  ublas_matrix(3, 1) = NumericT(3.1); ublas_matrix(3, 2) = NumericT(3.2); ublas_matrix(3, 3) = NumericT(3.3); ublas_matrix(3, 4) = NumericT(3.4);
+   ublas_matrix(4,0) = NumericT(4.0);  ublas_matrix(4, 1) = NumericT(4.1); ublas_matrix(4, 2) = NumericT(4.2); ublas_matrix(4, 3) = NumericT(4.3); ublas_matrix(4, 4) = NumericT(4.4);
 
    viennacl::copy(ublas_matrix, vcl_matrix);
    ublas::compressed_matrix<NumericT> other_matrix(ublas_matrix.size1(), ublas_matrix.size2());
@@ -288,7 +288,7 @@ int resize_test(Epsilon const& epsilon)
         retval = EXIT_FAILURE;
     }
 
-   ublas::vector<NumericT> ublas_vec = ublas::scalar_vector<NumericT>(ublas_matrix.size1(), 3.1415);
+   ublas::vector<NumericT> ublas_vec = ublas::scalar_vector<NumericT>(ublas_matrix.size1(), NumericT(3.1415));
    viennacl::vector<NumericT> vcl_vec(ublas_matrix.size1());
 
 

@@ -133,7 +133,7 @@ namespace viennacl
                                                       ++col_it)
               {
                 if (col_it.index1() >= col_it.index2())
-                  STL_A[col_it.index1()][col_it.index2()] = *col_it;
+                  STL_A[col_it.index1()][static_cast<unsigned int>(col_it.index2())] = *col_it;
                 else
                   break; //go to next row
               }
@@ -193,13 +193,13 @@ namespace viennacl
                 std::map<unsigned int, ScalarType> & A_row = A[row_index];
 
                 //fill y_k:
-                yk[i] = A_row[k];
+                yk[i] = A_row[static_cast<unsigned int>(k)];
 
                 for (vcl_size_t j=0; j<Jk.size(); ++j)
                 {
                   vcl_size_t col_index = Jk[j];
-                  if (col_index <= row_index && A_row.find(col_index) != A_row.end()) //block is symmetric, thus store only lower triangular part
-                    block_k(i, j) = A_row[col_index];
+                  if (col_index <= row_index && A_row.find(static_cast<unsigned int>(col_index)) != A_row.end()) //block is symmetric, thus store only lower triangular part
+                    block_k(i, j) = A_row[static_cast<unsigned int>(col_index)];
                 }
               }
             }
@@ -288,13 +288,13 @@ namespace viennacl
                 Lkk -= A(Jk[i],k) * yk[i];
 
               Lkk = ScalarType(1) / std::sqrt(Lkk);
-              L_temp[k][k] = Lkk;
+              L_temp[k][static_cast<unsigned int>(k)] = Lkk;
               L_trans(k,k) = Lkk;
 
               //write lower diagonal entries:
               for (vcl_size_t i=0; i<Jk.size(); ++i)
               {
-                L_temp[Jk[i]][k] = -Lkk * yk[i];
+                L_temp[Jk[i]][static_cast<unsigned int>(k)] = -Lkk * yk[i];
                 L_trans(k, Jk[i]) = -Lkk * yk[i];
               }
             } //for k

@@ -171,7 +171,7 @@ namespace viennacl
             }
             else
             {
-                csr_cols.push_back(col_it.index2());
+                csr_cols.push_back(static_cast<unsigned int>(col_it.index2()));
                 csr_elements.push_back(*col_it);
 
                 csr_index++;

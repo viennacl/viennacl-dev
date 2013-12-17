@@ -97,7 +97,7 @@ namespace viennacl
         template <typename MatrixType, typename VectorType>
         void backwardSolve(const MatrixType& R, const VectorType& y, VectorType& x)
         {
-          for (long i = R.size2()-1; i >= 0 ; i--)
+          for (long i = static_cast<long>(R.size2())-1; i >= 0 ; i--)
           {
             x(i) = y(i);
             for (vcl_size_t j = i+1; j < R.size2(); ++j)

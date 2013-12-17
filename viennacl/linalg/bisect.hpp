@@ -118,7 +118,7 @@ namespace viennacl
         wu.push_back(xmin);
       }
 
-      for(long k = size - 1; k >= 0; --k)
+      for(long k = static_cast<long>(size) - 1; k >= 0; --k)
       {
         double xu = xmin;
         for(long i = k; i >= 0; --i)

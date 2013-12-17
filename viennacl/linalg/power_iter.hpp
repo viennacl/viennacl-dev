@@ -78,7 +78,7 @@ namespace viennacl
       typedef typename viennacl::result_of::vector_for_matrix<MatrixT>::type    VectorT;
 
       CPU_ScalarType eigenvalue;
-      long matrix_size = matrix.size1();
+      vcl_size_t matrix_size = matrix.size1();
       VectorT r(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 

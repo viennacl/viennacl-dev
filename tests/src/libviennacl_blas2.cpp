@@ -96,36 +96,36 @@ int main()
   std::vector<double> ref_double_B(size1*size2, 4.0); for (std::size_t i=0; i<size1*size2; ++i) ref_double_B[i] = static_cast<double>(2*i);
 
   // Host setup
-  viennacl::vector<float> host_float_x = viennacl::scalar_vector<float>(size1, 1.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1; ++i) host_float_x[i] = i;
-  viennacl::vector<float> host_float_y = viennacl::scalar_vector<float>(size2, 2.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size2; ++i) host_float_y[i] = size2 - i;
-  viennacl::vector<float> host_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_float_A[i] = 3*i;
-  viennacl::vector<float> host_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_float_B[i] = 2*i;
+  viennacl::vector<float> host_float_x = viennacl::scalar_vector<float>(size1, 1.0f, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1; ++i) host_float_x[i] = float(i);
+  viennacl::vector<float> host_float_y = viennacl::scalar_vector<float>(size2, 2.0f, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size2; ++i) host_float_y[i] = float(size2 - i);
+  viennacl::vector<float> host_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0f, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_float_A[i] = float(3*i);
+  viennacl::vector<float> host_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0f, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_float_B[i] = float(2*i);
 
-  viennacl::vector<double> host_double_x = viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1; ++i) host_double_x[i] = i;
-  viennacl::vector<double> host_double_y = viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size2; ++i) host_double_y[i] = size2 - i;
-  viennacl::vector<double> host_double_A = viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_double_A[i] = 3*i;
-  viennacl::vector<double> host_double_B = viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_double_B[i] = 2*i;
+  viennacl::vector<double> host_double_x = viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1; ++i) host_double_x[i] = double(i);
+  viennacl::vector<double> host_double_y = viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size2; ++i) host_double_y[i] = double(size2 - i);
+  viennacl::vector<double> host_double_A = viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_double_A[i] = double(3*i);
+  viennacl::vector<double> host_double_B = viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::MAIN_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) host_double_B[i] = double(2*i);
 
   // CUDA setup
 #ifdef VIENNACL_WITH_CUDA
-  viennacl::vector<float> cuda_float_x = viennacl::scalar_vector<float>(size1, 1.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1; ++i) cuda_float_x[i] = i;
-  viennacl::vector<float> cuda_float_y = viennacl::scalar_vector<float>(size2, 2.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size2; ++i) cuda_float_y[i] = size2 - i;
-  viennacl::vector<float> cuda_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_float_A[i] = 3*i;
-  viennacl::vector<float> cuda_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_float_B[i] = 2*i;
+  viennacl::vector<float> cuda_float_x = viennacl::scalar_vector<float>(size1, 1.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1; ++i) cuda_float_x[i] = float(i);
+  viennacl::vector<float> cuda_float_y = viennacl::scalar_vector<float>(size2, 2.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size2; ++i) cuda_float_y[i] = float(size2 - i);
+  viennacl::vector<float> cuda_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_float_A[i] = float(3*i);
+  viennacl::vector<float> cuda_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0f, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_float_B[i] = float(2*i);
 
-  viennacl::vector<double> cuda_double_x = viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1; ++i) cuda_double_x[i] = i;
-  viennacl::vector<double> cuda_double_y = viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size2; ++i) cuda_double_y[i] = size2 - i;
-  viennacl::vector<double> cuda_double_A = viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_double_A[i] = 3*i;
-  viennacl::vector<double> cuda_double_B = viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_double_B[i] = 2*i;
+  viennacl::vector<double> cuda_double_x = viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1; ++i) cuda_double_x[i] = double(i);
+  viennacl::vector<double> cuda_double_y = viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size2; ++i) cuda_double_y[i] = double(size2 - i);
+  viennacl::vector<double> cuda_double_A = viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_double_A[i] = double(3*i);
+  viennacl::vector<double> cuda_double_B = viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::CUDA_MEMORY)); for (std::size_t i=0; i<size1*size2; ++i) cuda_double_B[i] = double(2*i);
 #endif
 
   // OpenCL setup
 #ifdef VIENNACL_WITH_OPENCL
-  std::size_t context_id = 0;
-  viennacl::vector<float> opencl_float_x = viennacl::scalar_vector<float>(size1, 1.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1; ++i) opencl_float_x[i] = i;
-  viennacl::vector<float> opencl_float_y = viennacl::scalar_vector<float>(size2, 2.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size2; ++i) opencl_float_y[i] = size2 - i;
-  viennacl::vector<float> opencl_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1*size2; ++i) opencl_float_A[i] = 3*i;
-  viennacl::vector<float> opencl_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1*size2; ++i) opencl_float_B[i] = 2*i;
+  ViennaCLInt context_id = 0;
+  viennacl::vector<float> opencl_float_x = viennacl::scalar_vector<float>(size1, 1.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1; ++i) opencl_float_x[i] = float(i);
+  viennacl::vector<float> opencl_float_y = viennacl::scalar_vector<float>(size2, 2.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size2; ++i) opencl_float_y[i] = float(size2 - i);
+  viennacl::vector<float> opencl_float_A = viennacl::scalar_vector<float>(size1*size2, 3.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1*size2; ++i) opencl_float_A[i] = float(3*i);
+  viennacl::vector<float> opencl_float_B = viennacl::scalar_vector<float>(size1*size2, 4.0f, viennacl::context(viennacl::ocl::get_context(context_id))); for (std::size_t i=0; i<size1*size2; ++i) opencl_float_B[i] = float(2*i);
 
   viennacl::vector<double> *opencl_double_x = NULL;
   viennacl::vector<double> *opencl_double_y = NULL;
@@ -133,10 +133,10 @@ int main()
   viennacl::vector<double> *opencl_double_B = NULL;
   if( viennacl::ocl::current_device().double_support() )
   {
-    opencl_double_x = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1; ++i) (*opencl_double_x)[i] = i;
-    opencl_double_y = new viennacl::vector<double>(viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size2; ++i) (*opencl_double_y)[i] = size2 - i;
-    opencl_double_A = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1*size2; ++i) (*opencl_double_A)[i] = 3*i;
-    opencl_double_B = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1*size2; ++i) (*opencl_double_B)[i] = 2*i;
+    opencl_double_x = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1; ++i) (*opencl_double_x)[i] = double(i);
+    opencl_double_y = new viennacl::vector<double>(viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size2; ++i) (*opencl_double_y)[i] = double(size2 - i);
+    opencl_double_A = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1*size2, 3.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1*size2; ++i) (*opencl_double_A)[i] = double(3*i);
+    opencl_double_B = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1*size2, 4.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1*size2; ++i) (*opencl_double_B)[i] = double(2*i);
   }
 
   ViennaCLBackendSetOpenCLContextID(my_backend, context_id);
@@ -191,14 +191,14 @@ int main()
   std::cout << std::endl << "Host: ";
   ViennaCLHostSgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    size1/3, size2/4, 3.1415f, viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_A), 2, 1, 2, 3, size2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_y), 1, 3,
                     0.1234f,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 1, 2);
   check(ref_float_x, host_float_x, eps_float);
   ViennaCLHostDgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    size1/3, size2/4, 3.1415, viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_A), 2, 1, 2, 3, size2,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_y), 1, 3,
                     0.1234,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 1, 2);
@@ -209,14 +209,14 @@ int main()
   std::cout << std::endl << "CUDA: ";
   ViennaCLCUDASgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    size1/3, size2/4, 3.1415f, viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_A), 2, 1, 2, 3, size2,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_y), 1, 3,
                     0.1234f,
                     viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_x), 1, 2);
   check(ref_float_x, cuda_float_x, eps_float);
   ViennaCLCUDADgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    size1/3, size2/4, 3.1415, viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_A), 2, 1, 2, 3, size2,
                     viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_y), 1, 3,
                     0.1234,
                     viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_x), 1, 2);
@@ -227,7 +227,7 @@ int main()
   std::cout << std::endl << "OpenCL: ";
   ViennaCLOpenCLSgemv(my_backend,
                       ViennaCLRowMajor, ViennaCLNoTrans,
-                      size1/3, size2/4, 3.1415f, viennacl::traits::opencl_handle(opencl_float_A), 2, 1, 2, 3, size2,
+                      ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::traits::opencl_handle(opencl_float_A), 2, 1, 2, 3, size2,
                       viennacl::traits::opencl_handle(opencl_float_y), 1, 3,
                       0.1234f,
                       viennacl::traits::opencl_handle(opencl_float_x), 1, 2);
@@ -236,7 +236,7 @@ int main()
   {
     ViennaCLOpenCLDgemv(my_backend,
                         ViennaCLRowMajor, ViennaCLNoTrans,
-                        size1/3, size2/4, 3.1415, viennacl::traits::opencl_handle(*opencl_double_A), 2, 1, 2, 3, size2,
+                        ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::traits::opencl_handle(*opencl_double_A), 2, 1, 2, 3, size2,
                         viennacl::traits::opencl_handle(*opencl_double_y), 1, 3,
                         0.1234,
                         viennacl::traits::opencl_handle(*opencl_double_x), 1, 2);

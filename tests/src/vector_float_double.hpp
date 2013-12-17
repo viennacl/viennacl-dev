@@ -318,7 +318,7 @@ int test(Epsilon const& epsilon,
   //
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
