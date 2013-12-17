@@ -558,20 +558,6 @@ namespace viennacl
           Pointvector[level].get_F(F);
           printvector (F);
           #endif
-
-          #ifdef VIENNACL_AMG_DEBUG
-          unsigned int i;
-    #ifdef VIENNACL_WITH_OPENMP
-          #pragma omp critical
-    #endif
-          {
-            std::cout << "No C and no F point: ";
-            for (typename PointVectorType::iterator iter = Pointvector[level].begin(); iter != Pointvector[level].end(); ++iter)
-              if ((*iter)->is_undecided())
-                std::cout << i << " ";
-            std::cout << std::endl;
-          }
-          #endif
         }
 
         /** @brief AG (aggregation based) coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_SA)
