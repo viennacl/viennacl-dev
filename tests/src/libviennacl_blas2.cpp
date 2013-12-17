@@ -79,7 +79,7 @@ int main()
 {
   std::size_t size1  = 13; // at least 7
   std::size_t size2  = 11; // at least 7
-  float  eps_float  = 1e-5;
+  float  eps_float  = 1e-5f;
   double eps_double = 1e-12;
 
   ViennaCLBackend my_backend;

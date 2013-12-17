@@ -78,7 +78,7 @@ void check(T const & t, U const & u, EpsilonT eps)
 int main()
 {
   std::size_t size  = 10; // at least 7
-  float  eps_float  = 1e-5;
+  float  eps_float  = 1e-5f;
   double eps_double = 1e-12;
 
   float  ref_float_alpha;

@@ -477,7 +477,7 @@ void test_blas(ViennaCLBackend my_backend,
 int main()
 {
   ViennaCLInt size  = 500*500;
-  float  eps_float  = 1e-5;
+  float  eps_float  = 1e-5f;
   double eps_double = 1e-12;
 
   std::vector<float> C_float(size);
