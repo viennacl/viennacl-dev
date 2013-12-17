@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/saxpy.hpp
  *
- * Kernel template for the saxpy-like operation
+ * @brief Kernel template for the saxpy-like operation
 */
 
 #include <vector>

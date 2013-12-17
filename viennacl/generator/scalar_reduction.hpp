@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/scalar_reduction.hpp
  *
- * Kernel template for the scalar reduction operation
+ * @brief Kernel template for the scalar reduction operation
 */
 
 #include <vector>

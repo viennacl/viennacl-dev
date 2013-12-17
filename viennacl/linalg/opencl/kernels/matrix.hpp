@@ -6,8 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
-/** @file viennacl/linalg/opencl/kernels/vector.hpp
- *  @brief OpenCL kernel file for vector operations */
+/** @file viennacl/linalg/opencl/kernels/matrix.hpp
+ *  @brief Runtime generation of OpenCL kernels for matrix operations */
 namespace viennacl
 {
   namespace linalg

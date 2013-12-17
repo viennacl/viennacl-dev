@@ -243,6 +243,8 @@ namespace viennacl {
     // Specify available operations:
     //
 
+    /** \cond */
+
     namespace linalg
     {
       namespace detail
@@ -330,5 +332,6 @@ namespace viennacl {
      } // namespace detail
    } // namespace linalg
 
+   /** \endcond */
 }
 #endif // VIENNACL_HANKEL_MATRIX_HPP

@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/profiles.hpp
  *
- * Vendor-specific parameters for the generated kernels
+ * @brief Vendor-specific parameters for the generated kernels
 */
 
 #include <map>

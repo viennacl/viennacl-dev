@@ -18,6 +18,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** @file viennacl/linalg/detail/op_executor.hpp
+ *
+ * @brief Defines the worker class for decomposing an expression tree into small chunks, which can be processed by the predefined operations in ViennaCL.
+*/
+
 #include "viennacl/forwards.h"
 
 namespace viennacl

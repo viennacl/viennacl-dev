@@ -8,8 +8,8 @@
 
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
 
-/** @file viennacl/linalg/opencl/kernels/matrix_solve.hpp
- *  @brief OpenCL kernel file for dense matrix solves with multiple right hand side (BLAS level 3) */
+/** @file viennacl/linalg/opencl/kernels/matrix_prod.hpp
+ *  @brief Runtime generation of OpenCL kernels for dense matrix-matrix products */
 namespace viennacl
 {
   namespace linalg

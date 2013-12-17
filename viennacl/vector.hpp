@@ -2052,11 +2052,12 @@ namespace viennacl
   // Specify available operations:
   //
 
+  /** \cond */
+
   namespace linalg
   {
     namespace detail
     {
-
       // x = y
       template <typename T>
       struct op_executor<vector_base<T>, op_assign, vector_base<T> >
@@ -3226,6 +3227,8 @@ namespace viennacl
     } // namespace detail
 
   } // namespace linalg
+
+  /** \endcond */
 
 } // namespace viennacl
 

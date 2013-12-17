@@ -697,17 +697,17 @@ namespace viennacl
   /** @brief Provides an OpenCL kernel generator. */
   namespace generator
   {
-    /** @brief Namespace holding unary math functions for use within the kernel generator. */
-    namespace math {}
+    /** @brief Provides the implementation for tuning the kernels for a particular device. */
+    namespace autotune {}
 
-    /** @brief Contains all the meta-functions used within the OpenCL kernel generator. */
-    namespace result_of {}
+    /** @brief Contains implementation details of the kernel generator. */
+    namespace detail {}
 
-    /** @brief Contains helper routines for manipulating expression trees. */
-    namespace tree_utils {}
+    /** @brief Namespace holding the various device-specific parameters for generating the best kernels. */
+    namespace profiles {}
 
-    /** @brief Contains helper routines for manipulating typelists. */
-    namespace typelist_utils {}
+    /** @brief Contains various helper routines for kernel generation. */
+    namespace utils {}
   }
 
   /** @brief Provides basic input-output functionality. */
@@ -758,6 +758,13 @@ namespace viennacl
     {
       /** @brief Helper functions for OpenCL-accelerated linear algebra operations. */
       namespace detail {}
+
+      /** @brief Contains the OpenCL kernel generation functions for a predefined set of functionality. */
+      namespace kernels
+      {
+        /** @brief Implementation details for the predefined OpenCL kernels. */
+        namespace detail {}
+      }
     }
   }
 
@@ -776,6 +783,16 @@ namespace viennacl
 
   /** @brief Namespace providing traits-information as well as generic wrappers to common routines for vectors and matrices such as size() or clear() */
   namespace traits {}
+
+  /** @brief Contains the scheduling functionality which allows for dynamic kernel generation as well as the fusion of multiple statements into a single kernel. */
+  namespace scheduler
+  {
+    /** @brief Implementation details for the scheduler */
+    namespace detail {}
+
+    /** @brief Helper metafunctions used for the scheduler */
+    namespace result_of {}
+  }
 
 } //namespace viennacl
 

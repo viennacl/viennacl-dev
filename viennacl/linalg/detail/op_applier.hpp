@@ -18,6 +18,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** @file viennacl/linalg/detail/op_applier.hpp
+ *
+ * @brief Defines the action of certain unary and binary operators and its arguments (for host execution).
+*/
+
 #include "viennacl/forwards.h"
 #include <cmath>
 

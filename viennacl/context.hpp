@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file slice.hpp
-    @brief Implementation of a slice object for use with proxy objects
+/** @file viennacl/context.hpp
+    @brief Implementation of a OpenCL-like context, which serves as a unification of {OpenMP, CUDA, OpenCL} at the user API.
 */
 
 #include <vector>

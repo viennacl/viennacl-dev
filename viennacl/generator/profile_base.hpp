@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/profile_base.hpp
  *
- * Base classes for the profiles
+ * @brief Base classes for the profiles
 */
 
 #include <list>

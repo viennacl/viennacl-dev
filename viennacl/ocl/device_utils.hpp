@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/ocl/forwards.h
-    @brief This file provides the forward declarations for the OpenCL layer of ViennaCL
+/** @file viennacl/ocl/device_utils.hpp
+    @brief Various utility implementations for dispatching with respect to the different devices available on the market.
 */
 
 #define VIENNACL_OCL_MAX_DEVICE_NUM  8

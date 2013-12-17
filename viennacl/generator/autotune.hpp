@@ -22,7 +22,7 @@
 
 /** @file viennacl/generator/autotune.hpp
  *
- * User interface for the autotuning procedure
+ * @brief User interface for the autotuning procedure
 */
 
 #include <ctime>

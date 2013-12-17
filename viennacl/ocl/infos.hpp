@@ -34,6 +34,7 @@ namespace viennacl{
 
     namespace ocl{
 
+      /** @brief Implementation details for the OpenCL managment layer in ViennaCL */
     namespace detail{
 
 
@@ -134,6 +135,7 @@ namespace viennacl{
     template<typename T, typename info<T>::type param>
     struct return_type;
 
+    /** \cond */
      #define SET_INFO_RETURN_TYPE(DATA_TYPE,NAME,RETURN_TYPE) template<> struct return_type<DATA_TYPE, NAME> { typedef RETURN_TYPE Result; }
 
      SET_INFO_RETURN_TYPE(cl_mem,CL_MEM_TYPE, cl_mem_object_type);
@@ -216,6 +218,7 @@ namespace viennacl{
 
       #undef SET_INFO_RETURN_TYPE
 
+      /** \endcond */
     }
 
     template<cl_device_info param>

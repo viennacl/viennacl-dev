@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/matrix_product.hpp
  *
- * Kernel template for the matrix product operation
+ * @brief Kernel template for the matrix product operation
 */
 
 #include <vector>

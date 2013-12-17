@@ -21,7 +21,7 @@
 
 /** @file viennacl/generator/vector_reduction.hpp
  *
- * Kernel template for the vector reduction operation
+ * @brief Kernel template for the vector reduction operation
 */
 
 #include <vector>

@@ -18,6 +18,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** @file   viennacl/tools/timer.hpp
+    @brief  A simple, yet (mostly) sufficiently accurate timer for benchmarking and profiling. */
+
 #include <iostream>
 
 
@@ -56,7 +60,7 @@ namespace viennacl{
 
     private:
       LARGE_INTEGER freq;
-        LARGE_INTEGER start_time;
+      LARGE_INTEGER start_time;
     };
 
   }
