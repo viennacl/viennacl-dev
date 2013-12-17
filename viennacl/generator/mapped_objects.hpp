@@ -91,9 +91,9 @@ namespace viennacl{
       class mapped_reduction : public mapped_binary_leaf{
         public:
           mapped_reduction(std::string const & scalartype) : mapped_binary_leaf(scalartype){ }
-          operation_node_type reduction_type() const { return reduction_type_; }
+          viennacl::scheduler::operation_node_type reduction_type() const { return reduction_type_; }
         private:
-          operation_node_type reduction_type_;
+          viennacl::scheduler::operation_node_type reduction_type_;
       };
 
       /** @brief Mapping of a scalar reduction (based on inner product) */
@@ -320,7 +320,7 @@ namespace viennacl{
           }
       };
 
-      static std::string generate(std::pair<std::string, std::string> const & index, int vector_element, mapped_object const & s){
+      inline std::string generate(std::pair<std::string, std::string> const & index, int vector_element, mapped_object const & s){
         return s.generate(index, vector_element);
       }
 

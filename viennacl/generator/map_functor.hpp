@@ -61,7 +61,7 @@ namespace viennacl{
 
           /** @brief Binary leaf */
           template<class T>
-          result_type binary_leaf(scheduler::statement const * statement, statement_node const * root_node, mapping_type const * mapping) const {
+          result_type binary_leaf(viennacl::scheduler::statement const * statement, viennacl::scheduler::statement_node const * root_node, mapping_type const * mapping) const {
             T * p = new T("float");
 
             p->info_.statement = statement;
@@ -139,19 +139,19 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor */
-          void operator()(scheduler::statement const * statement, scheduler::statement_node const * root_node, detail::node_type node_type) const {
+          void operator()(viennacl::scheduler::statement const * statement, viennacl::scheduler::statement_node const * root_node, detail::node_type node_type) const {
             const key_type key(root_node, node_type);
-            if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node->lhs, *this)));
-            else if(node_type == RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            else if(node_type == RHS_NODE_TYPE && root_node->rhs.type_family != viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node->rhs, *this)));
             else if( node_type== PARENT_NODE_TYPE){
-                  operation_node_type op_type = root_node->op.type;
-                if(op_type == OPERATION_BINARY_INNER_PROD_TYPE)
+                  viennacl::scheduler::operation_node_type op_type = root_node->op.type;
+                if(op_type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(statement, root_node, &mapping_)));
-                else if(op_type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                else if(op_type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(statement, root_node, &mapping_)));
-                else if(op_type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                else if(op_type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(statement, root_node, &mapping_)));
             }
           }

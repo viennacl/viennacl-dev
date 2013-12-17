@@ -1665,11 +1665,11 @@ namespace viennacl
 
       /** @brief Carries out matrix-vector multiplication with a hyb_matrix
       *
-      * Implementation of the convenience expression result = prod(mat, vec);
+      * Implementation of the convenience expression result = prod(mat, d_mat);
       *
-      * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param mat      The sparse matrix
+      * @param d_mat    The dense matrix (row- or column-major)
+      * @param result   The dense result matrix (row- or column-major)
       */
       template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
@@ -1779,11 +1779,11 @@ namespace viennacl
 
       /** @brief Carries out matrix-vector multiplication with a hyb_matrix
       *
-      * Implementation of the convenience expression result = prod(mat, vec);
+      * Implementation of the convenience expression result = prod(mat, trans(d_mat));
       *
-      * @param mat    The matrix
-      * @param vec    The vector
-      * @param result The result vector
+      * @param mat      The sparse matrix
+      * @param d_mat    Transposed matrix proxy object for the rhs dense matrix (row- or column-major)
+      * @param result   The dense result matrix (row- or column-major)
       */
       template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,

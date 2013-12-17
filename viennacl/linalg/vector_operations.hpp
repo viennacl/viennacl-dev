@@ -250,8 +250,9 @@ namespace viennacl
       }
     }
 
+    /** \cond */
 
-/** @brief Helper macro for generating binary element-wise operations such as element_prod(), element_div(), element_pow() without unnecessary code duplication */
+// Helper macro for generating binary element-wise operations such as element_prod(), element_div(), element_pow() without unnecessary code duplication */
 #define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
     template <typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
@@ -293,7 +294,7 @@ namespace viennacl
 
 #undef VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS
 
-/** @brief Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
+// Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
     template <typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> > \
@@ -331,6 +332,8 @@ namespace viennacl
     VIENNACL_MAKE_UNARY_ELEMENT_OP(tanh)
 
 #undef VIENNACL_MAKE_UNARY_ELEMENT_OP
+
+    /** \endcond */
 
     ///////////////////////// Norms and inner product ///////////////////
 

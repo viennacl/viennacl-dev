@@ -35,8 +35,8 @@ namespace viennacl{
 
   namespace generator{
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s);
+    inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
+    inline void generate_enqueue_statement(viennacl::scheduler::statement const & s);
 
     enum expression_type_family{
       SCALAR_SAXPY_FAMILY,
@@ -108,8 +108,6 @@ namespace viennacl{
 
     namespace detail{
 
-      using namespace viennacl::scheduler;
-
       enum node_type{
         LHS_NODE_TYPE,
         PARENT_NODE_TYPE,
@@ -118,18 +116,18 @@ namespace viennacl{
 
       class mapped_object;
 
-      typedef std::pair<scheduler::statement_node const *, node_type> key_type;
+      typedef std::pair<viennacl::scheduler::statement_node const *, node_type> key_type;
       typedef tools::shared_ptr<detail::mapped_object> container_ptr_type;
       typedef std::map<key_type, container_ptr_type> mapping_type;
 
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
-      static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_object const & s);
+      static void traverse(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
+      inline std::string generate(std::pair<std::string, std::string> const & index, int vector_element, mapped_object const & s);
       static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int vector_size, mapped_object const & s);
       static void fetch(std::pair<std::string, std::string> const & index, unsigned int vectorization, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s);
-      static const char * generate(scheduler::operation_node_type arg);
-      static void generate_all_rhs(scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+      inline const char * generate(viennacl::scheduler::operation_node_type type);
+      static void generate_all_rhs(viennacl::scheduler::statement const & statement
+                                , viennacl::scheduler::statement_node const & root_node
                                 , std::pair<std::string, std::string> const & index
                                 , int vector_element
                                 , std::string & str

@@ -41,8 +41,6 @@ namespace viennacl{
 
   namespace generator{
 
-    using namespace scheduler;
-
     /** @brief Class for handling code generation
      *
      *  It is meant to be only used along with the scheduler.*/
@@ -59,91 +57,91 @@ namespace viennacl{
         *
         * Row-major + Trans and Col-Major + NoTrans are equal in this regard. This prevents too much code duplication in the kernel templates.
         */
-        static bool is_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
-          scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-            return root_node.lhs.subtype==scheduler::DENSE_ROW_MATRIX_TYPE;
+        static bool is_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
+          viennacl::scheduler::statement::container_type const & expr = statement.array();
+          if(root_node.op.type==viennacl::scheduler::OPERATION_UNARY_TRANS_TYPE)
+            return root_node.lhs.subtype==viennacl::scheduler::DENSE_ROW_MATRIX_TYPE;
           else{
-            bool res = root_node.lhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE || root_node.rhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
-            if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            bool res = root_node.lhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE || root_node.rhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
+            if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
               res = res || is_lhs_flow_transposed(statement, expr[root_node.lhs.node_index]);
-            if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
               res = res || is_lhs_flow_transposed(statement, expr[root_node.rhs.node_index]);
             return res;
           }
         }
 
         /** @brief Checks for the data access flow of the LHS of a node */
-        static bool is_lhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+        static bool is_lhs_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
           scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.lhs.type_family==COMPOSITE_OPERATION_FAMILY)
+          if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             return is_flow_transposed(statement, expr[root_node.lhs.node_index]);
           else
-            return root_node.lhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
+            return root_node.lhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
         }
 
         /** @brief Checks for the data access flow of the RHS of a node */
-        static bool is_rhs_flow_transposed(scheduler::statement const & statement, scheduler::statement_node const & root_node){
-          scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.rhs.type_family==COMPOSITE_OPERATION_FAMILY)
+        static bool is_rhs_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
+          viennacl::scheduler::statement::container_type const & expr = statement.array();
+          if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             return is_flow_transposed(statement, expr[root_node.rhs.node_index]);
           else
-            return root_node.rhs.subtype==scheduler::DENSE_COL_MATRIX_TYPE;
+            return root_node.rhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
         }
 
         /** @brief Fills the expression descriptor for an operation of the type scalar = RHS */
-        static void fill_expression_descriptor_scalar(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid = (root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                          || (descriptor.type_family==SCALAR_REDUCE_FAMILY && root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE);
+        static void fill_expression_descriptor_scalar(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          viennacl::scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid = (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                          || (descriptor.type_family==SCALAR_REDUCE_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE);
           if(is_invalid){
-            descriptor.type_family =INVALID_EXPRESSION_FAMILY;
+            descriptor.type_family = INVALID_EXPRESSION_FAMILY;
             descriptor.type = INVALID_EXPRESSION_TYPE;
           }
-          else if(root_node.op.type==OPERATION_BINARY_INNER_PROD_TYPE){
+          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
             descriptor.type_family = SCALAR_REDUCE_FAMILY;
             descriptor.type = SCALAR_REDUCE_TYPE;
           }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_scalar(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_scalar(statement, expr[root_node.rhs.node_index],descriptor);
         }
 
         /** @brief Fills the expression descriptor for an operation of the type vector = RHS */
-        static void fill_expression_descriptor_vector(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid =  (root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
-                          || (root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                          || (descriptor.type_family==VECTOR_REDUCE_FAMILY && root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE);
+        static void fill_expression_descriptor_vector(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          viennacl::scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid =  (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
+                          || (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                          || (descriptor.type_family==VECTOR_REDUCE_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE);
           if(is_invalid){
             descriptor.type_family=INVALID_EXPRESSION_FAMILY;
             descriptor.type=INVALID_EXPRESSION_TYPE;
           }
-          else if(root_node.op.type==OPERATION_BINARY_MAT_VEC_PROD_TYPE){
+          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
             descriptor.type_family=VECTOR_REDUCE_FAMILY;
             if(is_lhs_flow_transposed(statement,root_node))
               descriptor.type=VECTOR_REDUCE_Tx_TYPE;
             else
               descriptor.type=VECTOR_REDUCE_Nx_TYPE;
           }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_vector(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_vector(statement, expr[root_node.rhs.node_index],descriptor);
         }
 
         /** @brief Fills the expression descriptor for an operation of the type matrix = RHS */
-        static void fill_expression_descriptor_matrix(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid =  (root_node.op.type == OPERATION_BINARY_INNER_PROD_TYPE)
-                          || (root_node.op.type == OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                          || (descriptor.type_family==MATRIX_PRODUCT_FAMILY && root_node.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE);
+        static void fill_expression_descriptor_matrix(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          viennacl::scheduler::statement::container_type const & expr = statement.array();
+          bool is_invalid =  (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
+                          || (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                          || (descriptor.type_family==MATRIX_PRODUCT_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE);
           if(is_invalid){
             descriptor.type_family=INVALID_EXPRESSION_FAMILY;
             descriptor.type=INVALID_EXPRESSION_TYPE;
           }
-          else if(root_node.op.type==OPERATION_BINARY_MAT_MAT_PROD_TYPE){
+          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
             descriptor.type_family=MATRIX_PRODUCT_FAMILY;
             bool lhs_trans = is_lhs_flow_transposed(statement,root_node);
             bool rhs_trans = is_rhs_flow_transposed(statement,root_node);
@@ -157,27 +155,27 @@ namespace viennacl{
               descriptor.type=MATRIX_PRODUCT_TT_TYPE;
 
           }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_matrix(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             fill_expression_descriptor_matrix(statement, expr[root_node.rhs.node_index],descriptor);
         }
 
         /** @brief Fills the expression descriptor for a statement */
-        void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
+        void fill_descriptor(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          viennacl::scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
           descriptor.scalartype_size = utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
-          if(lhs_family==VECTOR_TYPE_FAMILY){
+          if(lhs_family==viennacl::scheduler::VECTOR_TYPE_FAMILY){
             descriptor.type_family = VECTOR_SAXPY_FAMILY;
             descriptor.type = VECTOR_SAXPY_TYPE;
             fill_expression_descriptor_vector(statement,root_node,descriptor);
           }
-          else if(lhs_family==MATRIX_TYPE_FAMILY){
+          else if(lhs_family==viennacl::scheduler::MATRIX_TYPE_FAMILY){
             descriptor.type_family = MATRIX_SAXPY_FAMILY;
             descriptor.type = MATRIX_SAXPY_TYPE;
             fill_expression_descriptor_matrix(statement,root_node,descriptor);
           }
-          else if(lhs_family==SCALAR_TYPE_FAMILY){
+          else if(lhs_family==viennacl::scheduler::SCALAR_TYPE_FAMILY){
             descriptor.type_family = SCALAR_SAXPY_FAMILY;
             descriptor.type = SCALAR_SAXPY_TYPE;
             fill_expression_descriptor_scalar(statement,root_node,descriptor);
@@ -391,7 +389,7 @@ namespace viennacl{
       return gen.make_cuda_program_string();
     }
 
-    /** @brief Generate and enqueue a statement+root_node into the current queue */
+    /** @brief Generate and enqueue a statement plus root_node into the current queue */
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
       generator::code_generator gen;
       gen.add(s,root_node);
