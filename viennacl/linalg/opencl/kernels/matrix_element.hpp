@@ -72,6 +72,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for elementwise-operations such as element_sin() on/with dense matrix objects of type viennacl::matrix<>. */
         template <typename NumericT, typename F>
         struct matrix_element
         {

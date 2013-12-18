@@ -60,6 +60,11 @@ namespace viennacl
   namespace ocl
   {
     //Wrapper for OpenCL exceptions:
+
+    /** @brief Exception thrown in the case that a requested compute device was not found.
+      *
+      * This exception usually shows up if a user requests a GPU for computation, but the OpenCL SDK does not support the GPU.
+      */
     class device_not_found : public std::exception
     {
       virtual const char* what() const throw()
@@ -69,6 +74,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the selected compute device is not available (maybe locked by another process). */
     class device_not_available : public std::exception
     {
       virtual const char* what() const throw()
@@ -78,6 +84,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the OpenCL just-in-time compiler is not available. */
     class compiler_not_available : public std::exception
     {
       virtual const char* what() const throw()
@@ -87,6 +94,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if a memory object cannot be allocated. Usually the requested memory buffer is simply too large. */
     class mem_object_allocation_failure : public std::exception
     {
       virtual const char* what() const throw()
@@ -96,6 +104,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the compute device is out of resources (either global memory, registers, etc.) for the requested operation. */
     class out_of_resources : public std::exception
     {
       virtual const char* what() const throw()
@@ -105,6 +114,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the host cannot provide enough memory for the datastructures in the OpenCL backend (temporary arrays, etc.) to perform the requested operation. */
     class out_of_host_memory : public std::exception
     {
       virtual const char* what() const throw()
@@ -114,6 +124,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the OpenCL context does not have CL_QUEUE_PROFILING_ENABLE set, if the execution is not complete, or the event object is a user event object. */
     class profiling_info_not_available : public std::exception
     {
       virtual const char* what() const throw()
@@ -123,6 +134,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the source buffer overlaps the destination buffer when copying from device memory to device memory. */
     class mem_copy_overlap : public std::exception
     {
       virtual const char* what() const throw()
@@ -132,6 +144,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if there is a mismatch in image formats for the operands. */
     class image_format_mismatch : public std::exception
     {
       virtual const char* what() const throw()
@@ -141,6 +154,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the requested image format is not supported. */
     class image_format_not_supported : public std::exception
     {
       virtual const char* what() const throw()
@@ -150,6 +164,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the OpenCL program cannot be built, usually due to a syntax error in the OpenCL code. */
     class build_program_failure : public std::exception
     {
       virtual const char* what() const throw()
@@ -159,6 +174,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the mapping of device memory to the host memory space failed. */
     class map_failure : public std::exception
     {
       virtual const char* what() const throw()
@@ -168,6 +184,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown is an invalid value is provided to an OpenCL function. */
     class invalid_value : public std::exception
     {
       virtual const char* what() const throw()
@@ -177,6 +194,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid device type is specified. */
     class invalid_device_type : public std::exception
     {
       virtual const char* what() const throw()
@@ -186,6 +204,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid OpenCL platform is provided to an OpenCL function. */
     class invalid_platform : public std::exception
     {
       virtual const char* what() const throw()
@@ -195,6 +214,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid OpenCL device is provided to an OpenCL function. */
     class invalid_device : public std::exception
     {
       virtual const char* what() const throw()
@@ -204,6 +224,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid OpenCL context is provided to an OpenCL function. */
     class invalid_context : public std::exception
     {
       virtual const char* what() const throw()
@@ -213,6 +234,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if invalid OpenCL command queue properties are provided when creating a command queue. */
     class invalid_queue_properties : public std::exception
     {
       virtual const char* what() const throw()
@@ -222,6 +244,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid OpenCL command queue is provided to an OpenCL function. */
     class invalid_command_queue : public std::exception
     {
       virtual const char* what() const throw()
@@ -231,6 +254,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided pointer to host memory is invalid. */
     class invalid_host_ptr : public std::exception
     {
       virtual const char* what() const throw()
@@ -240,6 +264,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid OpenCL memory object (of type cl_mem) is passed to an OpenCL funciton. */
     class invalid_mem_object : public std::exception
     {
       virtual const char* what() const throw()
@@ -249,6 +274,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid image format descriptor is provided. */
     class invalid_image_format_descriptor : public std::exception
     {
       virtual const char* what() const throw()
@@ -258,6 +284,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the image size provided is invalid (e.g. zero). */
     class invalid_image_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -267,6 +294,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid sampler is provided for an image. */
     class invalid_sampler : public std::exception
     {
       virtual const char* what() const throw()
@@ -276,6 +304,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the OpenCL binary (generated from the jit-compiler or loaded from some other location) won't work on the device (e.g. due to a lack of double precision support). */
     class invalid_binary : public std::exception
     {
       virtual const char* what() const throw()
@@ -285,6 +314,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if invalid build options are passed to the OpenCL just-in-time compiler. */
     class invalid_build_options : public std::exception
     {
       virtual const char* what() const throw()
@@ -294,6 +324,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an OpenCL program object handle is invalid (e.g. not initialized). */
     class invalid_program : public std::exception
     {
       virtual const char* what() const throw()
@@ -303,6 +334,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if there is no built program exectuable available for the device. */
     class invalid_program_executable : public std::exception
     {
       virtual const char* what() const throw()
@@ -312,6 +344,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided kernel name is invalid (e.g. not part of the program provided). */
     class invalid_kernel_name : public std::exception
     {
       virtual const char* what() const throw()
@@ -321,6 +354,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the kernel definition (number of arguments, argument types, etc.) is not the same for all devices for which the program has been built. */
     class invalid_kernel_definition : public std::exception
     {
       virtual const char* what() const throw()
@@ -330,6 +364,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided kernel object (of type cl_kernel) is invalid (e.g. not initialized, from different context, or corrupted). */
     class invalid_kernel : public std::exception
     {
       virtual const char* what() const throw()
@@ -339,6 +374,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the kernel argument index is invalid, e.g. an arg index larger than the number of kernel arguments was provided. */
     class invalid_arg_index : public std::exception
     {
       virtual const char* what() const throw()
@@ -348,6 +384,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the kernel argument provided has an invalid value. */
     class invalid_arg_value : public std::exception
     {
       virtual const char* what() const throw()
@@ -357,6 +394,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the arguments to an OpenCL kernel have an invalid size e.g. not sizeof(cl_mem)). */
     class invalid_arg_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -366,6 +404,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the kernel arguments are invalid and/or do not fit the kernel parameter list. */
     class invalid_kernel_args : public std::exception
     {
       virtual const char* what() const throw()
@@ -375,6 +414,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the work dimension is invalid (usually this means that the work dimension was set to be larger than three. */
     class invalid_work_dimension : public std::exception
     {
       virtual const char* what() const throw()
@@ -384,6 +424,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the number of work groups is invalid (usually this means that more than 256/512/768/1024 work groups have been specified, but the device(s) cannot support this. */
     class invalid_work_group_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -393,6 +434,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the number of work items per work group invalid (usually this means that more than 256/512/768/1024 work items have been specified, but the device(s) cannot support this. */
     class invalid_work_item_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -402,6 +444,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided offset for get_global_id() in OpenCL kernels is invalid. */
     class invalid_global_offset : public std::exception
     {
       virtual const char* what() const throw()
@@ -411,6 +454,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided event wait list is invalid. */
     class invalid_event_wait_list : public std::exception
     {
       virtual const char* what() const throw()
@@ -420,6 +464,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided event object (of type cl_event) is invalid. */
     class invalid_event : public std::exception
     {
       virtual const char* what() const throw()
@@ -429,6 +474,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if interoperability of OpenCL with other frameworks collide. */
     class invalid_operation : public std::exception
     {
       virtual const char* what() const throw()
@@ -438,6 +484,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided OpenGL (not OpenCL) object is invalid. */
     class invalid_gl_object : public std::exception
     {
       virtual const char* what() const throw()
@@ -447,6 +494,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided buffer size is invalid (e.g. zero) */
     class invalid_buffer_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -456,6 +504,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the provided miplevel is greater than zero, but the OpenGL implementation does not support creating from non-zero mipmap levels. */
     class invalid_mip_level : public std::exception
     {
       virtual const char* what() const throw()
@@ -465,6 +514,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the total number of work items is invalid (for example, not divisible by the number of work items per work group). */
     class invalid_global_work_size : public std::exception
     {
       virtual const char* what() const throw()
@@ -474,6 +524,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if an invalid property is provided to a function (vague value). */
     class invalid_property : public std::exception
     {
       virtual const char* what() const throw()
@@ -483,6 +534,7 @@ namespace viennacl
       }
     };
 
+    /** @brief Exception thrown if the returned error cannot be resolved to some defined error constant. Might result from invalid sources, invalid memory operations, etc. */
     class unknown_error : public std::exception
     {
       virtual const char* what() const throw()
@@ -492,7 +544,7 @@ namespace viennacl
       }
     };
 
-
+    /** @brief Exception thrown if the user wants to use double precision arithmetics, but the device does not support double precision. */
     class double_precision_not_provided_error : public std::exception
     {
       virtual const char* what() const throw()

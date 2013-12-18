@@ -20,7 +20,7 @@
 
 
 /** @file viennacl/generator/utils.hpp
-    @brief Internal utils
+    @brief Internal utils for a dynamic OpenCL kernel generation.
 */
 
 #include <sstream>
@@ -200,8 +200,11 @@ namespace viennacl{
         return ss.str();
       }
 
+      /** \cond */
       template<class T>
       struct type_to_string;
+
+
       template<> struct type_to_string<float> { static const char * value() { return "float"; } };
       template<> struct type_to_string<double> { static const char * value() { return "double"; } };
 
@@ -212,6 +215,7 @@ namespace viennacl{
       template<> struct first_letter_of_type<double> { static char value() { return 'd'; } };
       template<> struct first_letter_of_type<viennacl::row_major> { static char value() { return 'r'; } };
       template<> struct first_letter_of_type<viennacl::column_major> { static char value() { return 'c'; } };
+      /** \endcond */
 
       class kernel_generation_stream : public std::ostream{
         private:

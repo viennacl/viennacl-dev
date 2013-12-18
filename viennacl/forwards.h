@@ -89,27 +89,49 @@ namespace viennacl
   template <typename OP>
   struct op_element_unary {};
 
+  /** @brief A tag class representing the modulus function for integers */
   struct op_abs {};
+  /** @brief A tag class representing the acos() function */
   struct op_acos {};
+  /** @brief A tag class representing the asin() function */
   struct op_asin {};
+  /** @brief A tag class representing the atan() function */
   struct op_atan {};
+  /** @brief A tag class representing the atan2() function */
   struct op_atan2 {};
+  /** @brief A tag class representing the ceil() function */
   struct op_ceil {};
+  /** @brief A tag class representing the cos() function */
   struct op_cos {};
+  /** @brief A tag class representing the cosh() function */
   struct op_cosh {};
+  /** @brief A tag class representing the exp() function */
   struct op_exp {};
+  /** @brief A tag class representing the fabs() function */
   struct op_fabs {};
+  /** @brief A tag class representing the fdim() function */
   struct op_fdim {};
+  /** @brief A tag class representing the floor() function */
   struct op_floor {};
+  /** @brief A tag class representing the fmax() function */
   struct op_fmax {};
+  /** @brief A tag class representing the fmin() function */
   struct op_fmin {};
+  /** @brief A tag class representing the fmod() function */
   struct op_fmod {};
+  /** @brief A tag class representing the log() function */
   struct op_log {};
+  /** @brief A tag class representing the log10() function */
   struct op_log10 {};
+  /** @brief A tag class representing the sin() function */
   struct op_sin {};
+  /** @brief A tag class representing the sinh() function */
   struct op_sinh {};
+  /** @brief A tag class representing the sqrt() function */
   struct op_sqrt {};
+  /** @brief A tag class representing the tan() function */
   struct op_tan {};
+  /** @brief A tag class representing the tanh() function */
   struct op_tanh {};
 
   /** @brief A tag class representing the (off-)diagonal of a matrix */
@@ -215,7 +237,9 @@ namespace viennacl
                   vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin);
 
 
+  /** @brief Tag class for indicating row-major layout of a matrix. Not passed to the matrix directly, see row_major type. */
   struct row_major_tag {};
+  /** @brief Tag class for indicating column-major layout of a matrix. Not passed to the matrix directly, see row_major type. */
   struct column_major_tag {};
 
   /** @brief A tag for row-major storage of a dense matrix. */
@@ -235,6 +259,7 @@ namespace viennacl
     }
   };
 
+  /** @brief A tag for column-major storage of a dense matrix. */
   struct column_major
   {
     typedef column_major_tag         orientation_category;
@@ -333,36 +358,78 @@ namespace viennacl
   class matrix_slice;
 
 
+  /** @brief Helper struct for checking whether a type is a host scalar type (e.g. float, double) */
   template <typename T>
   struct is_cpu_scalar
   {
     enum { value = false };
   };
 
+  /** @brief Helper struct for checking whether a type is a viennacl::scalar<> */
   template <typename T>
   struct is_scalar
   {
     enum { value = false };
   };
 
+  /** @brief Helper struct for checking whether a type represents a sign flip on a viennacl::scalar<> */
   template <typename T>
   struct is_flip_sign_scalar
   {
     enum { value = false };
   };
 
+  /** @brief Helper struct for checking whether the provided type represents a scalar (either host, from ViennaCL, or a flip-sign proxy) */
   template <typename T>
   struct is_any_scalar
   {
     enum { value = (is_scalar<T>::value || is_cpu_scalar<T>::value || is_flip_sign_scalar<T>::value )};
   };
 
+  /** @brief Checks for a type being either vector_base or implicit_vector_base */
+  template<typename T>
+  struct is_any_vector { enum { value = 0 }; };
+
+  /** @brief Checks for either matrix_base or implicit_matrix_base */
+  template<typename T>
+  struct is_any_dense_matrix { enum { value = 0 }; };
+
+  /** @brief Helper class for checking whether a matrix has a row-major layout. */
   template <typename T>
   struct is_row_major
   {
     enum { value = false };
   };
 
+  /** @brief Helper class for checking whether a matrix is a compressed_matrix (CSR format) */
+  template <typename T>
+  struct is_compressed_matrix
+  {
+    enum { value = false };
+  };
+
+  /** @brief Helper class for checking whether a matrix is a coordinate_matrix (COO format) */
+  template <typename T>
+  struct is_coordinate_matrix
+  {
+    enum { value = false };
+  };
+
+  /** @brief Helper class for checking whether a matrix is an ell_matrix (ELL format) */
+  template <typename T>
+  struct is_ell_matrix
+  {
+    enum { value = false };
+  };
+
+  /** @brief Helper class for checking whether a matrix is a hyb_matrix (hybrid format: ELL plus CSR) */
+  template <typename T>
+  struct is_hyb_matrix
+  {
+    enum { value = false };
+  };
+
+  /** @brief Helper class for checking whether the provided type is one of the sparse matrix types (compressed_matrix, coordinate_matrix, etc.) */
   template <typename T>
   struct is_any_sparse_matrix
   {
@@ -370,30 +437,35 @@ namespace viennacl
   };
 
 
+  /** @brief Helper class for checking whether a matrix is a circulant matrix */
   template <typename T>
   struct is_circulant_matrix
   {
     enum { value = false };
   };
 
+  /** @brief Helper class for checking whether a matrix is a Hankel matrix */
   template <typename T>
   struct is_hankel_matrix
   {
     enum { value = false };
   };
 
+  /** @brief Helper class for checking whether a matrix is a Toeplitz matrix */
   template <typename T>
   struct is_toeplitz_matrix
   {
     enum { value = false };
   };
 
+  /** @brief Helper class for checking whether a matrix is a Vandermonde matrix */
   template <typename T>
   struct is_vandermonde_matrix
   {
     enum { value = false };
   };
 
+  /** @brief Helper class for checking whether the provided type is any of the dense structured matrix types (circulant, Hankel, etc.) */
   template <typename T>
   struct is_any_dense_structured_matrix
   {

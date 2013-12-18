@@ -36,6 +36,7 @@ namespace viennacl
         }
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for nonnegative matrix factorization of a dense matrices. */
         template <class NumericT>
         struct nmf
         {

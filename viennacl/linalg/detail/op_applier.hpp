@@ -45,6 +45,7 @@ namespace viennacl
         typedef typename OP::ERROR_UNKNOWN_OP_TAG_PROVIDED    error_type;
       };
 
+      /** \cond */
       template <>
       struct op_applier<op_element_binary<op_prod> >
       {
@@ -93,6 +94,7 @@ namespace viennacl
       VIENNACL_MAKE_UNARY_OP_APPLIER(tanh);
 
 #undef VIENNACL_MAKE_UNARY_OP_APPLIER
+      /** \endcond */
 
     }
   }

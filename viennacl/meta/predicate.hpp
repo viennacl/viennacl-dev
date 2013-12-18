@@ -37,7 +37,6 @@
 
 namespace viennacl
 {
-    /** \cond */  //deactivate Doxygen parsing of the partial specializations
 
     //
     // is_cpu_scalar: checks for float or double
@@ -48,6 +47,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <> struct is_cpu_scalar<char>           { enum { value = true }; };
     template <> struct is_cpu_scalar<unsigned char>  { enum { value = true }; };
     template <> struct is_cpu_scalar<short>          { enum { value = true }; };
@@ -58,6 +58,7 @@ namespace viennacl
     template <> struct is_cpu_scalar<unsigned long>  { enum { value = true }; };
     template <> struct is_cpu_scalar<float>          { enum { value = true }; };
     template <> struct is_cpu_scalar<double>         { enum { value = true }; };
+    /** \endcond */
 
 
     //
@@ -69,11 +70,13 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename T>
     struct is_scalar<viennacl::scalar<T> >
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_flip_sign_scalar: checks for viennacl::scalar modified with unary operator-
@@ -84,6 +87,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename T>
     struct is_flip_sign_scalar<viennacl::scalar_expression< const scalar<T>,
                                                             const scalar<T>,
@@ -91,6 +95,7 @@ namespace viennacl
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_any_scalar: checks for either CPU and GPU scalars, i.e. is_cpu_scalar<>::value || is_scalar<>::value
@@ -102,32 +107,27 @@ namespace viennacl
     //};
 
     //
-      // is_any_vector : checks for either vector_base or implicit_vector_base
-      //
-      template<typename T>
-      struct is_any_vector { enum { value = 0 }; };
+
+      /** \cond */
   #define VIENNACL_MAKE_ANY_VECTOR_TRUE(type) template<> struct is_any_vector< type > { enum { value = 1 }; };
   #define VIENNACL_MAKE_FOR_ALL_SCALARTYPE(type) \
     VIENNACL_MAKE_ANY_VECTOR_TRUE(type<float>)\
     VIENNACL_MAKE_ANY_VECTOR_TRUE(type<double>)
 
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_range)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_slice)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::unit_vector)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_vector)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::one_vector)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_vector)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_range)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_slice)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::unit_vector)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_vector)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::one_vector)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_vector)
 
   #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
   #undef VIENNACL_MAKE_ANY_VECTOR_TRUE
+      /** \endcond */
 
 
-      //
-      // is_any_matrix : checks for either matrix_base or implicit_matrix_base
-      //
-      template<typename T>
-      struct is_any_dense_matrix { enum { value = 0 }; };
+      /** \cond */
   #define VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE)\
     template<> struct is_any_dense_matrix< TYPE > { enum { value = 1 }; };
 
@@ -142,16 +142,17 @@ namespace viennacl
     VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::column_major>)\
     VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::column_major>)
 
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix)
-  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_range)
-  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_slice)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::identity_matrix)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_matrix)
-      VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_matrix)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix)
+//    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_range)
+//    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_slice)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::identity_matrix)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_matrix)
+    VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_matrix)
 
   #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT
   #undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
   #undef VIENNACL_MAKE_ANY_MATRIX_TRUE
+      /** \endcond */
 
     //
     // is_row_major
@@ -162,6 +163,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType>
     struct is_row_major<viennacl::matrix_base<ScalarType, viennacl::row_major> >
     {
@@ -179,6 +181,7 @@ namespace viennacl
     {
       enum { value = is_row_major<T>::value };
     };
+    /** \endcond */
 
 
     //
@@ -190,6 +193,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_circulant_matrix<viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
     {
@@ -201,6 +205,7 @@ namespace viennacl
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_hankel_matrix
@@ -211,6 +216,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_hankel_matrix<viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
     {
@@ -222,6 +228,7 @@ namespace viennacl
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_toeplitz_matrix
@@ -232,6 +239,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_toeplitz_matrix<viennacl::toeplitz_matrix<ScalarType, ALIGNMENT> >
     {
@@ -243,6 +251,7 @@ namespace viennacl
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_vandermonde_matrix
@@ -253,6 +262,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_vandermonde_matrix<viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
     {
@@ -264,67 +274,54 @@ namespace viennacl
     {
       enum { value = true };
     };
+    /** \endcond */
 
 
     //
     // is_compressed_matrix
     //
-    template <typename T>
-    struct is_compressed_matrix
-    {
-      enum { value = false };
-    };
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_compressed_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_coordinate_matrix
     //
-    template <typename T>
-    struct is_coordinate_matrix
-    {
-      enum { value = false };
-    };
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_coordinate_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_ell_matrix
     //
-    template <typename T>
-    struct is_ell_matrix
-    {
-      enum { value = false };
-    };
-
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_ell_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
+    /** \endcond */
 
     //
     // is_hyb_matrix
     //
-    template <typename T>
-    struct is_hyb_matrix
-    {
-      enum { value = false };
-    };
-
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_hyb_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
     {
       enum { value = true };
     };
+    /** \endcond */
 
 
     //
@@ -336,6 +333,7 @@ namespace viennacl
     //  enum { value = false };
     //};
 
+    /** \cond */
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_any_sparse_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
     {
@@ -468,36 +466,42 @@ namespace viennacl
 
         // is_primitive_type
     //
+
+    /** @brief Helper class for checking whether a type is a primitive type. */
     template<class T>
     struct is_primitive_type{ enum {value = false}; };
-    template<> struct is_primitive_type<float>{ enum { value = true }; };
-    template<> struct is_primitive_type<double>{ enum { value = true }; };
-    template<> struct is_primitive_type<unsigned int>{ enum { value = true }; };
-    template<> struct is_primitive_type<int>{ enum { value = true }; };
-    template<> struct is_primitive_type<unsigned char>{ enum { value = true }; };
-    template<> struct is_primitive_type<char>{ enum { value = true }; };
-    template<> struct is_primitive_type<unsigned long>{ enum { value = true }; };
-    template<> struct is_primitive_type<long>{ enum { value = true }; };
+
+    /** \cond */
+    template<> struct is_primitive_type<float>         { enum { value = true }; };
+    template<> struct is_primitive_type<double>        { enum { value = true }; };
+    template<> struct is_primitive_type<unsigned int>  { enum { value = true }; };
+    template<> struct is_primitive_type<int>           { enum { value = true }; };
+    template<> struct is_primitive_type<unsigned char> { enum { value = true }; };
+    template<> struct is_primitive_type<char>          { enum { value = true }; };
+    template<> struct is_primitive_type<unsigned long> { enum { value = true }; };
+    template<> struct is_primitive_type<long>          { enum { value = true }; };
     template<> struct is_primitive_type<unsigned short>{ enum { value = true }; };
-    template<> struct is_primitive_type<short>{ enum { value = true }; };
+    template<> struct is_primitive_type<short>         { enum { value = true }; };
+    /** \endcond */
 
 #ifdef VIENNACL_WITH_OPENCL
 
-    //
-    // is_cl_type
-    //
+    /** @brief Helper class for checking whether a particular type is a native OpenCL type. */
     template<class T>
     struct is_cl_type{ enum { value = false }; };
-    template<> struct is_cl_type<cl_float>{ enum { value = true }; };
+
+    /** \cond */
+    template<> struct is_cl_type<cl_float> { enum { value = true }; };
     template<> struct is_cl_type<cl_double>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_uint>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_int>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_uchar>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_char>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_ulong>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_long>{ enum { value = true }; };
+    template<> struct is_cl_type<cl_uint>  { enum { value = true }; };
+    template<> struct is_cl_type<cl_int>   { enum { value = true }; };
+    template<> struct is_cl_type<cl_uchar> { enum { value = true }; };
+    template<> struct is_cl_type<cl_char>  { enum { value = true }; };
+    template<> struct is_cl_type<cl_ulong> { enum { value = true }; };
+    template<> struct is_cl_type<cl_long>  { enum { value = true }; };
     template<> struct is_cl_type<cl_ushort>{ enum { value = true }; };
-    template<> struct is_cl_type<cl_short>{ enum { value = true }; };
+    template<> struct is_cl_type<cl_short> { enum { value = true }; };
+    /** \endcond */
 
 #endif
 

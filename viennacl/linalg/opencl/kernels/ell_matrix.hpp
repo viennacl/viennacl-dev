@@ -151,6 +151,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for ell_matrix. */
         template <typename NumericT>
         struct ell_matrix
         {

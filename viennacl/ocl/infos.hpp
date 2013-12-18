@@ -37,10 +37,11 @@ namespace viennacl{
       /** @brief Implementation details for the OpenCL managment layer in ViennaCL */
     namespace detail{
 
-
+    /** @brief Helper class for obtaining informations from the OpenCL backend. Deprecated! */
     template<typename T>
     struct info;
 
+    /** \cond */
     template<>
     struct info<cl_mem>{
       typedef cl_mem_info type;
@@ -134,6 +135,7 @@ namespace viennacl{
 
     template<typename T, typename info<T>::type param>
     struct return_type;
+    /** \endcond */
 
     /** \cond */
      #define SET_INFO_RETURN_TYPE(DATA_TYPE,NAME,RETURN_TYPE) template<> struct return_type<DATA_TYPE, NAME> { typedef RETURN_TYPE Result; }

@@ -27,6 +27,7 @@ namespace viennacl
           VIENNACL_ASBS_GPU
         };
 
+        /** @brief Configuration struct for generating OpenCL kernels for linear combinations of viennacl::scalar<> objects */
         struct asbs_config
         {
           asbs_config() : with_stride_and_range(true), a(VIENNACL_ASBS_CPU), b(VIENNACL_ASBS_NONE) {}
@@ -220,6 +221,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for operations involving viennacl::scalar<>, but not viennacl::vector<> or viennacl::matrix<>. */
         template <class TYPE>
         struct scalar
         {

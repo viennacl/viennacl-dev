@@ -255,7 +255,9 @@ namespace viennacl
 
 
     //////////////////////// compressed_compressed_matrix //////////////////////////
-    /** @brief A sparse square matrix in compressed sparse rows format.
+    /** @brief A sparse square matrix in compressed sparse rows format optimized for the case that only a few rows carry nonzero entries.
+    *
+    * The difference to the 'standard' CSR format is that there is an additional array 'row_indices' so that the i-th set of indices in the CSR-layout refers to row_indices[i].
     *
     * @tparam SCALARTYPE    The floating point type (either float or double, checked at compile time)
     * @tparam ALIGNMENT     The internal memory size for the entries in each row is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.

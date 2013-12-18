@@ -87,6 +87,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for elementwise operations other than addition and subtraction on/with viennacl::vector<>. */
         template <class TYPE>
         struct vector_element
         {

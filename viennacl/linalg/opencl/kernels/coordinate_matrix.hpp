@@ -338,6 +338,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for coordinate_matrix. */
         template <typename NumericT>
         struct coordinate_matrix
         {

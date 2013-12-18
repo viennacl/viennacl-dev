@@ -172,6 +172,10 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
       }
 
+      /** @brief Helper struct for accessing an element of a row- or column-major matrix.
+        *
+        * @param LayoutT   The layout tag: Either row_major or column_major
+        */
       template <typename LayoutT>
       struct mat_mult_matrix_index
       {
@@ -184,6 +188,7 @@ namespace viennacl
         }
       };
 
+      /** \cond */
       template <>
       struct mat_mult_matrix_index<viennacl::column_major>
       {
@@ -195,6 +200,7 @@ namespace viennacl
           return (row_start + i * row_inc) + (col_start + j * col_inc) * internal_rows;
         }
       };
+      /** \endcond */
 
 
       template <typename DMatIndexT, typename ResultIndexT, typename T>

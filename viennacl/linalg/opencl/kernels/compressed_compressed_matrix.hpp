@@ -46,7 +46,7 @@ namespace viennacl
 
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
-        // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for compressed_compressed_matrix. */
         template <typename NumericT>
         struct compressed_compressed_matrix
         {

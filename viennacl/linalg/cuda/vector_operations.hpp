@@ -1654,6 +1654,7 @@ namespace viennacl
 
       namespace detail
       {
+        /** \cond */
         struct vector_sum_kernel_launcher_integers
         {
           template <typename T, typename S3>
@@ -1729,6 +1730,7 @@ namespace viennacl
         template <>
         struct vector_sum_kernel_launcher<double> : public vector_sum_kernel_launcher_floats {};
 
+        /** \endcond */
       }
 
 
@@ -2410,7 +2412,7 @@ namespace viennacl
           group_buffer[blockIdx.x] = tmp_buffer[0];
       }
 
-
+      /** \cond */
       namespace detail
       {
         struct norm_kernel_launcher_integers
@@ -2493,6 +2495,7 @@ namespace viennacl
         struct norm_kernel_launcher<double> : public norm_kernel_launcher_floats {};
 
       }
+      /** \endcond */
 
 
       /** @brief Computes the l^1-norm of a vector

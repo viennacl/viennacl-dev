@@ -44,6 +44,7 @@ namespace viennacl
         }
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for incomplete LU factorization preconditioners. */
         template <class NumericT>
         struct ilu
         {

@@ -27,6 +27,7 @@ namespace viennacl
           VIENNACL_AVBV_GPU
         };
 
+        /** @brief Configuration struct for generating OpenCL kernels for linear combinations of vectors */
         struct avbv_config
         {
           avbv_config() : with_stride_and_range(true), a(VIENNACL_AVBV_CPU), b(VIENNACL_AVBV_NONE) {}
@@ -594,6 +595,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
         template <class TYPE>
         struct vector
         {
@@ -639,6 +641,7 @@ namespace viennacl
         };
 
         // class with kernels for multiple inner products.
+        /** @brief Main kernel class for generating OpenCL kernels for multiple inner products on/with viennacl::vector<>. */
         template <class TYPE>
         struct vector_multi_inner_prod
         {

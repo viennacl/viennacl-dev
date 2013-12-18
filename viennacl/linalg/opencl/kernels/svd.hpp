@@ -498,6 +498,7 @@ namespace viennacl
 
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for singular value decomposition of dense matrices. */
         template <class NumericT>
         struct svd
         {

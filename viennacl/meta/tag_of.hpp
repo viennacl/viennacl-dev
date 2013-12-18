@@ -49,11 +49,17 @@ namespace viennacl
   // ----------------------------------------------------
   // TAGS
   //
+  /** @brief A tag class for identifying 'unknown' types. */
   struct tag_none     {};
+  /** @brief A tag class for identifying types from MTL4. */
   struct tag_mtl4     {};
+  /** @brief A tag class for identifying types from Eigen. */
   struct tag_eigen    {};
+  /** @brief A tag class for identifying types from uBLAS. */
   struct tag_ublas    {};
+  /** @brief A tag class for identifying types from the C++ STL. */
   struct tag_stl      {};
+  /** @brief A tag class for identifying types from ViennaCL. */
   struct tag_viennacl {};
 
   namespace traits
@@ -73,6 +79,7 @@ namespace viennacl
     template< typename T, typename Active = void >
     struct tag_of;
 
+    /** \cond */
     template < typename Sequence, typename Active >
     struct tag_of
     {
@@ -269,7 +276,7 @@ namespace viennacl
     {
       typedef viennacl::tag_viennacl  type;
     };
-
+    /** \endcond */
 
     // ----------------------------------------------------
   } // end namespace traits
@@ -285,11 +292,13 @@ namespace viennacl
      enum { value = false };
   };
 
+  /** \cond */
   template <>
   struct is_mtl4< viennacl::tag_mtl4 >
   {
      enum { value = true };
   };
+  /** \endcond */
 
   /** @brief Meta function which checks whether a tag is tag_eigen
   *
@@ -301,11 +310,13 @@ namespace viennacl
      enum { value = false };
   };
 
+  /** \cond */
   template <>
   struct is_eigen< viennacl::tag_eigen >
   {
      enum { value = true };
   };
+  /** \endcond */
 
 
   /** @brief Meta function which checks whether a tag is tag_ublas
@@ -318,11 +329,13 @@ namespace viennacl
      enum { value = false };
   };
 
+  /** \cond */
   template <>
   struct is_ublas< viennacl::tag_ublas >
   {
      enum { value = true };
   };
+  /** \endcond */
 
   /** @brief Meta function which checks whether a tag is tag_ublas
   *
@@ -334,11 +347,13 @@ namespace viennacl
      enum { value = false };
   };
 
+  /** \cond */
   template <>
   struct is_stl< viennacl::tag_stl >
   {
      enum { value = true };
   };
+  /** \endcond */
 
 
   /** @brief Meta function which checks whether a tag is tag_viennacl
@@ -351,11 +366,13 @@ namespace viennacl
      enum { value = false };
   };
 
+  /** \cond */
   template <>
   struct is_viennacl< viennacl::tag_viennacl >
   {
      enum { value = true };
   };
+  /** \endcond */
 
 } // end namespace viennacl
 

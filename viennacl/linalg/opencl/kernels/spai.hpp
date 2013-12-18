@@ -565,6 +565,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for the sparse approximate inverse preconditioners. */
         template <typename NumericT>
         struct spai
         {

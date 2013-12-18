@@ -105,11 +105,14 @@ namespace viennacl
 
     namespace result_of
     {
+      /** @brief Helper metafunction for obtaining the operation ID as well as the operation family for unary and binary operations on vectors and matrices. */
       template <typename T>
       struct op_type_info
       {
         typedef typename T::ERROR_UNKNOWN_OP_TYPE   error_type;
       };
+
+      /** \cond */
 
       // unary operations
       template <> struct op_type_info<op_element_unary<op_abs>   > { enum { id = OPERATION_UNARY_ABS_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY }; };
@@ -148,6 +151,7 @@ namespace viennacl
       template <> struct op_type_info<op_element_binary<op_div>  > { enum { id = OPERATION_BINARY_ELEMENT_DIV_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY }; };
       template <> struct op_type_info<op_inner_prod>               { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY }; };
 
+      /** \endcond */
     } // namespace result_of
 
 
@@ -218,8 +222,11 @@ namespace viennacl
     {
       ///////////// numeric type ID deduction /////////////
 
+      /** @brief Helper metafunction for obtaining the runtime type ID for a numerical type */
       template <typename T>
       struct numeric_type_id {};
+
+      /** \cond */
 
       template <> struct numeric_type_id<char>           { enum { value = CHAR_TYPE   }; };
       template <> struct numeric_type_id<unsigned char>  { enum { value = UCHAR_TYPE  }; };
@@ -232,13 +239,20 @@ namespace viennacl
       template <> struct numeric_type_id<float>          { enum { value = FLOAT_TYPE  }; };
       template <> struct numeric_type_id<double>         { enum { value = DOUBLE_TYPE }; };
 
+      /** \endcond */
+
       ///////////// matrix layout ID deduction /////////////
 
+      /** @brief Helper metafunction for obtaining the memory layout (row-/column-major) for a matrix. */
       template <typename F>
       struct layout_type_id {};
 
+      /** \cond */
+
       template <> struct layout_type_id<viennacl::column_major> { enum { value = DENSE_COL_MATRIX_TYPE }; };
       template <> struct layout_type_id<viennacl::row_major   > { enum { value = DENSE_ROW_MATRIX_TYPE }; };
+
+      /** \endcond */
     }
 
 
@@ -395,6 +409,7 @@ namespace viennacl
     };
 
 
+    /** @brief Struct for holding the type family as well as the type of an operation (could be addition, subtraction, norm, etc.) */
     struct op_element
     {
       operation_node_type_family   type_family;
@@ -412,16 +427,23 @@ namespace viennacl
     namespace result_of
     {
 
+      /** @brief Helper metafunction for obtaining the number of nodes of an expression template tree. */
       template <class T> struct num_nodes { enum { value = 0 }; };
+      /** \cond */
       template <class LHS, class OP, class RHS> struct num_nodes<       vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
       template <class LHS, class OP, class RHS> struct num_nodes< const vector_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
       template <class LHS, class OP, class RHS> struct num_nodes<       matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
       template <class LHS, class OP, class RHS> struct num_nodes< const matrix_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
       template <class LHS, class OP, class RHS> struct num_nodes<       scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
       template <class LHS, class OP, class RHS> struct num_nodes< const scalar_expression<LHS, RHS, OP> > { enum { value = 1 + num_nodes<LHS>::value + num_nodes<RHS>::value }; };
+      /** \endcond */
 
     }
 
+    /** \brief The main class for representing a statement such as x = inner_prod(y,z); at runtime.
+      *
+      * This is the equivalent to an expression template tree, but entirely built at runtime in order to perform really cool stuff such as kernel fusion.
+      */
     class statement
     {
       public:
@@ -431,6 +453,9 @@ namespace viennacl
 
         statement(container_type const & custom_array) : array_(custom_array) {}
 
+        /** @brief Generate the runtime statement from an expression template.
+          *
+          * Constructing a runtime statement from expression templates makes perfect sense, because this way only a single allocation is needed when creating the statement. */
         template <typename LHS, typename OP, typename RHS>
         statement(LHS & lhs, OP const &, RHS const & rhs) : array_(1 + result_of::num_nodes<RHS>::value)
         {

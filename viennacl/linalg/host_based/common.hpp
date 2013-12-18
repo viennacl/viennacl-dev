@@ -72,12 +72,14 @@ namespace viennacl
         inline bool is_row_major(viennacl::row_major_tag) { return true; }
         inline bool is_row_major(viennacl::column_major_tag) { return false; }
 
+        /** @brief Returns the row_major or column_major class of a dense matrix based on the majority-tag (layout-tag) provided. */
         template <typename T>
         struct majority_struct_for_orientation
         {
           typedef typename T::ERROR_UNRECOGNIZED_MAJORITY_CATEGORTY_TAG   type;
         };
 
+        /** \cond */
         template <>
         struct majority_struct_for_orientation<viennacl::row_major_tag>
         {
@@ -89,6 +91,7 @@ namespace viennacl
         {
           typedef viennacl::column_major type;
         };
+        /** \endcond */
 
 
         template <typename NumericT, typename MajorityCategory, bool is_transposed>
