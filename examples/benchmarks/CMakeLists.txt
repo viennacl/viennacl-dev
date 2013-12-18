@@ -45,12 +45,18 @@ if (ENABLE_CUDA)
 
   foreach(bench blas3 copy vector)
      cuda_add_executable(${bench}bench-cuda ${bench}.cu)
+     if(ENABLE_CUBLAS)
+        cuda_add_cublas_to_target(${bench}bench-cuda)
+     endif(ENABLE_CUBLAS)
   endforeach()
 
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver)
        cuda_add_executable(${bench}bench-cuda ${bench}.cu)
+       if(ENABLE_CUBLAS)
+          cuda_add_cublas_to_target(${bench}bench-cuda)
+       endif(ENABLE_CUBLAS)
      endforeach()
   endif (ENABLE_UBLAS)
 

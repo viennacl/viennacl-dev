@@ -29,6 +29,8 @@ file(RELATIVE_PATH CONF_REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
 # User options
 ##############
 
+option(ENABLE_CUBLAS "Bind to CuBlas" OFF)
+
 option(ENABLE_CUDA "Use the CUDA backend" OFF)
 
 option(BUILD_EXAMPLES "Build example programs" ON)
@@ -37,7 +39,7 @@ option(ENABLE_OPENCL "Use the OpenCL backend" ON)
 
 option(ENABLE_OPENMP "Use OpenMP acceleration" OFF)
 
-option(ENABLE_CBLAS "Use the CBLAS standards" OFF)
+option(ENABLE_CBLAS "Bind to CBlas" OFF)
 
 # If you are interested in the impact of different kernel parameters on
 # performance, you may want to give ViennaProfiler a try (see
@@ -83,6 +85,12 @@ if(ENABLE_UBLAS OR BUILD_TESTING)
    else()
      find_package(Boost REQUIRED COMPONENTS thread)
    endif()
+endif()
+
+if(ENABLE_CUBLAS)
+   set(ENABLE_CUDA true)
+   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DVIENNACL_WITH_CUBLAS)
+   set(CUDA_LIBRARIES ${CUDA_LIBRARIES} cublas)
 endif()
 
 if (ENABLE_CUDA)

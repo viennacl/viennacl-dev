@@ -2318,6 +2318,56 @@ namespace viennacl
                   ScalarType alpha,
                   ScalarType beta)
         {
+
+
+          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
+          typename T1::blas_type::functions_type::gemm gemm = A.blas().gemm();
+
+          if(gemm){
+            cpu_value_type converted_alpha = static_cast<cpu_value_type>(alpha);
+            cpu_value_type converted_beta  = static_cast<cpu_value_type>(beta);
+
+            bool A_row_major = viennacl::is_row_major<T1>::value;
+            bool B_row_major = viennacl::is_row_major<T2>::value;
+            bool C_row_major = viennacl::is_row_major<T3>::value;
+
+            cpu_value_type const * data_A = detail::cuda_arg<cpu_value_type>(A);
+            cpu_value_type const * data_B = detail::cuda_arg<cpu_value_type>(B);
+            cpu_value_type       * data_C = detail::cuda_arg<cpu_value_type>(C);
+
+            vcl_size_t A_start1 = viennacl::traits::start1(A);
+            vcl_size_t A_start2 = viennacl::traits::start2(A);
+            vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+            vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+            vcl_size_t A_size1  = viennacl::traits::size1(A);
+            vcl_size_t A_size2  = viennacl::traits::size2(A);
+            vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+            vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+            vcl_size_t B_start1 = viennacl::traits::start1(B);
+            vcl_size_t B_start2 = viennacl::traits::start2(B);
+            vcl_size_t B_inc1   = viennacl::traits::stride1(B);
+            vcl_size_t B_inc2   = viennacl::traits::stride2(B);
+            vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
+            vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
+
+            vcl_size_t C_start1 = viennacl::traits::start1(C);
+            vcl_size_t C_start2 = viennacl::traits::start2(C);
+            vcl_size_t C_inc1   = viennacl::traits::stride1(C);
+            vcl_size_t C_inc2   = viennacl::traits::stride2(C);
+            vcl_size_t C_size1  = viennacl::traits::size1(C);
+            vcl_size_t C_size2  = viennacl::traits::size2(C);
+            vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
+            vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
+
+            if((*gemm)(C_row_major, A_row_major, B_row_major, transposed_A, transposed_B,
+                                   C_size1, C_size2, transposed_A?A_size1:A_size2,
+                                   converted_alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                                   data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                                   converted_beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                          return;
+          }
+
           if (   (viennacl::traits::size1(A) < 64)
               || (viennacl::traits::size2(A) < 64)
               || (viennacl::traits::size1(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable

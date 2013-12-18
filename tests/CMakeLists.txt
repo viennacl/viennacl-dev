@@ -55,6 +55,9 @@ if (ENABLE_CUDA)
                vector_float vector_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
+     if(ENABLE_CUBLAS)
+        cuda_add_cublas_to_target(${PROG}-test-cuda)
+     endif(ENABLE_CUBLAS)
      add_test(${PROG}-cuda ${PROG}-test-cuda)
   endforeach(PROG)
 

@@ -227,7 +227,11 @@ namespace viennacl
   class matrix_base
   {
       typedef matrix_base<SCALARTYPE, F, SizeType, DistanceType>                  self_type;
+#ifdef VIENNACL_WITH_CUDA
+      typedef typename backend::result_of::cuda_blas_functions<SCALARTYPE>::type  blas_functions_type;
+#else
       typedef typename backend::result_of::host_blas_functions<SCALARTYPE>::type  blas_functions_type;
+#endif
     public:
 
       typedef matrix_iterator<row_iteration, self_type >   iterator1;

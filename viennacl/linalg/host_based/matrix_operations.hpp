@@ -935,7 +935,7 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, false,
                      C_size1, C_size2, A_size2,
                      alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
@@ -1000,7 +1000,7 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, false,
                      C_size1, C_size2, A_size1,
                      alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
@@ -1064,7 +1064,7 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, true,
                      C_size1, C_size2, A_size2,
                      alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
@@ -1127,7 +1127,7 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = A.blas().gemm();
+        typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, true,
                      C_size1, C_size2, A_size1,
                      alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,

@@ -324,7 +324,7 @@ int test_prod(Epsilon const& epsilon)
 
   long matrix_size1 = 131;  //some odd number, not too large
   long matrix_size2 = 67;  //some odd number, not too large
-  long matrix_size3 = 73;  //some odd number, not too large
+  long matrix_size3 = 273;  //some odd number, not too large
   //long matrix_size1 = 128;  //some odd number, not too large
   //long matrix_size2 = 64;  //some odd number, not too large
   //long matrix_size3 = 128;  //some odd number, not too large
