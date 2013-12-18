@@ -55,9 +55,7 @@ if (ENABLE_CUDA)
                vector_float vector_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
-     if(ENABLE_CUBLAS)
-        cuda_add_cublas_to_target(${PROG}-test-cuda)
-     endif(ENABLE_CUBLAS)
+     viennacl_link_cublas_to_target(${PROG}-test-cuda)
      add_test(${PROG}-cuda ${PROG}-test-cuda)
   endforeach(PROG)
 
@@ -65,6 +63,7 @@ if (ENABLE_CUDA)
   cuda_add_executable(external_linkage-cuda
                       src/external_1.cu
                       src/external_2.cu)
+  viennacl_link_cublas_to_target(external_linkage-cuda)
 endif (ENABLE_CUDA)
 
 # test shared library

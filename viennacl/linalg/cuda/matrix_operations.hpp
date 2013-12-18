@@ -2331,10 +2331,6 @@ namespace viennacl
             bool B_row_major = viennacl::is_row_major<T2>::value;
             bool C_row_major = viennacl::is_row_major<T3>::value;
 
-            cpu_value_type const * data_A = detail::cuda_arg<cpu_value_type>(A);
-            cpu_value_type const * data_B = detail::cuda_arg<cpu_value_type>(B);
-            cpu_value_type       * data_C = detail::cuda_arg<cpu_value_type>(C);
-
             vcl_size_t A_start1 = viennacl::traits::start1(A);
             vcl_size_t A_start2 = viennacl::traits::start2(A);
             vcl_size_t A_inc1   = viennacl::traits::stride1(A);
@@ -2362,9 +2358,9 @@ namespace viennacl
 
             if((*gemm)(C_row_major, A_row_major, B_row_major, transposed_A, transposed_B,
                                    C_size1, C_size2, transposed_A?A_size1:A_size2,
-                                   converted_alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
-                                   data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
-                                   converted_beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                                   converted_alpha, viennacl::traits::handle(A), A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                                   viennacl::traits::handle(B), B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                                   converted_beta, viennacl::traits::handle(C), C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
                           return;
           }
 

@@ -938,9 +938,9 @@ namespace viennacl
         typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, false,
                      C_size1, C_size2, A_size2,
-                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
-                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
-                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                     alpha, viennacl::traits::handle(A), A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     viennacl::traits::handle(B), B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, viennacl::traits::handle(C), C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
             return;
 
         detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
@@ -1003,9 +1003,9 @@ namespace viennacl
         typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, false,
                      C_size1, C_size2, A_size1,
-                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
-                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
-                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                     alpha, viennacl::traits::handle(A), A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     viennacl::traits::handle(B), B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, viennacl::traits::handle(C), C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
             return;
 
         detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
@@ -1067,9 +1067,9 @@ namespace viennacl
         typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, false, true,
                      C_size1, C_size2, A_size2,
-                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
-                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
-                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                     alpha, viennacl::traits::handle(A), A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     viennacl::traits::handle(B), B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, viennacl::traits::handle(C), C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
             return;
 
         detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
@@ -1130,9 +1130,9 @@ namespace viennacl
         typename matrix_base<NumericT, F1>::blas_type::functions_type::gemm gemm = C.blas().gemm();
         if(gemm && (*gemm)(C_row_major, A_row_major, B_row_major, true, true,
                      C_size1, C_size2, A_size1,
-                     alpha, data_A, A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
-                     data_B, B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
-                     beta, data_C, C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
+                     alpha, viennacl::traits::handle(A), A_internal_size1, A_internal_size2, A_start1, A_start2, A_inc1, A_inc2,
+                     viennacl::traits::handle(B), B_internal_size1, B_internal_size2, B_start1, B_start2, B_inc1, B_inc2,
+                     beta, viennacl::traits::handle(C), C_internal_size1, C_internal_size2, C_start1, C_start2, C_inc1, C_inc2))
             return;
 
         detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);

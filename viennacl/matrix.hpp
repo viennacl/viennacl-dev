@@ -227,11 +227,6 @@ namespace viennacl
   class matrix_base
   {
       typedef matrix_base<SCALARTYPE, F, SizeType, DistanceType>                  self_type;
-#ifdef VIENNACL_WITH_CUDA
-      typedef typename backend::result_of::cuda_blas_functions<SCALARTYPE>::type  blas_functions_type;
-#else
-      typedef typename backend::result_of::host_blas_functions<SCALARTYPE>::type  blas_functions_type;
-#endif
     public:
 
       typedef matrix_iterator<row_iteration, self_type >   iterator1;
@@ -243,7 +238,7 @@ namespace viennacl
       typedef viennacl::backend::mem_handle                                       handle_type;
       typedef F                                                                   orientation_functor;
       typedef typename F::orientation_category                                    orientation_category;
-      typedef viennacl::backend::blas<blas_functions_type>                        blas_type;
+      typedef viennacl::backend::blas<cpu_value_type>                             blas_type;
       static const size_type alignment = 128;
 
 

@@ -17,6 +17,8 @@ if(ENABLE_CUDA)
                                      src/blas3.cu) #src/blas3_host.cu src/blas3_cuda.cu
     set_target_properties(viennacl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_CUDA")
   endif(ENABLE_OPENCL)
+  viennacl_link_cublas_to_target(viennacl)
+
 else(ENABLE_CUDA)
   if(ENABLE_OPENCL)
     add_library(viennacl SHARED src/blas1.cpp src/blas1_host.cpp src/blas1_opencl.cpp
@@ -24,9 +26,6 @@ else(ENABLE_CUDA)
                                 src/blas3.cpp) #src/blas3_host.cpp src/blas3_opencl.cpp)
     set_target_properties(viennacl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
     target_link_libraries(viennacl ${OPENCL_LIBRARIES})
-    if(ENABLE_CUBLAS)
-       cuda_add_cublas_to_target(viennacl)
-    endif(ENABLE_CUBLAS)
   else(ENABLE_OPENCL)
     add_library(viennacl SHARED src/blas1.cpp src/blas1_host.cpp
                                 src/blas2.cpp src/blas2_host.cpp
