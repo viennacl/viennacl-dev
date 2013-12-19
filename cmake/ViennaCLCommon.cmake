@@ -58,7 +58,7 @@ cmake_dependent_option(ENABLE_EIGEN "Enable examples that use Eigen" OFF
 cmake_dependent_option(ENABLE_MTL4 "Enable examples that use MTL4" OFF
    BUILD_EXAMPLES OFF)
 
-option(ENABLE_PEDANTIC_FLAGS "Enable pedantic compiler flags" OFF)
+option(ENABLE_PEDANTIC_FLAGS "Enable pedantic compiler flags (GCC and Clang only)" OFF)
 
 mark_as_advanced(BOOSTPATH ENABLE_VIENNAPROFILER ENABLE_EIGEN
    ENABLE_MTL4 ENABLE_PEDANTIC_FLAGS)
