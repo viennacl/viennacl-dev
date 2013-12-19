@@ -2321,7 +2321,7 @@ namespace viennacl
 
 
           typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-          typename T1::blas_type::functions_type::gemm gemm = A.blas().gemm();
+          typename T1::blas_type::gemm_type gemm = A.blas().gemm();
 
           if(gemm){
             cpu_value_type converted_alpha = static_cast<cpu_value_type>(alpha);
