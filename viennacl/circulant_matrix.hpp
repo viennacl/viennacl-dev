@@ -112,12 +112,12 @@ namespace viennacl
          */
         entry_proxy<SCALARTYPE> operator()(vcl_size_t row_index, vcl_size_t col_index)
         {
-            int index = static_cast<int>(row_index) - static_cast<int>(col_index);
+            long index = static_cast<long>(row_index) - static_cast<long>(col_index);
 
             assert(row_index < size1() && col_index < size2() && bool("Invalid access"));
 
             while (index < 0)
-              index += size1();
+              index += static_cast<long>(size1());
             return elements_[index];
         }
 
@@ -182,9 +182,9 @@ namespace viennacl
 
         for (vcl_size_t i = 0; i < size; i++) {
             for (vcl_size_t j = 0; j < size; j++) {
-                int index = static_cast<int>(i) - static_cast<int>(j);
+                long index = static_cast<long>(i) - static_cast<long>(j);
                 if (index < 0)
-                  index = size + index;
+                  index = static_cast<long>(size + index);
                 com_dst(i, j) = tmp[index];
             }
         }

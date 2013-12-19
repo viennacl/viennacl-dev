@@ -759,7 +759,7 @@ namespace viennacl
 
         result = 0;
         for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result += *it;
+          result += static_cast<T>(*it);
       }
 
 
@@ -824,7 +824,7 @@ namespace viennacl
 
         result = 0;
         for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result += *it;
+          result += static_cast<T>(*it);
         result = std::sqrt(result);
       }
 

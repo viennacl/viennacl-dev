@@ -66,7 +66,7 @@ public:
     NumericT result = viennacl::linalg::norm_2(u);
 
     std::stringstream ss;
-    ss << "Result of thread " << thread_id_ << " on device " << viennacl::ocl::get_context(thread_id_).devices()[0].name() << ": " << result << std::endl;
+    ss << "Result of thread " << thread_id_ << " on device " << viennacl::ocl::get_context(static_cast<long>(thread_id_)).devices()[0].name() << ": " << result << std::endl;
     ss << "  A: " << A << std::endl;
     ss << "  x: " << x << std::endl;
     message_ = ss.str();

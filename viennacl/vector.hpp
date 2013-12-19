@@ -94,7 +94,7 @@ namespace viennacl
       typedef implicit_vector_base<SCALARTYPE> base_type;
     public:
       typedef typename base_type::size_type size_type;
-      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(1,true), ctx)
+      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(SCALARTYPE(1),true), ctx)
       {
         assert( (ind < s) && bool("Provided index out of range!") );
       }

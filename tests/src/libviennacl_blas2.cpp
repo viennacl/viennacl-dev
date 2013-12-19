@@ -191,14 +191,14 @@ int main()
   std::cout << std::endl << "Host: ";
   ViennaCLHostSgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_A), 2, 1, 2, 3, ViennaCLInt(size2),
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_y), 1, 3,
                     0.1234f,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 1, 2);
   check(ref_float_x, host_float_x, eps_float);
   ViennaCLHostDgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_A), 2, 1, 2, 3, size2,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_A), 2, 1, 2, 3, ViennaCLInt(size2),
                     viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_y), 1, 3,
                     0.1234,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 1, 2);
@@ -227,7 +227,7 @@ int main()
   std::cout << std::endl << "OpenCL: ";
   ViennaCLOpenCLSgemv(my_backend,
                       ViennaCLRowMajor, ViennaCLNoTrans,
-                      ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::traits::opencl_handle(opencl_float_A), 2, 1, 2, 3, size2,
+                      ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::traits::opencl_handle(opencl_float_A), 2, 1, 2, 3, ViennaCLInt(size2),
                       viennacl::traits::opencl_handle(opencl_float_y), 1, 3,
                       0.1234f,
                       viennacl::traits::opencl_handle(opencl_float_x), 1, 2);
@@ -236,7 +236,7 @@ int main()
   {
     ViennaCLOpenCLDgemv(my_backend,
                         ViennaCLRowMajor, ViennaCLNoTrans,
-                        ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::traits::opencl_handle(*opencl_double_A), 2, 1, 2, 3, size2,
+                        ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::traits::opencl_handle(*opencl_double_A), 2, 1, 2, 3, ViennaCLInt(size2),
                         viennacl::traits::opencl_handle(*opencl_double_y), 1, 3,
                         0.1234,
                         viennacl::traits::opencl_handle(*opencl_double_x), 1, 2);

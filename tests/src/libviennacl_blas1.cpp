@@ -170,7 +170,7 @@ int main()
                     &host_float_alpha,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<float>(host_float_x), 2, 3);
   check(ref_float_alpha, host_float_alpha, eps_float);
-  ViennaCLHostDasum(my_backend, size/4,
+  ViennaCLHostDasum(my_backend, ViennaCLInt(size/4),
                     &host_double_alpha,
                     viennacl::linalg::host_based::detail::extract_raw_pointer<double>(host_double_x), 2, 3);
   check(ref_double_alpha, host_double_alpha, eps_double);
@@ -599,7 +599,7 @@ int main()
   {
     if (ref_float_x[0 + 2*i] > std::fabs(ref_float_alpha))
     {
-      ref_index = i;
+      ref_index = ViennaCLInt(i);
       ref_float_alpha = std::fabs(ref_float_x[0 + 2*i]);
     }
   }
