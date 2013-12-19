@@ -36,8 +36,7 @@ namespace viennacl
   namespace linalg
   {
 
-    /** @brief A tag for a row preconditioner
-    */
+    /** @brief A tag for a row scaling preconditioner which merely normalizes the equation system such that each row of the system matrix has unit norm. */
     class row_scaling_tag
     {
       public:
@@ -55,6 +54,7 @@ namespace viennacl
     };
 
 
+    /** \cond */
     namespace detail
     {
       template <typename T>
@@ -74,9 +74,8 @@ namespace viennacl
       {
         enum { value = true };
       };
-
-
     }
+    /** \endcond */
 
 
     /** @brief Jacobi-type preconditioner class, can be supplied to solve()-routines. This is a diagonal preconditioner with the diagonal entries being (configurable) row norms of the matrix.

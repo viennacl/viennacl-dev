@@ -65,6 +65,7 @@ namespace viennacl
         }
 
 
+        /** @brief Functor for deleting a CUDA handle. Used within the smart pointer class. */
         template <typename U>
         struct cuda_deleter
         {

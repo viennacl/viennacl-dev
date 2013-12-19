@@ -40,6 +40,7 @@ namespace viennacl{
 
   namespace generator{
 
+    /** @brief Kernel generation class for matrix-matrix products. */
     class matrix_product : public profile_base{
 
         enum access_flow{

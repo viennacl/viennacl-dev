@@ -34,6 +34,21 @@
 
 namespace viennacl
 {
+    /** @brief Sparse matrix class using the ELLPACK format for storing the nonzeros.
+      *
+      * This format works best for matrices where the number of nonzeros per row is mostly the same.
+      * Finite element and finite difference methods on nicely shaped domains often result in such a nonzero pattern.
+      * For a matrix
+      *
+      *   (1 2 0 0 0)
+      *   (2 3 4 0 0)
+      *   (0 5 6 0 7)
+      *   (0 0 8 9 0)
+      *
+      * the entries are layed out in chunks of size 3 as
+      *   (1 2 5 8; 2 3 6 9; 0 4 7 0)
+      * Note that this is a 'transposed' representation in order to maximize coalesced memory access.
+      */
     template<typename SCALARTYPE, unsigned int ALIGNMENT /* see forwards.h for default argument */>
     class ell_matrix
     {

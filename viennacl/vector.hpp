@@ -39,6 +39,10 @@
 namespace viennacl
 {
 
+  /** @brief Common base class for representing vectors where the entries are not all stored explicitly.
+    *
+    * Typical examples are zero_vector or scalar_vector.
+    */
   template<typename SCALARTYPE>
   class implicit_vector_base
   {
@@ -1114,6 +1118,7 @@ namespace viennacl
 
   }; //vector
 
+  /** @brief Tuple class holding pointers to multiple vectors. Mainly used as a temporary object returned from viennacl::tie(). */
   template <typename ScalarT>
   class vector_tuple
   {

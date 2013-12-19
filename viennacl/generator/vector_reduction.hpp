@@ -40,6 +40,7 @@ namespace viennacl{
 
   namespace generator{
 
+    /** @brief OpenCL kernel template for reductions resulting in a vector. Example: Computing the row norms of a matrix concurrently. */
     class vector_reduction : public profile_base{
 
         vcl_size_t lmem_used(vcl_size_t scalartype_size) const {

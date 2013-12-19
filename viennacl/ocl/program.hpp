@@ -32,6 +32,11 @@ namespace viennacl
 {
   namespace ocl
   {
+    /** @brief Wrapper class for an OpenCL program.
+      *
+      * This class was written when the OpenCL C++ bindings haven't been standardized yet.
+      * Regardless, it takes care about some additional details and is supposed to provide higher convenience by holding the kernels defined in the program.
+      */
     class program
     {
       typedef std::vector<viennacl::ocl::kernel>    KernelContainer;

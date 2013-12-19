@@ -50,6 +50,7 @@ namespace viennacl{
       typedef std::string device_name_type;
       typedef viennacl::tools::shared_ptr<profile_base> profile_base_ptr;
 
+      /** @brief Helper struct for mapping a std::map<KeyType, ValueType>. Used to avoids type length explosion when using nested std::map directly */
       template<class KeyType, class ValueType>
       struct map_wrapper{
           typedef std::map<KeyType,ValueType> map_type;
@@ -57,10 +58,19 @@ namespace viennacl{
           ValueType & operator[](KeyType const & key){ return map[key]; }
       };
 
+      /** @brief Represents expression->profile in the map hierarchy vendor->device_type->device_arch->device->expression->profile. */
       struct expression_map : public map_wrapper<expression_key_type, profile_base_ptr>{ };
+
+      /** @brief Represents device->expression in the map hierarchy vendor->device_type->device_arch->device->expression->profile. */
       struct device_name_map : public map_wrapper<device_name_type, expression_map>{ };
+
+      /** @brief Represents device_arch->device in the map hierarchy vendor->device_type->device_arch->device->expression->profile. */
       struct device_architecture_map : public map_wrapper<viennacl::ocl::device_architecture_family, device_name_map>{ };
+
+      /** @brief Represents device_type->device_arch in the map hierarchy vendor->device_type->device_arch->device->expression->profile. */
       struct device_type_map : public map_wrapper<device_type,device_architecture_map>{ };
+
+      /** @brief Represents vendor->device_type in the map hierarchy vendor->device_type->device_arch->device->expression->profile. */
       struct database_type : public map_wrapper<vendor_id_type, device_type_map>{ };
 
       /** @brief Set a default of a generation to a particular device for a particular operation */

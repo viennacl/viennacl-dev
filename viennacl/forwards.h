@@ -502,6 +502,7 @@ namespace viennacl
   {
     //helper for matrix row/col iterators
     //must be specialized for every viennacl matrix type
+    /** @brief Helper class for incrementing an iterator in a dense matrix. */
     template <typename ROWCOL, typename MATRIXTYPE>
     struct MATRIX_ITERATOR_INCREMENTER
     {

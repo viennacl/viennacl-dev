@@ -30,7 +30,10 @@
 
 namespace viennacl
 {
-
+  /** @brief Class for representing non-strided subvectors of a bigger vector x.
+    *
+    * In MATLAB notation, this could for example refer to the subvector x(3:8) of a vector x.
+    */
   template <typename VectorType>
   class vector_range : public vector_base<typename VectorType::cpu_value_type>
   {
@@ -153,7 +156,10 @@ namespace viennacl
 
 
 
-
+  /** @brief Class for representing strided subvectors of a bigger vector x.
+    *
+    * In MATLAB notation, this could for example refer to the subvector x(3:2:8) of a vector x.
+    */
   template <typename VectorType>
   class vector_slice : public vector_base<typename VectorType::cpu_value_type>
   {

@@ -49,6 +49,7 @@ namespace viennacl{
 
     namespace detail{
 
+      /** @brief Helper class for setting the arguments of a kernel. */
       class set_arguments_functor : public traversal_functor{
         public:
           typedef void result_type;

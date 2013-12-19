@@ -38,6 +38,7 @@ namespace viennacl
   {
     namespace detail
     {
+      /** @brief Helper range class for representing a subvector of a larger buffer. */
       template <typename VectorType, typename ValueType, typename SizeType = vcl_size_t>
       class ilu_vector_range
       {

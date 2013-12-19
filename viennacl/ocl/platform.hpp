@@ -36,6 +36,12 @@ namespace viennacl
 {
   namespace ocl
   {
+
+    /** @brief Wrapper class for an OpenCL platform.
+      *
+      * This class was written when the OpenCL C++ bindings haven't been standardized yet.
+      * Regardless, it takes care about some additional details and is supposed to provide higher convenience.
+      */
     class platform
     {
 

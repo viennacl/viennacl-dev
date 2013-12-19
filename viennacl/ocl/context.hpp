@@ -43,6 +43,11 @@ namespace viennacl
 {
   namespace ocl
   {
+    /** @brief Manages an OpenCL context and provides the respective convenience functions for creating buffers, etc.
+      *
+      * This class was originally written before the OpenCL C++ bindings were standardized.
+      * Regardless, it provides a couple of convience functionality which is not covered by the OpenCL C++ bindings.
+    */
     class context
     {
       typedef std::vector< viennacl::ocl::program >   ProgramContainer;

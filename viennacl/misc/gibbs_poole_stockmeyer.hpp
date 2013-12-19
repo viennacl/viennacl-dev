@@ -134,6 +134,7 @@ namespace viennacl
   } // namespace detail
 
 
+  /** @brief Tag class for identifying the Gibbs-Poole-Stockmeyer algorithm for reducing the bandwidth of a sparse matrix. */
   struct gibbs_poole_stockmeyer_tag {};
 
 

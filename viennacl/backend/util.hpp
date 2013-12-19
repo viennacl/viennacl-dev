@@ -43,6 +43,7 @@ namespace viennacl
     namespace detail
     {
 
+      /** @brief Helper struct for converting a type to its OpenCL pendant. */
       template <typename T>
       struct convert_to_opencl
       {

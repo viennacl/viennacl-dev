@@ -44,6 +44,7 @@ namespace viennacl
           return reinterpret_cast<T const *>(viennacl::traits::ram_handle(vec).get());
         }
 
+        /** @brief Helper class for accessing a strided subvector of a larger vector. */
         template <typename NumericT>
         class vector_array_wrapper
         {
@@ -94,6 +95,7 @@ namespace viennacl
         /** \endcond */
 
 
+        /** @brief Helper array for accessing a strided submatrix embedded in a larger matrix. */
         template <typename NumericT, typename MajorityCategory, bool is_transposed>
         class matrix_array_wrapper
         {
@@ -123,6 +125,7 @@ namespace viennacl
             vcl_size_t internal_size1_, internal_size2_;
         };
 
+        /** \cond */
         template <typename NumericT, typename MajorityCategory>
         class matrix_array_wrapper<NumericT, MajorityCategory, true>
         {
@@ -151,6 +154,7 @@ namespace viennacl
             vcl_size_t inc1_, inc2_;
             vcl_size_t internal_size1_, internal_size2_;
         };
+        /** \endcond */
 
       }
 

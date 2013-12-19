@@ -287,6 +287,7 @@ namespace viennacl
             }
         }
 
+        /** @brief Internal helper class representing a row-major dense matrix used for the QR method for the purpose of computing eigenvalues. */
         template <typename SCALARTYPE>
         class FastMatrix
         {

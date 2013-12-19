@@ -33,6 +33,7 @@
 
 namespace viennacl
 {
+    /** @brief Sparse matrix class using a hybrid format composed of the ELL and CSR format for storing the nonzeros. */
     template<typename SCALARTYPE, unsigned int ALIGNMENT  /* see forwards.h for default argument */>
     class hyb_matrix
     {

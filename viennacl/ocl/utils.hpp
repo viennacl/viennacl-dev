@@ -40,6 +40,7 @@ namespace viennacl
       static void apply(viennacl::ocl::context const &) {}
     };
 
+    /** \cond */
     template <>
     struct DOUBLE_PRECISION_CHECKER<double>
     {
@@ -49,6 +50,7 @@ namespace viennacl
           throw viennacl::ocl::double_precision_not_provided_error();
       }
     };
+    /** \endcond */
 
     /** \brief Helper class for converting a type to its string representation. */
     template <typename T>

@@ -66,7 +66,7 @@ namespace viennacl
         typedef viennacl::linalg::detail::spai::spai_tag         spai_tag;
         typedef viennacl::linalg::detail::spai::fspai_tag        fspai_tag;
 
-        /** @brief Implementation of the SParse Approximate Inverse Algorithm
+        /** @brief Implementation of the SParse Approximate Inverse Algorithm for a generic, uBLAS-compatible matrix type.
          * @param Matrix matrix that is used for computations
          * @param Vector vector that is used for computations
          */
@@ -116,6 +116,10 @@ namespace viennacl
         };
 
         //VIENNACL version
+        /** @brief Implementation of the SParse Approximate Inverse Algorithm for a ViennaCL compressed_matrix.
+         * @param Matrix matrix that is used for computations
+         * @param Vector vector that is used for computations
+         */
         template <typename ScalarType, unsigned int MAT_ALIGNMENT>
         class spai_precond< viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> >
         {
@@ -176,7 +180,7 @@ namespace viennacl
         // FSPAI
         //
 
-        /** @brief Implementation of the Factored SParse Approximate Inverse Algorithm
+        /** @brief Implementation of the Factored SParse Approximate Inverse Algorithm for a generic, uBLAS-compatible matrix type.
         * @param Matrix matrix that is used for computations
         * @param Vector vector that is used for computations
         */
@@ -225,6 +229,10 @@ namespace viennacl
         //
         // ViennaCL version
         //
+        /** @brief Implementation of the Factored SParse Approximate Inverse Algorithm for a ViennaCL compressed_matrix.
+        * @param Matrix matrix that is used for computations
+        * @param Vector vector that is used for computations
+        */
         template <typename ScalarType, unsigned int MAT_ALIGNMENT>
         class fspai_precond< viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> >
         {

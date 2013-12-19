@@ -40,6 +40,7 @@ namespace viennacl{
 
   namespace generator{
 
+    /** @brief OpenCL kernel generation class for vector expressions of AXPY type, i.e. x = alpha * y + beta * z, where the number of summands can in principle be arbitrarily large. */
     class vector_saxpy : public profile_base{
       public:
         static std::string csv_format() {
@@ -112,6 +113,7 @@ namespace viennacl{
 
 
 
+    /** @brief OpenCL kernel generation class for matrix expressions of AXPY type, i.e. A = alpha * B + beta * C, where the number of summands can in principle be arbitrarily large. */
     class matrix_saxpy : public profile_base{
 
         bool invalid_impl(viennacl::ocl::device const & /*dev*/, vcl_size_t /*scalartype_size*/) const{ return false; }

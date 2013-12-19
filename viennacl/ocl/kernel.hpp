@@ -39,11 +39,19 @@ namespace viennacl
 {
   namespace ocl
   {
+    /** @brief Helper class for packing four cl_uint numbers into a uint4 type for access inside an OpenCL kernel.
+      *
+      * Since the primary use is for dealing with ranges and strides, the four members are termed accordingly.
+      */
     struct packed_cl_uint
     {
+      /** @brief Starting value of the integer stride. */
       cl_uint start;
+      /** @brief Increment between integers. */
       cl_uint stride;
+      /** @brief Number of values in the stride. */
       cl_uint size;
+      /** @brief Internal length of the buffer. Might be larger than 'size' due to padding. */
       cl_uint internal_size;
     };
 

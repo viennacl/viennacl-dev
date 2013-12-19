@@ -36,6 +36,10 @@ namespace viennacl{
 
   namespace tools{
 
+    /** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
+      *
+      * Avoids messing with Boost and should be sufficient for benchmarking purposes.
+      */
     class timer
     {
     public:
@@ -76,6 +80,10 @@ namespace viennacl{
 
   namespace tools{
 
+    /** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
+      *
+      * Avoids messing with Boost and should be sufficient for benchmarking purposes.
+      */
     class timer
     {
     public:

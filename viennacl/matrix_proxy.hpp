@@ -30,6 +30,10 @@
 namespace viennacl
 {
 
+  /** @brief Class for representing non-strided submatrices of a bigger matrix A.
+    *
+    * In MATLAB notation, this could for example refer to the submatrix A(3:8, 6:10) of a matrix A.
+    */
   template <typename MatrixType>
   class matrix_range : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
   {
@@ -278,7 +282,10 @@ namespace viennacl
 
 
 
-
+  /** @brief Class for representing strided submatrices of a bigger matrix A.
+    *
+    * In MATLAB notation, this could for example refer to the submatrix A(3:2:8, 6:3:16) of a matrix A.
+    */
   template <typename MatrixType>
   class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
   {

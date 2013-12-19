@@ -343,7 +343,7 @@ namespace viennacl
   // Part 1: The original Cuthill-McKee algorithm
   //
 
-
+  /** @brief A tag class for selecting the Cuthill-McKee algorithm for reducing the bandwidth of a sparse matrix. */
   struct cuthill_mckee_tag {};
 
   /** @brief Function for the calculation of a node number permutation to reduce the bandwidth of an incidence matrix by the Cuthill-McKee algorithm
@@ -422,7 +422,7 @@ namespace viennacl
   // Part 2: Advanced Cuthill McKee
   //
 
-  /** @brief Tag for the advanced Cuthill-McKee algorithm */
+  /** @brief Tag for the advanced Cuthill-McKee algorithm (i.e. running the 'standard' Cuthill-McKee algorithm for a couple of different seeds). */
   class advanced_cuthill_mckee_tag
   {
     public:

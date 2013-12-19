@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file enable_if.hpp
+/** @file viennacl/meta/enable_if.hpp
     @brief Simple enable-if variant that uses the SFINAE pattern
 */
 
@@ -31,8 +31,10 @@ namespace viennacl
       typedef T   type;
     };
 
+    /** \cond */
     template <class T>
     struct enable_if<false, T> {};
+    /** \endcond */
 
 } //namespace viennacl
 

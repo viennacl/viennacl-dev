@@ -40,12 +40,14 @@ namespace viennacl{
        */
       class mapped_object{
         protected:
+          /** \cond */
           struct node_info{
               node_info() : mapping(NULL), statement(NULL), root_node(NULL) { }
               mapping_type const * mapping;
               scheduler::statement const * statement;
               scheduler::statement_node const * root_node;
           };
+          /** \endcond */
           virtual std::string generate_default(std::pair<std::string, std::string> const & index) const = 0;
           virtual std::string append_vector_size(std::string const & scalartype, unsigned int) const { return scalartype; }
 

@@ -36,7 +36,10 @@
 
 namespace viennacl
 {
-
+  /** @brief Base class for representing matrices where the individual entries are not all stored explicitly, e.g. identity_matrix<>
+    *
+    * Examples are identity_matrix, scalar_matrix, and zero_matrix.
+    */
   template<typename SCALARTYPE>
   class implicit_matrix_base
   {
@@ -149,6 +152,12 @@ namespace viennacl
 //  }
 //#endif
 
+  /** @brief Expression template class for representing a tree of expressions which ultimately result in a matrix.
+    *
+    * @tparam LHS   The left hand side of the expression tree
+    * @tparam RHS   The right hand side of the expression tree
+    * @tparam OP    The operator to apply to LHS and RHS to obtain the result.
+    */
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
@@ -186,6 +195,7 @@ namespace viennacl
   struct col_iteration {};
 
   //STL-like iterator. TODO: STL-compliance...
+  /** @brief uBLAS-like iterator class for iterating over the entries of a dense matrix. */
   template <typename ROWCOL, typename MATRIXTYPE>
   class matrix_iterator
   {

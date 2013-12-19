@@ -583,12 +583,14 @@ namespace viennacl
       /** \endcond */
 
       //OpenCL equivalent type
+      /** @brief Metafunction for deducing the OpenCL type for a numeric type, e.g. float -> cl_float */
       template<typename T>
       struct cl_type
       {
           typedef T type;
       };
 
+      /** \cond */
 #ifdef VIENNACL_WITH_OPENCL
       template<>
       struct cl_type<float>{ typedef cl_float type; };
@@ -620,6 +622,7 @@ namespace viennacl
       template<>
       struct cl_type<unsigned char>{ typedef cl_uchar type; };
 #endif
+      /** \endcond */
 
     } //namespace result_of
 } //namespace viennacl

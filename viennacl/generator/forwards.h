@@ -80,6 +80,7 @@ namespace viennacl{
 
     typedef std::pair<expression_type, vcl_size_t> expression_key_type;
 
+    /** @brief A class for holding meta information such as the type or the underlying scalar type of an expression (such as x = inner_prod(y, z)). */
     struct expression_descriptor{
         expression_key_type make_key() const { return expression_key_type(type,scalartype_size); }
         bool operator==(expression_descriptor const & other) const

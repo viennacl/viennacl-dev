@@ -36,7 +36,7 @@ namespace viennacl
 {
   namespace linalg
   {
-
+    /** @brief Configuration class for the nonnegative-matrix-factorization algorithm. Specify tolerances, maximum iteration counts, etc., here. */
     class nmf_config
     {
       public:

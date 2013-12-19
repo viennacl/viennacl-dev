@@ -48,6 +48,7 @@ namespace viennacl{
 
     namespace detail{
 
+      /** @brief Helper class for the OpenCL kernel generator, representing a statement. */
       class statement_representation_functor : public traversal_functor{
         private:
           unsigned int get_id(void * handle) const{

@@ -73,10 +73,11 @@ namespace viennacl
         namespace spai
         {
 
-          typedef std::pair<unsigned int, double> PairT;
+          /** @brief Helper functor for comparing std::pair<> based on the second member. */
           struct CompareSecond
           {
-            bool operator()(const PairT& left, const PairT& right)
+            template <typename T1, typename T2>
+            bool operator()(std::pair<T1, T2> const & left, std::pair<T1, T2> const & right)
             {
               return static_cast<double>(left.second) > static_cast<double>(right.second);
             }

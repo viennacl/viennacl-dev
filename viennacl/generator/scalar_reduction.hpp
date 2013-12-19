@@ -41,6 +41,7 @@ namespace viennacl{
 
   namespace generator{
 
+    /** @brief OpenCL kernel generation template for scalar reduction operations such as s = norm_2(x). */
     class scalar_reduction : public profile_base{
       private:
         typedef std::vector<std::pair<const char *, viennacl::ocl::handle<cl_mem> > > temporaries_type;

@@ -188,11 +188,13 @@ namespace viennacl
       typedef T   ResultType;
     };
 
+    /** \cond */
     template <typename T>
     struct CONST_REMOVER<const T>
     {
       typedef T   ResultType;
     };
+    /** \endcond */
 
 
     /////// CPU scalar type deducer ///////////
