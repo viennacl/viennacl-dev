@@ -194,16 +194,16 @@ namespace detail
 }
 
 
-ViennaCLStatus ViennaCLHostSgemm(ViennaCLBackend backend,
-                                   ViennaCLOrder orderA, ViennaCLTranspose transA,
-                                   ViennaCLOrder orderB, ViennaCLTranspose transB,
-                                   ViennaCLOrder orderC,
-                                   ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
-                                   float alpha,
-                                   float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
-                                   float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
-                                   float beta,
-                                   float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSgemm(ViennaCLBackend backend,
+                                                            ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                                            ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                                            ViennaCLOrder orderC,
+                                                            ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
+                                                            float alpha,
+                                                            float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                                            float *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
+                                                            float beta,
+                                                            float *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
 {
   return detail::ViennaCLHostgemm_impl<float>(backend,
                                               orderA, transA,
@@ -217,16 +217,16 @@ ViennaCLStatus ViennaCLHostSgemm(ViennaCLBackend backend,
                                               C, offC_row, offC_col, incC_row, incC_col, ldc);
 }
 
-ViennaCLStatus ViennaCLHostDgemm(ViennaCLBackend backend,
-                                   ViennaCLOrder orderA, ViennaCLTranspose transA,
-                                   ViennaCLOrder orderB, ViennaCLTranspose transB,
-                                   ViennaCLOrder orderC,
-                                   ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
-                                   double alpha,
-                                   double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
-                                   double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
-                                   double beta,
-                                   double *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDgemm(ViennaCLBackend backend,
+                                                            ViennaCLOrder orderA, ViennaCLTranspose transA,
+                                                            ViennaCLOrder orderB, ViennaCLTranspose transB,
+                                                            ViennaCLOrder orderC,
+                                                            ViennaCLInt m, ViennaCLInt n, ViennaCLInt k,
+                                                            double alpha,
+                                                            double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
+                                                            double *B, ViennaCLInt offB_row, ViennaCLInt offB_col, ViennaCLInt incB_row, ViennaCLInt incB_col, ViennaCLInt ldb,
+                                                            double beta,
+                                                            double *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
 {
   return detail::ViennaCLHostgemm_impl<double>(backend,
                                                orderA, transA,

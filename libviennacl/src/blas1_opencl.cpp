@@ -37,9 +37,9 @@
 
 // IxAMAX
 
-ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLBackend backend, ViennaCLInt n,
-                                    ViennaCLInt *index,
-                                    cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLBackend backend, ViennaCLInt n,
+                                                               ViennaCLInt *index,
+                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -47,9 +47,9 @@ ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLBackend backend, ViennaCLInt n,
-                                    ViennaCLInt *index,
-                                    cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLBackend backend, ViennaCLInt n,
+                                                               ViennaCLInt *index,
+                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -62,9 +62,9 @@ ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLBackend backend, ViennaCLInt n,
 
 // xASUM
 
-ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLBackend backend, ViennaCLInt n,
-                                   float *alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLBackend backend, ViennaCLInt n,
+                                                              float *alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -72,9 +72,9 @@ ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLBackend backend, ViennaCLInt n,
-                                   double *alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLBackend backend, ViennaCLInt n,
+                                                              double *alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -86,10 +86,10 @@ ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLBackend backend, ViennaCLInt n,
 
 // xAXPY
 
-ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLBackend backend, ViennaCLInt n,
-                                   float alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLBackend backend, ViennaCLInt n,
+                                                              float alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -98,10 +98,10 @@ ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLBackend backend, ViennaCLInt n,
-                                   double alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLBackend backend, ViennaCLInt n,
+                                                              double alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -113,9 +113,9 @@ ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLBackend backend, ViennaCLInt n,
 
 // xCOPY
 
-ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLBackend backend, ViennaCLInt n,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLBackend backend, ViennaCLInt n,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -124,9 +124,9 @@ ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLBackend backend, ViennaCLInt n,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLBackend backend, ViennaCLInt n,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -137,10 +137,10 @@ ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLBackend backend, ViennaCLInt n,
 
 // xDOT
 
-ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLBackend backend, ViennaCLInt n,
-                                  float *alpha,
-                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLBackend backend, ViennaCLInt n,
+                                                             float *alpha,
+                                                             cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                             cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -149,10 +149,10 @@ ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLBackend backend, ViennaCLInt n,
-                                  double *alpha,
-                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLBackend backend, ViennaCLInt n,
+                                                             double *alpha,
+                                                             cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                             cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -164,9 +164,9 @@ ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLBackend backend, ViennaCLInt n,
 
 // xNRM2
 
-ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLBackend backend, ViennaCLInt n,
-                                   float *alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLBackend backend, ViennaCLInt n,
+                                                              float *alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -174,9 +174,9 @@ ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLBackend backend, ViennaCLInt n,
-                                   double *alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLBackend backend, ViennaCLInt n,
+                                                              double *alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -187,10 +187,10 @@ ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLBackend backend, ViennaCLInt n,
 
 // xROT
 
-ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLBackend backend, ViennaCLInt n,
-                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
-                                  float c, float s)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLBackend backend, ViennaCLInt n,
+                                                             cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                             cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                                             float c, float s)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -199,10 +199,10 @@ ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLBackend backend, ViennaCLInt n,
-                                  cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                  cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
-                                  double c, double s)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLBackend backend, ViennaCLInt n,
+                                                             cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                             cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
+                                                             double c, double s)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -215,9 +215,9 @@ ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLBackend backend, ViennaCLInt n,
 
 // xSCAL
 
-ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLBackend backend, ViennaCLInt n,
-                                   float alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLBackend backend, ViennaCLInt n,
+                                                              float alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -225,9 +225,9 @@ ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLBackend backend, ViennaCLInt n,
-                                   double alpha,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLBackend backend, ViennaCLInt n,
+                                                              double alpha,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
@@ -237,9 +237,9 @@ ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLBackend backend, ViennaCLInt n,
 
 // xSWAP
 
-ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLBackend backend, ViennaCLInt n,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLBackend backend, ViennaCLInt n,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -248,9 +248,9 @@ ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLBackend backend, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLBackend backend, ViennaCLInt n,
-                                   cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
-                                   cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLBackend backend, ViennaCLInt n,
+                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
+                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));

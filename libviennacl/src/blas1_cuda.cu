@@ -39,9 +39,9 @@
 
 // IxAMAX
 
-ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                  ViennaCLInt *index,
-                                  float *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                             ViennaCLInt *index,
+                                                             float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -49,9 +49,9 @@ ViennaCLStatus ViennaCLCUDAiSamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                  ViennaCLInt *index,
-                                  double *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                             ViennaCLInt *index,
+                                                             double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -63,9 +63,9 @@ ViennaCLStatus ViennaCLCUDAiDamax(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xASUM
 
-ViennaCLStatus ViennaCLCUDASasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float *alpha,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float *alpha,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -73,9 +73,9 @@ ViennaCLStatus ViennaCLCUDASasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double *alpha,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double *alpha,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -86,10 +86,10 @@ ViennaCLStatus ViennaCLCUDADasum(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xAXPY
 
-ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float alpha,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 float *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float alpha,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -98,10 +98,10 @@ ViennaCLStatus ViennaCLCUDASaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double alpha,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 double *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double alpha,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -113,9 +113,9 @@ ViennaCLStatus ViennaCLCUDADaxpy(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xCOPY
 
-ViennaCLStatus ViennaCLCUDAScopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 float *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDAScopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -124,9 +124,9 @@ ViennaCLStatus ViennaCLCUDAScopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADcopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 double *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADcopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -137,10 +137,10 @@ ViennaCLStatus ViennaCLCUDADcopy(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xDOT
 
-ViennaCLStatus ViennaCLCUDASdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                float *alpha,
-                                float *x, ViennaCLInt offx, ViennaCLInt incx,
-                                float *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                           float *alpha,
+                                                           float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                           float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -149,10 +149,10 @@ ViennaCLStatus ViennaCLCUDASdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                double *alpha,
-                                double *x, ViennaCLInt offx, ViennaCLInt incx,
-                                double *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                           double *alpha,
+                                                           double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                           double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -163,9 +163,9 @@ ViennaCLStatus ViennaCLCUDADdot(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xNRM2
 
-ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float *alpha,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float *alpha,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -173,9 +173,9 @@ ViennaCLStatus ViennaCLCUDASnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double *alpha,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double *alpha,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -187,10 +187,10 @@ ViennaCLStatus ViennaCLCUDADnrm2(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xROT
 
-ViennaCLStatus ViennaCLCUDASrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                float *x, ViennaCLInt offx, ViennaCLInt incx,
-                                float *y, ViennaCLInt offy, ViennaCLInt incy,
-                                float c, float s)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                           float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                           float *y, ViennaCLInt offy, ViennaCLInt incy,
+                                                           float c, float s)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -199,10 +199,10 @@ ViennaCLStatus ViennaCLCUDASrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                double *x, ViennaCLInt offx, ViennaCLInt incx,
-                                double *y, ViennaCLInt offy, ViennaCLInt incy,
-                                double c, double s)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                           double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                           double *y, ViennaCLInt offy, ViennaCLInt incy,
+                                                           double c, double s)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -215,9 +215,9 @@ ViennaCLStatus ViennaCLCUDADrot(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xSCAL
 
-ViennaCLStatus ViennaCLCUDASscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float alpha,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float alpha,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -225,9 +225,9 @@ ViennaCLStatus ViennaCLCUDASscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double alpha,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double alpha,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
 
@@ -238,9 +238,9 @@ ViennaCLStatus ViennaCLCUDADscal(ViennaCLBackend /*backend*/, ViennaCLInt n,
 
 // xSWAP
 
-ViennaCLStatus ViennaCLCUDASswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 float *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 float *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDASswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            float *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            float *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<float> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<float> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);
@@ -249,9 +249,9 @@ ViennaCLStatus ViennaCLCUDASswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLCUDADswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
-                                 double *x, ViennaCLInt offx, ViennaCLInt incx,
-                                 double *y, ViennaCLInt offy, ViennaCLInt incy)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADswap(ViennaCLBackend /*backend*/, ViennaCLInt n,
+                                                            double *x, ViennaCLInt offx, ViennaCLInt incx,
+                                                            double *y, ViennaCLInt offy, ViennaCLInt incy)
 {
   viennacl::vector_base<double> v1(x, viennacl::CUDA_MEMORY, n, offx, incx);
   viennacl::vector_base<double> v2(y, viennacl::CUDA_MEMORY, n, offy, incy);

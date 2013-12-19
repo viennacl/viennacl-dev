@@ -33,7 +33,7 @@
 
 // GEMV
 
-ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCLVector x, ViennaCLHostScalar beta, ViennaCLVector y)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCLVector x, ViennaCLHostScalar beta, ViennaCLVector y)
 {
   viennacl::backend::mem_handle v1_handle;
   viennacl::backend::mem_handle v2_handle;
@@ -120,7 +120,7 @@ ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCL
 
 // xTRSV
 
-ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaCLVector x, ViennaCLUplo uplo)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaCLVector x, ViennaCLUplo uplo)
 {
   viennacl::backend::mem_handle v1_handle;
   viennacl::backend::mem_handle A_handle;
@@ -236,7 +236,7 @@ ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaCLVector x, ViennaCLUplo upl
 
 // xGER
 
-ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLVector y, ViennaCLMatrix A)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLVector y, ViennaCLMatrix A)
 {
   viennacl::backend::mem_handle v1_handle;
   viennacl::backend::mem_handle v2_handle;

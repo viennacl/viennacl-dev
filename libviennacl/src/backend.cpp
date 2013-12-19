@@ -22,21 +22,21 @@
 #include "viennacl_private.hpp"
 
 
-ViennaCLStatus ViennaCLBackendCreate(ViennaCLBackend * backend)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLBackendCreate(ViennaCLBackend * backend)
 {
   *backend = new ViennaCLBackend_impl();
 
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLBackendSetOpenCLContextID(ViennaCLBackend backend, ViennaCLInt context_id)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLBackendSetOpenCLContextID(ViennaCLBackend backend, ViennaCLInt context_id)
 {
   backend->opencl_backend.context_id = context_id;
 
   return ViennaCLSuccess;
 }
 
-ViennaCLStatus ViennaCLBackendDestroy(ViennaCLBackend * backend)
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLBackendDestroy(ViennaCLBackend * backend)
 {
   delete *backend;
   *backend = NULL;
