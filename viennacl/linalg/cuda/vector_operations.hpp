@@ -120,9 +120,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                      + (reciprocal_alpha ? 2 : 0)
-                                      + (flip_sign_alpha ? 1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
@@ -130,7 +128,7 @@ namespace viennacl
         if (reciprocal_alpha)
           data_alpha = static_cast<value_type>(1) / data_alpha;
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
@@ -412,9 +410,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                    + (reciprocal_alpha ?                2 : 0)
-                                    + (flip_sign_alpha  ?                1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
@@ -422,15 +418,13 @@ namespace viennacl
         if (reciprocal_alpha)
           data_alpha = static_cast<value_type>(1) / data_alpha;
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                    + (reciprocal_beta ?               2 : 0)
-                                    +  (flip_sign_beta ?               1 : 0);
+        unsigned int options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        value_type temporary_beta;
+        value_type temporary_beta = 0;
         if (viennacl::is_cpu_scalar<ScalarType2>::value)
           temporary_beta = beta;
 
@@ -718,9 +712,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                    + (reciprocal_alpha ?                2 : 0)
-                                    + (flip_sign_alpha  ?                1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
@@ -728,15 +720,13 @@ namespace viennacl
         if (reciprocal_alpha)
           data_alpha = static_cast<value_type>(1) / data_alpha;
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                    + (reciprocal_beta ?               2 : 0)
-                                    +  (flip_sign_beta ?               1 : 0);
+        unsigned int options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        value_type temporary_beta;
+        value_type temporary_beta = 0;
         if (viennacl::is_cpu_scalar<ScalarType2>::value)
           temporary_beta = beta;
 
@@ -788,7 +778,7 @@ namespace viennacl
       {
         typedef T        value_type;
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
@@ -2763,11 +2753,11 @@ namespace viennacl
       {
         typedef T     value_type;
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<value_type>::value)
           temporary_alpha = alpha;
 
-        value_type temporary_beta;
+        value_type temporary_beta = 0;
         if (viennacl::is_cpu_scalar<value_type>::value)
           temporary_beta = beta;
 

@@ -25,6 +25,7 @@
 #include <cmath>
 
 #include "viennacl/forwards.h"
+#include "viennacl/ocl/platform.hpp"
 
 namespace viennacl
 {
@@ -35,6 +36,12 @@ namespace viennacl
 
       namespace detail
       {
+        inline cl_uint make_options(vcl_size_t length, bool reciprocal, bool flip_sign)
+        {
+          return static_cast<cl_uint>( ((length > 1) ? (cl_uint(length) << 2) : 0) + (reciprocal ? 2 : 0) + (flip_sign ? 1 : 0) );
+        }
+
+
         /** @brief Returns the OpenCL kernel string for the operation C = A * B with A sparse, B, C dense matrices. */
         inline std::string sparse_dense_matmult_kernel_name(bool B_transposed, bool B_row_major, bool C_row_major)
         {

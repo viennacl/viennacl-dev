@@ -60,7 +60,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
@@ -112,8 +112,8 @@ namespace viennacl
         else
           kernel_name = "avbv_gpu_gpu";
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
-        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
@@ -174,8 +174,8 @@ namespace viennacl
         else
           kernel_name = "avbv_v_gpu_gpu";
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
-        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
         k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),

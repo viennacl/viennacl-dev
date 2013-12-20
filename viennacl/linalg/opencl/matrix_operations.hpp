@@ -72,7 +72,7 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(),
                                                    (viennacl::is_cpu_scalar<ScalarType1>::value ? "am_cpu" : "am_gpu"));
@@ -115,8 +115,8 @@ namespace viennacl
         else
           kernel_name = "ambm_gpu_gpu";
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
-        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
@@ -165,8 +165,8 @@ namespace viennacl
         else
           kernel_name = "ambm_m_gpu_gpu";
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
-        cl_uint options_beta  = static_cast<cl_uint>( ((len_beta  > 1) ? (len_beta  << 2) : 0) + (reciprocal_beta  ? 2 : 0) + (flip_sign_beta  ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
@@ -964,7 +964,7 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
-        cl_uint options_alpha = static_cast<cl_uint>( ((len_alpha > 1) ? (len_alpha << 2) : 0) + (reciprocal_alpha ? 2 : 0) + (flip_sign_alpha ? 1 : 0) );
+        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 

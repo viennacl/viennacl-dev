@@ -84,11 +84,9 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                    + (reciprocal_alpha ?                2 : 0)
-                                     + (flip_sign_alpha ?                1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
@@ -201,18 +199,14 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                    + (reciprocal_alpha ?                2 : 0)
-                                    +  (flip_sign_alpha ?                1 : 0);
-        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                    + (reciprocal_beta ?               2 : 0)
-                                    +  (flip_sign_beta ?               1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        unsigned int options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        value_type temporary_beta;
+        value_type temporary_beta = 0;
         if (viennacl::is_cpu_scalar<ScalarType2>::value)
           temporary_beta = beta;
 
@@ -328,18 +322,14 @@ namespace viennacl
       {
         typedef typename viennacl::result_of::cpu_value_type<S1>::type        value_type;
 
-        unsigned int options_alpha =   ((len_alpha > 1) ? (len_alpha << 2) : 0)
-                                    + (reciprocal_alpha ?                2 : 0)
-                                    +  (flip_sign_alpha ?                1 : 0);
-        unsigned int options_beta =    ((len_beta > 1) ? (len_beta << 2) : 0)
-                                    + (reciprocal_beta ?               2 : 0)
-                                    +  (flip_sign_beta ?               1 : 0);
+        unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        unsigned int options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        value_type temporary_alpha;
+        value_type temporary_alpha = 0;
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        value_type temporary_beta;
+        value_type temporary_beta = 0;
         if (viennacl::is_cpu_scalar<ScalarType2>::value)
           temporary_beta = beta;
 

@@ -34,6 +34,11 @@ namespace viennacl
     {
       namespace detail
       {
+        inline unsigned int make_options(vcl_size_t length, bool reciprocal, bool flip_sign)
+        {
+          return static_cast<unsigned int>( ((length > 1) ? (static_cast<unsigned int>(length) << 2) : 0) + (reciprocal ? 2 : 0) + (flip_sign ? 1 : 0) );
+        }
+
         inline void cuda_last_error_check(const char * message, const char * file, const int line )
         {
           cudaError_t error_code = cudaGetLastError();
