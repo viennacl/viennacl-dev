@@ -410,7 +410,7 @@ int test(Epsilon const& epsilon,
   // subtract and inplace_subtract of vectors
   //
   std::cout << "Testing sub on vector..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -435,7 +435,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing multiply-add on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -447,7 +447,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing multiply-add on vector with CPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -458,7 +458,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-add on vector with CPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -470,7 +470,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace multiply-add on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -482,7 +482,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing multiply-add on vector with GPU scalar (right)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -493,7 +493,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-add on vector with GPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -504,7 +504,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-add on vector with GPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -516,7 +516,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace multiply-add on vector with GPU scalar (both, adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -527,7 +527,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-add on vector with GPU scalar (both, subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -540,7 +540,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace multiply-add on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -557,7 +557,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing division-add on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -569,7 +569,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing division-add on vector with CPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -580,7 +580,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-add on vector with CPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -591,7 +591,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-multiply-add on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -603,7 +603,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing multiply-division-add on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -616,7 +616,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace division-add on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -628,7 +628,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing division-add on vector with GPU scalar (right)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -639,7 +639,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-add on vector with GPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -650,7 +650,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-add on vector with GPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -662,7 +662,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace division-add on vector with GPU scalar (both, adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -673,7 +673,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-add on vector with GPU scalar (both, subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -684,7 +684,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-multiply-add on vector with GPU scalar (adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -695,7 +695,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-division-add on vector with GPU scalar (subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -708,7 +708,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace division-add on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -726,7 +726,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing multiply-subtract on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -738,7 +738,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing multiply-subtract on vector with CPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -749,7 +749,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-subtract on vector with CPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -761,7 +761,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace multiply-subtract on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -773,7 +773,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing multiply-subtract on vector with GPU scalar (right)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -784,7 +784,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-subtract on vector with GPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -795,7 +795,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-subtract on vector with GPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -806,7 +806,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-subtract on vector with GPU scalar (both, adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -817,7 +817,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-subtract on vector with GPU scalar (both, subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -829,7 +829,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace multiply-subtract on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -847,7 +847,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing division-subtract on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -859,7 +859,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing division-subtract on vector with CPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -870,7 +870,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-subtract on vector with CPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -882,7 +882,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace division-subtract on vector with CPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -893,7 +893,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-subtract on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -905,7 +905,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing division-subtract on vector with GPU scalar (right)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -916,7 +916,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-subtract on vector with GPU scalar (left)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -927,7 +927,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-subtract on vector with GPU scalar (both)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -938,7 +938,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-subtract on vector with GPU scalar (both, adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -949,7 +949,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-subtract on vector with GPU scalar (both, subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -960,7 +960,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing multiply-division-subtract on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -971,7 +971,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing division-multiply-subtract on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -982,7 +982,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-division-subtract on vector with GPU scalar (adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -993,7 +993,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-multiply-subtract on vector with GPU scalar (adding)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1004,7 +1004,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace multiply-division-subtract on vector with GPU scalar (subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1015,7 +1015,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing inplace division-multiply-subtract on vector with GPU scalar (subtracting)..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1027,7 +1027,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing inplace division-subtract on vector with GPU scalar..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1044,7 +1044,7 @@ int test(Epsilon const& epsilon,
   //
   for (size_t i=0; i < ublas_v1.size(); ++i)
     ublas_v1(i) = NumericT(1.0) + random<NumericT>();
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1056,7 +1056,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
 
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1075,7 +1075,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   // --------------------------------------------------------------------------
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1440,7 +1440,7 @@ int test(Epsilon const& epsilon,
     ublas_v1(i) = random<NumericT>() / NumericT(4);
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
-  ublas_v2 = 3.1415 * ublas_v1; \
+  ublas_v2 = NumericT(3.1415) * ublas_v1; \
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
   \
@@ -1522,7 +1522,7 @@ int test(Epsilon const& epsilon,
   GENERATE_UNARY_OP_TEST(tanh);
 
   // --------------------------------------------------------------------------
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1534,7 +1534,7 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
 
   std::cout << "Testing another complicated vector expression with GPU scalars..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
@@ -1546,7 +1546,7 @@ int test(Epsilon const& epsilon,
 
 
   std::cout << "Testing lenghty sum of scaled vectors..." << std::endl;
-  ublas_v2 = 3.1415 * ublas_v1;
+  ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 

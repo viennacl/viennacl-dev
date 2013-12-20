@@ -245,11 +245,11 @@ int resize_test(Epsilon const& epsilon)
 
    std::cout << "Testing resize to larger..." << std::endl;
    ublas_matrix.resize(10, 10, false); //ublas does not allow preserve = true here
-   ublas_matrix(0,0) = 10.0; ublas_matrix(0, 1) = 0.1; ublas_matrix(0, 2) = 0.2; ublas_matrix(0, 3) = 0.3; ublas_matrix(0, 4) = 0.4;
-   ublas_matrix(1,0) = 1.0; ublas_matrix(1, 1) = 1.1; ublas_matrix(1, 2) = 1.2; ublas_matrix(1, 3) = 1.3; ublas_matrix(1, 4) = 1.4;
-   ublas_matrix(2,0) = 2.0; ublas_matrix(2, 1) = 2.1; ublas_matrix(2, 2) = 2.2; ublas_matrix(2, 3) = 2.3; ublas_matrix(2, 4) = 2.4;
-   ublas_matrix(3,0) = 3.0; ublas_matrix(3, 1) = 3.1; ublas_matrix(3, 2) = 3.2; ublas_matrix(3, 3) = 3.3; ublas_matrix(3, 4) = 3.4;
-   ublas_matrix(4,0) = 4.0; ublas_matrix(4, 1) = 4.1; ublas_matrix(4, 2) = 4.2; ublas_matrix(4, 3) = 4.3; ublas_matrix(4, 4) = 4.4;
+   ublas_matrix(0,0) = NumericT(10.0); ublas_matrix(0, 1) = NumericT(0.1); ublas_matrix(0, 2) = NumericT(0.2); ublas_matrix(0, 3) = NumericT(0.3); ublas_matrix(0, 4) = NumericT(0.4);
+   ublas_matrix(1,0) = NumericT( 1.0); ublas_matrix(1, 1) = NumericT(1.1); ublas_matrix(1, 2) = NumericT(1.2); ublas_matrix(1, 3) = NumericT(1.3); ublas_matrix(1, 4) = NumericT(1.4);
+   ublas_matrix(2,0) = NumericT( 2.0); ublas_matrix(2, 1) = NumericT(2.1); ublas_matrix(2, 2) = NumericT(2.2); ublas_matrix(2, 3) = NumericT(2.3); ublas_matrix(2, 4) = NumericT(2.4);
+   ublas_matrix(3,0) = NumericT( 3.0); ublas_matrix(3, 1) = NumericT(3.1); ublas_matrix(3, 2) = NumericT(3.2); ublas_matrix(3, 3) = NumericT(3.3); ublas_matrix(3, 4) = NumericT(3.4);
+   ublas_matrix(4,0) = NumericT( 4.0); ublas_matrix(4, 1) = NumericT(4.1); ublas_matrix(4, 2) = NumericT(4.2); ublas_matrix(4, 3) = NumericT(4.3); ublas_matrix(4, 4) = NumericT(4.4);
    //std::cout << ublas_matrix << std::endl;
 
    vcl_matrix.resize(10, 10, true);
@@ -261,22 +261,22 @@ int resize_test(Epsilon const& epsilon)
         return EXIT_FAILURE;
     }
 
-   ublas_matrix(5,5) = 5.5; ublas_matrix(5, 6) = 5.6; ublas_matrix(5, 7) = 5.7; ublas_matrix(5, 8) = 5.8; ublas_matrix(5, 9) = 5.9;
-   ublas_matrix(6,5) = 6.5; ublas_matrix(6, 6) = 6.6; ublas_matrix(6, 7) = 6.7; ublas_matrix(6, 8) = 6.8; ublas_matrix(6, 9) = 6.9;
-   ublas_matrix(7,5) = 7.5; ublas_matrix(7, 6) = 7.6; ublas_matrix(7, 7) = 7.7; ublas_matrix(7, 8) = 7.8; ublas_matrix(7, 9) = 7.9;
-   ublas_matrix(8,5) = 8.5; ublas_matrix(8, 6) = 8.6; ublas_matrix(8, 7) = 8.7; ublas_matrix(8, 8) = 8.8; ublas_matrix(8, 9) = 8.9;
-   ublas_matrix(9,5) = 9.5; ublas_matrix(9, 6) = 9.6; ublas_matrix(9, 7) = 9.7; ublas_matrix(9, 8) = 9.8; ublas_matrix(9, 9) = 9.9;
+   ublas_matrix(5,5) = NumericT(5.5); ublas_matrix(5, 6) = NumericT(5.6); ublas_matrix(5, 7) = NumericT(5.7); ublas_matrix(5, 8) = NumericT(5.8); ublas_matrix(5, 9) = NumericT(5.9);
+   ublas_matrix(6,5) = NumericT(6.5); ublas_matrix(6, 6) = NumericT(6.6); ublas_matrix(6, 7) = NumericT(6.7); ublas_matrix(6, 8) = NumericT(6.8); ublas_matrix(6, 9) = NumericT(6.9);
+   ublas_matrix(7,5) = NumericT(7.5); ublas_matrix(7, 6) = NumericT(7.6); ublas_matrix(7, 7) = NumericT(7.7); ublas_matrix(7, 8) = NumericT(7.8); ublas_matrix(7, 9) = NumericT(7.9);
+   ublas_matrix(8,5) = NumericT(8.5); ublas_matrix(8, 6) = NumericT(8.6); ublas_matrix(8, 7) = NumericT(8.7); ublas_matrix(8, 8) = NumericT(8.8); ublas_matrix(8, 9) = NumericT(8.9);
+   ublas_matrix(9,5) = NumericT(9.5); ublas_matrix(9, 6) = NumericT(9.6); ublas_matrix(9, 7) = NumericT(9.7); ublas_matrix(9, 8) = NumericT(9.8); ublas_matrix(9, 9) = NumericT(9.9);
    viennacl::copy(ublas_matrix, vcl_matrix);
 
    std::cout << "Testing resize to smaller..." << std::endl;
    ublas_matrix.resize(7, 7, false); //ublas does not allow preserve = true here
-   ublas_matrix(0,0) = 10.0; ublas_matrix(0, 1) = 0.1; ublas_matrix(0, 2) = 0.2; ublas_matrix(0, 3) = 0.3; ublas_matrix(0, 4) = 0.4;
-   ublas_matrix(1,0) = 1.0; ublas_matrix(1, 1) = 1.1; ublas_matrix(1, 2) = 1.2; ublas_matrix(1, 3) = 1.3; ublas_matrix(1, 4) = 1.4;
-   ublas_matrix(2,0) = 2.0; ublas_matrix(2, 1) = 2.1; ublas_matrix(2, 2) = 2.2; ublas_matrix(2, 3) = 2.3; ublas_matrix(2, 4) = 2.4;
-   ublas_matrix(3,0) = 3.0; ublas_matrix(3, 1) = 3.1; ublas_matrix(3, 2) = 3.2; ublas_matrix(3, 3) = 3.3; ublas_matrix(3, 4) = 3.4;
-   ublas_matrix(4,0) = 4.0; ublas_matrix(4, 1) = 4.1; ublas_matrix(4, 2) = 4.2; ublas_matrix(4, 3) = 4.3; ublas_matrix(4, 4) = 4.4;
-   ublas_matrix(5,5) = 5.5; ublas_matrix(5, 6) = 5.6; ublas_matrix(5, 7) = 5.7; ublas_matrix(5, 8) = 5.8; ublas_matrix(5, 9) = 5.9;
-   ublas_matrix(6,5) = 6.5; ublas_matrix(6, 6) = 6.6; ublas_matrix(6, 7) = 6.7; ublas_matrix(6, 8) = 6.8; ublas_matrix(6, 9) = 6.9;
+   ublas_matrix(0,0) = NumericT(10.0); ublas_matrix(0, 1) = NumericT(0.1); ublas_matrix(0, 2) = NumericT(0.2); ublas_matrix(0, 3) = NumericT(0.3); ublas_matrix(0, 4) = NumericT(0.4);
+   ublas_matrix(1,0) = NumericT( 1.0); ublas_matrix(1, 1) = NumericT(1.1); ublas_matrix(1, 2) = NumericT(1.2); ublas_matrix(1, 3) = NumericT(1.3); ublas_matrix(1, 4) = NumericT(1.4);
+   ublas_matrix(2,0) = NumericT( 2.0); ublas_matrix(2, 1) = NumericT(2.1); ublas_matrix(2, 2) = NumericT(2.2); ublas_matrix(2, 3) = NumericT(2.3); ublas_matrix(2, 4) = NumericT(2.4);
+   ublas_matrix(3,0) = NumericT( 3.0); ublas_matrix(3, 1) = NumericT(3.1); ublas_matrix(3, 2) = NumericT(3.2); ublas_matrix(3, 3) = NumericT(3.3); ublas_matrix(3, 4) = NumericT(3.4);
+   ublas_matrix(4,0) = NumericT( 4.0); ublas_matrix(4, 1) = NumericT(4.1); ublas_matrix(4, 2) = NumericT(4.2); ublas_matrix(4, 3) = NumericT(4.3); ublas_matrix(4, 4) = NumericT(4.4);
+   ublas_matrix(5,5) = NumericT( 5.5); ublas_matrix(5, 6) = NumericT(5.6); ublas_matrix(5, 7) = NumericT(5.7); ublas_matrix(5, 8) = NumericT(5.8); ublas_matrix(5, 9) = NumericT(5.9);
+   ublas_matrix(6,5) = NumericT( 6.5); ublas_matrix(6, 6) = NumericT(6.6); ublas_matrix(6, 7) = NumericT(6.7); ublas_matrix(6, 8) = NumericT(6.8); ublas_matrix(6, 9) = NumericT(6.9);
 
    vcl_matrix.resize(7, 7);
 
