@@ -101,15 +101,13 @@ namespace viennacl
                       vector_base<ScalarType> & vec,
                       viennacl::linalg::detail::row_info_types info_selector)
         {
-          ScalarType const * ptr1 = detail::cuda_arg<ScalarType>(mat.handle().cuda_handle());
-          ScalarType       * ptr2 = detail::cuda_arg<ScalarType>(vec);
-          //csr_row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
-          //                                            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-          //                                            detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
-          //                                            detail::cuda_arg<ScalarType>(vec),
-          //                                            static_cast<unsigned int>(mat.size1()),
-          //                                           static_cast<unsigned int>(info_selector)
-          //                                           );
+          csr_row_info_extractor_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                      detail::cuda_arg<ScalarType>(vec),
+                                                      static_cast<unsigned int>(mat.size1()),
+                                                      static_cast<unsigned int>(info_selector)
+                                                     );
           VIENNACL_CUDA_LAST_ERROR_CHECK("csr_row_info_extractor_kernel");
         }
 
