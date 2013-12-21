@@ -9,7 +9,7 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
@@ -18,7 +18,7 @@
 /*
 *
 *   Tutorial:  Use of the iterative solvers in ViennaCL with Eigen (http://eigen.tuxfamily.org/)
-*   
+*
 */
 
 //
@@ -59,17 +59,17 @@
 int main(int, char *[])
 {
   typedef float ScalarType;
-  
+
   Eigen::SparseMatrix<ScalarType, Eigen::RowMajor> eigen_matrix(65025, 65025);
   Eigen::VectorXf eigen_rhs;
   Eigen::VectorXf eigen_result;
   Eigen::VectorXf ref_result;
   Eigen::VectorXf residual;
-  
+
   //
   // Read system from file
   //
-  std::cout << "Reading matrix..." << std::endl;
+  std::cout << "Reading matrix (this might take some time)..." << std::endl;
   eigen_matrix.reserve(65025 * 7);
   if (!viennacl::io::read_matrix_market_file(eigen_matrix, "../examples/testdata/mat65k.mtx"))
   {
@@ -84,33 +84,33 @@ int main(int, char *[])
     std::cout << "Error reading RHS file" << std::endl;
     return 0;
   }
-  
+
   if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
   {
     std::cout << "Error reading Result file" << std::endl;
     return 0;
   }
-  
+
   //CG solver:
   std::cout << "----- Running CG -----" << std::endl;
   eigen_result = viennacl::linalg::solve(eigen_matrix, eigen_rhs, viennacl::linalg::cg_tag());
-  
+
   residual = eigen_matrix * eigen_result - eigen_rhs;
   std::cout << "Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(eigen_rhs) << std::endl;
 
   //BiCGStab solver:
   std::cout << "----- Running BiCGStab -----" << std::endl;
   eigen_result = viennacl::linalg::solve(eigen_matrix, eigen_rhs, viennacl::linalg::bicgstab_tag());
-  
+
   residual = eigen_matrix * eigen_result - eigen_rhs;
   std::cout << "Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(eigen_rhs) << std::endl;
 
   //GMRES solver:
   std::cout << "----- Running GMRES -----" << std::endl;
   eigen_result = viennacl::linalg::solve(eigen_matrix, eigen_rhs, viennacl::linalg::gmres_tag());
-  
+
   residual = eigen_matrix * eigen_result - eigen_rhs;
   std::cout << "Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(eigen_rhs) << std::endl;
-  
+
 }
 
