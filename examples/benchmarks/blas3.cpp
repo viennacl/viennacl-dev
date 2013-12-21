@@ -59,24 +59,6 @@ int run_benchmark()
   double exec_time;
 
   //
-  // One alternative: Put the matrices into a contiguous block of memory (allows to use viennacl::fast_copy(), avoiding temporary memory)
-  //
-  std::vector<ScalarType> stl_A(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
-  std::vector<ScalarType> stl_B(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
-  std::vector<ScalarType> stl_C(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
-
-  //
-  // Fill the matrix
-  //
-  for (unsigned int i = 0; i < BLAS3_MATRIX_SIZE; ++i)
-    for (unsigned int j = 0; j < BLAS3_MATRIX_SIZE; ++j)
-      stl_A[i*BLAS3_MATRIX_SIZE + j] = random<ScalarType>();
-
-  for (unsigned int i = 0; i < BLAS3_MATRIX_SIZE; ++i)
-    for (unsigned int j = 0; j < BLAS3_MATRIX_SIZE; ++j)
-      stl_B[i + j*BLAS3_MATRIX_SIZE] = random<ScalarType>();
-
-  //
   // Set up some ViennaCL objects
   //
 #ifdef VIENNACL_WITH_OPENCL
@@ -88,6 +70,23 @@ int run_benchmark()
   viennacl::matrix<ScalarType> vcl_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
+
+  //
+  // One alternative: Put the matrices into a contiguous block of memory (allows to use viennacl::fast_copy(), avoiding temporary memory)
+  //
+  std::vector<ScalarType> stl_A(vcl_A.internal_size());
+  std::vector<ScalarType> stl_B(vcl_A.internal_size());
+
+  //
+  // Fill the matrix
+  //
+  for (unsigned int i = 0; i < BLAS3_MATRIX_SIZE; ++i)
+    for (unsigned int j = 0; j < BLAS3_MATRIX_SIZE; ++j)
+      stl_A[i*BLAS3_MATRIX_SIZE + j] = random<ScalarType>();
+
+  for (unsigned int i = 0; i < BLAS3_MATRIX_SIZE; ++i)
+    for (unsigned int j = 0; j < BLAS3_MATRIX_SIZE; ++j)
+      stl_B[i + j*BLAS3_MATRIX_SIZE] = random<ScalarType>();
 
 
   /////////////////////////////////////////////////
