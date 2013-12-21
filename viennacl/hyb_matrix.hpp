@@ -111,6 +111,9 @@ namespace viennacl
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const CPU_MATRIX& cpu_matrix, hyb_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix )
     {
+      assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       if(cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0)
       {
         //determine max capacity for row
@@ -209,10 +212,11 @@ namespace viennacl
     template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const hyb_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix, CPU_MATRIX& cpu_matrix)
     {
+      assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       if(gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
       {
-        cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
-
         std::vector<SCALARTYPE> ell_elements(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
         viennacl::backend::typesafe_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
 

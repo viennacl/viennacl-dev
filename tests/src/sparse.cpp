@@ -109,7 +109,7 @@ template <typename ScalarType, typename VCL_MATRIX>
 ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & gpu_matrix)
 {
   typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;
-  CPU_MATRIX from_gpu;
+  CPU_MATRIX from_gpu(gpu_matrix.size1(), gpu_matrix.size2());
 
   viennacl::backend::finish();
   viennacl::copy(gpu_matrix, from_gpu);

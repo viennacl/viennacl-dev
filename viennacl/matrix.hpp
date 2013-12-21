@@ -943,13 +943,8 @@ namespace viennacl
       gpu_matrix.resize(cpu_matrix.size1(),
                         cpu_matrix.size2(), false);
     }
-    else
-    {
-      assert( (gpu_matrix.size1() == cpu_matrix.size1())
-              && (gpu_matrix.size2() == cpu_matrix.size2())
-              && bool("matrix size mismatch")
-            );
-    }
+
+    assert( (gpu_matrix.size1() == cpu_matrix.size1()) && (gpu_matrix.size2() == cpu_matrix.size2()) && bool("Matrix dimensions mismatch.") );
 
     std::vector<SCALARTYPE> data(gpu_matrix.internal_size());
     for (size_type i = 0; i < gpu_matrix.size1(); ++i)
@@ -983,17 +978,14 @@ namespace viennacl
                         cpu_matrix[0].size(),
                         false);
     }
-    else
-    {
-      assert( (gpu_matrix.size1() == cpu_matrix.size())
-              && (gpu_matrix.size2() == cpu_matrix[0].size())
-              && bool("matrix size mismatch")
-            );
-    }
+
+    assert( (gpu_matrix.size1() == cpu_matrix.size()) && bool("Matrix dimensions mismatch.") );
 
     std::vector<SCALARTYPE> data(gpu_matrix.internal_size());
     for (size_type i = 0; i < gpu_matrix.size1(); ++i)
     {
+      assert( (gpu_matrix.size2() == cpu_matrix[i].size()) && bool("Matrix dimensions mismatch.") );
+
       for (size_type j = 0; j < gpu_matrix.size2(); ++j)
         data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[i][j];
     }
@@ -1155,13 +1147,18 @@ namespace viennacl
 
     if ( (gpu_matrix.size1() > 0) && (gpu_matrix.size2() > 0) )
     {
+      assert( viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1() && bool("Matrix dimensions mismatch: rows"));
+
       std::vector<SCALARTYPE> temp_buffer(gpu_matrix.internal_size());
       viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE)*gpu_matrix.internal_size(), &(temp_buffer[0]));
 
       //now copy entries to cpu_matrix:
       for (size_type i = 0; i < gpu_matrix.size1(); ++i)
+      {
+        assert( viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2() && bool("Matrix dimensions mismatch: columns"));
         for (size_type j = 0; j < gpu_matrix.size2(); ++j)
           cpu_matrix(i,j) = temp_buffer[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
+      }
     }
   }
 
@@ -1177,16 +1174,21 @@ namespace viennacl
   {
     typedef typename matrix<float, F, ALIGNMENT>::size_type      size_type;
 
-    if ( (gpu_matrix.size1() > 0) && (gpu_matrix.size2() > 0)
-        && (cpu_matrix.size() >= gpu_matrix.size1()) && (cpu_matrix[0].size() >= gpu_matrix.size2()))
+    if ( (gpu_matrix.size1() > 0) && (gpu_matrix.size2() > 0) )
     {
+      assert( (cpu_matrix.size() == gpu_matrix.size1()) && bool("Matrix dimensions mismatch: rows"));
+
       std::vector<SCALARTYPE> temp_buffer(gpu_matrix.internal_size());
       viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE)*gpu_matrix.internal_size(), &(temp_buffer[0]));
 
       //now copy entries to cpu_matrix:
       for (size_type i = 0; i < gpu_matrix.size1(); ++i)
+      {
+        assert( (cpu_matrix[i].size() == gpu_matrix.size2()) && bool("Matrix dimensions mismatch: columns"));
+
         for (size_type j = 0; j < gpu_matrix.size2(); ++j)
           cpu_matrix[i][j] = temp_buffer[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
+      }
     }
   }
 

@@ -42,6 +42,9 @@ namespace viennacl
                      compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
                      vcl_size_t nonzeros)
       {
+        assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+        assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
         viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), nonzeros);
         std::vector<SCALARTYPE> elements(nonzeros);
@@ -96,11 +99,6 @@ namespace viennacl
     void copy(const CPU_MATRIX & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
-      assert( (gpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
-      assert( (gpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
-
-      //std::cout << "copy for (" << cpu_matrix.size1() << ", " << cpu_matrix.size2() << ", " << cpu_matrix.nnz() << ")" << std::endl;
-
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
       {
         //determine nonzeros:
@@ -158,6 +156,9 @@ namespace viennacl
     void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
               viennacl::compressed_matrix<ScalarType, 1> & gpu_matrix)
     {
+      assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(ublas_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(ublas_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       //we just need to copy the CSR arrays:
       viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), ublas_matrix.size1() + 1);
       for (vcl_size_t i=0; i<=ublas_matrix.size1(); ++i)
@@ -182,6 +183,9 @@ namespace viennacl
     void copy(const Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
     {
+      assert( (gpu_matrix.size1() == 0 || static_cast<vcl_size_t>(eigen_matrix.rows()) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || static_cast<vcl_size_t>(eigen_matrix.cols()) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       std::vector< std::map<unsigned int, SCALARTYPE> >  stl_matrix(eigen_matrix.rows());
 
       for (int k=0; k < eigen_matrix.outerSize(); ++k)
@@ -198,6 +202,9 @@ namespace viennacl
     void copy(const mtl::compressed2D<SCALARTYPE> & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
     {
+      assert( (gpu_matrix.size1() == 0 || static_cast<vcl_size_t>(cpu_matrix.num_rows()) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || static_cast<vcl_size_t>(cpu_matrix.num_cols()) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       typedef mtl::compressed2D<SCALARTYPE>  MatrixType;
 
       std::vector< std::map<unsigned int, SCALARTYPE> >  stl_matrix(cpu_matrix.num_rows());
@@ -251,14 +258,11 @@ namespace viennacl
     void copy(const compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               CPU_MATRIX & cpu_matrix )
     {
-      assert( (cpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
-      assert( (cpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        if (cpu_matrix.size1() == 0 || cpu_matrix.size2() == 0)
-          cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
-
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), cpu_matrix.size1() + 1);
         viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
@@ -309,17 +313,14 @@ namespace viennacl
     void copy(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & gpu_matrix,
               boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix)
     {
-      assert( (ublas_matrix.size1() == 0 || ublas_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
-      assert( (ublas_matrix.size2() == 0 || ublas_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size1(ublas_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size2(ublas_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
       viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);
       viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
 
       viennacl::backend::memory_read(gpu_matrix.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
       viennacl::backend::memory_read(gpu_matrix.handle2(), 0, col_buffer.raw_size(), col_buffer.get());
-
-      if (ublas_matrix.size1() == 0 || ublas_matrix.size2() == 0)
-        ublas_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
 
       ublas_matrix.clear();
       ublas_matrix.reserve(gpu_matrix.nnz());
@@ -342,12 +343,11 @@ namespace viennacl
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix)
     {
+      assert( (static_cast<vcl_size_t>(eigen_matrix.rows()) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (static_cast<vcl_size_t>(eigen_matrix.cols()) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        assert(static_cast<unsigned int>(eigen_matrix.rows()) >= gpu_matrix.size1()
-               && static_cast<unsigned int>(eigen_matrix.cols()) >= gpu_matrix.size2()
-               && bool("Provided Eigen compressed matrix is too small!"));
-
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);
         viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), gpu_matrix.nnz());
@@ -380,11 +380,11 @@ namespace viennacl
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               mtl::compressed2D<SCALARTYPE> & mtl4_matrix)
     {
+      assert( (static_cast<vcl_size_t>(mtl4_matrix.num_rows()) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (static_cast<vcl_size_t>(mtl4_matrix.num_cols()) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        assert(mtl4_matrix.num_rows() >= gpu_matrix.size1()
-               && mtl4_matrix.num_cols() >= gpu_matrix.size2()
-               && bool("Provided MTL4 compressed matrix is too small!"));
 
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.size1() + 1);

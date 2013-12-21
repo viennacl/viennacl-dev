@@ -149,7 +149,7 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE>& cpu_vec, circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
-        assert(cpu_vec.size() == gpu_mat.size1() && bool("Size mismatch"));
+        assert( (gpu_mat.size1() == 0 || cpu_vec.size() == gpu_mat.size1()) && bool("Size mismatch"));
         copy(cpu_vec, gpu_mat.elements());
     }
 
@@ -175,8 +175,8 @@ namespace viennacl
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_src, MATRIXTYPE& com_dst) {
         vcl_size_t size = circ_src.size1();
-        assert(size == com_dst.size1() && bool("Size mismatch"));
-        assert(size == com_dst.size2() && bool("Size mismatch"));
+        assert(size == viennacl::traits::size1(com_dst) && bool("Size mismatch"));
+        assert(size == viennacl::traits::size2(com_dst) && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
         copy(circ_src, tmp);
 
@@ -197,10 +197,12 @@ namespace viennacl
     * @param circ_dst   A circulant_matrix from ViennaCL
     */
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
-    void copy(MATRIXTYPE& com_src, circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_dst) {
-        vcl_size_t size = circ_dst.size1();
-        assert(size == com_src.size1() && bool("Size mismatch"));
-        assert(size == com_src.size2() && bool("Size mismatch"));
+    void copy(MATRIXTYPE& com_src, circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_dst)
+    {
+        assert( (circ_dst.size1() == 0 || circ_dst.size1() == viennacl::traits::size1(com_src)) && bool("Size mismatch"));
+        assert( (circ_dst.size2() == 0 || circ_dst.size2() == viennacl::traits::size2(com_src)) && bool("Size mismatch"));
+
+        vcl_size_t size = viennacl::traits::size1(com_src);
 
         std::vector<SCALARTYPE> tmp(size);
 

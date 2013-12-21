@@ -174,9 +174,10 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(hankel_matrix<SCALARTYPE, ALIGNMENT> const & han_src, MATRIXTYPE& com_dst)
     {
+        assert( (viennacl::traits::size1(com_dst) == han_src.size1()) && bool("Size mismatch") );
+        assert( (viennacl::traits::size2(com_dst) == han_src.size2()) && bool("Size mismatch") );
+
         vcl_size_t size = han_src.size1();
-        assert(size == com_dst.size1() && bool("Size mismatch"));
-        assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size * 2 - 1);
         copy(han_src, tmp);
 
@@ -194,9 +195,11 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE const & com_src, hankel_matrix<SCALARTYPE, ALIGNMENT>& han_dst)
     {
-        vcl_size_t size = han_dst.size1();
-        assert(size == com_src.size1() && bool("Size mismatch"));
-        assert(size == com_src.size2() && bool("Size mismatch"));
+        assert( (han_dst.size1() == 0 || viennacl::traits::size1(com_src) == han_dst.size1()) && bool("Size mismatch") );
+        assert( (han_dst.size2() == 0 || viennacl::traits::size2(com_src) == han_dst.size2()) && bool("Size mismatch") );
+        assert( viennacl::traits::size2(com_src) == viennacl::traits::size1(com_src) && bool("Logic error: non-square Hankel matrix!") );
+
+        vcl_size_t size = viennacl::traits::size1(com_src);
 
         std::vector<SCALARTYPE> tmp(2*size - 1);
 

@@ -47,6 +47,9 @@ namespace viennacl
     void copy(const CPU_MATRIX & cpu_matrix,
                      coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
+      assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       vcl_size_t group_num = 64;
 
       // Step 1: Determine nonzeros:
@@ -136,10 +139,11 @@ namespace viennacl
     void copy(const coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
                      CPU_MATRIX & cpu_matrix )
     {
+      assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
-
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> coord_buffer(gpu_matrix.handle12(), 2*gpu_matrix.nnz());
         std::vector<SCALARTYPE> elements(gpu_matrix.nnz());

@@ -170,9 +170,10 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_src, MATRIXTYPE& com_dst)
     {
+        assert(vander_src.size1() == viennacl::traits::size1(com_dst) && bool("Size mismatch"));
+        assert(vander_src.size2() == viennacl::traits::size2(com_dst) && bool("Size mismatch"));
+
         vcl_size_t size = vander_src.size1();
-        assert(size == com_dst.size1() && bool("Size mismatch"));
-        assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
         copy(vander_src, tmp);
 
@@ -192,9 +193,10 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_dst)
     {
+        assert( (vander_dst.size1() == 0 || vander_dst.size1() == viennacl::traits::size1(com_src)) && bool("Size mismatch"));
+        assert( (vander_dst.size2() == 0 || vander_dst.size2() == viennacl::traits::size2(com_src)) && bool("Size mismatch"));
+
         vcl_size_t size = vander_dst.size1();
-        assert(size == com_src.size1() && bool("Size mismatch"));
-        assert(size == com_src.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size);
 
         for(vcl_size_t i = 0; i < size; i++)

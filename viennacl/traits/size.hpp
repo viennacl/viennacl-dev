@@ -221,11 +221,19 @@ namespace viennacl
     size1(std::vector< RowType > const & mat) { return mat.size(); }
 
     #ifdef VIENNACL_WITH_EIGEN
-    inline vcl_size_t size1(Eigen::MatrixXf const & m) { return m.rows(); }
-    inline vcl_size_t size1(Eigen::MatrixXd const & m) { return m.rows(); }
+    inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
+    inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
     template <typename T, int options>
-    inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return m.rows(); }
+    inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cast<vcl_size_t>(m.rows()); }
     #endif
+
+#ifdef VIENNACL_WITH_MTL4
+    template <typename SCALARTYPE, typename T>
+    vcl_size_t size1(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+    template <typename SCALARTYPE>
+    vcl_size_t size1(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+#endif
+
     /** \endcond */
 
     //
@@ -243,6 +251,13 @@ namespace viennacl
     template <typename T, int options>
     inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }
     #endif
+
+#ifdef VIENNACL_WITH_MTL4
+    template <typename SCALARTYPE, typename T>
+    vcl_size_t size2(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+    template <typename SCALARTYPE>
+    vcl_size_t size2(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+#endif
     /** \endcond */
 
     //

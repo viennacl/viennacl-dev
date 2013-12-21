@@ -40,6 +40,8 @@ template <typename T>
 class dense_matrix
 {
   public:
+    typedef std::size_t   size_type;
+
     dense_matrix(std::size_t rows, std::size_t cols) : elements_(rows * cols), rows_(rows), cols_(cols) {}
 
     T & operator()(std::size_t i, std::size_t j) { return elements_[i*cols_ + j]; }

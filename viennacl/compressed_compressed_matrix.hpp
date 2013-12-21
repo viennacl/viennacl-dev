@@ -43,6 +43,9 @@ namespace viennacl
                      vcl_size_t nonzero_rows,
                      vcl_size_t nonzeros)
       {
+        assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
+        assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), nonzero_rows + 1);
         viennacl::backend::typesafe_host_array<unsigned int> row_indices(gpu_matrix.handle3(), nonzero_rows);
         viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), nonzeros);
@@ -112,9 +115,6 @@ namespace viennacl
     void copy(const CPU_MATRIX & cpu_matrix,
               compressed_compressed_matrix<SCALARTYPE> & gpu_matrix )
     {
-      assert( (gpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
-      assert( (gpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
-
       //std::cout << "copy for (" << cpu_matrix.size1() << ", " << cpu_matrix.size2() << ", " << cpu_matrix.nnz() << ")" << std::endl;
 
       if ( cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0 )
@@ -198,14 +198,11 @@ namespace viennacl
     void copy(const compressed_compressed_matrix<SCALARTYPE> & gpu_matrix,
               CPU_MATRIX & cpu_matrix )
     {
-      assert( (cpu_matrix.size1() == 0 || cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
-      assert( (cpu_matrix.size2() == 0 || cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
+      assert( (cpu_matrix.size1() == gpu_matrix.size1()) && bool("Size mismatch") );
+      assert( (cpu_matrix.size2() == gpu_matrix.size2()) && bool("Size mismatch") );
 
       if ( gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0 )
       {
-        if (cpu_matrix.size1() == 0 || cpu_matrix.size2() == 0)
-          cpu_matrix.resize(gpu_matrix.size1(), gpu_matrix.size2(), false);
-
         //get raw data from memory:
         viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), gpu_matrix.nnz1() + 1);
         viennacl::backend::typesafe_host_array<unsigned int> row_indices(gpu_matrix.handle1(), gpu_matrix.nnz1());

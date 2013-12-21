@@ -154,8 +154,9 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE> const & cpu_vec, toeplitz_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
+        assert( (gpu_mat.size1() == 0 || (gpu_mat.size1() * 2 - 1)  == cpu_vec.size()) && bool("Size mismatch"));
+
         vcl_size_t size = gpu_mat.size1();
-        assert((size * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
         std::vector<SCALARTYPE> rvrs(cpu_vec.size());
         std::copy(cpu_vec.begin(), cpu_vec.end(), rvrs.begin());
         std::reverse(rvrs.begin(), rvrs.end());
@@ -176,8 +177,9 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(toeplitz_matrix<SCALARTYPE, ALIGNMENT> const & gpu_mat, std::vector<SCALARTYPE> & cpu_vec)
     {
+        assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
+
         vcl_size_t size = gpu_mat.size1();
-        assert((size * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(size * 2);
         copy(gpu_mat.elements(), tmp);
         std::reverse(tmp.begin(), tmp.end());
@@ -196,9 +198,10 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(toeplitz_matrix<SCALARTYPE, ALIGNMENT> const & tep_src, MATRIXTYPE & com_dst)
     {
+        assert(tep_src.size1() == viennacl::traits::size1(com_dst) && bool("Size mismatch"));
+        assert(tep_src.size2() == viennacl::traits::size2(com_dst) && bool("Size mismatch"));
+
         vcl_size_t size = tep_src.size1();
-        assert(size == com_dst.size1() && bool("Size mismatch"));
-        assert(size == com_dst.size2() && bool("Size mismatch"));
         std::vector<SCALARTYPE> tmp(tep_src.size1() * 2 - 1);
         copy(tep_src, tmp);
 
@@ -216,9 +219,10 @@ namespace viennacl {
     template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE const & com_src, toeplitz_matrix<SCALARTYPE, ALIGNMENT>& tep_dst)
     {
+        assert( (tep_dst.size1() == 0 || tep_dst.size1() == viennacl::traits::size1(com_src)) && bool("Size mismatch"));
+        assert( (tep_dst.size2() == 0 || tep_dst.size2() == viennacl::traits::size2(com_src)) && bool("Size mismatch"));
+
         vcl_size_t size = tep_dst.size1();
-        assert(size == com_src.size1() && bool("Size mismatch"));
-        assert(size == com_src.size2() && bool("Size mismatch"));
 
         std::vector<SCALARTYPE> tmp(2*size - 1);
 
