@@ -739,14 +739,14 @@ namespace viennacl
 
           uint2 tmp;
           T val;
-          uint last_index  = blockDim.x - 1;
-          uint group_start = group_boundaries[blockIdx.x];
-          uint group_end   = group_boundaries[blockIdx.x + 1];
-          uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+          unsigned int last_index  = blockDim.x - 1;
+          unsigned int group_start = group_boundaries[blockIdx.x];
+          unsigned int group_end   = group_boundaries[blockIdx.x + 1];
+          unsigned int k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
-          uint local_index = 0;
+          unsigned int local_index = 0;
 
-          for (uint k = 0; k < k_end; ++k)
+          for (unsigned int k = 0; k < k_end; ++k)
           {
             local_index = group_start + k * blockDim.x + threadIdx.x;
 
@@ -889,13 +889,13 @@ namespace viennacl
 
         uint2 tmp;
         T val;
-        uint group_start = group_boundaries[blockIdx.x];
-        uint group_end   = group_boundaries[blockIdx.x + 1];
-        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+        unsigned int group_start = group_boundaries[blockIdx.x];
+        unsigned int group_end   = group_boundaries[blockIdx.x + 1];
+        unsigned int k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
-        uint local_index = 0;
+        unsigned int local_index = 0;
 
-        for (uint k = 0; k < k_end; ++k)
+        for (unsigned int k = 0; k < k_end; ++k)
         {
           local_index = group_start + k * blockDim.x + threadIdx.x;
 
@@ -1000,15 +1000,15 @@ namespace viennacl
 
         uint2 tmp;
         NumericT val;
-        uint group_start = group_boundaries[blockIdx.x];
-        uint group_end   = group_boundaries[blockIdx.x + 1];
-        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+        unsigned int group_start = group_boundaries[blockIdx.x];
+        unsigned int group_end   = group_boundaries[blockIdx.x + 1];
+        unsigned int k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
-        uint local_index = 0;
+        unsigned int local_index = 0;
 
-        for (uint result_col = 0; result_col < result_col_size; ++result_col)
+        for (unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for (uint k = 0; k < k_end; ++k)
+          for (unsigned int k = 0; k < k_end; ++k)
           {
             local_index = group_start + k * blockDim.x + threadIdx.x;
 
@@ -1128,15 +1128,15 @@ namespace viennacl
 
         uint2 tmp;
         NumericT val;
-        uint group_start = group_boundaries[blockIdx.x];
-        uint group_end   = group_boundaries[blockIdx.x + 1];
-        uint k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
+        unsigned int group_start = group_boundaries[blockIdx.x];
+        unsigned int group_end   = group_boundaries[blockIdx.x + 1];
+        unsigned int k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
-        uint local_index = 0;
+        unsigned int local_index = 0;
 
-        for (uint result_col = 0; result_col < result_col_size; ++result_col)
+        for (unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for (uint k = 0; k < k_end; ++k)
+          for (unsigned int k = 0; k < k_end; ++k)
           {
             local_index = group_start + k * blockDim.x + threadIdx.x;
 
@@ -1251,15 +1251,15 @@ namespace viennacl
                                                 unsigned int aligned_items_per_row
                                                )
       {
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz)
+        for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
         {
           T sum = 0;
 
-          uint offset = row_id;
-          for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          unsigned int offset = row_id;
+          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = elements[offset];
 
@@ -1333,16 +1333,16 @@ namespace viennacl
                                                   unsigned int result_internal_cols) {
 
 
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
-        for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) {
-          uint row = rc % sp_mat_row_num;
-          uint col = rc / sp_mat_row_num;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
+        for( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) {
+          unsigned int row = rc % sp_mat_row_num;
+          unsigned int col = rc / sp_mat_row_num;
 
-          uint offset = row;
+          unsigned int offset = row;
           NumericT r = (NumericT)0;
 
-          for(uint k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
+          for(unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
 
             unsigned int j = sp_mat_coords[offset];
             NumericT x = static_cast<NumericT>(sp_mat_elements[offset]);
@@ -1430,16 +1430,16 @@ namespace viennacl
                                                   unsigned int result_internal_cols) {
 
 
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
-        for( uint rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) {
-          uint row = rc % sp_mat_row_num;
-          uint col = rc / sp_mat_row_num;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
+        for( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) {
+          unsigned int row = rc % sp_mat_row_num;
+          unsigned int col = rc / sp_mat_row_num;
 
-          uint offset = row;
+          unsigned int offset = row;
           NumericT r = (NumericT)0;
 
-          for(uint k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
+          for(unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
 
             unsigned int j = sp_mat_coords[offset];
             NumericT x = static_cast<NumericT>(sp_mat_elements[offset]);
@@ -1526,15 +1526,15 @@ namespace viennacl
                                                 unsigned int aligned_items_per_row
                                                )
       {
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz)
+        for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
         {
           T sum = 0;
 
-          uint offset = row_id;
-          for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          unsigned int offset = row_id;
+          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = ell_elements[offset];
 
@@ -1546,10 +1546,10 @@ namespace viennacl
             }
           }
 
-          uint col_begin = csr_rows[row_id];
-          uint col_end   = csr_rows[row_id + 1];
+          unsigned int col_begin = csr_rows[row_id];
+          unsigned int col_end   = csr_rows[row_id + 1];
 
-          for(uint item_id = col_begin; item_id < col_end; item_id++)
+          for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
           {
             sum += (x[csr_cols[item_id] * inc_x + start_x] * csr_elements[item_id]);
           }
@@ -1623,17 +1623,17 @@ namespace viennacl
                                                 unsigned int result_internal_rows,
                                                 unsigned int result_internal_cols)
       {
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(uint result_col = 0; result_col < result_col_size; ++result_col)
+        for(unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz)
+          for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
           {
             NumericT sum = 0;
 
-            uint offset = row_id;
-            for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+            unsigned int offset = row_id;
+            for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
             {
               NumericT val = ell_elements[offset];
 
@@ -1646,10 +1646,10 @@ namespace viennacl
               }
             }
 
-            uint col_begin = csr_rows[row_id];
-            uint col_end   = csr_rows[row_id + 1];
+            unsigned int col_begin = csr_rows[row_id];
+            unsigned int col_end   = csr_rows[row_id + 1];
 
-            for(uint item_id = col_begin; item_id < col_end; item_id++)
+            for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
             {
               sum += d_mat[DMatIndexT::apply(csr_cols[item_id], result_col,
                                              d_mat_row_start, d_mat_row_inc,
@@ -1737,17 +1737,17 @@ namespace viennacl
                                                 unsigned int result_internal_rows,
                                                 unsigned int result_internal_cols)
       {
-        uint glb_id = blockDim.x * blockIdx.x + threadIdx.x;
-        uint glb_sz = gridDim.x * blockDim.x;
+        unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
+        unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(uint result_col = 0; result_col < result_col_size; ++result_col)
+        for(unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz)
+          for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
           {
             NumericT sum = 0;
 
-            uint offset = row_id;
-            for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+            unsigned int offset = row_id;
+            for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
             {
               NumericT val = ell_elements[offset];
 
@@ -1760,10 +1760,10 @@ namespace viennacl
               }
             }
 
-            uint col_begin = csr_rows[row_id];
-            uint col_end   = csr_rows[row_id + 1];
+            unsigned int col_begin = csr_rows[row_id];
+            unsigned int col_end   = csr_rows[row_id + 1];
 
-            for(uint item_id = col_begin; item_id < col_end; item_id++)
+            for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
             {
               sum += d_mat[DMatIndexT::apply(result_col, csr_cols[item_id],
                                              d_mat_row_start, d_mat_row_inc,
