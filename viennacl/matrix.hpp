@@ -314,7 +314,7 @@ namespace viennacl
           elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
           elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
 #else
-          throw "CUDA not activated!";
+          throw cuda_not_available_exception();
 #endif
         }
         else if (mem_type == viennacl::MAIN_MEMORY)
@@ -1816,6 +1816,7 @@ namespace viennacl
         }
       };
 
+      // dense = sparse * dense
       template <typename T, typename F1, typename LHS, typename RHS>
       struct op_executor<matrix_base<T, F1>, op_assign, matrix_expression<const LHS, const RHS, op_prod> >
       {
@@ -1827,6 +1828,7 @@ namespace viennacl
           viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
         }
 
+        // dense = sparse * trans(dense)
         template < typename SparseMatrixType, typename F2 >
         static void apply(matrix_base<T, F1> & lhs, matrix_expression<const SparseMatrixType,
                                                                      const viennacl::matrix_expression< const viennacl::matrix_base<T, F2>,

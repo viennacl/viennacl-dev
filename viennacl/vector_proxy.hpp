@@ -71,7 +71,7 @@ namespace viennacl
   void copy(const VectorType & cpu_vector,
             vector_range<vector<SCALARTYPE> > & gpu_vector_range )
   {
-    assert(cpu_vector.end() - cpu_vector.begin() >= 0);
+    assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
 
     if (cpu_vector.end() - cpu_vector.begin() > 0)
     {
@@ -103,7 +103,7 @@ namespace viennacl
   void copy(vector_range<vector<SCALARTYPE> > const & gpu_vector_range,
             VectorType & cpu_vector)
   {
-    assert(cpu_vector.end() - cpu_vector.begin() >= 0);
+    assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
 
     if (cpu_vector.end() > cpu_vector.begin())
     {
@@ -220,7 +220,7 @@ namespace viennacl
   void copy(vector_slice<vector<SCALARTYPE> > const & gpu_vector_slice,
             VectorType & cpu_vector)
   {
-    assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0);
+    assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0 && bool("Range must have nonnegative length!"));
 
     if (gpu_vector_slice.end() - gpu_vector_slice.begin() > 0)
     {

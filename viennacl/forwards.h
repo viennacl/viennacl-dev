@@ -495,6 +495,18 @@ namespace viennacl
     std::string message_;
   };
 
+  class cuda_not_available_exception : public std::exception
+  {
+  public:
+    cuda_not_available_exception() : message_("ViennaCL was compiled without CUDA support, but CUDA functionality required for this operation.") {}
+
+    virtual const char* what() const throw() { return message_.c_str(); }
+
+    virtual ~cuda_not_available_exception() throw() {}
+  private:
+    std::string message_;
+  };
+
 
   class context;
 

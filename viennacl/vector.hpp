@@ -414,7 +414,7 @@ namespace viennacl
           elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
           elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
 #else
-          throw "CUDA not activated!";
+          throw cuda_not_available_exception();
 #endif
         }
         else if (mem_type == viennacl::MAIN_MEMORY)
