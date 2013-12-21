@@ -730,7 +730,7 @@ namespace viennacl
         template <typename T>
         __global__ void coo_row_info_extractor( const unsigned int * coords, //(row_index, column_index)
                                                 const T * elements,
-                                                const uint  * group_boundaries,
+                                                const unsigned int * group_boundaries,
                                                 T * result,
                                                 unsigned int option)
         {

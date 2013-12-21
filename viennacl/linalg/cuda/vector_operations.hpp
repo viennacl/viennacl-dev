@@ -2631,6 +2631,14 @@ namespace viennacl
 
       //index_norm_inf:
 
+      // fixes the problem of not having (f)abs available in a consistent manner
+      template <typename T>
+      __device__ T              cuda_abs(T val) { return (val < 0) ? -val : val; }
+      __device__ inline unsigned long  cuda_abs(unsigned long  val) { return val; }
+      __device__ inline unsigned int   cuda_abs(unsigned int   val) { return val; }
+      __device__ inline unsigned short cuda_abs(unsigned short val) { return val; }
+      __device__ inline unsigned char  cuda_abs(unsigned char  val) { return val; }
+
       template <typename T>
       __global__ void index_norm_inf_kernel(const T * vec,
                                             unsigned int start1,
@@ -2650,7 +2658,7 @@ namespace viennacl
         for (unsigned int i = threadIdx.x; i < size1; i += blockDim.x)
         {
           tmp = vec[i*inc1+start1];
-          tmp = (tmp < 0) ? -tmp : tmp;
+          tmp = cuda_abs(tmp);
           if (cur_max < tmp)
           {
             float_buffer[threadIdx.x] = tmp;
