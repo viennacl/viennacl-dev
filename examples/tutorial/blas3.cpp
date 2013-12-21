@@ -61,7 +61,7 @@
 
 #include "../benchmarks/benchmark-utils.hpp"
 
-#define BLAS3_MATRIX_SIZE   700
+#define BLAS3_MATRIX_SIZE   400
 
 using namespace boost::numeric;
 
@@ -88,14 +88,6 @@ int main()
   ublas::matrix<ScalarType, ublas::column_major> ublas_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   ublas::matrix<ScalarType> ublas_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   ublas::matrix<ScalarType> ublas_C1(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
-  ublas::matrix<ScalarType> ublas_C2(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
-
-  //
-  // One alternative: Put the matrices into a contiguous block of memory (allows to use viennacl::fast_copy(), avoiding temporary memory)
-  //
-  std::vector<ScalarType> stl_A(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
-  std::vector<ScalarType> stl_B(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
-  std::vector<ScalarType> stl_C(BLAS3_MATRIX_SIZE * BLAS3_MATRIX_SIZE);
 
   //
   // Fill the matrix
@@ -104,14 +96,12 @@ int main()
     for (unsigned int j = 0; j < ublas_A.size2(); ++j)
     {
       ublas_A(i,j) = random<ScalarType>();
-      stl_A[i*ublas_A.size2() + j] = ublas_A(i,j);
     }
 
   for (unsigned int i = 0; i < ublas_B.size1(); ++i)
     for (unsigned int j = 0; j < ublas_B.size2(); ++j)
     {
       ublas_B(i,j) = random<ScalarType>();
-      stl_B[i + j*ublas_B.size1()] = ublas_B(i,j);
     }
 
   //
@@ -152,14 +142,8 @@ int main()
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
 
-    //viennacl::copy(ublas_A, vcl_A);
-    //viennacl::copy(ublas_B, vcl_B);
-    viennacl::fast_copy(&(stl_A[0]),
-                        &(stl_A[0]) + stl_A.size(),
-                        vcl_A);
-    viennacl::fast_copy(&(stl_B[0]),
-                        &(stl_B[0]) + stl_B.size(),
-                        vcl_B);
+    viennacl::copy(ublas_A, vcl_A);
+    viennacl::copy(ublas_B, vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
     viennacl::backend::finish();
     timer.start();
@@ -171,11 +155,7 @@ int main()
     //
     // Verify the result
     //
-    //viennacl::copy(vcl_C, ublas_C1);
-    viennacl::fast_copy(vcl_C, &(stl_C[0]));
-    for (std::size_t i = 0; i < ublas_C1.size1(); ++i)
-      for (std::size_t j = 0; j < ublas_C1.size2(); ++j)
-        ublas_C1(i,j) = stl_C[i * ublas_C1.size2() + j];
+    viennacl::copy(vcl_C, ublas_C1);
 
     std::cout << " - Checking result... ";
     bool check_ok = true;
@@ -183,7 +163,7 @@ int main()
     {
       for (std::size_t j = 0; j < ublas_A.size2(); ++j)
       {
-        if ( fabs(ublas_C1(i,j) - ublas_C(i,j)) / ublas_C(i,j) > 1e-4 )
+        if ( std::fabs(ublas_C1(i,j) - ublas_C(i,j)) / ublas_C(i,j) > 1e-4 )
         {
           check_ok = false;
           break;
