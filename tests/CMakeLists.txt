@@ -11,6 +11,7 @@ foreach(PROG blas3_prod_float blas3_prod_double blas3_solve_float blas3_solve_do
              vector_float vector_double vector_int vector_uint vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
+   target_link_libraries(${PROG}-test-cpu ${Boost_LIBRARIES})
    add_test(${PROG}-cpu ${PROG}-test-cpu)
 endforeach(PROG)
 
@@ -28,7 +29,7 @@ if (ENABLE_OPENCL)
                vector_float vector_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
-     target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES})
+     target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES} ${Boost_LIBRARIES})
      add_test(${PROG}-opencl ${PROG}-test-opencl)
      set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach(PROG)
@@ -52,6 +53,7 @@ if (ENABLE_CUDA)
                vector_float vector_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
+     target_link_libraries(${PROG}-test-cuda ${Boost_LIBRARIES})
      add_test(${PROG}-cuda ${PROG}-test-cuda)
   endforeach(PROG)
 

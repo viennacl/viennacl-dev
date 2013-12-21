@@ -76,10 +76,10 @@ ENDIF (BOOSTPATH)
 
 if(ENABLE_UBLAS OR BUILD_TESTING)
    set(Boost_USE_MULTITHREADED TRUE)
-   if (Boost_MINOR_VERSION GREATER 34)
-     find_package(Boost REQUIRED COMPONENTS system thread)
-   else()
+   if (Boost_MINOR_VERSION LESS 34)
      find_package(Boost REQUIRED COMPONENTS thread)
+   else()
+     find_package(Boost REQUIRED COMPONENTS serialization system thread)
    endif()
 endif()
 
