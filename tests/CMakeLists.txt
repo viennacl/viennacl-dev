@@ -38,7 +38,7 @@ if (ENABLE_OPENCL)
   add_executable(external_linkage-opencl
                  src/external_1.cpp
                  src/external_2.cpp)
-  target_link_libraries(external_linkage-opencl ${OPENCL_LIBRARIES})
+  target_link_libraries(external_linkage-opencl ${OPENCL_LIBRARIES} ${Boost_LIBRARIES})
   set_target_properties(external_linkage-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
 endif (ENABLE_OPENCL)
 
@@ -61,6 +61,7 @@ if (ENABLE_CUDA)
   cuda_add_executable(external_linkage-cuda
                       src/external_1.cu
                       src/external_2.cu)
+  target_link_libraries(external_linkage-cuda ${Boost_LIBRARIES})
 endif (ENABLE_CUDA)
 
 # test shared library
