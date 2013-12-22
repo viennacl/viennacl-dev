@@ -73,8 +73,6 @@ include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 # Subdirectories
 ################
 
-add_subdirectory(auxiliary)
-
 if(BUILD_EXAMPLES)
    add_subdirectory(examples)
 endif()
