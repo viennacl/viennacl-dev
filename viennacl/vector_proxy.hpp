@@ -143,7 +143,7 @@ namespace viennacl
   vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::range const & r1)
   {
     assert(r1.size() <= vec.size() && bool("Size of range invalid!"));
-    return vector_range<VectorType>(vec.get(), viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
+    return vector_range<VectorType>(vec, viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
   }
 
 //
@@ -250,7 +250,7 @@ namespace viennacl
   vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-    return vector_slice<VectorType>(vec.get(), viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
+    return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
   }
 
   // interaction with range and vector_range:
@@ -259,14 +259,14 @@ namespace viennacl
   vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
   {
     assert(r1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-    return vector_slice<VectorType>(vec.get(), viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
+    return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
   }
 
   template <typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-    return vector_slice<VectorType>(vec.get(), viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
+    return vector_slice<VectorType>(vec, viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
   }
 
 
