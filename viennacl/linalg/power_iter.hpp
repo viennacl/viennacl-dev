@@ -80,6 +80,7 @@ namespace viennacl
       CPU_ScalarType eigenvalue;
       vcl_size_t matrix_size = matrix.size1();
       VectorT r(matrix_size);
+      VectorT r2(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 
       for(vcl_size_t i=0; i<s.size(); ++i)
@@ -100,7 +101,8 @@ namespace viennacl
           break;
 
         r /= norm;
-        r = viennacl::linalg::prod(matrix, r);
+        r2 = viennacl::linalg::prod(matrix, r);  //using helper vector r2 for the computation of r <- A * r in order to avoid the repeated creation of temporaries
+        r = r2;
         norm_prev = norm;
         norm = norm_2(r);
         numiter++;

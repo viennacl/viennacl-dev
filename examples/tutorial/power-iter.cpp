@@ -69,7 +69,7 @@ int main()
   viennacl::compressed_matrix<double>  vcl_A(ublas_A.size1(), ublas_A.size2());
   viennacl::copy(ublas_A, vcl_A);
 
-  viennacl::linalg::power_iter_tag ptag(1e-8);
+  viennacl::linalg::power_iter_tag ptag(1e-6);
 
   std::cout << "Starting computation of eigenvalue with largest modulus (might take about a minute)..." << std::endl;
   std::cout << "Result of power iteration with ublas matrix (single-threaded): " << viennacl::linalg::eig(ublas_A, ptag) << std::endl;
