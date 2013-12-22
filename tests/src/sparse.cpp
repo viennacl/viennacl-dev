@@ -176,11 +176,11 @@ int strided_matrix_vector_product_test(Epsilon epsilon,
     int retval = EXIT_SUCCESS;
 
     ublas::compressed_matrix<NumericT> ublas_matrix2(5, 4);
-    ublas_matrix2(0, 0) = 2.0; ublas_matrix2(0, 2) = -1.0;
-    ublas_matrix2(1, 0) = 3.0; ublas_matrix2(1, 2) = -5.0;
-    ublas_matrix2(2, 1) = 5.0; ublas_matrix2(2, 2) = -2.0;
-    ublas_matrix2(3, 2) = 1.0; ublas_matrix2(3, 3) = -6.0;
-    ublas_matrix2(4, 1) = 7.0; ublas_matrix2(4, 2) = -5.0;
+    ublas_matrix2(0, 0) = NumericT(2.0); ublas_matrix2(0, 2) = NumericT(-1.0);
+    ublas_matrix2(1, 0) = NumericT(3.0); ublas_matrix2(1, 2) = NumericT(-5.0);
+    ublas_matrix2(2, 1) = NumericT(5.0); ublas_matrix2(2, 2) = NumericT(-2.0);
+    ublas_matrix2(3, 2) = NumericT(1.0); ublas_matrix2(3, 3) = NumericT(-6.0);
+    ublas_matrix2(4, 1) = NumericT(7.0); ublas_matrix2(4, 2) = NumericT(-5.0);
     project(result, ublas::slice(1, 3, 5))     = ublas::prod(ublas_matrix2, project(rhs, ublas::slice(3, 2, 4)));
 
     VCL_MatrixT vcl_sparse_matrix2;
@@ -198,11 +198,11 @@ int strided_matrix_vector_product_test(Epsilon epsilon,
       std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
       retval = EXIT_FAILURE;
     }
-    vcl_result(1) = 1.0;
-    vcl_result(4) = 1.0;
-    vcl_result(7) = 1.0;
-    vcl_result(10) = 1.0;
-    vcl_result(13) = 1.0;
+    vcl_result(1)  = NumericT(1.0);
+    vcl_result(4)  = NumericT(1.0);
+    vcl_result(7)  = NumericT(1.0);
+    vcl_result(10) = NumericT(1.0);
+    vcl_result(13) = NumericT(1.0);
 
     viennacl::project(vcl_result, viennacl::slice(1, 3, 5)) = viennacl::linalg::prod(vcl_sparse_matrix2, vec);
 
