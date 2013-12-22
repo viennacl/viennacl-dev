@@ -48,11 +48,19 @@ namespace viennacl
   {
     namespace host_based
     {
+      namespace detail
+      {
+        template <typename NumericT>
+        NumericT flip_sign(NumericT val) { return -val; }
+        inline unsigned long  flip_sign(unsigned long  val) { return val; }
+        inline unsigned int   flip_sign(unsigned int   val) { return val; }
+        inline unsigned short flip_sign(unsigned short val) { return val; }
+        inline unsigned char  flip_sign(unsigned char  val) { return val; }
+      }
 
       //
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
-
 
       template <typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
@@ -65,7 +73,7 @@ namespace viennacl
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
-          data_alpha = -data_alpha;
+          data_alpha = detail::flip_sign(data_alpha);
 
         vcl_size_t start1 = viennacl::traits::start(vec1);
         vcl_size_t inc1   = viennacl::traits::stride(vec1);
@@ -106,11 +114,11 @@ namespace viennacl
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
-          data_alpha = -data_alpha;
+          data_alpha = detail::flip_sign(data_alpha);
 
         value_type data_beta = beta;
         if (flip_sign_beta)
-          data_beta = -data_beta;
+          data_beta = detail::flip_sign(data_beta);
 
         vcl_size_t start1 = viennacl::traits::start(vec1);
         vcl_size_t inc1   = viennacl::traits::stride(vec1);
@@ -176,11 +184,11 @@ namespace viennacl
 
         value_type data_alpha = alpha;
         if (flip_sign_alpha)
-          data_alpha = -data_alpha;
+          data_alpha = detail::flip_sign(data_alpha);
 
         value_type data_beta = beta;
         if (flip_sign_beta)
-          data_beta = -data_beta;
+          data_beta = detail::flip_sign(data_beta);
 
         vcl_size_t start1 = viennacl::traits::start(vec1);
         vcl_size_t inc1   = viennacl::traits::stride(vec1);
