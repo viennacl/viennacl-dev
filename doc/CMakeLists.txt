@@ -41,6 +41,7 @@ if(BUILD_MANUAL)
       manual/multi-device.tex
       manual/operations.tex
       manual/other-libs.tex
+      manual/shared-lib.tex
       manual/setup.tex
       manual/tuning.tex
       manual/types.tex

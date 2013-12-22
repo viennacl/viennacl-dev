@@ -35,12 +35,7 @@ viennacl::ocl::program & my_prog =
   viennacl::ocl::current_context().add_program(my_compute_program,
                                                "my_compute_program");
 \end{lstlisting}
-The next step is to register the kernel \lstinline|elementwise_prod| included in the compiled program:
-\begin{lstlisting}
-my_prog.add_kernel("elementwise_prod");
-\end{lstlisting}
-Similarly, one proceeds with other kernels in the compiled program.
-The next step is to extract the kernel object \lstinline|my_kernel| from the compiled program:
+The next step is to extract the kernel object \lstinline|my_kernel| from the compiled program (an explicit kernel registration was needed prior to ViennaCL 1.5.0, but is no longer needed):
 \begin{lstlisting}
 viennacl::ocl::kernel & my_kernel = my_prog.get_kernel("elementwise_prod");
 \end{lstlisting}
@@ -71,9 +66,12 @@ In order to use a two-dimensional execution, additionally parameters for the sec
 \end{lstlisting}
 However, for the simple kernel in this example it is not necessary to specify any work sizes at all. The default work sizes (which can be found in \texttt{viennacl/ocl/kernel.hpp}) suffice for most cases.
 
-To launch the kernel, the kernel arguments are set in the same way as for ordinary functions. We assume that three {\ViennaCL} vectors \lstinline|vec1|, \lstinline|vec2| and \lstinline|result| have already been set up:
+To launch the kernel, the kernel arguments are set in the same way as for ordinary functions.
+We assume that three {\ViennaCL} vectors \lstinline|vec1|, \lstinline|vec2| and \lstinline|result| have already been set up:
 \begin{lstlisting}
-  viennacl::ocl::enqueue(my_kernel(vec1, vec2, result, vec1.size()));
+  viennacl::ocl::enqueue(my_kernel(vec1, vec2, result, cl_uint(vec1.size())));
 \end{lstlisting}
 Per default, the kernel is enqueued in the first queue of the currently active device. A custom queue can be specified as optional second argument, cf.~the reference documentation
 located in \texttt{doc/doxygen/}.
+
+\TIP{Integer arguments need to be provided using the corresponding OpenCL types \lstinline|cl_int|, \lstinline|cl_uint|, etc. Do not pass arguments of type \lstinline|size_t|, because \lstinline|size_t| might differ on the host and the compute device.}

@@ -41,8 +41,7 @@ The full potential of {\ViennaCL} is available with the following optional libra
 %The use of {\OpenMP} for the benchmark suite allows fair comparisons between your multi-core CPU and your compute device (e.g.~GPU).
 
 \section{Generic Installation of ViennaCL} \label{sec:viennacl-installation}
-Since {\ViennaCL} is essentially a header-only library (the only exception is
-described in Chapter \ref{chap:tuning}), it is sufficient to copy the folder
+Since {\ViennaCL} is a header-only library, it is sufficient to copy the folder
 \lstinline|viennacl/| either into your project folder or to your global system
 include path. On Unix based systems, this is often \lstinline|/usr/include/| or
 \lstinline|/usr/local/include/|. If the OpenCL headers are not installed on your system,
@@ -169,14 +168,22 @@ Example/Tutorial & Dependencies\\
 \texttt{tutorial/iterative-eigen.cpp}      & {\Eigen}   \\
 \texttt{tutorial/iterative-mtl4.cpp}       & {\MTL}    \\
 \texttt{tutorial/lanczos.cpp/cu}           & {\ublas}    \\
+\texttt{tutorial/libviennacl.cpp/cu}       & - \\
 \texttt{tutorial/least-squares.cpp/cu}     & {\ublas}    \\
 \texttt{tutorial/matrix-range.cpp/cu}      & {\ublas} \\
 \texttt{tutorial/mtl4-with-viennacl.cpp}   & {\MTL} \\
+\texttt{tutorial/multithreaded.cpp/cu}     & {\Boost} \\
+\texttt{tutorial/multithreaded\_cg.cpp/cu} & {\Boost} \\
 \texttt{tutorial/power-iter.cpp/cu}        & {\ublas} \\
 \texttt{tutorial/qr.cpp/cu}                & {\ublas} \\
+\texttt{tutorial/scheduler.cpp}            & - \\
 \texttt{tutorial/spai.cpp}                 & {\OpenCL}, {\ublas} \\
+\texttt{tutorial/sparse.cpp/cu}            & {\ublas} \\
+\texttt{tutorial/structured-matrices.cpp}  & {\OpenCL}, {\ublas} \\
 \texttt{tutorial/vector-range.cpp/cu}      & {\ublas} \\
 \texttt{tutorial/viennacl-info.cpp}        & {\OpenCL} \\
+\texttt{tutorial/wrap-cuda-buffer.cu}      & {\CUDA} \\
+\texttt{tutorial/wrap-host-buffer.cpp}     & - \\
 \texttt{benchmarks/blas3.cpp/cu}   & - \\
 \texttt{benchmarks/opencl.cpp}     & {\OpenCL} \\
 \texttt{benchmarks/solver.cpp/cu}  & {\ublas} \\

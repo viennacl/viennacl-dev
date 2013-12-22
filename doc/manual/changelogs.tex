@@ -9,7 +9,7 @@ In addition to many internal improvements both in terms of performance and flexi
 \begin{itemize}
  \item API-change: User-provided OpenCL kernels extract their kernels automatically. A call to \lstinline|add_kernel()| is now obsolete, hence the function was removed.
  \item API-change: Device class has been extend and supports all informations defined in the OpenCL 1.1 standard through member functions. Duplicate \lstinline|compute_units()| and \lstinline|max_work_group_size()| have been removed (thanks for Shantanu Agarwal for the input).
- \item API-change: \lstinline|viennacl::copy()| from a ViennaCL object to host type no longer tries to resize the object accordingly. An assertion is thrown if the sizes are incorrect in order to provide a consistent behavior across many different types.
+ \item API-change: \lstinline|viennacl::copy()| from a ViennaCL object to an object of non-ViennaCL type no longer tries to resize the object accordingly. An assertion is thrown if the sizes are incorrect in order to provide a consistent behavior across many different types.
  \item Datastructure change: Vectors and matrices are now padded with zeros by default, resulting in higher performance particularly for matrix operations. This padding needs to be taken into account when using \lstinline|fast_copy()|, particularly for matrices.
  \item Fixed problems with CUDA and CMake+CUDA on Visual Studio.
  \item \lstinline|coordinate_matrix<>| now also behaves correctly for tiny matrix dimensions.
@@ -23,7 +23,7 @@ In addition to many internal improvements both in terms of performance and flexi
  \item Multiple inner products with a common vector can now be computed efficiently via e.g.~\lstinline|inner_prod(x, tie(y, z));|
  \item Added support for \lstinline|prod(A, B)|, where \lstinline|A| is a sparse matrix type and \lstinline|B| is a dense matrix (thanks to Albert Zaharovits for providing parts of the implementation).
  \item Added \lstinline|diag()| function for extracting the diagonal of a vector to a matrix, or for generating a square matrix from a vector with the vector elements on a diagonal (similar to MATLAB).
- \item Added \lstinline|row()| and \lstinline|col()| functions for extracting a certain row or column of a matrix to a vector.
+ \item Added \lstinline|row()| and \lstinline|column()| functions for extracting a certain row or column of a matrix to a vector.
  \item Sparse matrix-vector products now also work with vector strides and ranges.
  \item Added \lstinline|async_copy()| for vectors to allow for a better overlap of computation and communication.
  \item Added \lstinline|compressed_compressed_matrix| type for the efficient representation of CSR matrices with only few nonzero rows.
@@ -39,6 +39,7 @@ In addition to many internal improvements both in terms of performance and flexi
  \item Complete rewrite of the generator. Now uses the scheduler for specifying the operation. Includes a full device database for portable high performance of GEMM kernels.
  \item Added micro-scheduler for attaching the OpenCL kernel generator to the user API.
  \item Certain BLAS functionality in ViennaCL is now also available through a shared library (libviennacl).
+ \item Removed the external kernel parameter tuning factility, which is to be replaced by an internal device database through the kernel generator.
  \item Completely eliminated the OpenCL kernel conversion step in the developer repository and the source-release. One can now use the developer version without the need for a Boost installation.
 \end{itemize}
 

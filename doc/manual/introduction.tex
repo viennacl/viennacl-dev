@@ -31,7 +31,7 @@ using either the AMD Accelerated Parallel Processing (APP) SDK (formerly ATI Str
 \NOTE{Double precision arithmetic on GPUs is only possible if it is provided by the GPU. There is no double precision emulation in {\ViennaCL}.}
 
 \NOTE{Double precision arithmetic using the ATI Stream SDK or AMD APP SDK may not be fully
-OpenCL-certified. Also, we have observed bugs in AMD APP SDKs 2.7 which effects some algorithms in {\ViennaCL} (e.g.~BiCGStab).}
+OpenCL-certified. Also, we have observed bugs in AMD APP SDKs 2.7 which affects some algorithms in {\ViennaCL} (e.g.~BiCGStab).}
 
 \begin{table}[tb]
 \begin{center}
@@ -75,10 +75,9 @@ ATI FirePro V78XX    & ok & essentially ok \\
 ATI FirePro V87XX    & ok & essentially ok \\
 ATI FirePro V88XX    & ok & essentially ok \\
 \end{tabular}
-\caption{Available arithmetics in {\ViennaCL} provided by selected GPUs. At the
-release of {\ViennaCLversion}, the Stream SDK (APP SDK) from AMD/ATI may not comply to
-the {\OpenCL} standard for double precision extensions, and we have observed
-problems with the APP SDK 2.7 on Linux in both single- and double-precision.}
+\caption{Available arithmetics in {\ViennaCL} provided by selected GPUs.
+Some older versions of the Stream SDK (APP SDK) from AMD/ATI may not comply to
+the {\OpenCL} standard for double precision extensions.}
 \label{tab:double-precision-GPUs}
 \end{center}
 \end{table}

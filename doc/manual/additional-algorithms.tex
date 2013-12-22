@@ -178,16 +178,17 @@ smaller bandwidth. Typical applications stem from the discretization of partial 
 method. The algorithms employed are as follows:
 \begin{itemize}
  \item Classical Cuthill-McKee algorithm \cite{cuthill:reducing-bandwidth}
- \item Modified Cuthill-McKee algorithm \cite{cuthill:reducing-bandwidth}
+ \item Iterated Cuthill-McKee algorithm with different seeds \cite{cuthill:reducing-bandwidth}
  \item Gibbs-Poole-Stockmeyer algorithm, cf.~\cite{lewis:gps-algorithm}
 \end{itemize}
-The modified Cuthill-McKee algorithm also takes nodes with small, but not necessarily minimal degree as root node into account and may lead to better results
-than the classical Cuthill-McKee algorithm. A parameter $a \in [0,1]$ controls the number of nodes considered: All nodes with degree $d$ fulfilling
+The iterated Cuthill-McKee algorithm applies the classical Cuthill-McKee algorithm to different starting nodes with small, but not necessarily minimal degree as root node into account.
+While this iterated application is more expensive in times of execution times, it may lead to better results than the classical Cuthill-McKee algorithm.
+A parameter $a \in [0,1]$ controls the number of nodes considered: All nodes with degree $d$ fulfilling
 \begin{align*}
  d_{\min} \leq d \leq d_{\min} + a(d_{\max} - d_{\min})
 \end{align*}
-are considered, where $d_{\min}$ and $d_{\max}$ are the miminum and maximum nodal degrees in the graph. A second parameter \lstinline|gmax| specifies the
-number of additional root nodes considered.
+are considered, where $d_{\min}$ and $d_{\max}$ are the miminum and maximum nodal degrees in the graph.
+A second parameter \lstinline|gmax| specifies the number of additional root nodes considered.
 
 The algorithms are called for a \lstinline|matrix| of a type compatible with \lstinline|std::vector< std::map<int, double> >| by
 \begin{lstlisting}

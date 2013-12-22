@@ -4,15 +4,18 @@ The basic types have been introduced in the previous chapter, so we move on with
 Almost all operations supported by {\ublas} are available, including element-wise operations on vectors. Thus, consider the
 \href{http://www.boost.org/doc/libs/1_52_0/libs/numeric/ublas/doc/operations_overview.htm}{ublas-documentation} as a reference as well.
 
-\section{Vector-Vector Operations (BLAS Level 1)}
+\section{Vector-Vector and Elementary Matrix-Matrix Operations (BLAS Level 1)}
 
 {\ViennaCL} provides all vector-vector operations defined at level 1 of BLAS. Tab.~\ref{tab:blas-level-1} shows how these operations can be carried
 out in \ViennaCL. The function interface is compatible with {\ublas},
 thus allowing quick code migration for {\ublas} users.
-
+Element-wise operations and standard operator overloads are available for dense matrices as well.
+The only dense matrix norm provided is \lstinline|norm_frobenius()| for the Frobenius norm.
 
 \TIP{For full details on level 1 functions, refer to the reference documentation
 located in \texttt{doc/doxygen/}}
+
+\NOTE{Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.}
 
 
 \begin{table}[tb]
@@ -25,14 +28,34 @@ stretch    & $x \leftarrow \alpha x$ & \lstinline|x *= alpha;| \\
 assignment & $y \leftarrow x$ & \lstinline|y = x;| \\
 multiply add & $y \leftarrow \alpha x + y$ & \lstinline|y += alpha * x;| \\
 multiply subtract & $y \leftarrow \alpha x - y$ & \lstinline|y -= alpha * x;| \\
-elementwise product & $y_i \leftarrow x_i \cdot z_i$ & \lstinline|y = element_prod(x,z);| \\
-elementwise division & $y_i \leftarrow x_i \cdot z_i$ & \lstinline|y = element_div(x,z);| \\
 inner dot product & $\alpha \leftarrow x^{\mathrm{T}} y$ & \lstinline|inner_prod(x,y);| \\
 $L^1$ norm & $\alpha \leftarrow \Vert x \Vert_1$ & \lstinline|alpha = norm_1(x);| \\
 $L^2$ norm & $\alpha \leftarrow \Vert x \Vert_2$ & \lstinline|alpha = norm_2(x);| \\
 $L^\infty$ norm & $\alpha \leftarrow \Vert x \Vert_\infty$ & \lstinline|alpha = norm_inf(x);| \\
 $L^\infty$ norm index& $i \leftarrow \max_i \vert x_i \vert$ & \lstinline|i = index_norm_inf(x);| \\
-plane rotation & $(x,y) \leftarrow (\alpha x + \beta y, -\beta x + \alpha y)$ & \lstinline|plane_rotation(alpha, beta, x, y);| \\
+plane rotation & $(x,y) \leftarrow (\alpha x + \beta y, -\beta x + \alpha y)$ & \lstinline|plane_rotation(a, b, x, y);| \\
+\hline
+elementwise product  & $y_i \leftarrow x_i \cdot z_i$ & \lstinline|y = element_prod(x,z);| \\
+elementwise division & $y_i \leftarrow x_i \cdot z_i$ & \lstinline|y = element_div(x,z);| \\
+elementwise power    & $y_i \leftarrow x_i^{z_i}$ & \lstinline|y = element_pow(x,z);| \\
+\hline
+elementwise modulus (ints)   & $y_i \leftarrow |x_i|$ & \lstinline|y = element_abs(x);| \\
+elementwise modulus (floats) & $y_i \leftarrow |x_i|$ & \lstinline|y = element_fabs(x);| \\
+elementwise acos  & $y_i \leftarrow \textrm{acos}(x_i)$ & \lstinline|y = element_acos(x);| \\
+elementwise asin  & $y_i \leftarrow \textrm{asin}(x_i)$ & \lstinline|y = element_asin(x);| \\
+elementwise atan  & $y_i \leftarrow \textrm{atan}(x_i)$ & \lstinline|y = element_atan(x);| \\
+elementwise ceil  & $y_i \leftarrow \lceil x_i \rceil$ & \lstinline|y = element_ceil(x);| \\
+elementwise cos   & $y_i \leftarrow \textrm{cos}(x_i)$ & \lstinline|y = element_cos(x);| \\
+elementwise cosh  & $y_i \leftarrow \textrm{cosh}(x_i)$ & \lstinline|y = element_cosh(x);| \\
+elementwise exp   & $y_i \leftarrow \textrm{exp}(x_i)$ & \lstinline|y = element_exp(x);| \\
+elementwise floor & $y_i \leftarrow \lfloor x_i \rfloor $ & \lstinline|y = element_floor(x);| \\
+elementwise log (base e)  & $y_i \leftarrow \textrm{ln}(x_i)$ & \lstinline|y = element_log(x);| \\
+elementwise log (base 10) & $y_i \leftarrow \textrm{log}_{10}(x_i)$ & \lstinline|y = element_log10(x);| \\
+elementwise sin  & $y_i \leftarrow \textrm{sin}(x_i)$ & \lstinline|y = element_sin(x);| \\
+elementwise sinh & $y_i \leftarrow \textrm{sinh}(x_i)$ & \lstinline|y = element_sinh(x);| \\
+elementwise sqrt & $y_i \leftarrow \textrm{sqrt}(x_i)$ & \lstinline|y = element_sqrt(x);| \\
+elementwise tan  & $y_i \leftarrow \textrm{tan}(x_i)$ & \lstinline|y = element_tan(x);| \\
+elementwise tanh & $y_i \leftarrow \textrm{tanh}(x_i)$ & \lstinline|y = element_tanh(x);| \\
 \end{tabular}
 \caption{BLAS level 1 routines mapped to {\ViennaCL}. Note that the free functions reside in namespace \texttt{viennacl::linalg}}
 \label{tab:blas-level-1}
@@ -45,6 +68,8 @@ The interface for level 2 BLAS functions in {\ViennaCL} is similar to that of
 
 \TIP{For full details on level 2 functions, refer to the reference documentation
 located in \texttt{doc/doxygen/}}
+
+\NOTE{Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.}
 
 
 \begin{table}[tb]
@@ -97,6 +122,9 @@ among a large number of different devices and device types.
 For certain matrix dimensions, typically multiples of 64 or 128, {\ViennaCL} also provides tuned kernels reaching over 1 TFLOP in single precision (AMD HD 7970).
 }
 
+\NOTE{Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.}
+
+
 \begin{table}[tb]
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
@@ -126,7 +154,7 @@ reside in namespace \texttt{viennacl::linalg}}
 
 \section{Initializer Types}
 
-\NOTE{Initializer types in {\ViennaCLversion} can only be used for initializing vectors and matrices, not for computations!}
+\NOTE{Initializer types in {\ViennaCLversion} can currently only be used for initializing vectors and matrices, not for computations!}
 
 In order to initialize vectors, the following initializer types are provided, again similar to {\ublas}:
 \begin{center}
@@ -161,4 +189,33 @@ Similarly the following initializer types are available for matrices:
  \hline
 \end{tabular}
 \end{center}
+
+\section{Row, Column, and Diagonal Extraction}
+For many algorithms it is of interest to extract a single row or column of a dense matrix, or to access the matrix diagonal.
+This is provided in the same way as for Boost.uBLAS through the free functions \lstinline|row()|, \lstinline|column()|, and \lstinline|diag()|:
+\begin{lstlisting}
+ // A is a viennacl::matrix<T>
+ // Extract 5-th row of A, then overwrite with 6-th diagonal:
+ viennacl::vector<T> r = viennacl::row(A, 4);
+ r = viennacl::row(A, 5);
+ 
+ // Extract 4-th column of A, then overwrite with second column:
+ viennacl::vector<T> c = viennacl::column(A, 3);
+ c = viennacl::column(A, 1);
+
+ // Extract diagonal:
+ viennacl::vector<T> d = viennacl::diag(A);
+\end{lstlisting}
+The function \lstinline|diag| can also be used to create a matrix which has the provided vector entries in the off-diagonal:
+\begin{lstlisting}
+ // Create the matrix
+ // 0 1 0 0
+ // 0 0 2 0
+ // 0 0 0 3
+ viennacl::vector<float> v(3);
+ v[0] = 1.0f; v[1] = 2.0f; v[2] = 3.0f;
+ viennacl::matrix<float> A = viennacl::diag(v, 1);
+\end{lstlisting}
+This is similar to MATLAB's \lstinline|diag()| function.
+
 
