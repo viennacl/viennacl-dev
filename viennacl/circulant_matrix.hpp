@@ -276,12 +276,12 @@ namespace viennacl
               // check for the special case x = A * x
               if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
               {
-                viennacl::vector<T> temp(rhs.lhs().size1());
+                viennacl::vector<T> temp(lhs);
                 viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
                 lhs = temp;
               }
-
-              viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+              else
+                viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
             }
         };
 
@@ -290,7 +290,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(lhs);
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs += temp;
             }
@@ -301,7 +301,7 @@ namespace viennacl
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
             {
-              viennacl::vector<T> temp(rhs.lhs().size1());
+              viennacl::vector<T> temp(lhs);
               viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
               lhs -= temp;
             }
@@ -326,7 +326,7 @@ namespace viennacl
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
               viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp_result(lhs);
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs += temp_result;
             }
@@ -339,7 +339,7 @@ namespace viennacl
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
             {
               viennacl::vector<T> temp(rhs.rhs());
-              viennacl::vector<T> temp_result(lhs.size());
+              viennacl::vector<T> temp_result(lhs);
               viennacl::linalg::prod_impl(rhs.lhs(), temp, temp_result);
               lhs -= temp_result;
             }
