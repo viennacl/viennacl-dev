@@ -142,9 +142,9 @@ namespace viennacl
                 viennacl::linalg::opencl::kernels::spai<ScalarType>::init(ctx);
 
                 MatrixType At(A.size1(), A.size2(), viennacl::context(ctx));
-                UBLASSparseMatrixType ubls_A, ubls_spai_m;
+                UBLASSparseMatrixType ubls_A(A.size1(), A.size2()), ubls_spai_m;
                 UBLASSparseMatrixType ubls_At;
-                viennacl::copy(A, ubls_A);;
+                viennacl::copy(A, ubls_A);
                 if(!tag_.getIsRight()){
                     viennacl::linalg::detail::spai::sparse_transpose(ubls_A, ubls_At);
                 }
