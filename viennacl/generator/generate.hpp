@@ -349,7 +349,7 @@ namespace viennacl{
     *   @param force_recompilation if true, the program will be recompiled
     */
     inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
-      char* program_name = (char*)malloc(256*sizeof(char));
+      char* program_name = new char[256];
       generator.make_program_name(program_name);
       if(force_recompilation)
         viennacl::ocl::current_context().delete_program(program_name);
@@ -363,6 +363,8 @@ namespace viennacl{
       }
       viennacl::ocl::program & p = viennacl::ocl::current_context().get_program(program_name);
       generator.configure_program(p, kernels);
+      delete[] program_name;
+
       return p;
     }
 
