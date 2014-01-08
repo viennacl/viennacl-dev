@@ -86,7 +86,11 @@ namespace viennacl
 
 
     const char * double_float_conversion_program =
-    "#pragma OPENCL EXTENSION cl_khr_fp64 : enable \n"
+    "#if defined(cl_khr_fp64)\n"
+    "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
+    "#elif defined(cl_amd_fp64)\n"
+    "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n"
+    "#endif\n"
     "__kernel void assign_double_to_float(\n"
     "          __global float * vec1,\n"
     "          __global const double * vec2, \n"
