@@ -300,7 +300,7 @@ namespace viennacl
             MatrixRange W_part(W, range(j, A.size1()), range(0, effective_block_size));
             MatrixType temp = boost::numeric::ublas::prod(trans(W_part), A_part);
 
-            A_part += prod(project(Y, range(j, A.size1()), range(0, Y.size2())),
+            A_part += prod(project(Y, range(j, A.size1()), range(0, effective_block_size)),
                           temp);
           }
         }
@@ -400,7 +400,7 @@ namespace viennacl
             MatrixRange W_part(W, range(j, A.size1()), range(0, effective_block_size));
             MatrixType temp = prod(trans(W_part), A_part);
 
-            A_part += prod(project(Y, range(j, A.size1()), range(0, Y.size2())),
+            A_part += prod(project(Y, range(j, A.size1()), range(0, effective_block_size)),
                           temp);
           }
         }
@@ -544,7 +544,7 @@ namespace viennacl
             VCLMatrixRange W_part(vclW, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size));
             MatrixType temp = viennacl::linalg::prod(trans(W_part), A_part);
 
-            A_part += viennacl::linalg::prod(viennacl::project(vclY, viennacl::range(j, A.size1()), viennacl::range(0, vclY.size2())),
+            A_part += viennacl::linalg::prod(viennacl::project(vclY, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size)),
                                              temp);
           }
         }
