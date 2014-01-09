@@ -64,7 +64,7 @@ bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A,
     {
       if (ublas_A(i,j) != vcl_A_cpu(i,j))
       {
-        if ( (std::abs(ublas_A(i,j) - vcl_A_cpu(i,j)) / std::max(ublas_A(i,j), vcl_A_cpu(i,j)) > epsilon) || (vcl_A_cpu(i,j) != vcl_A_cpu(i,j)) )
+        if ( (std::abs(ublas_A(i,j) - vcl_A_cpu(i,j)) / std::max(std::fabs(ublas_A(i,j)), std::fabs(vcl_A_cpu(i,j))) > epsilon) || (vcl_A_cpu(i,j) != vcl_A_cpu(i,j)) )
         {
           std::cout << "Error at index (" << i << ", " << j << "): " << ublas_A(i,j) << " vs " << vcl_A_cpu(i,j) << std::endl;
           std::cout << std::endl << "TEST failed!" << std::endl;
