@@ -349,7 +349,7 @@ namespace viennacl
             viennacl::linalg::opencl::kernels::spai<ScalarType>::init(opencl_ctx);
             viennacl::ocl::kernel& block_q_kernel = opencl_ctx.get_kernel(viennacl::linalg::opencl::kernels::spai<ScalarType>::program_name(), "block_q_mult");
             block_q_kernel.local_work_size(0, local_c_n);
-            block_q_kernel.global_work_size(0, 256);
+            block_q_kernel.global_work_size(0, 128*local_c_n);
             viennacl::ocl::enqueue(block_q_kernel(g_A_I_J_vcl.handle(), g_A_I_J_vcl.handle2(), g_A_I_J_u_vcl.handle(), g_A_I_J_u_vcl.handle2(),
                                                   g_bv_vcl.handle(),
                                                   g_bv_vcl.handle1(), g_A_I_J_vcl.handle1(), g_A_I_J_u_vcl.handle1(), g_is_update_vcl,
