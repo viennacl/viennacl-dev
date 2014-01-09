@@ -43,15 +43,17 @@ namespace viennacl
         template <typename StringType>
         void generate_ambm_impl2(StringType & source, ambm_config const & cfg, bool mult_alpha, bool mult_beta)
         {
-          source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
-          source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
           if (cfg.is_row_major)
           {
+            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
+            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
             source.append("  for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
             source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
           }
           else
           {
+            source.append("  unsigned int col_gid = get_global_id(0) / get_local_size(0);\n");
+            source.append("  unsigned int row_gid = get_global_id(0) % get_local_size(0);\n");
             source.append("  for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
             source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
           }
