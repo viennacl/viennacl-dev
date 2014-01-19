@@ -118,7 +118,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-        for (std::size_t row = 0; row < mat.size1(); ++row)
+        for (omp_index row = 0; row < static_cast<omp_index>(mat.size1()); ++row)
         {
           ScalarType dot_prod = 0;
           std::size_t row_end = row_buffer[row+1];
@@ -172,7 +172,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < sp_mat.size1(); ++row) {
+          for (omp_index row = 0; row < static_cast<omp_index>(sp_mat.size1()); ++row) {
             std::size_t row_start = sp_mat_row_buffer[row];
             std::size_t row_end = sp_mat_row_buffer[row+1];
             for (std::size_t col = 0; col < d_mat.size2(); ++col) {
@@ -188,7 +188,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col) {
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col) {
             for (std::size_t row = 0; row < sp_mat.size1(); ++row) {
               std::size_t row_start = sp_mat_row_buffer[row];
               std::size_t row_end = sp_mat_row_buffer[row+1];
@@ -249,7 +249,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < sp_mat.size1(); ++row) {
+          for (omp_index row = 0; row < static_cast<omp_index>(sp_mat.size1()); ++row) {
             std::size_t row_start = sp_mat_row_buffer[row];
             std::size_t row_end = sp_mat_row_buffer[row+1];
             for (std::size_t col = 0; col < d_mat.size2(); ++col) {
@@ -265,7 +265,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col) {
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col) {
             for (std::size_t row = 0; row < sp_mat.size1(); ++row) {
               std::size_t row_start = sp_mat_row_buffer[row];
               std::size_t row_end = sp_mat_row_buffer[row+1];
@@ -871,7 +871,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-        for (std::size_t i = 0; i < mat.nnz1(); ++i)
+        for (omp_index i = 0; i < static_cast<omp_index>(mat.nnz1()); ++i)
         {
           ScalarType dot_prod = 0;
           std::size_t row_end = row_buffer[i+1];
@@ -1016,14 +1016,14 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < sp_mat.size1(); ++row)
+          for (omp_index row = 0; row < static_cast<omp_index>(sp_mat.size1()); ++row)
                 for (std::size_t col = 0; col < d_mat.size2(); ++col)
                   result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t i = 0; i < sp_mat.nnz(); ++i) {
+          for (omp_index i = 0; i < static_cast<omp_index>(sp_mat.nnz()); ++i) {
             NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
             unsigned int r = sp_mat_coords[2*i];
             unsigned int c = sp_mat_coords[2*i+1];
@@ -1039,14 +1039,14 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col)
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col)
             for (std::size_t row = 0; row < sp_mat.size1(); ++row)
                 result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col) {
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col) {
 
             for (std::size_t i = 0; i < sp_mat.nnz(); ++i) {
 
@@ -1109,7 +1109,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t row = 0; row < sp_mat.size1(); ++row)
+          for (omp_index row = 0; row < static_cast<omp_index>(sp_mat.size1()); ++row)
             for (std::size_t col = 0; col < d_mat.size2(); ++col)
               result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
         }
@@ -1118,7 +1118,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col)
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col)
             for (std::size_t row = 0; row < sp_mat.size1(); ++row)
               result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
         }
@@ -1126,7 +1126,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-        for (std::size_t i = 0; i < sp_mat.nnz(); ++i) {
+        for (omp_index i = 0; i < static_cast<omp_index>(sp_mat.nnz()); ++i) {
           NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
           unsigned int r = sp_mat_coords[2*i];
           unsigned int c = sp_mat_coords[2*i+1];
@@ -1249,14 +1249,14 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col)
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col)
             for(std::size_t row = 0; row < sp_mat.size1(); ++row)
                 result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col) {
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col) {
 
             for(unsigned int item_id = 0; item_id < sp_mat.maxnnz(); ++item_id) {
 
@@ -1348,14 +1348,14 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for (std::size_t col = 0; col < d_mat.size2(); ++col)
+          for (omp_index col = 0; col < static_cast<omp_index>(d_mat.size2()); ++col)
             for(std::size_t row = 0; row < sp_mat.size1(); ++row)
                 result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for(unsigned int item_id = 0; item_id < sp_mat.maxnnz(); ++item_id) {
+          for(omp_index item_id = 0; item_id < static_cast<omp_index>(sp_mat.maxnnz()); ++item_id) {
 
             for(std::size_t row = 0; row < sp_mat.size1(); ++row) {
 

@@ -55,6 +55,15 @@ namespace viennacl
 {
   typedef std::size_t                                       vcl_size_t;
   typedef std::ptrdiff_t                                    vcl_ptrdiff_t;
+#ifdef _MSC_VER
+#ifdef  _WIN64
+  typedef __int64  omp_index;
+#else
+  typedef _W64 int omp_index;
+#endif
+#else
+  typedef std::size_t omp_index;
+#endif
 
 
   /** @brief A tag class representing assignment */
