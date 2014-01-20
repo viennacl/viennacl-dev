@@ -182,9 +182,9 @@ int test(UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
   if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  cpu_result = inner_prod(ublas_v1 + ublas_v2, ublas_v2 - ublas_v1);
-  NumericT cpu_result3 = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
-  gpu_result = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
+  cpu_result = inner_prod(ublas_v1 + ublas_v2, 2*ublas_v2);
+  NumericT cpu_result3 = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, 2*vcl_v2);
+  gpu_result = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, 2*vcl_v2);
 
   if (check(cpu_result, cpu_result3) != EXIT_SUCCESS)
     return EXIT_FAILURE;
