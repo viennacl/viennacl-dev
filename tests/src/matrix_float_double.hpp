@@ -19,6 +19,9 @@
 //#define NDEBUG
 //#define VIENNACL_BUILD_INFO
 
+// We don't need debug mode in UBLAS:
+#define BOOST_UBLAS_NDEBUG
+
 #include <utility>
 #include <iostream>
 #include <fstream>

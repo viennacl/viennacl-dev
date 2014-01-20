@@ -18,6 +18,9 @@
 //#define NDEBUG
 //#define VIENNACL_DEBUG_BUILD
 
+// We don't need debug mode in UBLAS:
+#define BOOST_UBLAS_NDEBUG
+
 //
 // *** System
 //

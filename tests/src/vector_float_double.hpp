@@ -22,6 +22,9 @@
 #include <iomanip>
 #include <cmath>
 
+// We don't need debug mode in UBLAS:
+#define BOOST_UBLAS_NDEBUG
+
 //
 // *** Boost
 //
