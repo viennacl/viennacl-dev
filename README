@@ -26,9 +26,9 @@ ViennaCL requires the following:
 The first step is to extract the file:
 
 Unix-based OS:
-$> gunzip ViennaCL-1.5.0.tar.gz
-$> tar -xf ViennaCL-1.5.0.tar
-$> cd ViennaCL-1.5.0
+$> gunzip ViennaCL-1.5.1.tar.gz
+$> tar -xf ViennaCL-1.5.1.tar
+$> cd ViennaCL-1.5.1
 
 Windows:
 Extract the file using your favorite compressor/decompressor, e.g. 7-zip.
@@ -50,7 +50,7 @@ Unix-based clients:
    $> cmake-gui
    Or, disable openCL if you are not planning to use parallel programming components
    $> cmake .. -DENABLE_OPENCL=0
- 
+
  * Use 'make' to build all examples:
    $> make
    (alternatively, you can build them individually via 'make blas1', 'make viennacl-info', etc.
@@ -76,7 +76,7 @@ Windows:
 ---- ViennaCL-1.X.X
    |
    |-- auxiliary/ - (only in src-Edition) Auxiliary files (i.e. the OpenCL source code tree and the converter for the header files)
-   | 
+   |
    |-- build/ - Build directory for building the examples
    |
    |-- CL/ - The OpenCL headers
@@ -84,23 +84,23 @@ Windows:
    |-- cmake/ - Additional CMake configuration files
    |
    |-- doc/ - Documentation (LaTeX and doxygen)
-   | 
+   |
    |-- examples/ - Tutorial and benchmarking applications
-        | 
+        |
         |-- testdata/ - Test data for the tutorials and benchmarks
-        | 
+        |
         |-- benchmarks/ - A small benchmarking suite
         |
         |-- tutorial/ - Some tutorials explaining the usage of ViennaCL
         |
         |-- parameters/ - Parameter optimization environment
-   | 
+   |
    |-- external/ - External libraries
    |
    |-- libviennacl/ - Shared library for interfacing some BLAS functionality of ViennaCL from languages other than C++
    |
    |-- tests/ - Automated test suite using CTest
-   | 
+   |
    |-- viennacl/ - The library source code
 
 
@@ -109,7 +109,7 @@ Windows:
 
 For any technical questions related to ViennaCL, please use our mailing list: viennacl-support@lists.sourceforge.net
 You may also use the forum provided by sourceforge.net: http://sourceforge.net/projects/viennacl/
-For any other issues, please contact the project head Karl Rupp  at rupp@iue.tuwien.ac.at.
+For any other issues, please contact the project head Karl Rupp at rupp@iue.tuwien.ac.at.
 
 ViennaCL was developed under the aegis of the 'Institute for Microelectronics' at the 'Vienna University of Technology'.
 

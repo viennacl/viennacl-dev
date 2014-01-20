@@ -4,6 +4,18 @@
 
 *** Version 1.5.x ***
 
+-- Version 1.5.1 --
+This maintenance release fixes a few nasty bugs:
+ - Fixed a memory leak in the OpenCL kernel generator. Thanks to GitHub user dxyzab for spotting this.
+ - Added compatibility of the mixed precision CG implementation with older AMD GPUs. Thanks to Andreas Rost for the input.
+ - Fixed an error when running the QR factorization for matrices with less rows than columns. Thanks to Karol Polko for reporting.
+ - Readded accidentally removed chapters on additional algorithms and structured matrices to the manual. Thanks to Sajjadul Islam for the hint.
+ - Fixed buggy OpenCL kernels for matrix additions and subtractions for column-major matrices. Thanks to Tom Nicholson for reporting.
+ - Fixed an invalid default kernel parameter set for matrix-matrix multiplications on CPUs when using the OpenCL backend. Thanks again to Tom Nicholson.
+ - Corrected a weak check used in two tests. Thanks to Walter Mascarenhas for providing a fix.
+ - Fixed a wrong global work size inside the SPAI preconditioner. Thanks to Andreas Rost.
+
+
 -- Version 1.5.0 --
 This new minor release number update focuses on a more powerful API, and on first steps in making ViennaCL more accessible from languages other than C++.
 In addition to many internal improvements both in terms of performance and flexibility, the following changes are visible to users:
@@ -96,7 +108,7 @@ New features and feature improvements are as follows:
 - Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
 - Reduced overhead when copying to/from ublas::compressed_matrix.
 - ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
-- Refurbished OpenCL vector kernels backend. 
+- Refurbished OpenCL vector kernels backend.
   All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
 - matrix_range and matrix_slice as well as vector_range and vector_slice can now be used and mixed completely seamlessly with all standard operations except lu_factorize().
 - Fixed a bug when using copy() with iterators on vector proxy objects.
@@ -242,7 +254,7 @@ The main improvements in this release are:
  - Support for multi-core CPUs with ATI Stream SDK (thanks to Riccardo Rossi, UPC. BARCELONA TECH, for suggesting this)
  - inner_prod is now up to a factor of four faster (thanks to Serban Georgescu, ETH, for pointing the poor performance of the old implementation out)
  - Fixed a bug with plane_rotation that caused system freezes with ATI GPUs.
- - Extended the doxygen generated reference documentation 
+ - Extended the doxygen generated reference documentation
 
 
 -- Version 1.0.2 --
