@@ -34,6 +34,7 @@ if(BUILD_MANUAL)
       manual/figures/tip.eps
       manual/figures/TU_Signet_CMYK.eps
       manual/IEEEtran_v1.13.bst
+      manual/additional-algorithms.tex
       manual/installation.tex
       manual/introduction.tex
       manual/keywords.tex
@@ -43,6 +44,7 @@ if(BUILD_MANUAL)
       manual/other-libs.tex
       manual/shared-lib.tex
       manual/setup.tex
+      manual/structured-matrices.tex
       manual/tuning.tex
       manual/types.tex
       manual/versioning.tex
