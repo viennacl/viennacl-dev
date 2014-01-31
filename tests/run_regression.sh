@@ -24,9 +24,9 @@ if [ "$INPUT" != "" ]; then
       make Nightly
       echo ""
       echo "regression result is available here:"
-      echo "----------------------------------------------"
-      echo "http://my.cdash.org/index.php?project=ViennaCL"
-      echo "----------------------------------------------"
+      echo "---------------------------------------------------------------------"
+      echo "http://jwein2.iue.tuwien.ac.at:50000/CDash/index.php?project=ViennaCL"
+      echo "-------------------------------------------------------------------- "
       echo ""
    else 
       echo ""
