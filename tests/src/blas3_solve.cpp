@@ -18,14 +18,13 @@
 //#define NDEBUG
 //#define VIENNACL_DEBUG_BUILD
 
-// We don't need debug mode in UBLAS:
-#define BOOST_UBLAS_NDEBUG
-
-
 //
 // *** System
 //
 #include <iostream>
+
+// We don't need debug mode in UBLAS:
+#define BOOST_UBLAS_NDEBUG
 
 //
 // *** Boost
@@ -64,7 +63,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
+      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
    return 0;
 }
 
@@ -78,8 +77,8 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 
    for (std::size_t i=0;i<v1.size(); ++i)
    {
-      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
+      if ( std::max( fabs(v2_cpu[i]), fabs(v1[i]) ) > 0 )
+         v2_cpu[i] = fabs(v2_cpu[i] - v1[i]) / std::max( fabs(v2_cpu[i]), fabs(v1[i]) );
       else
          v2_cpu[i] = 0.0;
    }
@@ -121,7 +120,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 template <typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
 void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, Epsilon const & epsilon)
 {
-   double act_diff = std::fabs(diff(B_ref, B_check));
+   double act_diff = fabs(diff(B_ref, B_check));
    if( act_diff > epsilon )
    {
      std::cout << " FAILED!" << std::endl;
@@ -511,4 +510,66 @@ int test(Epsilon const& epsilon)
 
 
   return ret;
+}
+
+//
+// -------------------------------------------------------------
+//
+int main()
+{
+   std::cout << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << "## Test :: BLAS 3 routines" << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << std::endl;
+
+   int retval = EXIT_SUCCESS;
+
+   std::cout << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << std::endl;
+   {
+      typedef float NumericT;
+      NumericT epsilon = NumericT(1.0E-3);
+      std::cout << "# Testing setup:" << std::endl;
+      std::cout << "  eps:     " << epsilon << std::endl;
+      std::cout << "  numeric: float" << std::endl;
+      retval = test<NumericT>(epsilon);
+      if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+      else
+        return retval;
+   }
+   std::cout << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << std::endl;
+#ifdef VIENNACL_WITH_OPENCL
+   if( viennacl::ocl::current_device().double_support() )
+#endif
+   {
+      {
+        typedef double NumericT;
+        NumericT epsilon = 1.0E-11;
+        std::cout << "# Testing setup:" << std::endl;
+        std::cout << "  eps:     " << epsilon << std::endl;
+        std::cout << "  numeric: double" << std::endl;
+        retval = test<NumericT>(epsilon);
+        if( retval == EXIT_SUCCESS )
+          std::cout << "# Test passed" << std::endl;
+        else
+          return retval;
+      }
+      std::cout << std::endl;
+      std::cout << "----------------------------------------------" << std::endl;
+      std::cout << std::endl;
+   }
+
+   std::cout << std::endl;
+   std::cout << "------- Test completed --------" << std::endl;
+   std::cout << std::endl;
+
+
+   return retval;
 }
