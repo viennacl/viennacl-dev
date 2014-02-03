@@ -287,65 +287,22 @@ namespace viennacl
       //
 
       ////////////////// triangular solver //////////////////////////////////////
-      /** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation)
+      /** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation). Both A and B can optionally be transposed.
       *
-      * @param A      The system matrix
-      * @param B      The matrix of row vectors, where the solution is directly written to
-      * @param tag    Solver tag for identifying the respective triangular solver
+      * @param A         The system matrix
+      * @param trans_A   Whether A is transposed
+      * @param B         The matrix of row vectors, where the solution is directly written to
+      * @param trans_B   Whether B is transposed
+      * @param tag       Solver tag for identifying the respective triangular solver
       */
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG tag)
-      {
-        detail::inplace_solve_impl(A, false,
-                                   B, false, tag);
-      }
-
-      /** @brief Direct inplace solver for triangular systems with multiple transposed right hand sides, i.e. A \ B^T   (MATLAB notation)
-      *
-      * @param A       The system matrix
-      * @param proxy_B The proxy for the transposed matrix of row vectors, where the solution is directly written to
-      * @param tag    Solver tag for identifying the respective triangular solver
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A,
-                         matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
+      void inplace_solve(const matrix_base<NumericT, F1> & A, bool trans_A,
+                         matrix_base<NumericT, F2> & B, bool trans_B,
                          SOLVERTAG tag)
       {
-        detail::inplace_solve_impl(A, false,
-                                   const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, tag);
+        detail::inplace_solve_impl(A, trans_A,
+                                   B, trans_B, tag);
       }
-
-      //upper triangular solver for transposed lower triangular matrices
-      /** @brief Direct inplace solver for transposed triangular systems with multiple right hand sides, i.e. A^T \ B   (MATLAB notation)
-      *
-      * @param proxy_A  The transposed system matrix proxy
-      * @param B        The matrix holding the load vectors, where the solution is directly written to
-      * @param tag    Solver tag for identifying the respective triangular solver
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
-                         matrix_base<NumericT, F2> & B,
-                         SOLVERTAG tag)
-      {
-        detail::inplace_solve_impl(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
-                                   B, false, tag);
-      }
-
-      /** @brief Direct inplace solver for transposed triangular systems with multiple transposed right hand sides, i.e. A^T \ B^T   (MATLAB notation)
-      *
-      * @param proxy_A    The transposed system matrix proxy
-      * @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
-      * @param tag    Solver tag for identifying the respective triangular solver
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
-                               matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
-                         SOLVERTAG tag)
-      {
-        detail::inplace_solve_impl(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
-                                   const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, tag);
-      }
-
 
 
       //
@@ -487,33 +444,16 @@ namespace viennacl
       * @param vec    The load vector, where the solution is directly written to
       */
       template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F> & mat,
+      void inplace_solve(const matrix_base<NumericT, F> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
         unsigned int options = detail::get_option_for_solver_tag(SOLVERTAG());
+        if (trans_mat)
+          options |= 0x02;
 
         detail::inplace_solve_vector_impl(mat, vec, options);
       }
-
-
-
-
-      /** @brief Direct inplace solver for dense triangular systems (transposed version)
-      *
-      * @param proxy    The system matrix proxy
-      * @param vec    The load vector, where the solution is directly written to
-      */
-      template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & proxy,
-                         vector_base<NumericT> & vec,
-                         SOLVERTAG)
-      {
-        unsigned int options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
-
-        detail::inplace_solve_vector_impl(proxy.lhs(), vec, options);
-      }
-
 
 
     }

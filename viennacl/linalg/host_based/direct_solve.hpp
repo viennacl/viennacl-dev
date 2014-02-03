@@ -127,7 +127,9 @@ namespace viennacl
       * @param B      The matrix of row vectors, where the solution is directly written to
       */
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
+      void inplace_solve(const matrix_base<NumericT, F1> & A, bool trans_A,
+                         matrix_base<NumericT, F2> & B, bool trans_B,
+                         SOLVERTAG)
       {
         typedef NumericT        value_type;
 
@@ -138,6 +140,7 @@ namespace viennacl
         vcl_size_t A_start2 = viennacl::traits::start2(A);
         vcl_size_t A_inc1   = viennacl::traits::stride1(A);
         vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+        vcl_size_t A_size1  = viennacl::traits::size1(A);
         vcl_size_t A_size2  = viennacl::traits::size2(A);
         vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
         vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
@@ -146,15 +149,40 @@ namespace viennacl
         vcl_size_t B_start2 = viennacl::traits::start2(B);
         vcl_size_t B_inc1   = viennacl::traits::stride1(B);
         vcl_size_t B_inc2   = viennacl::traits::stride2(B);
+        vcl_size_t B_size1  = viennacl::traits::size1(B);
         vcl_size_t B_size2  = viennacl::traits::size2(B);
         vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
         vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
 
 
-        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+        if (!trans_A && !trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
-        detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
+          detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SOLVERTAG());
+        }
+        else if  (!trans_A && trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+          detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SOLVERTAG());
+        }
+        else if  (trans_A && !trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+          detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size2, SOLVERTAG());
+        }
+        else if  (trans_A && trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F2::orientation_category, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+          detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size1, SOLVERTAG());
+        }
       }
 
       /** @brief Direct inplace solver for triangular systems with multiple transposed right hand sides, i.e. A \ B^T   (MATLAB notation)
@@ -349,7 +377,7 @@ namespace viennacl
       }
 
       template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F> & mat,
+      void inplace_solve(const matrix_base<NumericT, F> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
@@ -369,46 +397,21 @@ namespace viennacl
         vcl_size_t start1 = viennacl::traits::start(vec);
         vcl_size_t inc1   = viennacl::traits::stride(vec);
 
-        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
+        if (trans_mat)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F::orientation_category, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
 
-        detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SOLVERTAG());
+          detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SOLVERTAG());
+        }
+        else
+        {
+          detail::matrix_array_wrapper<value_type const, typename F::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
+
+          detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SOLVERTAG());
+        }
       }
-
-
-
-      /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
-      *
-      * @param proxy    The system matrix proxy
-      * @param vec    The load vector, where the solution is directly written to
-      */
-      template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & proxy,
-                         vector_base<NumericT> & vec,
-                         SOLVERTAG)
-      {
-        typedef NumericT        value_type;
-
-        value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy.lhs());
-        value_type       * data_v = detail::extract_raw_pointer<value_type>(vec);
-
-        vcl_size_t A_start1 = viennacl::traits::start1(proxy.lhs());
-        vcl_size_t A_start2 = viennacl::traits::start2(proxy.lhs());
-        vcl_size_t A_inc1   = viennacl::traits::stride1(proxy.lhs());
-        vcl_size_t A_inc2   = viennacl::traits::stride2(proxy.lhs());
-        vcl_size_t A_size2  = viennacl::traits::size2(proxy.lhs());
-        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(proxy.lhs());
-        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(proxy.lhs());
-
-        vcl_size_t start1 = viennacl::traits::start(vec);
-        vcl_size_t inc1   = viennacl::traits::stride(vec);
-
-        detail::matrix_array_wrapper<value_type const, typename F::orientation_category, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
-
-        detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SOLVERTAG());
-      }
-
 
 
     }

@@ -72,7 +72,9 @@ namespace viennacl
       * @param B    The matrix of row vectors, where the solution is directly written to
       */
       template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, matrix_base<NumericT, F2> & B, SOLVERTAG)
+      void inplace_solve(const matrix_base<NumericT, F1> & A, bool trans_A,
+                         matrix_base<NumericT, F2> & B, bool trans_B,
+                         SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
@@ -80,81 +82,17 @@ namespace viennacl
         KernelClass::init(ctx);
 
         std::stringstream ss;
-        ss << SOLVERTAG::name() << "_solve";
+        if (trans_A) ss << "trans_";
+        ss << SOLVERTAG::name();
+        if (trans_B) ss << "_trans";
+        ss << "_solve";
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
 
-        k.global_work_size(0, B.size2() * k.local_work_size());
+        if (trans_B)
+          k.global_work_size(0, B.size1() * k.local_work_size());
+        else
+          k.global_work_size(0, B.size2() * k.local_work_size());
         detail::inplace_solve_impl(A, B, k);
-      }
-
-      /** @brief Direct inplace solver for dense triangular systems with transposed right hand side
-      *
-      * @param A       The system matrix
-      * @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A,
-                         matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> proxy_B,
-                         SOLVERTAG)
-      {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
-        KernelClass::init(ctx);
-
-        std::stringstream ss;
-        ss << SOLVERTAG::name() << "_trans_solve";
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
-
-        k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
-        detail::inplace_solve_impl(A, proxy_B.lhs(), k);
-      }
-
-      //upper triangular solver for transposed lower triangular matrices
-      /** @brief Direct inplace solver for dense triangular systems that stem from transposed triangular systems
-      *
-      * @param proxy_A  The system matrix proxy
-      * @param B        The matrix holding the load vectors, where the solution is directly written to
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
-                         matrix_base<NumericT, F2> & B,
-                         SOLVERTAG)
-      {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(B).context());
-
-        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
-        KernelClass::init(ctx);
-
-        std::stringstream ss;
-        ss << "trans_" << SOLVERTAG::name() << "_solve";
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
-
-        k.global_work_size(0, B.size2() * k.local_work_size());
-        detail::inplace_solve_impl(proxy_A.lhs(), B, k);
-      }
-
-      /** @brief Direct inplace solver for dense transposed triangular systems with transposed right hand side. Matlab notation: A' \ B'
-      *
-      * @param proxy_A  The system matrix proxy
-      * @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
-      */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & proxy_A,
-                               matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans>   proxy_B,
-                         SOLVERTAG)
-      {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_A.lhs()).context());
-
-        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
-        KernelClass::init(ctx);
-
-        std::stringstream ss;
-        ss << "trans_" << SOLVERTAG::name() << "_trans_solve";
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
-
-        k.global_work_size(0, proxy_B.lhs().size1() * k.local_work_size());
-        detail::inplace_solve_impl(proxy_A.lhs(), proxy_B.lhs(), k);
       }
 
 
@@ -164,7 +102,7 @@ namespace viennacl
       //
 
       template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F> & mat,
+      void inplace_solve(const matrix_base<NumericT, F> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
@@ -174,6 +112,8 @@ namespace viennacl
         KernelClass::init(ctx);
 
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
+        if (trans_mat)
+          options |= 0x02;
         viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
 
         k.global_work_size(0, k.local_work_size());
@@ -190,40 +130,6 @@ namespace viennacl
                                 )
                               );
       }
-
-      /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
-      *
-      * @param proxy    The system matrix proxy
-      * @param vec    The load vector, where the solution is directly written to
-      */
-      template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & proxy,
-                         vector_base<NumericT> & vec,
-                         SOLVERTAG)
-      {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
-        cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG()) | 0x02;  //add transpose-flag
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
-
-        k.global_work_size(0, k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(proxy.lhs()),
-                                 cl_uint(viennacl::traits::start1(proxy.lhs())),         cl_uint(viennacl::traits::start2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::stride1(proxy.lhs())),        cl_uint(viennacl::traits::stride2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::size1(proxy.lhs())),          cl_uint(viennacl::traits::size2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(proxy.lhs())), cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
-                                 viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),
-                                 options
-                                )
-                              );
-      }
-
 
     }
   }

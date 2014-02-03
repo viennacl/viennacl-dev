@@ -59,16 +59,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(A, B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(A, false, B, false, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(A, B, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(A, false, B, false, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(A, B, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(A, false, B, false, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -94,16 +94,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(A, proxy_B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(A, false, const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(A, proxy_B, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(A, false, const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(A, proxy_B, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(A, false, const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -130,16 +130,16 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(proxy_A, B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(proxy_A, B, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(proxy_A, B, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -165,16 +165,19 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
+                                                      const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
+                                                  const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(proxy_A, proxy_B, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT, F1> &>(proxy_A.lhs()), true,
+                                                const_cast<matrix_base<NumericT, F2> &>(proxy_B.lhs()), true, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -199,16 +202,16 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(mat, vec, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(mat, false, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(mat, vec, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(mat, false, vec, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(mat, vec, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(mat, false, vec, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -234,16 +237,16 @@ namespace viennacl
       switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(proxy, vec, SOLVERTAG());
+          viennacl::linalg::host_based::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(proxy, vec, SOLVERTAG());
+          viennacl::linalg::opencl::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(proxy, vec, SOLVERTAG());
+          viennacl::linalg::cuda::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
