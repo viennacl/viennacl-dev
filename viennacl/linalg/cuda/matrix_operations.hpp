@@ -1354,14 +1354,14 @@ namespace viennacl
 
       /** @brief Carries out matrix-vector multiplication
       *
-      * Implementation of the convenience expression result = prod(mat, vec);
+      * Implementation of the convenience expressions result = prod(mat, vec); and result = prod(trans(mat), vec);
       *
       * @param mat    The matrix
       * @param vec    The vector
       * @param result The result vector
       */
       template <typename NumericT, typename F>
-      void prod_impl(const matrix_base<NumericT, F> & mat,
+      void prod_impl(const matrix_base<NumericT, F> & mat, bool mat_transpose,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
@@ -1371,110 +1371,89 @@ namespace viennacl
 
         if (viennacl::is_row_major<F>::value)
         {
-          vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
-                                           static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
+          if (!mat_transpose)
+          {
+            vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
+                                             static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
 
-                                           detail::cuda_arg<value_type>(vec),
-                                           static_cast<unsigned int>(viennacl::traits::start(vec)),
-                                           static_cast<unsigned int>(viennacl::traits::stride(vec)),
-                                           static_cast<unsigned int>(viennacl::traits::size(vec)),
+                                             detail::cuda_arg<value_type>(vec),
+                                             static_cast<unsigned int>(viennacl::traits::start(vec)),
+                                             static_cast<unsigned int>(viennacl::traits::stride(vec)),
+                                             static_cast<unsigned int>(viennacl::traits::size(vec)),
 
-                                           detail::cuda_arg<value_type>(result),
-                                           static_cast<unsigned int>(viennacl::traits::start(result)),
-                                           static_cast<unsigned int>(viennacl::traits::stride(result)),
-                                           static_cast<unsigned int>(viennacl::traits::size(result))
-                                          );
-          VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_row_kernel");
+                                             detail::cuda_arg<value_type>(result),
+                                             static_cast<unsigned int>(viennacl::traits::start(result)),
+                                             static_cast<unsigned int>(viennacl::traits::stride(result)),
+                                             static_cast<unsigned int>(viennacl::traits::size(result))
+                                            );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_row_kernel");
+          }
+          else
+          {
+            trans_vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
+                                                   static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
+
+                                                   detail::cuda_arg<value_type>(vec),
+                                                   static_cast<unsigned int>(viennacl::traits::start(vec)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride(vec)),
+                                                   static_cast<unsigned int>(viennacl::traits::size(vec)),
+
+                                                   detail::cuda_arg<value_type>(result),
+                                                   static_cast<unsigned int>(viennacl::traits::start(result)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride(result)),
+                                                   static_cast<unsigned int>(viennacl::traits::size(result))
+                                                  );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_row_kernel");
+          }
         }
         else
         {
-          vec_mul_col_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
-                                           static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
-                                           static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
+          if (!mat_transpose)
+          {
+            vec_mul_col_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
+                                             static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                             static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
 
-                                           detail::cuda_arg<value_type>(vec),
-                                           static_cast<unsigned int>(viennacl::traits::start(vec)),
-                                           static_cast<unsigned int>(viennacl::traits::stride(vec)),
-                                           static_cast<unsigned int>(viennacl::traits::size(vec)),
+                                             detail::cuda_arg<value_type>(vec),
+                                             static_cast<unsigned int>(viennacl::traits::start(vec)),
+                                             static_cast<unsigned int>(viennacl::traits::stride(vec)),
+                                             static_cast<unsigned int>(viennacl::traits::size(vec)),
 
-                                           detail::cuda_arg<value_type>(result),
-                                           static_cast<unsigned int>(viennacl::traits::start(result)),
-                                           static_cast<unsigned int>(viennacl::traits::stride(result)),
-                                           static_cast<unsigned int>(viennacl::traits::size(result))
-                                          );
-          VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_col_kernel");
-        }
-      }
+                                             detail::cuda_arg<value_type>(result),
+                                             static_cast<unsigned int>(viennacl::traits::start(result)),
+                                             static_cast<unsigned int>(viennacl::traits::stride(result)),
+                                             static_cast<unsigned int>(viennacl::traits::size(result))
+                                            );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("vec_mul_col_kernel");
+          }
+          else
+          {
+            trans_vec_mul_col_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
+                                                   static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
+                                                   static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
 
+                                                   detail::cuda_arg<value_type>(vec),
+                                                   static_cast<unsigned int>(viennacl::traits::start(vec)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride(vec)),
+                                                   static_cast<unsigned int>(viennacl::traits::size(vec)),
 
-      // trans(A) * x
-
-      /** @brief Carries out matrix-vector multiplication with a transposed matrix
-      *
-      * Implementation of the convenience expression result = trans(mat) * vec;
-      *
-      * @param mat_trans  The transposed matrix proxy
-      * @param vec        The vector
-      * @param result     The result vector
-      */
-      template <typename NumericT, typename F>
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
-                     const vector_base<NumericT> & vec,
-                           vector_base<NumericT> & result)
-      {
-        assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && bool("Size check failed for transposed matrix-vector product: size1(A^T) == size(result)"));
-        assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && bool("Size check failed for transposed matrix-vector product: size2(A^T) == size(x)"));  //remember: mat is transposed!
-
-        typedef NumericT    value_type;
-
-
-        // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-        assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
-
-        if (viennacl::is_row_major<F>::value)
-        {
-          trans_vec_mul_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat_trans.lhs()),
-                                                 static_cast<unsigned int>(viennacl::traits::start1(mat_trans.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::stride1(mat_trans.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::size1(mat_trans.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::internal_size1(mat_trans.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(mat_trans.lhs())),
-
-                                                 detail::cuda_arg<value_type>(vec),
-                                                 static_cast<unsigned int>(viennacl::traits::start(vec)),
-                                                 static_cast<unsigned int>(viennacl::traits::stride(vec)),
-                                                 static_cast<unsigned int>(viennacl::traits::size(vec)),
-
-                                                 detail::cuda_arg<value_type>(result),
-                                                 static_cast<unsigned int>(viennacl::traits::start(result)),
-                                                 static_cast<unsigned int>(viennacl::traits::stride(result)),
-                                                 static_cast<unsigned int>(viennacl::traits::size(result))
-                                                );
-          VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_row_kernel");
-        }
-        else
-        {
-          trans_vec_mul_col_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat_trans.lhs()),
-                                                 static_cast<unsigned int>(viennacl::traits::start1(mat_trans.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::stride1(mat_trans.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::size1(mat_trans.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(mat_trans.lhs())),
-                                                 static_cast<unsigned int>(viennacl::traits::internal_size1(mat_trans.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(mat_trans.lhs())),
-
-                                                 detail::cuda_arg<value_type>(vec),
-                                                 static_cast<unsigned int>(viennacl::traits::start(vec)),
-                                                 static_cast<unsigned int>(viennacl::traits::stride(vec)),
-                                                 static_cast<unsigned int>(viennacl::traits::size(vec)),
-
-                                                 detail::cuda_arg<value_type>(result),
-                                                 static_cast<unsigned int>(viennacl::traits::start(result)),
-                                                 static_cast<unsigned int>(viennacl::traits::stride(result)),
-                                                 static_cast<unsigned int>(viennacl::traits::size(result))
-                                                );
-          VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_col_kernel");
+                                                   detail::cuda_arg<value_type>(result),
+                                                   static_cast<unsigned int>(viennacl::traits::start(result)),
+                                                   static_cast<unsigned int>(viennacl::traits::stride(result)),
+                                                   static_cast<unsigned int>(viennacl::traits::size(result))
+                                                  );
+            VIENNACL_CUDA_LAST_ERROR_CHECK("trans_vec_mul_col_kernel");
+          }
         }
       }
 
@@ -2340,109 +2319,14 @@ namespace viennacl
       *
       */
       template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const matrix_base<NumericT, F2> & B,
+      void prod_impl(const matrix_base<NumericT, F1> & A, bool trans_A,
+                     const matrix_base<NumericT, F2> & B, bool trans_B,
                            matrix_base<NumericT, F3> & C,
                      ScalarType alpha,
                      ScalarType beta)
       {
-        assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(A, B): size1(A) != size1(C)"));
-        assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(A, B): size2(A) != size1(B)"));
-        assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(A, B): size2(B) != size2(C)"));
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
-
-
-        detail::prod(A, false,
-                     B, false,
-                     C, alpha, beta);
-      }
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), B);
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>,
-                                                        const matrix_base<NumericT, F1>,
-                                                        op_trans> & A,
-                     const matrix_base<NumericT, F2> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        //std::cout << "size2(A): " << viennacl::traits::size2(A.lhs()) << std::endl;
-        //std::cout << "size1(C): " << viennacl::traits::size1(C) << std::endl;
-        assert( (viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(A) != size1(C)"));
-        assert( (viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(trans(A), B): size1(A) != size1(B)"));
-        assert( (viennacl::traits::size2(B)       == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(B) != size2(C)"));
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
-
-        detail::prod(A.lhs(), true,
-                     B, false,
-                     C, alpha, beta);
-      }
-
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(A, trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        assert( (viennacl::traits::size1(A)       == viennacl::traits::size1(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(A) != size1(C)"));
-        assert( (viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs())) && bool("Size mismatch in C = prod(A, trans(B)): size2(A) != size2(B)"));
-        assert( (viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(B) != size2(C)"));
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        detail::prod(A, false,
-                     B.lhs(), true,
-                     C, alpha, beta);
-      }
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                     matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size2(A) != size1(C)"));
-        assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(A) != size2(B)"));
-        assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(B) != size2(C)"));
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));
-
-        detail::prod(A.lhs(), true,
-                     B.lhs(), true,
+        detail::prod(A, trans_A,
+                     B, trans_B,
                      C, alpha, beta);
       }
 

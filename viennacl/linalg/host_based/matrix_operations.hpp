@@ -734,7 +734,7 @@ namespace viennacl
       * @param result The result vector
       */
       template <typename NumericT, typename F>
-      void prod_impl(const matrix_base<NumericT, F> & mat,
+      void prod_impl(const matrix_base<NumericT, F> & mat, bool trans,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
@@ -761,103 +761,71 @@ namespace viennacl
 
         if (detail::is_row_major(typename F::orientation_category()))
         {
-#ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
-#endif
-          for (long row = 0; row < static_cast<long>(A_size1); ++row)
+          if (trans)
           {
-            value_type temp = 0;
-            for (vcl_size_t col = 0; col < A_size2; ++col)
-              temp += data_A[viennacl::row_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
-
-            data_result[row * inc2 + start2] = temp;
-          }
-        }
-        else
-        {
-          {
-            value_type temp = data_x[start1];
-            for (vcl_size_t row = 0; row < A_size1; ++row)
-              data_result[row * inc2 + start2] = data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, A_start2, A_internal_size1, A_internal_size2)] * temp;
-          }
-          for (vcl_size_t col = 1; col < A_size2; ++col)  //run through matrix sequentially
-          {
-            value_type temp = data_x[col * inc1 + start1];
-            for (vcl_size_t row = 0; row < A_size1; ++row)
-              data_result[row * inc2 + start2] += data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
-          }
-        }
-      }
-
-
-      // trans(A) * x
-
-      /** @brief Carries out matrix-vector multiplication with a transposed matrix
-      *
-      * Implementation of the convenience expression result = trans(mat) * vec;
-      *
-      * @param mat_trans  The transposed matrix proxy
-      * @param vec        The vector
-      * @param result     The result vector
-      */
-      template <typename NumericT, typename F>
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
-                     const vector_base<NumericT> & vec,
-                           vector_base<NumericT> & result)
-      {
-        typedef NumericT        value_type;
-
-        value_type const * data_A = detail::extract_raw_pointer<value_type>(mat_trans.lhs());
-        value_type const * data_x = detail::extract_raw_pointer<value_type>(vec);
-        value_type       * data_result = detail::extract_raw_pointer<value_type>(result);
-
-        vcl_size_t A_start1 = viennacl::traits::start1(mat_trans.lhs());
-        vcl_size_t A_start2 = viennacl::traits::start2(mat_trans.lhs());
-        vcl_size_t A_inc1   = viennacl::traits::stride1(mat_trans.lhs());
-        vcl_size_t A_inc2   = viennacl::traits::stride2(mat_trans.lhs());
-        vcl_size_t A_size1  = viennacl::traits::size1(mat_trans.lhs());
-        vcl_size_t A_size2  = viennacl::traits::size2(mat_trans.lhs());
-        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(mat_trans.lhs());
-        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(mat_trans.lhs());
-
-        vcl_size_t start1 = viennacl::traits::start(vec);
-        vcl_size_t inc1   = viennacl::traits::stride(vec);
-
-        vcl_size_t start2 = viennacl::traits::start(result);
-        vcl_size_t inc2   = viennacl::traits::stride(result);
-
-        if (detail::is_row_major(typename F::orientation_category()))
-        {
-          {
-            value_type temp = data_x[start1];
-            for (vcl_size_t row = 0; row < A_size2; ++row)
-              data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
-          }
-
-          for (vcl_size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
-          {
-            value_type temp = data_x[col * inc1 + start1];
-            for (vcl_size_t row = 0; row < A_size2; ++row)
             {
-              data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+              value_type temp = data_x[start1];
+              for (vcl_size_t row = 0; row < A_size2; ++row)
+                data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
+
+            for (vcl_size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
+            {
+              value_type temp = data_x[col * inc1 + start1];
+              for (vcl_size_t row = 0; row < A_size2; ++row)
+              {
+                data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+              }
+            }
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            {
+              value_type temp = 0;
+              for (vcl_size_t col = 0; col < A_size2; ++col)
+                temp += data_A[viennacl::row_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+
+              data_result[row * inc2 + start2] = temp;
             }
           }
         }
         else
         {
-#ifdef VIENNACL_WITH_OPENMP
-          #pragma omp parallel for
-#endif
-          for (long row = 0; row < static_cast<long>(A_size2); ++row)
+          if (!trans)
           {
-            value_type temp = 0;
-            for (vcl_size_t col = 0; col < A_size1; ++col)
-              temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+            {
+              value_type temp = data_x[start1];
+              for (vcl_size_t row = 0; row < A_size1; ++row)
+                data_result[row * inc2 + start2] = data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
+            for (vcl_size_t col = 1; col < A_size2; ++col)  //run through matrix sequentially
+            {
+              value_type temp = data_x[col * inc1 + start1];
+              for (vcl_size_t row = 0; row < A_size1; ++row)
+                data_result[row * inc2 + start2] += data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+            }
+          }
+          else
+          {
+#ifdef VIENNACL_WITH_OPENMP
+            #pragma omp parallel for
+#endif
+            for (long row = 0; row < static_cast<long>(A_size2); ++row)
+            {
+              value_type temp = 0;
+              for (vcl_size_t col = 0; col < A_size1; ++col)
+                temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
 
-            data_result[row * inc2 + start2] = temp;
+              data_result[row * inc2 + start2] = temp;
+            }
           }
         }
       }
+
 
 
       //
@@ -898,8 +866,8 @@ namespace viennacl
       *
       */
       template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const matrix_base<NumericT, F2> & B,
+      void prod_impl(const matrix_base<NumericT, F1> & A, bool trans_A,
+                     const matrix_base<NumericT, F2> & B, bool trans_B,
                            matrix_base<NumericT, F3> & C,
                      ScalarType alpha,
                      ScalarType beta)
@@ -914,6 +882,7 @@ namespace viennacl
         vcl_size_t A_start2 = viennacl::traits::start2(A);
         vcl_size_t A_inc1   = viennacl::traits::stride1(A);
         vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+        vcl_size_t A_size1  = viennacl::traits::size1(A);
         vcl_size_t A_size2  = viennacl::traits::size2(A);
         vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
         vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
@@ -934,167 +903,38 @@ namespace viennacl
         vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
         vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
-        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+        if (!trans_A && !trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
-      }
+          detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+        }
+        else if (!trans_A && trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
+          detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+        }
+        else if (trans_A && !trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
+          detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+        }
+        else if (trans_A && trans_B)
+        {
+          detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+          detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+          detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), B);
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>,
-                                                        const matrix_base<NumericT, F1>,
-                                                        op_trans> & A,
-                     const matrix_base<NumericT, F2> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        typedef NumericT        value_type;
-
-        value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
-        value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
-        value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
-
-        vcl_size_t A_start1 = viennacl::traits::start1(A.lhs());
-        vcl_size_t A_start2 = viennacl::traits::start2(A.lhs());
-        vcl_size_t A_inc1   = viennacl::traits::stride1(A.lhs());
-        vcl_size_t A_inc2   = viennacl::traits::stride2(A.lhs());
-        vcl_size_t A_size1  = viennacl::traits::size1(A.lhs());
-        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A.lhs());
-        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A.lhs());
-
-        vcl_size_t B_start1 = viennacl::traits::start1(B);
-        vcl_size_t B_start2 = viennacl::traits::start2(B);
-        vcl_size_t B_inc1   = viennacl::traits::stride1(B);
-        vcl_size_t B_inc2   = viennacl::traits::stride2(B);
-        vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
-        vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
-
-        vcl_size_t C_start1 = viennacl::traits::start1(C);
-        vcl_size_t C_start2 = viennacl::traits::start2(C);
-        vcl_size_t C_inc1   = viennacl::traits::stride1(C);
-        vcl_size_t C_inc2   = viennacl::traits::stride2(C);
-        vcl_size_t C_size1  = viennacl::traits::size1(C);
-        vcl_size_t C_size2  = viennacl::traits::size2(C);
-        vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
-        vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
-
-        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
-
-        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
-      }
-
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(A, trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        typedef NumericT        value_type;
-
-        value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
-        value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
-        value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
-
-        vcl_size_t A_start1 = viennacl::traits::start1(A);
-        vcl_size_t A_start2 = viennacl::traits::start2(A);
-        vcl_size_t A_inc1   = viennacl::traits::stride1(A);
-        vcl_size_t A_inc2   = viennacl::traits::stride2(A);
-        vcl_size_t A_size2  = viennacl::traits::size2(A);
-        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
-        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
-
-        vcl_size_t B_start1 = viennacl::traits::start1(B.lhs());
-        vcl_size_t B_start2 = viennacl::traits::start2(B.lhs());
-        vcl_size_t B_inc1   = viennacl::traits::stride1(B.lhs());
-        vcl_size_t B_inc2   = viennacl::traits::stride2(B.lhs());
-        vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B.lhs());
-        vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B.lhs());
-
-        vcl_size_t C_start1 = viennacl::traits::start1(C);
-        vcl_size_t C_start2 = viennacl::traits::start2(C);
-        vcl_size_t C_inc1   = viennacl::traits::stride1(C);
-        vcl_size_t C_inc2   = viennacl::traits::stride2(C);
-        vcl_size_t C_size1  = viennacl::traits::size1(C);
-        vcl_size_t C_size2  = viennacl::traits::size2(C);
-        vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
-        vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
-
-        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
-
-        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
-      }
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                     matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        typedef NumericT        value_type;
-
-        value_type const * data_A = detail::extract_raw_pointer<value_type>(A.lhs());
-        value_type const * data_B = detail::extract_raw_pointer<value_type>(B.lhs());
-        value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
-
-        vcl_size_t A_start1 = viennacl::traits::start1(A.lhs());
-        vcl_size_t A_start2 = viennacl::traits::start2(A.lhs());
-        vcl_size_t A_inc1   = viennacl::traits::stride1(A.lhs());
-        vcl_size_t A_inc2   = viennacl::traits::stride2(A.lhs());
-        vcl_size_t A_size1  = viennacl::traits::size1(A.lhs());
-        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A.lhs());
-        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A.lhs());
-
-        vcl_size_t B_start1 = viennacl::traits::start1(B.lhs());
-        vcl_size_t B_start2 = viennacl::traits::start2(B.lhs());
-        vcl_size_t B_inc1   = viennacl::traits::stride1(B.lhs());
-        vcl_size_t B_inc2   = viennacl::traits::stride2(B.lhs());
-        vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B.lhs());
-        vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B.lhs());
-
-        vcl_size_t C_start1 = viennacl::traits::start1(C);
-        vcl_size_t C_start2 = viennacl::traits::start2(C);
-        vcl_size_t C_inc1   = viennacl::traits::stride1(C);
-        vcl_size_t C_inc2   = viennacl::traits::stride2(C);
-        vcl_size_t C_size1  = viennacl::traits::size1(C);
-        vcl_size_t C_size2  = viennacl::traits::size2(C);
-        vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
-        vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
-
-        detail::matrix_array_wrapper<value_type const, typename F1::orientation_category, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-        detail::matrix_array_wrapper<value_type const, typename F2::orientation_category, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-        detail::matrix_array_wrapper<value_type,       typename F3::orientation_category, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
-
-        detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+          detail::prod(wrapper_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+        }
       }
 
 

@@ -357,16 +357,16 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(mat, vec, result);
+          viennacl::linalg::host_based::prod_impl(mat, false, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(mat, vec, result);
+          viennacl::linalg::opencl::prod_impl(mat, false, vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(mat, vec, result);
+          viennacl::linalg::cuda::prod_impl(mat, false, vec, result);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -398,16 +398,16 @@ namespace viennacl
       switch (viennacl::traits::handle(mat_trans.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(mat_trans, vec, result);
+          viennacl::linalg::host_based::prod_impl(mat_trans.lhs(), true, vec, result);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(mat_trans, vec, result);
+          viennacl::linalg::opencl::prod_impl(mat_trans.lhs(), true, vec, result);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(mat_trans, vec, result);
+          viennacl::linalg::cuda::prod_impl(mat_trans.lhs(), true, vec, result);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -442,16 +442,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, false, B, false, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::opencl::prod_impl(A, false, B, false, C, alpha, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::cuda::prod_impl(A, false, B, false, C, alpha, beta);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -484,16 +484,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A.lhs(), true, B, false, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::opencl::prod_impl(A.lhs(), true, B, false, C, alpha, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::cuda::prod_impl(A.lhs(), true, B, false, C, alpha, beta);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -525,16 +525,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A, false, B.lhs(), true, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::opencl::prod_impl(A, false, B.lhs(), true, C, alpha, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::cuda::prod_impl(A, false, B.lhs(), true, C, alpha, beta);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -565,16 +565,16 @@ namespace viennacl
       switch (viennacl::traits::handle(A.lhs()).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::host_based::prod_impl(A.lhs(), true, B.lhs(), true, C, alpha, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::opencl::prod_impl(A.lhs(), true, B.lhs(), true, C, alpha, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(A, B, C, alpha, beta);
+          viennacl::linalg::cuda::prod_impl(A.lhs(), true, B.lhs(), true, C, alpha, beta);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

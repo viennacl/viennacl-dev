@@ -544,7 +544,7 @@ namespace viennacl
       * @param result The result vector
       */
       template <typename NumericT, typename F>
-      void prod_impl(const matrix_base<NumericT, F> & mat,
+      void prod_impl(const matrix_base<NumericT, F> & mat, bool trans_mat,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
@@ -554,12 +554,11 @@ namespace viennacl
         typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
         KernelClass::init(ctx);
 
-        assert(mat.size2() == vec.size());
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         //result.resize(mat.size1());
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "vec_mul");
+        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), trans_mat ? "trans_vec_mul" : "vec_mul");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
                                 cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
@@ -579,57 +578,6 @@ namespace viennacl
                                 viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size())
                               ) );
       }
-
-
-      // trans(A) * x
-
-      /** @brief Carries out matrix-vector multiplication with a transposed matrix
-      *
-      * Implementation of the convenience expression result = trans(mat) * vec;
-      *
-      * @param mat_trans  The transposed matrix proxy
-      * @param vec        The vector
-      * @param result     The result vector
-      */
-      template <typename NumericT, typename F>
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
-                     const vector_base<NumericT> & vec,
-                           vector_base<NumericT> & result)
-      {
-        assert( (viennacl::traits::size1(mat_trans) == viennacl::traits::size(result)) && bool("Size check failed for transposed matrix-vector product: size1(A^T) == size(result)"));
-        assert( (viennacl::traits::size2(mat_trans) == viennacl::traits::size(vec)) && bool("Size check failed for transposed matrix-vector product: size2(A^T) == size(x)"));  //remember: mat is transposed!
-
-
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
-
-        // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
-        assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace transposed matrix-vector product possible. Introduce a temporary!"));
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "trans_vec_mul");
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat_trans.lhs()),
-                                cl_uint(viennacl::traits::start1(mat_trans.lhs())),         cl_uint(viennacl::traits::start2(mat_trans.lhs())),
-                                cl_uint(viennacl::traits::stride1(mat_trans.lhs())),        cl_uint(viennacl::traits::stride2(mat_trans.lhs())),
-                                cl_uint(viennacl::traits::size1(mat_trans.lhs())),          cl_uint(viennacl::traits::size2(mat_trans.lhs())),
-                                cl_uint(viennacl::traits::internal_size1(mat_trans.lhs())), cl_uint(viennacl::traits::internal_size2(mat_trans.lhs())),
-
-                                viennacl::traits::opencl_handle(vec),
-                                cl_uint(viennacl::traits::start(vec)),
-                                cl_uint(viennacl::traits::stride(vec)),
-                                cl_uint(viennacl::traits::size(vec)),
-
-                                viennacl::traits::opencl_handle(result),
-                                cl_uint(viennacl::traits::start(result)),
-                                cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result)),
-
-                                viennacl::ocl::local_mem(sizeof(NumericT) * k.local_work_size())
-                              ) );
-      }
-
 
       //
       /////////////////////////   matrix-matrix products /////////////////////////////////
@@ -782,16 +730,12 @@ namespace viennacl
       *
       */
       template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const matrix_base<NumericT, F2> & B,
+      void prod_impl(const matrix_base<NumericT, F1> & A, bool trans_A,
+                     const matrix_base<NumericT, F2> & B, bool trans_B,
                            matrix_base<NumericT, F3> & C,
                      ScalarType alpha,
                      ScalarType beta)
       {
-        assert( (viennacl::traits::size1(A) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(A, B): size1(A) != size1(C)"));
-        assert( (viennacl::traits::size2(A) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(A, B): size2(A) != size1(B)"));
-        assert( (viennacl::traits::size2(B) == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(A, B): size2(B) != size2(C)"));
-
         bool A_not_aligned = (A.internal_size1()%matrix_base<NumericT, F1>::alignment>0) ||(A.internal_size2()%matrix_base<NumericT, F1>::alignment>0);
         bool B_not_aligned = (B.internal_size1()%matrix_base<NumericT, F2>::alignment>0) ||(B.internal_size2()%matrix_base<NumericT, F2>::alignment>0);
         bool C_not_aligned = (C.internal_size1()%matrix_base<NumericT, F3>::alignment>0) ||(C.internal_size2()%matrix_base<NumericT, F3>::alignment>0);
@@ -800,139 +744,47 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        if(A_not_aligned || A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
-         ||B_not_aligned || B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
-         ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
-          detail::prod(A, B, C, alpha, beta, "prod16_AA", "prod_AA");
-        else{
-          typedef matrix_expression<const matrix_base<NumericT, F1>, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
-          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+        std::string string_prod16("prod16_");
+        std::string string_prod("prod_");
+
+        string_prod16.append(trans_A ? "T" : "A");
+        string_prod.append(trans_A ? "T" : "A");
+
+        string_prod16.append(trans_B ? "T" : "A");
+        string_prod.append(trans_B ? "T" : "A");
+
+        if (A_not_aligned || A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
+          ||B_not_aligned || B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
+          ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
+          detail::prod(A, B, C, alpha, beta, string_prod16, string_prod);
+        else
+        {
+          if (!trans_A && !trans_B)
+          {
+            typedef matrix_expression<const matrix_base<NumericT, F1>, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+            viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
+          }
+          else if (!trans_A && trans_B)
+          {
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
+            typedef matrix_expression<const matrix_base<NumericT, F1>, RhsType, op_mat_mat_prod> ProdType;
+            viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,RhsType(B,B))+beta*C));
+          }
+          else if (trans_A && !trans_B)
+          {
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
+            typedef matrix_expression<LhsType, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+            viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),B)+beta*C));
+          }
+          else if (trans_A && trans_B)
+          {
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
+            typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
+            viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),RhsType(B,B))+beta*C));
+          }
         }
       }
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), B);
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>,
-                                                        const matrix_base<NumericT, F1>,
-                                                        op_trans> & A,
-                     const matrix_base<NumericT, F2> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        //std::cout << "size2(A): " << viennacl::traits::size2(A.lhs()) << std::endl;
-        //std::cout << "size1(C): " << viennacl::traits::size1(C) << std::endl;
-        assert( (viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(A) != size1(C)"));
-        assert( (viennacl::traits::size1(A.lhs()) == viennacl::traits::size1(B)) && bool("Size mismatch in C = prod(trans(A), B): size1(A) != size1(B)"));
-        assert( (viennacl::traits::size2(B)       == viennacl::traits::size2(C)) && bool("Size mismatch in C = prod(trans(A), B): size2(B) != size2(C)"));
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
-
-        bool A_not_aligned = (A.lhs().internal_size1()%matrix_base<NumericT, F1>::alignment>0) ||(A.lhs().internal_size2()%matrix_base<NumericT, F1>::alignment>0);
-        bool B_not_aligned = (B.internal_size1()%matrix_base<NumericT, F2>::alignment>0) ||(B.internal_size2()%matrix_base<NumericT, F2>::alignment>0);
-        bool C_not_aligned = (C.internal_size1()%matrix_base<NumericT, F3>::alignment>0) ||(C.internal_size2()%matrix_base<NumericT, F3>::alignment>0);
-
-
-        if(A_not_aligned || A.lhs().start1() > 0 || A.lhs().start2() > 0 || A.lhs().stride1() > 1 || A.lhs().stride2() > 1
-         ||B_not_aligned || B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
-         ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
-          detail::prod(A.lhs(), B, C, alpha, beta, "prod16_TA", "prod_TA");
-        else{
-          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
-          typedef matrix_expression<LhsType, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
-          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
-        }
-      }
-
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(A, trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                           matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        assert( (viennacl::traits::size1(A)       == viennacl::traits::size1(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(A) != size1(C)"));
-        assert( (viennacl::traits::size2(A)       == viennacl::traits::size2(B.lhs())) && bool("Size mismatch in C = prod(A, trans(B)): size2(A) != size2(B)"));
-        assert( (viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C))       && bool("Size mismatch in C = prod(A, trans(B)): size1(B) != size2(C)"));
-
-        bool A_not_aligned = (A.internal_size1()%matrix_base<NumericT, F1>::alignment>0) ||(A.internal_size2()%matrix_base<NumericT, F1>::alignment>0);
-        bool B_not_aligned = (B.lhs().internal_size1()%matrix_base<NumericT, F2>::alignment>0) ||(B.lhs().internal_size2()%matrix_base<NumericT, F2>::alignment>0);
-        bool C_not_aligned = (C.internal_size1()%matrix_base<NumericT, F3>::alignment>0) ||(C.internal_size2()%matrix_base<NumericT, F3>::alignment>0);
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
-
-        if(A_not_aligned || A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
-         ||B_not_aligned || B.lhs().start1() > 0 || B.lhs().start2() > 0 || B.lhs().stride1() > 1 || B.lhs().stride2() > 1
-         ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
-          detail::prod(A, B.lhs(), C, alpha, beta, "prod16_AT", "prod_AT");
-        else{
-          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
-          typedef matrix_expression<const matrix_base<NumericT, F1>, RhsType, op_mat_mat_prod> ProdType;
-          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
-        }
-      }
-
-
-
-      /** @brief Carries out matrix-matrix multiplication
-      *
-      * Implementation of C = prod(trans(A), trans(B));
-      *
-      */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> & A,
-                     const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> & B,
-                     matrix_base<NumericT, F3> & C,
-                     ScalarType alpha,
-                     ScalarType beta)
-      {
-        assert(viennacl::traits::size2(A.lhs()) == viennacl::traits::size1(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size2(A) != size1(C)"));
-        assert(viennacl::traits::size1(A.lhs()) == viennacl::traits::size2(B.lhs()) && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(A) != size2(B)"));
-        assert(viennacl::traits::size1(B.lhs()) == viennacl::traits::size2(C)       && bool("Size mismatch in C = prod(trans(A), trans(B)): size1(B) != size2(C)"));
-
-        bool A_not_aligned = (A.lhs().internal_size1()%matrix_base<NumericT, F1>::alignment>0) ||(A.lhs().internal_size2()%matrix_base<NumericT, F1>::alignment>0);
-        bool B_not_aligned = (B.lhs().internal_size1()%matrix_base<NumericT, F2>::alignment>0) ||(B.lhs().internal_size2()%matrix_base<NumericT, F2>::alignment>0);
-        bool C_not_aligned = (C.internal_size1()%matrix_base<NumericT, F3>::alignment>0) ||(C.internal_size2()%matrix_base<NumericT, F3>::alignment>0);
-
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A.lhs()))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B.lhs()))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
-
-        if(A_not_aligned || A.lhs().start1() > 0 || A.lhs().start2() > 0 || A.lhs().stride1() > 1 || A.lhs().stride2() > 1
-         ||B_not_aligned || B.lhs().start1() > 0 || B.lhs().start2() > 0 || B.lhs().stride1() > 1 || B.lhs().stride2() > 1
-         ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
-          detail::prod(A.lhs(), B.lhs(), C, alpha, beta, "prod16_TT", "prod_TT");
-        else{
-          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
-          typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
-          typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
-          viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
-        }
-      }
-
-
-
 
       //
       /////////////////////////   miscellaneous operations /////////////////////////////////
