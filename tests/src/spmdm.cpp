@@ -76,7 +76,7 @@ int test(NumericT epsilon)
 
   ublas::compressed_matrix<NumericT>    ublas_lhs;
 
-  if (viennacl::io::read_matrix_market_file(ublas_lhs, "../../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
+  if (viennacl::io::read_matrix_market_file(ublas_lhs, "../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;

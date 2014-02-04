@@ -233,11 +233,11 @@ template <typename ScalarType>
 int test(ScalarType epsilon)
 {
 
-    test_svd<ScalarType>(std::string("../../examples/testdata/svd/qr.example"), epsilon);
-    test_svd<ScalarType>(std::string("../../examples/testdata/svd/wiki.example"), epsilon);
-    test_svd<ScalarType>(std::string("../../examples/testdata/svd/wiki.qr.example"), epsilon);
-    test_svd<ScalarType>(std::string("../../examples/testdata/svd/pysvd.example"), epsilon);
-    test_svd<ScalarType>(std::string("../../examples/testdata/svd/random.example"), epsilon);
+    test_svd<ScalarType>(std::string("../examples/testdata/svd/qr.example"), epsilon);
+    test_svd<ScalarType>(std::string("../examples/testdata/svd/wiki.example"), epsilon);
+    test_svd<ScalarType>(std::string("../examples/testdata/svd/wiki.qr.example"), epsilon);
+    test_svd<ScalarType>(std::string("../examples/testdata/svd/pysvd.example"), epsilon);
+    test_svd<ScalarType>(std::string("../examples/testdata/svd/random.example"), epsilon);
 
     time_svd<ScalarType>(500, 500);
     time_svd<ScalarType>(1000, 1000);
