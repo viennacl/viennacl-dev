@@ -271,6 +271,7 @@ namespace viennacl
 #endif
 
         /** @brief Is CL_TRUE if the device and the host have a unified memory subsystem and is CL_FALSE otherwise. */
+#ifdef CL_DEVICE_HOST_UNIFIED_MEMORY
         cl_bool host_unified_memory() const
         {
           if (!host_unified_memory_valid_)
@@ -281,6 +282,7 @@ namespace viennacl
           }
           return host_unified_memory_;
         }
+#endif
 
         /** @brief Is CL_TRUE if images are supported by the OpenCL device and CL_FALSE otherwise. */
         cl_bool image_support() const
@@ -583,6 +585,7 @@ namespace viennacl
           return architecture_family_;
         }
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_char() const
         {
@@ -594,7 +597,9 @@ namespace viennacl
           }
           return native_vector_width_char_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_short() const
         {
@@ -606,7 +611,9 @@ namespace viennacl
           }
           return native_vector_width_short_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_INT
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_int() const
         {
@@ -618,7 +625,9 @@ namespace viennacl
           }
           return native_vector_width_int_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_long() const
         {
@@ -630,7 +639,9 @@ namespace viennacl
           }
           return native_vector_width_long_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector. */
         cl_uint native_vector_width_float() const
         {
@@ -642,7 +653,9 @@ namespace viennacl
           }
           return native_vector_width_float_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector.
           *
           * If the cl_khr_fp64 extension is not supported, this function returns 0.
@@ -657,7 +670,9 @@ namespace viennacl
           }
           return native_vector_width_double_;
         }
+#endif
 
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF
         /** @brief Returns the native ISA vector width. The vector width is defined as the number of scalar elements that can be stored in the vector.
           *
           * If the cl_khr_fp16 extension is not supported, this function returns 0.
@@ -672,7 +687,9 @@ namespace viennacl
           }
           return native_vector_width_half_;
         }
+#endif
 
+#if CL_DEVICE_OPENCL_C_VERSION
         /** @brief OpenCL C version string. Returns the highest OpenCL C version supported by the compiler for this device.
           *
           * This version string has the following format:
@@ -691,6 +708,7 @@ namespace viennacl
           }
           return opencl_c_version_;
         }
+#endif
 
         /** @brief The platform associated with this device. */
         cl_platform_id platform() const
@@ -783,6 +801,7 @@ namespace viennacl
           *
           * If the cl_khr_fp16 extension is not supported, this function returns 0.
           */
+#ifdef CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF
         cl_uint preferred_vector_width_half() const
         {
           if (!preferred_vector_width_half_valid_)
@@ -793,6 +812,7 @@ namespace viennacl
           }
           return preferred_vector_width_half_;
         }
+#endif
 
         /** @brief OpenCL profile string. Returns the profile name supported by the device.
           *
@@ -985,7 +1005,9 @@ namespace viennacl
           oss << line_indent << "Global Mem Size:     " << global_mem_size() << std::endl;
           oss << line_indent << "Local Mem Size:      " << local_mem_size() << std::endl;
           oss << line_indent << "Local Mem Type:      " << local_mem_type() << std::endl;
+#ifdef CL_DEVICE_HOST_UNIFIED_MEMORY
           oss << line_indent << "Host Unified Memory: " << host_unified_memory() << std::endl;
+#endif
 
           return oss.str();
         }
@@ -1016,7 +1038,9 @@ namespace viennacl
 #ifdef CL_DEVICE_HALF_FP_CONFIG
           oss << line_indent << "Half PF Config:                " << fp_config_to_string(half_fp_config()) << std::endl;
 #endif
+#ifdef CL_DEVICE_HOST_UNIFIED_MEMORY
           oss << line_indent << "Host Unified Memory:           " << host_unified_memory() << std::endl;
+#endif
           oss << line_indent << "Image Support:                 " << image_support() << std::endl;
           oss << line_indent << "Image2D Max Height:            " << image2d_max_height() << std::endl;
           oss << line_indent << "Image2D Max Width:             " << image2d_max_width() << std::endl;
@@ -1040,14 +1064,30 @@ namespace viennacl
           oss << line_indent << "Mem Base Addr Align:           " << mem_base_addr_align() << std::endl;
           oss << line_indent << "Min Data Type Align Size:      " << min_data_type_align_size() << " Bytes" << std::endl;
           oss << line_indent << "Name:                          " << name() << std::endl;
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR
           oss << line_indent << "Native Vector Width char:      " << native_vector_width_char() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT
           oss << line_indent << "Native Vector Width short:     " << native_vector_width_short() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_INT
           oss << line_indent << "Native Vector Width int:       " << native_vector_width_int() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG
           oss << line_indent << "Native Vector Width long:      " << native_vector_width_long() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT
           oss << line_indent << "Native Vector Width float:     " << native_vector_width_float() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE
           oss << line_indent << "Native Vector Width double:    " << native_vector_width_double() << std::endl;
+#endif
+#ifdef CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF
           oss << line_indent << "Native Vector Width half:      " << native_vector_width_half() << std::endl;
+#endif
+#ifdef CL_DEVICE_OPENCL_C_VERSION
           oss << line_indent << "OpenCL C Version:              " << opencl_c_version() << std::endl;
+#endif
           oss << line_indent << "Platform:                      " << platform() << std::endl;
           oss << line_indent << "Preferred Vector Width char:   " << preferred_vector_width_char() << std::endl;
           oss << line_indent << "Preferred Vector Width short:  " << preferred_vector_width_short() << std::endl;
@@ -1055,7 +1095,9 @@ namespace viennacl
           oss << line_indent << "Preferred Vector Width long:   " << preferred_vector_width_long() << std::endl;
           oss << line_indent << "Preferred Vector Width float:  " << preferred_vector_width_float() << std::endl;
           oss << line_indent << "Preferred Vector Width double: " << preferred_vector_width_double() << std::endl;
+#ifdef CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF
           oss << line_indent << "Preferred Vector Width half:   " << preferred_vector_width_half() << std::endl;
+#endif
           oss << line_indent << "Profile:                       " << profile() << std::endl;
           oss << line_indent << "Profiling Timer Resolution:    " << profiling_timer_resolution() << " ns" << std::endl;
           oss << line_indent << "Queue Properties:              " << queue_properties_to_string(queue_properties()) << std::endl;
@@ -1097,8 +1139,10 @@ namespace viennacl
             oss << "CL_FP_ROUND_TO_INF ";
           if (conf & CL_FP_FMA)
             oss << "CL_FP_FMA ";
+#ifdef CL_FP_SOFT_FLOAT
           if (conf & CL_FP_SOFT_FLOAT)
             oss << "CL_FP_SOFT_FLOAT ";
+#endif
 
           return oss.str();
         }
