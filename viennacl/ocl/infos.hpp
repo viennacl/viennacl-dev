@@ -212,9 +212,13 @@ namespace viennacl{
       SET_INFO_RETURN_TYPE(cl_kernel,CL_KERNEL_WORK_GROUP_SIZE, size_t);
 //      SET_INFO_RETURN_TYPE(cl_kernel,CL_KERNEL_COMPILE_WORK_GROUP_SIZE, size_t[3]);
       SET_INFO_RETURN_TYPE(cl_kernel,CL_KERNEL_LOCAL_MEM_SIZE, cl_ulong);
+#ifdef CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
       SET_INFO_RETURN_TYPE(cl_kernel,CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, size_t);
+#endif
 
+#ifdef CL_CONTEXT_NUM_DEVICES
       SET_INFO_RETURN_TYPE(cl_context, CL_CONTEXT_NUM_DEVICES, cl_uint);
+#endif
       SET_INFO_RETURN_TYPE(cl_context, CL_CONTEXT_REFERENCE_COUNT, cl_uint);
       SET_INFO_RETURN_TYPE(cl_context, CL_CONTEXT_PROPERTIES, cl_context_properties);
 
