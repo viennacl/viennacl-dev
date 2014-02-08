@@ -2,7 +2,7 @@
 #define VIENNACL_GENERATOR_GENERATE_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -30,10 +30,11 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/generator/forwards.h"
 
-#include "viennacl/generator/profiles.hpp"
-#include "viennacl/generator/statement_representation_functor.hpp"
-#include "viennacl/generator/set_arguments_functor.hpp"
-#include "viennacl/generator/map_functor.hpp"
+#include "viennacl/generator/autotuning/profiles.hpp"
+
+#include "viennacl/generator/tree_parsing/statement_representation.hpp"
+#include "viennacl/generator/tree_parsing/set_arguments.hpp"
+#include "viennacl/generator/tree_parsing/map.hpp"
 
 #include "viennacl/tools/tools.hpp"
 
@@ -41,144 +42,77 @@ namespace viennacl{
 
   namespace generator{
 
+
     /** @brief Class for handling code generation
      *
      *  It is meant to be only used along with the scheduler.*/
     class code_generator{
       public:
         /** @brief typedef of the key used in the forced profiles. Contains the expression type and the size of the scalartype */
-        typedef std::pair<expression_type, vcl_size_t> forced_profile_key_type;
+        typedef std::pair<expression_type, std::size_t> forced_profile_key_type;
       private:
         typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
         typedef std::vector<representation_node_type> statements_type;
         typedef std::map<forced_profile_key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
 
-        /** @brief Check for the data access flow of a node.
-        *
-        * Row-major + Trans and Col-Major + NoTrans are equal in this regard. This prevents too much code duplication in the kernel templates.
-        */
-        static bool is_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
-          viennacl::scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.op.type==viennacl::scheduler::OPERATION_UNARY_TRANS_TYPE)
-            return root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
-          else{
-            bool res = root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
-            if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-              res = res || is_lhs_flow_transposed(statement, expr[root_node.lhs.node_index]);
-            if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-              res = res || is_lhs_flow_transposed(statement, expr[root_node.rhs.node_index]);
-            return res;
-          }
-        }
-
-        /** @brief Checks for the data access flow of the LHS of a node */
-        static bool is_lhs_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
-          scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            return is_flow_transposed(statement, expr[root_node.lhs.node_index]);
-          else
-            return root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
-        }
-
-        /** @brief Checks for the data access flow of the RHS of a node */
-        static bool is_rhs_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
-          viennacl::scheduler::statement::container_type const & expr = statement.array();
-          if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            return is_flow_transposed(statement, expr[root_node.rhs.node_index]);
-          else
-            return root_node.rhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
-        }
-
         /** @brief Fills the expression descriptor for an operation of the type scalar = RHS */
-        static void fill_expression_descriptor_scalar(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          viennacl::scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid = (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                          || (descriptor.type_family==SCALAR_REDUCE_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE);
-          if(is_invalid){
-            descriptor.type_family = INVALID_EXPRESSION_FAMILY;
-            descriptor.type = INVALID_EXPRESSION_TYPE;
+        static void fill_descriptor_impl(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement::container_type const & expr = statement.array();
+          if(descriptor.type_family == SCALAR_SAXPY_FAMILY && is_scalar_reduction(root_node)){
+              descriptor.type_family = SCALAR_REDUCE_FAMILY;
+              descriptor.type = SCALAR_REDUCE_TYPE;
           }
-          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
-            descriptor.type_family = SCALAR_REDUCE_FAMILY;
-            descriptor.type = SCALAR_REDUCE_TYPE;
-          }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_scalar(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_scalar(statement, expr[root_node.rhs.node_index],descriptor);
-        }
-
-        /** @brief Fills the expression descriptor for an operation of the type vector = RHS */
-        static void fill_expression_descriptor_vector(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          viennacl::scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid =  (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-                          || (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                          || (descriptor.type_family==VECTOR_REDUCE_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE);
-          if(is_invalid){
-            descriptor.type_family=INVALID_EXPRESSION_FAMILY;
-            descriptor.type=INVALID_EXPRESSION_TYPE;
-          }
-          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
-            descriptor.type_family=VECTOR_REDUCE_FAMILY;
-            if(is_lhs_flow_transposed(statement,root_node))
+          else if(descriptor.type_family == VECTOR_SAXPY_FAMILY && is_vector_reduction(root_node)){
+            if(  (root_node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY  && !utils::interpret_as_transposed(expr,root_node.lhs))
+               ||(root_node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY && utils::interpret_as_transposed(expr,root_node.lhs))
+               ||(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE && utils::interpret_as_transposed(statement.array(),root_node.lhs)))
               descriptor.type=VECTOR_REDUCE_Tx_TYPE;
             else
               descriptor.type=VECTOR_REDUCE_Nx_TYPE;
           }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_vector(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_vector(statement, expr[root_node.rhs.node_index],descriptor);
+          else if(descriptor.type_family == MATRIX_SAXPY_FAMILY && root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
+              descriptor.type_family=MATRIX_PRODUCT_FAMILY;
+              bool lhs_trans = utils::interpret_as_transposed(expr,root_node.lhs);
+              bool rhs_trans = utils::interpret_as_transposed(expr,root_node.rhs);
+              if(!lhs_trans && !rhs_trans)
+                descriptor.type=MATRIX_PRODUCT_NN_TYPE;
+              else if(lhs_trans && !rhs_trans)
+                descriptor.type=MATRIX_PRODUCT_TN_TYPE;
+              else if(!lhs_trans && rhs_trans)
+                descriptor.type=MATRIX_PRODUCT_NT_TYPE;
+              else if(lhs_trans && rhs_trans)
+                descriptor.type=MATRIX_PRODUCT_TT_TYPE;
+          }
+          else if(root_node.op.type_subfamily==scheduler::OPERATION_FUNCTION_TYPE_SUBFAMILY){
+              descriptor.type_family=INVALID_EXPRESSION_FAMILY;
+              descriptor.type=INVALID_EXPRESSION_TYPE;
+          }
+
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_descriptor_impl(statement, expr[root_node.lhs.node_index],descriptor);
+          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            fill_descriptor_impl(statement, expr[root_node.rhs.node_index],descriptor);
         }
 
-        /** @brief Fills the expression descriptor for an operation of the type matrix = RHS */
-        static void fill_expression_descriptor_matrix(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          viennacl::scheduler::statement::container_type const & expr = statement.array();
-          bool is_invalid =  (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-                          || (root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                          || (descriptor.type_family==MATRIX_PRODUCT_FAMILY && root_node.op.type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE);
-          if(is_invalid){
-            descriptor.type_family=INVALID_EXPRESSION_FAMILY;
-            descriptor.type=INVALID_EXPRESSION_TYPE;
-          }
-          else if(root_node.op.type==viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE){
-            descriptor.type_family=MATRIX_PRODUCT_FAMILY;
-            bool lhs_trans = is_lhs_flow_transposed(statement,root_node);
-            bool rhs_trans = is_rhs_flow_transposed(statement,root_node);
-            if(!lhs_trans && !rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_NN_TYPE;
-            else if(lhs_trans && !rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_TN_TYPE;
-            else if(!lhs_trans && rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_NT_TYPE;
-            else if(lhs_trans && rhs_trans)
-              descriptor.type=MATRIX_PRODUCT_TT_TYPE;
-
-          }
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_matrix(statement, expr[root_node.lhs.node_index],descriptor);
-          if(descriptor.type_family!=INVALID_EXPRESSION_FAMILY && root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
-            fill_expression_descriptor_matrix(statement, expr[root_node.rhs.node_index],descriptor);
-        }
 
         /** @brief Fills the expression descriptor for a statement */
-        void fill_descriptor(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node, expression_descriptor & descriptor){
-          viennacl::scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
+        void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+          scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
           descriptor.scalartype_size = utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
-          if(lhs_family==viennacl::scheduler::VECTOR_TYPE_FAMILY){
+          if(lhs_family==scheduler::VECTOR_TYPE_FAMILY){
             descriptor.type_family = VECTOR_SAXPY_FAMILY;
             descriptor.type = VECTOR_SAXPY_TYPE;
-            fill_expression_descriptor_vector(statement,root_node,descriptor);
+            fill_descriptor_impl(statement,root_node,descriptor);
           }
-          else if(lhs_family==viennacl::scheduler::MATRIX_TYPE_FAMILY){
+          else if(lhs_family==scheduler::MATRIX_TYPE_FAMILY){
             descriptor.type_family = MATRIX_SAXPY_FAMILY;
             descriptor.type = MATRIX_SAXPY_TYPE;
-            fill_expression_descriptor_matrix(statement,root_node,descriptor);
+            fill_descriptor_impl(statement,root_node,descriptor);
           }
-          else if(lhs_family==viennacl::scheduler::SCALAR_TYPE_FAMILY){
+          else if(lhs_family==scheduler::SCALAR_TYPE_FAMILY){
             descriptor.type_family = SCALAR_SAXPY_FAMILY;
             descriptor.type = SCALAR_SAXPY_TYPE;
-            fill_expression_descriptor_scalar(statement,root_node,descriptor);
+            fill_descriptor_impl(statement,root_node,descriptor);
           }
         }
 
@@ -188,7 +122,7 @@ namespace viennacl{
         */
         template<class StatementsType>
         void set_expression_arguments(profile_base const & profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
-          for(vcl_size_t i = 0 ; i < profile.num_kernels() ; ++i){
+          for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
             //add kernel name
             char str[32];
             std::sprintf(str,"kernel_%d_%d",device_offset,kernel_id);
@@ -199,7 +133,7 @@ namespace viennacl{
             profile.configure_range_enqueue_arguments(i, statements, kernel, current_arg);
             std::set<void *> memory;
             for(typename StatementsType::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-              detail::traverse(it->first, it->second, detail::set_arguments_functor(memory,current_arg,kernel));
+              tree_parsing::traverse(it->first, it->second, tree_parsing::set_arguments_functor(memory,current_arg,kernel));
             }
             ++kernel_id;
           }
@@ -249,7 +183,7 @@ namespace viennacl{
           unsigned int kernel_id = 0;
           std::vector<viennacl::ocl::device>::const_iterator found = std::find(ctx_.devices().begin(),ctx_.devices().end(),ctx_.current_device());
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
-            set_expression_arguments(get_profile(ctx_.current_device(), it->first), static_cast<unsigned int>(std::distance(ctx_.devices().begin(), found)), it->second, kernel_id, p, kernels);
+            set_expression_arguments(get_profile(ctx_.current_device(), it->first), std::distance(ctx_.devices().begin(), found), it->second, kernel_id, p, kernels);
         }
 
         /** @brief Creates an identifier string for the set of expressions in the object */
@@ -258,7 +192,7 @@ namespace viennacl{
           void* memory[64] = {NULL};
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
             for(profile_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
-              detail::traverse(iit->first, iit->second, detail::statement_representation_functor(memory, current_arg, program_name));
+              tree_parsing::traverse(iit->first, iit->second, tree_parsing::statement_representation_functor(memory, current_arg, program_name),true);
             }
           }
           *program_name='\0';
@@ -276,10 +210,10 @@ namespace viennacl{
           stream <<  "#endif\n";
           stream << std::endl;
 
-          vcl_size_t device_offset =0;
+          std::size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
             for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
-              get_profile(*it,iit->first)(stream,device_offset++,iit->second);
+              get_profile(*it,iit->first)(stream,device_offset++,iit->first,iit->second);
 
           return stream.str();
         }
@@ -291,10 +225,10 @@ namespace viennacl{
         std::string make_cuda_program_string() const {
           //Creates OpenCL string with #ifdef and attributes
           utils::kernel_generation_stream stream;
-          vcl_size_t device_offset =0;
+          std::size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
             for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
-              get_profile(*it,iit->first)(stream,device_offset++,iit->second);
+              get_profile(*it,iit->first)(stream,device_offset++,iit->first,iit->second);
           std::string res = stream.str();
 
           viennacl::tools::find_and_replace(res,"__attribute__","//__attribute__");
@@ -349,7 +283,7 @@ namespace viennacl{
     *   @param force_recompilation if true, the program will be recompiled
     */
     inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
-      char* program_name = new char[256];
+      char* program_name = (char*)malloc(256*sizeof(char));
       generator.make_program_name(program_name);
       if(force_recompilation)
         viennacl::ocl::current_context().delete_program(program_name);
@@ -363,8 +297,6 @@ namespace viennacl{
       }
       viennacl::ocl::program & p = viennacl::ocl::current_context().get_program(program_name);
       generator.configure_program(p, kernels);
-      delete[] program_name;
-
       return p;
     }
 
@@ -391,7 +323,7 @@ namespace viennacl{
       return gen.make_cuda_program_string();
     }
 
-    /** @brief Generate and enqueue a statement plus root_node into the current queue */
+    /** @brief Generate and enqueue a statement+root_node into the current queue */
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
       generator::code_generator gen;
       gen.add(s,root_node);

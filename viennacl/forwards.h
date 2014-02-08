@@ -81,6 +81,28 @@ namespace viennacl
   /** @brief A tag class representing the power function */
   struct op_pow {};
 
+  /** @brief A tag class representing equality */
+ struct op_eq {};
+ /** @brief A tag class representing inequality */
+ struct op_neq {};
+ /** @brief A tag class representing greater-than */
+ struct op_greater {};
+ /** @brief A tag class representing less-than */
+ struct op_less {};
+ /** @brief A tag class representing greater-than-or-equal-to */
+ struct op_geq {};
+ /** @brief A tag class representing less-than-or-equal-to */
+ struct op_leq {};
+
+  template<class T>
+  struct op_reduce_vector{ };
+
+  template<class T>
+  struct op_reduce_rows{ };
+
+  template<class T>
+  struct op_reduce_columns{ };
+
   /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
   template <typename OP>
   struct op_element_binary {};

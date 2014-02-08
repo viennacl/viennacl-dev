@@ -19,13 +19,13 @@
 // *** System
 //
 #include <iostream>
-#include <cmath>
 
 //
 // *** Boost
 //
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/foreach.hpp>
 
 //
 // *** ViennaCL
@@ -38,11 +38,12 @@
 #include "viennacl/matrix.hpp"
 
 #include "viennacl/linalg/prod.hpp"
-
+#include "viennacl/linalg/reduce.hpp"
 #include "viennacl/generator/generate.hpp"
+#include "viennacl/scheduler/io.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
-    if ( double delta = std::fabs ( diff ( cpu, gpu) ) > epsilon ) {\
+    if ( double delta = fabs ( diff ( cpu, gpu) ) > epsilon ) {\
         std::cout << "# Error at operation: " #op << std::endl;\
         std::cout << "  diff: " << delta << std::endl;\
         retval = EXIT_FAILURE;\
@@ -58,14 +59,14 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   ScalarType ret = 0;
-   ScalarType act = 0;
+   double ret = 0;
+   double act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
+         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -79,8 +80,8 @@ ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Al
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
     for ( unsigned int i=0; i<v1.size(); ++i ) {
-        if ( std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = std::fabs ( v2_cpu[i] - v1[i] ) / std::max ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) );
+        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }
@@ -100,25 +101,27 @@ int test( Epsilon const& epsilon) {
     ublas::matrix<NumericT> cC;
     ublas::matrix<NumericT> cD;
 
-    unsigned int size1 = 841;
-    unsigned int size2 = 772;
+    unsigned int size1 = 762;
+    unsigned int size2 = 663;
 
     cA.resize(size1,size2);
     cx.resize(size2);
     cy.resize(size1);
 
+    srand(0);
+
     for(unsigned int i=0; i<size1; ++i){
         for(unsigned int j=0 ; j<size2; ++j){
-            cA(i,j)=static_cast<NumericT>(std::rand()/RAND_MAX);
+            cA(i,j)=j;
         }
     }
 
     for(unsigned int i=0; i<size2; ++i){
-        cx(i) = static_cast<NumericT>(std::rand()/RAND_MAX);
+        cx(i) = i;
     }
 
     for(unsigned int i=0; i<size1; ++i){
-        cy(i) = static_cast<NumericT>(std::rand()/RAND_MAX);
+        cy(i) = i;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
@@ -149,6 +152,7 @@ int test( Epsilon const& epsilon) {
         std::cout << "y = A*x..." << std::endl;
         cy     =  ublas::prod(cA,cx);
         viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::linalg::prod(A,x));
+        //std::cout << statement << std::endl;
         generator::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cy,y,y=A*x)
@@ -163,38 +167,37 @@ int test( Epsilon const& epsilon) {
         CHECK_RESULT(cx,x,x=trans(A)*y)
     }
 
-//    {
-//        std::cout << "y = reduce_rows<max>(A)..." << std::endl;
-//        for(unsigned int i = 0 ; i < size1 ; ++i){
-//            NumericT current_max = -INFINITY;
-//            for(unsigned int j = 0 ; j < size2 ; ++j){
-//                current_max = std::max(current_max,cA(i,j));
-//            }
-//            cy(i) = current_max;
-//        }
-//        generator::custom_operation op;
-//        op.add(dv_t(y) = generator::reduce_rows<generator::fmax_type>(dm_t(A)));
-//        op.execute();
-//        viennacl::backend::finish();
-//        CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
-//    }
+    {
+        std::cout << "y = reduce_rows<add>(A)..." << std::endl;
+        for(unsigned int i = 0 ; i < size1 ; ++i){
+            NumericT acc = cA(i,0);
+            for(unsigned int j = 1 ; j < size2 ; ++j){
+                acc += cA(i,j);
+            }
+            cy(i) = acc;
+        }
+        viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::linalg::reduce_rows<viennacl::op_add>(A));
+        //std::cout << statement << std::endl;
 
+        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        viennacl::backend::finish();
+        CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
+    }
 
-//    {
-//        std::cout << "x = reduce_cols<max>(A)..." << std::endl;
-//        for(unsigned int j = 0 ; j < size2 ; ++j){
-//            NumericT current_max = -INFINITY;
-//            for(unsigned int i = 0 ; i < size1 ; ++i){
-//                current_max = std::max(current_max,cA(i,j));
-//            }
-//            cx(j) = current_max;
-//        }
-//        generator::custom_operation op;
-//        op.add(dv_t(x) = generator::reduce_cols<generator::fmax_type>(dm_t(A)));
-//        op.execute();
-//        viennacl::backend::finish();
-//        CHECK_RESULT(cx,x,x = reduce_cols<max>(A))
-//    }
+    {
+        std::cout << "x = reduce_columns<add>(A)..." << std::endl;
+        for(unsigned int j = 0 ; j < size2 ; ++j){
+            NumericT acc = cA(0,j);
+            for(unsigned int i = 1 ; i < size1 ; ++i){
+                acc += cA(i,j);
+            }
+            cx(j) = acc;
+        }
+        viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::linalg::reduce_columns<viennacl::op_add>(A));
+        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        viennacl::backend::finish();
+        CHECK_RESULT(cx,x,x = reduce_columns<max>(A))
+    }
 
 
     return retval;
@@ -234,28 +237,28 @@ int main() {
             return retval;
     }
 
-    std::cout << std::endl;
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << std::endl;
-#ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
-#endif
-    {
-        double epsilon = 1.0E-4;
-        std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  numeric: double" << std::endl;
-        std::cout << "  --------------" << std::endl;
-        std::cout << "  Row-Major"      << std::endl;
-        std::cout << "  --------------" << std::endl;
-        retval = test<double, viennacl::row_major> (epsilon);
-        std::cout << "  --------------" << std::endl;
-        std::cout << "  Column-Major"   << std::endl;
-        std::cout << "  --------------" << std::endl;
-        retval &= test<double, viennacl::column_major> (epsilon);
+//    std::cout << std::endl;
+//    std::cout << "----------------------------------------------" << std::endl;
+//    std::cout << std::endl;
+//#ifdef VIENNACL_WITH_OPENCL
+//   if( viennacl::ocl::current_device().double_support() )
+//#endif
+//    {
+//        double epsilon = 1.0E-4;
+//        std::cout << "# Testing setup:" << std::endl;
+//        std::cout << "  numeric: double" << std::endl;
+//        std::cout << "  --------------" << std::endl;
+//        std::cout << "  Row-Major"      << std::endl;
+//        std::cout << "  --------------" << std::endl;
+//        retval = test<double, viennacl::row_major> (epsilon);
+//        std::cout << "  --------------" << std::endl;
+//        std::cout << "  Column-Major"   << std::endl;
+//        std::cout << "  --------------" << std::endl;
+//        retval &= test<double, viennacl::column_major> (epsilon);
 
-        if ( retval == EXIT_SUCCESS )
-            std::cout << "# Test passed" << std::endl;
-        else
-            return retval;
-    }
+//        if ( retval == EXIT_SUCCESS )
+//            std::cout << "# Test passed" << std::endl;
+//        else
+//            return retval;
+//    }
 }

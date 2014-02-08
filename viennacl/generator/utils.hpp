@@ -2,7 +2,7 @@
 #define VIENNACL_GENERATOR_UTILS_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -20,22 +20,35 @@
 
 
 /** @file viennacl/generator/utils.hpp
-    @brief Internal utils for a dynamic OpenCL kernel generation.
+    @brief Internal utils
 */
 
 #include <sstream>
 
+#include "viennacl/generator/forwards.h"
 #include "viennacl/ocl/forwards.h"
 
-#include "viennacl/traits/size.hpp"
-
 #include "viennacl/scheduler/forwards.h"
+
+#include "viennacl/traits/size.hpp"
+#include "viennacl/traits/row_major.hpp"
 
 namespace viennacl{
 
   namespace generator{
 
     namespace utils{
+
+    static std::string numeric_type_to_string(scheduler::statement_node_numeric_type const & type){
+        switch(type){
+            case scheduler::FLOAT_TYPE :
+                return "float";
+            case scheduler::DOUBLE_TYPE :
+                return  "double";
+            default :
+                throw generator_not_supported_exception("Unsupported Scalartype");
+        }
+    }
 
     template<class Fun>
     static typename Fun::result_type call_on_host_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
@@ -46,7 +59,7 @@ namespace viennacl{
         case scheduler::DOUBLE_TYPE :
             return fun(element.host_double);
         default :
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -59,7 +72,7 @@ namespace viennacl{
         case scheduler::DOUBLE_TYPE :
             return fun(*element.scalar_double);
         default :
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -72,7 +85,7 @@ namespace viennacl{
         case scheduler::DOUBLE_TYPE :
             return fun(*element.vector_double);
         default :
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -86,7 +99,7 @@ namespace viennacl{
         case scheduler::DOUBLE_TYPE :
             return fun(*element.implicit_vector_double);
         default :
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -101,12 +114,8 @@ namespace viennacl{
             case scheduler::DOUBLE_TYPE :
                 return fun(*element.matrix_double);
             default :
-                throw "not implemented";
+                throw generator_not_supported_exception("Unsupported Scalartype");
             }
-        }
-        else
-        {
-          throw "not implemented";
         }
     }
 
@@ -121,7 +130,7 @@ namespace viennacl{
         case scheduler::DOUBLE_TYPE :
             return fun(*element.implicit_matrix_double);
         default :
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -144,54 +153,46 @@ namespace viennacl{
             else
               return call_on_matrix(element,fun);
           default:
-            throw "not implemented";
+            throw generator_not_supported_exception("Unsupported datastructure type : Not among {Scalar, Vector, Matrix}");
         }
       }
 
-      /** @brief Functor for returning the size of the underlying scalar type in bytes. */
       struct scalartype_size_fun{
-          typedef vcl_size_t result_type;
+          typedef std::size_t result_type;
           result_type operator()(float const &) const { return sizeof(float); }
           result_type operator()(double const &) const { return sizeof(double); }
           template<class T> result_type operator()(T const &) const { return sizeof(typename viennacl::result_of::cpu_value_type<T>::type); }
       };
 
-      /** @brief Functor for returning the internal size of a vector. */
       struct internal_size_fun{
-          typedef vcl_size_t result_type;
+          typedef std::size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
       };
 
-      /** @brief Functor for obtaining the OpenCL handle from ViennaCL objects (vector, matrix, etc.). */
       struct handle_fun{
           typedef cl_mem result_type;
           template<class T>
           result_type operator()(T const &t) const { return t.handle().opencl_handle(); }
       };
 
-      /** @brief Functor for obtaining the internal number of rows of a ViennaCL matrix. */
       struct internal_size1_fun{
-          typedef vcl_size_t result_type;
+          typedef std::size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size1(t); }
       };
 
-      /** @brief Functor for obtaining the internal number of columns of a ViennaCL matrix. */
       struct internal_size2_fun{
-          typedef vcl_size_t result_type;
+          typedef std::size_t result_type;
           template<class T>
           result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
       };
 
-      /** @brief Helper metafunction for checking whether two types are the same. */
       template<class T, class U>
       struct is_same_type { enum { value = 0 }; };
 
-      /** \cond */
       template<class T>
       struct is_same_type<T,T> { enum { value = 1 }; };
-      /** \endcond */
 
       template <class T>
       inline std::string to_string ( T const t )
@@ -201,26 +202,40 @@ namespace viennacl{
         return ss.str();
       }
 
-      /** @brief Helper struct for converting a numerical type to its string representation. */
+      inline bool is_row_major_matrix(scheduler::lhs_rhs_element const & element){
+        return  element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::FLOAT_TYPE && viennacl::traits::row_major(*(matrix_base<float>*)element.matrix_float)
+             || element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::DOUBLE_TYPE && viennacl::traits::row_major(*(matrix_base<double>*)element.matrix_double);
+      }
+
+      inline bool is_reduction(scheduler::op_element const & op){
+        return op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
+            || op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
+            || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
+      }
+
+      inline bool implemented_as_kernel(scheduler::op_element const & op){
+        return op.type_subfamily==scheduler::OPERATION_FUNCTION_TYPE_SUBFAMILY || is_reduction(op);
+      }
+
+      inline bool interpret_as_transposed(std::vector<scheduler::statement_node> const & array, scheduler::lhs_rhs_element const & element){
+        return  is_row_major_matrix(element)
+
+            || (element.type_family==scheduler::COMPOSITE_OPERATION_FAMILY
+               && array[element.node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE
+               && !is_row_major_matrix(array[element.node_index].lhs));
+      }
+
       template<class T>
       struct type_to_string;
-
-
-      /** \cond */
       template<> struct type_to_string<float> { static const char * value() { return "float"; } };
       template<> struct type_to_string<double> { static const char * value() { return "double"; } };
-      /** \endcond */
 
-      /** @brief Helper struct for obtaining the first letter of a type. Used internally by the generator only. */
+
       template<class T>
       struct first_letter_of_type;
-
-      /** \cond */
       template<> struct first_letter_of_type<float> { static char value() { return 'f'; } };
       template<> struct first_letter_of_type<double> { static char value() { return 'd'; } };
-      /** \endcond */
 
-      /** @brief A stream class where the kernel sources are streamed to. Takes care of indentation of the sources. */
       class kernel_generation_stream : public std::ostream{
         private:
 

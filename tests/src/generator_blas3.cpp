@@ -60,7 +60,7 @@ using namespace boost::numeric;
 //
 static const unsigned int min_large_block_size = 32;
 static const unsigned int max_large_block_size = 128;
-static const unsigned int n_large_blocks = static_cast<unsigned int>(std::log(static_cast<double>(max_large_block_size/min_large_block_size))/std::log(2.0)+1.0);
+static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
 
 static const unsigned int min_alignment = 1;
 static const unsigned int max_alignment = 8;
@@ -75,7 +75,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
    if (s1 != s2)
-      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
+      return (s1 - s2) / std::max(fabs(s1), fabs(s2));
    return 0;
 }
 
@@ -85,14 +85,14 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
-   ScalarType ret = 0;
-   ScalarType act = 0;
+   double ret = 0;
+   double act = 0;
 
     for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
     {
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
-         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
+         act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
          if (act > ret)
            ret = act;
       }
@@ -127,8 +127,8 @@ int test_prod(Epsilon const& epsilon,
 {
    int retval = EXIT_SUCCESS;
    NumericT act_diff = 0;
-   NumericT alpha = NumericT(3.14);
-   NumericT beta  = NumericT(4.51);
+   NumericT alpha = 3.14;
+   NumericT beta = 4.51;
 
 std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
 {
@@ -137,7 +137,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
     viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = std::fabs(diff(C, vcl_C));
+    act_diff = fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -155,7 +155,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
        viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
        viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
-       act_diff = std::fabs(diff(C, vcl_C));
+       act_diff = fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -171,7 +171,7 @@ std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
     viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = std::fabs(diff(C, vcl_C));
+    act_diff = fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -187,7 +187,7 @@ std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
     viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = std::fabs(diff(C, vcl_C));
+    act_diff = fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 
             int retval = EXIT_SUCCESS;
 
-            //srand(time(NULL));
+            srand(time(NULL));
 
             std::cout << std::endl;
             std::cout << "----------------------------------------------" << std::endl;

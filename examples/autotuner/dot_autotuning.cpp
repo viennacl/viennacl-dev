@@ -26,7 +26,7 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/vector.hpp"
 #include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotune.hpp"
+#include "viennacl/generator/autotuning/autotune.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
 #include "command-line-utils.hpp"

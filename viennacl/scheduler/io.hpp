@@ -40,7 +40,7 @@ namespace viennacl
 #define VIENNACL_TRANSLATE_OP_TO_STRING(NAME)   case NAME: return #NAME;
 
       /** @brief Helper routine for converting the operation enums to string */
-      std::string to_string(viennacl::scheduler::op_element op_elem)
+      inline std::string to_string(viennacl::scheduler::op_element op_elem)
       {
         if (op_elem.type_family == OPERATION_UNARY_TYPE_FAMILY)
         {
@@ -107,7 +107,7 @@ namespace viennacl
 #define VIENNACL_TRANSLATE_ELEMENT_TO_STRING(NAME, ELEMENT)   case NAME: ss << "(" << element.ELEMENT << ")"; return #NAME + ss.str();
 
       /** @brief Helper routine converting the enum and union values inside a statement node to a string */
-      std::string to_string(viennacl::scheduler::lhs_rhs_element element)
+      inline std::string to_string(viennacl::scheduler::lhs_rhs_element element)
       {
         std::stringstream ss;
 
@@ -216,7 +216,7 @@ namespace viennacl
 
 
     /** @brief Print a single statement_node. Non-recursive */
-    std::ostream & operator<<(std::ostream & os, viennacl::scheduler::statement_node const & s_node)
+    inline std::ostream & operator<<(std::ostream & os, viennacl::scheduler::statement_node const & s_node)
     {
       os << "LHS: " << detail::to_string(s_node.lhs) << ", "
          << "OP: "  << detail::to_string(s_node.op) << ", "
@@ -232,7 +232,7 @@ namespace viennacl
     namespace detail
     {
       /** @brief Recursive worker routine for printing a whole statement */
-      void print_node(std::ostream & os, viennacl::scheduler::statement const & s, vcl_size_t node_index, vcl_size_t indent = 0)
+      inline void print_node(std::ostream & os, viennacl::scheduler::statement const & s, vcl_size_t node_index, vcl_size_t indent = 0)
       {
         typedef viennacl::scheduler::statement::container_type   StatementNodeContainer;
         typedef viennacl::scheduler::statement::value_type       StatementNode;
@@ -259,7 +259,7 @@ namespace viennacl
       * @param os    The output stream
       * @param s     The statement object
       */
-    std::ostream & operator<<(std::ostream & os, viennacl::scheduler::statement const & s)
+    inline std::ostream & operator<<(std::ostream & os, viennacl::scheduler::statement const & s)
     {
       detail::print_node(os, s, s.root());
       return os;

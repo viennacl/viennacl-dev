@@ -28,7 +28,7 @@
 #include "viennacl/linalg/prod.hpp"
 
 #include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotune.hpp"
+#include "viennacl/generator/autotuning/autotune.hpp"
 
 #include "viennacl/tools/timer.hpp"
 

@@ -1,8 +1,8 @@
-#ifndef VIENNACL_GENERATOR_ENQUEUE_TREE_HPP
-#define VIENNACL_GENERATOR_ENQUEUE_TREE_HPP
+#ifndef VIENNACL_GENERATOR_TREE_PARSING_SET_ARGUMENTS_HPP
+#define VIENNACL_GENERATOR_TREE_PARSING_SET_ARGUMENTS_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -38,7 +38,7 @@
 
 #include "viennacl/ocl/kernel.hpp"
 
-#include "viennacl/generator/helpers.hpp"
+#include "viennacl/generator/tree_parsing/traverse.hpp"
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/generator/mapped_objects.hpp"
 
@@ -47,9 +47,8 @@ namespace viennacl{
 
   namespace generator{
 
-    namespace detail{
+    namespace tree_parsing{
 
-      /** @brief Helper class for setting the arguments of a kernel. */
       class set_arguments_functor : public traversal_functor{
         public:
           typedef void result_type;
@@ -94,19 +93,32 @@ namespace viennacl{
           }
 
           /** @brief Matrix mapping */
-          template<class ScalarType, class Layout>
-          result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
-            //typedef typename matrix_base<ScalarType, Layout>::size_type size_type;
+          template<class ScalarType>
+          result_type operator()(matrix_base<ScalarType> const & mat) const {
             if(memory_.insert((void*)&mat).second){
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
-              if(viennacl::traits::start1(mat)>0)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-              if(viennacl::traits::stride1(mat)>1)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-              if(viennacl::traits::start2(mat)>0)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-              if(viennacl::traits::stride2(mat)>1)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+              if(mat.row_major()){
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
+                if(viennacl::traits::start2(mat)>0)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                if(viennacl::traits::stride2(mat)>1)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+                if(viennacl::traits::start1(mat)>0)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                if(viennacl::traits::stride1(mat)>1)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+              }
+              else{
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size1(mat)));
+                if(viennacl::traits::start1(mat)>0)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                if(viennacl::traits::stride1(mat)>1)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+                if(viennacl::traits::start2(mat)>0)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                if(viennacl::traits::stride2(mat)>1)
+                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+              }
             }
           }
 
@@ -118,7 +130,7 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor: */
-          void operator()(scheduler::statement const * /*statement*/, scheduler::statement_node const * root_node, detail::node_type node_type) const {
+          void operator()(scheduler::statement const * /*statement*/, scheduler::statement_node const * root_node, node_type node_type) const {
             if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->lhs, *this);
             else if(node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)

@@ -25,7 +25,7 @@
 #include "viennacl/matrix.hpp"
 
 #include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotune.hpp"
+#include "viennacl/generator/autotuning/autotune.hpp"
 #include "viennacl/tools/timer.hpp"
 #include "command-line-utils.hpp"
 

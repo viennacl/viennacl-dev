@@ -964,19 +964,19 @@ namespace viennacl
   }
 
   // row():
-  template<typename NumericT>
-  vector_expression< const matrix_base<NumericT>, const unsigned int, op_row>
-  row(const matrix_base<NumericT> & A, unsigned int i)
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>
+  row(const matrix_base<NumericT, F> & A, unsigned int i)
   {
-    return vector_expression< const matrix_base<NumericT>, const unsigned int, op_row>(A, i);
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>(A, i);
   }
 
   // column():
-  template<typename NumericT>
-  vector_expression< const matrix_base<NumericT>, const unsigned int, op_column>
-  column(const matrix_base<NumericT> & A, unsigned int j)
+  template<typename NumericT, typename F>
+  vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>
+  column(const matrix_base<NumericT, F> & A, unsigned int j)
   {
-    return vector_expression< const matrix_base<NumericT>, const unsigned int, op_column>(A, j);
+    return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>(A, j);
   }
 
   /////////////////////// transfer operations: //////////////////////////////////////

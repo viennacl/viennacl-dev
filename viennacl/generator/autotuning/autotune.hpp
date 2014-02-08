@@ -3,7 +3,7 @@
 
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -22,7 +22,7 @@
 
 /** @file viennacl/generator/autotune.hpp
  *
- * @brief User interface for the autotuning procedure
+ * User interface for the autotuning procedure
 */
 
 #include <ctime>
@@ -165,7 +165,6 @@ namespace viennacl{
        * @tparam ConfigType  type of the benchmark configuration
        * @param timings      the timings to fill
        * @param op           the given statement
-       * @param key          a key for forcing a particular kernel profile (i.e. to pick profile A for a device which would usually use profile B)
        * @param config       the given configuration
        * @param n_runs       Number of runs for the benchmark
        * @param out          Pointer to output file stream for writing to file (if not NULL)

@@ -1,8 +1,8 @@
-#ifndef VIENNACL_GENERATOR_MAP_GENERATE_PROTOTYPE_HPP
-#define VIENNACL_GENERATOR_MAP_GENERATE_PROTOTYPE_HPP
+#ifndef VIENNACL_GENERATOR_TREE_PARSING_MAP_HPP
+#define VIENNACL_GENERATOR_TREE_PARSING_MAP_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2013, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -26,14 +26,14 @@
 #include <set>
 
 #include "viennacl/forwards.h"
-#include "viennacl/vector.hpp"
-#include "viennacl/matrix.hpp"
 #include "viennacl/scheduler/forwards.h"
+#include "viennacl/scheduler/io.hpp"
 #include "viennacl/generator/forwards.h"
 
 #include "viennacl/tools/shared_ptr.hpp"
 
-#include "viennacl/generator/helpers.hpp"
+#include "viennacl/generator/forwards.h"
+#include "viennacl/generator/tree_parsing/traverse.hpp"
 #include "viennacl/generator/utils.hpp"
 #include "viennacl/generator/mapped_objects.hpp"
 
@@ -41,28 +41,35 @@ namespace viennacl{
 
   namespace generator{
 
-    namespace detail{
+    namespace tree_parsing{
 
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
-          std::string create_name(unsigned int & current_arg, std::map<void *, vcl_size_t> & memory, void * handle) const{
+          std::string create_name(unsigned int & current_arg, std::map<void *, std::size_t> & memory, void * handle) const{
             if(handle==NULL)
               return "arg" + utils::to_string(current_arg_++);
             if(memory.insert(std::make_pair(handle, current_arg)).second)
               return "arg" + utils::to_string(current_arg_++);
             else
-              return "arg" + utils::to_string(memory[handle]);
+              return "arg" + utils::to_string(memory.at(handle));
+          }
+
+          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, scheduler::statement_node const * root_node) const {
+              while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
+                  root_node = &statement->array()[root_node->lhs.node_index];
+              return root_node->lhs.numeric_type;
           }
 
         public:
           typedef container_ptr_type result_type;
 
-          map_functor(std::map<void *, vcl_size_t> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
+          map_functor(std::map<void *, std::size_t> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
 
           /** @brief Binary leaf */
           template<class T>
-          result_type binary_leaf(viennacl::scheduler::statement const * statement, viennacl::scheduler::statement_node const * root_node, mapping_type const * mapping) const {
-            T * p = new T("float");
+          result_type structurewise_function(scheduler::statement const * statement, scheduler::statement_node const * root_node, mapping_type const * mapping) const {
+
+            T * p = new T(utils::numeric_type_to_string(numeric_type(statement,root_node)));
 
             p->info_.statement = statement;
             p->info_.root_node = root_node;
@@ -115,7 +122,8 @@ namespace viennacl{
           result_type operator()(matrix_base<ScalarType> const & mat) const {
             mapped_matrix * p = new mapped_matrix(utils::type_to_string<ScalarType>::value());
             p->name_ = create_name(current_arg_, memory_, (void*)&mat);
-            p->is_row_major_ = mat.row_major();
+            p->ld_name_ = p->name_ + "_ld";
+            p->interpret_as_transposed_ = static_cast<bool>(mat.row_major());
             if(mat.start1() > 0)
               p->start1_name_ = p->name_ +"_start1";
             if(mat.stride1() > 1)
@@ -139,25 +147,29 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor */
-          void operator()(viennacl::scheduler::statement const * statement, viennacl::scheduler::statement_node const * root_node, detail::node_type node_type) const {
-            const key_type key(root_node, node_type);
-            if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
+          void operator()(scheduler::statement const * statement, scheduler::statement_node const * root_node, node_type node_type) const {
+            key_type key(root_node, node_type);
+            if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node->lhs, *this)));
-            else if(node_type == RHS_NODE_TYPE && root_node->rhs.type_family != viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
+            else if(node_type == RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node->rhs, *this)));
             else if( node_type== PARENT_NODE_TYPE){
-                  viennacl::scheduler::operation_node_type op_type = root_node->op.type;
-                if(op_type == viennacl::scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(statement, root_node, &mapping_)));
-                else if(op_type == viennacl::scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(statement, root_node, &mapping_)));
-                else if(op_type == viennacl::scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(statement, root_node, &mapping_)));
-            }
+                if(is_scalar_reduction(*root_node))
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_scalar_reduction>(statement, root_node, &mapping_)));
+                else if(is_vector_reduction(*root_node))
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_reduction>(statement, root_node, &mapping_)));
+                else if(root_node->op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_matrix_product>(statement, root_node, &mapping_)));
+                else if(root_node->op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
+                  key.second = tree_parsing::LHS_NODE_TYPE;
+                  mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node->lhs, *this))).first;
+                  ((mapped_matrix *)it->second.get())->interpret_as_transposed_ = !((mapped_matrix *)it->second.get())->interpret_as_transposed();
+                }
+           }
           }
 
         private:
-          std::map<void *, vcl_size_t> & memory_;
+          std::map<void *, std::size_t> & memory_;
           unsigned int & current_arg_;
           mapping_type & mapping_;
       };
