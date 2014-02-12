@@ -179,46 +179,28 @@ namespace viennacl
         }
         else if (element.type_family == MATRIX_TYPE_FAMILY)
         {
-          if (element.subtype == DENSE_ROW_MATRIX_TYPE)
+          if (element.subtype == DENSE_MATRIX_TYPE)
           {
-            ss << ", DENSE_ROW_MATRIX_TYPE ";
+            ss << ", DENSE_MATRIX_TYPE ";
             switch (element.numeric_type)
             {
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_row_char)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_row_uchar)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_row_short)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_row_ushort)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_row_int)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_row_uint)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_row_long)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_row_ulong)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_row_half)
-              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_row_float)
-              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_row_double)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_char)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_uchar)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_short)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_ushort)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_int)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_uint)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_long)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_ulong)
+              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_half)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_float)
+              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_double)
 
-              default: throw statement_not_supported_exception("Cannot convert row-major matrix type to string");
+              default: throw statement_not_supported_exception("Cannot convert dense matrix type to string");
             }
           }
           else
-          {
-            ss << ", DENSE_COL_MATRIX_TYPE ";
-            switch (element.numeric_type)
-            {
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(CHAR_TYPE,   matrix_col_char)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UCHAR_TYPE,  matrix_col_uchar)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(SHORT_TYPE,  matrix_col_short)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(USHORT_TYPE, matrix_col_ushort)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(INT_TYPE,    matrix_col_int)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(UINT_TYPE,   matrix_col_uint)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(LONG_TYPE,   matrix_col_long)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(ULONG_TYPE,  matrix_col_ulong)
-              //VIENNACL_TRANSLATE_ELEMENT_TO_STRING(HALF_TYPE,   matrix_col_half)
-              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(FLOAT_TYPE,  matrix_col_float)
-              VIENNACL_TRANSLATE_ELEMENT_TO_STRING(DOUBLE_TYPE, matrix_col_double)
-
-              default: throw statement_not_supported_exception("Cannot convert column-major matrix type to string");
-            }
-          }
+            throw statement_not_supported_exception("Cannot convert matrix sub-type to string");
         }
         else if (element.type_family == INVALID_TYPE_FAMILY)
         {

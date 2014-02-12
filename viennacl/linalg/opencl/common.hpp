@@ -27,6 +27,8 @@
 #include "viennacl/forwards.h"
 #include "viennacl/ocl/platform.hpp"
 
+#include "viennacl/linalg/opencl/kernels/matrix.hpp"
+
 namespace viennacl
 {
   namespace linalg
@@ -36,6 +38,24 @@ namespace viennacl
 
       namespace detail
       {
+
+        template <typename NumericT>
+        viennacl::ocl::kernel & kernel_for_matrix(matrix_base<NumericT> const & A, std::string kernel_name)
+        {
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+
+          if (A.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix<NumericT, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+
+          typedef viennacl::linalg::opencl::kernels::matrix<NumericT, column_major>  KernelClass;
+          KernelClass::init(ctx);
+          return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+        }
+
         inline cl_uint make_options(vcl_size_t length, bool reciprocal, bool flip_sign)
         {
           return static_cast<cl_uint>( ((length > 1) ? (cl_uint(length) << 2) : 0) + (reciprocal ? 2 : 0) + (flip_sign ? 1 : 0) );

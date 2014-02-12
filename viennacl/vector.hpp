@@ -634,8 +634,7 @@ namespace viennacl
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F>
-      self_type & operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE, F>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
+      self_type & operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
       {
         assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
 
@@ -659,8 +658,7 @@ namespace viennacl
       *
       * @param proxy An expression template proxy class
       */
-      template <typename F>
-      self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE, F>, const matrix_base<SCALARTYPE, F>, op_trans >,
+      self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE>, const matrix_base<SCALARTYPE>, op_trans >,
                                                      const vector_base<SCALARTYPE>,
                                                      op_prod> & proxy)
       {

@@ -35,27 +35,32 @@ namespace viennacl
     * In MATLAB notation, this could for example refer to the submatrix A(3:8, 6:10) of a matrix A.
     */
   template <typename MatrixType>
-  class matrix_range : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
+  class matrix_range : public matrix_base<typename MatrixType::cpu_value_type>
   {
-      typedef matrix_base<typename MatrixType::cpu_value_type,
-                          typename MatrixType::orientation_functor>    base_type;
-      typedef matrix_range<MatrixType>                                 self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+      typedef matrix_range<MatrixType>                            self_type;
 
     public:
-      typedef typename MatrixType::orientation_category       orientation_category;
-
       typedef typename MatrixType::value_type     value_type;
+      typedef typename MatrixType::handle_type    handle_type;
       typedef typename viennacl::result_of::cpu_value_type<value_type>::type    cpu_value_type;
       typedef range::size_type                    size_type;
       typedef range::difference_type              difference_type;
       typedef value_type                          reference;
       typedef const value_type &                  const_reference;
 
+
       matrix_range(MatrixType & A,
                    range const & row_range,
                    range const & col_range) : base_type(A.handle(),
                                                         row_range.size(), row_range.start(), 1, A.internal_size1(),
-                                                        col_range.size(), col_range.start(), 1, A.internal_size2()) {}
+                                                        col_range.size(), col_range.start(), 1, A.internal_size2(),
+                                                        viennacl::is_row_major<MatrixType>::value) {}
+
+      matrix_range(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
+                                                        other.size1(), other.start1(), other.stride1(), other.internal_size1(),
+                                                        other.size2(), other.start2(), other.stride2(), other.internal_size2(),
+                                                        other.row_major()) {}
 
       using base_type::operator=;
 
@@ -287,16 +292,15 @@ namespace viennacl
     * In MATLAB notation, this could for example refer to the submatrix A(3:2:8, 6:3:16) of a matrix A.
     */
   template <typename MatrixType>
-  class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type, typename MatrixType::orientation_functor>
+  class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type>
   {
-      typedef matrix_base<typename MatrixType::cpu_value_type,
-                          typename MatrixType::orientation_functor>    base_type;
-      typedef matrix_slice<MatrixType>                                 self_type;
+      typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+      typedef matrix_slice<MatrixType>                            self_type;
 
     public:
-      typedef typename MatrixType::orientation_category       orientation_category;
 
       typedef typename MatrixType::value_type     value_type;
+      typedef typename MatrixType::handle_type    handle_type;
       typedef typename viennacl::result_of::cpu_value_type<value_type>::type    cpu_value_type;
       typedef range::size_type                    size_type;
       typedef range::difference_type              difference_type;
@@ -307,7 +311,13 @@ namespace viennacl
                    slice const & row_slice,
                    slice const & col_slice) : base_type(A.handle(),
                                                         row_slice.size(), row_slice.start(), row_slice.stride(), A.internal_size1(),
-                                                        col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2()) {}
+                                                        col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2(),
+                                                        viennacl::is_row_major<MatrixType>::value) {}
+
+      matrix_slice(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
+                                                        other.size1(), other.start1(), other.stride1(), other.internal_size1(),
+                                                        other.size2(), other.start2(), other.stride2(), other.internal_size2(),
+                                                        other.row_major()) {}
 
       using base_type::operator=;
 

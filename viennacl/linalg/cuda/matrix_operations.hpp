@@ -53,11 +53,13 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1>
-      void am(matrix_base<NumericT, F> & mat1,
-              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+      void am(matrix_base<NumericT> & mat1,
+              matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
+        assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
+
         typedef NumericT        value_type;
 
         unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
@@ -66,7 +68,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<ScalarType1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat1.row_major())
         {
           am_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                       static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -103,12 +105,14 @@ namespace viennacl
       }
 
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1, typename ScalarType2>
-      void ambm(matrix_base<NumericT, F> & mat1,
-                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+      void ambm(matrix_base<NumericT> & mat1,
+                matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
+        assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
+
         typedef NumericT        value_type;
 
         unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
@@ -125,7 +129,7 @@ namespace viennacl
           temporary_beta = beta;
 
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat1.row_major())
         {
           ambm_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                         static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -177,12 +181,14 @@ namespace viennacl
       }
 
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1, typename ScalarType2>
-      void ambm_m(matrix_base<NumericT, F> & mat1,
-                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+      void ambm_m(matrix_base<NumericT> & mat1,
+                  matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
+        assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
+
         typedef NumericT        value_type;
 
         unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
@@ -199,7 +205,7 @@ namespace viennacl
           temporary_beta = beta;
 
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat1.row_major())
         {
           ambm_m_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                           static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
@@ -253,8 +259,8 @@ namespace viennacl
 
 
 
-      template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
+      template <typename NumericT>
+      void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
         value_type alpha = s;
@@ -262,7 +268,7 @@ namespace viennacl
         unsigned int s1  = clear ? viennacl::traits::internal_size1(mat) : viennacl::traits::size1(mat);
         unsigned int s2  = clear ? viennacl::traits::internal_size2(mat) : viennacl::traits::size2(mat);
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
 
           matrix_row_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
@@ -285,13 +291,13 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT, typename F>
-      void matrix_diagonal_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      template <typename NumericT>
+      void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
         typedef NumericT        value_type;
         value_type alpha = s;
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           matrix_row_diagonal_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat),
                                                           static_cast<unsigned int>(viennacl::traits::start1(mat)),           static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -314,8 +320,8 @@ namespace viennacl
       }
 
 
-      template <typename NumericT, typename F>
-      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT, F> & mat)
+      template <typename NumericT>
+      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         typedef NumericT        value_type;
 
@@ -328,7 +334,7 @@ namespace viennacl
         vcl_size_t mat_start = 0;
         vcl_size_t mat_stride = 0;
         vcl_size_t mat_size = viennacl::traits::size(vec);
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           vcl_size_t first_row_index = 0;
           vcl_size_t first_col_index = 0;
@@ -366,8 +372,8 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT, typename F>
-      void matrix_diag_to_vector(const matrix_base<NumericT, F> & mat, int k, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
 
@@ -375,7 +381,7 @@ namespace viennacl
 
         vcl_size_t mat_start = 0;
         vcl_size_t mat_stride = 0;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           vcl_size_t first_row_index = 0;
           vcl_size_t first_col_index = 0;
@@ -413,8 +419,8 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT, typename F>
-      void matrix_row(const matrix_base<NumericT, F> & mat, unsigned int i, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
 
@@ -422,7 +428,7 @@ namespace viennacl
 
         vcl_size_t mat_start = 0;
         vcl_size_t mat_stride = 0;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           mat_start  = (viennacl::traits::start1(mat) + i * viennacl::traits::stride1(mat)) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat);
           mat_stride = viennacl::traits::stride2(mat);
@@ -446,8 +452,8 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT, typename F>
-      void matrix_column(const matrix_base<NumericT, F> & mat, unsigned int j, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
 
@@ -455,7 +461,7 @@ namespace viennacl
 
         vcl_size_t mat_start = 0;
         vcl_size_t mat_stride = 0;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           mat_start  = viennacl::traits::start1(mat) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat) + j * viennacl::traits::stride2(mat);
           mat_stride = viennacl::traits::stride2(mat) * viennacl::traits::internal_size2(mat);
@@ -485,10 +491,12 @@ namespace viennacl
       //
 
 
-      template <typename T, typename F, typename OP>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
+      template <typename T, typename SizeType, typename OP>
+      void element_op(matrix_base<T, SizeType> & A,
+                      matrix_expression<const matrix_base<T, SizeType>, const matrix_base<T, SizeType>, op_element_binary<OP> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
         unsigned int op_type = 2; //0: product, 1: division, 2: power
@@ -497,7 +505,7 @@ namespace viennacl
         else if (viennacl::is_product<OP>::value)
           op_type = 0;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           element_op_int_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
                                               static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -543,10 +551,12 @@ namespace viennacl
         }
       }
 
-      template <typename F, typename OP>
-      void element_op(matrix_base<float, F> & A,
-                      matrix_expression<const matrix_base<float, F>, const matrix_base<float, F>, op_element_binary<OP> > const & proxy)
+      template <typename SizeType, typename OP>
+      void element_op(matrix_base<float, SizeType> & A,
+                      matrix_expression<const matrix_base<float, SizeType>, const matrix_base<float, SizeType>, op_element_binary<OP> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef float        value_type;
 
         unsigned int op_type = 2; //0: product, 1: division, 2: power
@@ -555,7 +565,7 @@ namespace viennacl
         else if (viennacl::is_product<OP>::value)
           op_type = 0;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           element_op_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
                                               static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -601,10 +611,12 @@ namespace viennacl
         }
       }
 
-      template <typename F, typename OP>
-      void element_op(matrix_base<double, F> & A,
-                      matrix_expression<const matrix_base<double, F>, const matrix_base<double, F>, op_element_binary<OP> > const & proxy)
+      template <typename SizeType, typename OP>
+      void element_op(matrix_base<double, SizeType> & A,
+                      matrix_expression<const matrix_base<double, SizeType>, const matrix_base<double, SizeType>, op_element_binary<OP> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef double        value_type;
 
         unsigned int op_type = 2; //0: product, 1: division, 2: power
@@ -613,7 +625,7 @@ namespace viennacl
         else if (viennacl::is_product<OP>::value)
           op_type = 0;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           element_op_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
                                               static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -667,13 +679,15 @@ namespace viennacl
       //       we could not find a more 'automatic' way of generating the overloads below...
 
       // abs
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_abs> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_abs> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_abs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -707,13 +721,15 @@ namespace viennacl
 
 
       // acos
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_acos> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_acos> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_acos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -747,13 +763,15 @@ namespace viennacl
 
 
       // asin
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_asin> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_asin> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_asin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -787,13 +805,15 @@ namespace viennacl
 
 
       // atan
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_atan> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_atan> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_atan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -827,13 +847,15 @@ namespace viennacl
 
 
       // ceil
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_ceil> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_ceil> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_ceil_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -867,13 +889,15 @@ namespace viennacl
 
 
       // cos
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_cos> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_cos> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_cos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -907,13 +931,15 @@ namespace viennacl
 
 
       // cosh
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_cosh> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_cosh> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_cosh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -947,13 +973,15 @@ namespace viennacl
 
 
       // exp
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_exp> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_exp> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_exp_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -987,13 +1015,15 @@ namespace viennacl
 
 
       // fabs
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_fabs> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_fabs> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_fabs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1027,13 +1057,15 @@ namespace viennacl
 
 
       // floor
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_floor> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_floor> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_floor_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1067,13 +1099,15 @@ namespace viennacl
 
 
       // log
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_log> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_log> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_log_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1107,13 +1141,15 @@ namespace viennacl
 
 
       // log10
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_log10> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_log10> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_log10_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1147,13 +1183,15 @@ namespace viennacl
 
 
       // sin
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sin> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sin> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_sin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1187,13 +1225,15 @@ namespace viennacl
 
 
       // sinh
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sinh> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sinh> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_sinh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1227,13 +1267,15 @@ namespace viennacl
 
 
       // sqrt
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_sqrt> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sqrt> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_sqrt_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1267,13 +1309,15 @@ namespace viennacl
 
 
       // tan
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_tan> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_tan> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_tan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
             static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1307,13 +1351,15 @@ namespace viennacl
 
 
       // tanh
-      template <typename T, typename F>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<op_tanh> > const & proxy)
+      template <typename T>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_tanh> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
         typedef T        value_type;
 
-        if (viennacl::is_row_major<F>::value)
+        if (A.row_major())
         {
           matrix_row_element_tanh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(A),
            static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
@@ -1360,8 +1406,8 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename NumericT, typename F>
-      void prod_impl(const matrix_base<NumericT, F> & mat, bool mat_transpose,
+      template <typename NumericT>
+      void prod_impl(const matrix_base<NumericT> & mat, bool mat_transpose,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
@@ -1369,7 +1415,7 @@ namespace viennacl
 
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           if (!mat_transpose)
           {
@@ -1481,9 +1527,9 @@ namespace viennacl
           dim3 grid( (viennacl::traits::size1(C) - 1) / 16 + 1,
                      (viennacl::traits::size2(C) - 1) / 16 + 1);
 
-          bool row_major_A = viennacl::is_row_major<T1>::value;
-          bool row_major_B = viennacl::is_row_major<T2>::value;
-          bool row_major_C = viennacl::is_row_major<T3>::value;
+          bool row_major_A = A.row_major();
+          bool row_major_B = B.row_major();
+          bool row_major_C = C.row_major();
 
 
           if (!row_major_C && !row_major_A && !row_major_B && !transposed_A && !transposed_B)
@@ -2318,10 +2364,10 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A, bool trans_A,
-                     const matrix_base<NumericT, F2> & B, bool trans_B,
-                           matrix_base<NumericT, F3> & C,
+      template <typename NumericT, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
+                     const matrix_base<NumericT> & B, bool trans_B,
+                           matrix_base<NumericT> & C,
                      ScalarType alpha,
                      ScalarType beta)
       {
@@ -2350,8 +2396,8 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename NumericT, typename F, typename S1>
-      void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
+      template <typename NumericT, typename S1>
+      void scaled_rank_1_update(matrix_base<NumericT> & mat1,
                                 S1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,
                                 const vector_base<NumericT> & vec2)
@@ -2367,7 +2413,7 @@ namespace viennacl
         if (viennacl::is_cpu_scalar<S1>::value)
           temporary_alpha = alpha;
 
-        if (viennacl::is_row_major<F>::value)
+        if (mat1.row_major())
         {
           scaled_rank1_update_row_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(mat1),
                                                        static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),

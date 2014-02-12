@@ -56,11 +56,11 @@ namespace viennacl
     // ----------------------------------------------------
     // VIENNACL
     //
-    template<typename NumericT, typename F>
-    scalar_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_norm_frobenius>
-    norm_frobenius(const matrix<NumericT, F> & A)
+    template<typename NumericT>
+    scalar_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_norm_frobenius>
+    norm_frobenius(const matrix_base<NumericT> & A)
     {
-      return scalar_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_norm_frobenius>(A, A);
+      return scalar_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_norm_frobenius>(A, A);
     }
 
   } // end namespace linalg

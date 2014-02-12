@@ -191,7 +191,7 @@ int test(NumericT epsilon)
 
   /******************************************************************/
 
-  std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
+  std::cout << "Testing compressed(HYB) lhs * transposed dense rhs" << std::endl;
   result.clear();
   result = viennacl::linalg::prod( hyb_lhs, viennacl::trans(rhs2));
 

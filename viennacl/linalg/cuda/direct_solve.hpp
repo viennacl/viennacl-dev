@@ -242,7 +242,7 @@ namespace viennacl
                                                                static_cast<unsigned int>(viennacl::traits::stride1(A)),        static_cast<unsigned int>(viennacl::traits::stride2(A)),
                                                                static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                                static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
-                                                               bool(viennacl::is_row_major<M1>::value),
+                                                               bool(A.row_major()),
                                                                transpose_A,
 
                                                                detail::cuda_arg<value_type>(B),
@@ -250,7 +250,7 @@ namespace viennacl
                                                                static_cast<unsigned int>(viennacl::traits::stride1(B)),        static_cast<unsigned int>(viennacl::traits::stride2(B)),
                                                                static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
                                                                static_cast<unsigned int>(viennacl::traits::internal_size1(B)), static_cast<unsigned int>(viennacl::traits::internal_size2(B)),
-                                                               bool(viennacl::is_row_major<M2>::value),
+                                                               bool(B.row_major()),
                                                                transpose_B,
 
                                                                is_unit_solve(tag)
@@ -263,7 +263,7 @@ namespace viennacl
                                                                static_cast<unsigned int>(viennacl::traits::stride1(A)),        static_cast<unsigned int>(viennacl::traits::stride2(A)),
                                                                static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                                static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
-                                                               bool(viennacl::is_row_major<M1>::value),
+                                                               bool(A.row_major()),
                                                                transpose_A,
 
                                                                detail::cuda_arg<value_type>(B),
@@ -271,7 +271,7 @@ namespace viennacl
                                                                static_cast<unsigned int>(viennacl::traits::stride1(B)),        static_cast<unsigned int>(viennacl::traits::stride2(B)),
                                                                static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
                                                                static_cast<unsigned int>(viennacl::traits::internal_size1(B)), static_cast<unsigned int>(viennacl::traits::internal_size2(B)),
-                                                               bool(viennacl::is_row_major<M2>::value),
+                                                               bool(B.row_major()),
                                                                transpose_B,
 
                                                                is_unit_solve(tag)
@@ -295,9 +295,9 @@ namespace viennacl
       * @param trans_B   Whether B is transposed
       * @param tag       Solver tag for identifying the respective triangular solver
       */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, bool trans_A,
-                         matrix_base<NumericT, F2> & B, bool trans_B,
+      template <typename NumericT, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
+                         matrix_base<NumericT> & B, bool trans_B,
                          SOLVERTAG tag)
       {
         detail::inplace_solve_impl(A, trans_A,
@@ -406,7 +406,7 @@ namespace viennacl
         {
           typedef typename viennacl::result_of::cpu_value_type<MatrixType>::type        value_type;
 
-          if (viennacl::is_row_major<MatrixType>::value)
+          if (mat.row_major())
           {
             triangular_substitute_inplace_row_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(mat),
                                                                  static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
@@ -443,8 +443,8 @@ namespace viennacl
       * @param mat    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F> & mat, bool trans_mat,
+      template <typename NumericT, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {

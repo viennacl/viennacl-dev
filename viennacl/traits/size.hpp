@@ -167,14 +167,14 @@ namespace viennacl
     template <typename T, unsigned int A, typename VectorType>
     vcl_size_t size(vector_expression<const vandermonde_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
 
-    template <typename NumericT, typename F>
-    vcl_size_t size(vector_expression<const matrix_base<NumericT, F>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
+    template <typename NumericT>
+    vcl_size_t size(vector_expression<const matrix_base<NumericT>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
     {
       return proxy.lhs().size1();
     }
 
-    template <typename NumericT, typename F>
-    vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans>,
+    template <typename NumericT>
+    vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>,
                                       const vector_base<NumericT>,
                                       op_prod> const & proxy)  //transposed matrix-vector product
     {
@@ -275,16 +275,16 @@ namespace viennacl
     // internal_size1: No. of internal (padded) rows for matrices
     //
     /** @brief Helper routine for obtaining the internal number of entries per row of a ViennaCL matrix  */
-    template <typename NumericT, typename F>
-    vcl_size_t internal_size1(matrix_base<NumericT, F> const & mat) { return mat.internal_size1(); }
+    template <typename NumericT>
+    vcl_size_t internal_size1(matrix_base<NumericT> const & mat) { return mat.internal_size1(); }
 
 
     //
     // internal_size2: No. of internal (padded) columns for matrices
     //
     /** @brief Helper routine for obtaining the internal number of entries per column of a ViennaCL matrix  */
-    template <typename NumericT, typename F>
-    vcl_size_t internal_size2(matrix_base<NumericT, F> const & mat) { return mat.internal_size2(); }
+    template <typename NumericT>
+    vcl_size_t internal_size2(matrix_base<NumericT> const & mat) { return mat.internal_size2(); }
 
 
     template <typename LHS>

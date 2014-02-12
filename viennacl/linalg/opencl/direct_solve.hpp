@@ -71,22 +71,46 @@ namespace viennacl
       * @param A    The system matrix
       * @param B    The matrix of row vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename F1, typename F2, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F1> & A, bool trans_A,
-                         matrix_base<NumericT, F2> & B, bool trans_B,
+      template <typename NumericT, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
+                         matrix_base<NumericT> & B, bool trans_B,
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, F1, F2>    KernelClass;
-        KernelClass::init(ctx);
+        std::string program_name;
+        if (A.row_major() && B.row_major())
+        {
+          typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, row_major, row_major>    KernelClass;
+          KernelClass::init(ctx);
+          program_name = KernelClass::program_name();
+        }
+        else if (A.row_major() && !B.row_major())
+        {
+          typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, row_major, column_major>    KernelClass;
+          KernelClass::init(ctx);
+          program_name = KernelClass::program_name();
+        }
+        else if (!A.row_major() && B.row_major())
+        {
+          typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, column_major, row_major>    KernelClass;
+          KernelClass::init(ctx);
+          program_name = KernelClass::program_name();
+        }
+        else
+        {
+          typedef viennacl::linalg::opencl::kernels::matrix_solve<NumericT, column_major, column_major>    KernelClass;
+          KernelClass::init(ctx);
+          program_name = KernelClass::program_name();
+        }
 
         std::stringstream ss;
         if (trans_A) ss << "trans_";
         ss << SOLVERTAG::name();
         if (trans_B) ss << "_trans";
         ss << "_solve";
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), ss.str());
+
+        viennacl::ocl::kernel & k = ctx.get_kernel(program_name, ss.str());
 
         if (trans_B)
           k.global_work_size(0, B.size1() * k.local_work_size());
@@ -101,20 +125,16 @@ namespace viennacl
       //  Solve on vector
       //
 
-      template <typename NumericT, typename F, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT, F> & mat, bool trans_mat,
+      template <typename NumericT, typename SOLVERTAG>
+      void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
         if (trans_mat)
           options |= 0x02;
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "triangular_substitute_inplace");
+
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat,  "triangular_substitute_inplace");
 
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),

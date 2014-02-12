@@ -120,8 +120,8 @@ namespace viennacl{
           }
 
           /** @brief Matrix mapping */
-          template<class ScalarType, class Layout>
-          result_type operator()(matrix_base<ScalarType, Layout> const & mat) const {
+          template<class ScalarType>
+          result_type operator()(matrix_base<ScalarType> const & mat) const {
             *ptr_++='m'; //vector
             if(viennacl::traits::start1(mat)>0)
               *ptr_++='r';
@@ -132,7 +132,7 @@ namespace viennacl{
             if(viennacl::traits::stride2(mat)>1)
               *ptr_++='s';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            *ptr_++=utils::first_letter_of_type<Layout>::value();
+            *ptr_++=mat.row_major() ? 'r' : 'c';
             append_id(ptr_, get_id((void*)&mat));
           }
 

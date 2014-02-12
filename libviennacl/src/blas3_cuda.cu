@@ -59,139 +59,23 @@ namespace detail
     ViennaCLInt B_size1 = (transB == ViennaCLTrans) ? n : k;
     ViennaCLInt B_size2 = (transB == ViennaCLTrans) ? k : n;
 
-    /////// A row-major
+    bool A_row_major = (orderA == ViennaCLRowMajor);
+    bool B_row_major = (orderB == ViennaCLRowMajor);
+    bool C_row_major = (orderC == ViennaCLRowMajor);
 
-    if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
-    {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::CUDA_MEMORY,
-                                           A_size1, offA_row, incA_row, m,
-                                           A_size2, offA_col, incA_col, lda);
+    viennacl::matrix_base<NumericT> matA(A, viennacl::CUDA_MEMORY,
+                                         A_size1, offA_row, incA_row, A_row_major ? m : lda,
+                                         A_size2, offA_col, incA_col, A_row_major ? lda : k, A_row_major);
 
-      viennacl::matrix_base<NumericT> matB(B, viennacl::CUDA_MEMORY,
-                                           B_size1, offB_row, incB_row, k,
-                                           B_size2, offB_col, incB_col, ldb);
+    viennacl::matrix_base<NumericT> matB(B, viennacl::CUDA_MEMORY,
+                                         B_size1, offB_row, incB_row, B_row_major ? k : ldb,
+                                         B_size2, offB_col, incB_col, B_row_major ? ldb : n, B_row_major);
 
-      viennacl::matrix_base<NumericT> matC(C, viennacl::CUDA_MEMORY,
-                                           m, offC_row, incC_row, m,
-                                           n, offC_col, incC_col, ldc);
+    viennacl::matrix_base<NumericT> matC(C, viennacl::CUDA_MEMORY,
+                                         m, offC_row, incC_row, C_row_major ? m : ldc,
+                                         n, offC_col, incC_col, C_row_major ? ldc : n, C_row_major);
 
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
-    {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::CUDA_MEMORY,
-                                           A_size1, offA_row, incA_row, m,
-                                           A_size2, offA_col, incA_col, lda);
-
-      viennacl::matrix_base<NumericT> matB(B, viennacl::CUDA_MEMORY,
-                                           B_size1, offB_row, incB_row, k,
-                                           B_size2, offB_col, incB_col, ldb);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::CUDA_MEMORY,
-                                                                   m, offC_row, incC_row, ldc,
-                                                                   n, offC_col, incC_col, n);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
-    {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::CUDA_MEMORY,
-                                           A_size1, offA_row, incA_row, m,
-                                           A_size2, offA_col, incA_col, lda);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::CUDA_MEMORY,
-                                                                   B_size1, offB_row, incB_row, ldb,
-                                                                   B_size2, offB_col, incB_col, n);
-
-      viennacl::matrix_base<NumericT> matC(C, viennacl::CUDA_MEMORY,
-                                           m, offC_row, incC_row, m,
-                                           n, offC_col, incC_col, ldc);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLRowMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
-    {
-      viennacl::matrix_base<NumericT> matA(A, viennacl::CUDA_MEMORY,
-                                           A_size1, offA_row, incA_row, m,
-                                           A_size2, offA_col, incA_col, lda);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::CUDA_MEMORY,
-                                                                   B_size1, offB_row, incB_row, ldb,
-                                                                   B_size2, offB_col, incB_col, n);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::CUDA_MEMORY,
-                                                                   m, offC_row, incC_row, ldc,
-                                                                   n, offC_col, incC_col, n);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-
-    /////// A column-major
-
-    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLRowMajor)
-    {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::CUDA_MEMORY,
-                                                                   A_size1, offA_row, incA_row, lda,
-                                                                   A_size2, offA_col, incA_col, k);
-
-      viennacl::matrix_base<NumericT> matB(B, viennacl::CUDA_MEMORY,
-                                           B_size1, offB_row, incB_row, k,
-                                           B_size2, offB_col, incB_col, ldb);
-
-      viennacl::matrix_base<NumericT> matC(C, viennacl::CUDA_MEMORY,
-                                           m, offC_row, incC_row, m,
-                                           n, offC_col, incC_col, ldc);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLRowMajor && orderC == ViennaCLColumnMajor)
-    {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::CUDA_MEMORY,
-                                                                   A_size1, offA_row, incA_row, lda,
-                                                                   A_size2, offA_col, incA_col, k);
-
-      viennacl::matrix_base<NumericT> matB(B, viennacl::CUDA_MEMORY,
-                                           B_size1, offB_row, incB_row, k,
-                                           B_size2, offB_col, incB_col, ldb);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::CUDA_MEMORY,
-                                                                   m, offC_row, incC_row, ldc,
-                                                                   n, offC_col, incC_col, n);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLRowMajor)
-    {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::CUDA_MEMORY,
-                                                                   A_size1, offA_row, incA_row, lda,
-                                                                   A_size2, offA_col, incA_col, k);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::CUDA_MEMORY,
-                                                                   B_size1, offB_row, incB_row, ldb,
-                                                                   B_size2, offB_col, incB_col, n);
-
-      viennacl::matrix_base<NumericT> matC(C, viennacl::CUDA_MEMORY,
-                                           m, offC_row, incC_row, m,
-                                           n, offC_col, incC_col, ldc);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
-    else if (orderA == ViennaCLColumnMajor && orderB == ViennaCLColumnMajor && orderC == ViennaCLColumnMajor)
-    {
-      viennacl::matrix_base<NumericT, viennacl::column_major> matA(A, viennacl::CUDA_MEMORY,
-                                                                   A_size1, offA_row, incA_row, lda,
-                                                                   A_size2, offA_col, incA_col, k);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matB(B, viennacl::CUDA_MEMORY,
-                                                                   B_size1, offB_row, incB_row, ldb,
-                                                                   B_size2, offB_col, incB_col, n);
-
-      viennacl::matrix_base<NumericT, viennacl::column_major> matC(C, viennacl::CUDA_MEMORY,
-                                                                   m, offC_row, incC_row, ldc,
-                                                                   n, offC_col, incC_col, n);
-
-      detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
-    }
+    detail::gemm_dispatch(alpha, matA, transA, matB, transB, beta, matC);
 
     return ViennaCLSuccess;
   }

@@ -47,34 +47,17 @@ namespace viennacl
 
         assert(mat1.numeric_type == mat2.numeric_type && bool("Matrices do not have the same scalar type"));
 
-        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        if (mat1.subtype == DENSE_MATRIX_TYPE)
         {
           switch (mat1.numeric_type)
           {
           case FLOAT_TYPE:
-            viennacl::linalg::am(*mat1.matrix_row_float,
-                                 *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
+            viennacl::linalg::am(*mat1.matrix_float,
+                                 *mat2.matrix_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
           case DOUBLE_TYPE:
-            viennacl::linalg::am(*mat1.matrix_row_double,
-                                 *mat2.matrix_row_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
-            break;
-
-          default:
-            throw statement_not_supported_exception("Invalid arguments in scheduler when calling am()");
-          }
-        }
-        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
-        {
-          switch (mat1.numeric_type)
-          {
-          case FLOAT_TYPE:
-            viennacl::linalg::am(*mat1.matrix_col_float,
-                                 *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
-            break;
-          case DOUBLE_TYPE:
-            viennacl::linalg::am(*mat1.matrix_col_double,
-                                 *mat2.matrix_col_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
+            viennacl::linalg::am(*mat1.matrix_double,
+                                 *mat2.matrix_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha);
             break;
 
           default:
@@ -106,42 +89,26 @@ namespace viennacl
                && (mat2.numeric_type == mat3.numeric_type)
                && bool("Matrices do not have the same scalar type"));
 
-        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        if (mat1.subtype == DENSE_MATRIX_TYPE)
         {
           switch (mat1.numeric_type)
           {
           case FLOAT_TYPE:
-            viennacl::linalg::ambm(*mat1.matrix_row_float,
-                                   *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                   *mat3.matrix_row_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
+            viennacl::linalg::ambm(*mat1.matrix_float,
+                                   *mat2.matrix_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                   *mat3.matrix_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           case DOUBLE_TYPE:
-            viennacl::linalg::ambm(*mat1.matrix_row_double,
-                                   *mat2.matrix_row_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                   *mat3.matrix_row_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
+            viennacl::linalg::ambm(*mat1.matrix_double,
+                                   *mat2.matrix_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                   *mat3.matrix_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm()");
           }
         }
-        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
-        {
-          switch (mat1.numeric_type)
-          {
-          case FLOAT_TYPE:
-            viennacl::linalg::ambm(*mat1.matrix_col_float,
-                                   *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                   *mat3.matrix_col_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
-            break;
-          case DOUBLE_TYPE:
-            viennacl::linalg::ambm(*mat1.matrix_col_double,
-                                   *mat2.matrix_col_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                   *mat3.matrix_col_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
-            break;
-          default:
-            throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm()");
-          }
-        }
+        else
+          throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm()");
       }
 
       /** @brief Wrapper for viennacl::linalg::avbv_v(), taking care of the argument unwrapping */
@@ -163,42 +130,26 @@ namespace viennacl
                && (mat2.numeric_type == mat3.numeric_type)
                && bool("Matrices do not have the same scalar type"));
 
-        if (mat1.subtype == DENSE_ROW_MATRIX_TYPE)
+        if (mat1.subtype == DENSE_MATRIX_TYPE)
         {
           switch (mat1.numeric_type)
           {
           case FLOAT_TYPE:
-            viennacl::linalg::ambm_m(*mat1.matrix_row_float,
-                                     *mat2.matrix_row_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                     *mat3.matrix_row_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
+            viennacl::linalg::ambm_m(*mat1.matrix_float,
+                                     *mat2.matrix_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                     *mat3.matrix_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           case DOUBLE_TYPE:
-            viennacl::linalg::ambm_m(*mat1.matrix_row_double,
-                                     *mat2.matrix_row_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                     *mat3.matrix_row_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
+            viennacl::linalg::ambm_m(*mat1.matrix_double,
+                                     *mat2.matrix_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
+                                     *mat3.matrix_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
             break;
           default:
             throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
           }
         }
-        else if (mat1.subtype == DENSE_COL_MATRIX_TYPE)
-        {
-          switch (mat1.numeric_type)
-          {
-          case FLOAT_TYPE:
-            viennacl::linalg::ambm_m(*mat1.matrix_col_float,
-                                     *mat2.matrix_col_float, convert_to_float(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                     *mat3.matrix_col_float, convert_to_float(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
-            break;
-          case DOUBLE_TYPE:
-            viennacl::linalg::ambm_m(*mat1.matrix_col_double,
-                                     *mat2.matrix_col_double, convert_to_double(alpha), len_alpha, reciprocal_alpha, flip_sign_alpha,
-                                     *mat3.matrix_col_double, convert_to_double(beta),  len_beta,  reciprocal_beta,  flip_sign_beta);
-            break;
-          default:
-            throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
-          }
-        }
+        else
+          throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
       }
 
 

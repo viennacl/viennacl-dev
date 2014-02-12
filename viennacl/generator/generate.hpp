@@ -60,9 +60,9 @@ namespace viennacl{
         static bool is_flow_transposed(viennacl::scheduler::statement const & statement, viennacl::scheduler::statement_node const & root_node){
           viennacl::scheduler::statement::container_type const & expr = statement.array();
           if(root_node.op.type==viennacl::scheduler::OPERATION_UNARY_TRANS_TYPE)
-            return root_node.lhs.subtype==viennacl::scheduler::DENSE_ROW_MATRIX_TYPE;
+            return root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
           else{
-            bool res = root_node.lhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE || root_node.rhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
+            bool res = root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
             if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
               res = res || is_lhs_flow_transposed(statement, expr[root_node.lhs.node_index]);
             if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
@@ -77,7 +77,7 @@ namespace viennacl{
           if(root_node.lhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             return is_flow_transposed(statement, expr[root_node.lhs.node_index]);
           else
-            return root_node.lhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
+            return root_node.lhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
         }
 
         /** @brief Checks for the data access flow of the RHS of a node */
@@ -86,7 +86,7 @@ namespace viennacl{
           if(root_node.rhs.type_family==viennacl::scheduler::COMPOSITE_OPERATION_FAMILY)
             return is_flow_transposed(statement, expr[root_node.rhs.node_index]);
           else
-            return root_node.rhs.subtype==viennacl::scheduler::DENSE_COL_MATRIX_TYPE;
+            return root_node.rhs.subtype==viennacl::scheduler::DENSE_MATRIX_TYPE;
         }
 
         /** @brief Fills the expression descriptor for an operation of the type scalar = RHS */

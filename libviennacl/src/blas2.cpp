@@ -55,28 +55,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha,
       viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
 
-      if (A->order == ViennaCLRowMajor)
-      {
-        viennacl::matrix_base<float> mat(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2);
-        v2 *= beta->value_float;
-        if (A->trans == ViennaCLTrans)
-          v2 += alpha->value_float * viennacl::linalg::prod(viennacl::trans(mat), v1);
-        else
-          v2 += alpha->value_float * viennacl::linalg::prod(mat, v1);
-      }
+      viennacl::matrix_base<float> mat(A_handle,
+                                       A->size1, A->start1, A->stride1, A->internal_size1,
+                                       A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+      v2 *= beta->value_float;
+      if (A->trans == ViennaCLTrans)
+        v2 += alpha->value_float * viennacl::linalg::prod(viennacl::trans(mat), v1);
       else
-      {
-        viennacl::matrix_base<float, viennacl::column_major> mat(A_handle,
-                                                                 A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                 A->size2, A->start2, A->stride2, A->internal_size2);
-        v2 *= beta->value_float;
-        if (A->trans == ViennaCLTrans)
-          v2 += alpha->value_float * viennacl::linalg::prod(viennacl::trans(mat), v1);
-        else
-          v2 += alpha->value_float * viennacl::linalg::prod(mat, v1);
-      }
+        v2 += alpha->value_float * viennacl::linalg::prod(mat, v1);
 
       return ViennaCLSuccess;
     }
@@ -86,28 +72,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha,
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
 
-      if (A->order == ViennaCLRowMajor)
-      {
-        viennacl::matrix_base<double> mat(A_handle,
-                                          A->size1, A->start1, A->stride1, A->internal_size1,
-                                          A->size2, A->start2, A->stride2, A->internal_size2);
-        v2 *= beta->value_double;
-        if (A->trans == ViennaCLTrans)
-          v2 += alpha->value_double * viennacl::linalg::prod(viennacl::trans(mat), v1);
-        else
-          v2 += alpha->value_double * viennacl::linalg::prod(mat, v1);
-      }
+      viennacl::matrix_base<double> mat(A_handle,
+                                        A->size1, A->start1, A->stride1, A->internal_size1,
+                                        A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+      v2 *= beta->value_double;
+      if (A->trans == ViennaCLTrans)
+        v2 += alpha->value_double * viennacl::linalg::prod(viennacl::trans(mat), v1);
       else
-      {
-        viennacl::matrix_base<double, viennacl::column_major> mat(A_handle,
-                                                                  A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                  A->size2, A->start2, A->stride2, A->internal_size2);
-        v2 *= beta->value_double;
-        if (A->trans == ViennaCLTrans)
-          v2 += alpha->value_double * viennacl::linalg::prod(viennacl::trans(mat), v1);
-        else
-          v2 += alpha->value_double * viennacl::linalg::prod(mat, v1);
-      }
+        v2 += alpha->value_double * viennacl::linalg::prod(mat, v1);
 
       return ViennaCLSuccess;
     }
@@ -137,45 +109,22 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaC
     {
       viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
 
-      if (A->order == ViennaCLRowMajor)
+      viennacl::matrix_base<float> mat(A_handle,
+                                       A->size1, A->start1, A->stride1, A->internal_size1,
+                                       A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+      if (A->trans == ViennaCLTrans)
       {
-        viennacl::matrix_base<float> mat(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2);
-        if (A->trans == ViennaCLTrans)
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
-        }
+        if (uplo == ViennaCLUpper)
+          viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
         else
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
-        }
+          viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
       }
       else
       {
-        viennacl::matrix_base<float, viennacl::column_major> mat(A_handle,
-                                                                 A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                 A->size2, A->start2, A->stride2, A->internal_size2);
-        if (A->trans == ViennaCLTrans)
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
-        }
+        if (uplo == ViennaCLUpper)
+          viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
         else
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
-        }
+          viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
       }
 
       return ViennaCLSuccess;
@@ -184,45 +133,22 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaC
     {
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
 
-      if (A->order == ViennaCLRowMajor)
+      viennacl::matrix_base<double> mat(A_handle,
+                                        A->size1, A->start1, A->stride1, A->internal_size1,
+                                        A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+      if (A->trans == ViennaCLTrans)
       {
-        viennacl::matrix_base<double> mat(A_handle,
-                                          A->size1, A->start1, A->stride1, A->internal_size1,
-                                          A->size2, A->start2, A->stride2, A->internal_size2);
-        if (A->trans == ViennaCLTrans)
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
-        }
+        if (uplo == ViennaCLUpper)
+          viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
         else
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
-        }
+          viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
       }
       else
       {
-        viennacl::matrix_base<double, viennacl::column_major> mat(A_handle,
-                                                                  A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                  A->size2, A->start2, A->stride2, A->internal_size2);
-        if (A->trans == ViennaCLTrans)
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(viennacl::trans(mat), v1, viennacl::linalg::lower_tag());
-        }
+        if (uplo == ViennaCLUpper)
+          viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
         else
-        {
-          if (uplo == ViennaCLUpper)
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::upper_tag());
-          else
-            viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
-        }
+          viennacl::linalg::inplace_solve(mat, v1, viennacl::linalg::lower_tag());
       }
 
       return ViennaCLSuccess;
@@ -258,22 +184,11 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, 
       viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
 
-      if (A->order == ViennaCLRowMajor)
-      {
-        viennacl::matrix_base<float> mat(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2);
+      viennacl::matrix_base<float> mat(A_handle,
+                                       A->size1, A->start1, A->stride1, A->internal_size1,
+                                       A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
 
-        mat += alpha->value_float * viennacl::linalg::outer_prod(v1, v2);
-      }
-      else
-      {
-        viennacl::matrix_base<float, viennacl::column_major> mat(A_handle,
-                                                                 A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                 A->size2, A->start2, A->stride2, A->internal_size2);
-
-        mat += alpha->value_float * viennacl::linalg::outer_prod(v1, v2);
-      }
+      mat += alpha->value_float * viennacl::linalg::outer_prod(v1, v2);
 
       return ViennaCLSuccess;
     }
@@ -282,22 +197,11 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, 
       viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
       viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
 
-      if (A->order == ViennaCLRowMajor)
-      {
-        viennacl::matrix_base<double> mat(A_handle,
-                                          A->size1, A->start1, A->stride1, A->internal_size1,
-                                          A->size2, A->start2, A->stride2, A->internal_size2);
+      viennacl::matrix_base<double> mat(A_handle,
+                                        A->size1, A->start1, A->stride1, A->internal_size1,
+                                        A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
 
-        mat += alpha->value_double * viennacl::linalg::outer_prod(v1, v2);
-      }
-      else
-      {
-        viennacl::matrix_base<double, viennacl::column_major> mat(A_handle,
-                                                                  A->size1, A->start1, A->stride1, A->internal_size1,
-                                                                  A->size2, A->start2, A->stride2, A->internal_size2);
-
-        mat += alpha->value_double * viennacl::linalg::outer_prod(v1, v2);
-      }
+      mat += alpha->value_double * viennacl::linalg::outer_prod(v1, v2);
 
       return ViennaCLSuccess;
     }

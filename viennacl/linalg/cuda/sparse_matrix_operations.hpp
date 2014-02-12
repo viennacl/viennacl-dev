@@ -265,28 +265,95 @@ namespace viennacl
       * @param d_mat    The dense matrix
       * @param result   The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< typename TYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<TYPE, F1> & d_mat,
-                           viennacl::matrix_base<TYPE, F2> & result) {
-        compressed_matrix_d_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<128, 128>>>
-                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
-                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+                     const viennacl::matrix_base<TYPE> & d_mat,
+                           viennacl::matrix_base<TYPE> & result)
+      {
+        if (d_mat.row_major() && result.row_major())
+        {
+          compressed_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                         detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
 
-                                                       detail::cuda_arg<TYPE>(d_mat),
-                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
-                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
-                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
-                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+                                                         detail::cuda_arg<TYPE>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
 
-                                                       detail::cuda_arg<TYPE>(result),
-                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
-                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
-                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
-                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
-                                                      );
-        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+                                                         detail::cuda_arg<TYPE>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                        );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+        }
+        else if (d_mat.row_major() && !result.row_major())
+        {
+          compressed_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                         detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                         detail::cuda_arg<TYPE>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<TYPE>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                        );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+        }
+        else if (!d_mat.row_major() && result.row_major())
+        {
+          compressed_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                         detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                         detail::cuda_arg<TYPE>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<TYPE>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                        );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+        }
+        else
+        {
+          compressed_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                         detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                         detail::cuda_arg<TYPE>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<TYPE>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                        );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_mat_mul_kernel");
+        }
       }
 
 
@@ -353,14 +420,17 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix proxy
       * @param result             The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< typename TYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F1>,
-                                                        const viennacl::matrix_base<TYPE, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE>,
+                                                        const viennacl::matrix_base<TYPE>,
                                                         viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<TYPE, F2> & result) {
+                      viennacl::matrix_base<TYPE> & result)
+      {
 
-        compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<128, 128>>>
+        if (d_mat.lhs().row_major() && result.row_major())
+        {
+          compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
                                                        detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                        detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
@@ -377,7 +447,71 @@ namespace viennacl
                                                        static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
                                                        static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
                                                       );
-        VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+        }
+        if (d_mat.lhs().row_major() && !result.row_major())
+        {
+          compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                       detail::cuda_arg<TYPE>(d_mat.lhs()),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                       detail::cuda_arg<TYPE>(result),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                      );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+        }
+        if (!d_mat.lhs().row_major() && result.row_major())
+        {
+          compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
+                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                       detail::cuda_arg<TYPE>(d_mat.lhs()),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                       detail::cuda_arg<TYPE>(result),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                      );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+        }
+        else
+        {
+          compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                      (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                       detail::cuda_arg<TYPE>(sp_mat.handle().cuda_handle()),
+
+                                                       detail::cuda_arg<TYPE>(d_mat.lhs()),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                       detail::cuda_arg<TYPE>(result),
+                                                       static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                       static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                      );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
+        }
       }
 
 
@@ -1075,12 +1209,14 @@ namespace viennacl
       * @param d_mat      The Dense Matrix
       * @param result     The Result Matrix
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
-
-        coordinate_matrix_d_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<64, 128>>>
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
+      {
+        if (d_mat.row_major() && result.row_major())
+        {
+          coordinate_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<64, 128>>>
                                                         (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
                                                          detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
                                                          detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
@@ -1097,6 +1233,71 @@ namespace viennacl
                                                          static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
                                                          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_mat_mul_kernel");
+        }
+        else if (d_mat.row_major() && !result.row_major())
+        {
+          coordinate_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<64, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                         detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+
+                                                         detail::cuda_arg<NumericT>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<NumericT>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                         );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_mat_mul_kernel");
+        }
+        else if (!d_mat.row_major() && result.row_major())
+        {
+          coordinate_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<64, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                         detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+
+                                                         detail::cuda_arg<NumericT>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<NumericT>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                         );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_mat_mul_kernel");
+        }
+        else
+        {
+          coordinate_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<64, 128>>>
+                                                        (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                         detail::cuda_arg<NumericT>(sp_mat.handle().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+
+                                                         detail::cuda_arg<NumericT>(d_mat),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                         detail::cuda_arg<NumericT>(result),
+                                                         static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                         static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                         );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_mat_mul_kernel");
+        }
 
       }
 
@@ -1202,14 +1403,16 @@ namespace viennacl
       * @param d_mat      The Dense Transposed Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
-
-        coordinate_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<64, 128>>>
+                           viennacl::matrix_base<NumericT> & result)
+      {
+        if (d_mat.lhs().row_major() && result.row_major())
+        {
+          coordinate_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<64, 128>>>
                                                           (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
                                                            detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
                                                            detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
@@ -1226,8 +1429,71 @@ namespace viennacl
                                                            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
                                                            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
                                                           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
+        }
+        else if (d_mat.lhs().row_major() && !result.row_major())
+        {
+          coordinate_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<64, 128>>>
+                                                          (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
 
-        VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
+                                                           detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                           detail::cuda_arg<NumericT>(result),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
+        }
+        else if (!d_mat.lhs().row_major() && result.row_major())
+        {
+          coordinate_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<64, 128>>>
+                                                          (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+
+                                                           detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                           detail::cuda_arg<NumericT>(result),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
+        }
+        else
+        {
+          coordinate_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<64, 128>>>
+                                                          (detail::cuda_arg<unsigned int>(sp_mat.handle12().cuda_handle()),
+                                                           detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                           detail::cuda_arg<unsigned int>(sp_mat.handle3().cuda_handle()),
+
+                                                           detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                           detail::cuda_arg<NumericT>(result),
+                                                           static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                           static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                                          );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("coordinate_matrix_d_tr_mat_mul_kernel");
+        }
       }
 
 
@@ -1374,12 +1640,14 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
-
-        ell_matrix_d_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<128, 128>>>
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
+      {
+        if (d_mat.row_major() && result.row_major())
+        {
+          ell_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
                                                  (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                   detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
                                                   static_cast<unsigned int>(sp_mat.size1()),
@@ -1399,7 +1667,80 @@ namespace viennacl
                                                   static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
                                                   static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
                                                );
-        VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_mat_mul_kernel");
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_mat_mul_kernel");
+        }
+        else if (d_mat.row_major() && !result.row_major())
+        {
+          ell_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                 (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                  detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                  static_cast<unsigned int>(sp_mat.size1()),
+                                                  static_cast<unsigned int>(sp_mat.size2()),
+                                                  static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                  static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                  static_cast<unsigned int>(sp_mat.internal_maxnnz()),
+                                                  detail::cuda_arg<NumericT>(d_mat),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                  detail::cuda_arg<NumericT>(result),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_mat_mul_kernel");
+        }
+        else if (!d_mat.row_major() && result.row_major())
+        {
+          ell_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
+                                                 (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                  detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                  static_cast<unsigned int>(sp_mat.size1()),
+                                                  static_cast<unsigned int>(sp_mat.size2()),
+                                                  static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                  static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                  static_cast<unsigned int>(sp_mat.internal_maxnnz()),
+                                                  detail::cuda_arg<NumericT>(d_mat),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                  detail::cuda_arg<NumericT>(result),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_mat_mul_kernel");
+        }
+        else
+        {
+          ell_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                 (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                  detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                  static_cast<unsigned int>(sp_mat.size1()),
+                                                  static_cast<unsigned int>(sp_mat.size2()),
+                                                  static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                  static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                  static_cast<unsigned int>(sp_mat.internal_maxnnz()),
+                                                  detail::cuda_arg<NumericT>(d_mat),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+                                                  detail::cuda_arg<NumericT>(result),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_mat_mul_kernel");
+        }
       }
 
       template <typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT >
@@ -1471,14 +1812,16 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
-
-        ell_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<128, 128>>>
+                           viennacl::matrix_base<NumericT> & result)
+      {
+        if (d_mat.lhs().row_major() && result.row_major())
+        {
+          ell_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
                                                     (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
                                                      detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
                                                      static_cast<unsigned int>(sp_mat.size1()),
@@ -1499,8 +1842,83 @@ namespace viennacl
                                                      static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
                                                      static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
                                                );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_tr_mat_mul_kernel");
+        }
+        else if (d_mat.lhs().row_major() && !result.row_major())
+        {
+          ell_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                    (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                     detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                     static_cast<unsigned int>(sp_mat.size1()),
+                                                     static_cast<unsigned int>(sp_mat.size2()),
+                                                     static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                     static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                     static_cast<unsigned int>(sp_mat.internal_maxnnz()),
 
-        VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_tr_mat_mul_kernel");
+                                                     detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                     detail::cuda_arg<NumericT>(result),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_tr_mat_mul_kernel");
+        }
+        else if (!d_mat.lhs().row_major() && result.row_major())
+        {
+          ell_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
+                                                    (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                     detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                     static_cast<unsigned int>(sp_mat.size1()),
+                                                     static_cast<unsigned int>(sp_mat.size2()),
+                                                     static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                     static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                     static_cast<unsigned int>(sp_mat.internal_maxnnz()),
+
+                                                     detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                     detail::cuda_arg<NumericT>(result),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_tr_mat_mul_kernel");
+        }
+        else
+        {
+          ell_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
+                                                    (detail::cuda_arg<unsigned int>(sp_mat.handle2().cuda_handle()),
+                                                     detail::cuda_arg<ScalarType>(sp_mat.handle().cuda_handle()),
+                                                     static_cast<unsigned int>(sp_mat.size1()),
+                                                     static_cast<unsigned int>(sp_mat.size2()),
+                                                     static_cast<unsigned int>(sp_mat.internal_size1()),
+                                                     static_cast<unsigned int>(sp_mat.maxnnz()),
+                                                     static_cast<unsigned int>(sp_mat.internal_maxnnz()),
+
+                                                     detail::cuda_arg<NumericT>(d_mat.lhs()),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+                                                     detail::cuda_arg<NumericT>(result),
+                                                     static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+                                                     static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+                                               );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_d_tr_mat_mul_kernel");
+        }
       }
 
       //
@@ -1675,35 +2093,119 @@ namespace viennacl
       * @param d_mat    The dense matrix (row- or column-major)
       * @param result   The dense result matrix (row- or column-major)
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
       {
-        hyb_matrix_d_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<256, 128>>>(
-          detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-          detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
-          detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
-          detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
-          detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
-          static_cast<unsigned int>(mat.size1()),
-          static_cast<unsigned int>(mat.internal_size1()),
-          static_cast<unsigned int>(mat.ell_nnz()),
-          static_cast<unsigned int>(mat.internal_ellnnz()),
+        if (d_mat.row_major() && result.row_major())
+        {
+          hyb_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
 
-          detail::cuda_arg<NumericT>(d_mat),
-          static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
-          static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
-          static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
-          static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+            detail::cuda_arg<NumericT>(d_mat),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
 
-          detail::cuda_arg<NumericT>(result),
-          static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
-          static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
-          static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
-          static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
-         );
-        VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else if (d_mat.row_major() && !result.row_major())
+        {
+          hyb_matrix_d_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else if (!d_mat.row_major() && result.row_major())
+        {
+          hyb_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else
+        {
+          hyb_matrix_d_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat)),         static_cast<unsigned int>(viennacl::traits::start2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat)),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat)),          static_cast<unsigned int>(viennacl::traits::size2(d_mat)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat)),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
       }
 
 
@@ -1789,37 +2291,121 @@ namespace viennacl
       * @param d_mat    Transposed matrix proxy object for the rhs dense matrix (row- or column-major)
       * @param result   The dense result matrix (row- or column-major)
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                           viennacl::matrix_base<NumericT> & result)
       {
-        hyb_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<F1>, mat_mult_matrix_index<F2> ><<<256, 128>>>(
-          detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-          detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
-          detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
-          detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
-          detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
-          static_cast<unsigned int>(mat.size1()),
-          static_cast<unsigned int>(mat.internal_size1()),
-          static_cast<unsigned int>(mat.ell_nnz()),
-          static_cast<unsigned int>(mat.internal_ellnnz()),
+        if (d_mat.lhs().row_major() && result.row_major())
+        {
+          hyb_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<row_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
 
-          detail::cuda_arg<NumericT>(d_mat.lhs()),
-          static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
-          static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
-          static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
-          static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+            detail::cuda_arg<NumericT>(d_mat.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
 
-          detail::cuda_arg<NumericT>(result),
-          static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
-          static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
-          static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
-          static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
-         );
-        VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else if (d_mat.lhs().row_major() && !result.row_major())
+        {
+          hyb_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else if (!d_mat.lhs().row_major() && result.row_major())
+        {
+          hyb_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
+        else
+        {
+          hyb_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<column_major> ><<<256, 128>>>(
+            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+            detail::cuda_arg<unsigned int>(mat.handle4().cuda_handle()),
+            detail::cuda_arg<NumericT>(mat.handle5().cuda_handle()),
+            static_cast<unsigned int>(mat.size1()),
+            static_cast<unsigned int>(mat.internal_size1()),
+            static_cast<unsigned int>(mat.ell_nnz()),
+            static_cast<unsigned int>(mat.internal_ellnnz()),
+
+            detail::cuda_arg<NumericT>(d_mat.lhs()),
+            static_cast<unsigned int>(viennacl::traits::start1(d_mat.lhs())),         static_cast<unsigned int>(viennacl::traits::start2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::stride1(d_mat.lhs())),        static_cast<unsigned int>(viennacl::traits::stride2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::size1(d_mat.lhs())),          static_cast<unsigned int>(viennacl::traits::size2(d_mat.lhs())),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(d_mat.lhs())), static_cast<unsigned int>(viennacl::traits::internal_size2(d_mat.lhs())),
+
+            detail::cuda_arg<NumericT>(result),
+            static_cast<unsigned int>(viennacl::traits::start1(result)),         static_cast<unsigned int>(viennacl::traits::start2(result)),
+            static_cast<unsigned int>(viennacl::traits::stride1(result)),        static_cast<unsigned int>(viennacl::traits::stride2(result)),
+            static_cast<unsigned int>(viennacl::traits::size1(result)),          static_cast<unsigned int>(viennacl::traits::size2(result)),
+            static_cast<unsigned int>(viennacl::traits::internal_size1(result)), static_cast<unsigned int>(viennacl::traits::internal_size2(result))
+           );
+          VIENNACL_CUDA_LAST_ERROR_CHECK("hyb_matrix_vec_mul_kernel");
+        }
       }
 
 

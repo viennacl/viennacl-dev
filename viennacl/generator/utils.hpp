@@ -93,27 +93,20 @@ namespace viennacl{
     template<class Fun>
     static typename Fun::result_type call_on_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::MATRIX_TYPE_FAMILY && bool("Must be called on a matrix"));
-        if (element.subtype == scheduler::DENSE_ROW_MATRIX_TYPE)
+        if (element.subtype == scheduler::DENSE_MATRIX_TYPE)
         {
             switch(element.numeric_type){
             case scheduler::FLOAT_TYPE :
-                return fun(*element.matrix_row_float);
+                return fun(*element.matrix_float);
             case scheduler::DOUBLE_TYPE :
-                return fun(*element.matrix_row_double);
+                return fun(*element.matrix_double);
             default :
                 throw "not implemented";
             }
         }
         else
         {
-            switch(element.numeric_type){
-            case scheduler::FLOAT_TYPE :
-                return fun(*element.matrix_col_float);
-            case scheduler::DOUBLE_TYPE :
-                return fun(*element.matrix_col_double);
-            default :
-                throw "not implemented";
-            }
+          throw "not implemented";
         }
     }
 
@@ -225,8 +218,6 @@ namespace viennacl{
       /** \cond */
       template<> struct first_letter_of_type<float> { static char value() { return 'f'; } };
       template<> struct first_letter_of_type<double> { static char value() { return 'd'; } };
-      template<> struct first_letter_of_type<viennacl::row_major> { static char value() { return 'r'; } };
-      template<> struct first_letter_of_type<viennacl::column_major> { static char value() { return 'c'; } };
       /** \endcond */
 
       /** @brief A stream class where the kernel sources are streamed to. Takes care of indentation of the sources. */

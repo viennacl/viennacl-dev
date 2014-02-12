@@ -187,8 +187,7 @@ namespace viennacl
       DENSE_VECTOR_TYPE,
       IMPLICIT_VECTOR_TYPE,
 
-      DENSE_ROW_MATRIX_TYPE,
-      DENSE_COL_MATRIX_TYPE,
+      DENSE_MATRIX_TYPE,
       IMPLICIT_MATRIX_TYPE,
 
       COMPRESSED_MATRIX_TYPE,
@@ -238,19 +237,6 @@ namespace viennacl
       template <> struct numeric_type_id<unsigned long>  { enum { value = ULONG_TYPE  }; };
       template <> struct numeric_type_id<float>          { enum { value = FLOAT_TYPE  }; };
       template <> struct numeric_type_id<double>         { enum { value = DOUBLE_TYPE }; };
-
-      /** \endcond */
-
-      ///////////// matrix layout ID deduction /////////////
-
-      /** @brief Helper metafunction for obtaining the memory layout (row-/column-major) for a matrix. */
-      template <typename F>
-      struct layout_type_id {};
-
-      /** \cond */
-
-      template <> struct layout_type_id<viennacl::column_major> { enum { value = DENSE_COL_MATRIX_TYPE }; };
-      template <> struct layout_type_id<viennacl::row_major   > { enum { value = DENSE_ROW_MATRIX_TYPE }; };
 
       /** \endcond */
     }
@@ -327,29 +313,17 @@ namespace viennacl
         viennacl::implicit_vector_base<float>            *implicit_vector_float;
         viennacl::implicit_vector_base<double>           *implicit_vector_double;
 
-        // row-major matrices:
-        //viennacl::matrix_base<char>             *matrix_row_char;
-        //viennacl::matrix_base<unsigned char>    *matrix_row_uchar;
-        //viennacl::matrix_base<short>            *matrix_row_short;
-        //viennacl::matrix_base<unsigned short>   *matrix_row_ushort;
-        //viennacl::matrix_base<int>              *matrix_row_int;
-        //viennacl::matrix_base<unsigned int>     *matrix_row_uint;
-        //viennacl::matrix_base<long>             *matrix_row_long;
-        //viennacl::matrix_base<unsigned long>    *matrix_row_ulong;
-        viennacl::matrix_base<float>            *matrix_row_float;
-        viennacl::matrix_base<double>           *matrix_row_double;
-
-        // column-major matrices:
-        //viennacl::matrix_base<char,           viennacl::column_major>    *matrix_col_char;
-        //viennacl::matrix_base<unsigned char,  viennacl::column_major>    *matrix_col_uchar;
-        //viennacl::matrix_base<short,          viennacl::column_major>    *matrix_col_short;
-        //viennacl::matrix_base<unsigned short, viennacl::column_major>    *matrix_col_ushort;
-        //viennacl::matrix_base<int,            viennacl::column_major>    *matrix_col_int;
-        //viennacl::matrix_base<unsigned int,   viennacl::column_major>    *matrix_col_uint;
-        //viennacl::matrix_base<long,           viennacl::column_major>    *matrix_col_long;
-        //viennacl::matrix_base<unsigned long,  viennacl::column_major>    *matrix_col_ulong;
-        viennacl::matrix_base<float,          viennacl::column_major>    *matrix_col_float;
-        viennacl::matrix_base<double,         viennacl::column_major>    *matrix_col_double;
+        // dense matrices:
+        //viennacl::matrix_base<char>             *matrix_char;
+        //viennacl::matrix_base<unsigned char>    *matrix_uchar;
+        //viennacl::matrix_base<short>            *matrix_short;
+        //viennacl::matrix_base<unsigned short>   *matrix_ushort;
+        //viennacl::matrix_base<int>              *matrix_int;
+        //viennacl::matrix_base<unsigned int>     *matrix_uint;
+        //viennacl::matrix_base<long>             *matrix_long;
+        //viennacl::matrix_base<unsigned long>    *matrix_ulong;
+        viennacl::matrix_base<float>            *matrix_float;
+        viennacl::matrix_base<double>           *matrix_double;
 
         //viennacl::implicit_matrix_base<char>             *implicit_matrix_char;
         //viennacl::implicit_matrix_base<unsigned char>    *implicit_matrix_uchar;
@@ -489,10 +463,8 @@ namespace viennacl
 
         ///////////// Matrix node helper ////////////////
         // TODO: add integer matrix overloads here
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float,  viennacl::column_major> const & t) { elem.matrix_col_float  = const_cast<viennacl::matrix_base<float,  viennacl::column_major> *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float,  viennacl::row_major>    const & t) { elem.matrix_row_float  = const_cast<viennacl::matrix_base<float,  viennacl::row_major>    *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::column_major> const & t) { elem.matrix_col_double = const_cast<viennacl::matrix_base<double, viennacl::column_major> *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double, viennacl::row_major>    const & t) { elem.matrix_row_double = const_cast<viennacl::matrix_base<double, viennacl::row_major>    *>(&t); }
+        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float> const & t) { elem.matrix_float  = const_cast<viennacl::matrix_base<float> *>(&t); }
+        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double> const & t) { elem.matrix_double = const_cast<viennacl::matrix_base<double> *>(&t); }
 
         void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<float>  const & m) { elem.compressed_matrix_float  = const_cast<viennacl::compressed_matrix<float>  *>(&m); }
         void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<double> const & m) { elem.compressed_matrix_double = const_cast<viennacl::compressed_matrix<double> *>(&m); }
@@ -555,13 +527,13 @@ namespace viennacl
           return next_free;
         }
 
-        template <typename T, typename F>
+        template <typename T>
         vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
-                                viennacl::matrix_base<T, F> const & t)
+                                viennacl::matrix_base<T> const & t)
         {
           elem.type_family  = MATRIX_TYPE_FAMILY;
-          elem.subtype      = statement_node_subtype(result_of::layout_type_id<F>::value);
+          elem.subtype      = DENSE_MATRIX_TYPE;
           elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;

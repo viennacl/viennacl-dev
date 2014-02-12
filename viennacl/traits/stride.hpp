@@ -52,9 +52,9 @@ namespace viennacl
     //typename result_of::size_type<MatrixType>::type
     //stride1(MatrixType const &) { return 1; }
 
-    template <typename NumericT, typename F>
-    typename result_of::size_type< matrix_base<NumericT, F> >::type
-    stride1(matrix_base<NumericT, F> const & s) { return s.stride1(); }
+    template <typename NumericT>
+    typename result_of::size_type< matrix_base<NumericT> >::type
+    stride1(matrix_base<NumericT> const & s) { return s.stride1(); }
 
     //
     // inc2: Column increment for matrices. Defaults to 1
@@ -63,9 +63,9 @@ namespace viennacl
     //typename result_of::size_type<MatrixType>::type
     //stride2(MatrixType const &) { return 1; }
 
-    template <typename NumericT, typename F>
-    typename result_of::size_type< matrix_base<NumericT, F> >::type
-    stride2(matrix_base<NumericT, F> const & s) { return s.stride2(); }
+    template <typename NumericT>
+    typename result_of::size_type< matrix_base<NumericT> >::type
+    stride2(matrix_base<NumericT> const & s) { return s.stride2(); }
 
 
   } //namespace traits

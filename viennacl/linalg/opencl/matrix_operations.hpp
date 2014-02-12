@@ -57,25 +57,23 @@ namespace viennacl
   {
     namespace opencl
     {
+
       //
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1>
-      void am(matrix_base<NumericT, F> & mat1,
-              matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+      void am(matrix_base<NumericT> & mat1,
+              matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
-        typedef NumericT        value_type;
+        assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat1).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
+        typedef NumericT        value_type;
 
         cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(),
-                                                   (viennacl::is_cpu_scalar<ScalarType1>::value ? "am_cpu" : "am_gpu"));
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat1, viennacl::is_cpu_scalar<ScalarType1>::value ? "am_cpu" : "am_gpu");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                 cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
                                 cl_uint(viennacl::traits::stride1(mat1)),          cl_uint(viennacl::traits::stride2(mat1)),
@@ -93,17 +91,15 @@ namespace viennacl
       }
 
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1, typename ScalarType2>
-      void ambm(matrix_base<NumericT, F> & mat1,
-                matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+      void ambm(matrix_base<NumericT> & mat1,
+                matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        typedef NumericT        value_type;
+        assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat1).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
+        typedef NumericT        value_type;
 
         std::string kernel_name;
         if      ( viennacl::is_cpu_scalar<ScalarType1>::value &&  viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -118,7 +114,7 @@ namespace viennacl
         cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
         cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat1, kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                 cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
                                 cl_uint(viennacl::traits::stride1(mat1)),          cl_uint(viennacl::traits::stride2(mat1)),
@@ -143,17 +139,15 @@ namespace viennacl
       }
 
 
-      template <typename NumericT, typename F,
+      template <typename NumericT,
                 typename ScalarType1, typename ScalarType2>
-      void ambm_m(matrix_base<NumericT, F> & mat1,
-                  matrix_base<NumericT, F> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                  matrix_base<NumericT, F> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+      void ambm_m(matrix_base<NumericT> & mat1,
+                  matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                  matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
       {
-        typedef NumericT        value_type;
+        assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat1).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
+        typedef NumericT        value_type;
 
         std::string kernel_name;
         if      ( viennacl::is_cpu_scalar<ScalarType1>::value &&  viennacl::is_cpu_scalar<ScalarType2>::value)
@@ -168,7 +162,7 @@ namespace viennacl
         cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
         cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat1, kernel_name);
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                 cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
                                 cl_uint(viennacl::traits::stride1(mat1)),          cl_uint(viennacl::traits::stride2(mat1)),
@@ -194,21 +188,17 @@ namespace viennacl
 
 
 
-      template <typename NumericT, typename F>
-      void matrix_assign(matrix_base<NumericT, F> & mat, NumericT s, bool clear = false)
+      template <typename NumericT>
+      void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
-
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
 
         value_type alpha = static_cast<value_type>(s);
 
         cl_uint s1 = clear ? cl_uint(viennacl::traits::internal_size1(mat)) : cl_uint(viennacl::traits::size1(mat));
         cl_uint s2 = clear ? cl_uint(viennacl::traits::internal_size2(mat)) : cl_uint(viennacl::traits::size2(mat));
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "assign_cpu");
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, "assign_cpu");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                  cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
                                  cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
@@ -219,18 +209,14 @@ namespace viennacl
                               );
       }
 
-      template <typename NumericT, typename F>
-      void matrix_diagonal_assign(matrix_base<NumericT, F> & mat, NumericT s)
+      template <typename NumericT>
+      void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
         typedef NumericT        value_type;
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
         value_type alpha = static_cast<value_type>(s);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "diagonal_assign_cpu");
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, "diagonal_assign_cpu");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                  cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
                                  cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
@@ -241,8 +227,8 @@ namespace viennacl
                               );
       }
 
-      template <typename NumericT, typename F>
-      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT, F> & mat)
+      template <typename NumericT>
+      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         // Step 1: set everything to zero
         matrix_assign(mat, NumericT(0));
@@ -256,7 +242,7 @@ namespace viennacl
 
         cl_uint options_alpha = 0;
         viennacl::ocl::packed_cl_uint size_mat;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           vcl_size_t first_row_index = 0;
           vcl_size_t first_col_index = 0;
@@ -302,8 +288,8 @@ namespace viennacl
                               );
       }
 
-      template <typename NumericT, typename F>
-      void matrix_diag_to_vector(const matrix_base<NumericT, F> & mat, int k, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
@@ -312,7 +298,7 @@ namespace viennacl
 
         cl_uint options_alpha = 0;
         viennacl::ocl::packed_cl_uint size_mat;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           vcl_size_t first_row_index = 0;
           vcl_size_t first_col_index = 0;
@@ -359,8 +345,8 @@ namespace viennacl
                               );
       }
 
-      template <typename NumericT, typename F>
-      void matrix_row(const matrix_base<NumericT, F> & mat, unsigned int i, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
@@ -369,7 +355,7 @@ namespace viennacl
 
         cl_uint options_alpha = 0;
         viennacl::ocl::packed_cl_uint size_mat;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           size_mat.start  = cl_uint((viennacl::traits::start1(mat) + i * viennacl::traits::stride1(mat)) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat));
           size_mat.stride = cl_uint(viennacl::traits::stride2(mat));
@@ -402,8 +388,8 @@ namespace viennacl
                               );
       }
 
-      template <typename NumericT, typename F>
-      void matrix_column(const matrix_base<NumericT, F> & mat, unsigned int j, vector_base<NumericT> & vec)
+      template <typename NumericT>
+      void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         // reuse vector ambm kernel for assigning the elements:
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
@@ -412,7 +398,7 @@ namespace viennacl
 
         cl_uint options_alpha = 0;
         viennacl::ocl::packed_cl_uint size_mat;
-        if (viennacl::is_row_major<F>::value)
+        if (mat.row_major())
         {
           size_mat.start  = cl_uint(viennacl::traits::start1(mat) * viennacl::traits::internal_size2(mat) + viennacl::traits::start2(mat) + j * viennacl::traits::stride2(mat));
           size_mat.stride = cl_uint(viennacl::traits::stride2(mat) * viennacl::traits::internal_size2(mat));
@@ -456,18 +442,14 @@ namespace viennacl
       * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B, C, and the operation
       */
-      template <typename T, typename F, typename OP>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_binary<OP> > const & proxy)
+      template <typename T, typename OP>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_binary<OP> > const & proxy)
       {
-        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<T, F>  KernelClass;
-        KernelClass::init(ctx);
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), "element_op");
+        assert(A.row_major() == proxy.lhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
+        assert(A.row_major() == proxy.rhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         cl_uint op_type = 2; //0: product, 1: division, 2: power
         if (viennacl::is_division<OP>::value)
@@ -475,6 +457,7 @@ namespace viennacl
         else if (viennacl::is_product<OP>::value)
           op_type = 0;
 
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(A, "element_op");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
                                 cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
                                 cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
@@ -503,19 +486,31 @@ namespace viennacl
       * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B and the operation
       */
-      template <typename T, typename F, typename OP>
-      void element_op(matrix_base<T, F> & A,
-                      matrix_expression<const matrix_base<T, F>, const matrix_base<T, F>, op_element_unary<OP> > const & proxy)
+      template <typename T, typename OP>
+      void element_op(matrix_base<T> & A,
+                      matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<OP> > const & proxy)
       {
+        assert(A.row_major() == proxy.lhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
+        assert(A.row_major() == proxy.rhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
+
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        viennacl::linalg::opencl::kernels::matrix_element<T, F>::init(ctx);
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, F>::program_name(), detail::op_to_string(OP()) + "_assign");
+        viennacl::ocl::kernel *k = NULL;
+        if (A.row_major())
+        {
+          viennacl::linalg::opencl::kernels::matrix_element<T, row_major>::init(ctx);
+          k = &(ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, row_major>::program_name(), detail::op_to_string(OP()) + "_assign"));
+        }
+        else
+        {
+          viennacl::linalg::opencl::kernels::matrix_element<T, column_major>::init(ctx);
+          k = &(ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, column_major>::program_name(), detail::op_to_string(OP()) + "_assign"));
+        }
 
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+        viennacl::ocl::enqueue((*k)(viennacl::traits::opencl_handle(A),
                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
@@ -543,22 +538,18 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename NumericT, typename F>
-      void prod_impl(const matrix_base<NumericT, F> & mat, bool trans_mat,
+      template <typename NumericT>
+      void prod_impl(const matrix_base<NumericT> & mat, bool trans_mat,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
         typedef NumericT        value_type;
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         //result.resize(mat.size1());
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), trans_mat ? "trans_vec_mul" : "vec_mul");
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, trans_mat ? "trans_vec_mul" : "vec_mul");
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
                                 cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
@@ -585,6 +576,60 @@ namespace viennacl
 
       namespace detail
       {
+        template <typename NumericT>
+        viennacl::ocl::kernel & kernel_for_matrix_prod(matrix_base<NumericT> const & A, matrix_base<NumericT> const & B, matrix_base<NumericT> const & C, std::string kernel_name)
+        {
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+
+          if (A.row_major() && B.row_major() && C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, row_major, row_major, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (A.row_major() && B.row_major() && !C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, row_major, row_major, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (A.row_major() && !B.row_major() && C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, row_major, column_major, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (A.row_major() && !B.row_major() && !C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, row_major, column_major, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (!A.row_major() && B.row_major() && C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, row_major, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (!A.row_major() && B.row_major() && !C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, row_major, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+          else if (!A.row_major() && !B.row_major() && C.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, column_major, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          }
+
+          typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, column_major, column_major>  KernelClass;
+          KernelClass::init(ctx);
+          return ctx.get_kernel(KernelClass::program_name(), kernel_name);
+        }
+
+
         // C = A * B and possibly transposed variants
         template <typename T1, typename T2, typename T3, typename ScalarType >
         void prod_slow_kernel(const T1 & A,
@@ -595,17 +640,8 @@ namespace viennacl
                               std::string kernel_name)
         {
           typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-          typedef typename viennacl::result_of::orientation_functor<T1>::type   orientation_A;
-          typedef typename viennacl::result_of::orientation_functor<T2>::type   orientation_B;
-          typedef typename viennacl::result_of::orientation_functor<T3>::type   orientation_C;
 
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-          typedef viennacl::linalg::opencl::kernels::matrix_prod<cpu_value_type, orientation_A, orientation_B, orientation_C>    KernelClass;
-          KernelClass::init(ctx);
-
-          //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
-          viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
 
           k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size1(C)), 16));
           k.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size2(C)), 16));
@@ -648,17 +684,8 @@ namespace viennacl
                               std::string kernel_name)
         {
           typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-          typedef typename viennacl::result_of::orientation_functor<T1>::type   orientation_A;
-          typedef typename viennacl::result_of::orientation_functor<T2>::type   orientation_B;
-          typedef typename viennacl::result_of::orientation_functor<T3>::type   orientation_C;
 
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-          typedef viennacl::linalg::opencl::kernels::matrix_prod<cpu_value_type, orientation_A, orientation_B, orientation_C>    KernelClass;
-          KernelClass::init(ctx);
-
-          //std::cout << "KernelClass::program_name() : " << KernelClass::program_name() << std::endl;
-          viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), kernel_name);
+          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
 
           k.global_work_size(0, viennacl::traits::size2(C) / 4); //column blocks
           k.global_work_size(1, viennacl::traits::size1(C) / 4); //row blocks
@@ -729,16 +756,17 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename NumericT, typename F1, typename F2, typename F3, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT, F1> & A, bool trans_A,
-                     const matrix_base<NumericT, F2> & B, bool trans_B,
-                           matrix_base<NumericT, F3> & C,
+      template <typename NumericT, typename ScalarType >
+      void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
+                     const matrix_base<NumericT> & B, bool trans_B,
+                           matrix_base<NumericT> & C,
                      ScalarType alpha,
                      ScalarType beta)
       {
-        bool A_not_aligned = (A.internal_size1()%matrix_base<NumericT, F1>::alignment>0) ||(A.internal_size2()%matrix_base<NumericT, F1>::alignment>0);
-        bool B_not_aligned = (B.internal_size1()%matrix_base<NumericT, F2>::alignment>0) ||(B.internal_size2()%matrix_base<NumericT, F2>::alignment>0);
-        bool C_not_aligned = (C.internal_size1()%matrix_base<NumericT, F3>::alignment>0) ||(C.internal_size2()%matrix_base<NumericT, F3>::alignment>0);
+        bool A_not_aligned = (A.internal_size1() % matrix_base<NumericT>::alignment > 0) || (A.internal_size2() % matrix_base<NumericT>::alignment > 0);
+        bool B_not_aligned = (B.internal_size1() % matrix_base<NumericT>::alignment > 0) || (B.internal_size2() % matrix_base<NumericT>::alignment > 0);
+        bool C_not_aligned = (C.internal_size1() % matrix_base<NumericT>::alignment > 0) || (C.internal_size2() % matrix_base<NumericT>::alignment > 0);
+
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
@@ -761,25 +789,25 @@ namespace viennacl
         {
           if (!trans_A && !trans_B)
           {
-            typedef matrix_expression<const matrix_base<NumericT, F1>, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+            typedef matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
             viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
           }
           else if (!trans_A && trans_B)
           {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
-            typedef matrix_expression<const matrix_base<NumericT, F1>, RhsType, op_mat_mat_prod> ProdType;
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
+            typedef matrix_expression<const matrix_base<NumericT>, RhsType, op_mat_mat_prod> ProdType;
             viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,RhsType(B,B))+beta*C));
           }
           else if (trans_A && !trans_B)
           {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
-            typedef matrix_expression<LhsType, const matrix_base<NumericT, F2>, op_mat_mat_prod> ProdType;
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
+            typedef matrix_expression<LhsType, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
             viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),B)+beta*C));
           }
           else if (trans_A && trans_B)
           {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F1>, const matrix_base<NumericT, F1>, op_trans> LhsType;
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT, F2>, const matrix_base<NumericT, F2>, op_trans> RhsType;
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
+            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
             typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
             viennacl::generator::generate_enqueue_statement(viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),RhsType(B,B))+beta*C));
           }
@@ -803,8 +831,8 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename NumericT, typename F, typename S1>
-      void scaled_rank_1_update(matrix_base<NumericT, F> & mat1,
+      template <typename NumericT, typename S1>
+      void scaled_rank_1_update(matrix_base<NumericT> & mat1,
                                 S1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,
                                 const vector_base<NumericT> & vec2)
@@ -812,13 +840,9 @@ namespace viennacl
         assert( (viennacl::traits::size1(mat1) == viennacl::traits::size(vec1)) && bool("Size mismatch in scaled_rank_1_update: size1(A) != size(v1)"));
         assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat1).context());
-        typedef viennacl::linalg::opencl::kernels::matrix<NumericT, F>  KernelClass;
-        KernelClass::init(ctx);
-
         cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(KernelClass::program_name(), viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
+        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat1, viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
                                  cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),

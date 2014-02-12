@@ -135,82 +135,82 @@ namespace viennacl
     //
 
     // standard product:
-    template< typename NumericT, typename F1, typename F2>
-    viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                 const viennacl::matrix_base<NumericT, F2>,
+    template< typename NumericT>
+    viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                 const viennacl::matrix_base<NumericT>,
                                  viennacl::op_mat_mat_prod >
-    prod(viennacl::matrix_base<NumericT, F1> const & A,
-         viennacl::matrix_base<NumericT, F2> const & B)
+    prod(viennacl::matrix_base<NumericT> const & A,
+         viennacl::matrix_base<NumericT> const & B)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                          const viennacl::matrix_base<NumericT, F2>,
+      return viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                          const viennacl::matrix_base<NumericT>,
                                           viennacl::op_mat_mat_prod >(A, B);
     }
 
     // right factor is transposed:
-    template< typename NumericT, typename F1, typename F2>
-    viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                 const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                                                   const viennacl::matrix_base<NumericT, F2>,
+    template< typename NumericT>
+    viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                 const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                   const viennacl::matrix_base<NumericT>,
                                                                    op_trans>,
                                  viennacl::op_mat_mat_prod >
-    prod(viennacl::matrix_base<NumericT, F1> const & A,
-         viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                     const viennacl::matrix_base<NumericT, F2>,
+    prod(viennacl::matrix_base<NumericT> const & A,
+         viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                     const viennacl::matrix_base<NumericT>,
                                      op_trans> const & B)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                          const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                                                            const viennacl::matrix_base<NumericT, F2>,
+      return viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                          const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                            const viennacl::matrix_base<NumericT>,
                                                                             op_trans>,
                                           viennacl::op_mat_mat_prod >(A, B);
     }
 
     // left factor transposed:
-    template< typename NumericT, typename F1, typename F2>
-    viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                                                   const viennacl::matrix_base<NumericT, F1>,
+    template< typename NumericT>
+    viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                   const viennacl::matrix_base<NumericT>,
                                                                    op_trans>,
-                                 const viennacl::matrix_base<NumericT, F2>,
+                                 const viennacl::matrix_base<NumericT>,
                                  viennacl::op_mat_mat_prod >
-    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                     const viennacl::matrix_base<NumericT, F1>,
+    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                     const viennacl::matrix_base<NumericT>,
                                      op_trans> const & A,
-         viennacl::matrix_base<NumericT, F2> const & B)
+         viennacl::matrix_base<NumericT> const & B)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                                                            const viennacl::matrix_base<NumericT, F1>,
+      return viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                            const viennacl::matrix_base<NumericT>,
                                                                             op_trans>,
-                                          const viennacl::matrix_base<NumericT, F2>,
+                                          const viennacl::matrix_base<NumericT>,
                                           viennacl::op_mat_mat_prod >(A, B);
     }
 
 
     // both factors transposed:
-    template< typename NumericT, typename F1, typename F2>
-    viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                                                   const viennacl::matrix_base<NumericT, F1>,
+    template< typename NumericT>
+    viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                   const viennacl::matrix_base<NumericT>,
                                                                    op_trans>,
-                                 const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                                                   const viennacl::matrix_base<NumericT, F2>,
+                                 const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                   const viennacl::matrix_base<NumericT>,
                                                                    op_trans>,
                                  viennacl::op_mat_mat_prod >
-    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                     const viennacl::matrix_base<NumericT, F1>,
+    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                     const viennacl::matrix_base<NumericT>,
                                      op_trans> const & A,
-         viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                     const viennacl::matrix_base<NumericT, F2>,
+         viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                     const viennacl::matrix_base<NumericT>,
                                      op_trans> const & B)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F1>,
-                                                                            const viennacl::matrix_base<NumericT, F1>,
+      return viennacl::matrix_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                            const viennacl::matrix_base<NumericT>,
                                                                             op_trans>,
-                                          const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F2>,
-                                                                            const viennacl::matrix_base<NumericT, F2>,
+                                          const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                            const viennacl::matrix_base<NumericT>,
                                                                             op_trans>,
                                           viennacl::op_mat_mat_prod >(A, B);
     }
@@ -218,34 +218,34 @@ namespace viennacl
 
 
     // matrix-vector product
-    template< typename NumericT, typename F>
-    viennacl::vector_expression< const viennacl::matrix_base<NumericT, F>,
+    template< typename NumericT>
+    viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
                                  const viennacl::vector_base<NumericT>,
                                  viennacl::op_prod >
-    prod(viennacl::matrix_base<NumericT, F> const & matrix,
+    prod(viennacl::matrix_base<NumericT> const & matrix,
          viennacl::vector_base<NumericT> const & vector)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::vector_expression< const viennacl::matrix_base<NumericT, F>,
+      return viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
                                           const viennacl::vector_base<NumericT>,
                                           viennacl::op_prod >(matrix, vector);
     }
 
     // transposed matrix-vector product
-    template< typename NumericT, typename F>
-    viennacl::vector_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F>,
-                                                                   const viennacl::matrix_base<NumericT, F>,
+    template< typename NumericT>
+    viennacl::vector_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                   const viennacl::matrix_base<NumericT>,
                                                                    op_trans>,
                                  const viennacl::vector_base<NumericT>,
                                  viennacl::op_prod >
-    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F>,
-                                     const viennacl::matrix_base<NumericT, F>,
+    prod(viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                     const viennacl::matrix_base<NumericT>,
                                      op_trans> const & matrix,
          viennacl::vector_base<NumericT> const & vector)
     {
       // std::cout << "viennacl .. " << std::endl;
-      return viennacl::vector_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT, F>,
-                                                                            const viennacl::matrix_base<NumericT, F>,
+      return viennacl::vector_expression< const viennacl::matrix_expression<const viennacl::matrix_base<NumericT>,
+                                                                            const viennacl::matrix_base<NumericT>,
                                                                             op_trans>,
                                           const viennacl::vector_base<NumericT>,
                                           viennacl::op_prod >(matrix, vector);
@@ -266,37 +266,37 @@ namespace viennacl
                                op_prod >(mat, vec);
     }
 
-    template< typename SparseMatrixType, typename SCALARTYPE, typename F1>
+    template< typename SparseMatrixType, typename SCALARTYPE>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   viennacl::matrix_expression<const SparseMatrixType,
-                                                              const matrix_base < SCALARTYPE, F1 >,
+                                                              const matrix_base <SCALARTYPE>,
                                                               op_prod >
                                  >::type
     prod(const SparseMatrixType & sp_mat,
-         const viennacl::matrix_base<SCALARTYPE, F1> & d_mat)
+         const viennacl::matrix_base<SCALARTYPE> & d_mat)
     {
       return viennacl::matrix_expression<const SparseMatrixType,
-                                         const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                         const viennacl::matrix_base<SCALARTYPE>,
                                          op_prod >(sp_mat, d_mat);
     }
 
     // right factor is transposed
-    template< typename SparseMatrixType, typename SCALARTYPE, typename F1 >
+    template< typename SparseMatrixType, typename SCALARTYPE>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   viennacl::matrix_expression< const SparseMatrixType,
-                                                               const viennacl::matrix_expression<const viennacl::matrix_base<SCALARTYPE, F1>,
-                                                                                                 const viennacl::matrix_base<SCALARTYPE, F1>,
+                                                               const viennacl::matrix_expression<const viennacl::matrix_base<SCALARTYPE>,
+                                                                                                 const viennacl::matrix_base<SCALARTYPE>,
                                                                                                  op_trans>,
                                                                viennacl::op_prod >
                                   >::type
     prod(const SparseMatrixType & A,
-         viennacl::matrix_expression<const viennacl::matrix_base < SCALARTYPE, F1 >,
-                                     const viennacl::matrix_base < SCALARTYPE, F1 >,
+         viennacl::matrix_expression<const viennacl::matrix_base<SCALARTYPE>,
+                                     const viennacl::matrix_base<SCALARTYPE>,
                                      op_trans> const & B)
     {
       return viennacl::matrix_expression< const SparseMatrixType,
-                                          const viennacl::matrix_expression<const viennacl::matrix_base < SCALARTYPE, F1 >,
-                                                                            const viennacl::matrix_base < SCALARTYPE, F1 >,
+                                          const viennacl::matrix_expression<const viennacl::matrix_base<SCALARTYPE>,
+                                                                            const viennacl::matrix_base<SCALARTYPE>,
                                                                             op_trans>,
                                           viennacl::op_prod >(A, B);
     }

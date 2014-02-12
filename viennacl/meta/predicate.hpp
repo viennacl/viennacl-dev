@@ -165,7 +165,7 @@ namespace viennacl
 
     /** \cond */
     template <typename ScalarType>
-    struct is_row_major<viennacl::matrix_base<ScalarType, viennacl::row_major> >
+    struct is_row_major<viennacl::matrix<ScalarType, viennacl::row_major> >
     {
       enum { value = true };
     };

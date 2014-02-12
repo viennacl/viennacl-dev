@@ -286,7 +286,7 @@ namespace viennacl
   // Matrix types:
   //
 
-  template<class SCALARTYPE, typename F = row_major, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class matrix_base;
 
   template <class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
@@ -593,9 +593,6 @@ namespace viennacl
     template <typename T>
     void norm_1_impl(vector_base<T> const & vec, scalar<T> & result);
 
-    //template <typename T, typename F>
-    //void norm_1_impl(matrix_base<T, F> const & A, scalar<T> & result);
-
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
@@ -604,10 +601,6 @@ namespace viennacl
     template <typename T>
     void norm_1_cpu(vector_base<T> const & vec,
                     T & result);
-
-    //template <typename T, typename F>
-    //void norm_1_cpu(matrix_base<T, F> const & vec,
-    //                T & result);
 
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
@@ -633,9 +626,6 @@ namespace viennacl
     template <typename T>
     void norm_inf_impl(vector_base<T> const & vec, scalar<T> & result);
 
-    //template <typename T, typename F>
-    //void norm_inf_impl(matrix_base<T, F> const & vec, scalar<T> & result);
-
     template <typename LHS, typename RHS, typename OP, typename T>
     void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       scalar<T> & result);
@@ -644,18 +634,15 @@ namespace viennacl
     template <typename T>
     void norm_inf_cpu(vector_base<T> const & vec, T & result);
 
-    //template <typename T, typename F>
-    //void norm_inf_cpu(matrix_base<T, F> const & vec, T & result);
-
     template <typename LHS, typename RHS, typename OP, typename S2>
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result);
 
-    template <typename T, typename F>
-    void norm_frobenius_impl(matrix_base<T, F> const & vec, scalar<T> & result);
+    template <typename T>
+    void norm_frobenius_impl(matrix_base<T> const & vec, scalar<T> & result);
 
-    template <typename T, typename F>
-    void norm_frobenius_cpu(matrix_base<T, F> const & vec, T & result);
+    template <typename T>
+    void norm_frobenius_cpu(matrix_base<T> const & vec, T & result);
 
 
     template <typename T>
@@ -666,13 +653,13 @@ namespace viennacl
 
     //forward definition of prod_impl functions
 
-    template <typename NumericT, typename F>
-    void prod_impl(const matrix_base<NumericT, F> & mat,
+    template <typename NumericT>
+    void prod_impl(const matrix_base<NumericT> & mat,
                    const vector_base<NumericT> & vec,
                          vector_base<NumericT> & result);
 
-    template <typename NumericT, typename F>
-    void prod_impl(const matrix_expression< const matrix_base<NumericT, F>, const matrix_base<NumericT, F>, op_trans> & mat_trans,
+    template <typename NumericT>
+    void prod_impl(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & mat_trans,
                    const vector_base<NumericT> & vec,
                          vector_base<NumericT> & result);
 

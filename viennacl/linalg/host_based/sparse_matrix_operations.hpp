@@ -137,10 +137,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result) {
 
         ScalarType   const * sp_mat_elements   = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_row_buffer = detail::extract_raw_pointer<unsigned int>(sp_mat.handle1());
@@ -163,12 +163,17 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        if ( d_mat.row_major() ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
@@ -178,9 +183,12 @@ namespace viennacl
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper(sp_mat_col_buffer[k], col);
+                temp += sp_mat_elements[k] * d_mat_wrapper_row(sp_mat_col_buffer[k], col);
               }
-              result_wrapper(row, col) = temp;
+              if (result.row_major())
+                result_wrapper_row(row, col) = temp;
+              else
+                result_wrapper_col(row, col) = temp;
             }
           }
         }
@@ -194,9 +202,12 @@ namespace viennacl
               vcl_size_t row_end = sp_mat_row_buffer[row+1];
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper(sp_mat_col_buffer[k], col);
+                temp += sp_mat_elements[k] * d_mat_wrapper_col(sp_mat_col_buffer[k], col);
               }
-              result_wrapper(row, col) = temp;
+              if (result.row_major())
+                result_wrapper_row(row, col) = temp;
+              else
+                result_wrapper_col(row, col) = temp;
             }
           }
         }
@@ -212,12 +223,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< class ScalarType, typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                   const viennacl::matrix_base<NumericT, F1>,
+                const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                   const viennacl::matrix_base<NumericT>,
                                                    viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<NumericT, F2> & result) {
+                      viennacl::matrix_base<NumericT> & result) {
 
         ScalarType   const * sp_mat_elements   = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_row_buffer = detail::extract_raw_pointer<unsigned int>(sp_mat.handle1());
@@ -240,12 +251,17 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        if ( d_mat.lhs().row_major() ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
@@ -255,9 +271,12 @@ namespace viennacl
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper(col, sp_mat_col_buffer[k]);
+                temp += sp_mat_elements[k] * d_mat_wrapper_row(col, sp_mat_col_buffer[k]);
               }
-              result_wrapper(row, col) = temp;
+              if (result.row_major())
+                result_wrapper_row(row, col) = temp;
+              else
+                result_wrapper_col(row, col) = temp;
             }
           }
         }
@@ -271,9 +290,12 @@ namespace viennacl
               vcl_size_t row_end = sp_mat_row_buffer[row+1];
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper(col, sp_mat_col_buffer[k]);
+                temp += sp_mat_elements[k] * d_mat_wrapper_col(col, sp_mat_col_buffer[k]);
               }
-              result_wrapper(row, col) = temp;
+              if (result.row_major())
+                result_wrapper_row(row, col) = temp;
+              else
+                result_wrapper_col(row, col) = temp;
             }
           }
         }
@@ -981,10 +1003,10 @@ namespace viennacl
       * @param d_mat      The Dense Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle12());
@@ -1006,19 +1028,30 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        if ( d_mat.row_major() ) {
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
-                for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
-                  result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_row(row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_col(row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1028,8 +1061,11 @@ namespace viennacl
             unsigned int r = sp_mat_coords[2*i];
             unsigned int c = sp_mat_coords[2*i+1];
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
-              NumericT y = d_mat_wrapper( c, col);
-              result_wrapper(r, col) += x * y;
+              NumericT y = d_mat_wrapper_row( c, col);
+              if (result.row_major())
+                result_wrapper_row(r, col) += x * y;
+              else
+                result_wrapper_col(r, col) += x * y;
             }
           }
         }
@@ -1040,8 +1076,14 @@ namespace viennacl
         #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(d_mat.size2()); ++col)
-            for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
-                result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1053,9 +1095,12 @@ namespace viennacl
               NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
               unsigned int r = sp_mat_coords[2*i];
               unsigned int c = sp_mat_coords[2*i+1];
-              NumericT y = d_mat_wrapper( c, col);
+              NumericT y = d_mat_wrapper_col( c, col);
 
-              result_wrapper( r, col) += x*y;
+              if (result.row_major())
+                result_wrapper_row( r, col) += x*y;
+              else
+                result_wrapper_col( r, col) += x*y;
             }
 
           }
@@ -1072,12 +1117,12 @@ namespace viennacl
       * @param d_mat      The Dense Transposed Matrix
       * @param result     The Result Matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::coordinate_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                           viennacl::matrix_base<NumericT> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle12());
@@ -1099,40 +1144,92 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
+        if ( d_mat.lhs().row_major() )
+        {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
-            for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
-              result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
-        }
-        else {
+          {
+            if (result.row_major())
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
+#ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for
+#endif
+          for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
+            NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
+            unsigned int r = sp_mat_coords[2*i];
+            unsigned int c = sp_mat_coords[2*i+1];
+            if (result.row_major())
+            {
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
+                NumericT y = d_mat_wrapper_row( col, c);
+                result_wrapper_row(r, col) += x * y;
+              }
+            }
+            else
+            {
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
+                NumericT y = d_mat_wrapper_row( col, c);
+                result_wrapper_col(r, col) += x * y;
+              }
+            }
+          }
+
+
+        }
+        else
+        {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(d_mat.size2()); ++col)
-            for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
-              result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
-        }
+          {
+            if (result.row_major())
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-        for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
-          NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
-          unsigned int r = sp_mat_coords[2*i];
-          unsigned int c = sp_mat_coords[2*i+1];
-          for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
-            NumericT y = d_mat_wrapper( col, c);
-            result_wrapper(r, col) += x * y;
+          for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
+            NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
+            unsigned int r = sp_mat_coords[2*i];
+            unsigned int c = sp_mat_coords[2*i+1];
+            if (result.row_major())
+            {
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
+                NumericT y = d_mat_wrapper_col( col, c);
+                result_wrapper_row(r, col) += x * y;
+              }
+            }
+            else
+            {
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
+                NumericT y = d_mat_wrapper_col( col, c);
+                result_wrapper_col(r, col) += x * y;
+              }
+            }
           }
         }
 
@@ -1186,10 +1283,10 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result dense matrix
       */
-      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
       {
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle2());
@@ -1211,18 +1308,29 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        if ( d_mat.row_major() ) {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
-                for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
-                  result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1237,8 +1345,12 @@ namespace viennacl
 
               if( sp_mat_val != 0)
               {
-                for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
-                  result_wrapper(static_cast<vcl_size_t>(row), col) += sp_mat_val * d_mat_wrapper( sp_mat_col, col);
+                if (result.row_major())
+                  for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                    result_wrapper_row(static_cast<vcl_size_t>(row), col) += sp_mat_val * d_mat_wrapper_row( sp_mat_col, col);
+                else
+                  for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                    result_wrapper_col(static_cast<vcl_size_t>(row), col) += sp_mat_val * d_mat_wrapper_row( sp_mat_col, col);
               }
             }
           }
@@ -1248,8 +1360,14 @@ namespace viennacl
         #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(d_mat.size2()); ++col)
-            for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
-                result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1265,8 +1383,10 @@ namespace viennacl
                 unsigned int sp_mat_col = sp_mat_coords[offset];
 
                 if( sp_mat_val != 0) {
-
-                  result_wrapper( row, col) += sp_mat_val * d_mat_wrapper( sp_mat_col, col);
+                  if (result.row_major())
+                    result_wrapper_row( row, col) += sp_mat_val * d_mat_wrapper_col( sp_mat_col, col);
+                  else
+                    result_wrapper_col( row, col) += sp_mat_val * d_mat_wrapper_col( sp_mat_col, col);
                 }
               }
             }
@@ -1284,12 +1404,12 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<class ScalarType, typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                           viennacl::matrix_base<NumericT> & result) {
 
         ScalarType   const * sp_mat_elements     = detail::extract_raw_pointer<ScalarType>(sp_mat.handle());
         unsigned int const * sp_mat_coords       = detail::extract_raw_pointer<unsigned int>(sp_mat.handle2());
@@ -1311,18 +1431,30 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
 
-        if ( detail::is_row_major(typename F1::orientation_category()) ) {
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+
+        if ( d_mat.lhs().row_major() )
+        {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for
+          #pragma omp parallel for
 #endif
           for(long row = 0; row < static_cast<long>(sp_mat.size1()); ++row)
-            for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
-              result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
           for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
 
@@ -1334,21 +1466,31 @@ namespace viennacl
                 NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
                 unsigned int sp_mat_col = sp_mat_coords[offset];
 
-                if( sp_mat_val != 0) {
-
-                  result_wrapper( row, col) += sp_mat_val * d_mat_wrapper( col, sp_mat_col);
+                if( sp_mat_val != 0)
+                {
+                  if (result.row_major())
+                    result_wrapper_row( row, col) += sp_mat_val * d_mat_wrapper_row( col, sp_mat_col);
+                  else
+                    result_wrapper_col( row, col) += sp_mat_val * d_mat_wrapper_row( col, sp_mat_col);
                 }
               }
             }
           }
         }
-        else {
+        else
+        {
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(d_mat.size2()); ++col)
-            for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
-              result_wrapper( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          {
+            if (result.row_major())
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_row( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+            else
+              for (vcl_size_t row = 0; row < sp_mat.size1(); ++row)
+                result_wrapper_col( row, col) = (NumericT)0; /* filling result with zeros, as the product loops are reordered */
+          }
 
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
@@ -1361,12 +1503,14 @@ namespace viennacl
               NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
               unsigned int sp_mat_col = sp_mat_coords[offset];
 
-              if( sp_mat_val != 0) {
-
-                for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
-
-                  result_wrapper( row, col) += sp_mat_val * d_mat_wrapper( col, sp_mat_col);
-                }
+              if( sp_mat_val != 0)
+              {
+                if (result.row_major())
+                  for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                    result_wrapper_row( row, col) += sp_mat_val * d_mat_wrapper_col( col, sp_mat_col);
+                else
+                  for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
+                    result_wrapper_col( row, col) += sp_mat_val * d_mat_wrapper_col( col, sp_mat_col);
               }
             }
           }
@@ -1445,10 +1589,10 @@ namespace viennacl
       * @param d_mat  The dense matrix B
       * @param result The dense result matrix C
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
       {
         NumericT const * d_mat_data = detail::extract_raw_pointer<NumericT>(d_mat);
         NumericT       * result_data = detail::extract_raw_pointer<NumericT>(result);
@@ -1467,10 +1611,15 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
         NumericT     const * elements       = detail::extract_raw_pointer<NumericT>(mat.handle());
         unsigned int const * coords         = detail::extract_raw_pointer<unsigned int>(mat.handle2());
@@ -1496,7 +1645,10 @@ namespace viennacl
               if(val != 0)
               {
                 unsigned int col = coords[offset];
-                sum += d_mat_wrapper(col, result_col) * val;
+                if (d_mat.row_major())
+                  sum += d_mat_wrapper_row(col, result_col) * val;
+                else
+                  sum += d_mat_wrapper_col(col, result_col) * val;
               }
             }
 
@@ -1506,10 +1658,17 @@ namespace viennacl
             vcl_size_t col_begin = csr_row_buffer[row];
             vcl_size_t col_end   = csr_row_buffer[row + 1];
 
-            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-              sum += d_mat_wrapper(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
+            if (d_mat.row_major())
+              for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+                sum += d_mat_wrapper_row(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
+            else
+              for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+                sum += d_mat_wrapper_col(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
 
-            result_wrapper(row, result_col) = sum;
+            if (result.row_major())
+              result_wrapper_row(row, result_col) = sum;
+            else
+              result_wrapper_col(row, result_col) = sum;
           }
         } // for result_col
       }
@@ -1523,12 +1682,12 @@ namespace viennacl
       * @param d_mat  The dense matrix B
       * @param result The dense result matrix C
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::hyb_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                           viennacl::matrix_base<NumericT> & result)
       {
         NumericT const * d_mat_data = detail::extract_raw_pointer<NumericT>(d_mat);
         NumericT       * result_data = detail::extract_raw_pointer<NumericT>(result);
@@ -1547,10 +1706,15 @@ namespace viennacl
         vcl_size_t result_internal_size1  = viennacl::traits::internal_size1(result);
         vcl_size_t result_internal_size2  = viennacl::traits::internal_size2(result);
 
-        detail::matrix_array_wrapper<NumericT const, typename F1::orientation_category, false>
-            d_mat_wrapper(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
-        detail::matrix_array_wrapper<NumericT,       typename F2::orientation_category, false>
-            result_wrapper(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, row_major, false>
+            d_mat_wrapper_row(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+        detail::matrix_array_wrapper<NumericT const, column_major, false>
+            d_mat_wrapper_col(d_mat_data, d_mat_start1, d_mat_start2, d_mat_inc1, d_mat_inc2, d_mat_internal_size1, d_mat_internal_size2);
+
+        detail::matrix_array_wrapper<NumericT, row_major, false>
+            result_wrapper_row(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
+        detail::matrix_array_wrapper<NumericT, column_major, false>
+            result_wrapper_col(result_data, result_start1, result_start2, result_inc1, result_inc2, result_internal_size1, result_internal_size2);
 
         NumericT     const * elements       = detail::extract_raw_pointer<NumericT>(mat.handle());
         unsigned int const * coords         = detail::extract_raw_pointer<unsigned int>(mat.handle2());
@@ -1576,7 +1740,10 @@ namespace viennacl
               if(val != 0)
               {
                 unsigned int col = coords[offset];
-                sum += d_mat_wrapper(result_col, col) * val;
+                if (d_mat.lhs().row_major())
+                  sum += d_mat_wrapper_row(result_col, col) * val;
+                else
+                  sum += d_mat_wrapper_col(result_col, col) * val;
               }
             }
 
@@ -1586,10 +1753,17 @@ namespace viennacl
             vcl_size_t col_begin = csr_row_buffer[row];
             vcl_size_t col_end   = csr_row_buffer[row + 1];
 
-            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-              sum += d_mat_wrapper(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
+            if (d_mat.lhs().row_major())
+              for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+                sum += d_mat_wrapper_row(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
+            else
+              for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+                sum += d_mat_wrapper_col(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
 
-            result_wrapper(row, result_col) = sum;
+            if (result.row_major())
+              result_wrapper_row(row, result_col) = sum;
+            else
+              result_wrapper_col(row, result_col) = sum;
           }
         } // for result_col
       }

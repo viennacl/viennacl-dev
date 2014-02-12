@@ -62,14 +62,14 @@ namespace viennacl
           return reinterpret_cast<const T *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename NumericT, typename F>
-        NumericT * cuda_arg(matrix_base<NumericT, F> & obj)
+        template <typename NumericT>
+        NumericT * cuda_arg(matrix_base<NumericT> & obj)
         {
           return reinterpret_cast<NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename NumericT, typename F>
-        const NumericT * cuda_arg(matrix_base<NumericT, F> const & obj)
+        template <typename NumericT>
+        const NumericT * cuda_arg(matrix_base<NumericT> const & obj)
         {
           return reinterpret_cast<const NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
         }

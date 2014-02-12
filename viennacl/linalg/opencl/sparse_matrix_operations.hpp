@@ -118,15 +118,15 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< typename TYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<TYPE, F1> & d_mat,
-                           viennacl::matrix_base<TYPE, F2> & result) {
+                     const viennacl::matrix_base<TYPE> & d_mat,
+                           viennacl::matrix_base<TYPE> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(false, d_mat.row_major(), result.row_major()));
 
         viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(d_mat),
@@ -150,17 +150,17 @@ namespace viennacl
       * @param d_mat              The transposed dense matrix
       * @param result             The result matrix
       */
-      template< typename TYPE, unsigned int ALIGNMENT, typename F1, typename F2>
+      template< typename TYPE, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::compressed_matrix<TYPE, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE, F1>,
-                                                        const viennacl::matrix_base<TYPE, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<TYPE>,
+                                                        const viennacl::matrix_base<TYPE>,
                                                         viennacl::op_trans > & d_mat,
-                      viennacl::matrix_base<TYPE, F2> & result) {
+                      viennacl::matrix_base<TYPE> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<TYPE>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(true, d_mat.lhs().row_major(), result.row_major()));
 
         viennacl::ocl::enqueue(k(sp_mat.handle1().opencl_handle(), sp_mat.handle2().opencl_handle(), sp_mat.handle().opencl_handle(),
                                  viennacl::traits::opencl_handle(d_mat.lhs()),
@@ -575,16 +575,16 @@ namespace viennacl
       * @param d_mat  The dense matrix
       * @param result The result vector
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(false, d_mat.row_major(), result.row_major()));
 
         result.clear();
 
@@ -616,18 +616,18 @@ namespace viennacl
       * @param d_mat  The dense matrix
       * @param result The result vector
       */
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl(const viennacl::coordinate_matrix<NumericT, ALIGNMENT> & mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result)
+                           viennacl::matrix_base<NumericT> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
 
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(true, d_mat.lhs().row_major(), result.row_major()));
 
         result.clear();
 
@@ -716,15 +716,15 @@ namespace viennacl
       * @param d_mat      The dense matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2 >
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_base<NumericT, F1> & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                     const viennacl::matrix_base<NumericT> & d_mat,
+                           viennacl::matrix_base<NumericT> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(false, d_mat.row_major(), result.row_major()));
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;
@@ -761,17 +761,17 @@ namespace viennacl
       * @param d_mat      The dense transposed matrix
       * @param result     The result matrix
       */
-      template<class ScalarType, unsigned int ALIGNMENT, class NumericT, typename F1, typename F2>
+      template<class ScalarType, unsigned int ALIGNMENT, class NumericT>
       void prod_impl(const viennacl::ell_matrix<ScalarType, ALIGNMENT> & sp_mat,
-                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                        const viennacl::matrix_base<NumericT, F1>,
+                     const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                        const viennacl::matrix_base<NumericT>,
                                                         viennacl::op_trans > & d_mat,
-                           viennacl::matrix_base<NumericT, F2> & result) {
+                           viennacl::matrix_base<NumericT> & result) {
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(sp_mat).context());
         viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<ScalarType>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(true, d_mat.lhs().row_major(), result.row_major()));
 
         //unsigned int thread_num = 128;
         //unsigned int group_num = 256;
@@ -851,15 +851,15 @@ namespace viennacl
         );
       }
 
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl( const viennacl::hyb_matrix<NumericT, ALIGNMENT>& mat,
-                      const viennacl::matrix_base<NumericT, F1> & d_mat,
-                            viennacl::matrix_base<NumericT, F2> & result)
+                      const viennacl::matrix_base<NumericT> & d_mat,
+                            viennacl::matrix_base<NumericT> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(false, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(false, d_mat.row_major(), result.row_major()));
 
         unsigned int thread_num = 256;
         unsigned int group_num = 32;
@@ -890,17 +890,17 @@ namespace viennacl
         );
       }
 
-      template<typename NumericT, unsigned int ALIGNMENT, typename F1, typename F2>
+      template<typename NumericT, unsigned int ALIGNMENT>
       void prod_impl( const viennacl::hyb_matrix<NumericT, ALIGNMENT>& mat,
-                      const viennacl::matrix_expression< const viennacl::matrix_base<NumericT, F1>,
-                                                         const viennacl::matrix_base<NumericT, F1>,
+                      const viennacl::matrix_expression< const viennacl::matrix_base<NumericT>,
+                                                         const viennacl::matrix_base<NumericT>,
                                                          viennacl::op_trans > & d_mat,
-                            viennacl::matrix_base<NumericT, F2> & result)
+                            viennacl::matrix_base<NumericT> & result)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
         viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
         viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
-                                                   detail::sparse_dense_matmult_kernel_name(true, is_row_major<F1>::value, is_row_major<F2>::value));
+                                                   detail::sparse_dense_matmult_kernel_name(true, d_mat.lhs().row_major(), result.row_major()));
 
         unsigned int thread_num = 256;
         unsigned int group_num = 32;

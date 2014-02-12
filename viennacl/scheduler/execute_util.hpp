@@ -138,32 +138,17 @@ namespace viennacl
         }
         else if (new_elem.type_family == MATRIX_TYPE_FAMILY)
         {
-          assert( (new_elem.subtype == DENSE_COL_MATRIX_TYPE || new_elem.subtype == DENSE_ROW_MATRIX_TYPE)
-                 && bool("Expected a dense matrix in root node"));
+          assert( (new_elem.subtype == DENSE_MATRIX_TYPE) && bool("Expected a dense matrix in root node"));
 
-          if (new_elem.subtype == DENSE_COL_MATRIX_TYPE)
+          if (new_elem.subtype == DENSE_MATRIX_TYPE)
           {
             switch (new_elem.numeric_type)
             {
               case FLOAT_TYPE:
-                new_elem.matrix_col_float = new viennacl::matrix<float, viennacl::column_major>((old_element.matrix_col_float)->size1(), (old_element.matrix_col_float)->size2());
+                new_elem.matrix_float = new viennacl::matrix_base<float>((old_element.matrix_float)->size1(), (old_element.matrix_float)->size2(), (old_element.matrix_float)->row_major());
                 return;
               case DOUBLE_TYPE:
-                new_elem.matrix_col_double = new viennacl::matrix<double, viennacl::column_major>((old_element.matrix_col_double)->size1(), (old_element.matrix_col_double)->size2());
-                return;
-              default:
-                throw statement_not_supported_exception("Invalid vector type for vector construction");
-            }
-          }
-          else if (new_elem.subtype == DENSE_ROW_MATRIX_TYPE)
-          {
-            switch (new_elem.numeric_type)
-            {
-              case FLOAT_TYPE:
-                new_elem.matrix_row_float = new viennacl::matrix<float, viennacl::row_major>((old_element.matrix_row_float)->size1(), (old_element.matrix_row_float)->size2());
-                return;
-              case DOUBLE_TYPE:
-                new_elem.matrix_row_double = new viennacl::matrix<double, viennacl::row_major>((old_element.matrix_row_double)->size1(), (old_element.matrix_row_double)->size2());
+                new_elem.matrix_double = new viennacl::matrix_base<double>((old_element.matrix_double)->size1(), (old_element.matrix_double)->size2(), (old_element.matrix_double)->row_major());
                 return;
               default:
                 throw statement_not_supported_exception("Invalid vector type for vector construction");
@@ -208,29 +193,15 @@ namespace viennacl
         }
         else if (elem.type_family == MATRIX_TYPE_FAMILY)
         {
-          if (elem.subtype == DENSE_COL_MATRIX_TYPE)
+          if (elem.subtype == DENSE_MATRIX_TYPE)
           {
             switch (elem.numeric_type)
             {
               case FLOAT_TYPE:
-                delete elem.matrix_col_float;
+                delete elem.matrix_float;
                 return;
               case DOUBLE_TYPE:
-                delete elem.matrix_col_double;
-                return;
-              default:
-                throw statement_not_supported_exception("Invalid vector type for vector destruction");
-            }
-          }
-          else if (elem.subtype == DENSE_ROW_MATRIX_TYPE)
-          {
-            switch (elem.numeric_type)
-            {
-              case FLOAT_TYPE:
-                delete elem.matrix_row_float;
-                return;
-              case DOUBLE_TYPE:
-                delete elem.matrix_row_double;
+                delete elem.matrix_double;
                 return;
               default:
                 throw statement_not_supported_exception("Invalid vector type for vector destruction");

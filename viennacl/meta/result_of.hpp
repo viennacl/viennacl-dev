@@ -128,55 +128,6 @@ namespace viennacl
       /** \endcond */
 
       //
-      // Majority specifier for matrices (row_major, column_major)
-      //
-      /** @brief Returns the orientation functor tag (either row_major or column_major) of a matrix */
-      template <typename T>
-      struct orientation_functor
-      {
-        typedef typename T::ERROR_ARGUMENT_PROVIDED_IS_NOT_A_MATRIX     type;
-      };
-
-      /** \cond */
-      template <typename T>
-      struct orientation_functor<const T>
-      {
-        typedef typename orientation_functor<T>::type  type;
-      };
-
-      template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-      struct orientation_functor< matrix<SCALARTYPE, F, ALIGNMENT> >
-      {
-        typedef F     type;
-      };
-
-      template <typename T>
-      struct orientation_functor< matrix_range<T> >
-      {
-        typedef typename orientation_functor<T>::type  type;
-      };
-
-      template <typename T>
-      struct orientation_functor< matrix_slice<T> >
-      {
-        typedef typename orientation_functor<T>::type  type;
-      };
-
-      template <typename SCALARTYPE, typename F>
-      struct orientation_functor< matrix_base<SCALARTYPE, F> >
-      {
-        typedef F     type;
-      };
-
-      template <typename LHS, typename RHS>
-      struct orientation_functor< matrix_expression<LHS, RHS, op_trans> >
-      {
-        typedef typename orientation_functor<LHS>::type  type;
-      };
-      /** \endcond */
-
-
-      //
       // Retrieve size_type
       //
       /** @brief Generic meta-function for retrieving the size_type associated with type T */
@@ -394,8 +345,8 @@ namespace viennacl
       };
 
 
-      template <typename T, typename F>
-      struct cpu_value_type<viennacl::matrix_base<T, F> >
+      template <typename T>
+      struct cpu_value_type<viennacl::matrix_base<T> >
       {
         typedef T    type;
       };
