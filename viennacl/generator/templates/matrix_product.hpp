@@ -334,9 +334,17 @@ namespace viennacl{
           std::size_t local_rhs_size2 = nl_ + 1;
 
           ///Result Values
-          for(unsigned int m=0; m< ms_res; ++m)
-            for(unsigned int n=0; n < ns_res ; ++n)
-              stream << assigned->simd_scalartype() << " " << "res" << m << "_" << n << " = (" << assigned->simd_scalartype() << ")(0) ;" << std::endl;
+          stream << assigned->scalartype() << " " << "res[" << ms_ << "][" << ns_ <<"]  = {(float)0};" << std::endl;
+
+          if(use_lhs_shared_)
+            stream << lhs->scalartype() << " " << "val_lhs[" << ms_lhs << "][" << ks_lhs <<"]  = {(" << lhs->scalartype() << ")0};" << std::endl;
+          else
+            stream << lhs->simd_scalartype() << " " << "val_lhs[" << ms_lhs << "][" << ks_lhs <<"]  = {(" << lhs->simd_scalartype() << ")0};" << std::endl;
+
+          if(use_rhs_shared_)
+            stream << rhs->scalartype() << " " << "val_rhs[" << ks_rhs << "][" << ns_rhs <<"]  = {(" << rhs->scalartype() << ")0};" << std::endl;
+          else
+            stream << rhs->simd_scalartype() << " " << "val_rhs[" << ks_rhs << "][" << ns_rhs <<"]  = {(" << rhs->simd_scalartype() << ")0};" << std::endl;
 
           ///Local memory
           if(use_lhs_shared_)
@@ -428,9 +436,9 @@ namespace viennacl{
           for(unsigned int k = 0 ; k < ks_rhs ; ++k){
             for(unsigned int n=0 ; n < ns_rhs ; ++n){
               if(use_rhs_shared_ )
-                  stream << rhs->scalartype() << " val_rhs_" << k << "_" << n << " = * rhs_ptr_" << k << "++";
+                  stream << "val_rhs[" << k << "][" << n << "] = * rhs_ptr_" << k << "++";
               else{
-                stream << rhs->simd_scalartype() << " val_rhs_" << k << "_" << n << " = " ;
+                stream << "val_rhs[" << k << "][" << n << "] = " ;
                 if(rhs->interpret_as_transposed())
                   stream << "* rhs_ptr_" << k << "++";
                 else
@@ -441,13 +449,12 @@ namespace viennacl{
             }
           }
 
-
+         for(unsigned int m=0 ; m < ms_lhs ; ++m){
           for(unsigned int k = 0 ; k < ks_lhs ; ++k){
-            for(unsigned int m=0 ; m < ms_lhs ; ++m){
               if(use_lhs_shared_)
-                stream << lhs->scalartype() << " " << "val_lhs_" << m << "_" << k << " = * lhs_ptr_" << m << "++" ;
+                stream << "val_lhs[" << m << "][" << k << "] = * lhs_ptr_" << m << "++" ;
               else{
-                  stream << lhs->simd_scalartype() << " " << "val_lhs_" << m << "_" << k << " = ";
+                  stream << "val_lhs[" << m << "][" << k << "] = ";
                   if(lhs->interpret_as_transposed())
                     stream << "* lhs_ptr_" << m << "++";
                   else
@@ -462,28 +469,28 @@ namespace viennacl{
               for(unsigned int m=0 ; m < ms_ ; ++m){
                   for(unsigned int n=0 ; n < ns_ ; ++n){
                       std::ostringstream res_oss;
-                      res_oss << "res" << m << "_" << n ;
+                      res_oss << "res[" << m << "][" << n << "]" ;
 
                       std::ostringstream lhs_oss;
                       if(use_lhs_shared_ || simd_width_==1){
-                          lhs_oss << "val_lhs_" << m << "_" << k;
+                          lhs_oss << "val_lhs[" << m << "][" << k << "]";
                       }
                       else{
                           if(lhs->interpret_as_transposed())
-                              lhs_oss << "val_lhs_" << m << "_" << k/simd_width_ << ".s" << k%simd_width_;
+                              lhs_oss << "val_lhs[" << m << "][" << k/simd_width_ << "].s" << k%simd_width_;
                           else
-                              lhs_oss << "val_lhs_" << m/simd_width_ << "_" << k << ".s" << m%simd_width_;
+                              lhs_oss << "val_lhs[" << m/simd_width_ << "][" << k << "].s" << m%simd_width_;
                       }
 
                       std::ostringstream rhs_oss;
                       if(use_rhs_shared_ || simd_width_==1){
-                          rhs_oss << "val_rhs_" << k << "_" << n;
+                          rhs_oss << "val_rhs[" << k << "][" << n;
                       }
                       else{
                           if(rhs->interpret_as_transposed())
-                              rhs_oss << "val_rhs_" << k << "_" << n/simd_width_ << ".s" << n%simd_width_;
+                              rhs_oss << "val_rhs[" << k << "][" << n/simd_width_ << "].s" << n%simd_width_;
                           else
-                              rhs_oss << "val_rhs_" << k/simd_width_ << "_" << n << ".s" << k%simd_width_;
+                              rhs_oss << "val_rhs[" << k/simd_width_ << "][" << n << "].s" << k%simd_width_;
                       }
 
 
@@ -537,7 +544,7 @@ namespace viennacl{
               std::string j = "get_global_id(1)*" + utils::to_string(ns_res) + "+" + utils::to_string(n);
               if(assigned->interpret_as_transposed())
                 std::swap(i,j);
-              prod->access_name("res"+utils::to_string(m)+"_"+utils::to_string(n));
+              prod->access_name("res["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
               std::string str;
               tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
               stream << str << ";" << std::endl;

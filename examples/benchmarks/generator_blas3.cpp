@@ -29,7 +29,7 @@
 //
 // ViennaCL includes
 //
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_BUILD
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -112,16 +112,16 @@ int main(){
                 std::cout << "----------------------------------------------" << std::endl;
 
                 std::cout << "float : " << std::endl;
-                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
+                std::cout << "#Size\tTA" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    std::cout << size << "\t" << run_benchmark<float>(size,false,false) << "\t" << run_benchmark<float>(size,true,false) << "\t" << run_benchmark<float>(size,false,true) << "\t" << run_benchmark<float>(size,true,true) << std::endl;
+                    std::cout << size << "\t" << run_benchmark<float>(size,true,false) << std::endl;
                 }
 
-                std::cout << "double : " << std::endl;
-                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
-                for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    std::cout << size << "\t" << run_benchmark<double>(size,false,false) << "\t" << run_benchmark<double>(size,true,false) << "\t" << run_benchmark<double>(size,false,true) << "\t" << run_benchmark<double>(size,true,true) << std::endl;
-                }
+//                std::cout << "double : " << std::endl;
+//                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
+//                for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
+//                    std::cout << size << "\t" << run_benchmark<double>(size,false,false) << "\t" << run_benchmark<double>(size,true,false) << "\t" << run_benchmark<double>(size,false,true) << "\t" << run_benchmark<double>(size,true,true) << std::endl;
+//                }
           }
         }
     }
