@@ -260,6 +260,31 @@ namespace viennacl{
           //default
           set_all_generation_default_to(map,nvidia_id,Fermi,"GeForce GTX 470");
 
+          //-----Kepler
+
+          //Geforce GTX 680 (based on feedback from Paul Dufort via viennacl-support)
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_SAXPY_TYPE,4)]      =    profile_base_ptr(new vector_saxpy(1,1,256,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_SAXPY_TYPE,4)]      =    profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(SCALAR_REDUCE_TYPE,4)]     =    profile_base_ptr(new scalar_reduction(4,64,512,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,1,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,32,16,4,4,8,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,4,128,32,4,8,4,1,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,4,32,16,8,4,8,0,0));
+
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_SAXPY_TYPE,8)]      =    profile_base_ptr(new vector_saxpy(2,1,64,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_SAXPY_TYPE,8)]      =    profile_base_ptr(new matrix_saxpy(2,16,16,16,16,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(SCALAR_REDUCE_TYPE,8)]     =    profile_base_ptr(new scalar_reduction(2,64,512,true));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,1,128,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,16,32,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,64,32,2,2,8,1,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,64,128,4,2,2,8,0,1));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,128,32,4,8,4,1,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,32,16,8,4,8,0,0));
+
+          //default
+          set_all_generation_default_to(map,nvidia_id,Kepler,"GeForce GTX 680");
 
 
         return map;
