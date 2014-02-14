@@ -189,9 +189,9 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
-    viennacl::matrix<ScalarType> A(size, size);
-    viennacl::matrix<ScalarType> B(size, size);
-    viennacl::matrix<ScalarType> C(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> A(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> B(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> C(size, size);
     viennacl::scheduler::statement statement = make_statement(layout,A,B,C);
     viennacl::generator::code_generator gen;
     gen.add(statement,statement.array()[0]);
@@ -212,7 +212,7 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
 template<class ScalarType>
 void run_autotune(autotuner_options options){
     typedef std::map<double, matrix_product> timings_t;
-    typedef viennacl::matrix<ScalarType> MatrixT;
+    typedef viennacl::matrix<ScalarType, viennacl::column_major> MatrixT;
     typedef config<ScalarType> config_type;
     typedef typename config_type::profile_type profile_type;
 

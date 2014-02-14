@@ -135,7 +135,7 @@ code_generator::forced_profile_key_type make_key(autotuner_options options){
 }
 
 template<class ScalarType>
-viennacl::scheduler::statement make_statement(autotuner_options options, viennacl::vector<ScalarType> const & y, viennacl::matrix<ScalarType> const & A, viennacl::vector<ScalarType> const & x){
+viennacl::scheduler::statement make_statement(autotuner_options options, viennacl::vector<ScalarType> const & y, viennacl::matrix<ScalarType, viennacl::column_major> const & A, viennacl::vector<ScalarType> const & x){
     if(options.layout =="Nx") return viennacl::scheduler::statement(y,viennacl::op_assign(), viennacl::linalg::prod(A, x));
     else return viennacl::scheduler::statement(y,viennacl::op_assign(), viennacl::linalg::prod(viennacl::trans(A), x));
 }
@@ -145,7 +145,7 @@ double run_benchmark(size_t size, autotuner_options options, typename config<Sca
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
-    viennacl::matrix<ScalarType> A(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> A(size, size);
     viennacl::vector<ScalarType> y(size);
     viennacl::vector<ScalarType> x(size);
     viennacl::scheduler::statement statement = make_statement(options,y,A,x);
@@ -173,7 +173,7 @@ void run_autotune(autotuner_options const & options){
     viennacl::ocl::device const &  device = viennacl::ocl::current_device();
 
     viennacl::vector<ScalarType> y(options.tuning_size), x(options.tuning_size);
-    viennacl::matrix<ScalarType> A(options.tuning_size, options.tuning_size);
+    viennacl::matrix<ScalarType, viennacl::column_major> A(options.tuning_size, options.tuning_size);
     std::map<double,profile_type> timings;
     autotune::tuning_config<config_type> conf;
 

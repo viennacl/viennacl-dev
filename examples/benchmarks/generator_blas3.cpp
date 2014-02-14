@@ -70,9 +70,9 @@ template<typename ScalarType>
 unsigned int run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
 {    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
-    viennacl::matrix<ScalarType> A(size, size);
-    viennacl::matrix<ScalarType> B(size, size);
-    viennacl::matrix<ScalarType> C(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> A(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> B(size, size);
+    viennacl::matrix<ScalarType, viennacl::column_major> C(size, size);
     viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
     viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
@@ -114,14 +114,14 @@ int main(){
                 std::cout << "float : " << std::endl;
                 std::cout << "#Size\tTA" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    std::cout << size << "\t" << run_benchmark<float>(size,true,false) << std::endl;
+                  std::cout << size << "\t" << run_benchmark<float>(size,false,false) << "\t" << run_benchmark<float>(size,true,false) << "\t" << run_benchmark<float>(size,false,true) << "\t" << run_benchmark<float>(size,true,true) << std::endl;
                 }
 
-//                std::cout << "double : " << std::endl;
-//                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
-//                for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-//                    std::cout << size << "\t" << run_benchmark<double>(size,false,false) << "\t" << run_benchmark<double>(size,true,false) << "\t" << run_benchmark<double>(size,false,true) << "\t" << run_benchmark<double>(size,true,true) << std::endl;
-//                }
+                std::cout << "double : " << std::endl;
+                std::cout << "#Size\tAA\tTA\tAT\tTT" << std::endl;
+                for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
+                    std::cout << size << "\t" << run_benchmark<double>(size,false,false) << "\t" << run_benchmark<double>(size,true,false) << "\t" << run_benchmark<double>(size,false,true) << "\t" << run_benchmark<double>(size,true,true) << std::endl;
+                }
           }
         }
     }

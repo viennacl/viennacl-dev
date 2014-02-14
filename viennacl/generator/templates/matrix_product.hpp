@@ -484,7 +484,7 @@ namespace viennacl{
 
                       std::ostringstream rhs_oss;
                       if(use_rhs_shared_ || simd_width_==1){
-                          rhs_oss << "val_rhs[" << k << "][" << n;
+                        rhs_oss << "val_rhs[" << k << "][" << n << "]";
                       }
                       else{
                           if(rhs->interpret_as_transposed())

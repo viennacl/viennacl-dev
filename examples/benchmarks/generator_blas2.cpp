@@ -55,13 +55,13 @@
 #define SIZE_INC 256
 #define MAX_SIZE 7936
 
-template<typename ScalarType, class FB>
+template<typename ScalarType>
 double run_benchmark(size_t size, bool is_trans)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
     viennacl::vector<ScalarType> y = viennacl::scalar_vector<ScalarType>(size,1);
-    viennacl::matrix<ScalarType,FB> A = viennacl::scalar_matrix<ScalarType>(size, size,1);
+    viennacl::matrix<ScalarType,viennacl::column_major> A = viennacl::scalar_matrix<ScalarType>(size, size,1);
     viennacl::vector<ScalarType> x = viennacl::scalar_vector<ScalarType>(size,1);
 
     viennacl::scheduler::statement * statement;
@@ -113,13 +113,13 @@ int main()
                 std::cout << "float:" << std::endl;
                 std::cout << "#N\tAv(GFLOP/s)\tTv(GFLOP/s)" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                    std::cout << size << "\t" << std::setprecision(3) << run_benchmark<float,viennacl::row_major>(size,false) << "\t" << run_benchmark<float,viennacl::row_major>(size,true) << std::endl;
+                    std::cout << size << "\t" << std::setprecision(3) << run_benchmark<float>(size,false) << "\t" << run_benchmark<float>(size,true) << std::endl;
                 }
                 std::cout << std::endl;
                 std::cout << "double:" << std::endl;
                 std::cout << "#N\tAv(GFLOP/s)\tTv(GFLOP/s)" << std::endl;
                 for(unsigned int size = SIZE_INC ; size <= MAX_SIZE ; size += SIZE_INC){
-                  std::cout << size << "\t" << std::setprecision(3) << run_benchmark<double,viennacl::row_major>(size,false) << "\t" << run_benchmark<double,viennacl::row_major>(size,true) << std::endl;
+                  std::cout << size << "\t" << std::setprecision(3) << run_benchmark<double>(size,false) << "\t" << run_benchmark<double>(size,true) << std::endl;
                 }
         }
     }
