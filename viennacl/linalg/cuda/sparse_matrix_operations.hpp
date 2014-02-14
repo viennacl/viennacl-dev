@@ -449,7 +449,7 @@ namespace viennacl
                                                       );
           VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
         }
-        if (d_mat.lhs().row_major() && !result.row_major())
+        else if (d_mat.lhs().row_major() && !result.row_major())
         {
           compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<row_major>, mat_mult_matrix_index<column_major> ><<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
@@ -470,7 +470,7 @@ namespace viennacl
                                                       );
           VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_d_tr_mat_mul_kernel");
         }
-        if (!d_mat.lhs().row_major() && result.row_major())
+        else if (!d_mat.lhs().row_major() && result.row_major())
         {
           compressed_matrix_d_tr_mat_mul_kernel<mat_mult_matrix_index<column_major>, mat_mult_matrix_index<row_major> ><<<128, 128>>>
                                                       (detail::cuda_arg<unsigned int>(sp_mat.handle1().cuda_handle()),
