@@ -40,7 +40,7 @@ namespace viennacl
     bool row_major(matrix_base<NumericT> const & A) { return A.row_major(); }
 
     template <typename LHS, typename RHS, typename OP>
-    bool row_major(matrix_expression<LHS, RHS, OP> const & proxy) { return row_major(proxy.lhs()); }
+    bool row_major(matrix_expression<LHS, RHS, OP> const & proxy) { return viennacl::traits::row_major(proxy.lhs()); }
 
   } //namespace traits
 } //namespace viennacl
