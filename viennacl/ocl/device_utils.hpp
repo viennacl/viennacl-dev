@@ -58,6 +58,7 @@ namespace viennacl
       Evergreen,
       NorthernIslands,
       SouthernIslands,
+	  VolcanicIslands,
 
       UNKNOWN
     };
@@ -133,6 +134,9 @@ namespace viennacl
         VIENNACL_DEVICE_MAP("Tahiti",SouthernIslands);
         VIENNACL_DEVICE_MAP("Malta",SouthernIslands);
 
+		//VolcanicIslands
+        VIENNACL_DEVICE_MAP("Hawaii",VolcanicIslands);
+		
 #undef VIENNACL_DEVICE_MAP
 
         return UNKNOWN;

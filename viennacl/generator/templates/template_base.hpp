@@ -134,7 +134,7 @@ namespace viennacl{
           bool invalid_work_group_sizes = local_size_1_*local_size_2_ > max_workgroup_size
               || local_size_1_ > max_work_item_sizes[0]
               || local_size_2_ > max_work_item_sizes[1]; // uses too much resources
-
+		  
           return  invalid_work_group_sizes
               || lmem_used(scalartype_size)>lmem_available
               || invalid_impl(dev, scalartype_size);

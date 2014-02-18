@@ -39,7 +39,7 @@
 // *** ViennaCL
 //
 //#define VIENNACL_DEBUG_ALL
-//#define VIENNACL_DEBUG_BUILD
+#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_HAVE_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
@@ -130,72 +130,72 @@ int test_prod(Epsilon const& epsilon,
    NumericT alpha = 3.14;
    NumericT beta = 4.51;
 
-std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
-{
-    C     = alpha*viennacl::linalg::prod(A, B) + beta*C;
+	// std::cout << "Testing C = alpha*A*B + beta*C ..." << std::endl;
+	// {
+		// C     = alpha*viennacl::linalg::prod(A,B) + beta*C;
 
-    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
-    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-    viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
-    {
-      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-      std::cout << "  diff: " << act_diff << std::endl;
-      retval = EXIT_FAILURE;
-    }
-    else
-      std::cout << "Test C = A * B passed!" << std::endl;
-}
+		// viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
+		// viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+		// viennacl::backend::finish();
+		// act_diff = fabs(diff(C, vcl_C));
+		// if( act_diff > epsilon )
+		// {
+		  // std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+		  // std::cout << "  diff: " << act_diff << std::endl;
+		  // retval = EXIT_FAILURE;
+		// }
+		// else
+		  // std::cout << "Test C = A*B passed!" << std::endl;
+	// }
 
 
-   std::cout << "Testing C = alpha*trans(A) * B + beta*C ..." << std::endl;
-   {
-       C     = alpha*boost::numeric::ublas::prod(trans(A_trans), B) + beta*C;
-       viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
-       viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-       viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C));
-       if( act_diff > epsilon )
-       {
-         std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         std::cout << "  diff: " << act_diff << std::endl;
-         retval = EXIT_FAILURE;
-       }
-       else std::cout << "Test C = trans(A) * B passed!" << std::endl;
-   }
+   // std::cout << "Testing C = alpha*trans(A)*B + beta*C ..." << std::endl;
+   // {
+       // C     = alpha*boost::numeric::ublas::prod(trans(A_trans), B) + beta*C;
+       // viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
+       // viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+       // viennacl::backend::finish();
+       // act_diff = fabs(diff(C, vcl_C));
+       // if( act_diff > epsilon )
+       // {
+         // std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+         // std::cout << "  diff: " << act_diff << std::endl;
+         // retval = EXIT_FAILURE;
+       // }
+       // else std::cout << "Test C = trans(A)*B passed!" << std::endl;
+   // }
 
-std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
-{
-    C     = boost::numeric::ublas::prod(A,trans(B_trans)) + beta*C;
-    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
-    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-    viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
-    {
-      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-      std::cout << "  diff: " << act_diff << std::endl;
-      retval = EXIT_FAILURE;
-    }
-    else std::cout << "Test C = A * trans(B) passed!" << std::endl;
-}
+	std::cout << "Testing C = alpha*A*trans(B) + beta*C ..." << std::endl;
+	{
+		C     = boost::numeric::ublas::prod(A,trans(B_trans)) + beta*C;
+		viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
+		viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+		viennacl::backend::finish();
+		act_diff = fabs(diff(C, vcl_C));
+		if( act_diff > epsilon )
+		{
+		  std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+		  std::cout << "  diff: " << act_diff << std::endl;
+		  retval = EXIT_FAILURE;
+		}
+		else std::cout << "Test C = A*trans(B) passed!" << std::endl;
+	}
 
-std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
-{
-    C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans)) + beta*C;
-    viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
-    viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-    viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
-    {
-      std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-      std::cout << "  diff: " << act_diff << std::endl;
-      retval = EXIT_FAILURE;
-    }
-    else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
-}
+	// std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
+	// {
+		// C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans)) + beta*C;
+		// viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
+		// viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+		// viennacl::backend::finish();
+		// act_diff = fabs(diff(C, vcl_C));
+		// if( act_diff > epsilon )
+		// {
+		  // std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+		  // std::cout << "  diff: " << act_diff << std::endl;
+		  // retval = EXIT_FAILURE;
+		// }
+		// else std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
+	// }
 
 
    return retval;
@@ -283,55 +283,55 @@ int test(Epsilon const& epsilon)
 {
   int ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=row, B=row, C=row ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::row_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
+  // std::cout << "///////////////////////////////////////" << std::endl;
+  // ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
+  // if (ret != EXIT_SUCCESS)
+    // return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
   std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;
@@ -369,25 +369,26 @@ int main(int argc, char* argv[])
 
             srand(time(NULL));
 
-            std::cout << std::endl;
-            std::cout << "----------------------------------------------" << std::endl;
-            std::cout << std::endl;
-            {
-               typedef float NumericT;
-               NumericT epsilon = NumericT(1.0E-3);
-               std::cout << "# Testing setup:" << std::endl;
+            // std::cout << std::endl;
+            // std::cout << "----------------------------------------------" << std::endl;
+            // std::cout << std::endl;
+            // {
+               // typedef float NumericT;
+               // NumericT epsilon = NumericT(1.0E-3);
+               // std::cout << "# Testing setup:" << std::endl;
 
-               std::cout << viennacl::ocl::current_device().info() << std::endl;
+               // std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-               std::cout << "  eps:     " << epsilon << std::endl;
-               std::cout << "  numeric: float" << std::endl;
-               retval = test<NumericT>(epsilon);
-               if( retval == EXIT_SUCCESS )
-                 std::cout << "# Test passed" << std::endl;
-               else
-                 return retval;
-            }
-            std::cout << std::endl;
+               // std::cout << "  eps:     " << epsilon << std::endl;
+               // std::cout << "  numeric: float" << std::endl;
+               // retval = test<NumericT>(epsilon);
+               // if( retval == EXIT_SUCCESS )
+                 // std::cout << "# Test passed" << std::endl;
+               // else
+                 // return retval;
+            // }
+            // std::cout << std::endl;
+			
             std::cout << "----------------------------------------------" << std::endl;
             std::cout << std::endl;
          #ifdef VIENNACL_WITH_OPENCL
