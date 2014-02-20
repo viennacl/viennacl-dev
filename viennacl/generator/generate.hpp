@@ -283,19 +283,20 @@ namespace viennacl{
     *   @param force_recompilation if true, the program will be recompiled
     */
     inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
-      char* program_name = (char*)malloc(256*sizeof(char));
-      generator.make_program_name(program_name);
+      std::vector<char> program_name_vector(256);
+      char* program_data = program_name_vector.data();
+      generator.make_program_name(program_data);
       if(force_recompilation)
-        viennacl::ocl::current_context().delete_program(program_name);
-      if(!viennacl::ocl::current_context().has_program(program_name)){
+        viennacl::ocl::current_context().delete_program(program_data);
+      if(!viennacl::ocl::current_context().has_program(program_data)){
         std::string source_code = generator.make_opencl_program_string();
     #ifdef VIENNACL_DEBUG_BUILD
         std::cout << "Building " << program_name << "..." << std::endl;
         std::cout << source_code << std::endl;
     #endif
-        viennacl::ocl::current_context().add_program(source_code, program_name);
+        viennacl::ocl::current_context().add_program(source_code, program_data);
       }
-      viennacl::ocl::program & p = viennacl::ocl::current_context().get_program(program_name);
+      viennacl::ocl::program & p = viennacl::ocl::current_context().get_program(program_data);
       generator.configure_program(p, kernels);
       return p;
     }
