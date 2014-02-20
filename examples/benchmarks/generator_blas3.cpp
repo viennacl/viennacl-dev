@@ -49,7 +49,7 @@
 
 #define N_RUNS 10
 #define SIZE_INC 128
-#define MAX_SIZE 3072
+#define MAX_SIZE 5128
 
 template<class MatA, class MatB, class MatC>
 viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){

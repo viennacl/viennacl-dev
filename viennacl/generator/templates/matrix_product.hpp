@@ -68,12 +68,8 @@ namespace viennacl{
 
 			bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
 				static const unsigned int alignment = 128;
-				return ml_ > alignment
-				|| cache_width_ > alignment
-				|| nl_ > alignment
-				|| ml_ < ms_
-				|| cache_width_ < ks_
-				|| nl_ < ns_
+				return alignment % ml_ > 0
+				|| alignment % nl_ > 0
 				|| (ms_ % simd_width_) > 0
 				|| (ns_ % simd_width_) > 0;
 			}
@@ -339,6 +335,14 @@ namespace viennacl{
 				std::size_t local_rhs_size2 = nl_ + 1;
 
 				
+
+				///Result Values
+				stream << assigned->scalartype() << " " << "res[" << ms_ << "][" << ns_ <<"]  = {(" << assigned->scalartype() << ")0};" << std::endl;
+				stream << lhs->simd_scalartype() << " " << "val_lhs[" << ms_lhs << "];" << std::endl;
+				stream << rhs->simd_scalartype() << " " << "val_rhs[" << ns_rhs <<"];" << std::endl;
+
+
+				{
 				std::string offset_i;
 				std::string offset_j;
 				
@@ -346,37 +350,45 @@ namespace viennacl{
 					offset_i = "get_group_id(0)*"+utils::to_string(ml_) + "+ get_local_id(0)*"+utils::to_string(simd_width_);
 					offset_j = "get_group_id(1)*"+utils::to_string(nl_) + "+ get_local_id(1)*"+utils::to_string(simd_width_);
 				}
+				stream << "uint2 offset = (uint2)(" << offset_i << "," << offset_j << ");" << std::endl;
+				}
 				
-				///Result Values
-				stream << assigned->scalartype() << " " << "res[" << ms_ << "][" << ns_ <<"]  = {(" << assigned->scalartype() << ")0};" << std::endl;
-				stream << lhs->simd_scalartype() << " " << "val_lhs[" << ms_lhs << "];" << std::endl;
-				stream << rhs->simd_scalartype() << " " << "val_rhs[" << ns_rhs <<"];" << std::endl;
-
-
-					if(lhs->interpret_as_transposed()){
-						for(unsigned int m=0; m<ms_lhs; ++m)
-						stream << "__global " << lhs->simd_scalartype() << "* " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
-						<< lhs->ld() << "* ("
-						<< "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << "+" << m
-						<< " );" << std::endl;
-					}
-					else{
-						stream << "__global " << lhs->simd_scalartype() << "* " << "lhs_ptr" << " = " 
-							   << lhs->name() << " + (" << offset_i << ")/" << simd_width_  << ";" << std::endl;
-					}
+				if(lhs->interpret_as_transposed()){
+					for(unsigned int m=0; m<ms_lhs; ++m)
+					stream << "__global " << lhs->simd_scalartype() << "* " << "lhs_ptr_" << m << " = " << lhs->name() << " + "
+					<< lhs->ld() << "* ("
+					<< "get_group_id(0)*" << ml_lhs << "+" << "get_local_id(0)*" << ms_lhs << "+" << m
+					<< " );" << std::endl;
+				}
+				else{
+					stream << "__global " << lhs->simd_scalartype() << "* " << "lhs_ptr" << " = " 
+						   << lhs->name() << " + offset.x/" << simd_width_  << ";" << std::endl;
+				}
 					
 				if(rhs->interpret_as_transposed())
 					stream << "__global " << rhs->simd_scalartype() << "* " << "rhs_ptr"
-								<< " = " << rhs->name() << " + (" << offset_j << ")/" << simd_width_  << ";" << std::endl;
+								<< " = " << rhs->name() << " + offset.y/" << simd_width_  << ";" << std::endl;
 				else
 					for(unsigned int n = 0 ; n < ns_rhs ; ++n)
 							stream << "__global " << rhs->simd_scalartype() << "* " << "rhs_ptr_" << n << " = " << rhs->name() << " +  "
 							<< "(" << "get_local_id(1)*" << ns_rhs << " + get_group_id(1)*" << nl_rhs << " + " << n << ")" << "*" << rhs->ld()
 							<< ";" << std::endl;
 				
-				stream << "for(unsigned int k=0 ; k< K ; k++){" << std::endl;
-				stream.inc_tab();
 
+
+				if(cache_width_>1)
+				{
+					stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << cache_width_ << "){" << std::endl;
+					stream.inc_tab();
+					stream << "#pragma unroll " << cache_width_ << std::endl;
+					stream << "for(unsigned int k = 0 ; k < " << cache_width_ << "; ++k){" << std::endl;
+					stream.inc_tab();
+				}
+				else
+				{
+					stream << "for(unsigned int k=0 ; k< K ; ++k){" << std::endl;
+					stream.inc_tab();
+				}
 				///Fetch LHS to registers
 				for(unsigned int m=0 ; m < ms_lhs ; ++m){
 					if(lhs->interpret_as_transposed())
@@ -419,15 +431,25 @@ namespace viennacl{
 				if(rhs->interpret_as_transposed())
 					stream << "rhs_ptr += " << rhs->ld() << ";" << std::endl;
 
-				stream.dec_tab();
-				stream << "}" << std::endl;
+				if(cache_width_>1)
+				{
+					stream.dec_tab();
+					stream << "}" << std::endl;
+					stream.dec_tab();
+					stream << "}" << std::endl;
+				}
+				else
+				{
+					stream.dec_tab();
+					stream << "}" << std::endl;
+				}
 
 				for(unsigned int m=0 ; m < ms_res ; ++m){
 					for(unsigned int n=0 ; n < ns_res ; ++n){
 						std::string i,j;
 						if(strided){
-							i = offset_i + "+" + utils::to_string((m/simd_width_)*(local_size_1_*simd_width_) + m%simd_width_);
-							j = offset_j + "+" + utils::to_string((n/simd_width_)*(local_size_2_*simd_width_) + n%simd_width_);
+							i = "offset.x +" + utils::to_string((m/simd_width_)*(local_size_1_*simd_width_) + m%simd_width_);
+							j = "offset.y +" + utils::to_string((n/simd_width_)*(local_size_2_*simd_width_) + n%simd_width_);
 						}
 						else{
 							i = "get_global_id(0)*" + utils::to_string(ms_res) + "+" + utils::to_string(m);

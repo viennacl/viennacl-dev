@@ -197,16 +197,23 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
     gen.add(statement,statement.array()[0]);
     gen.force_profile(make_key(layout,scalartype_size), profile);
     viennacl::generator::enqueue(gen);
-    viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     viennacl::tools::timer timer;
     timer.start();
-    static const unsigned int n_runs = 1;
+    static const unsigned int n_runs = 5;
     for(unsigned int r = 0 ; r < n_runs; ++r)
       viennacl::generator::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/n_runs;
     return static_cast<unsigned int>(2*pow(size/static_cast<double>(1000.0),3)/time);
+}
+
+template<class ItType>
+void print_parameters(std::string const & name, ItType begin, ItType end){
+    std::cout << name << " : [";
+    for(ItType it = begin ; it != end ; ++it)
+        std::cout << ((it==begin)?"":",") << *it;
+    std::cout << "]" << std::endl;
 }
 
 template<class ScalarType>
@@ -234,6 +241,7 @@ void run_autotune(autotuner_options options){
     tmp = get_values_in_commas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
     tmp = get_values_in_commas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
     tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    
     std::vector<int> lhs_storage;
     if(options.lhs_fetch_method=="global")
         lhs_storage.push_back(0);
@@ -252,6 +260,16 @@ void run_autotune(autotuner_options options){
         rhs_storage.push_back(0);
         rhs_storage.push_back(1);
     }
+    
+    std::cout << "-------------------" << std::endl;
+    print_parameters("local size 1", local_size_1.begin(), local_size_1.end());
+    print_parameters("local size 2", local_size_2.begin(), local_size_2.end());
+    print_parameters("cache_width", cache_width.begin(), cache_width.end());
+    print_parameters("ms", ms.begin(), ms.end());
+    print_parameters("ns", ns.begin(), ns.end());
+    print_parameters("lhs fetch method", lhs_storage.begin(), lhs_storage.end());
+    print_parameters("rhs fetch method", rhs_storage.begin(), rhs_storage.end());
+    std::cout << "-------------------" << std::endl;
 
     conf.add_tuning_param("local_size1",local_size_1);
     conf.add_tuning_param("cache_width",cache_width);
@@ -355,15 +373,6 @@ int main(int argc, char* argv[]){
         std::cout << "-------------------" << std::endl;
         std::cout << "layout : " << options.layout << std::endl;
         std::cout << "scalartype : " << options.scalartype << std::endl;
-        std::cout << "ms : [" << options.ms_interval << "]" << std::endl;
-        std::cout << "ks : [" << options.ks_interval << "]" <<  std::endl;
-        std::cout << "ns : [" << options.ns_interval << "]" <<  std::endl;
-        std::cout << "local size 1 : [" << options.local_size_1_interval << "]" << std::endl;
-        std::cout << "cache width : [" << options.cache_width_interval << "]" << std::endl;
-        std::cout << "local size 2 : [" << options.local_size_2_interval << "]" << std::endl;
-        std::cout << "vector : [" << options.vector_interval << "]" << std::endl;
-        std::cout << "lhs fetch method : [" << options.lhs_fetch_method << "]" << std::endl;
-        std::cout << "rhs fetch method : [" << options.rhs_fetch_method << "]" << std::endl;
         std::cout << "-------------------" << std::endl;
         if(options.scalartype=="float")
             run_autotune<float>(options);
