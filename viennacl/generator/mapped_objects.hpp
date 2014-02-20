@@ -265,7 +265,7 @@ namespace viennacl{
             std::string i = index.first;
             std::string j = index.second;
             if(i=="0")
-              return  "(" + + ')' + '*' + ld_name_;
+              return  "(" + j + ')' + '*' + ld_name_;
             else if(j=="0")
               return "(" + i + ")";
             else

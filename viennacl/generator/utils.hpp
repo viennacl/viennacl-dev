@@ -106,16 +106,13 @@ namespace viennacl{
     template<class Fun>
     static typename Fun::result_type call_on_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::MATRIX_TYPE_FAMILY && bool("Must be called on a matrix"));
-        if (element.subtype == scheduler::DENSE_MATRIX_TYPE)
-        {
-            switch(element.numeric_type){
-            case scheduler::FLOAT_TYPE :
-                return fun(*element.matrix_float);
-            case scheduler::DOUBLE_TYPE :
-                return fun(*element.matrix_double);
-            default :
-                throw generator_not_supported_exception("Unsupported Scalartype");
-            }
+        switch(element.numeric_type){
+        case scheduler::FLOAT_TYPE :
+            return fun(*element.matrix_float);
+        case scheduler::DOUBLE_TYPE :
+            return fun(*element.matrix_double);
+        default :
+            throw generator_not_supported_exception("Unsupported Scalartype");
         }
     }
 
@@ -203,8 +200,8 @@ namespace viennacl{
       }
 
       inline bool is_row_major_matrix(scheduler::lhs_rhs_element const & element){
-        return  element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::FLOAT_TYPE && viennacl::traits::row_major(*(matrix_base<float>*)element.matrix_float)
-             || element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::DOUBLE_TYPE && viennacl::traits::row_major(*(matrix_base<double>*)element.matrix_double);
+        return  (element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::FLOAT_TYPE && viennacl::traits::row_major(*(matrix_base<float>*)element.matrix_float))
+             || (element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::DOUBLE_TYPE && viennacl::traits::row_major(*(matrix_base<double>*)element.matrix_double));
       }
 
       inline bool is_reduction(scheduler::op_element const & op){
